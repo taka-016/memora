@@ -351,10 +351,10 @@ Widget _buildTestApp({
       groupQueryServiceProvider.overrideWithValue(
         groupQueryService ?? _FakeGroupQueryService(groups),
       ),
-      tripEntryQueryServiceProvider.overrideWithValue(
+      mapTripEntryQueryServiceProvider.overrideWithValue(
         _FakeTripEntryQueryService(),
       ),
-      itineraryItemQueryServiceProvider.overrideWithValue(
+      androidWidgetItineraryItemQueryServiceProvider.overrideWithValue(
         _FakeItineraryItemQueryService(),
       ),
     ],

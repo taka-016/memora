@@ -80,7 +80,14 @@ private fun ItineraryWidgetContent(
 ) {
     val prefs = state.preferences
     val targetGroupId = prefs.getString(TARGET_GROUP_ID_KEY, null).orEmpty()
-    val cache = readCache(prefs.getString(CACHE_FILE_KEY, null))
+    val generation = prefs.getLong(CACHE_GENERATION_KEY, 0)
+    val cachePath = prefs.getString(cacheFileKey(generation), null)
+        ?: if (generation == 0L) prefs.getString(LEGACY_CACHE_FILE_KEY, null) else null
+    val cache = readCache(cachePath)?.takeIf { cache ->
+        cache.sourceMode == BuildConfig.RESOLVED_APP_MODE &&
+            cache.groupId == targetGroupId &&
+            cache.generation == generation
+    }
     val selectedItineraryDateId = cache?.selectedItineraryDateId
     val selectedItineraryDate = cache?.itineraryDates
         ?.firstOrNull { it.id == selectedItineraryDateId }
@@ -483,6 +490,9 @@ private fun readCache(path: String?): WidgetCache? {
     return runCatching {
         val root = JSONObject(file.readText(Charsets.UTF_8))
         WidgetCache(
+            sourceMode = root.optString("sourceMode").ifBlank { "online" },
+            generation = root.optLong("generation", 0),
+            groupId = root.optString("groupId"),
             selectedItineraryDateId = root
                 .optString("selectedItineraryDateId")
                 .ifBlank { null },
@@ -538,6 +548,9 @@ private fun formatLastUpdatedAt(value: String): String {
 }
 
 private data class WidgetCache(
+    val sourceMode: String,
+    val generation: Long,
+    val groupId: String,
     val selectedItineraryDateId: String?,
     val lastUpdatedAt: String,
     val itineraryDates: List<WidgetItineraryDate>,
@@ -563,7 +576,11 @@ private sealed interface WidgetItineraryListEntry {
 }
 
 private const val TARGET_GROUP_ID_KEY = "memora_widget_target_group_id"
-private const val CACHE_FILE_KEY = "memora_widget_itinerary_cache"
+private fun cacheFileKey(generation: Long) = "${CACHE_FILE_KEY_PREFIX}$generation"
+
+private const val CACHE_GENERATION_KEY = "memora_widget_cache_generation"
+private const val CACHE_FILE_KEY_PREFIX = "memora_widget_itinerary_cache_"
+private const val LEGACY_CACHE_FILE_KEY = "memora_widget_itinerary_cache"
 private const val WIDGET_PADDING_DP = 8
 private const val CONTENT_TOP_SPACE_DP = 10
 private const val TIME_TEXT_HEIGHT_DP = 12

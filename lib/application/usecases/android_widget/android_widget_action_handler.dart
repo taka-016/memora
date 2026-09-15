@@ -18,12 +18,14 @@ typedef ShowAndroidWidgetToast = Future<void> Function(
 class AndroidWidgetActionHandler {
   const AndroidWidgetActionHandler({
     required this._cacheStorage,
+    this._cacheGenerationStorage,
     required this._refreshCache,
     required this._moveDate,
     required this._showToast,
   });
 
   final AndroidWidgetCacheStorage _cacheStorage;
+  final AndroidWidgetCacheGenerationStorage? _cacheGenerationStorage;
   final RefreshAndroidWidgetCache _refreshCache;
   final MoveAndroidWidgetItineraryDate _moveDate;
   final ShowAndroidWidgetToast _showToast;
@@ -76,6 +78,9 @@ class AndroidWidgetActionHandler {
       return;
     }
     try {
+      await _cacheGenerationStorage?.advanceCacheGeneration(
+        updateCache: (currentCache) => currentCache,
+      );
       await _refreshCache(groupId: groupId);
     } catch (_) {
       await _showMoveFailedToast();

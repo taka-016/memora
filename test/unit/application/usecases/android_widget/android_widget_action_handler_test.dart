@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/android_widget/android_widget_itinerary_cache_dto.dart';
+import 'package:memora/application/models/app_mode.dart';
 import 'package:memora/application/services/android_widget_cache_storage.dart';
 import 'package:memora/application/services/android_widget_toast_notifier.dart';
 import 'package:memora/application/usecases/android_widget/android_widget_action_handler.dart';
@@ -14,6 +15,7 @@ void main() {
 
       final handler = AndroidWidgetActionHandler(
         cacheStorage: storage,
+        cacheGenerationStorage: storage,
         showToast: toastNotifier.show,
         refreshCache: ({
           required String groupId,
@@ -34,6 +36,7 @@ void main() {
       final refreshCalls = <({String groupId, String? selectedId})>[];
       final handler = AndroidWidgetActionHandler(
         cacheStorage: storage,
+        cacheGenerationStorage: storage,
         showToast: toastNotifier.show,
         refreshCache:
             ({required String groupId, String? selectedItineraryDateId}) async {
@@ -124,14 +127,17 @@ void main() {
     });
 
     test('直近の旅程へ戻る場合は選択中IDを渡さず再取得する', () async {
+      final cache = _cache();
       final storage = _FakeAndroidWidgetCacheStorage(
         targetGroupId: 'group-1',
         selectedItineraryDateId: 'trip-1_2026-05-23',
+        cache: cache,
       );
       final toastNotifier = _FakeAndroidWidgetToastNotifier();
       final refreshCalls = <({String groupId, String? selectedId})>[];
       final handler = AndroidWidgetActionHandler(
         cacheStorage: storage,
+        cacheGenerationStorage: storage,
         showToast: toastNotifier.show,
         refreshCache:
             ({required String groupId, String? selectedItineraryDateId}) async {
@@ -146,20 +152,93 @@ void main() {
       await handler.handle(Uri.parse('memoraWidget://recent'));
 
       expect(refreshCalls, [(groupId: 'group-1', selectedId: null)]);
+      expect(storage.generation, 1);
+      expect(storage.caches[1]?.itineraryDates, cache.itineraryDates);
       expect(toastNotifier.notifications, isEmpty);
+    });
+
+    test('直近の旅程への再取得に失敗しても新世代で既存表示を維持する', () async {
+      final cache = _cache();
+      final storage = _FakeAndroidWidgetCacheStorage(
+        targetGroupId: 'group-1',
+        selectedItineraryDateId: 'trip-1_2026-05-23',
+        cache: cache,
+      );
+      final toastNotifier = _FakeAndroidWidgetToastNotifier();
+      final handler = AndroidWidgetActionHandler(
+        cacheStorage: storage,
+        cacheGenerationStorage: storage,
+        showToast: toastNotifier.show,
+        refreshCache:
+            ({required String groupId, String? selectedItineraryDateId}) async {
+              throw TestException('取得失敗');
+            },
+        moveDate: (_) async => true,
+      );
+
+      await handler.handle(Uri.parse('memoraWidget://recent'));
+
+      expect(storage.generation, 1);
+      expect(storage.caches[1]?.itineraryDates, cache.itineraryDates);
+      expect(toastNotifier.notifications, [
+        const AndroidWidgetToastNotification.error('切り替えに失敗しました'),
+      ]);
     });
   });
 }
 
-class _FakeAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
+AndroidWidgetItineraryCacheDto _cache() {
+  return AndroidWidgetItineraryCacheDto(
+    version: 1,
+    sourceMode: AppMode.offline,
+    generation: 0,
+    groupId: 'group-1',
+    selectedItineraryDateId: 'trip-1_2026-05-23',
+    lastUpdatedAt: DateTime(2026, 9, 13),
+    itineraryDates: const [],
+  );
+}
+
+class _FakeAndroidWidgetCacheStorage
+    implements AndroidWidgetCacheStorage, AndroidWidgetCacheGenerationStorage {
   _FakeAndroidWidgetCacheStorage({
     this.targetGroupId,
     this.selectedItineraryDateId,
-  });
+    AndroidWidgetItineraryCacheDto? cache,
+  }) {
+    if (cache != null) {
+      caches[cache.generation] = cache;
+    }
+  }
 
   String? targetGroupId;
   String? selectedItineraryDateId;
   int updateWidgetCount = 0;
+  int generation = 0;
+  final caches = <int, AndroidWidgetItineraryCacheDto>{};
+
+  @override
+  Future<int> advanceCacheGeneration({
+    AndroidWidgetItineraryCacheDto? Function(
+      AndroidWidgetItineraryCacheDto? currentCache,
+    )?
+    updateCache,
+  }) async {
+    final cache = updateCache?.call(caches[generation]);
+    generation += 1;
+    if (cache != null) {
+      caches[generation] = AndroidWidgetItineraryCacheDto(
+        version: cache.version,
+        sourceMode: cache.sourceMode,
+        generation: generation,
+        groupId: cache.groupId,
+        selectedItineraryDateId: cache.selectedItineraryDateId,
+        lastUpdatedAt: cache.lastUpdatedAt,
+        itineraryDates: cache.itineraryDates,
+      );
+    }
+    return generation;
+  }
 
   @override
   Future<void> clear() async {}
@@ -180,7 +259,17 @@ class _FakeAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
   }
 
   @override
+  Future<int> getCacheGeneration() async => generation;
+
+  @override
   Future<void> saveItineraryCache(AndroidWidgetItineraryCacheDto cache) async {}
+
+  @override
+  Future<void> saveItineraryCacheForGeneration(
+    AndroidWidgetItineraryCacheDto cache,
+  ) async {
+    caches[cache.generation] = cache;
+  }
 
   @override
   Future<void> saveSelectedItineraryDateId(String? itineraryDateId) async {
@@ -199,7 +288,7 @@ class _FakeAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
 
   @override
   Future<AndroidWidgetItineraryCacheDto?> loadItineraryCache() async {
-    return null;
+    return caches[generation];
   }
 }
 

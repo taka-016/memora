@@ -1,6 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:memora/application/models/app_mode.dart';
+import 'package:memora/composition_root/providers/offline_database_provider.dart';
+import 'package:memora/infrastructure/config/resolved_app_mode_provider.dart';
 import 'package:memora/application/services/android_widget_cache_storage.dart';
 import 'package:memora/application/services/android_widget_update_interval_storage.dart';
+import 'package:memora/application/transactions/read_transaction.dart';
 import 'package:memora/application/usecases/android_widget/android_widget_itinerary_cache_usecases.dart';
 import 'package:memora/application/usecases/android_widget/get_android_widget_itinerary_cache_usecase.dart';
 import 'package:memora/application/usecases/android_widget/update_android_widget_interval_usecase.dart';
@@ -23,11 +29,18 @@ final androidWidgetUpdateIntervalStorageProvider =
 
 final refreshAndroidWidgetItineraryCacheUsecaseProvider =
     Provider<RefreshAndroidWidgetItineraryCacheUsecase>((ref) {
+      final cacheStorage = ref.watch(androidWidgetCacheStorageProvider);
       return RefreshAndroidWidgetItineraryCacheUsecase(
-        cacheStorage: ref.watch(androidWidgetCacheStorageProvider),
+        cacheStorage: cacheStorage,
+        cacheGenerationStorage:
+            cacheStorage is AndroidWidgetCacheGenerationStorage
+            ? cacheStorage as AndroidWidgetCacheGenerationStorage
+            : null,
         getCacheUsecase: ref.watch(
           getAndroidWidgetItineraryCacheUsecaseProvider,
         ),
+        mode: ref.watch(appModeProvider),
+        readTransaction: ref.watch(androidWidgetReadTransactionProvider),
       );
     });
 
@@ -56,24 +69,38 @@ final clearAndroidWidgetTargetGroupUsecaseProvider =
 
 final moveAndroidWidgetSelectedItineraryDateUsecaseProvider =
     Provider<MoveAndroidWidgetSelectedItineraryDateUsecase>((ref) {
+      final cacheStorage = ref.watch(androidWidgetCacheStorageProvider);
       return MoveAndroidWidgetSelectedItineraryDateUsecase(
-        cacheStorage: ref.watch(androidWidgetCacheStorageProvider),
+        cacheStorage: cacheStorage,
+        cacheGenerationStorage:
+            cacheStorage is AndroidWidgetCacheGenerationStorage
+            ? cacheStorage as AndroidWidgetCacheGenerationStorage
+            : null,
         tripEntryQueryService: ref.watch(tripEntryQueryServiceProvider),
         itineraryItemQueryService: ref.watch(itineraryItemQueryServiceProvider),
         refreshCacheUsecase: ref.watch(
           refreshAndroidWidgetItineraryCacheUsecaseProvider,
         ),
+        readTransaction: ref.watch(androidWidgetReadTransactionProvider),
       );
     });
 
 final getAndroidWidgetItineraryCacheUsecaseProvider =
     Provider<GetAndroidWidgetItineraryCacheUsecase>((ref) {
       return GetAndroidWidgetItineraryCacheUsecase(
-        tripEntryQueryService: ref.watch(tripEntryQueryServiceProvider),
-        itineraryItemQueryService: ref.watch(itineraryItemQueryServiceProvider),
+        tripEntryQueryService: ref.watch(mapTripEntryQueryServiceProvider),
+        itineraryItemQueryService: ref.watch(
+          androidWidgetItineraryItemQueryServiceProvider,
+        ),
         clock: ref.watch(appClockProvider),
       );
     });
+
+final androidWidgetReadTransactionProvider = Provider<ReadTransaction?>((ref) {
+  return ref.watch(appModeProvider) == AppMode.offline
+      ? ref.watch(offlineDatabaseProvider)
+      : null;
+});
 
 final androidWidgetPeriodicUpdateRegistrarProvider =
     Provider<RegisterAndroidWidgetPeriodicUpdateTask>((ref) {
@@ -95,4 +122,14 @@ final watchAndroidWidgetLaunchUriUsecaseProvider =
       return const WatchAndroidWidgetLaunchUriUsecase(
         HomeWidgetAndroidWidgetLaunchUriSource(),
       );
+    });
+
+final refreshSelectedAndroidWidgetCacheProvider =
+    Provider<Future<void> Function()>((ref) {
+      return () async {
+        if (!Platform.isAndroid) return;
+        await ref
+            .read(refreshAndroidWidgetItineraryCacheUsecaseProvider)
+            .executeForSelectedGroup();
+      };
     });

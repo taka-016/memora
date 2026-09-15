@@ -17,6 +17,7 @@ const _fallbackReceiverPath =
 const _widgetInfoPath =
     'android/app/src/main/res/xml/itinerary_widget_info.xml';
 const _androidManifestPath = 'android/app/src/main/AndroidManifest.xml';
+const _buildGradlePath = 'android/app/build.gradle.kts';
 
 void main() {
   group('AndroidWidgetPeriodicUpdate', () {
@@ -38,11 +39,51 @@ void main() {
       expect(source, contains('memora_android_widget_periodic_update'));
     });
 
-    test('ネットワーク接続時のみバックグラウンド更新を実行する', () {
+    test('保存済みモードで通常登録のネットワーク制約を選択する', () {
       final source = File(_backgroundUpdatePath).readAsStringSync();
 
       expect(source, contains('Constraints('));
-      expect(source, contains('networkType: NetworkType.connected'));
+      expect(source, contains('.loadForCurrentBuild()'));
+      expect(
+        source,
+        contains('constraints: androidWidgetNetworkConstraints(mode)'),
+      );
+    });
+
+    test('フォールバックの定期・即時登録にも同じモードの制約を適用する', () {
+      final source = File(_fallbackSchedulerPath).readAsStringSync();
+      final buildGradle = File(_buildGradlePath).readAsStringSync();
+
+      expect(buildGradle, contains('project.findProperty("dart-defines")'));
+      expect(buildGradle, contains('MEMORA_APP_MODE='));
+      expect(
+        buildGradle,
+        contains('buildConfigField("String", "RESOLVED_APP_MODE"'),
+      );
+      expect(source, contains('flutter.resolved_app_mode'));
+      expect(source, contains('BuildConfig.RESOLVED_APP_MODE'));
+      expect(
+        source.indexOf('BuildConfig.RESOLVED_APP_MODE'),
+        lessThan(source.indexOf('Constraints.Builder()')),
+      );
+      expect(source, contains('"offline" -> NetworkType.NOT_REQUIRED'));
+      expect(source, contains('"online" -> NetworkType.CONNECTED'));
+      expect(source, contains('else -> return'));
+      expect('.setConstraints(constraints)'.allMatches(source).length, 2);
+    });
+
+    test('コールバック登録前にアプリモードとウィジェットキャッシュを同期する', () {
+      final source = File(_mainPath).readAsStringSync();
+      final synchronize = source.indexOf(
+        'synchronizeAppModeAndAndroidWidgetCache(root.mode)',
+      );
+      expect(synchronize, greaterThanOrEqualTo(0));
+      expect(
+        synchronize,
+        lessThan(
+          source.indexOf('registerAndroidWidgetInteractivityCallback();'),
+        ),
+      );
     });
 
     test('検証用の短間隔One-offタスクを登録しない', () {
@@ -110,6 +151,19 @@ void main() {
       );
     });
 
+    test('現在のモードと対象グループと世代に一致するキャッシュだけ描画する', () {
+      final source = File(_itineraryWidgetPath).readAsStringSync();
+
+      expect(source, contains('memora_widget_cache_generation'));
+      expect(source, contains('BuildConfig.RESOLVED_APP_MODE'));
+      expect(
+        source,
+        contains('cache.sourceMode == BuildConfig.RESOLVED_APP_MODE'),
+      );
+      expect(source, contains('cache.groupId == targetGroupId'));
+      expect(source, contains('cache.generation == generation'));
+    });
+
     test('Android標準のウィジェット定期更新に依存しない', () {
       final source = File(_widgetInfoPath).readAsStringSync();
 
@@ -136,6 +190,13 @@ void main() {
         contains('android.permission.RECEIVE_BOOT_COMPLETED'),
       );
       expect(manifestSource, contains('.AndroidWidgetUpdateFallbackReceiver'));
+    });
+
+    test('フォールバック復旧は現世代の最終更新時刻を参照する', () {
+      final source = File(_fallbackSchedulerPath).readAsStringSync();
+
+      expect(source, contains('memora_widget_cache_generation'));
+      expect(source, contains('lastUpdatedAtKey(generation)'));
     });
 
     test('アプリを開かなくても期限超過した自動更新タスクをネイティブ側で復旧する', () {
