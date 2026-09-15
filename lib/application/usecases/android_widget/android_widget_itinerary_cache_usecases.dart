@@ -42,6 +42,18 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
     String? selectedItineraryDateId,
     bool preserveExistingCacheOnEmpty = false,
     bool updateWidgetAfterRefresh = true,
+  }) => _execute(
+    groupId: groupId,
+    selectedItineraryDateId: selectedItineraryDateId,
+    preserveExistingCacheOnEmpty: preserveExistingCacheOnEmpty,
+    updateWidgetAfterRefresh: updateWidgetAfterRefresh,
+  );
+
+  Future<void> _execute({
+    required String groupId,
+    String? selectedItineraryDateId,
+    bool preserveExistingCacheOnEmpty = false,
+    bool updateWidgetAfterRefresh = true,
     int? cacheGeneration,
   }) async {
     try {
@@ -258,7 +270,7 @@ class MoveAndroidWidgetSelectedItineraryDateUsecase {
         return;
       }
     }
-    await _refreshCacheUsecase.execute(
+    await _refreshCacheUsecase._execute(
       groupId: currentCache.groupId,
       selectedItineraryDateId: targetItineraryDateId,
       cacheGeneration: refreshGeneration,
