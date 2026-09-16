@@ -31,10 +31,7 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
   Future<void> executeForSelectedGroup() async {
     final groupId = await _cacheStorage.getTargetGroupId();
     if (groupId == null) return;
-    await execute(
-      groupId: groupId,
-      selectedItineraryDateId: await _cacheStorage.getSelectedItineraryDateId(),
-    );
+    await _execute(groupId: groupId, useCurrentSelectedItineraryDate: true);
   }
 
   Future<void> execute({
@@ -55,20 +52,33 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
     bool preserveExistingCacheOnEmpty = false,
     bool updateWidgetAfterRefresh = true,
     int? cacheGeneration,
+    bool useCurrentSelectedItineraryDate = false,
   }) async {
     try {
       final generationStorage = _cacheGenerationStorage;
-      final generation =
-          cacheGeneration ??
-          (generationStorage == null
-              ? 0
-              : await generationStorage.advanceCacheGeneration(
-                  updateCache: (currentCache) => currentCache,
-                ));
+      var selectedId = selectedItineraryDateId;
+      late final int generation;
+      if (cacheGeneration != null) {
+        generation = cacheGeneration;
+      } else if (generationStorage == null) {
+        generation = 0;
+        if (useCurrentSelectedItineraryDate) {
+          selectedId = await _cacheStorage.getSelectedItineraryDateId();
+        }
+      } else {
+        generation = await generationStorage.advanceCacheGeneration(
+          updateCache: (currentCache) {
+            if (useCurrentSelectedItineraryDate) {
+              selectedId = currentCache?.selectedItineraryDateId;
+            }
+            return currentCache;
+          },
+        );
+      }
       Future<AndroidWidgetItineraryCacheDto> read() {
         return _getCacheUsecase.execute(
           groupId: groupId,
-          selectedItineraryDateId: selectedItineraryDateId,
+          selectedItineraryDateId: selectedId,
         );
       }
 
