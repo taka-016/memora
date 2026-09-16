@@ -20,6 +20,7 @@ void main() {
         refreshCache: ({
           required String groupId,
           String? selectedItineraryDateId,
+          bool useCurrentSelectedItineraryDate = false,
         }) async {},
         moveDate: (_) async => true,
       );
@@ -33,16 +34,22 @@ void main() {
         selectedItineraryDateId: 'trip-1_2026-05-24',
       );
       final toastNotifier = _FakeAndroidWidgetToastNotifier();
-      final refreshCalls = <({String groupId, String? selectedId})>[];
+      final refreshCalls =
+          <({String groupId, String? selectedId, bool useCurrentSelection})>[];
       final handler = AndroidWidgetActionHandler(
         cacheStorage: storage,
         cacheGenerationStorage: storage,
         showToast: toastNotifier.show,
         refreshCache:
-            ({required String groupId, String? selectedItineraryDateId}) async {
+            ({
+              required String groupId,
+              String? selectedItineraryDateId,
+              bool useCurrentSelectedItineraryDate = false,
+            }) async {
               refreshCalls.add((
                 groupId: groupId,
                 selectedId: selectedItineraryDateId,
+                useCurrentSelection: useCurrentSelectedItineraryDate,
               ));
             },
         moveDate: (_) async => true,
@@ -51,7 +58,7 @@ void main() {
       await handler.handle(Uri.parse('memoraWidget://refresh'));
 
       expect(refreshCalls, [
-        (groupId: 'group-1', selectedId: 'trip-1_2026-05-24'),
+        (groupId: 'group-1', selectedId: null, useCurrentSelection: true),
       ]);
       expect(toastNotifier.notifications, [
         const AndroidWidgetToastNotification.success('更新しました。'),
@@ -65,7 +72,11 @@ void main() {
         cacheStorage: storage,
         showToast: toastNotifier.show,
         refreshCache:
-            ({required String groupId, String? selectedItineraryDateId}) async {
+            ({
+              required String groupId,
+              String? selectedItineraryDateId,
+              bool useCurrentSelectedItineraryDate = false,
+            }) async {
               throw TestException('取得失敗');
             },
         moveDate: (_) async => true,
@@ -92,6 +103,7 @@ void main() {
         refreshCache: ({
           required String groupId,
           String? selectedItineraryDateId,
+          bool useCurrentSelectedItineraryDate = false,
         }) async {},
         moveDate: (_) async => true,
       );
@@ -115,6 +127,7 @@ void main() {
         refreshCache: ({
           required String groupId,
           String? selectedItineraryDateId,
+          bool useCurrentSelectedItineraryDate = false,
         }) async {},
         moveDate: (_) async => false,
       );
@@ -134,16 +147,22 @@ void main() {
         cache: cache,
       );
       final toastNotifier = _FakeAndroidWidgetToastNotifier();
-      final refreshCalls = <({String groupId, String? selectedId})>[];
+      final refreshCalls =
+          <({String groupId, String? selectedId, bool useCurrentSelection})>[];
       final handler = AndroidWidgetActionHandler(
         cacheStorage: storage,
         cacheGenerationStorage: storage,
         showToast: toastNotifier.show,
         refreshCache:
-            ({required String groupId, String? selectedItineraryDateId}) async {
+            ({
+              required String groupId,
+              String? selectedItineraryDateId,
+              bool useCurrentSelectedItineraryDate = false,
+            }) async {
               refreshCalls.add((
                 groupId: groupId,
                 selectedId: selectedItineraryDateId,
+                useCurrentSelection: useCurrentSelectedItineraryDate,
               ));
             },
         moveDate: (_) async => true,
@@ -151,9 +170,11 @@ void main() {
 
       await handler.handle(Uri.parse('memoraWidget://recent'));
 
-      expect(refreshCalls, [(groupId: 'group-1', selectedId: null)]);
-      expect(storage.generation, 1);
-      expect(storage.caches[1]?.itineraryDates, cache.itineraryDates);
+      expect(refreshCalls, [
+        (groupId: 'group-1', selectedId: null, useCurrentSelection: false),
+      ]);
+      expect(storage.generation, 0);
+      expect(storage.caches[0]?.itineraryDates, cache.itineraryDates);
       expect(toastNotifier.notifications, isEmpty);
     });
 
@@ -170,7 +191,11 @@ void main() {
         cacheGenerationStorage: storage,
         showToast: toastNotifier.show,
         refreshCache:
-            ({required String groupId, String? selectedItineraryDateId}) async {
+            ({
+              required String groupId,
+              String? selectedItineraryDateId,
+              bool useCurrentSelectedItineraryDate = false,
+            }) async {
               throw TestException('取得失敗');
             },
         moveDate: (_) async => true,
@@ -178,8 +203,8 @@ void main() {
 
       await handler.handle(Uri.parse('memoraWidget://recent'));
 
-      expect(storage.generation, 1);
-      expect(storage.caches[1]?.itineraryDates, cache.itineraryDates);
+      expect(storage.generation, 0);
+      expect(storage.caches[0]?.itineraryDates, cache.itineraryDates);
       expect(toastNotifier.notifications, [
         const AndroidWidgetToastNotification.error('切り替えに失敗しました'),
       ]);
