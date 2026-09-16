@@ -103,7 +103,7 @@ void main() {
       );
 
   test(
-    '先に開始した定期更新が保存後更新の新しいキャッシュを上書きしない',
+    '同じ対象の更新が重なった場合は最後に完了した結果を保存する',
     skip: buildMode != AppMode.offline,
     () async {
       final oldReadStarted = Completer<void>();
@@ -133,14 +133,16 @@ void main() {
 
       final caches = verify(storage.saveItineraryCache(captureAny)).captured
           .cast<AndroidWidgetItineraryCacheDto>();
-      expect(caches, isNotEmpty);
-      for (final cache in caches) {
-        expect(cache.itineraryDates.single.tripName, '変更後の旅行');
-        expect(
-          cache.itineraryDates.single.itineraryItems.single.name,
-          '変更後の旅程',
-        );
-      }
+      expect(
+        caches.map((cache) => cache.itineraryDates.single.tripName),
+        ['変更後の旅行', '変更前の旅行'],
+      );
+      expect(
+        caches.map(
+          (cache) => cache.itineraryDates.single.itineraryItems.single.name,
+        ),
+        ['変更後の旅程', '変更前の旅程'],
+      );
     },
   );
 

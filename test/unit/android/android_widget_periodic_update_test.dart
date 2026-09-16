@@ -151,6 +151,19 @@ void main() {
       );
     });
 
+    test('現在のモードと対象グループに一致する単一キャッシュだけ描画する', () {
+      final source = File(_itineraryWidgetPath).readAsStringSync();
+
+      expect(source, contains('BuildConfig.RESOLVED_APP_MODE'));
+      expect(
+        source,
+        contains('cache.sourceMode == BuildConfig.RESOLVED_APP_MODE'),
+      );
+      expect(source, contains('cache.groupId == targetGroupId'));
+      expect(source, contains('memora_widget_itinerary_cache'));
+      expect(source, isNot(contains('memora_widget_cache_generation')));
+    });
+
     test('Android標準のウィジェット定期更新に依存しない', () {
       final source = File(_widgetInfoPath).readAsStringSync();
 
