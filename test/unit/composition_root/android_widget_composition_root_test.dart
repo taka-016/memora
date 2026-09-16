@@ -78,6 +78,7 @@ void main() {
           .cast<AndroidWidgetItineraryCacheDto>();
       expect(caches, hasLength(3));
       for (final cache in caches) {
+        expect(cache.sourceMode, AppMode.offline);
         expect(cache.itineraryDates.single.tripName, '端末内の旅行');
         expect(
           cache.itineraryDates.single.itineraryItems.single.name,
