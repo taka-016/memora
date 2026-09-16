@@ -37,11 +37,13 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
   Future<void> execute({
     required String groupId,
     String? selectedItineraryDateId,
+    bool useCurrentSelectedItineraryDate = false,
     bool preserveExistingCacheOnEmpty = false,
     bool updateWidgetAfterRefresh = true,
   }) => _execute(
     groupId: groupId,
     selectedItineraryDateId: selectedItineraryDateId,
+    useCurrentSelectedItineraryDate: useCurrentSelectedItineraryDate,
     preserveExistingCacheOnEmpty: preserveExistingCacheOnEmpty,
     updateWidgetAfterRefresh: updateWidgetAfterRefresh,
   );

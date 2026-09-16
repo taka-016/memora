@@ -5,6 +5,7 @@ import 'package:memora/application/usecases/android_widget/android_widget_itiner
 typedef RefreshAndroidWidgetCache = Future<void> Function({
   required String groupId,
   String? selectedItineraryDateId,
+  bool useCurrentSelectedItineraryDate,
 });
 
 typedef MoveAndroidWidgetItineraryDate = Future<bool> Function(
@@ -53,12 +54,10 @@ class AndroidWidgetActionHandler {
       await _cacheStorage.updateWidget();
       return;
     }
-    final selectedItineraryDateId = await _cacheStorage
-        .getSelectedItineraryDateId();
     try {
       await _refreshCache(
         groupId: groupId,
-        selectedItineraryDateId: selectedItineraryDateId,
+        useCurrentSelectedItineraryDate: true,
       );
     } catch (_) {
       await _showToastSafely(
@@ -78,9 +77,6 @@ class AndroidWidgetActionHandler {
       return;
     }
     try {
-      await _cacheGenerationStorage?.advanceCacheGeneration(
-        updateCache: (currentCache) => currentCache,
-      );
       await _refreshCache(groupId: groupId);
     } catch (_) {
       await _showMoveFailedToast();
