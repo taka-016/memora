@@ -100,6 +100,32 @@ void main() {
       expect(storage.updateWidgetCount, 1);
     });
 
+    test('直近の旅程の再取得に失敗しても予約した新世代で既存表示を維持する', () async {
+      final existingCache = _cacheWithItinerary();
+      final storage = _FakeAndroidWidgetCacheStorage(cache: existingCache);
+      final generations = _FakeAndroidWidgetCacheGenerationStorage()
+        ..caches[0] = existingCache;
+      final tripEntryQueryService = _FakeTripEntryQueryService()
+        ..exception = TestException('取得失敗');
+      final usecase = _buildRefreshUsecase(
+        storage,
+        tripEntryQueryService,
+        _FakeItineraryItemQueryService(),
+        generationStorage: generations,
+      );
+
+      await expectLater(
+        usecase.execute(groupId: 'group-1'),
+        throwsA(isA<TestException>()),
+      );
+
+      expect(generations.generation, 1);
+      expect(
+        generations.currentCache?.itineraryDates,
+        existingCache.itineraryDates,
+      );
+    });
+
     test('古い更新の完了後も新しく選択した対象グループとキャッシュを維持する', () async {
       final oldReadStarted = Completer<void>();
       final releaseOldRead = Completer<void>();

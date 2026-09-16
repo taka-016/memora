@@ -66,7 +66,6 @@ Future<void> withAndroidWidgetDependencies(
     );
     final handler = AndroidWidgetActionHandler(
       cacheStorage: storage,
-      cacheGenerationStorage: generationStorage,
       refreshCache: refresh.execute,
       moveDate: move.execute,
       showToast: const MethodChannelAndroidWidgetToastNotifier().show,
