@@ -1,6 +1,7 @@
 import 'package:memora/application/dtos/android_widget/android_widget_itinerary_cache_dto.dart';
 import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
+import 'package:memora/application/models/app_mode.dart';
 import 'package:memora/application/queries/order_by.dart';
 import 'package:memora/application/queries/trip/itinerary_item_query_service.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
@@ -16,11 +17,13 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
   const RefreshAndroidWidgetItineraryCacheUsecase({
     required this._cacheStorage,
     required this._getCacheUsecase,
+    this._mode = AppMode.online,
     this._readTransaction,
   });
 
   final AndroidWidgetCacheStorage _cacheStorage;
   final GetAndroidWidgetItineraryCacheUsecase _getCacheUsecase;
+  final AppMode _mode;
   final ReadTransaction? _readTransaction;
 
   Future<void> executeForSelectedGroup() async {
@@ -58,19 +61,23 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
             return;
           }
         }
-        await _cacheStorage.saveItineraryCache(cache);
-        final publishedTargetGroupId = await _cacheStorage.getTargetGroupId();
-        if (publishedTargetGroupId != null &&
-            publishedTargetGroupId != groupId) {
-          await executeForSelectedGroup();
-        }
+        await _cacheStorage.saveItineraryCache(
+          AndroidWidgetItineraryCacheDto(
+            version: cache.version,
+            sourceMode: _mode,
+            groupId: cache.groupId,
+            selectedItineraryDateId: cache.selectedItineraryDateId,
+            lastUpdatedAt: cache.lastUpdatedAt,
+            itineraryDates: cache.itineraryDates,
+          ),
+        );
       }
 
       final readTransaction = _readTransaction;
       if (readTransaction == null) {
         await publish(await read());
       } else {
-        await readTransaction.executeAndPublish(read: read, publish: publish);
+        await publish(await readTransaction.execute(read));
       }
     } finally {
       if (updateWidgetAfterRefresh) {
@@ -154,6 +161,7 @@ class MoveAndroidWidgetSelectedItineraryDateUsecase {
       await _cacheStorage.saveItineraryCache(
         AndroidWidgetItineraryCacheDto(
           version: cache.version,
+          sourceMode: cache.sourceMode,
           groupId: cache.groupId,
           selectedItineraryDateId: cachedTarget,
           lastUpdatedAt: cache.lastUpdatedAt,

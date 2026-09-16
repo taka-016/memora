@@ -34,6 +34,7 @@ final refreshAndroidWidgetItineraryCacheUsecaseProvider =
         getCacheUsecase: ref.watch(
           getAndroidWidgetItineraryCacheUsecaseProvider,
         ),
+        mode: ref.watch(appModeProvider),
         readTransaction: ref.watch(androidWidgetReadTransactionProvider),
       );
     });
