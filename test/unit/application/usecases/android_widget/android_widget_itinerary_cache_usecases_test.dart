@@ -245,6 +245,58 @@ void main() {
 
       expect(generations.currentCache?.itineraryDates.single.tripName, '変更後');
     });
+
+    test('世代予約直前に選択日が変わった場合は最新の選択日を維持する', () async {
+      final initialCache = AndroidWidgetItineraryCacheDto(
+        version: 1,
+        sourceMode: AppMode.offline,
+        generation: 0,
+        groupId: 'group-1',
+        selectedItineraryDateId: 'trip-1_2026-05-24',
+        lastUpdatedAt: DateTime(2026, 5, 24, 10),
+        itineraryDates: [
+          _itineraryDate('trip-1_2026-05-24', DateTime(2026, 5, 24)),
+          _itineraryDate('trip-1_2026-05-25', DateTime(2026, 5, 25)),
+        ],
+      );
+      final laterOperationCache = AndroidWidgetItineraryCacheDto(
+        version: 1,
+        sourceMode: AppMode.offline,
+        generation: 0,
+        groupId: 'group-1',
+        selectedItineraryDateId: 'trip-1_2026-05-25',
+        lastUpdatedAt: DateTime(2026, 5, 24, 10),
+        itineraryDates: initialCache.itineraryDates,
+      );
+      final storage = _FakeAndroidWidgetCacheStorage(cache: initialCache)
+        ..targetGroupId = 'group-1'
+        ..selectedItineraryDateId = initialCache.selectedItineraryDateId;
+      final generations = _FakeAndroidWidgetCacheGenerationStorage()
+        ..caches[0] = initialCache
+        ..cachePublishedBeforeNextAdvance = laterOperationCache;
+      final tripEntryQueryService = _FakeTripEntryQueryService()
+        ..responses = [
+          [_trip(name: '旅行')],
+        ];
+      final itineraryItemQueryService = _FakeItineraryItemQueryService()
+        ..items = [
+          _itemAt(DateTime(2026, 5, 24, 10)),
+          _itemAt(DateTime(2026, 5, 25, 10)),
+        ];
+      final usecase = _buildRefreshUsecase(
+        storage,
+        tripEntryQueryService,
+        itineraryItemQueryService,
+        generationStorage: generations,
+      );
+
+      await usecase.executeForSelectedGroup();
+
+      expect(
+        generations.currentCache?.selectedItineraryDateId,
+        'trip-1_2026-05-25',
+      );
+    });
   });
 
   group('MoveAndroidWidgetSelectedItineraryDateUsecase', () {
