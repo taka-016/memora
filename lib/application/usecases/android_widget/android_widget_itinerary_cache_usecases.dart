@@ -28,10 +28,18 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
   final AppMode _mode;
   final ReadTransaction? _readTransaction;
 
-  Future<void> executeForSelectedGroup() async {
+  Future<void> executeForSelectedGroup({
+    bool preserveExistingCacheOnEmpty = false,
+    bool updateWidgetAfterRefresh = true,
+  }) async {
     final groupId = await _cacheStorage.getTargetGroupId();
     if (groupId == null) return;
-    await _execute(groupId: groupId, useCurrentSelectedItineraryDate: true);
+    await _execute(
+      groupId: groupId,
+      useCurrentSelectedItineraryDate: true,
+      preserveExistingCacheOnEmpty: preserveExistingCacheOnEmpty,
+      updateWidgetAfterRefresh: updateWidgetAfterRefresh,
+    );
   }
 
   Future<void> execute({
