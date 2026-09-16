@@ -151,19 +151,6 @@ void main() {
       );
     });
 
-    test('現在のモードと対象グループと世代に一致するキャッシュだけ描画する', () {
-      final source = File(_itineraryWidgetPath).readAsStringSync();
-
-      expect(source, contains('memora_widget_cache_generation'));
-      expect(source, contains('BuildConfig.RESOLVED_APP_MODE'));
-      expect(
-        source,
-        contains('cache.sourceMode == BuildConfig.RESOLVED_APP_MODE'),
-      );
-      expect(source, contains('cache.groupId == targetGroupId'));
-      expect(source, contains('cache.generation == generation'));
-    });
-
     test('Android標準のウィジェット定期更新に依存しない', () {
       final source = File(_widgetInfoPath).readAsStringSync();
 
@@ -190,13 +177,6 @@ void main() {
         contains('android.permission.RECEIVE_BOOT_COMPLETED'),
       );
       expect(manifestSource, contains('.AndroidWidgetUpdateFallbackReceiver'));
-    });
-
-    test('フォールバック復旧は現世代の最終更新時刻を参照する', () {
-      final source = File(_fallbackSchedulerPath).readAsStringSync();
-
-      expect(source, contains('memora_widget_cache_generation'));
-      expect(source, contains('lastUpdatedAtKey(generation)'));
     });
 
     test('アプリを開かなくても期限超過した自動更新タスクをネイティブ側で復旧する', () {

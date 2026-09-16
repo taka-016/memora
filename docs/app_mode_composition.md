@@ -18,7 +18,7 @@
 | ログ | Crashlytics。debugでは端末にも出力 | debugのみ端末へ出力。profile・releaseでは保存・送信しない |
 | 地図 | `GoogleMapViewBuilder` | 共通モデルの利用不可理由を表示 |
 | 場所検索・周辺の場所名・現在地 | Places SDK・Geolocatorの既存実装 | 呼び出すと`FeatureUnavailableException`を返す |
-| Androidウィジェットの端末連携 | HomeWidget・SharedPreferences・MethodChannel | 同じ端末連携。保存済みモードを復元し、ネットワーク制約なしでSQLiteのキャッシュを更新 |
+| Androidウィジェットの端末連携 | HomeWidget・SharedPreferences・MethodChannel | 同じ端末連携。モード復元・ネットワーク制約等は後続対応 |
 
 `AppCapabilities`と`FeatureAvailability`が利用可能な機能と利用できない理由を表す。Presentation層はこのモデルを参照し、ビルド指定やDB種別を判定しない。地図はComposition Rootで選択した`MapViewBuilder`を画面へ渡す。テストでは必要に応じて`PlaceholderMapViewBuilder`を注入する。
 
@@ -48,12 +48,11 @@ Crashlyticsの自動収集を無効化する設定と実行時の有効化は、
 
 業務制御の`AndroidWidgetBackgroundUpdateRunner`と`AndroidWidgetPeriodicUpdateRegistrar`はApplication層に残し、WorkManager・端末ストレージとの連携はInfrastructure層に置く。
 
-解決済みモードはアプリ起動時に端末へ保存し、Kotlinのフォールバック更新とDartのバックグラウンドComposition Rootで現ビルドとの一致を確認してから復元する。オンライン更新だけネットワーク接続を要求し、共通Factoryのオフライン分岐はSQLiteのQueryServiceを返す。
-
-キャッシュは生成元モード、対象グループ、公開世代を持つ。各更新と選択変更は固有世代へ表示を切り替え、取得結果を世代別ファイルへ保存する。Kotlinは現ビルドのモード、現在の対象グループ、現在の公開世代と一致するキャッシュだけを描画する。
+モードの端末保存、Kotlin側のモード復元、オフライン時のネットワーク制約解除と更新経路全体の検証はTODO 7で対応する。現在はビルド指定から同じモードを判定し、共通Factoryのオフライン分岐はSQLiteのQueryServiceを返す。
 
 ## 後続の接続
 
+- TODO 7で通常更新・操作コールバック・Kotlinフォールバックを両モードで使用可能にする。
 - モード間のデータ共有・同期・移行は実装しない。
 
 ## 検証

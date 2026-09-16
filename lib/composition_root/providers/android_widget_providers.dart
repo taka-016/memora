@@ -29,17 +29,11 @@ final androidWidgetUpdateIntervalStorageProvider =
 
 final refreshAndroidWidgetItineraryCacheUsecaseProvider =
     Provider<RefreshAndroidWidgetItineraryCacheUsecase>((ref) {
-      final cacheStorage = ref.watch(androidWidgetCacheStorageProvider);
       return RefreshAndroidWidgetItineraryCacheUsecase(
-        cacheStorage: cacheStorage,
-        cacheGenerationStorage:
-            cacheStorage is AndroidWidgetCacheGenerationStorage
-            ? cacheStorage as AndroidWidgetCacheGenerationStorage
-            : null,
+        cacheStorage: ref.watch(androidWidgetCacheStorageProvider),
         getCacheUsecase: ref.watch(
           getAndroidWidgetItineraryCacheUsecaseProvider,
         ),
-        mode: ref.watch(appModeProvider),
         readTransaction: ref.watch(androidWidgetReadTransactionProvider),
       );
     });
@@ -69,13 +63,8 @@ final clearAndroidWidgetTargetGroupUsecaseProvider =
 
 final moveAndroidWidgetSelectedItineraryDateUsecaseProvider =
     Provider<MoveAndroidWidgetSelectedItineraryDateUsecase>((ref) {
-      final cacheStorage = ref.watch(androidWidgetCacheStorageProvider);
       return MoveAndroidWidgetSelectedItineraryDateUsecase(
-        cacheStorage: cacheStorage,
-        cacheGenerationStorage:
-            cacheStorage is AndroidWidgetCacheGenerationStorage
-            ? cacheStorage as AndroidWidgetCacheGenerationStorage
-            : null,
+        cacheStorage: ref.watch(androidWidgetCacheStorageProvider),
         tripEntryQueryService: ref.watch(tripEntryQueryServiceProvider),
         itineraryItemQueryService: ref.watch(itineraryItemQueryServiceProvider),
         refreshCacheUsecase: ref.watch(

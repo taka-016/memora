@@ -1,14 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/android_widget/android_widget_itinerary_cache_dto.dart';
-import 'package:memora/application/models/app_mode.dart';
 
 void main() {
   group('AndroidWidgetItineraryCacheDto', () {
     test('JSONへ変換して復元できる', () {
       final cache = AndroidWidgetItineraryCacheDto(
         version: 1,
-        sourceMode: AppMode.offline,
-        generation: 4,
         groupId: 'group001',
         selectedItineraryDateId: 'trip001_2026-05-25',
         lastUpdatedAt: DateTime(2026, 5, 24, 12, 30),
@@ -36,16 +33,6 @@ void main() {
       final restored = AndroidWidgetItineraryCacheDto.fromJson(cache.toJson());
 
       expect(restored, cache);
-    });
-
-    test('従来キャッシュはオンラインの第0世代として復元する', () {
-      final restored = AndroidWidgetItineraryCacheDto.fromJson({
-        'version': 1,
-        'groupId': 'group001',
-      });
-
-      expect(restored.sourceMode, AppMode.online);
-      expect(restored.generation, 0);
     });
 
     test('旅程項目のメモはJSONに出力しない', () {

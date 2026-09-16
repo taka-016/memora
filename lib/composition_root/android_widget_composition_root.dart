@@ -40,29 +40,22 @@ Future<void> withAndroidWidgetDependencies(
     await database?.initialize();
     final AndroidWidgetCacheStorage storage =
         cacheStorage ?? container.read(androidWidgetCacheStorageProvider);
-    final generationStorage = storage is AndroidWidgetCacheGenerationStorage
-        ? storage as AndroidWidgetCacheGenerationStorage
-        : null;
     final trips = container.read(mapTripEntryQueryServiceProvider);
     final items = container.read(
       androidWidgetItineraryItemQueryServiceProvider,
     );
     final refresh = RefreshAndroidWidgetItineraryCacheUsecase(
       cacheStorage: storage,
-      cacheGenerationStorage: generationStorage,
       getCacheUsecase: container.read(
         getAndroidWidgetItineraryCacheUsecaseProvider,
       ),
-      mode: mode,
       readTransaction: container.read(androidWidgetReadTransactionProvider),
     );
     final move = MoveAndroidWidgetSelectedItineraryDateUsecase(
       cacheStorage: storage,
-      cacheGenerationStorage: generationStorage,
       tripEntryQueryService: trips,
       itineraryItemQueryService: items,
       refreshCacheUsecase: refresh,
-      readTransaction: container.read(androidWidgetReadTransactionProvider),
     );
     final handler = AndroidWidgetActionHandler(
       cacheStorage: storage,

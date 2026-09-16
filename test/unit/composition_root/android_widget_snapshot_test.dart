@@ -225,48 +225,6 @@ void main() {
     }
   });
 
-  test(
-    '操作でキャッシュ外の日付を探す場合も読み取りトランザクションを使用する',
-    skip: buildMode != AppMode.offline,
-    () async {
-      await writer.insertRow('itinerary_items', {
-        'id': 'next-item',
-        'trip_id': 'trip',
-        'name': '翌日の旅程',
-        'start_date_time': DateTime(2026, 9, 13, 10).microsecondsSinceEpoch,
-      });
-      when(storage.loadItineraryCache()).thenAnswer(
-        (_) async => AndroidWidgetItineraryCacheDto(
-          version: 1,
-          groupId: 'group',
-          selectedItineraryDateId: 'trip_2026-09-12',
-          lastUpdatedAt: DateTime(2026, 9, 12),
-          itineraryDates: [
-            AndroidWidgetItineraryDateCacheDto(
-              id: 'trip_2026-09-12',
-              tripId: 'trip',
-              tripName: '変更前の旅行',
-              tripPeriodLabel: '期間未設定',
-              dateLabel: '2026/9/12',
-              date: DateTime(2026, 9, 12),
-              itineraryItems: const [],
-            ),
-          ],
-        ),
-      );
-
-      await withAndroidWidgetDependencies(
-        (refresh, handler) async {
-          await handler.handle(Uri.parse('memoraWidget://next'));
-        },
-        createOfflineDatabase: () => reader,
-        cacheStorage: storage,
-      );
-
-      expect(reader.executeCount, 2);
-    },
-  );
-
   test('取得失敗後もキャッシュを維持しトランザクションを終了して再取得できる', () async {
     final failure = TestException('旅程取得前に失敗');
     reader.afterTripsRead = () async => throw failure;
@@ -297,13 +255,6 @@ class _InterceptingDatabase extends OfflineDatabase {
   _InterceptingDatabase(super.executor);
 
   Future<void> Function()? afterTripsRead;
-  int executeCount = 0;
-
-  @override
-  Future<T> execute<T>(Future<T> Function() action) async {
-    executeCount += 1;
-    return super.execute(action);
-  }
 
   @override
   Future<List<Map<String, Object?>>> rows(
