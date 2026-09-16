@@ -58,6 +58,25 @@ void main() {
       expect(storage.updateWidgetCount, 1);
     });
 
+    test('選択グループの自動更新オプションで既存表示を維持して再描画を委ねる', () async {
+      final existingCache = _cacheWithItinerary();
+      final storage = _FakeAndroidWidgetCacheStorage(cache: existingCache)
+        ..targetGroupId = 'group-1';
+      final usecase = _buildRefreshUsecase(
+        storage,
+        _FakeTripEntryQueryService(),
+        _FakeItineraryItemQueryService(),
+      );
+
+      await usecase.executeForSelectedGroup(
+        preserveExistingCacheOnEmpty: true,
+        updateWidgetAfterRefresh: false,
+      );
+
+      expect(storage.cache, same(existingCache));
+      expect(storage.updateWidgetCount, 0);
+    });
+
     test('手動更新で取得結果が空の場合は空キャッシュへ更新する', () async {
       final existingCache = _cacheWithItinerary();
       final storage = _FakeAndroidWidgetCacheStorage(cache: existingCache);
