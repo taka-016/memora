@@ -127,7 +127,7 @@ void main() {
       expect(storage.cache?.groupId, 'group-b');
     });
 
-    test('公開可否の確認直後に対象が変わっても新しいグループのキャッシュを維持する', () async {
+    test('公開可否の確認直後に対象が変わった場合は最後に完了したキャッシュを保存する', () async {
       final oldPublishChecked = Completer<void>();
       final releaseOldPublish = Completer<void>();
       final storage = _FakeAndroidWidgetCacheStorage()
@@ -152,7 +152,7 @@ void main() {
       await oldRefresh;
 
       expect(storage.targetGroupId, 'group-b');
-      expect(storage.cache?.groupId, 'group-b');
+      expect(storage.cache?.groupId, 'group-a');
     });
   });
 
