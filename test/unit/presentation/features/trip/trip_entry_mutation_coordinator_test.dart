@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
@@ -63,6 +65,35 @@ void main() {
       throwsA(same(failure)),
     );
     expect(events, isEmpty);
+  });
+
+  test('旅行保存の応答はウィジェット更新の完了を待たない', () async {
+    final refreshStarted = Completer<void>();
+    final releaseRefresh = Completer<void>();
+    container.dispose();
+    container = ProviderContainer(
+      overrides: [
+        tripEntryRepositoryProvider.overrideWithValue(repository),
+        refreshSelectedAndroidWidgetCacheProvider.overrideWithValue(() async {
+          refreshStarted.complete();
+          await releaseRefresh.future;
+        }),
+      ],
+    );
+
+    final operation = container
+        .read(tripEntryMutationCoordinatorProvider)
+        .createTripEntry(trip);
+    await refreshStarted.future;
+
+    try {
+      await expectLater(
+        operation.timeout(const Duration(seconds: 1)),
+        completion('new-trip'),
+      );
+    } finally {
+      releaseRefresh.complete();
+    }
   });
 
   test('ウィジェット更新失敗を保存失敗として扱わず重複作成を防ぐ', () async {
