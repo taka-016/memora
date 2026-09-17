@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:memora/composition_root/providers/android_widget_providers.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/composition_root/providers/trip_providers.dart';
@@ -51,19 +53,19 @@ class TripEntryMutationCoordinator {
   Future<String> createTripEntry(TripEntryDto tripEntry) async {
     final id = await _createTripEntry(tripEntry);
     _onTripEntriesChanged();
-    await _refreshWidgetAfterMutation();
+    unawaited(_refreshWidgetAfterMutation());
     return id;
   }
 
   Future<void> updateTripEntry(TripEntryDto tripEntry) async {
     await _updateTripEntry(tripEntry);
     _onTripEntriesChanged();
-    await _refreshWidgetAfterMutation();
+    unawaited(_refreshWidgetAfterMutation());
   }
 
   Future<void> deleteTripEntry(String tripEntryId) async {
     await _deleteTripEntry(tripEntryId);
     _onTripEntriesChanged();
-    await _refreshWidgetAfterMutation();
+    unawaited(_refreshWidgetAfterMutation());
   }
 }
