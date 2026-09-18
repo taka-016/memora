@@ -1,0 +1,139 @@
+import 'package:memora/application/models/offline_backup_snapshot.dart';
+import 'package:memora/application/services/offline_backup_current_member_storage.dart';
+import 'package:memora/application/services/offline_backup_settings_storage.dart';
+import 'package:memora/infrastructure/database/offline_database.dart';
+
+class SqliteOfflineBackupDataStore {
+  const SqliteOfflineBackupDataStore({
+    required this.database,
+    required this.currentMemberStorage,
+    required this.settingsStorage,
+  });
+
+  final OfflineDatabase database;
+  final OfflineBackupCurrentMemberStorage currentMemberStorage;
+  final OfflineBackupSettingsStorage settingsStorage;
+
+  static const _deleteOrder = <String>[
+    'tasks',
+    'itinerary_items',
+    'member_events',
+    'group_events',
+    'dvc_point_contracts',
+    'dvc_limited_points',
+    'dvc_point_usages',
+    'trip_entries',
+    'group_members',
+    'groups',
+    'members',
+  ];
+
+  static const _insertOrder = <String>[
+    'members',
+    'groups',
+    'group_members',
+    'trip_entries',
+    'tasks',
+    'itinerary_items',
+    'member_events',
+    'group_events',
+    'dvc_point_contracts',
+    'dvc_limited_points',
+    'dvc_point_usages',
+  ];
+
+  Future<OfflineBackupSnapshot> exportSnapshot() async {
+    final currentMember = await currentMemberStorage.load();
+    final settings = await settingsStorage.load();
+    final tables = <String, List<Map<String, Object?>>>{};
+    await database.readTransaction(() async {
+      for (final table in OfflineBackupSnapshot.tableNames) {
+        tables[table] = await database.rows(table);
+      }
+    });
+    return OfflineBackupSnapshot(
+      formatVersion: OfflineBackupSnapshot.currentFormatVersion,
+      databaseSchemaVersion: database.schemaVersion,
+      currentMember: currentMember,
+      settings: settings,
+      tables: tables,
+    );
+  }
+
+  Future<void> restoreSnapshot(OfflineBackupSnapshot snapshot) async {
+    _validate(snapshot);
+    final previousMember = await currentMemberStorage.load();
+    final previousSettings = await settingsStorage.load();
+    try {
+      await database.transaction(() async {
+        await database.customStatement('PRAGMA defer_foreign_keys = ON');
+        for (final table in _deleteOrder) {
+          await database.customStatement('DELETE FROM "$table"');
+        }
+        for (final table in _insertOrder) {
+          for (final row in snapshot.tables[table]!) {
+            await database.insertRow(table, row);
+          }
+        }
+        await currentMemberStorage.save(snapshot.currentMember);
+        await settingsStorage.save(snapshot.settings);
+      });
+    } catch (_) {
+      await _restoreExternalState(previousMember, previousSettings);
+      rethrow;
+    }
+  }
+
+  void _validate(OfflineBackupSnapshot snapshot) {
+    if (snapshot.formatVersion != OfflineBackupSnapshot.currentFormatVersion) {
+      throw OfflineBackupUnsupportedVersionException(
+        '未対応のバックアップ形式です: ${snapshot.formatVersion}',
+      );
+    }
+    if (snapshot.databaseSchemaVersion != database.schemaVersion) {
+      throw OfflineBackupUnsupportedVersionException(
+        '未対応のDBスキーマです: ${snapshot.databaseSchemaVersion}',
+      );
+    }
+    if (snapshot.tables.keys
+            .toSet()
+            .difference(OfflineBackupSnapshot.tableNames)
+            .isNotEmpty ||
+        OfflineBackupSnapshot.tableNames
+            .difference(snapshot.tables.keys.toSet())
+            .isNotEmpty) {
+      throw const FormatException('バックアップのテーブル構成が不正です。');
+    }
+    final memberExists = snapshot.tables['members']!.any(
+      (row) =>
+          row['id'] == snapshot.currentMember.id &&
+          row['account_id'] == snapshot.currentMember.accountId,
+    );
+    if (!memberExists) {
+      throw const FormatException('バックアップに端末内本人が含まれていません。');
+    }
+  }
+
+  Future<void> _restoreExternalState(
+    OfflineBackupCurrentMember member,
+    OfflineBackupSettings settings,
+  ) async {
+    Object? firstError;
+    StackTrace? firstStackTrace;
+    try {
+      await currentMemberStorage.save(member);
+    } catch (error, stackTrace) {
+      firstError = error;
+      firstStackTrace = stackTrace;
+    }
+    try {
+      await settingsStorage.save(settings);
+    } catch (error, stackTrace) {
+      firstError ??= error;
+      firstStackTrace ??= stackTrace;
+    }
+    if (firstError != null) {
+      Error.throwWithStackTrace(firstError, firstStackTrace!);
+    }
+  }
+}
