@@ -62,6 +62,24 @@ void main() {
     expect(values[HomeWidgetAndroidWidgetCacheStorage.cacheFileKey], isNull);
     expect(File(path).existsSync(), isFalse);
   });
+
+  test('選択日は別キーではなく公開済みキャッシュから取得する', () async {
+    const storage = HomeWidgetAndroidWidgetCacheStorage();
+    await storage.saveItineraryCache(
+      AndroidWidgetItineraryCacheDto(
+        version: 1,
+        sourceMode: AppMode.offline,
+        groupId: 'group-1',
+        selectedItineraryDateId: 'date-new',
+        lastUpdatedAt: DateTime(2026, 9, 18),
+        itineraryDates: const [],
+      ),
+    );
+    values[HomeWidgetAndroidWidgetCacheStorage.selectedItineraryDateIdKey] =
+        'date-old';
+
+    expect(await storage.getSelectedItineraryDateId(), 'date-new');
+  });
 }
 
 class _FakePathProvider extends PathProviderPlatform {
