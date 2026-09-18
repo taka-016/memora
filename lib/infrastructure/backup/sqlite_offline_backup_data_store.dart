@@ -1,3 +1,4 @@
+import 'package:memora/application/dtos/android_widget/android_widget_update_interval.dart';
 import 'package:memora/application/models/offline_backup_snapshot.dart';
 import 'package:memora/application/services/offline_backup_current_member_storage.dart';
 import 'package:memora/application/services/offline_backup_data_store.dart';
@@ -97,6 +98,13 @@ class SqliteOfflineBackupDataStore implements OfflineBackupDataStore {
       throw OfflineBackupUnsupportedVersionException(
         '未対応のDBスキーマです: ${snapshot.databaseSchemaVersion}',
       );
+    }
+    if (!AndroidWidgetUpdateInterval.values.any(
+      (interval) =>
+          interval.duration.inMinutes ==
+          snapshot.settings.androidWidgetUpdateIntervalMinutes,
+    )) {
+      throw const FormatException('バックアップのウィジェット更新間隔が不正です。');
     }
     if (snapshot.tables.keys
             .toSet()

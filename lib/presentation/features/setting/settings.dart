@@ -365,6 +365,8 @@ class Settings extends ConsumerWidget {
           .read(offlineBackupNotifierProvider.notifier)
           .restorePrepared();
       if (!restored || !context.mounted) return;
+      ref.invalidate(androidWidgetUpdateIntervalProvider);
+      ref.invalidate(androidWidgetTargetGroupProvider);
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text('オフラインデータを復元しました')));
     } on OfflineBackupAuthenticationException {
