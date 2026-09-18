@@ -4,17 +4,19 @@ import 'package:memora/infrastructure/backup/shared_preferences_offline_backup_s
 import 'package:memora/infrastructure/backup/sqlite_offline_backup_data_store.dart';
 import 'package:memora/infrastructure/database/offline_database.dart';
 
-Future<void> recoverPendingOfflineBackupRestore() async {
-  final database = OfflineDatabase.device();
+Future<void> recoverPendingOfflineBackupRestore({
+  OfflineDatabase? database,
+}) async {
+  final targetDatabase = database ?? OfflineDatabase.device();
   try {
-    await database.initialize();
+    await targetDatabase.initialize();
     await SqliteOfflineBackupDataStore(
-      database: database,
+      database: targetDatabase,
       currentMemberStorage: LocalOfflineBackupCurrentMemberStorage(),
       settingsStorage: const SharedPreferencesOfflineBackupSettingsStorage(),
       restoreJournalStorage: LocalOfflineBackupRestoreJournalStorage(),
     ).recoverPendingRestore();
   } finally {
-    await database.close();
+    if (database == null) await targetDatabase.close();
   }
 }

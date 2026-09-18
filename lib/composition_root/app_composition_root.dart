@@ -20,16 +20,20 @@ class AppCompositionRoot {
     Future<void> Function()? recoverPendingRestore,
   }) : services = AppServicesFactory.create(
          mode,
-         recoverPendingRestore: mode == AppMode.offline
-             ? recoverPendingRestore ?? recoverPendingOfflineBackupRestore
-             : null,
+         recoverPendingRestore: recoverPendingRestore,
        );
 
   factory AppCompositionRoot.fromBuildConfiguration() {
     final configuration = AppModeBuildConfiguration.fromEnvironment();
+    final mode = const AppModeResolver().resolve(
+      forcedMode: configuration.forcedMode,
+    );
     return AppCompositionRoot(
-      const AppModeResolver().resolve(forcedMode: configuration.forcedMode),
+      mode,
       requestedValue: configuration.requestedValue,
+      recoverPendingRestore: mode == AppMode.offline
+          ? () => recoverPendingOfflineBackupRestore()
+          : null,
     );
   }
 

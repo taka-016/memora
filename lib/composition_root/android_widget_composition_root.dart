@@ -8,6 +8,7 @@ import 'package:memora/application/usecases/android_widget/android_widget_action
 import 'package:memora/application/usecases/android_widget/android_widget_itinerary_cache_usecases.dart';
 import 'package:memora/composition_root/app_composition_root.dart';
 import 'package:memora/composition_root/providers/android_widget_providers.dart';
+import 'package:memora/infrastructure/backup/offline_backup_restore_recovery.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/infrastructure/services/method_channel_android_widget_toast_notifier.dart';
 
@@ -18,6 +19,7 @@ Future<void> withAndroidWidgetDependencies(
   )
   action, {
   OfflineDatabase Function()? createOfflineDatabase,
+  Future<void> Function(OfflineDatabase database)? recoverPendingRestore,
   AndroidWidgetCacheStorage? cacheStorage,
 }) async {
   final mode = await const SharedPreferencesAppModeStorage()
@@ -26,18 +28,25 @@ Future<void> withAndroidWidgetDependencies(
     throw StateError('ウィジェット更新用のモードが未保存、または現ビルドと一致しません');
   }
   final root = AppCompositionRoot(mode);
-  await root.initialize();
   final database = mode == AppMode.offline
       ? (createOfflineDatabase ?? OfflineDatabase.device)()
       : null;
-  final container = ProviderContainer(
-    overrides: [
-      ...root.overrides,
-      if (database != null) offlineDatabaseProvider.overrideWithValue(database),
-    ],
-  );
+  ProviderContainer? container;
   try {
     await database?.initialize();
+    if (database != null) {
+      await (recoverPendingRestore ??
+          (database) =>
+              recoverPendingOfflineBackupRestore(database: database))(database);
+    }
+    await root.initialize();
+    container = ProviderContainer(
+      overrides: [
+        ...root.overrides,
+        if (database != null)
+          offlineDatabaseProvider.overrideWithValue(database),
+      ],
+    );
     final AndroidWidgetCacheStorage storage =
         cacheStorage ?? container.read(androidWidgetCacheStorageProvider);
     final trips = container.read(mapTripEntryQueryServiceProvider);
@@ -67,7 +76,7 @@ Future<void> withAndroidWidgetDependencies(
     );
     await action(refresh, handler);
   } finally {
-    container.dispose();
+    container?.dispose();
     await database?.close();
   }
 }
