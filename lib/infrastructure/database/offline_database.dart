@@ -10,7 +10,10 @@ part 'offline_database.g.dart';
 
 @DriftDatabase(include: {'offline_schema.drift'})
 class OfflineDatabase extends _$OfflineDatabase implements ReadTransaction {
-  OfflineDatabase(super.executor);
+  OfflineDatabase(super.executor, {Future<File> Function()? backupLockFile})
+    : _backupLockFile = backupLockFile;
+
+  final Future<File> Function()? _backupLockFile;
 
   factory OfflineDatabase.device({
     Future<Directory> Function() directory = getApplicationSupportDirectory,
@@ -26,6 +29,11 @@ class OfflineDatabase extends _$OfflineDatabase implements ReadTransaction {
         },
       );
     }),
+    backupLockFile: () async {
+      final databaseDirectory = await directory();
+      await databaseDirectory.create(recursive: true);
+      return File('${databaseDirectory.path}/memora_backup_restore.lock');
+    },
   );
 
   @override
@@ -52,18 +60,40 @@ class OfflineDatabase extends _$OfflineDatabase implements ReadTransaction {
   }
 
   @override
-  Future<T> execute<T>(Future<T> Function() action) async =>
-      exclusively(() async {
-        // 通常のtransactionはBEGIN IMMEDIATEで別接続の書き込みもロックする。
-        await customStatement('BEGIN DEFERRED');
-        try {
-          return await action();
-        } finally {
-          await customStatement('ROLLBACK');
-        }
-      });
+  Future<T> execute<T>(Future<T> Function() action) async => _withBackupLock(
+    FileLock.shared,
+    () => exclusively(() async {
+      // 通常のtransactionはBEGIN IMMEDIATEで別接続の書き込みもロックする。
+      await customStatement('BEGIN DEFERRED');
+      try {
+        return await action();
+      } finally {
+        await customStatement('ROLLBACK');
+      }
+    }),
+  );
 
   Future<T> readTransaction<T>(Future<T> Function() action) => execute(action);
+
+  Future<T> backupRestoreTransaction<T>(Future<T> Function() action) =>
+      _withBackupLock(FileLock.exclusive, () => transaction(action));
+
+  Future<T> _withBackupLock<T>(
+    FileLock lock,
+    Future<T> Function() action,
+  ) async {
+    final lockFile = _backupLockFile;
+    if (lockFile == null) return action();
+    final file = await lockFile();
+    final handle = await file.open(mode: FileMode.append);
+    try {
+      await handle.lock(lock);
+      return await action();
+    } finally {
+      await handle.unlock();
+      await handle.close();
+    }
+  }
 
   Future<List<Map<String, Object?>>> rows(
     String table, {

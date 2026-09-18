@@ -68,7 +68,7 @@ class SqliteOfflineBackupDataStore implements OfflineBackupDataStore {
     final previousMember = await currentMemberStorage.load();
     final previousSettings = await settingsStorage.load();
     try {
-      await database.transaction(() async {
+      await database.backupRestoreTransaction(() async {
         await database.customStatement('PRAGMA defer_foreign_keys = ON');
         for (final table in _deleteOrder) {
           await database.customStatement('DELETE FROM "$table"');
