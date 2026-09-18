@@ -9,8 +9,6 @@ abstract interface class AndroidWidgetCacheStorage {
 
   Future<String?> getSelectedItineraryDateId();
 
-  Future<void> saveSelectedItineraryDateId(String? itineraryDateId);
-
   Future<AndroidWidgetItineraryCacheDto?> loadItineraryCache();
 
   Future<void> saveItineraryCache(AndroidWidgetItineraryCacheDto cache);

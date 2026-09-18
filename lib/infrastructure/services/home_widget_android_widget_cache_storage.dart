@@ -37,18 +37,7 @@ class HomeWidgetAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
 
   @override
   Future<String?> getSelectedItineraryDateId() async {
-    final value = await HomeWidget.getWidgetData<String>(
-      selectedItineraryDateIdKey,
-    );
-    return value == null || value.isEmpty ? null : value;
-  }
-
-  @override
-  Future<void> saveSelectedItineraryDateId(String? itineraryDateId) async {
-    await HomeWidget.saveWidgetData<String>(
-      selectedItineraryDateIdKey,
-      itineraryDateId ?? '',
-    );
+    return (await loadItineraryCache())?.selectedItineraryDateId;
   }
 
   @override
@@ -73,13 +62,10 @@ class HomeWidgetAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
   Future<void> saveItineraryCache(AndroidWidgetItineraryCacheDto cache) async {
     final json = jsonEncode(cache.toJson());
     await _saveCacheFile(Uint8List.fromList(utf8.encode(json)));
-    await Future.wait([
-      saveSelectedItineraryDateId(cache.selectedItineraryDateId),
-      HomeWidget.saveWidgetData<String>(
-        lastUpdatedAtKey,
-        cache.lastUpdatedAt.toIso8601String(),
-      ),
-    ]);
+    await HomeWidget.saveWidgetData<String>(
+      lastUpdatedAtKey,
+      cache.lastUpdatedAt.toIso8601String(),
+    );
   }
 
   Future<void> _saveCacheFile(Uint8List bytes) async {
@@ -114,7 +100,7 @@ class HomeWidgetAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
   Future<void> clear() async {
     await Future.wait([
       clearTargetGroupId(),
-      saveSelectedItineraryDateId(null),
+      HomeWidget.saveWidgetData<String>(selectedItineraryDateIdKey, ''),
       HomeWidget.saveWidgetData<String>(lastUpdatedAtKey, ''),
       HomeWidget.saveWidgetData<String>(cacheFileKey, null),
     ]);
