@@ -47,6 +47,7 @@ void main() {
     final usecase = PrepareOfflineRestoreUsecase(
       codec: codec,
       fileSelector: _FakeFileSelector(pickedBytes: null),
+      dataStore: _FakeDataStore(snapshot),
     );
 
     expect(await usecase.execute('パスワード'), isNull);
@@ -62,6 +63,7 @@ void main() {
     final prepared = await PrepareOfflineRestoreUsecase(
       codec: codec,
       fileSelector: selector,
+      dataStore: dataStore,
     ).execute('復元用パスワード');
     OfflineBackupSnapshot? synchronized;
     final restore = RestoreOfflineBackupUsecase(
@@ -74,6 +76,7 @@ void main() {
     await restore.execute(prepared!);
 
     expect(codec.decodedPassword, '復元用パスワード');
+    expect(dataStore.validated, snapshot);
     expect(dataStore.restored, snapshot);
     expect(synchronized, snapshot);
   });
@@ -84,6 +87,7 @@ class _FakeDataStore implements OfflineBackupDataStore {
 
   final OfflineBackupSnapshot snapshot;
   OfflineBackupSnapshot? restored;
+  OfflineBackupSnapshot? validated;
 
   @override
   Future<OfflineBackupSnapshot> exportSnapshot() async => snapshot;
@@ -91,6 +95,11 @@ class _FakeDataStore implements OfflineBackupDataStore {
   @override
   Future<void> restoreSnapshot(OfflineBackupSnapshot snapshot) async {
     restored = snapshot;
+  }
+
+  @override
+  void validateSnapshot(OfflineBackupSnapshot snapshot) {
+    validated = snapshot;
   }
 }
 
