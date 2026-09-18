@@ -106,16 +106,19 @@ final restoreOfflineBackupUsecaseProvider =
       (ref) => RestoreOfflineBackupUsecase(
         dataStore: ref.watch(offlineBackupDataStoreProvider),
         synchronizeAfterRestore: (snapshot) async {
-          await ref
-              .read(synchronizeOfflineBackupRestoreUsecaseProvider)
-              .execute(snapshot);
-          ref.invalidate(currentMemberNotifierProvider);
-          ref.invalidate(groupTimelineGroupSelectionNotifierProvider);
-          ref.invalidate(timelineRowsRefreshProvider);
-          ref.invalidate(groupManagementNotifierProvider);
-          ref.invalidate(memberManagementNotifierProvider);
-          ref.invalidate(tripManagementNotifierProvider);
-          ref.invalidate(dvcPointCalculationNotifierProvider);
+          try {
+            await ref
+                .read(synchronizeOfflineBackupRestoreUsecaseProvider)
+                .execute(snapshot);
+          } finally {
+            ref.invalidate(currentMemberNotifierProvider);
+            ref.invalidate(groupTimelineGroupSelectionNotifierProvider);
+            ref.invalidate(timelineRowsRefreshProvider);
+            ref.invalidate(groupManagementNotifierProvider);
+            ref.invalidate(memberManagementNotifierProvider);
+            ref.invalidate(tripManagementNotifierProvider);
+            ref.invalidate(dvcPointCalculationNotifierProvider);
+          }
         },
       ),
     );

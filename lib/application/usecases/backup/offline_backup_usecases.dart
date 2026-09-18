@@ -66,6 +66,10 @@ class RestoreOfflineBackupUsecase {
 
   Future<void> execute(OfflineBackupSnapshot snapshot) async {
     await dataStore.restoreSnapshot(snapshot);
-    await synchronizeAfterRestore(snapshot);
+    try {
+      await synchronizeAfterRestore(snapshot);
+    } catch (_) {
+      // 復元済みデータは確定しているため、派生データの同期失敗で復元失敗には戻さない。
+    }
   }
 }
