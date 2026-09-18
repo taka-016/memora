@@ -7,6 +7,8 @@ import 'package:memora/application/services/offline_backup_data_store.dart';
 import 'package:memora/application/services/offline_backup_file_selector.dart';
 import 'package:memora/application/usecases/backup/offline_backup_usecases.dart';
 
+import '../../../../helpers/test_exception.dart';
+
 void main() {
   const snapshot = OfflineBackupSnapshot(
     formatVersion: 1,
@@ -79,6 +81,20 @@ void main() {
     expect(dataStore.validated, snapshot);
     expect(dataStore.restored, snapshot);
     expect(synchronized, snapshot);
+  });
+
+  test('データ確定後の同期失敗は復元失敗として返さない', () async {
+    final dataStore = _FakeDataStore(snapshot);
+    final restore = RestoreOfflineBackupUsecase(
+      dataStore: dataStore,
+      synchronizeAfterRestore: (_) async {
+        throw TestException('ウィジェット同期失敗');
+      },
+    );
+
+    await restore.execute(snapshot);
+
+    expect(dataStore.restored, snapshot);
   });
 }
 
