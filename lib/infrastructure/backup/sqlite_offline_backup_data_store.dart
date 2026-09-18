@@ -1,9 +1,10 @@
 import 'package:memora/application/models/offline_backup_snapshot.dart';
 import 'package:memora/application/services/offline_backup_current_member_storage.dart';
+import 'package:memora/application/services/offline_backup_data_store.dart';
 import 'package:memora/application/services/offline_backup_settings_storage.dart';
 import 'package:memora/infrastructure/database/offline_database.dart';
 
-class SqliteOfflineBackupDataStore {
+class SqliteOfflineBackupDataStore implements OfflineBackupDataStore {
   const SqliteOfflineBackupDataStore({
     required this.database,
     required this.currentMemberStorage,
@@ -42,6 +43,7 @@ class SqliteOfflineBackupDataStore {
     'dvc_point_usages',
   ];
 
+  @override
   Future<OfflineBackupSnapshot> exportSnapshot() async {
     final currentMember = await currentMemberStorage.load();
     final settings = await settingsStorage.load();
@@ -60,6 +62,7 @@ class SqliteOfflineBackupDataStore {
     );
   }
 
+  @override
   Future<void> restoreSnapshot(OfflineBackupSnapshot snapshot) async {
     _validate(snapshot);
     final previousMember = await currentMemberStorage.load();

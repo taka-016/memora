@@ -4,8 +4,9 @@ import 'dart:typed_data';
 
 import 'package:cryptography/cryptography.dart';
 import 'package:memora/application/models/offline_backup_snapshot.dart';
+import 'package:memora/application/services/offline_backup_codec.dart';
 
-class EncryptedOfflineBackupCodec {
+class EncryptedOfflineBackupCodec implements OfflineBackupCodec {
   EncryptedOfflineBackupCodec({
     this.argon2Memory = 64 * 1024,
     this.argon2Iterations = 3,
@@ -20,6 +21,7 @@ class EncryptedOfflineBackupCodec {
   final int argon2Iterations;
   final int argon2Parallelism;
 
+  @override
   Future<Uint8List> encode(
     OfflineBackupSnapshot snapshot,
     String password,
@@ -60,6 +62,7 @@ class EncryptedOfflineBackupCodec {
     );
   }
 
+  @override
   Future<OfflineBackupSnapshot> decode(List<int> bytes, String password) async {
     final Map<String, dynamic> envelope;
     try {
