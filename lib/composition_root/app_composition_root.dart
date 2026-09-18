@@ -6,6 +6,7 @@ import 'package:memora/application/services/app_services.dart';
 import 'package:memora/composition_root/providers/app_providers.dart';
 import 'package:memora/composition_root/providers/android_widget_providers.dart';
 import 'package:memora/core/app_logger.dart';
+import 'package:memora/infrastructure/backup/offline_backup_restore_recovery.dart';
 import 'package:memora/infrastructure/config/app_mode_build_configuration.dart';
 import 'package:memora/infrastructure/config/resolved_app_mode_provider.dart';
 import 'package:memora/infrastructure/factories/app_services_factory.dart';
@@ -13,8 +14,16 @@ import 'package:memora/infrastructure/services/home_widget_android_widget_cache_
 import 'package:memora/infrastructure/services/shared_preferences_android_widget_update_interval_storage.dart';
 
 class AppCompositionRoot {
-  AppCompositionRoot(this.mode, {this.requestedValue})
-    : services = AppServicesFactory.create(mode);
+  AppCompositionRoot(
+    this.mode, {
+    this.requestedValue,
+    Future<void> Function()? recoverPendingRestore,
+  }) : services = AppServicesFactory.create(
+         mode,
+         recoverPendingRestore: mode == AppMode.offline
+             ? recoverPendingRestore ?? recoverPendingOfflineBackupRestore
+             : null,
+       );
 
   factory AppCompositionRoot.fromBuildConfiguration() {
     final configuration = AppModeBuildConfiguration.fromEnvironment();

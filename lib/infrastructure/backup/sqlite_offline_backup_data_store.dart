@@ -2,6 +2,7 @@ import 'package:memora/application/dtos/android_widget/android_widget_update_int
 import 'package:memora/application/models/offline_backup_snapshot.dart';
 import 'package:memora/application/services/offline_backup_current_member_storage.dart';
 import 'package:memora/application/services/offline_backup_data_store.dart';
+import 'package:memora/application/services/offline_backup_restore_journal_storage.dart';
 import 'package:memora/application/services/offline_backup_settings_storage.dart';
 import 'package:memora/infrastructure/database/offline_database.dart';
 
@@ -10,11 +11,13 @@ class SqliteOfflineBackupDataStore implements OfflineBackupDataStore {
     required this.database,
     required this.currentMemberStorage,
     required this.settingsStorage,
+    required this.restoreJournalStorage,
   });
 
   final OfflineDatabase database;
   final OfflineBackupCurrentMemberStorage currentMemberStorage;
   final OfflineBackupSettingsStorage settingsStorage;
+  final OfflineBackupRestoreJournalStorage restoreJournalStorage;
 
   static const _deleteOrder = <String>[
     'tasks',
@@ -45,15 +48,16 @@ class SqliteOfflineBackupDataStore implements OfflineBackupDataStore {
   ];
 
   @override
-  Future<OfflineBackupSnapshot> exportSnapshot() async {
+  Future<OfflineBackupSnapshot> exportSnapshot() =>
+      database.readTransaction(_exportSnapshotWithoutBackupLock);
+
+  Future<OfflineBackupSnapshot> _exportSnapshotWithoutBackupLock() async {
     final currentMember = await currentMemberStorage.load();
     final settings = await settingsStorage.load();
     final tables = <String, List<Map<String, Object?>>>{};
-    await database.readTransaction(() async {
-      for (final table in OfflineBackupSnapshot.tableNames) {
-        tables[table] = await database.rows(table);
-      }
-    });
+    for (final table in OfflineBackupSnapshot.tableNames) {
+      tables[table] = await database.rows(table);
+    }
     return OfflineBackupSnapshot(
       formatVersion: OfflineBackupSnapshot.currentFormatVersion,
       databaseSchemaVersion: database.schemaVersion,
@@ -66,10 +70,38 @@ class SqliteOfflineBackupDataStore implements OfflineBackupDataStore {
   @override
   Future<void> restoreSnapshot(OfflineBackupSnapshot snapshot) async {
     validateSnapshot(snapshot);
+    await database.backupRestoreExclusive(() async {
+      await _recoverPendingRestoreWithoutBackupLock();
+      final previousSnapshot = await database.transaction(
+        _exportSnapshotWithoutBackupLock,
+      );
+      await restoreJournalStorage.save(previousSnapshot);
+      try {
+        await _replaceSnapshot(snapshot);
+      } catch (error, stackTrace) {
+        await _recoverPendingRestoreWithoutBackupLock();
+        Error.throwWithStackTrace(error, stackTrace);
+      }
+      await restoreJournalStorage.clear();
+    });
+  }
+
+  Future<void> recoverPendingRestore() =>
+      database.backupRestoreExclusive(_recoverPendingRestoreWithoutBackupLock);
+
+  Future<void> _recoverPendingRestoreWithoutBackupLock() async {
+    final previousSnapshot = await restoreJournalStorage.load();
+    if (previousSnapshot == null) return;
+    _validateSnapshot(previousSnapshot, requireCurrentMember: false);
+    await _replaceSnapshot(previousSnapshot);
+    await restoreJournalStorage.clear();
+  }
+
+  Future<void> _replaceSnapshot(OfflineBackupSnapshot snapshot) async {
     final previousMember = await currentMemberStorage.load();
     final previousSettings = await settingsStorage.load();
     try {
-      await database.backupRestoreTransaction(() async {
+      await database.transaction(() async {
         await database.customStatement('PRAGMA defer_foreign_keys = ON');
         for (final table in _deleteOrder) {
           await database.customStatement('DELETE FROM "$table"');
@@ -89,7 +121,13 @@ class SqliteOfflineBackupDataStore implements OfflineBackupDataStore {
   }
 
   @override
-  void validateSnapshot(OfflineBackupSnapshot snapshot) {
+  void validateSnapshot(OfflineBackupSnapshot snapshot) =>
+      _validateSnapshot(snapshot, requireCurrentMember: true);
+
+  void _validateSnapshot(
+    OfflineBackupSnapshot snapshot, {
+    required bool requireCurrentMember,
+  }) {
     if (snapshot.formatVersion != OfflineBackupSnapshot.currentFormatVersion) {
       throw OfflineBackupUnsupportedVersionException(
         '未対応のバックアップ形式です: ${snapshot.formatVersion}',
@@ -121,7 +159,7 @@ class SqliteOfflineBackupDataStore implements OfflineBackupDataStore {
           row['id'] == snapshot.currentMember.id &&
           row['account_id'] == snapshot.currentMember.accountId,
     );
-    if (!memberExists) {
+    if (requireCurrentMember && !memberExists) {
       throw const FormatException('バックアップに端末内本人が含まれていません。');
     }
   }

@@ -12,6 +12,7 @@ import 'package:memora/composition_root/providers/offline_database_provider.dart
 import 'package:memora/infrastructure/backup/encrypted_offline_backup_codec.dart';
 import 'package:memora/infrastructure/backup/file_picker_offline_backup_file_selector.dart';
 import 'package:memora/infrastructure/backup/local_offline_backup_current_member_storage.dart';
+import 'package:memora/infrastructure/backup/local_offline_backup_restore_journal_storage.dart';
 import 'package:memora/infrastructure/backup/shared_preferences_offline_backup_settings_storage.dart';
 import 'package:memora/infrastructure/backup/sqlite_offline_backup_data_store.dart';
 import 'package:memora/infrastructure/config/resolved_app_mode_provider.dart';
@@ -48,6 +49,7 @@ final offlineBackupDataStoreProvider = Provider<OfflineBackupDataStore>((ref) {
     database: ref.watch(offlineDatabaseProvider),
     currentMemberStorage: ref.watch(offlineBackupCurrentMemberStorageProvider),
     settingsStorage: ref.watch(offlineBackupSettingsStorageProvider),
+    restoreJournalStorage: LocalOfflineBackupRestoreJournalStorage(),
   );
 });
 
