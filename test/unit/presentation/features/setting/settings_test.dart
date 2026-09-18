@@ -623,7 +623,11 @@ class _FakeAndroidWidgetUpdateIntervalStorage
 
 class _FakePrepareOfflineRestoreUsecase extends PrepareOfflineRestoreUsecase {
   _FakePrepareOfflineRestoreUsecase(this.result)
-    : super(codec: _UnusedOfflineBackupCodec(), fileSelector: _UnusedFileSelector());
+    : super(
+        codec: _UnusedOfflineBackupCodec(),
+        fileSelector: _UnusedFileSelector(),
+        dataStore: _UnusedOfflineBackupDataStore(),
+      );
 
   final OfflineBackupSnapshot result;
 
@@ -673,5 +677,9 @@ class _UnusedOfflineBackupDataStore implements OfflineBackupDataStore {
 
   @override
   Future<void> restoreSnapshot(OfflineBackupSnapshot snapshot) =>
+      throw UnimplementedError();
+
+  @override
+  void validateSnapshot(OfflineBackupSnapshot snapshot) =>
       throw UnimplementedError();
 }

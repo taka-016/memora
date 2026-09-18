@@ -110,7 +110,11 @@ class _FakeCreateOfflineBackupUsecase extends CreateOfflineBackupUsecase {
 
 class _FakePrepareOfflineRestoreUsecase extends PrepareOfflineRestoreUsecase {
   _FakePrepareOfflineRestoreUsecase(this.result)
-    : super(codec: _UnusedCodec(), fileSelector: _UnusedFileSelector());
+    : super(
+        codec: _UnusedCodec(),
+        fileSelector: _UnusedFileSelector(),
+        dataStore: _UnusedDataStore(),
+      );
 
   final OfflineBackupSnapshot? result;
 
@@ -139,6 +143,10 @@ class _UnusedDataStore implements OfflineBackupDataStore {
 
   @override
   Future<void> restoreSnapshot(OfflineBackupSnapshot snapshot) =>
+      throw UnimplementedError();
+
+  @override
+  void validateSnapshot(OfflineBackupSnapshot snapshot) =>
       throw UnimplementedError();
 }
 
