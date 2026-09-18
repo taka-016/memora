@@ -2,6 +2,7 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/models/offline_backup_snapshot.dart';
 import 'package:memora/application/services/offline_backup_current_member_storage.dart';
+import 'package:memora/application/services/offline_backup_restore_journal_storage.dart';
 import 'package:memora/application/services/offline_backup_settings_storage.dart';
 import 'package:memora/infrastructure/backup/sqlite_offline_backup_data_store.dart';
 import 'package:memora/infrastructure/database/offline_database.dart';
@@ -12,6 +13,7 @@ void main() {
   late OfflineDatabase db;
   late _FakeCurrentMemberStorage memberStorage;
   late _FakeSettingsStorage settingsStorage;
+  late _FakeRestoreJournalStorage journalStorage;
   late SqliteOfflineBackupDataStore dataStore;
 
   const originalMember = OfflineBackupCurrentMember(
@@ -30,10 +32,12 @@ void main() {
     db = OfflineDatabase(NativeDatabase.memory());
     memberStorage = _FakeCurrentMemberStorage(originalMember);
     settingsStorage = _FakeSettingsStorage(originalSettings);
+    journalStorage = _FakeRestoreJournalStorage();
     dataStore = SqliteOfflineBackupDataStore(
       database: db,
       currentMemberStorage: memberStorage,
       settingsStorage: settingsStorage,
+      restoreJournalStorage: journalStorage,
     );
     await db.insertRow('members', {
       'id': originalMember.id,
@@ -131,6 +135,42 @@ void main() {
 
     expect((await db.rows('groups')).single['name'], '家族');
   });
+
+  test('DB確定直後に終了しても次回初期化で復元前の正本を復旧する', () async {
+    final restoreTarget = await dataStore.exportSnapshot();
+    await db.updateRow('members', originalMember.id, {'display_name': '現在の本人'});
+    await db.updateRow('groups', 'group-1', {'name': '現在のデータ'});
+    const currentMember = OfflineBackupCurrentMember(
+      id: 'member-1',
+      accountId: 'account-1',
+      displayName: '現在の本人',
+    );
+    const currentSettings = OfflineBackupSettings(
+      androidWidgetUpdateIntervalMinutes: 60,
+      showAge: false,
+      showGrade: true,
+      showYakudoshi: false,
+    );
+    memberStorage.value = currentMember;
+    settingsStorage.value = currentSettings;
+    journalStorage.nextClearError = TestException('確定直後にプロセス終了');
+
+    await expectLater(
+      dataStore.restoreSnapshot(restoreTarget),
+      throwsA(isA<TestException>()),
+    );
+    expect((await db.rows('groups')).single['name'], '家族');
+    expect(memberStorage.value, originalMember);
+    expect(settingsStorage.value, originalSettings);
+    expect(journalStorage.value, isNotNull);
+
+    await dataStore.recoverPendingRestore();
+
+    expect((await db.rows('groups')).single['name'], '現在のデータ');
+    expect(memberStorage.value, currentMember);
+    expect(settingsStorage.value, currentSettings);
+    expect(journalStorage.value, isNull);
+  });
 }
 
 class _FakeCurrentMemberStorage implements OfflineBackupCurrentMemberStorage {
@@ -164,5 +204,26 @@ class _FakeSettingsStorage implements OfflineBackupSettingsStorage {
       throw error;
     }
     value = settings;
+  }
+}
+
+class _FakeRestoreJournalStorage implements OfflineBackupRestoreJournalStorage {
+  OfflineBackupSnapshot? value;
+  TestException? nextClearError;
+
+  @override
+  Future<void> clear() async {
+    final error = nextClearError;
+    nextClearError = null;
+    if (error != null) throw error;
+    value = null;
+  }
+
+  @override
+  Future<OfflineBackupSnapshot?> load() async => value;
+
+  @override
+  Future<void> save(OfflineBackupSnapshot snapshot) async {
+    value = snapshot;
   }
 }

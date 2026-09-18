@@ -7,6 +7,7 @@ import 'package:memora/composition_root/app_composition_root.dart';
 import 'package:memora/composition_root/providers/app_providers.dart';
 import 'package:memora/infrastructure/time/ntp_synchronized_app_clock.dart';
 import 'package:memora/infrastructure/time/system_app_clock.dart';
+import 'package:memora/infrastructure/services/offline_app_services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/models/app_mode.dart';
@@ -48,6 +49,19 @@ void main() {
     await services.initialize();
     await services.clock.sync();
     expect(services.clock.now(), isA<DateTime>());
+  });
+
+  test('オフライン初期化時に未完了の復元を回復する', () async {
+    var recovered = false;
+    final services = OfflineAppServices(
+      recoverPendingRestore: () async {
+        recovered = true;
+      },
+    );
+
+    await services.initialize();
+
+    expect(recovered, isTrue);
   });
 
   test('オフラインの機能と利用不可理由を共通モデルから取得できる', () {
