@@ -70,6 +70,30 @@ void main() {
       isNull,
     );
   });
+
+  test('画面の監視終了後は検証済みバックアップを破棄する', () async {
+    final container = _container(
+      prepare: _FakePrepareOfflineRestoreUsecase(snapshot),
+    );
+    addTearDown(container.dispose);
+    final subscription = container.listen(
+      offlineBackupNotifierProvider,
+      (_, _) {},
+    );
+
+    await container
+        .read(offlineBackupNotifierProvider.notifier)
+        .prepareRestore('パスワード');
+    expect(
+      container.read(offlineBackupNotifierProvider).preparedRestore,
+      snapshot,
+    );
+
+    subscription.close();
+    await container.pump();
+
+    expect(container.exists(offlineBackupNotifierProvider), isFalse);
+  });
 }
 
 ProviderContainer _container({
