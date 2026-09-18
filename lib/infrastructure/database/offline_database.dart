@@ -3,20 +3,27 @@ import 'dart:io';
 import 'package:drift/drift.dart' hide OrderBy;
 import 'package:drift/native.dart';
 import 'package:memora/application/queries/order_by.dart';
+import 'package:memora/application/transactions/read_transaction.dart';
 import 'package:path_provider/path_provider.dart';
 
 part 'offline_database.g.dart';
 
 @DriftDatabase(include: {'offline_schema.drift'})
-class OfflineDatabase extends _$OfflineDatabase {
+class OfflineDatabase extends _$OfflineDatabase implements ReadTransaction {
   OfflineDatabase(super.executor);
 
-  factory OfflineDatabase.device() => OfflineDatabase(
+  factory OfflineDatabase.device({
+    Future<Directory> Function() directory = getApplicationSupportDirectory,
+  }) => OfflineDatabase(
     LazyDatabase(() async {
-      final directory = await getApplicationSupportDirectory();
-      await directory.create(recursive: true);
+      final databaseDirectory = await directory();
+      await databaseDirectory.create(recursive: true);
       return NativeDatabase.createInBackground(
-        File('${directory.path}/memora.sqlite'),
+        File('${databaseDirectory.path}/memora.sqlite'),
+        setup: (database) {
+          database.execute('PRAGMA busy_timeout = 5000');
+          database.execute('PRAGMA journal_mode = WAL');
+        },
       );
     }),
   );
@@ -43,6 +50,20 @@ class OfflineDatabase extends _$OfflineDatabase {
   Future<void> initialize() async {
     await customSelect('SELECT 1').get();
   }
+
+  @override
+  Future<T> execute<T>(Future<T> Function() action) async =>
+      exclusively(() async {
+        // 通常のtransactionはBEGIN IMMEDIATEで別接続の書き込みもロックする。
+        await customStatement('BEGIN DEFERRED');
+        try {
+          return await action();
+        } finally {
+          await customStatement('ROLLBACK');
+        }
+      });
+
+  Future<T> readTransaction<T>(Future<T> Function() action) => execute(action);
 
   Future<List<Map<String, Object?>>> rows(
     String table, {

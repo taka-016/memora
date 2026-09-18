@@ -351,10 +351,10 @@ Widget _buildTestApp({
       groupQueryServiceProvider.overrideWithValue(
         groupQueryService ?? _FakeGroupQueryService(groups),
       ),
-      tripEntryQueryServiceProvider.overrideWithValue(
+      mapTripEntryQueryServiceProvider.overrideWithValue(
         _FakeTripEntryQueryService(),
       ),
-      itineraryItemQueryServiceProvider.overrideWithValue(
+      androidWidgetItineraryItemQueryServiceProvider.overrideWithValue(
         _FakeItineraryItemQueryService(),
       ),
     ],
@@ -492,11 +492,6 @@ class _FakeAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
   Future<void> saveItineraryCache(AndroidWidgetItineraryCacheDto cache) async {
     this.cache = cache;
     selectedItineraryDateId = cache.selectedItineraryDateId;
-  }
-
-  @override
-  Future<void> saveSelectedItineraryDateId(String? itineraryDateId) async {
-    selectedItineraryDateId = itineraryDateId;
   }
 
   @override
