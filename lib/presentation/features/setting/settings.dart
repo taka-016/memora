@@ -1,5 +1,4 @@
 import 'package:memora/application/models/app_capabilities.dart';
-import 'package:memora/application/models/app_mode.dart';
 import 'package:memora/application/models/offline_backup_snapshot.dart';
 import 'package:memora/composition_root/providers/app_providers.dart';
 import 'package:memora/composition_root/providers/android_widget_providers.dart';
@@ -11,7 +10,6 @@ import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/usecases/android_widget/update_android_widget_interval_usecase.dart';
 import 'package:memora/presentation/notifiers/member/current_member_notifier.dart';
-import 'package:memora/infrastructure/config/resolved_app_mode_provider.dart';
 import 'package:memora/presentation/notifiers/backup/offline_backup_notifier.dart';
 
 final androidWidgetUpdateIntervalProvider =
@@ -220,6 +218,10 @@ class Settings extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentMemberState = ref.watch(currentMemberNotifierProvider);
+    final isOffline = !ref
+        .watch(appCapabilitiesProvider)
+        .availability(AppFeature.authentication)
+        .isAvailable;
 
     return Scaffold(
       key: const Key('settings'),
@@ -228,7 +230,7 @@ class Settings extends ConsumerWidget {
         padding: const EdgeInsets.all(24),
         children: [
           ..._buildModeInformation(ref),
-          if (ref.watch(appModeProvider) == AppMode.offline) ...[
+          if (isOffline) ...[
             const SizedBox(height: 24),
             _buildOfflineBackupSection(context, ref),
           ],
