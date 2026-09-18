@@ -111,10 +111,7 @@ class _FakeCodec implements OfflineBackupCodec {
   String? decodedPassword;
 
   @override
-  Future<OfflineBackupSnapshot> decode(
-    List<int> bytes,
-    String password,
-  ) async {
+  Future<OfflineBackupSnapshot> decode(List<int> bytes, String password) async {
     decodedPassword = password;
     return snapshot;
   }

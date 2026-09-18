@@ -10,8 +10,7 @@ part 'offline_database.g.dart';
 
 @DriftDatabase(include: {'offline_schema.drift'})
 class OfflineDatabase extends _$OfflineDatabase implements ReadTransaction {
-  OfflineDatabase(super.executor, {Future<File> Function()? backupLockFile})
-    : _backupLockFile = backupLockFile;
+  OfflineDatabase(super.executor, [this._backupLockFile]);
 
   final Future<File> Function()? _backupLockFile;
 
@@ -29,7 +28,7 @@ class OfflineDatabase extends _$OfflineDatabase implements ReadTransaction {
         },
       );
     }),
-    backupLockFile: () async {
+    () async {
       final databaseDirectory = await directory();
       await databaseDirectory.create(recursive: true);
       return File('${databaseDirectory.path}/memora_backup_restore.lock');

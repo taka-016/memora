@@ -39,10 +39,7 @@ void main() {
     );
 
     final preferences = await SharedPreferences.getInstance();
-    expect(
-      preferences.getInt('android_widget_update_interval_minutes'),
-      1440,
-    );
+    expect(preferences.getInt('android_widget_update_interval_minutes'), 1440);
     expect(preferences.getBool('timeline_show_age'), isTrue);
   });
 }

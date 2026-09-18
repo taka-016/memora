@@ -133,8 +133,7 @@ void main() {
   });
 }
 
-class _FakeCurrentMemberStorage
-    implements OfflineBackupCurrentMemberStorage {
+class _FakeCurrentMemberStorage implements OfflineBackupCurrentMemberStorage {
   _FakeCurrentMemberStorage(this.value);
 
   OfflineBackupCurrentMember value;

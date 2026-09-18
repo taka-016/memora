@@ -656,10 +656,8 @@ class _UnusedOfflineBackupCodec implements OfflineBackupCodec {
       throw UnimplementedError();
 
   @override
-  Future<Uint8List> encode(
-    OfflineBackupSnapshot snapshot,
-    String password,
-  ) => throw UnimplementedError();
+  Future<Uint8List> encode(OfflineBackupSnapshot snapshot, String password) =>
+      throw UnimplementedError();
 }
 
 class _UnusedFileSelector implements OfflineBackupFileSelector {

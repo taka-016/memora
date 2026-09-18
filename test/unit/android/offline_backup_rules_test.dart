@@ -6,9 +6,8 @@ void main() {
   test('Android 11以前と12以降で自動バックアップと端末間転送から内部データを除外する', () {
     final manifest = File('android/app/src/main/AndroidManifest.xml')
         .readAsStringSync();
-    final legacyRules = File(
-      'android/app/src/main/res/xml/backup_rules.xml',
-    ).readAsStringSync();
+    final legacyRules = File('android/app/src/main/res/xml/backup_rules.xml')
+        .readAsStringSync();
     final extractionRules = File(
       'android/app/src/main/res/xml/data_extraction_rules.xml',
     ).readAsStringSync();
