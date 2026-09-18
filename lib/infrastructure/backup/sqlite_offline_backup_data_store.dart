@@ -65,7 +65,7 @@ class SqliteOfflineBackupDataStore implements OfflineBackupDataStore {
 
   @override
   Future<void> restoreSnapshot(OfflineBackupSnapshot snapshot) async {
-    _validate(snapshot);
+    validateSnapshot(snapshot);
     final previousMember = await currentMemberStorage.load();
     final previousSettings = await settingsStorage.load();
     try {
@@ -88,7 +88,8 @@ class SqliteOfflineBackupDataStore implements OfflineBackupDataStore {
     }
   }
 
-  void _validate(OfflineBackupSnapshot snapshot) {
+  @override
+  void validateSnapshot(OfflineBackupSnapshot snapshot) {
     if (snapshot.formatVersion != OfflineBackupSnapshot.currentFormatVersion) {
       throw OfflineBackupUnsupportedVersionException(
         '未対応のバックアップ形式です: ${snapshot.formatVersion}',

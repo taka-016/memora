@@ -39,15 +39,19 @@ class PrepareOfflineRestoreUsecase {
   const PrepareOfflineRestoreUsecase({
     required this.codec,
     required this.fileSelector,
+    required this.dataStore,
   });
 
   final OfflineBackupCodec codec;
   final OfflineBackupFileSelector fileSelector;
+  final OfflineBackupDataStore dataStore;
 
   Future<OfflineBackupSnapshot?> execute(String password) async {
     final bytes = await fileSelector.pick();
     if (bytes == null) return null;
-    return codec.decode(bytes, password);
+    final snapshot = await codec.decode(bytes, password);
+    dataStore.validateSnapshot(snapshot);
+    return snapshot;
   }
 }
 

@@ -64,6 +64,7 @@ final prepareOfflineRestoreUsecaseProvider =
       (ref) => PrepareOfflineRestoreUsecase(
         codec: ref.watch(offlineBackupCodecProvider),
         fileSelector: ref.watch(offlineBackupFileSelectorProvider),
+        dataStore: ref.watch(offlineBackupDataStoreProvider),
       ),
     );
 
