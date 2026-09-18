@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/misc.dart';
 import 'package:drift/native.dart';
 import 'package:memora/infrastructure/database/offline_database.dart';
 import 'package:memora/composition_root/providers/offline_database_provider.dart';
+import 'package:memora/composition_root/providers/offline_backup_providers.dart';
 import 'package:memora/composition_root/app_composition_root.dart';
 import 'package:memora/composition_root/providers/app_providers.dart';
 import 'package:memora/infrastructure/time/ntp_synchronized_app_clock.dart';
@@ -138,5 +139,23 @@ void main() {
           .getLocationName(const Coordinate(latitude: 35, longitude: 139)),
       throwsA(isA<FeatureUnavailableException>()),
     );
+  });
+
+  test('オフラインのバックアップ作成・検証・復元を同じSQLiteへ接続する', () {
+    final container = ProviderContainer(
+      overrides: [
+        appModeProvider.overrideWithValue(AppMode.offline),
+        offlineDatabaseProvider.overrideWith((ref) {
+          final db = OfflineDatabase(NativeDatabase.memory());
+          ref.onDispose(db.close);
+          return db;
+        }),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    expect(container.read(createOfflineBackupUsecaseProvider), isNotNull);
+    expect(container.read(prepareOfflineRestoreUsecaseProvider), isNotNull);
+    expect(container.read(restoreOfflineBackupUsecaseProvider), isNotNull);
   });
 }
