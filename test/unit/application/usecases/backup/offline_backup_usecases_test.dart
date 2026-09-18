@@ -127,10 +127,9 @@ class _FakeCodec implements OfflineBackupCodec {
 }
 
 class _FakeFileSelector implements OfflineBackupFileSelector {
-  _FakeFileSelector({this.pickedBytes, this.saveResult = true});
+  _FakeFileSelector({this.pickedBytes});
 
   final Uint8List? pickedBytes;
-  final bool saveResult;
   Uint8List? savedBytes;
   String? suggestedName;
 
@@ -141,6 +140,6 @@ class _FakeFileSelector implements OfflineBackupFileSelector {
   Future<bool> save(Uint8List bytes, {required String suggestedName}) async {
     savedBytes = bytes;
     this.suggestedName = suggestedName;
-    return saveResult;
+    return true;
   }
 }
