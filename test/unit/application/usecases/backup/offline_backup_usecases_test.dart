@@ -5,6 +5,7 @@ import 'package:memora/application/models/offline_backup_snapshot.dart';
 import 'package:memora/application/services/offline_backup_codec.dart';
 import 'package:memora/application/services/offline_backup_data_store.dart';
 import 'package:memora/application/services/offline_backup_file_selector.dart';
+import 'package:memora/application/services/offline_backup_restore_sync_storage.dart';
 import 'package:memora/application/usecases/backup/offline_backup_usecases.dart';
 
 import '../../../../helpers/test_exception.dart';
@@ -70,6 +71,7 @@ void main() {
     OfflineBackupSnapshot? synchronized;
     final restore = RestoreOfflineBackupUsecase(
       dataStore: dataStore,
+      restoreSyncStorage: _FakeRestoreSyncStorage(),
       synchronizeAfterRestore: (value) async {
         synchronized = value;
       },
@@ -85,8 +87,10 @@ void main() {
 
   test('データ確定後の同期失敗は復元失敗として返さない', () async {
     final dataStore = _FakeDataStore(snapshot);
+    final syncStorage = _FakeRestoreSyncStorage()..pending = true;
     final restore = RestoreOfflineBackupUsecase(
       dataStore: dataStore,
+      restoreSyncStorage: syncStorage,
       synchronizeAfterRestore: (_) async {
         throw TestException('ウィジェット同期失敗');
       },
@@ -95,7 +99,63 @@ void main() {
     await restore.execute(snapshot);
 
     expect(dataStore.restored, snapshot);
+    expect(await syncStorage.isPending(), isTrue);
   });
+
+  test('復元後同期が完了したら保留記録を消す', () async {
+    final syncStorage = _FakeRestoreSyncStorage()..pending = true;
+    final restore = RestoreOfflineBackupUsecase(
+      dataStore: _FakeDataStore(snapshot),
+      restoreSyncStorage: syncStorage,
+      synchronizeAfterRestore: (_) async {},
+    );
+
+    await restore.execute(snapshot);
+
+    expect(await syncStorage.isPending(), isFalse);
+  });
+
+  test('起動時に保留中の派生データ同期を再実行してから記録を消す', () async {
+    final syncStorage = _FakeRestoreSyncStorage()..pending = true;
+    OfflineBackupSnapshot? synchronized;
+    final retry = RetryPendingOfflineBackupRestoreUsecase(
+      dataStore: _FakeDataStore(snapshot),
+      restoreSyncStorage: syncStorage,
+      synchronizeAfterRestore: (value) async => synchronized = value,
+    );
+
+    await retry.execute();
+
+    expect(synchronized, snapshot);
+    expect(await syncStorage.isPending(), isFalse);
+  });
+
+  test('起動時の派生データ同期に失敗したら次回再試行の記録を残す', () async {
+    final syncStorage = _FakeRestoreSyncStorage()..pending = true;
+    final failure = TestException('再同期失敗');
+    final retry = RetryPendingOfflineBackupRestoreUsecase(
+      dataStore: _FakeDataStore(snapshot),
+      restoreSyncStorage: syncStorage,
+      synchronizeAfterRestore: (_) async => throw failure,
+    );
+
+    await expectLater(retry.execute(), throwsA(same(failure)));
+
+    expect(await syncStorage.isPending(), isTrue);
+  });
+}
+
+class _FakeRestoreSyncStorage implements OfflineBackupRestoreSyncStorage {
+  bool pending = false;
+
+  @override
+  Future<void> markPending() async => pending = true;
+
+  @override
+  Future<bool> isPending() async => pending;
+
+  @override
+  Future<void> clear() async => pending = false;
 }
 
 class _FakeDataStore implements OfflineBackupDataStore {

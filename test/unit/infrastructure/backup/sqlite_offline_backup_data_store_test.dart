@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/models/offline_backup_snapshot.dart';
 import 'package:memora/application/services/offline_backup_current_member_storage.dart';
 import 'package:memora/application/services/offline_backup_restore_journal_storage.dart';
+import 'package:memora/application/services/offline_backup_restore_sync_storage.dart';
 import 'package:memora/application/services/offline_backup_settings_storage.dart';
 import 'package:memora/infrastructure/backup/sqlite_offline_backup_data_store.dart';
 import 'package:memora/infrastructure/database/offline_database.dart';
@@ -14,6 +15,7 @@ void main() {
   late _FakeCurrentMemberStorage memberStorage;
   late _FakeSettingsStorage settingsStorage;
   late _FakeRestoreJournalStorage journalStorage;
+  late _FakeRestoreSyncStorage syncStorage;
   late SqliteOfflineBackupDataStore dataStore;
 
   const originalMember = OfflineBackupCurrentMember(
@@ -33,11 +35,13 @@ void main() {
     memberStorage = _FakeCurrentMemberStorage(originalMember);
     settingsStorage = _FakeSettingsStorage(originalSettings);
     journalStorage = _FakeRestoreJournalStorage();
+    syncStorage = _FakeRestoreSyncStorage();
     dataStore = SqliteOfflineBackupDataStore(
       database: db,
       currentMemberStorage: memberStorage,
       settingsStorage: settingsStorage,
       restoreJournalStorage: journalStorage,
+      restoreSyncStorage: syncStorage,
     );
     await db.insertRow('members', {
       'id': originalMember.id,
@@ -81,6 +85,7 @@ void main() {
     expect((await db.rows('groups')).single['name'], '家族');
     expect(memberStorage.value, originalMember);
     expect(settingsStorage.value, originalSettings);
+    expect(await syncStorage.isPending(), isTrue);
   });
 
   test('SQLite外の設定保存に失敗した場合はDBと端末内本人と設定をすべて維持する', () async {
@@ -163,6 +168,7 @@ void main() {
     expect(memberStorage.value, originalMember);
     expect(settingsStorage.value, originalSettings);
     expect(journalStorage.value, isNotNull);
+    expect(await syncStorage.isPending(), isTrue);
 
     await dataStore.recoverPendingRestore();
 
@@ -171,6 +177,41 @@ void main() {
     expect(settingsStorage.value, currentSettings);
     expect(journalStorage.value, isNull);
   });
+
+  test('同期保留の記録に失敗した場合はジャーナルを残して次回に正本を復旧する', () async {
+    final restoreTarget = await dataStore.exportSnapshot();
+    await db.updateRow('groups', 'group-1', {'name': '現在のデータ'});
+    syncStorage.nextMarkError = TestException('同期保留の保存失敗');
+
+    await expectLater(
+      dataStore.restoreSnapshot(restoreTarget),
+      throwsA(isA<TestException>()),
+    );
+    expect(journalStorage.value, isNotNull);
+
+    await dataStore.recoverPendingRestore();
+
+    expect((await db.rows('groups')).single['name'], '現在のデータ');
+  });
+}
+
+class _FakeRestoreSyncStorage implements OfflineBackupRestoreSyncStorage {
+  bool pending = false;
+  TestException? nextMarkError;
+
+  @override
+  Future<void> markPending() async {
+    final error = nextMarkError;
+    nextMarkError = null;
+    if (error != null) throw error;
+    pending = true;
+  }
+
+  @override
+  Future<bool> isPending() async => pending;
+
+  @override
+  Future<void> clear() async => pending = false;
 }
 
 class _FakeCurrentMemberStorage implements OfflineBackupCurrentMemberStorage {
