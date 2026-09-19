@@ -20,6 +20,7 @@ import 'package:memora/application/services/android_widget_update_interval_stora
 import 'package:memora/application/services/offline_backup_codec.dart';
 import 'package:memora/application/services/offline_backup_data_store.dart';
 import 'package:memora/application/services/offline_backup_file_selector.dart';
+import 'package:memora/application/services/offline_backup_restore_sync_storage.dart';
 import 'package:memora/application/usecases/backup/offline_backup_usecases.dart';
 import 'package:memora/application/usecases/android_widget/update_android_widget_interval_usecase.dart';
 import 'package:memora/composition_root/providers/offline_backup_providers.dart';
@@ -638,6 +639,7 @@ class _FakeRestoreOfflineBackupUsecase extends RestoreOfflineBackupUsecase {
   _FakeRestoreOfflineBackupUsecase()
     : super(
         dataStore: _UnusedOfflineBackupDataStore(),
+        restoreSyncStorage: _UnusedRestoreSyncStorage(),
         synchronizeAfterRestore: (_) async {},
       );
 
@@ -648,6 +650,9 @@ class _FakeRestoreOfflineBackupUsecase extends RestoreOfflineBackupUsecase {
     restored = snapshot;
   }
 }
+
+class _UnusedRestoreSyncStorage extends Fake
+    implements OfflineBackupRestoreSyncStorage {}
 
 class _UnusedOfflineBackupCodec implements OfflineBackupCodec {
   @override
