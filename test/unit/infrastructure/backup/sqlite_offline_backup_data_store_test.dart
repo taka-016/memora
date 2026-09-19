@@ -175,6 +175,32 @@ void main() {
     expect((await db.rows('groups')).single['name'], '失敗後の更新');
   });
 
+  test('ジャーナルファイルの削除後に例外が出ても復元前の正本へ戻す', () async {
+    final restoreTarget = await dataStore.exportSnapshot();
+    await db.updateRow('groups', 'group-1', {'name': '現在のデータ'});
+    journalStorage.nextClearErrorAfterDelete = TestException('一時ファイル削除失敗');
+
+    await expectLater(
+      dataStore.restoreSnapshot(restoreTarget),
+      throwsA(isA<TestException>()),
+    );
+
+    expect((await db.rows('groups')).single['name'], '現在のデータ');
+    expect(journalStorage.value, isNull);
+    expect(await syncStorage.isPending(), isFalse);
+  });
+
+  test('プロセス終了後に残ったジャーナルから復元前の正本を回復する', () async {
+    final previousSnapshot = await dataStore.exportSnapshot();
+    await journalStorage.save(previousSnapshot);
+    await db.updateRow('groups', 'group-1', {'name': '復元途中のデータ'});
+
+    await dataStore.recoverPendingRestore();
+
+    expect((await db.rows('groups')).single['name'], '家族');
+    expect(journalStorage.value, isNull);
+  });
+
   test('同期保留の記録に失敗した場合は直ちに復元前の正本へ戻す', () async {
     final restoreTarget = await dataStore.exportSnapshot();
     await db.updateRow('groups', 'group-1', {'name': '現在のデータ'});
@@ -252,6 +278,7 @@ class _FakeSettingsStorage implements OfflineBackupSettingsStorage {
 class _FakeRestoreJournalStorage implements OfflineBackupRestoreJournalStorage {
   OfflineBackupSnapshot? value;
   TestException? nextClearError;
+  TestException? nextClearErrorAfterDelete;
 
   @override
   Future<void> clear() async {
@@ -259,6 +286,9 @@ class _FakeRestoreJournalStorage implements OfflineBackupRestoreJournalStorage {
     nextClearError = null;
     if (error != null) throw error;
     value = null;
+    final afterDeleteError = nextClearErrorAfterDelete;
+    nextClearErrorAfterDelete = null;
+    if (afterDeleteError != null) throw afterDeleteError;
   }
 
   @override
