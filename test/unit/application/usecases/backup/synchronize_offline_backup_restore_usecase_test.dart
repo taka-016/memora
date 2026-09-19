@@ -2,6 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/models/offline_backup_snapshot.dart';
 import 'package:memora/application/usecases/backup/synchronize_offline_backup_restore_usecase.dart';
 
+import '../../../../helpers/test_exception.dart';
+
 void main() {
   const snapshot = OfflineBackupSnapshot(
     formatVersion: 1,
@@ -90,5 +92,41 @@ void main() {
       usecase.execute(invalid),
       throwsA(isA<FormatException>()),
     );
+  });
+
+  test('キャッシュの再生成に失敗しても更新間隔の登録を試みる', () async {
+    Duration? registeredFrequency;
+    final failure = TestException('キャッシュ再生成失敗');
+    final usecase = SynchronizeOfflineBackupRestoreUsecase(
+      loadTargetGroupId: () async => 'group-1',
+      loadSelectedItineraryDateId: () async => null,
+      targetGroupExists: (_, _) async => true,
+      clearWidgetCache: () async {},
+      refreshWidgetCache: (_, _) async => throw failure,
+      registerPeriodicUpdateTask: (frequency) async {
+        registeredFrequency = frequency;
+      },
+    );
+
+    await expectLater(usecase.execute(snapshot), throwsA(same(failure)));
+    expect(registeredFrequency, const Duration(hours: 6));
+  });
+
+  test('対象の検証に失敗しても更新間隔の登録を試みる', () async {
+    Duration? registeredFrequency;
+    final failure = TestException('対象の検証失敗');
+    final usecase = SynchronizeOfflineBackupRestoreUsecase(
+      loadTargetGroupId: () async => 'group-1',
+      loadSelectedItineraryDateId: () async => null,
+      targetGroupExists: (_, _) async => throw failure,
+      clearWidgetCache: () async {},
+      refreshWidgetCache: (_, _) async {},
+      registerPeriodicUpdateTask: (frequency) async {
+        registeredFrequency = frequency;
+      },
+    );
+
+    await expectLater(usecase.execute(snapshot), throwsA(same(failure)));
+    expect(registeredFrequency, const Duration(hours: 6));
   });
 }
