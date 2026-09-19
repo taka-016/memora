@@ -81,12 +81,14 @@ class SqliteOfflineBackupDataStore implements OfflineBackupDataStore {
       await restoreJournalStorage.save(previousSnapshot);
       try {
         await _replaceSnapshot(snapshot);
+        await restoreSyncStorage.markPending();
+        await restoreJournalStorage.clear();
       } catch (error, stackTrace) {
-        await _recoverPendingRestoreWithoutBackupLock();
+        await _replaceSnapshot(previousSnapshot);
+        await restoreJournalStorage.clear();
+        await restoreSyncStorage.clear();
         Error.throwWithStackTrace(error, stackTrace);
       }
-      await restoreSyncStorage.markPending();
-      await restoreJournalStorage.clear();
     });
   }
 
