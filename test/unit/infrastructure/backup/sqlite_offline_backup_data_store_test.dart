@@ -141,7 +141,7 @@ void main() {
     expect((await db.rows('groups')).single['name'], '家族');
   });
 
-  test('DB確定直後に終了しても次回初期化で復元前の正本を復旧する', () async {
+  test('ジャーナル削除に失敗した場合は直ちに復元前の正本へ戻す', () async {
     final restoreTarget = await dataStore.exportSnapshot();
     await db.updateRow('members', originalMember.id, {'display_name': '現在の本人'});
     await db.updateRow('groups', 'group-1', {'name': '現在のデータ'});
@@ -164,21 +164,18 @@ void main() {
       dataStore.restoreSnapshot(restoreTarget),
       throwsA(isA<TestException>()),
     );
-    expect((await db.rows('groups')).single['name'], '家族');
-    expect(memberStorage.value, originalMember);
-    expect(settingsStorage.value, originalSettings);
-    expect(journalStorage.value, isNotNull);
-    expect(await syncStorage.isPending(), isTrue);
-
-    await dataStore.recoverPendingRestore();
-
     expect((await db.rows('groups')).single['name'], '現在のデータ');
     expect(memberStorage.value, currentMember);
     expect(settingsStorage.value, currentSettings);
     expect(journalStorage.value, isNull);
+    expect(await syncStorage.isPending(), isFalse);
+
+    await db.updateRow('groups', 'group-1', {'name': '失敗後の更新'});
+    await dataStore.recoverPendingRestore();
+    expect((await db.rows('groups')).single['name'], '失敗後の更新');
   });
 
-  test('同期保留の記録に失敗した場合はジャーナルを残して次回に正本を復旧する', () async {
+  test('同期保留の記録に失敗した場合は直ちに復元前の正本へ戻す', () async {
     final restoreTarget = await dataStore.exportSnapshot();
     await db.updateRow('groups', 'group-1', {'name': '現在のデータ'});
     syncStorage.nextMarkError = TestException('同期保留の保存失敗');
@@ -187,11 +184,15 @@ void main() {
       dataStore.restoreSnapshot(restoreTarget),
       throwsA(isA<TestException>()),
     );
-    expect(journalStorage.value, isNotNull);
-
-    await dataStore.recoverPendingRestore();
-
     expect((await db.rows('groups')).single['name'], '現在のデータ');
+    expect(memberStorage.value, originalMember);
+    expect(settingsStorage.value, originalSettings);
+    expect(journalStorage.value, isNull);
+    expect(await syncStorage.isPending(), isFalse);
+
+    await db.updateRow('groups', 'group-1', {'name': '失敗後の更新'});
+    await dataStore.recoverPendingRestore();
+    expect((await db.rows('groups')).single['name'], '失敗後の更新');
   });
 }
 
