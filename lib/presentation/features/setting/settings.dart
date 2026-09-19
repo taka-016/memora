@@ -1,4 +1,5 @@
 import 'package:memora/application/models/app_capabilities.dart';
+import 'package:memora/application/models/offline_backup_snapshot.dart';
 import 'package:memora/composition_root/providers/app_providers.dart';
 import 'package:memora/composition_root/providers/android_widget_providers.dart';
 import 'package:memora/composition_root/providers/group_providers.dart';
@@ -9,6 +10,7 @@ import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/usecases/android_widget/update_android_widget_interval_usecase.dart';
 import 'package:memora/presentation/notifiers/member/current_member_notifier.dart';
+import 'package:memora/presentation/notifiers/backup/offline_backup_notifier.dart';
 
 final androidWidgetUpdateIntervalProvider =
     AsyncNotifierProvider.autoDispose<
@@ -216,6 +218,10 @@ class Settings extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentMemberState = ref.watch(currentMemberNotifierProvider);
+    final isOffline = !ref
+        .watch(appCapabilitiesProvider)
+        .availability(AppFeature.authentication)
+        .isAvailable;
 
     return Scaffold(
       key: const Key('settings'),
@@ -224,6 +230,10 @@ class Settings extends ConsumerWidget {
         padding: const EdgeInsets.all(24),
         children: [
           ..._buildModeInformation(ref),
+          if (isOffline) ...[
+            const SizedBox(height: 24),
+            _buildOfflineBackupSection(context, ref),
+          ],
           const SizedBox(height: 24),
           Text('Androidウィジェット', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
@@ -256,9 +266,197 @@ class Settings extends ConsumerWidget {
       Text(
         online
             ? 'アプリを削除してもクラウドのデータは保持されます。'
-            : 'バックアップ未作成時は、アプリ削除・データ消去・端末故障によりデータを復元できなくなります。手動バックアップ機能は準備中です。',
+            : 'バックアップ未作成時は、アプリ削除・データ消去・端末故障によりデータを復元できなくなります。',
       ),
     ];
+  }
+
+  Widget _buildOfflineBackupSection(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(offlineBackupNotifierProvider);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('オフラインデータのバックアップ', style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 8),
+        const Text('バックアップのパスワードを忘れた場合は復元できません。パスワードは端末に保存されません。'),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            FilledButton.tonal(
+              onPressed: state.isWorking
+                  ? null
+                  : () => _createOfflineBackup(context, ref),
+              child: const Text('バックアップを作成'),
+            ),
+            OutlinedButton(
+              onPressed: state.isWorking
+                  ? null
+                  : () => _prepareOfflineRestore(context, ref),
+              child: const Text('バックアップから復元'),
+            ),
+          ],
+        ),
+        if (state.isWorking) ...[
+          const SizedBox(height: 12),
+          const LinearProgressIndicator(),
+        ],
+      ],
+    );
+  }
+
+  Future<void> _createOfflineBackup(BuildContext context, WidgetRef ref) async {
+    final password = await _showPasswordDialog(
+      context,
+      title: 'バックアップのパスワード',
+      actionLabel: '保存先を選択',
+      passwordKey: const Key('offline_backup_password'),
+      confirmPassword: true,
+    );
+    if (password == null || !context.mounted) return;
+    try {
+      final saved = await ref
+          .read(offlineBackupNotifierProvider.notifier)
+          .create(password);
+      if (!saved || !context.mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('オフラインデータをバックアップしました')));
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('バックアップを作成できませんでした')));
+    }
+  }
+
+  Future<void> _prepareOfflineRestore(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final password = await _showPasswordDialog(
+      context,
+      title: 'バックアップのパスワード',
+      actionLabel: 'バックアップを選択',
+      passwordKey: const Key('offline_restore_password'),
+    );
+    if (password == null || !context.mounted) return;
+    try {
+      final prepared = await ref
+          .read(offlineBackupNotifierProvider.notifier)
+          .prepareRestore(password);
+      if (!prepared || !context.mounted) return;
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('バックアップから復元'),
+          content: const Text('現在のオフラインデータを全件置換します。この操作は取り消せません。復元しますか？'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('キャンセル'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('復元する'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true || !context.mounted) return;
+      final restored = await ref
+          .read(offlineBackupNotifierProvider.notifier)
+          .restorePrepared();
+      if (!restored || !context.mounted) return;
+      ref.invalidate(androidWidgetUpdateIntervalProvider);
+      ref.invalidate(androidWidgetTargetGroupProvider);
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('オフラインデータを復元しました')));
+    } on OfflineBackupAuthenticationException {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('パスワードが誤っているか、バックアップが破損しています')),
+      );
+    } on OfflineBackupUnsupportedVersionException catch (error) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error.message)));
+    } on FormatException {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('バックアップファイルを読み込めませんでした')));
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('オフラインデータを復元できませんでした')));
+    }
+  }
+
+  Future<String?> _showPasswordDialog(
+    BuildContext context, {
+    required String title,
+    required String actionLabel,
+    required Key passwordKey,
+    bool confirmPassword = false,
+  }) async {
+    var password = '';
+    var confirmation = '';
+    String? errorMessage;
+    final result = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: Text(title),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                key: passwordKey,
+                obscureText: true,
+                onChanged: (value) => password = value,
+                decoration: const InputDecoration(labelText: 'パスワード（8文字以上）'),
+              ),
+              if (confirmPassword) ...[
+                const SizedBox(height: 8),
+                TextField(
+                  key: const Key('offline_backup_password_confirmation'),
+                  obscureText: true,
+                  onChanged: (value) => confirmation = value,
+                  decoration: const InputDecoration(labelText: 'パスワード（確認）'),
+                ),
+              ],
+              if (errorMessage != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  errorMessage!,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('キャンセル'),
+            ),
+            FilledButton(
+              onPressed: () {
+                if (password.length < 8) {
+                  setState(() => errorMessage = 'パスワードは8文字以上で入力してください');
+                  return;
+                }
+                if (confirmPassword && password != confirmation) {
+                  setState(() => errorMessage = '確認用パスワードが一致しません');
+                  return;
+                }
+                Navigator.of(dialogContext).pop(password);
+              },
+              child: Text(actionLabel),
+            ),
+          ],
+        ),
+      ),
+    );
+    return result;
   }
 
   Widget _buildAndroidWidgetUpdateIntervalSetting(

@@ -60,9 +60,12 @@ void main() {
       });
       final storage = MockAndroidWidgetCacheStorage();
       when(storage.getTargetGroupId()).thenAnswer((_) async => 'group');
+      var recovered = false;
+      var retried = false;
 
       await withAndroidWidgetDependencies(
         (refresh, handler) async {
+          expect(retried, isTrue);
           await refresh.execute(
             groupId: 'group',
             updateWidgetAfterRefresh: false,
@@ -71,9 +74,18 @@ void main() {
           await refresh.executeForSelectedGroup();
         },
         createOfflineDatabase: () => database,
+        recoverPendingRestore: (target) async {
+          expect(target, same(database));
+          recovered = true;
+        },
+        retryPendingRestore: (_) async {
+          expect(recovered, isTrue);
+          retried = true;
+        },
         cacheStorage: storage,
       );
 
+      expect(recovered, isTrue);
       final caches = verify(storage.saveItineraryCache(captureAny)).captured
           .cast<AndroidWidgetItineraryCacheDto>();
       expect(caches, hasLength(3));
@@ -105,12 +117,14 @@ void main() {
           return release.future;
         });
         var completed = false;
-        final operation = withAndroidWidgetDependencies((
-          refresh,
-          handler,
-        ) async {
-          throw failure;
-        }, createOfflineDatabase: () => database);
+        final operation = withAndroidWidgetDependencies(
+          (refresh, handler) async {
+            throw failure;
+          },
+          createOfflineDatabase: () => database,
+          recoverPendingRestore: (_) async {},
+          retryPendingRestore: (_) async {},
+        );
         final assertion = expectLater(operation, throwsA(same(failure)));
         final tracked = assertion.whenComplete(() => completed = true);
         await closing.future;
