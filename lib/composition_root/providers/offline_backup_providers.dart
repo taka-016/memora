@@ -5,6 +5,7 @@ import 'package:memora/application/services/offline_backup_current_member_storag
 import 'package:memora/application/services/offline_backup_data_store.dart';
 import 'package:memora/application/services/offline_backup_file_selector.dart';
 import 'package:memora/application/services/offline_backup_settings_storage.dart';
+import 'package:memora/application/services/offline_backup_restore_sync_storage.dart';
 import 'package:memora/application/usecases/backup/offline_backup_usecases.dart';
 import 'package:memora/application/usecases/backup/synchronize_offline_backup_restore_usecase.dart';
 import 'package:memora/composition_root/providers/android_widget_providers.dart';
@@ -13,6 +14,7 @@ import 'package:memora/infrastructure/backup/encrypted_offline_backup_codec.dart
 import 'package:memora/infrastructure/backup/file_picker_offline_backup_file_selector.dart';
 import 'package:memora/infrastructure/backup/local_offline_backup_current_member_storage.dart';
 import 'package:memora/infrastructure/backup/local_offline_backup_restore_journal_storage.dart';
+import 'package:memora/infrastructure/backup/local_offline_backup_restore_sync_storage.dart';
 import 'package:memora/infrastructure/backup/shared_preferences_offline_backup_settings_storage.dart';
 import 'package:memora/infrastructure/backup/sqlite_offline_backup_data_store.dart';
 import 'package:memora/infrastructure/config/resolved_app_mode_provider.dart';
@@ -43,6 +45,11 @@ final offlineBackupSettingsStorageProvider =
       (ref) => const SharedPreferencesOfflineBackupSettingsStorage(),
     );
 
+final offlineBackupRestoreSyncStorageProvider =
+    Provider<OfflineBackupRestoreSyncStorage>(
+      (ref) => LocalOfflineBackupRestoreSyncStorage(),
+    );
+
 final offlineBackupDataStoreProvider = Provider<OfflineBackupDataStore>((ref) {
   _requireOffline(ref);
   return SqliteOfflineBackupDataStore(
@@ -50,6 +57,7 @@ final offlineBackupDataStoreProvider = Provider<OfflineBackupDataStore>((ref) {
     currentMemberStorage: ref.watch(offlineBackupCurrentMemberStorageProvider),
     settingsStorage: ref.watch(offlineBackupSettingsStorageProvider),
     restoreJournalStorage: LocalOfflineBackupRestoreJournalStorage(),
+    restoreSyncStorage: ref.watch(offlineBackupRestoreSyncStorageProvider),
   );
 });
 
@@ -107,6 +115,7 @@ final restoreOfflineBackupUsecaseProvider =
     Provider<RestoreOfflineBackupUsecase>(
       (ref) => RestoreOfflineBackupUsecase(
         dataStore: ref.watch(offlineBackupDataStoreProvider),
+        restoreSyncStorage: ref.watch(offlineBackupRestoreSyncStorageProvider),
         synchronizeAfterRestore: (snapshot) async {
           try {
             await ref
@@ -122,6 +131,17 @@ final restoreOfflineBackupUsecaseProvider =
             ref.invalidate(dvcPointCalculationNotifierProvider);
           }
         },
+      ),
+    );
+
+final retryPendingOfflineBackupRestoreUsecaseProvider =
+    Provider<RetryPendingOfflineBackupRestoreUsecase>(
+      (ref) => RetryPendingOfflineBackupRestoreUsecase(
+        dataStore: ref.watch(offlineBackupDataStoreProvider),
+        restoreSyncStorage: ref.watch(offlineBackupRestoreSyncStorageProvider),
+        synchronizeAfterRestore: ref
+            .watch(synchronizeOfflineBackupRestoreUsecaseProvider)
+            .execute,
       ),
     );
 

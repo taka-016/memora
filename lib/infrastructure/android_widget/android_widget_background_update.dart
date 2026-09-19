@@ -140,9 +140,9 @@ Future<void> _showUpdateFailedToast() async {
 
 Future<void> _refreshAndroidWidgetCache() async {
   const storage = HomeWidgetAndroidWidgetCacheStorage();
-  final groupId = await storage.getTargetGroupId();
-  if (groupId == null) return;
   await withAndroidWidgetDependencies((refresh, handler) async {
+    final groupId = await storage.getTargetGroupId();
+    if (groupId == null) return;
     await refresh.execute(
       groupId: groupId,
       selectedItineraryDateId: await storage.getSelectedItineraryDateId(),

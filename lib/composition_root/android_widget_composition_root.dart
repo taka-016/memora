@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/models/app_mode.dart';
 import 'package:memora/application/services/android_widget_cache_storage.dart';
 import 'package:memora/composition_root/providers/offline_database_provider.dart';
+import 'package:memora/composition_root/providers/offline_backup_providers.dart';
 import 'package:memora/infrastructure/database/offline_database.dart';
 import 'package:memora/infrastructure/services/shared_preferences_app_mode_storage.dart';
 import 'package:memora/application/usecases/android_widget/android_widget_action_handler.dart';
@@ -20,6 +21,7 @@ Future<void> withAndroidWidgetDependencies(
   action, {
   OfflineDatabase Function()? createOfflineDatabase,
   Future<void> Function(OfflineDatabase database)? recoverPendingRestore,
+  Future<void> Function(ProviderContainer container)? retryPendingRestore,
   AndroidWidgetCacheStorage? cacheStorage,
 }) async {
   final mode = await const SharedPreferencesAppModeStorage()
@@ -47,6 +49,12 @@ Future<void> withAndroidWidgetDependencies(
           offlineDatabaseProvider.overrideWithValue(database),
       ],
     );
+    if (database != null) {
+      await (retryPendingRestore ??
+          (container) => container
+              .read(retryPendingOfflineBackupRestoreUsecaseProvider)
+              .execute())(container);
+    }
     final AndroidWidgetCacheStorage storage =
         cacheStorage ?? container.read(androidWidgetCacheStorageProvider);
     final trips = container.read(mapTripEntryQueryServiceProvider);

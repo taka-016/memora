@@ -44,21 +44,37 @@ class SynchronizeOfflineBackupRestoreUsecase {
       throw const FormatException('バックアップのウィジェット更新間隔が不正です。');
     }
 
-    final targetGroupId = await loadTargetGroupId();
-    if (targetGroupId != null) {
-      final exists = await targetGroupExists(
-        snapshot.currentMember.id,
-        targetGroupId,
-      );
-      if (exists) {
-        await refreshWidgetCache(
-          targetGroupId,
-          await loadSelectedItineraryDateId(),
-        );
-      } else {
+    Object? cacheError;
+    StackTrace? cacheStackTrace;
+    try {
+      final targetGroupId = await loadTargetGroupId();
+      if (targetGroupId == null) {
         await clearWidgetCache();
+      } else {
+        final exists = await targetGroupExists(
+          snapshot.currentMember.id,
+          targetGroupId,
+        );
+        if (exists) {
+          await refreshWidgetCache(
+            targetGroupId,
+            await loadSelectedItineraryDateId(),
+          );
+        } else {
+          await clearWidgetCache();
+        }
       }
+    } catch (error, stackTrace) {
+      cacheError = error;
+      cacheStackTrace = stackTrace;
     }
-    await registerPeriodicUpdateTask(interval.duration);
+    try {
+      await registerPeriodicUpdateTask(interval.duration);
+    } catch (error, stackTrace) {
+      if (cacheError == null) Error.throwWithStackTrace(error, stackTrace);
+    }
+    if (cacheError != null) {
+      Error.throwWithStackTrace(cacheError, cacheStackTrace!);
+    }
   }
 }

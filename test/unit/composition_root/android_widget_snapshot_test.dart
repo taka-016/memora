@@ -116,6 +116,7 @@ void main() {
         (refresh, handler) async => refresh.executeForSelectedGroup(),
         createOfflineDatabase: () => reader,
         recoverPendingRestore: (_) async {},
+        retryPendingRestore: (_) async {},
         cacheStorage: storage,
       );
       await oldReadStarted.future;
@@ -176,6 +177,7 @@ void main() {
             (refresh, handler) async => verifyRefresh(refresh),
             createOfflineDatabase: () => reader,
             recoverPendingRestore: (_) async {},
+            retryPendingRestore: (_) async {},
             cacheStorage: storage,
           );
         } else {
@@ -266,6 +268,7 @@ void main() {
         },
         createOfflineDatabase: () => reader,
         recoverPendingRestore: (_) async {},
+        retryPendingRestore: (_) async {},
         cacheStorage: storage,
       );
 

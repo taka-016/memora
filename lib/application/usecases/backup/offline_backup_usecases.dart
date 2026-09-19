@@ -2,6 +2,7 @@ import 'package:memora/application/models/offline_backup_snapshot.dart';
 import 'package:memora/application/services/offline_backup_codec.dart';
 import 'package:memora/application/services/offline_backup_data_store.dart';
 import 'package:memora/application/services/offline_backup_file_selector.dart';
+import 'package:memora/application/services/offline_backup_restore_sync_storage.dart';
 
 typedef SynchronizeAfterOfflineRestore = Future<void> Function(
   OfflineBackupSnapshot snapshot,
@@ -58,18 +59,40 @@ class PrepareOfflineRestoreUsecase {
 class RestoreOfflineBackupUsecase {
   const RestoreOfflineBackupUsecase({
     required this.dataStore,
+    required this.restoreSyncStorage,
     required this.synchronizeAfterRestore,
   });
 
   final OfflineBackupDataStore dataStore;
+  final OfflineBackupRestoreSyncStorage restoreSyncStorage;
   final SynchronizeAfterOfflineRestore synchronizeAfterRestore;
 
   Future<void> execute(OfflineBackupSnapshot snapshot) async {
     await dataStore.restoreSnapshot(snapshot);
     try {
       await synchronizeAfterRestore(snapshot);
+      await restoreSyncStorage.clear();
     } catch (_) {
       // 復元済みデータは確定しているため、派生データの同期失敗で復元失敗には戻さない。
     }
+  }
+}
+
+class RetryPendingOfflineBackupRestoreUsecase {
+  const RetryPendingOfflineBackupRestoreUsecase({
+    required this.dataStore,
+    required this.restoreSyncStorage,
+    required this.synchronizeAfterRestore,
+  });
+
+  final OfflineBackupDataStore dataStore;
+  final OfflineBackupRestoreSyncStorage restoreSyncStorage;
+  final SynchronizeAfterOfflineRestore synchronizeAfterRestore;
+
+  Future<void> execute() async {
+    if (!await restoreSyncStorage.isPending()) return;
+    final snapshot = await dataStore.exportSnapshot();
+    await synchronizeAfterRestore(snapshot);
+    await restoreSyncStorage.clear();
   }
 }

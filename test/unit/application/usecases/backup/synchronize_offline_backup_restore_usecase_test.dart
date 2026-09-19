@@ -66,6 +66,22 @@ void main() {
     expect(refreshed, isFalse);
   });
 
+  test('対象グループが未設定なら残存キャッシュを解除する', () async {
+    var cleared = false;
+    final usecase = SynchronizeOfflineBackupRestoreUsecase(
+      loadTargetGroupId: () async => null,
+      loadSelectedItineraryDateId: () async => null,
+      targetGroupExists: (_, _) async => true,
+      clearWidgetCache: () async => cleared = true,
+      refreshWidgetCache: (_, _) async => fail('対象が未設定なら再生成しない'),
+      registerPeriodicUpdateTask: (_) async {},
+    );
+
+    await usecase.execute(snapshot);
+
+    expect(cleared, isTrue);
+  });
+
   test('バックアップに不正な更新間隔が含まれる場合は同期前に拒否する', () async {
     final invalid = OfflineBackupSnapshot(
       formatVersion: snapshot.formatVersion,

@@ -3,6 +3,7 @@ import 'package:memora/application/models/offline_backup_snapshot.dart';
 import 'package:memora/application/services/offline_backup_current_member_storage.dart';
 import 'package:memora/application/services/offline_backup_data_store.dart';
 import 'package:memora/application/services/offline_backup_restore_journal_storage.dart';
+import 'package:memora/application/services/offline_backup_restore_sync_storage.dart';
 import 'package:memora/application/services/offline_backup_settings_storage.dart';
 import 'package:memora/infrastructure/database/offline_database.dart';
 
@@ -12,12 +13,14 @@ class SqliteOfflineBackupDataStore implements OfflineBackupDataStore {
     required this.currentMemberStorage,
     required this.settingsStorage,
     required this.restoreJournalStorage,
+    required this.restoreSyncStorage,
   });
 
   final OfflineDatabase database;
   final OfflineBackupCurrentMemberStorage currentMemberStorage;
   final OfflineBackupSettingsStorage settingsStorage;
   final OfflineBackupRestoreJournalStorage restoreJournalStorage;
+  final OfflineBackupRestoreSyncStorage restoreSyncStorage;
 
   static const _deleteOrder = <String>[
     'tasks',
@@ -82,6 +85,7 @@ class SqliteOfflineBackupDataStore implements OfflineBackupDataStore {
         await _recoverPendingRestoreWithoutBackupLock();
         Error.throwWithStackTrace(error, stackTrace);
       }
+      await restoreSyncStorage.markPending();
       await restoreJournalStorage.clear();
     });
   }

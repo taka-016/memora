@@ -61,9 +61,11 @@ void main() {
       final storage = MockAndroidWidgetCacheStorage();
       when(storage.getTargetGroupId()).thenAnswer((_) async => 'group');
       var recovered = false;
+      var retried = false;
 
       await withAndroidWidgetDependencies(
         (refresh, handler) async {
+          expect(retried, isTrue);
           await refresh.execute(
             groupId: 'group',
             updateWidgetAfterRefresh: false,
@@ -75,6 +77,10 @@ void main() {
         recoverPendingRestore: (target) async {
           expect(target, same(database));
           recovered = true;
+        },
+        retryPendingRestore: (_) async {
+          expect(recovered, isTrue);
+          retried = true;
         },
         cacheStorage: storage,
       );
@@ -117,6 +123,7 @@ void main() {
           },
           createOfflineDatabase: () => database,
           recoverPendingRestore: (_) async {},
+          retryPendingRestore: (_) async {},
         );
         final assertion = expectLater(operation, throwsA(same(failure)));
         final tracked = assertion.whenComplete(() => completed = true);
