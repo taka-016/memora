@@ -8,6 +8,7 @@ import 'package:memora/application/queries/order_by.dart';
 import 'package:memora/application/queries/trip/itinerary_item_query_service.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
 import 'package:memora/application/services/android_widget_cache_storage.dart';
+import 'package:memora/application/transactions/read_transaction.dart';
 import 'package:memora/application/usecases/android_widget/android_widget_itinerary_cache_usecases.dart';
 import 'package:memora/application/usecases/android_widget/get_android_widget_itinerary_cache_usecase.dart';
 import 'package:memora/infrastructure/time/fixed_app_clock.dart';
@@ -16,6 +17,23 @@ import '../../../../helpers/test_exception.dart';
 
 void main() {
   group('RefreshAndroidWidgetItineraryCacheUsecase', () {
+    test('復元後に公開したキャッシュを先行更新で上書きしない', () async {
+      final restoredCache = _cacheWithItinerary();
+      final storage = _FakeAndroidWidgetCacheStorage();
+      final usecase = _buildRefreshUsecase(
+        storage,
+        _FakeTripEntryQueryService(),
+        _FakeItineraryItemQueryService(),
+        readTransaction: _AfterReadTransaction(() {
+          storage.cache = restoredCache;
+        }),
+      );
+
+      await usecase.execute(groupId: 'group-1');
+
+      expect(storage.cache, same(restoredCache));
+    });
+
     for (final targetGroupId in [null, 'group-1']) {
       test('選択グループ$targetGroupIdの旅程削除後に表示を更新する', () async {
         final existingCache = _cacheWithItinerary();
@@ -225,16 +243,31 @@ AndroidWidgetItineraryCacheDto _cacheWithItinerary() {
 RefreshAndroidWidgetItineraryCacheUsecase _buildRefreshUsecase(
   AndroidWidgetCacheStorage storage,
   TripEntryQueryService tripEntryQueryService,
-  ItineraryItemQueryService itineraryItemQueryService,
-) {
+  ItineraryItemQueryService itineraryItemQueryService, {
+  ReadTransaction? readTransaction,
+}) {
   return RefreshAndroidWidgetItineraryCacheUsecase(
     cacheStorage: storage,
+    readTransaction: readTransaction,
     getCacheUsecase: GetAndroidWidgetItineraryCacheUsecase(
       tripEntryQueryService: tripEntryQueryService,
       itineraryItemQueryService: itineraryItemQueryService,
       clock: FixedAppClock(DateTime(2026, 5, 24, 10)),
     ),
   );
+}
+
+class _AfterReadTransaction implements ReadTransaction {
+  _AfterReadTransaction(this.afterRead);
+
+  final void Function() afterRead;
+
+  @override
+  Future<T> execute<T>(Future<T> Function() action) async {
+    final result = await action();
+    afterRead();
+    return result;
+  }
 }
 
 class _FakeAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
