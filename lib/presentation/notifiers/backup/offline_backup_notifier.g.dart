@@ -42,7 +42,7 @@ final class OfflineBackupNotifierProvider
 }
 
 String _$offlineBackupNotifierHash() =>
-    r'108b745049c180f93abfaaa3f0e7afa05fc40f32';
+    r'0580fb6568ac75633e3961be67a121780ce7660f';
 
 abstract class _$OfflineBackupNotifier extends $Notifier<OfflineBackupState> {
   OfflineBackupState build();
