@@ -136,6 +136,29 @@ void main() {
     );
   }
 
+  test(
+    '復元後同期の再試行に失敗してもウィジェット操作を実行する',
+    skip: buildMode != AppMode.offline,
+    () async {
+      final database = OfflineDatabase(NativeDatabase.memory());
+      var actionCalled = false;
+
+      await withAndroidWidgetDependencies(
+        (refresh, handler) async {
+          actionCalled = true;
+        },
+        createOfflineDatabase: () => database,
+        recoverPendingRestore: (_) async {},
+        retryPendingRestore: (_) async {
+          throw TestException('定期更新の再登録に失敗');
+        },
+        cacheStorage: MockAndroidWidgetCacheStorage(),
+      );
+
+      expect(actionCalled, isTrue);
+    },
+  );
+
   test('APK更新前のモードが残っていても外部SDKやDBの初期化前に拒否する', () async {
     final oldMode = buildMode == AppMode.offline ? 'online' : 'offline';
     SharedPreferences.setMockInitialValues({'resolved_app_mode': oldMode});
