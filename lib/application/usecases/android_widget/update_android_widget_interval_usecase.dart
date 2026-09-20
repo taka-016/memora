@@ -12,18 +12,18 @@ class UpdateAndroidWidgetIntervalUsecase {
   const UpdateAndroidWidgetIntervalUsecase({
     required this._storage,
     required this._registerPeriodicUpdateTask,
-    OfflineBackupRestoreOperationLock? operationLock,
-  }) : _operationLock = operationLock;
+    this.operationLock,
+  });
 
   final AndroidWidgetUpdateIntervalStorage _storage;
   final RegisterAndroidWidgetPeriodicUpdateTask _registerPeriodicUpdateTask;
-  final OfflineBackupRestoreOperationLock? _operationLock;
+  final OfflineBackupRestoreOperationLock? operationLock;
 
   Future<void> execute(AndroidWidgetUpdateInterval interval) {
-    final operationLock = _operationLock;
-    return operationLock == null
+    final lock = operationLock;
+    return lock == null
         ? _execute(interval)
-        : operationLock.run(() => _execute(interval));
+        : lock.run(() => _execute(interval));
   }
 
   Future<void> _execute(AndroidWidgetUpdateInterval interval) async {

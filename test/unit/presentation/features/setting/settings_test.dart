@@ -149,15 +149,19 @@ void main() {
       await tester.pump();
 
       expect(
-        tester.widget<DropdownButtonFormField<String>>(
-          find.byType(DropdownButtonFormField<String>),
-        ).onChanged,
+        tester
+            .widget<DropdownButtonFormField<String>>(
+              find.byType(DropdownButtonFormField<String>),
+            )
+            .onChanged,
         isNull,
       );
       expect(
-        tester.widget<DropdownButtonFormField<AndroidWidgetUpdateInterval>>(
-          find.byType(DropdownButtonFormField<AndroidWidgetUpdateInterval>),
-        ).onChanged,
+        tester
+            .widget<DropdownButtonFormField<AndroidWidgetUpdateInterval>>(
+              find.byType(DropdownButtonFormField<AndroidWidgetUpdateInterval>),
+            )
+            .onChanged,
         isNull,
       );
       restoreUsecase.blocker!.complete();

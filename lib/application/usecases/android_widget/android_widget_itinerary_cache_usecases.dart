@@ -96,20 +96,18 @@ class SelectAndroidWidgetTargetGroupUsecase {
     required this._refreshCacheUsecase,
     required this._updateIntervalStorage,
     required this._registerPeriodicUpdateTask,
-    OfflineBackupRestoreOperationLock? operationLock,
-  }) : _operationLock = operationLock;
+    this.operationLock,
+  });
 
   final AndroidWidgetCacheStorage _cacheStorage;
   final RefreshAndroidWidgetItineraryCacheUsecase _refreshCacheUsecase;
   final AndroidWidgetUpdateIntervalStorage _updateIntervalStorage;
   final RegisterAndroidWidgetPeriodicUpdateTask _registerPeriodicUpdateTask;
-  final OfflineBackupRestoreOperationLock? _operationLock;
+  final OfflineBackupRestoreOperationLock? operationLock;
 
   Future<void> execute(String groupId) {
-    final operationLock = _operationLock;
-    return operationLock == null
-        ? _execute(groupId)
-        : operationLock.run(() => _execute(groupId));
+    final lock = operationLock;
+    return lock == null ? _execute(groupId) : lock.run(() => _execute(groupId));
   }
 
   Future<void> _execute(String groupId) async {
@@ -124,15 +122,15 @@ class SelectAndroidWidgetTargetGroupUsecase {
 class ClearAndroidWidgetTargetGroupUsecase {
   const ClearAndroidWidgetTargetGroupUsecase({
     required this._cacheStorage,
-    OfflineBackupRestoreOperationLock? operationLock,
-  }) : _operationLock = operationLock;
+    this.operationLock,
+  });
 
   final AndroidWidgetCacheStorage _cacheStorage;
-  final OfflineBackupRestoreOperationLock? _operationLock;
+  final OfflineBackupRestoreOperationLock? operationLock;
 
   Future<void> execute() {
-    final operationLock = _operationLock;
-    return operationLock == null ? _execute() : operationLock.run(_execute);
+    final lock = operationLock;
+    return lock == null ? _execute() : lock.run(_execute);
   }
 
   Future<void> _execute() async {
