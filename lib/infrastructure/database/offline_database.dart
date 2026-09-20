@@ -78,7 +78,7 @@ class OfflineDatabase extends _$OfflineDatabase implements ReadTransaction {
       _withBackupLock(FileLock.exclusive, () => transaction(action));
 
   Future<T> backupRestoreExclusive<T>(Future<T> Function() action) =>
-      _withBackupLock(FileLock.exclusive, action);
+      _withBackupLock(FileLock.exclusive, () => exclusively(action));
 
   Future<T> _withBackupLock<T>(
     FileLock lock,
