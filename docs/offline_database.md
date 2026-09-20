@@ -1,77 +1,21 @@
 # オフラインDB設計
 
-## 保存先とライフサイクル
+物理スキーマの正本は[`offline_schema.drift`](../lib/infrastructure/database/offline_schema.drift)。共通の業務モデルとの対応は[ER図](er_diagram.md)を参照する。
 
-Driftの`NativeDatabase.createInBackground`を使い、Androidのアプリ内部ストレージにある`getApplicationSupportDirectory()`配下の`memora.sqlite`へ保存する。アプリ独自のDB暗号化は適用しない。
+## 基本方針
 
-Composition Rootの`offlineDatabaseProvider`が接続を所有する。Factoryと本人復元は同じProviderのDBを共有し、初回アクセス時に`LazyDatabase`がファイル・スキーマを初期化する。Providerの破棄時に接続を閉じる。独立してDBを使う処理では`initialize()`と`close()`を対にする。通常のバックグラウンドDB処理は別isolate上で実行され、UI isolateをブロックしない。
+- 業務データはアプリ内部のSQLiteへ保存する。端末の保護機能を使い、アプリ独自のDB暗号化は行わない。
+- グループと所属、旅行とタスク・旅程はそれぞれ集約単位で保存する。複数旅行をまとめて変更する操作も、全件成功か全件ロールバックとする。
+- 日時はUnix epochからのマイクロ秒で保存し、端末ローカルの`DateTime`として復元する。日付・年月をMapperで丸めない。
+- DBアクセスの失敗は「データなし」に変換せず、呼び出し元へ伝える。
 
-AndroidウィジェットのバックグラウンドComposition Rootは、アプリ起動時にSharedPreferencesへ保存した解決済みの`AppMode`を復元する。オフラインでは専用のSQLite接続を開き、成功・失敗にかかわらず`close()`の完了を待つ。FirebaseやNTPは初期化せず、端末時刻を共通UseCaseへ渡す。端末DBはWALと5秒のロック待機を設定し、アプリの書き込みとウィジェットの読み取りを並行して実行できる。
+## 保存しないデータ
 
-定期更新・操作コールバック・アプリ内の保存後更新・対象グループ設定は、共通のキャッシュ取得UseCaseを使い、旅行一覧から各旅行の旅程までを単一の読み取りトランザクションで取得する。`BEGIN DEFERRED`で別接続の保存を妨げずに同じスナップショットを維持し、Driftの`exclusively`で同じ接続の別処理が混入することを防ぐ。読み取り終了時は成功・失敗にかかわらず`ROLLBACK`を待ってトランザクションを終了する。
+- `passportNumber`、`passportExpiration`、場所データ、招待データはSQLiteに保存しない。
+- 場所を含む旅行・旅程の保存要求は、場所を捨てて保存せず、利用不可として拒否する。論理バックアップの復元でも場所を含む入力は全体を拒否し、既存データを維持する。バックアップ・復元の実装範囲は[todo 8](todo.md)を参照する。
 
-読み取りトランザクションは、1回のキャッシュ生成内で旅行と旅程の取得時点が混在しないことだけを保証する。読み取り後のDB更新を検出するための再取得や、キャッシュ公開時の書き込みロックは行わない。同じ対象の更新が重なった場合は最後に完了した結果を採用し、一時的に古いスナップショットへ戻ることを許容する。キャッシュは再構築可能な派生データであり、保存後更新、手動更新、次回の定期更新で復旧する。
+## 既存データの保護
 
-ウィジェットキャッシュは世代を持たない単一ファイルとする。一時ファイルへの書き込み完了後に固定パスへ置き換え、生成元モードと対象グループが現在値に一致する場合だけKotlin側で表示する。これにより、DB読み取りの一貫性、書き込み途中のファイルを表示しないこと、異なるモード・グループのデータを表示しないことを維持しつつ、更新順序を管理するための世代別ファイルとプロセス間ロックを不要にする。
-
-通常の定期更新と、端末再起動後を含むKotlinのフォールバック定期・即時更新は、同じ保存値（Androidでは`FlutterSharedPreferences`の`flutter.resolved_app_mode`）からネットワーク制約を選ぶ。オンラインだけ接続済みネットワークを要求する。Gradleは`--dart-define`の指定をDartと同じ規則で解決し、`auto`と`online`をオンライン、`offline`をオフラインとして`BuildConfig`へ埋め込む。KotlinとDartは保存値をこの解決済みビルドモードと照合する。モード未保存・不明値・現ビルドとの不一致の場合は通常登録、フォールバック登録、バックグラウンド初期化を拒否し、アプリ起動によるモード保存後に登録する。アプリ起動時に保存値と現ビルドの解決済みモードが異なる場合は、旧モードの対象グループ・選択日・キャッシュ参照を消去してウィジェットを再描画してから、新しいモードを保存する。このため、APK更新前のモードでFirebase・NTP・DBへアクセスせず、旧モードの旅行も表示しない。
-
-アプリ内の旅行・旅程の作成・更新・削除が成功した後も、現在のモードのQueryServiceで選択中グループのウィジェットキャッシュを再生成する。ウィジェット更新だけが失敗した場合、旅行の保存結果は成功として扱い、以後の定期更新・手動更新で再取得する。
-
-手動バックアップ・復元の画面およびファイル処理はtodo 8で対応する。
-
-## 業務データと制約
-
-物理定義の正本は[`offline_schema.drift`](../lib/infrastructure/database/offline_schema.drift)。全列の型、NOT NULL、外部キー、CHECK、一意制約とindexをここに定義し、Driftで生成する。Entity・DTOのcamelCaseはMapperでsnake_caseへ変換する。
-
-| テーブル | 主キー・一意性 | 関連と削除時の扱い | 主な検索・並び替え |
-| --- | --- | --- | --- |
-| members | id、account_idは非null値で一意 | owner_idはmembersを参照。所有するメンバーやグループがある本人の削除はRESTRICT | owner_id、表示名による並び替え |
-| groups | id | owner_idはmembersを参照、RESTRICT | owner_id、グループ名による並び替え |
-| group_members | (group_id, member_id) | グループまたはメンバー削除でCASCADE | group_idまたはmember_idとorder_indexの複合index |
-| member_events | id、(member_id, year)は一意 | メンバー削除でCASCADE | member_idとyearの一意index |
-| group_events | id。同年の複数件を許可 | グループ削除でCASCADE | group_idとyearの複合index |
-| trip_entries | id | グループ削除でCASCADE | group_idとyearの複合index |
-| tasks | id、(id, trip_id)は一意 | 旅行削除でCASCADE、担当メンバー削除でSET NULL | trip_idとorder_index、担当メンバー、親タスクのindex |
-| itinerary_items | id | 旅行削除でCASCADE | trip_idとstart_date_timeの複合index |
-| dvc_point_contracts | id | グループ削除でCASCADE | group_idとcontract_start_year_monthの複合index |
-| dvc_limited_points | id | グループ削除でCASCADE | group_idとstart_year_monthの複合index |
-| dvc_point_usages | id | グループ削除でCASCADE | group_idとusage_year_monthの複合index |
-
-タスクの親参照は`(parent_task_id, trip_id)`から`(id, trip_id)`への複合外部キーで、他の旅行のタスクを親にできない。`DEFERRABLE INITIALLY DEFERRED`により、子が親より先に入力されてもトランザクション終了時に整合していれば保存できる。親だけを削除して子を残す操作は拒否する。旅行の子データは集約単位で置換・削除する。
-
-グループと所属の保存・置換は`GroupRepository`、旅行・タスク・旅程の保存・置換・削除は`TripEntryRepository`のトランザクションにまとめる。`SqliteWriteTransaction`は既存の`WriteTransactionScope`と同様に旅行Repositoryを提供し、複数旅行の変更も全件コミットまたはロールバックする。関連データを組み立てるQueryServiceも同一の読み取りトランザクションを使う。
-
-メンバー、グループ、旅行、DVCの新規保存時はUUIDを発行する。旅程・タスクは集約で渡されたIDを維持する。グループイベントはIDが空なら新規作成、既存IDなら更新する。メンバーイベントは本人IDと年からIDを決め、同年の内容を置換し、空メモなら削除する。
-
-## 値の保存形式
-
-- 日時はUnix epochからのマイクロ秒をSQLiteのINTEGERへ保存し、Firestoreの日時変換と同じく端末ローカルの`DateTime`として復元する。日付・年月も同じ形式を使い、Mapperでは丸めない。
-- 真偽値はINTEGERの0/1。CHECK制約で他の値を拒否する。
-- 任意項目はSQL NULL。更新時もnullを明示して、以前の値を解除できる。
-- アプリの`OrderBy`はスキーマに存在する列へ変換・検証する。指定した順序で複数列の昇順・降順を適用し、SQLiteのNULL順序（昇順では先頭）を使う。
-- DBアクセスの失敗は呼び出し元へ伝え、データなしと区別して既存の再試行処理へつなぐ。
-
-## 保存しないデータと復元入力の検証
-
-`passportNumber`、`passportExpiration`、`locations`、`member_invitations`、旅程の`locationId`はSQLiteに保存しない。旅行DTOの場所一覧は空配列、旅程DTOの`locationId`・`location`はnullになる。
-
-場所一覧が空でない旅行、または`locationId`が非nullの旅程は、`SqliteTripEntryMapper.validate`・`SqliteItineraryItemMapper.validate`が共通の`FeatureUnavailableException(AppFeature.maps)`で拒否する。Repositoryは書き込み開始前に検証し、Mapperの`toRow`でも同じ検証を行う。場所を除去して保存する補正は行わない。
-
-todo 8の論理バックアップ復元でも、入力をEntityへ変換してこの検証を通してから書き込む。ファイル全体の形式・バージョン・未知フィールド・業務上の不変条件の検証も必要であり、DB用の`fromRow`をバックアップファイルのパーサーとして使用しない。場所付き入力は復元全体を拒否し、現在のデータを維持する。生SQLによる未知の場所列への書き込みもスキーマで拒否される。
-
-## 端末内の本人情報
-
-既存の`offline_current_member.json`を`LocalCurrentMemberResolver`で読み、本人メンバーIDと利用者ID（accountId）を引き継ぐ。SQLiteに本人が未登録の場合のみそのIDで登録する。以後は`SqliteCurrentMemberResolver`がSQLiteの本人情報を返すため、名前や生年月日等の編集結果がDB再オープン後にも反映される。JSONが破損している場合は既存どおりエラーを返し、新しい利用者で上書きしない。
-
-## バージョンとマイグレーション
-
-初期バージョンは1。新規DBはDriftの`Migrator.createAll()`で作成し、毎回の接続で`PRAGMA foreign_keys = ON`を設定する。現在は旧SQLiteバージョンが存在しないため、異なるバージョンはエラーとし、削除・再作成・暗黙のダウングレードはしない。
-
-リリース後のスキーマ変更では、`schemaVersion`を上げ、旧バージョンからの移行を`onUpgrade`へ明示的に追加する。既存データを保存した旧DBからの移行、失敗時のロールバック、移行後の`foreign_key_check`と全体チェックを必須にする。テーブル再作成が必要な移行でも、既存ファイルの削除で代替しない。
-
-## 検証と参照資料
-
-`test/unit/infrastructure/database/`で、集約の保存・取得・更新・削除、関連データの組み立て、並び替え、日時とnullの復元、制約違反、ロールバック、本人IDの引き継ぎ、DB再オープン、未対応バージョンの拒否を検証する。Factoryの選択は`test/unit/composition_root/app_mode_services_test.dart`で検証する。
-
-導入前にContext7で[Driftのセットアップ](https://drift.simonbinder.eu/setup/)、[ネイティブ接続](https://drift.simonbinder.eu/platforms/vm/)、[マイグレーションAPI](https://drift.simonbinder.eu/migrations/api/)を確認した。
+- 端末内の本人情報が破損している場合は、新しい利用者で上書きせず、取得エラーとして扱う。
+- 未対応のDBバージョンは拒否し、DBの削除・再作成や暗黙のダウングレードは行わない。
+- リリース後のスキーマ変更は明示的なマイグレーションで行う。失敗時はロールバックし、移行後は外部キーとデータ全体の整合性を検証する。
