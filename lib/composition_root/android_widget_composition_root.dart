@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/models/app_mode.dart';
 import 'package:memora/application/services/android_widget_cache_storage.dart';
+import 'package:memora/application/services/offline_backup_restore_operation_lock.dart';
 import 'package:memora/composition_root/providers/offline_database_provider.dart';
 import 'package:memora/composition_root/providers/offline_backup_providers.dart';
 import 'package:memora/infrastructure/database/offline_database.dart';
@@ -22,6 +23,7 @@ Future<void> withAndroidWidgetDependencies(
   OfflineDatabase Function()? createOfflineDatabase,
   Future<void> Function(OfflineDatabase database)? recoverPendingRestore,
   Future<void> Function(ProviderContainer container)? retryPendingRestore,
+  OfflineBackupRestoreOperationLock? operationLock,
   AndroidWidgetCacheStorage? cacheStorage,
 }) async {
   final mode = await const SharedPreferencesAppModeStorage()
@@ -90,7 +92,14 @@ Future<void> withAndroidWidgetDependencies(
       moveDate: move.execute,
       showToast: const MethodChannelAndroidWidgetToastNotifier().show,
     );
-    await action(refresh, handler);
+    if (database == null) {
+      await action(refresh, handler);
+    } else {
+      final OfflineBackupRestoreOperationLock activeOperationLock =
+          operationLock ??
+          container.read(offlineBackupRestoreOperationLockProvider);
+      await activeOperationLock.run(() => action(refresh, handler));
+    }
   } finally {
     container?.dispose();
     await database?.close();
