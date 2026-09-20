@@ -163,40 +163,36 @@ void main() {
     },
   );
 
-  test(
-    'ウィジェット操作中は次の復元後同期を開始しない',
-    skip: buildMode != AppMode.offline,
-    () async {
-      final database = OfflineDatabase(NativeDatabase.memory());
-      final operationLock = _TestOperationLock();
-      final actionStarted = Completer<void>();
-      final releaseAction = Completer<void>();
-      var restoreStarted = false;
+  test('ウィジェット操作中は次の復元後同期を開始しない', skip: buildMode != AppMode.offline, () async {
+    final database = OfflineDatabase(NativeDatabase.memory());
+    final operationLock = _TestOperationLock();
+    final actionStarted = Completer<void>();
+    final releaseAction = Completer<void>();
+    var restoreStarted = false;
 
-      final widget = withAndroidWidgetDependencies(
-        (refresh, handler) async {
-          actionStarted.complete();
-          await releaseAction.future;
-        },
-        createOfflineDatabase: () => database,
-        recoverPendingRestore: (_) async {},
-        retryPendingRestore: (_) async {},
-        operationLock: operationLock,
-      );
-      await actionStarted.future;
-      final restore = operationLock.run(() async {
-        restoreStarted = true;
-      });
-      try {
-        await Future<void>.value();
-        expect(restoreStarted, isFalse);
-      } finally {
-        releaseAction.complete();
-        await Future.wait([widget, restore]);
-      }
-      expect(restoreStarted, isTrue);
-    },
-  );
+    final widget = withAndroidWidgetDependencies(
+      (refresh, handler) async {
+        actionStarted.complete();
+        await releaseAction.future;
+      },
+      createOfflineDatabase: () => database,
+      recoverPendingRestore: (_) async {},
+      retryPendingRestore: (_) async {},
+      operationLock: operationLock,
+    );
+    await actionStarted.future;
+    final restore = operationLock.run(() async {
+      restoreStarted = true;
+    });
+    try {
+      await Future<void>.value();
+      expect(restoreStarted, isFalse);
+    } finally {
+      releaseAction.complete();
+      await Future.wait([widget, restore]);
+    }
+    expect(restoreStarted, isTrue);
+  });
 
   test('APK更新前のモードが残っていても外部SDKやDBの初期化前に拒否する', () async {
     final oldMode = buildMode == AppMode.offline ? 'online' : 'offline';
