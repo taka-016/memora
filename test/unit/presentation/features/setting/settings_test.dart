@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:memora/composition_root/providers/android_widget_providers.dart';
@@ -98,6 +99,69 @@ void main() {
 
       expect(restoreUsecase.restored, snapshot);
       expect(find.text('オフラインデータを復元しました'), findsOneWidget);
+    });
+
+    testWidgets('復元中はウィジェット設定を変更できない', (tester) async {
+      const snapshot = OfflineBackupSnapshot(
+        formatVersion: 1,
+        databaseSchemaVersion: 1,
+        currentMember: OfflineBackupCurrentMember(
+          id: 'member-1',
+          accountId: 'account-1',
+          displayName: '本人',
+        ),
+        settings: OfflineBackupSettings(
+          androidWidgetUpdateIntervalMinutes: 360,
+          showAge: true,
+          showGrade: true,
+          showYakudoshi: true,
+        ),
+        tables: {},
+      );
+      final restoreUsecase = _FakeRestoreOfflineBackupUsecase()
+        ..blocker = Completer<void>();
+      await tester.pumpWidget(
+        _buildTestApp(
+          storage: _FakeAndroidWidgetCacheStorage(targetGroupId: 'group-a'),
+          groups: const [
+            GroupDto(
+              id: 'group-a',
+              ownerId: 'owner',
+              name: 'グループA',
+              members: [],
+            ),
+          ],
+          mode: AppMode.offline,
+          prepareRestoreUsecase: _FakePrepareOfflineRestoreUsecase(snapshot),
+          restoreUsecase: restoreUsecase,
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('バックアップから復元'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('offline_restore_password')),
+        '復元パスワード123',
+      );
+      await tester.tap(find.text('バックアップを選択'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('復元する'));
+      await tester.pump();
+
+      expect(
+        tester.widget<DropdownButtonFormField<String>>(
+          find.byType(DropdownButtonFormField<String>),
+        ).onChanged,
+        isNull,
+      );
+      expect(
+        tester.widget<DropdownButtonFormField<AndroidWidgetUpdateInterval>>(
+          find.byType(DropdownButtonFormField<AndroidWidgetUpdateInterval>),
+        ).onChanged,
+        isNull,
+      );
+      restoreUsecase.blocker!.complete();
+      await tester.pumpAndSettle();
     });
 
     testWidgets('Androidウィジェットの表示対象グループをプルダウンで選択すると画面に即時反映される', (tester) async {
@@ -646,10 +710,12 @@ class _FakeRestoreOfflineBackupUsecase extends RestoreOfflineBackupUsecase {
       );
 
   OfflineBackupSnapshot? restored;
+  Completer<void>? blocker;
 
   @override
   Future<void> execute(OfflineBackupSnapshot snapshot) async {
     restored = snapshot;
+    await blocker?.future;
   }
 }
 
