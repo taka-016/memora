@@ -4,6 +4,7 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/android_widget/android_widget_itinerary_cache_dto.dart';
 import 'package:memora/application/services/android_widget_cache_storage.dart';
+import 'package:memora/application/services/offline_backup_restore_operation_lock.dart';
 import 'package:memora/composition_root/android_widget_composition_root.dart';
 import 'package:memora/infrastructure/database/offline_database.dart';
 import 'package:memora/infrastructure/config/app_mode_build_configuration.dart';
@@ -82,6 +83,7 @@ void main() {
           expect(recovered, isTrue);
           retried = true;
         },
+        operationLock: _TestOperationLock(),
         cacheStorage: storage,
       );
 
@@ -124,6 +126,7 @@ void main() {
           createOfflineDatabase: () => database,
           recoverPendingRestore: (_) async {},
           retryPendingRestore: (_) async {},
+          operationLock: _TestOperationLock(),
         );
         final assertion = expectLater(operation, throwsA(same(failure)));
         final tracked = assertion.whenComplete(() => completed = true);
@@ -152,10 +155,46 @@ void main() {
         retryPendingRestore: (_) async {
           throw TestException('定期更新の再登録に失敗');
         },
+        operationLock: _TestOperationLock(),
         cacheStorage: MockAndroidWidgetCacheStorage(),
       );
 
       expect(actionCalled, isTrue);
+    },
+  );
+
+  test(
+    'ウィジェット操作中は次の復元後同期を開始しない',
+    skip: buildMode != AppMode.offline,
+    () async {
+      final database = OfflineDatabase(NativeDatabase.memory());
+      final operationLock = _TestOperationLock();
+      final actionStarted = Completer<void>();
+      final releaseAction = Completer<void>();
+      var restoreStarted = false;
+
+      final widget = withAndroidWidgetDependencies(
+        (refresh, handler) async {
+          actionStarted.complete();
+          await releaseAction.future;
+        },
+        createOfflineDatabase: () => database,
+        recoverPendingRestore: (_) async {},
+        retryPendingRestore: (_) async {},
+        operationLock: operationLock,
+      );
+      await actionStarted.future;
+      final restore = operationLock.run(() async {
+        restoreStarted = true;
+      });
+      try {
+        await Future<void>.value();
+        expect(restoreStarted, isFalse);
+      } finally {
+        releaseAction.complete();
+        await Future.wait([widget, restore]);
+      }
+      expect(restoreStarted, isTrue);
     },
   );
 
@@ -195,4 +234,21 @@ void main() {
     );
     expect(opened, isFalse);
   });
+}
+
+class _TestOperationLock implements OfflineBackupRestoreOperationLock {
+  Future<void> _previous = Future<void>.value();
+
+  @override
+  Future<T> run<T>(Future<T> Function() action) async {
+    final previous = _previous;
+    final completed = Completer<void>();
+    _previous = completed.future;
+    await previous;
+    try {
+      return await action();
+    } finally {
+      completed.complete();
+    }
+  }
 }
