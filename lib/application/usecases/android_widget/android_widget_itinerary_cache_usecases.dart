@@ -7,6 +7,7 @@ import 'package:memora/application/queries/trip/itinerary_item_query_service.dar
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
 import 'package:memora/application/services/android_widget_cache_storage.dart';
 import 'package:memora/application/services/android_widget_update_interval_storage.dart';
+import 'package:memora/application/services/offline_backup_restore_operation_lock.dart';
 import 'package:memora/application/transactions/read_transaction.dart';
 import 'package:memora/application/usecases/android_widget/get_android_widget_itinerary_cache_usecase.dart';
 import 'package:memora/application/usecases/android_widget/update_android_widget_interval_usecase.dart';
@@ -95,14 +96,23 @@ class SelectAndroidWidgetTargetGroupUsecase {
     required this._refreshCacheUsecase,
     required this._updateIntervalStorage,
     required this._registerPeriodicUpdateTask,
-  });
+    OfflineBackupRestoreOperationLock? operationLock,
+  }) : _operationLock = operationLock;
 
   final AndroidWidgetCacheStorage _cacheStorage;
   final RefreshAndroidWidgetItineraryCacheUsecase _refreshCacheUsecase;
   final AndroidWidgetUpdateIntervalStorage _updateIntervalStorage;
   final RegisterAndroidWidgetPeriodicUpdateTask _registerPeriodicUpdateTask;
+  final OfflineBackupRestoreOperationLock? _operationLock;
 
-  Future<void> execute(String groupId) async {
+  Future<void> execute(String groupId) {
+    final operationLock = _operationLock;
+    return operationLock == null
+        ? _execute(groupId)
+        : operationLock.run(() => _execute(groupId));
+  }
+
+  Future<void> _execute(String groupId) async {
     await _cacheStorage.clear();
     await _cacheStorage.saveTargetGroupId(groupId);
     final updateInterval = await _updateIntervalStorage.load();
@@ -112,11 +122,20 @@ class SelectAndroidWidgetTargetGroupUsecase {
 }
 
 class ClearAndroidWidgetTargetGroupUsecase {
-  const ClearAndroidWidgetTargetGroupUsecase({required this._cacheStorage});
+  const ClearAndroidWidgetTargetGroupUsecase({
+    required this._cacheStorage,
+    OfflineBackupRestoreOperationLock? operationLock,
+  }) : _operationLock = operationLock;
 
   final AndroidWidgetCacheStorage _cacheStorage;
+  final OfflineBackupRestoreOperationLock? _operationLock;
 
-  Future<void> execute() async {
+  Future<void> execute() {
+    final operationLock = _operationLock;
+    return operationLock == null ? _execute() : operationLock.run(_execute);
+  }
+
+  Future<void> _execute() async {
     await _cacheStorage.clear();
     await _cacheStorage.updateWidget();
   }

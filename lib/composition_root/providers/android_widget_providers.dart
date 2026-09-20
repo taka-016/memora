@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/models/app_mode.dart';
 import 'package:memora/composition_root/providers/offline_database_provider.dart';
+import 'package:memora/composition_root/providers/offline_backup_operation_lock_provider.dart';
 import 'package:memora/infrastructure/config/resolved_app_mode_provider.dart';
 import 'package:memora/application/services/android_widget_cache_storage.dart';
 import 'package:memora/application/services/android_widget_update_interval_storage.dart';
@@ -52,6 +53,9 @@ final selectAndroidWidgetTargetGroupUsecaseProvider =
         registerPeriodicUpdateTask: ref.watch(
           androidWidgetPeriodicUpdateRegistrarProvider,
         ),
+        operationLock: ref.watch(appModeProvider) == AppMode.offline
+            ? ref.watch(offlineBackupRestoreOperationLockProvider)
+            : null,
       );
     });
 
@@ -59,6 +63,9 @@ final clearAndroidWidgetTargetGroupUsecaseProvider =
     Provider<ClearAndroidWidgetTargetGroupUsecase>((ref) {
       return ClearAndroidWidgetTargetGroupUsecase(
         cacheStorage: ref.watch(androidWidgetCacheStorageProvider),
+        operationLock: ref.watch(appModeProvider) == AppMode.offline
+            ? ref.watch(offlineBackupRestoreOperationLockProvider)
+            : null,
       );
     });
 
@@ -104,6 +111,9 @@ final updateAndroidWidgetIntervalUsecaseProvider =
         registerPeriodicUpdateTask: ref.watch(
           androidWidgetPeriodicUpdateRegistrarProvider,
         ),
+        operationLock: ref.watch(appModeProvider) == AppMode.offline
+            ? ref.watch(offlineBackupRestoreOperationLockProvider)
+            : null,
       );
     });
 

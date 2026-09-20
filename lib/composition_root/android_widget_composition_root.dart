@@ -3,6 +3,7 @@ import 'package:memora/application/models/app_mode.dart';
 import 'package:memora/application/services/android_widget_cache_storage.dart';
 import 'package:memora/application/services/offline_backup_restore_operation_lock.dart';
 import 'package:memora/composition_root/providers/offline_database_provider.dart';
+import 'package:memora/composition_root/providers/offline_backup_operation_lock_provider.dart';
 import 'package:memora/composition_root/providers/offline_backup_providers.dart';
 import 'package:memora/infrastructure/database/offline_database.dart';
 import 'package:memora/infrastructure/services/shared_preferences_app_mode_storage.dart';
