@@ -50,10 +50,18 @@ Future<void> withAndroidWidgetDependencies(
       ],
     );
     if (database != null) {
-      await (retryPendingRestore ??
-          (container) => container
-              .read(retryPendingOfflineBackupRestoreUsecaseProvider)
-              .execute())(container);
+      try {
+        await (retryPendingRestore ??
+            (container) => container
+                .read(retryPendingOfflineBackupRestoreUsecaseProvider)
+                .execute())(container);
+      } catch (error, stackTrace) {
+        root.services.log.w(
+          '復元後の派生データ同期を次回のウィジェット起動時に再試行します',
+          error: error,
+          stackTrace: stackTrace,
+        );
+      }
     }
     final AndroidWidgetCacheStorage storage =
         cacheStorage ?? container.read(androidWidgetCacheStorageProvider);
