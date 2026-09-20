@@ -6,13 +6,18 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 part 'offline_backup_notifier.g.dart';
 
 class OfflineBackupState extends Equatable {
-  const OfflineBackupState({this.isWorking = false, this.preparedRestore});
+  const OfflineBackupState({
+    this.isWorking = false,
+    this.isRestoring = false,
+    this.preparedRestore,
+  });
 
   final bool isWorking;
+  final bool isRestoring;
   final OfflineBackupSnapshot? preparedRestore;
 
   @override
-  List<Object?> get props => [isWorking, preparedRestore];
+  List<Object?> get props => [isWorking, isRestoring, preparedRestore];
 }
 
 @riverpod
@@ -65,7 +70,11 @@ class OfflineBackupNotifier extends _$OfflineBackupNotifier {
     final snapshot = state.preparedRestore;
     if (state.isWorking || snapshot == null) return false;
     final keepAliveLink = ref.keepAlive();
-    state = OfflineBackupState(isWorking: true, preparedRestore: snapshot);
+    state = OfflineBackupState(
+      isWorking: true,
+      isRestoring: true,
+      preparedRestore: snapshot,
+    );
     try {
       await ref.read(restoreOfflineBackupUsecaseProvider).execute(snapshot);
       if (!ref.mounted) return false;

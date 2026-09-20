@@ -224,25 +224,36 @@ class Settings extends ConsumerWidget {
         .watch(appCapabilitiesProvider)
         .availability(AppFeature.authentication)
         .isAvailable;
+    final isRestoring =
+        isOffline &&
+        ref.watch(
+          offlineBackupNotifierProvider.select((state) => state.isRestoring),
+        );
 
-    return Scaffold(
-      key: const Key('settings'),
-      appBar: AppBar(title: const Text('設定')),
-      body: ListView(
-        padding: const EdgeInsets.all(24),
-        children: [
-          ..._buildModeInformation(ref),
-          if (isOffline) ...[
+    return PopScope(
+      canPop: !isRestoring,
+      child: Scaffold(
+        key: const Key('settings'),
+        appBar: AppBar(title: const Text('設定')),
+        body: ListView(
+          padding: const EdgeInsets.all(24),
+          children: [
+            ..._buildModeInformation(ref),
+            if (isOffline) ...[
+              const SizedBox(height: 24),
+              _buildOfflineBackupSection(context, ref),
+            ],
             const SizedBox(height: 24),
-            _buildOfflineBackupSection(context, ref),
+            Text(
+              'Androidウィジェット',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            _buildAndroidWidgetGroupSetting(context, ref, currentMemberState),
+            const SizedBox(height: 16),
+            _buildAndroidWidgetUpdateIntervalSetting(context, ref),
           ],
-          const SizedBox(height: 24),
-          Text('Androidウィジェット', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 8),
-          _buildAndroidWidgetGroupSetting(context, ref, currentMemberState),
-          const SizedBox(height: 16),
-          _buildAndroidWidgetUpdateIntervalSetting(context, ref),
-        ],
+        ),
       ),
     );
   }
@@ -365,9 +376,38 @@ class Settings extends ConsumerWidget {
         ),
       );
       if (confirmed != true || !context.mounted) return;
-      final restored = await ref
-          .read(offlineBackupNotifierProvider.notifier)
-          .restorePrepared();
+      final overlayEntry = OverlayEntry(
+        builder: (_) => Stack(
+          children: [
+            const ModalBarrier(color: Colors.black54, dismissible: false),
+            Center(
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      CircularProgressIndicator(),
+                      SizedBox(height: 16),
+                      Text('復元中です。操作せずにお待ちください'),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+      Overlay.of(context, rootOverlay: true).insert(overlayEntry);
+      late final bool restored;
+      try {
+        restored = await ref
+            .read(offlineBackupNotifierProvider.notifier)
+            .restorePrepared();
+      } finally {
+        overlayEntry.remove();
+        overlayEntry.dispose();
+      }
       if (!restored || !context.mounted) return;
       ref.invalidate(androidWidgetUpdateIntervalProvider);
       ref.invalidate(androidWidgetTargetGroupProvider);
