@@ -175,6 +175,49 @@ void main() {
   });
 
   group('MoveAndroidWidgetSelectedItineraryDateUsecase', () {
+    test('復元後のキャッシュを先行した日付移動で上書きしない', () async {
+      final first = _cacheWithItinerary().itineraryDates.single;
+      final oldCache = AndroidWidgetItineraryCacheDto(
+        version: 1,
+        groupId: 'group-1',
+        selectedItineraryDateId: first.id,
+        lastUpdatedAt: DateTime(2026, 5, 24, 10),
+        itineraryDates: [
+          first,
+          AndroidWidgetItineraryDateCacheDto(
+            id: 'trip-1_2026-05-25',
+            tripId: 'trip-1',
+            tripName: '復元前の旅行',
+            tripPeriodLabel: '2026/5/24 - 2026/5/25',
+            date: DateTime(2026, 5, 25),
+            dateLabel: '2026/5/25',
+            itineraryItems: const [],
+          ),
+        ],
+      );
+      final restoredCache = _cacheWithItinerary();
+      final storage = _FakeAndroidWidgetCacheStorage(cache: oldCache);
+      final trips = _FakeTripEntryQueryService();
+      final items = _FakeItineraryItemQueryService();
+      final readTransaction = _AfterReadTransaction(() {
+        storage.cache = restoredCache;
+      });
+      final usecase = MoveAndroidWidgetSelectedItineraryDateUsecase(
+        cacheStorage: storage,
+        tripEntryQueryService: trips,
+        itineraryItemQueryService: items,
+        refreshCacheUsecase: _buildRefreshUsecase(storage, trips, items),
+        readTransaction: readTransaction,
+      );
+
+      expect(
+        await usecase.execute(AndroidWidgetItineraryDateMoveDirection.next),
+        isTrue,
+      );
+
+      expect(storage.cache, same(restoredCache));
+    });
+
     test('リモート探索で失敗した場合は失敗を返してウィジェットを更新する', () async {
       final storage = _FakeAndroidWidgetCacheStorage(
         cache: AndroidWidgetItineraryCacheDto(
