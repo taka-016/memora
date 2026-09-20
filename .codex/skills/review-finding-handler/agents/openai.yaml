@@ -1,0 +1,4 @@
+interface:
+  display_name: "Review Finding Handler"
+  short_description: "レビュー指摘の妥当性確認から修正と再レビューまで対応"
+  default_prompt: "Use $review-finding-handler to assess review findings, fix valid issues in scope, and repeat independent review until no actionable findings remain."
