@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:memora/application/models/offline_backup_snapshot.dart';
 import 'package:memora/composition_root/providers/offline_backup_providers.dart';
+import 'package:memora/presentation/features/timeline/timeline_display_settings.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'offline_backup_notifier.g.dart';
@@ -76,6 +77,7 @@ class OfflineBackupNotifier extends _$OfflineBackupNotifier {
       preparedRestore: snapshot,
     );
     try {
+      await TimelineDisplaySettings.waitForPendingSaves();
       await ref.read(restoreOfflineBackupUsecaseProvider).execute(snapshot);
       if (!ref.mounted) return false;
       state = const OfflineBackupState();
