@@ -8,6 +8,7 @@ import 'package:memora/application/services/offline_backup_codec.dart';
 import 'package:memora/application/services/offline_backup_data_store.dart';
 import 'package:memora/application/services/offline_backup_file_selector.dart';
 import 'package:memora/application/services/offline_backup_restore_sync_storage.dart';
+import 'package:memora/application/services/offline_backup_restore_operation_lock.dart';
 import 'package:memora/application/usecases/backup/offline_backup_usecases.dart';
 import 'package:memora/composition_root/providers/offline_backup_providers.dart';
 import 'package:memora/presentation/notifiers/backup/offline_backup_notifier.dart';
@@ -151,6 +152,7 @@ class _FakeRestoreOfflineBackupUsecase extends RestoreOfflineBackupUsecase {
   _FakeRestoreOfflineBackupUsecase()
     : super(
         dataStore: _UnusedDataStore(),
+        operationLock: _UnusedOperationLock(),
         restoreSyncStorage: _UnusedRestoreSyncStorage(),
         synchronizeAfterRestore: (_) async {},
       );
@@ -165,6 +167,9 @@ class _FakeRestoreOfflineBackupUsecase extends RestoreOfflineBackupUsecase {
 
 class _UnusedRestoreSyncStorage extends Fake
     implements OfflineBackupRestoreSyncStorage {}
+
+class _UnusedOperationLock extends Fake
+    implements OfflineBackupRestoreOperationLock {}
 
 class _UnusedDataStore implements OfflineBackupDataStore {
   @override

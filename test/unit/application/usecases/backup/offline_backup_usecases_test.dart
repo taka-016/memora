@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -6,6 +7,7 @@ import 'package:memora/application/services/offline_backup_codec.dart';
 import 'package:memora/application/services/offline_backup_data_store.dart';
 import 'package:memora/application/services/offline_backup_file_selector.dart';
 import 'package:memora/application/services/offline_backup_restore_sync_storage.dart';
+import 'package:memora/application/services/offline_backup_restore_operation_lock.dart';
 import 'package:memora/application/usecases/backup/offline_backup_usecases.dart';
 
 import '../../../../helpers/test_exception.dart';
@@ -71,6 +73,7 @@ void main() {
     OfflineBackupSnapshot? synchronized;
     final restore = RestoreOfflineBackupUsecase(
       dataStore: dataStore,
+      operationLock: _TestOperationLock(),
       restoreSyncStorage: _FakeRestoreSyncStorage(),
       synchronizeAfterRestore: (value) async {
         synchronized = value;
@@ -90,6 +93,7 @@ void main() {
     final syncStorage = _FakeRestoreSyncStorage()..pending = true;
     final restore = RestoreOfflineBackupUsecase(
       dataStore: dataStore,
+      operationLock: _TestOperationLock(),
       restoreSyncStorage: syncStorage,
       synchronizeAfterRestore: (_) async {
         throw TestException('ウィジェット同期失敗');
@@ -106,6 +110,7 @@ void main() {
     final syncStorage = _FakeRestoreSyncStorage()..pending = true;
     final restore = RestoreOfflineBackupUsecase(
       dataStore: _FakeDataStore(snapshot),
+      operationLock: _TestOperationLock(),
       restoreSyncStorage: syncStorage,
       synchronizeAfterRestore: (_) async {},
     );
@@ -120,6 +125,7 @@ void main() {
     OfflineBackupSnapshot? synchronized;
     final retry = RetryPendingOfflineBackupRestoreUsecase(
       dataStore: _FakeDataStore(snapshot),
+      operationLock: _TestOperationLock(),
       restoreSyncStorage: syncStorage,
       synchronizeAfterRestore: (value) async => synchronized = value,
     );
@@ -135,6 +141,7 @@ void main() {
     final failure = TestException('再同期失敗');
     final retry = RetryPendingOfflineBackupRestoreUsecase(
       dataStore: _FakeDataStore(snapshot),
+      operationLock: _TestOperationLock(),
       restoreSyncStorage: syncStorage,
       synchronizeAfterRestore: (_) async => throw failure,
     );
@@ -143,6 +150,80 @@ void main() {
 
     expect(await syncStorage.isPending(), isTrue);
   });
+
+  test('古い復元後同期が実行中なら次の復元は完了まで待つ', () async {
+    const nextSnapshot = OfflineBackupSnapshot(
+      formatVersion: 1,
+      databaseSchemaVersion: 1,
+      currentMember: OfflineBackupCurrentMember(
+        id: 'member-2',
+        accountId: 'account-2',
+        displayName: '次の本人',
+      ),
+      settings: OfflineBackupSettings(
+        androidWidgetUpdateIntervalMinutes: 360,
+        showAge: true,
+        showGrade: true,
+        showYakudoshi: true,
+      ),
+      tables: {},
+    );
+    final dataStore = _FakeDataStore(snapshot);
+    final syncStorage = _FakeRestoreSyncStorage()..pending = true;
+    final operationLock = _TestOperationLock();
+    final firstSyncStarted = Completer<void>();
+    final releaseFirstSync = Completer<void>();
+    OfflineBackupSnapshot? published;
+    Future<void> synchronize(OfflineBackupSnapshot value) async {
+      if (value == snapshot) {
+        firstSyncStarted.complete();
+        await releaseFirstSync.future;
+      }
+      published = value;
+    }
+
+    final retry = RetryPendingOfflineBackupRestoreUsecase(
+      dataStore: dataStore,
+      operationLock: operationLock,
+      restoreSyncStorage: syncStorage,
+      synchronizeAfterRestore: synchronize,
+    );
+    final restore = RestoreOfflineBackupUsecase(
+      dataStore: dataStore,
+      operationLock: operationLock,
+      restoreSyncStorage: syncStorage,
+      synchronizeAfterRestore: synchronize,
+    );
+
+    final retryFuture = retry.execute();
+    await firstSyncStarted.future;
+    final restoreFuture = restore.execute(nextSnapshot);
+    try {
+      expect(dataStore.restored, isNull);
+    } finally {
+      releaseFirstSync.complete();
+      await Future.wait([retryFuture, restoreFuture]);
+    }
+    expect(published, nextSnapshot);
+    expect(await syncStorage.isPending(), isFalse);
+  });
+}
+
+class _TestOperationLock implements OfflineBackupRestoreOperationLock {
+  Future<void> _previous = Future<void>.value();
+
+  @override
+  Future<T> run<T>(Future<T> Function() action) async {
+    final previous = _previous;
+    final completed = Completer<void>();
+    _previous = completed.future;
+    await previous;
+    try {
+      return await action();
+    } finally {
+      completed.complete();
+    }
+  }
 }
 
 class _FakeRestoreSyncStorage implements OfflineBackupRestoreSyncStorage {
@@ -161,7 +242,7 @@ class _FakeRestoreSyncStorage implements OfflineBackupRestoreSyncStorage {
 class _FakeDataStore implements OfflineBackupDataStore {
   _FakeDataStore(this.snapshot);
 
-  final OfflineBackupSnapshot snapshot;
+  OfflineBackupSnapshot snapshot;
   OfflineBackupSnapshot? restored;
   OfflineBackupSnapshot? validated;
 
@@ -171,6 +252,7 @@ class _FakeDataStore implements OfflineBackupDataStore {
   @override
   Future<void> restoreSnapshot(OfflineBackupSnapshot snapshot) async {
     restored = snapshot;
+    this.snapshot = snapshot;
   }
 
   @override
