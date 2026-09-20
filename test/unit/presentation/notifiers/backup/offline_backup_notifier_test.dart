@@ -12,6 +12,8 @@ import 'package:memora/application/services/offline_backup_restore_operation_loc
 import 'package:memora/application/usecases/backup/offline_backup_usecases.dart';
 import 'package:memora/composition_root/providers/offline_backup_providers.dart';
 import 'package:memora/presentation/notifiers/backup/offline_backup_notifier.dart';
+import 'package:memora/presentation/features/timeline/timeline_display_settings.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   const snapshot = OfflineBackupSnapshot(
@@ -71,6 +73,30 @@ void main() {
       container.read(offlineBackupNotifierProvider).preparedRestore,
       isNull,
     );
+  });
+
+  test('復元前に開始した年表表示設定の保存完了を待つ', () async {
+    SharedPreferences.setMockInitialValues({});
+    final restore = _FakeRestoreOfflineBackupUsecase();
+    final container = _container(
+      prepare: _FakePrepareOfflineRestoreUsecase(snapshot),
+      restore: restore,
+    );
+    addTearDown(container.dispose);
+    final notifier = container.read(offlineBackupNotifierProvider.notifier);
+    expect(await notifier.prepareRestore('パスワード'), isTrue);
+
+    final saving = const TimelineDisplaySettings(
+      showAge: false,
+      showGrade: false,
+      showYakudoshi: false,
+    ).save();
+    final restoring = notifier.restorePrepared();
+
+    expect(restore.restored, isNull);
+    await saving;
+    expect(await restoring, isTrue);
+    expect(restore.restored, snapshot);
   });
 
   test('画面の監視終了後は検証済みバックアップを破棄する', () async {
