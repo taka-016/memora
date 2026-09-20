@@ -95,7 +95,7 @@ class TimelineDisplaySettings {
       await Future.wait(
         _pendingSaves.map(
           (saving) =>
-              saving.then<void>((_) {}, onError: (Object _, StackTrace __) {}),
+              saving.then<void>((_) {}, onError: (Object _, StackTrace _) {}),
         ),
       );
     }
