@@ -46,6 +46,7 @@ class AndroidWidgetUpdateIntervalNotifier
   Future<bool> save(AndroidWidgetUpdateInterval interval) async {
     final currentState = state.value;
     if (currentState == null ||
+        ref.read(offlineBackupNotifierProvider).isWorking ||
         currentState.isSaving ||
         currentState.interval == interval) {
       return false;
@@ -155,6 +156,7 @@ class AndroidWidgetTargetGroupNotifier
   Future<bool> select(String? groupId) async {
     final currentState = state.value;
     if (currentState == null ||
+        ref.read(offlineBackupNotifierProvider).isWorking ||
         currentState.isSaving ||
         currentState.persistedGroupId == groupId) {
       return false;
@@ -464,6 +466,7 @@ class Settings extends ConsumerWidget {
     WidgetRef ref,
   ) {
     final intervalState = ref.watch(androidWidgetUpdateIntervalProvider);
+    final backupIsWorking = ref.watch(offlineBackupNotifierProvider).isWorking;
     final setting = intervalState.value;
     if (setting == null) {
       return _buildLoadingOrRetry(
@@ -488,7 +491,7 @@ class Settings extends ConsumerWidget {
             ),
           )
           .toList(),
-      onChanged: setting.isSaving
+      onChanged: setting.isSaving || backupIsWorking
           ? null
           : (interval) async {
               if (interval == null) {
@@ -531,6 +534,7 @@ class Settings extends ConsumerWidget {
     }
 
     final provider = androidWidgetTargetGroupProvider(member);
+    final backupIsWorking = ref.watch(offlineBackupNotifierProvider).isWorking;
     final targetGroupState = ref.watch(provider);
     final setting = targetGroupState.value;
     if (setting == null) {
@@ -546,7 +550,7 @@ class Settings extends ConsumerWidget {
           children: [
             const Expanded(child: Text('所属グループがありません')),
             TextButton(
-              onPressed: setting.isSaving
+              onPressed: setting.isSaving || backupIsWorking
                   ? null
                   : () => _saveTargetGroupSelection(
                       context,
@@ -586,7 +590,7 @@ class Settings extends ConsumerWidget {
           ),
         ),
       ],
-      onChanged: setting.isSaving
+      onChanged: setting.isSaving || backupIsWorking
           ? null
           : (groupId) => _saveTargetGroupSelection(
               context,
