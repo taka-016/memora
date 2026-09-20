@@ -168,6 +168,70 @@ void main() {
       await tester.pumpAndSettle();
     });
 
+    testWidgets('復元中は画面を離れられず、完了後は戻れる', (tester) async {
+      const snapshot = OfflineBackupSnapshot(
+        formatVersion: 1,
+        databaseSchemaVersion: 1,
+        currentMember: OfflineBackupCurrentMember(
+          id: 'member-1',
+          accountId: 'account-1',
+          displayName: '本人',
+        ),
+        settings: OfflineBackupSettings(
+          androidWidgetUpdateIntervalMinutes: 360,
+          showAge: true,
+          showGrade: true,
+          showYakudoshi: true,
+        ),
+        tables: {},
+      );
+      final restoreUsecase = _FakeRestoreOfflineBackupUsecase()
+        ..blocker = Completer<void>();
+      await tester.pumpWidget(
+        _buildTestApp(
+          storage: _FakeAndroidWidgetCacheStorage(),
+          groups: const [],
+          mode: AppMode.offline,
+          prepareRestoreUsecase: _FakePrepareOfflineRestoreUsecase(snapshot),
+          restoreUsecase: restoreUsecase,
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: TextButton(
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(builder: (_) => const Settings()),
+                ),
+                child: const Text('設定を開く'),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('設定を開く'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('バックアップから復元'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('offline_restore_password')),
+        '復元パスワード123',
+      );
+      await tester.tap(find.text('バックアップを選択'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('復元する'));
+      await tester.pump();
+
+      expect(find.text('復元中です。操作せずにお待ちください'), findsOneWidget);
+      await tester.binding.handlePopRoute();
+      await tester.pump();
+      expect(find.byKey(const Key('settings')), findsOneWidget);
+
+      restoreUsecase.blocker!.complete();
+      await tester.pumpAndSettle();
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(find.text('設定を開く'), findsOneWidget);
+      expect(find.byKey(const Key('settings')), findsNothing);
+    });
+
     testWidgets('Androidウィジェットの表示対象グループをプルダウンで選択すると画面に即時反映される', (tester) async {
       final storage = _FakeAndroidWidgetCacheStorage(targetGroupId: 'group-a');
 
@@ -480,6 +544,7 @@ Widget _buildTestApp({
   _FakeGroupQueryService? groupQueryService,
   PrepareOfflineRestoreUsecase? prepareRestoreUsecase,
   RestoreOfflineBackupUsecase? restoreUsecase,
+  Widget? home,
 }) {
   const member = MemberDto(id: 'member-1', displayName: '太郎');
 
@@ -517,7 +582,7 @@ Widget _buildTestApp({
       theme: ThemeData(
         buttonTheme: const ButtonThemeData(alignedDropdown: true),
       ),
-      home: const Settings(),
+      home: home ?? const Settings(),
     ),
   );
 }
