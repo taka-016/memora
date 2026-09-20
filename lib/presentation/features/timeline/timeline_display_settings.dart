@@ -30,7 +30,7 @@ class TimelineDisplaySettings {
   static const String showAgeKey = 'timeline_show_age';
   static const String showGradeKey = 'timeline_show_grade';
   static const String showYakudoshiKey = 'timeline_show_yakudoshi';
-  static Future<void> _pendingSave = Future<void>.value();
+  static final Set<Future<void>> _pendingSaves = {};
 
   static final List<TimelineDisplaySettingDefinition> definitions =
       List.unmodifiable([
@@ -90,15 +90,25 @@ class TimelineDisplaySettings {
     return settings;
   }
 
-  static Future<void> waitForPendingSaves() => _pendingSave;
+  static Future<void> waitForPendingSaves() async {
+    while (_pendingSaves.isNotEmpty) {
+      await Future.wait(
+        _pendingSaves.map(
+          (saving) =>
+              saving.then<void>((_) {}, onError: (Object _, StackTrace __) {}),
+        ),
+      );
+    }
+  }
 
-  Future<void> save() {
-    final saving = _pendingSave.then((_) => _write());
-    _pendingSave = saving.then<void>(
-      (_) {},
-      onError: (Object _, StackTrace __) {},
-    );
-    return saving;
+  Future<void> save() async {
+    final saving = _write();
+    _pendingSaves.add(saving);
+    try {
+      await saving;
+    } finally {
+      _pendingSaves.remove(saving);
+    }
   }
 
   Future<void> _write() async {
