@@ -77,7 +77,9 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
       if (readTransaction == null) {
         await publish(await read());
       } else {
-        await publish(await readTransaction.execute(read));
+        await readTransaction.execute(() async {
+          await publish(await read());
+        });
       }
     } finally {
       if (updateWidgetAfterRefresh) {
