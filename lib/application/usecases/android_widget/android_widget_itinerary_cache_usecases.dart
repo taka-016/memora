@@ -152,10 +152,24 @@ class MoveAndroidWidgetSelectedItineraryDateUsecase {
   Future<void> _execute(
     AndroidWidgetItineraryDateMoveDirection direction,
   ) async {
+    final readTransaction = _readTransaction;
+    final refreshTarget = readTransaction == null
+        ? await _selectDate(direction)
+        : await readTransaction.execute(() => _selectDate(direction));
+    if (refreshTarget == null) return;
+    await _refreshCacheUsecase.execute(
+      groupId: refreshTarget.$1,
+      selectedItineraryDateId: refreshTarget.$2,
+    );
+  }
+
+  Future<(String, String)?> _selectDate(
+    AndroidWidgetItineraryDateMoveDirection direction,
+  ) async {
     final cache = await _cacheStorage.loadItineraryCache();
     if (cache == null || cache.selectedItineraryDateId == null) {
       await _cacheStorage.updateWidget();
-      return;
+      return null;
     }
 
     final cachedTarget = _findCachedTarget(cache, direction);
@@ -171,24 +185,19 @@ class MoveAndroidWidgetSelectedItineraryDateUsecase {
         ),
       );
       await _cacheStorage.updateWidget();
-      return;
+      return null;
     }
 
-    final readTransaction = _readTransaction;
-    final targetItineraryDateId = readTransaction == null
-        ? await _findRemoteTargetItineraryDateId(cache, direction)
-        : await readTransaction.execute(
-            () => _findRemoteTargetItineraryDateId(cache, direction),
-          );
+    final targetItineraryDateId = await _findRemoteTargetItineraryDateId(
+      cache,
+      direction,
+    );
     if (targetItineraryDateId == null) {
       await _cacheStorage.updateWidget();
-      return;
+      return null;
     }
 
-    await _refreshCacheUsecase.execute(
-      groupId: cache.groupId,
-      selectedItineraryDateId: targetItineraryDateId,
-    );
+    return (cache.groupId, targetItineraryDateId);
   }
 
   String? _findCachedTarget(
