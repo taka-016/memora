@@ -8,6 +8,8 @@
 - 設計判断: docs/design_decisions.md
 - todo: docs/todo.md
 
+今後も維持する設計判断は、機能領域を問わず`docs/design_decisions.md`に記録し、機能ごとの設計資料を新たに作成しないこと。
+
 ## 主要コマンド
 
 - `flutter run` - アプリケーションを実行
