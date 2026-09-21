@@ -5,6 +5,7 @@
 - ユーザーストーリー: docs/user_stories.md
 - ユースケース図: docs/usecase_diagram.md
 - ER図: docs/er_diagram.md
+- 設計判断: docs/design_decisions.md
 - todo: docs/todo.md
 
 ## 主要コマンド

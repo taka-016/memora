@@ -136,4 +136,4 @@ erDiagram
 
 ## オフラインモードの物理スキーマ
 
-上図は共通の業務モデルとFirestoreの関連を示す。SQLiteの物理定義と制約・indexは[`offline_schema.drift`](../lib/infrastructure/database/offline_schema.drift)、保存形式とマイグレーションの方針は[オフラインDB設計](offline_database.md)を参照。
+上図は共通の業務モデルとFirestoreの関連を示す。SQLiteの物理定義と制約・indexは[`offline_schema.drift`](../lib/infrastructure/database/offline_schema.drift)、保存形式とマイグレーションの方針は[設計判断](design_decisions.md#オフラインデータベース)を参照。
