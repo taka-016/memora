@@ -5,10 +5,10 @@
 - ユーザーストーリー: docs/user_stories.md
 - ユースケース図: docs/usecase_diagram.md
 - ER図: docs/er_diagram.md
-- 設計判断: docs/design_decisions.md
+- ADR: docs/adr.md
 - todo: docs/todo.md
 
-今後も維持する設計判断は、機能領域を問わず`docs/design_decisions.md`に記録し、機能ごとの設計資料を新たに作成しないこと。
+今後も維持するアーキテクチャ上の判断は、機能領域を問わず`docs/adr.md`へADRとして追記すること。判断ごとに連番を付け、「ステータス」「コンテキスト」「決定」「結果」を記載し、機能ごとの設計資料を新たに作成しないこと。
 
 ## 主要コマンド
 
