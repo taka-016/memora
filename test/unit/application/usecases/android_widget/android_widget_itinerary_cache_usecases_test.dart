@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/dtos/android_widget/android_widget_update_interval.dart';
 import 'package:memora/application/dtos/android_widget/android_widget_itinerary_cache_dto.dart';
 import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
@@ -8,6 +9,9 @@ import 'package:memora/application/queries/order_by.dart';
 import 'package:memora/application/queries/trip/itinerary_item_query_service.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
 import 'package:memora/application/services/android_widget_cache_storage.dart';
+import 'package:memora/application/services/android_widget_update_interval_storage.dart';
+import 'package:memora/application/services/offline_backup_restore_operation_lock.dart';
+import 'package:memora/application/transactions/read_transaction.dart';
 import 'package:memora/application/usecases/android_widget/android_widget_itinerary_cache_usecases.dart';
 import 'package:memora/application/usecases/android_widget/get_android_widget_itinerary_cache_usecase.dart';
 import 'package:memora/infrastructure/time/fixed_app_clock.dart';
@@ -15,7 +19,85 @@ import 'package:memora/infrastructure/time/fixed_app_clock.dart';
 import '../../../../helpers/test_exception.dart';
 
 void main() {
+  group('ウィジェット設定と復元後同期の排他', () {
+    test('復元後同期の解除後に選んだ対象グループを維持する', () async {
+      final storage = _FakeAndroidWidgetCacheStorage();
+      final operationLock = _TestOperationLock();
+      final syncStarted = Completer<void>();
+      final releaseSync = Completer<void>();
+      final sync = operationLock.run(() async {
+        syncStarted.complete();
+        await releaseSync.future;
+        await storage.clear();
+      });
+      await syncStarted.future;
+      final select = SelectAndroidWidgetTargetGroupUsecase(
+        cacheStorage: storage,
+        refreshCacheUsecase: _buildRefreshUsecase(
+          storage,
+          _FakeTripEntryQueryService(),
+          _FakeItineraryItemQueryService(),
+        ),
+        updateIntervalStorage: _FakeIntervalStorage(),
+        registerPeriodicUpdateTask: (_) async {},
+        operationLock: operationLock,
+      );
+      final selection = select.execute('group-1');
+      try {
+        await Future<void>.value();
+        expect(storage.targetGroupId, isNull);
+      } finally {
+        releaseSync.complete();
+        await Future.wait([sync, selection]);
+      }
+      expect(storage.targetGroupId, 'group-1');
+    });
+
+    test('復元後同期の更新後に解除した対象グループを維持する', () async {
+      final storage = _FakeAndroidWidgetCacheStorage();
+      final operationLock = _TestOperationLock();
+      final syncStarted = Completer<void>();
+      final releaseSync = Completer<void>();
+      final sync = operationLock.run(() async {
+        syncStarted.complete();
+        await releaseSync.future;
+        await storage.saveTargetGroupId('group-1');
+      });
+      await syncStarted.future;
+      final clear = ClearAndroidWidgetTargetGroupUsecase(
+        cacheStorage: storage,
+        operationLock: operationLock,
+      );
+      final clearing = clear.execute();
+      try {
+        await Future<void>.value();
+        expect(storage.targetGroupId, isNull);
+      } finally {
+        releaseSync.complete();
+        await Future.wait([sync, clearing]);
+      }
+      expect(storage.targetGroupId, isNull);
+    });
+  });
+
   group('RefreshAndroidWidgetItineraryCacheUsecase', () {
+    test('復元後に公開したキャッシュを先行更新で上書きしない', () async {
+      final restoredCache = _cacheWithItinerary();
+      final storage = _FakeAndroidWidgetCacheStorage();
+      final usecase = _buildRefreshUsecase(
+        storage,
+        _FakeTripEntryQueryService(),
+        _FakeItineraryItemQueryService(),
+        readTransaction: _AfterReadTransaction(() {
+          storage.cache = restoredCache;
+        }),
+      );
+
+      await usecase.execute(groupId: 'group-1');
+
+      expect(storage.cache, same(restoredCache));
+    });
+
     for (final targetGroupId in [null, 'group-1']) {
       test('選択グループ$targetGroupIdの旅程削除後に表示を更新する', () async {
         final existingCache = _cacheWithItinerary();
@@ -157,6 +239,49 @@ void main() {
   });
 
   group('MoveAndroidWidgetSelectedItineraryDateUsecase', () {
+    test('復元後のキャッシュを先行した日付移動で上書きしない', () async {
+      final first = _cacheWithItinerary().itineraryDates.single;
+      final oldCache = AndroidWidgetItineraryCacheDto(
+        version: 1,
+        groupId: 'group-1',
+        selectedItineraryDateId: first.id,
+        lastUpdatedAt: DateTime(2026, 5, 24, 10),
+        itineraryDates: [
+          first,
+          AndroidWidgetItineraryDateCacheDto(
+            id: 'trip-1_2026-05-25',
+            tripId: 'trip-1',
+            tripName: '復元前の旅行',
+            tripPeriodLabel: '2026/5/24 - 2026/5/25',
+            date: DateTime(2026, 5, 25),
+            dateLabel: '2026/5/25',
+            itineraryItems: const [],
+          ),
+        ],
+      );
+      final restoredCache = _cacheWithItinerary();
+      final storage = _FakeAndroidWidgetCacheStorage(cache: oldCache);
+      final trips = _FakeTripEntryQueryService();
+      final items = _FakeItineraryItemQueryService();
+      final readTransaction = _AfterReadTransaction(() {
+        storage.cache = restoredCache;
+      });
+      final usecase = MoveAndroidWidgetSelectedItineraryDateUsecase(
+        cacheStorage: storage,
+        tripEntryQueryService: trips,
+        itineraryItemQueryService: items,
+        refreshCacheUsecase: _buildRefreshUsecase(storage, trips, items),
+        readTransaction: readTransaction,
+      );
+
+      expect(
+        await usecase.execute(AndroidWidgetItineraryDateMoveDirection.next),
+        isTrue,
+      );
+
+      expect(storage.cache, same(restoredCache));
+    });
+
     test('リモート探索で失敗した場合は失敗を返してウィジェットを更新する', () async {
       final storage = _FakeAndroidWidgetCacheStorage(
         cache: AndroidWidgetItineraryCacheDto(
@@ -202,6 +327,32 @@ void main() {
   });
 }
 
+class _TestOperationLock implements OfflineBackupRestoreOperationLock {
+  Future<void> _previous = Future<void>.value();
+
+  @override
+  Future<T> run<T>(Future<T> Function() action) async {
+    final previous = _previous;
+    final completed = Completer<void>();
+    _previous = completed.future;
+    await previous;
+    try {
+      return await action();
+    } finally {
+      completed.complete();
+    }
+  }
+}
+
+class _FakeIntervalStorage implements AndroidWidgetUpdateIntervalStorage {
+  @override
+  Future<AndroidWidgetUpdateInterval> load() async =>
+      AndroidWidgetUpdateInterval.every24Hours;
+
+  @override
+  Future<void> save(AndroidWidgetUpdateInterval interval) async {}
+}
+
 AndroidWidgetItineraryCacheDto _cacheWithItinerary() {
   return AndroidWidgetItineraryCacheDto(
     version: 1,
@@ -225,16 +376,31 @@ AndroidWidgetItineraryCacheDto _cacheWithItinerary() {
 RefreshAndroidWidgetItineraryCacheUsecase _buildRefreshUsecase(
   AndroidWidgetCacheStorage storage,
   TripEntryQueryService tripEntryQueryService,
-  ItineraryItemQueryService itineraryItemQueryService,
-) {
+  ItineraryItemQueryService itineraryItemQueryService, {
+  ReadTransaction? readTransaction,
+}) {
   return RefreshAndroidWidgetItineraryCacheUsecase(
     cacheStorage: storage,
+    readTransaction: readTransaction,
     getCacheUsecase: GetAndroidWidgetItineraryCacheUsecase(
       tripEntryQueryService: tripEntryQueryService,
       itineraryItemQueryService: itineraryItemQueryService,
       clock: FixedAppClock(DateTime(2026, 5, 24, 10)),
     ),
   );
+}
+
+class _AfterReadTransaction implements ReadTransaction {
+  _AfterReadTransaction(this.afterRead);
+
+  final void Function() afterRead;
+
+  @override
+  Future<T> execute<T>(Future<T> Function() action) async {
+    final result = await action();
+    afterRead();
+    return result;
+  }
 }
 
 class _FakeAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {

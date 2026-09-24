@@ -59,6 +59,8 @@ dependencies:
     path: packages/memora_android_widget_toast
   workmanager: ^0.10.9
   drift: ^2.35.0
+  cryptography: ^2.9.0
+  file_picker: ^13.1.0
 
 dev_dependencies:
   flutter_test:

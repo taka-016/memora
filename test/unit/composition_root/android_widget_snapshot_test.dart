@@ -17,6 +17,7 @@ import 'package:memora/composition_root/providers/app_providers.dart';
 import 'package:memora/composition_root/providers/offline_database_provider.dart';
 import 'package:memora/infrastructure/config/app_mode_build_configuration.dart';
 import 'package:memora/infrastructure/config/resolved_app_mode_provider.dart';
+import 'package:memora/infrastructure/backup/local_offline_backup_restore_operation_lock.dart';
 import 'package:memora/infrastructure/database/offline_database.dart';
 import 'package:memora/infrastructure/time/fixed_app_clock.dart';
 import 'package:mockito/annotations.dart';
@@ -115,6 +116,11 @@ void main() {
       final backgroundRefresh = withAndroidWidgetDependencies(
         (refresh, handler) async => refresh.executeForSelectedGroup(),
         createOfflineDatabase: () => reader,
+        recoverPendingRestore: (_) async {},
+        retryPendingRestore: (_) async {},
+        operationLock: LocalOfflineBackupRestoreOperationLock(
+          directory: () async => directory,
+        ),
         cacheStorage: storage,
       );
       await oldReadStarted.future;
@@ -174,6 +180,11 @@ void main() {
           await withAndroidWidgetDependencies(
             (refresh, handler) async => verifyRefresh(refresh),
             createOfflineDatabase: () => reader,
+            recoverPendingRestore: (_) async {},
+            retryPendingRestore: (_) async {},
+            operationLock: LocalOfflineBackupRestoreOperationLock(
+              directory: () async => directory,
+            ),
             cacheStorage: storage,
           );
         } else {
@@ -263,6 +274,11 @@ void main() {
           await handler.handle(Uri.parse('memoraWidget://next'));
         },
         createOfflineDatabase: () => reader,
+        recoverPendingRestore: (_) async {},
+        retryPendingRestore: (_) async {},
+        operationLock: LocalOfflineBackupRestoreOperationLock(
+          directory: () async => directory,
+        ),
         cacheStorage: storage,
       );
 

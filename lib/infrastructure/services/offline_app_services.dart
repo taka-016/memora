@@ -7,6 +7,11 @@ import 'package:memora/infrastructure/logging/device_app_log.dart';
 import 'package:memora/infrastructure/time/system_app_clock.dart';
 
 class OfflineAppServices implements AppServices {
+  OfflineAppServices({Future<void> Function()? recoverPendingRestore})
+    : _recoverPendingRestore = recoverPendingRestore ?? _noRecovery;
+
+  final Future<void> Function() _recoverPendingRestore;
+
   @override
   final AppClock clock = const SystemAppClock();
 
@@ -16,5 +21,7 @@ class OfflineAppServices implements AppServices {
       : const SilentAppLog();
 
   @override
-  Future<void> initialize() async {}
+  Future<void> initialize() => _recoverPendingRestore();
 }
+
+Future<void> _noRecovery() async {}

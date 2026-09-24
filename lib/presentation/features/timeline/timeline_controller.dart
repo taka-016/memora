@@ -79,16 +79,19 @@ TimelineController useTimelineController({
     layoutConfig: layoutConfig,
   );
 
+  final isCurrentRoute = ModalRoute.of(context)?.isCurrent ?? true;
   useEffect(() {
+    if (!isCurrentRoute) return null;
+    var isActive = true;
     Future.microtask(() async {
       final loaded = await TimelineDisplaySettings.load();
-      if (!context.mounted) {
+      if (!isActive || !context.mounted) {
         return;
       }
       displaySettingsState.value = loaded;
     });
-    return null;
-  }, []);
+    return () => isActive = false;
+  }, [isCurrentRoute]);
 
   useEffect(() {
     viewStateState.value = viewStateState.value.ensureRowCount(

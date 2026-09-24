@@ -6,6 +6,7 @@ import 'package:memora/application/models/app_mode.dart';
 import 'package:memora/application/services/android_widget_cache_storage.dart';
 import 'package:memora/composition_root/app_composition_root.dart';
 import 'package:memora/composition_root/providers/android_widget_providers.dart';
+import 'package:memora/composition_root/providers/offline_backup_providers.dart';
 import 'package:memora/infrastructure/android_widget/android_widget_background_update.dart';
 import 'package:memora/infrastructure/android_widget/android_widget_interactivity_callback.dart';
 import 'package:memora/infrastructure/services/home_widget_android_widget_cache_storage.dart';
@@ -46,6 +47,19 @@ Future<void> launchApp(Widget app) async {
       await initializeAndroidWidgetBackgroundUpdate();
       final container = root.createContainer();
       try {
+        if (root.mode == AppMode.offline) {
+          try {
+            await container
+                .read(retryPendingOfflineBackupRestoreUsecaseProvider)
+                .execute();
+          } catch (error, stackTrace) {
+            root.services.log.w(
+              '復元後の派生データ同期を次回起動時に再試行します',
+              error: error,
+              stackTrace: stackTrace,
+            );
+          }
+        }
         final interval = await container
             .read(androidWidgetUpdateIntervalStorageProvider)
             .load();

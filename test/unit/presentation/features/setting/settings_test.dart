@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:typed_data';
+
 import 'package:memora/composition_root/providers/android_widget_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -7,13 +10,23 @@ import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
+import 'package:memora/application/models/app_mode.dart';
+import 'package:memora/application/models/offline_backup_snapshot.dart';
 import 'package:memora/application/queries/group/group_query_service.dart';
 import 'package:memora/application/queries/order_by.dart';
 import 'package:memora/application/queries/trip/itinerary_item_query_service.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
 import 'package:memora/application/services/android_widget_cache_storage.dart';
 import 'package:memora/application/services/android_widget_update_interval_storage.dart';
+import 'package:memora/application/services/offline_backup_codec.dart';
+import 'package:memora/application/services/offline_backup_data_store.dart';
+import 'package:memora/application/services/offline_backup_file_selector.dart';
+import 'package:memora/application/services/offline_backup_restore_sync_storage.dart';
+import 'package:memora/application/services/offline_backup_restore_operation_lock.dart';
+import 'package:memora/application/usecases/backup/offline_backup_usecases.dart';
 import 'package:memora/application/usecases/android_widget/update_android_widget_interval_usecase.dart';
+import 'package:memora/composition_root/providers/offline_backup_providers.dart';
+import 'package:memora/infrastructure/config/resolved_app_mode_provider.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/presentation/features/setting/settings.dart';
 import 'package:memora/presentation/notifiers/member/current_member_notifier.dart';
@@ -23,6 +36,202 @@ import '../../../../helpers/test_exception.dart';
 
 void main() {
   group('Settings', () {
+    testWidgets('オフラインモードでは手動バックアップと復元不能条件を案内する', (tester) async {
+      await tester.pumpWidget(
+        _buildTestApp(
+          storage: _FakeAndroidWidgetCacheStorage(),
+          groups: const [],
+          mode: AppMode.offline,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('オフラインデータのバックアップ'), findsOneWidget);
+      expect(find.text('バックアップを作成'), findsOneWidget);
+      expect(find.text('バックアップから復元'), findsOneWidget);
+      expect(find.textContaining('パスワードを忘れた場合は復元できません'), findsOneWidget);
+      expect(find.textContaining('アプリ削除・データ消去・端末故障'), findsOneWidget);
+    });
+
+    testWidgets('検証済みバックアップの復元前に全件置換の確認を求める', (tester) async {
+      const snapshot = OfflineBackupSnapshot(
+        formatVersion: 1,
+        databaseSchemaVersion: 1,
+        currentMember: OfflineBackupCurrentMember(
+          id: 'member-1',
+          accountId: 'account-1',
+          displayName: '本人',
+        ),
+        settings: OfflineBackupSettings(
+          androidWidgetUpdateIntervalMinutes: 360,
+          showAge: true,
+          showGrade: true,
+          showYakudoshi: true,
+        ),
+        tables: {},
+      );
+      final restoreUsecase = _FakeRestoreOfflineBackupUsecase();
+      await tester.pumpWidget(
+        _buildTestApp(
+          storage: _FakeAndroidWidgetCacheStorage(),
+          groups: const [],
+          mode: AppMode.offline,
+          prepareRestoreUsecase: _FakePrepareOfflineRestoreUsecase(snapshot),
+          restoreUsecase: restoreUsecase,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('バックアップから復元'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('offline_restore_password')),
+        '復元パスワード123',
+      );
+      await tester.tap(find.text('バックアップを選択'));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('現在のオフラインデータを全件置換'), findsOneWidget);
+      expect(restoreUsecase.restored, isNull);
+
+      await tester.tap(find.text('復元する'));
+      await tester.pumpAndSettle();
+
+      expect(restoreUsecase.restored, snapshot);
+      expect(find.text('オフラインデータを復元しました'), findsOneWidget);
+    });
+
+    testWidgets('復元中はウィジェット設定を変更できない', (tester) async {
+      const snapshot = OfflineBackupSnapshot(
+        formatVersion: 1,
+        databaseSchemaVersion: 1,
+        currentMember: OfflineBackupCurrentMember(
+          id: 'member-1',
+          accountId: 'account-1',
+          displayName: '本人',
+        ),
+        settings: OfflineBackupSettings(
+          androidWidgetUpdateIntervalMinutes: 360,
+          showAge: true,
+          showGrade: true,
+          showYakudoshi: true,
+        ),
+        tables: {},
+      );
+      final restoreUsecase = _FakeRestoreOfflineBackupUsecase()
+        ..blocker = Completer<void>();
+      await tester.pumpWidget(
+        _buildTestApp(
+          storage: _FakeAndroidWidgetCacheStorage(targetGroupId: 'group-a'),
+          groups: const [
+            GroupDto(
+              id: 'group-a',
+              ownerId: 'owner',
+              name: 'グループA',
+              members: [],
+            ),
+          ],
+          mode: AppMode.offline,
+          prepareRestoreUsecase: _FakePrepareOfflineRestoreUsecase(snapshot),
+          restoreUsecase: restoreUsecase,
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('バックアップから復元'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('offline_restore_password')),
+        '復元パスワード123',
+      );
+      await tester.tap(find.text('バックアップを選択'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('復元する'));
+      await tester.pump();
+
+      expect(
+        tester
+            .widget<DropdownButtonFormField<String>>(
+              find.byType(DropdownButtonFormField<String>),
+            )
+            .onChanged,
+        isNull,
+      );
+      expect(
+        tester
+            .widget<DropdownButtonFormField<AndroidWidgetUpdateInterval>>(
+              find.byType(DropdownButtonFormField<AndroidWidgetUpdateInterval>),
+            )
+            .onChanged,
+        isNull,
+      );
+      restoreUsecase.blocker!.complete();
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('復元中は画面を離れられず、完了後は戻れる', (tester) async {
+      const snapshot = OfflineBackupSnapshot(
+        formatVersion: 1,
+        databaseSchemaVersion: 1,
+        currentMember: OfflineBackupCurrentMember(
+          id: 'member-1',
+          accountId: 'account-1',
+          displayName: '本人',
+        ),
+        settings: OfflineBackupSettings(
+          androidWidgetUpdateIntervalMinutes: 360,
+          showAge: true,
+          showGrade: true,
+          showYakudoshi: true,
+        ),
+        tables: {},
+      );
+      final restoreUsecase = _FakeRestoreOfflineBackupUsecase()
+        ..blocker = Completer<void>();
+      await tester.pumpWidget(
+        _buildTestApp(
+          storage: _FakeAndroidWidgetCacheStorage(),
+          groups: const [],
+          mode: AppMode.offline,
+          prepareRestoreUsecase: _FakePrepareOfflineRestoreUsecase(snapshot),
+          restoreUsecase: restoreUsecase,
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: TextButton(
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(builder: (_) => const Settings()),
+                ),
+                child: const Text('設定を開く'),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('設定を開く'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('バックアップから復元'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('offline_restore_password')),
+        '復元パスワード123',
+      );
+      await tester.tap(find.text('バックアップを選択'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('復元する'));
+      await tester.pump();
+
+      expect(find.text('復元中です。操作せずにお待ちください'), findsOneWidget);
+      await tester.binding.handlePopRoute();
+      await tester.pump();
+      expect(find.byKey(const Key('settings')), findsOneWidget);
+
+      restoreUsecase.blocker!.complete();
+      await tester.pumpAndSettle();
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(find.text('設定を開く'), findsOneWidget);
+      expect(find.byKey(const Key('settings')), findsNothing);
+    });
+
     testWidgets('Androidウィジェットの表示対象グループをプルダウンで選択すると画面に即時反映される', (tester) async {
       final storage = _FakeAndroidWidgetCacheStorage(targetGroupId: 'group-a');
 
@@ -329,14 +538,19 @@ void main() {
 Widget _buildTestApp({
   required _FakeAndroidWidgetCacheStorage storage,
   required List<GroupDto> groups,
+  AppMode mode = AppMode.online,
   _FakeAndroidWidgetUpdateIntervalStorage? intervalStorage,
   RegisterAndroidWidgetPeriodicUpdateTask? registerPeriodicUpdateTask,
   _FakeGroupQueryService? groupQueryService,
+  PrepareOfflineRestoreUsecase? prepareRestoreUsecase,
+  RestoreOfflineBackupUsecase? restoreUsecase,
+  Widget? home,
 }) {
   const member = MemberDto(id: 'member-1', displayName: '太郎');
 
   return ProviderScope(
     overrides: [
+      appModeProvider.overrideWithValue(mode),
       currentMemberNotifierProvider.overrideWith(
         () => FakeCurrentMemberNotifier.loaded(member),
       ),
@@ -357,12 +571,18 @@ Widget _buildTestApp({
       androidWidgetItineraryItemQueryServiceProvider.overrideWithValue(
         _FakeItineraryItemQueryService(),
       ),
+      if (prepareRestoreUsecase != null)
+        prepareOfflineRestoreUsecaseProvider.overrideWithValue(
+          prepareRestoreUsecase,
+        ),
+      if (restoreUsecase != null)
+        restoreOfflineBackupUsecaseProvider.overrideWithValue(restoreUsecase),
     ],
     child: MaterialApp(
       theme: ThemeData(
         buttonTheme: const ButtonThemeData(alignedDropdown: true),
       ),
-      home: const Settings(),
+      home: home ?? const Settings(),
     ),
   );
 }
@@ -533,4 +753,75 @@ class _FakeAndroidWidgetUpdateIntervalStorage
     }
     savedInterval = interval;
   }
+}
+
+class _FakePrepareOfflineRestoreUsecase extends PrepareOfflineRestoreUsecase {
+  _FakePrepareOfflineRestoreUsecase(this.result)
+    : super(
+        codec: _UnusedOfflineBackupCodec(),
+        fileSelector: _UnusedFileSelector(),
+        dataStore: _UnusedOfflineBackupDataStore(),
+      );
+
+  final OfflineBackupSnapshot result;
+
+  @override
+  Future<OfflineBackupSnapshot?> execute(String password) async => result;
+}
+
+class _FakeRestoreOfflineBackupUsecase extends RestoreOfflineBackupUsecase {
+  _FakeRestoreOfflineBackupUsecase()
+    : super(
+        dataStore: _UnusedOfflineBackupDataStore(),
+        operationLock: _UnusedOperationLock(),
+        restoreSyncStorage: _UnusedRestoreSyncStorage(),
+        synchronizeAfterRestore: (_) async {},
+      );
+
+  OfflineBackupSnapshot? restored;
+  Completer<void>? blocker;
+
+  @override
+  Future<void> execute(OfflineBackupSnapshot snapshot) async {
+    restored = snapshot;
+    await blocker?.future;
+  }
+}
+
+class _UnusedRestoreSyncStorage extends Fake
+    implements OfflineBackupRestoreSyncStorage {}
+
+class _UnusedOperationLock extends Fake
+    implements OfflineBackupRestoreOperationLock {}
+
+class _UnusedOfflineBackupCodec implements OfflineBackupCodec {
+  @override
+  Future<OfflineBackupSnapshot> decode(List<int> bytes, String password) =>
+      throw UnimplementedError();
+
+  @override
+  Future<Uint8List> encode(OfflineBackupSnapshot snapshot, String password) =>
+      throw UnimplementedError();
+}
+
+class _UnusedFileSelector implements OfflineBackupFileSelector {
+  @override
+  Future<Uint8List?> pick() => throw UnimplementedError();
+
+  @override
+  Future<bool> save(Uint8List bytes, {required String suggestedName}) =>
+      throw UnimplementedError();
+}
+
+class _UnusedOfflineBackupDataStore implements OfflineBackupDataStore {
+  @override
+  Future<OfflineBackupSnapshot> exportSnapshot() => throw UnimplementedError();
+
+  @override
+  Future<void> restoreSnapshot(OfflineBackupSnapshot snapshot) =>
+      throw UnimplementedError();
+
+  @override
+  void validateSnapshot(OfflineBackupSnapshot snapshot) =>
+      throw UnimplementedError();
 }

@@ -7,6 +7,7 @@ import 'package:memora/application/queries/trip/itinerary_item_query_service.dar
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
 import 'package:memora/application/services/android_widget_cache_storage.dart';
 import 'package:memora/application/services/android_widget_update_interval_storage.dart';
+import 'package:memora/application/services/offline_backup_restore_operation_lock.dart';
 import 'package:memora/application/transactions/read_transaction.dart';
 import 'package:memora/application/usecases/android_widget/get_android_widget_itinerary_cache_usecase.dart';
 import 'package:memora/application/usecases/android_widget/update_android_widget_interval_usecase.dart';
@@ -77,7 +78,9 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
       if (readTransaction == null) {
         await publish(await read());
       } else {
-        await publish(await readTransaction.execute(read));
+        await readTransaction.execute(() async {
+          await publish(await read());
+        });
       }
     } finally {
       if (updateWidgetAfterRefresh) {
@@ -93,14 +96,21 @@ class SelectAndroidWidgetTargetGroupUsecase {
     required this._refreshCacheUsecase,
     required this._updateIntervalStorage,
     required this._registerPeriodicUpdateTask,
+    this.operationLock,
   });
 
   final AndroidWidgetCacheStorage _cacheStorage;
   final RefreshAndroidWidgetItineraryCacheUsecase _refreshCacheUsecase;
   final AndroidWidgetUpdateIntervalStorage _updateIntervalStorage;
   final RegisterAndroidWidgetPeriodicUpdateTask _registerPeriodicUpdateTask;
+  final OfflineBackupRestoreOperationLock? operationLock;
 
-  Future<void> execute(String groupId) async {
+  Future<void> execute(String groupId) {
+    final lock = operationLock;
+    return lock == null ? _execute(groupId) : lock.run(() => _execute(groupId));
+  }
+
+  Future<void> _execute(String groupId) async {
     await _cacheStorage.clear();
     await _cacheStorage.saveTargetGroupId(groupId);
     final updateInterval = await _updateIntervalStorage.load();
@@ -110,11 +120,20 @@ class SelectAndroidWidgetTargetGroupUsecase {
 }
 
 class ClearAndroidWidgetTargetGroupUsecase {
-  const ClearAndroidWidgetTargetGroupUsecase({required this._cacheStorage});
+  const ClearAndroidWidgetTargetGroupUsecase({
+    required this._cacheStorage,
+    this.operationLock,
+  });
 
   final AndroidWidgetCacheStorage _cacheStorage;
+  final OfflineBackupRestoreOperationLock? operationLock;
 
-  Future<void> execute() async {
+  Future<void> execute() {
+    final lock = operationLock;
+    return lock == null ? _execute() : lock.run(_execute);
+  }
+
+  Future<void> _execute() async {
     await _cacheStorage.clear();
     await _cacheStorage.updateWidget();
   }
@@ -150,10 +169,24 @@ class MoveAndroidWidgetSelectedItineraryDateUsecase {
   Future<void> _execute(
     AndroidWidgetItineraryDateMoveDirection direction,
   ) async {
+    final readTransaction = _readTransaction;
+    final refreshTarget = readTransaction == null
+        ? await _selectDate(direction)
+        : await readTransaction.execute(() => _selectDate(direction));
+    if (refreshTarget == null) return;
+    await _refreshCacheUsecase.execute(
+      groupId: refreshTarget.$1,
+      selectedItineraryDateId: refreshTarget.$2,
+    );
+  }
+
+  Future<(String, String)?> _selectDate(
+    AndroidWidgetItineraryDateMoveDirection direction,
+  ) async {
     final cache = await _cacheStorage.loadItineraryCache();
     if (cache == null || cache.selectedItineraryDateId == null) {
       await _cacheStorage.updateWidget();
-      return;
+      return null;
     }
 
     final cachedTarget = _findCachedTarget(cache, direction);
@@ -169,24 +202,19 @@ class MoveAndroidWidgetSelectedItineraryDateUsecase {
         ),
       );
       await _cacheStorage.updateWidget();
-      return;
+      return null;
     }
 
-    final readTransaction = _readTransaction;
-    final targetItineraryDateId = readTransaction == null
-        ? await _findRemoteTargetItineraryDateId(cache, direction)
-        : await readTransaction.execute(
-            () => _findRemoteTargetItineraryDateId(cache, direction),
-          );
+    final targetItineraryDateId = await _findRemoteTargetItineraryDateId(
+      cache,
+      direction,
+    );
     if (targetItineraryDateId == null) {
       await _cacheStorage.updateWidget();
-      return;
+      return null;
     }
 
-    await _refreshCacheUsecase.execute(
-      groupId: cache.groupId,
-      selectedItineraryDateId: targetItineraryDateId,
-    );
+    return (cache.groupId, targetItineraryDateId);
   }
 
   String? _findCachedTarget(
