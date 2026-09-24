@@ -15,6 +15,7 @@ class SharedPreferencesOfflineBackupSettingsStorage
   @override
   Future<OfflineBackupSettings> load() async {
     final preferences = await SharedPreferences.getInstance();
+    await preferences.reload();
     final interval =
         await const SharedPreferencesAndroidWidgetUpdateIntervalStorage()
             .load();
@@ -39,13 +40,21 @@ class SharedPreferencesOfflineBackupSettingsStorage
       throw const FormatException('バックアップのウィジェット更新間隔が不正です。');
     }
     final preferences = await SharedPreferences.getInstance();
-    await preferences.setInt(
-      SharedPreferencesAndroidWidgetUpdateIntervalStorage
-          .updateIntervalMinutesKey,
-      interval.duration.inMinutes,
+    await _save(
+      preferences.setInt(
+        SharedPreferencesAndroidWidgetUpdateIntervalStorage
+            .updateIntervalMinutesKey,
+        interval.duration.inMinutes,
+      ),
     );
-    await preferences.setBool(_showAgeKey, settings.showAge);
-    await preferences.setBool(_showGradeKey, settings.showGrade);
-    await preferences.setBool(_showYakudoshiKey, settings.showYakudoshi);
+    await _save(preferences.setBool(_showAgeKey, settings.showAge));
+    await _save(preferences.setBool(_showGradeKey, settings.showGrade));
+    await _save(preferences.setBool(_showYakudoshiKey, settings.showYakudoshi));
+  }
+
+  Future<void> _save(Future<bool> result) async {
+    if (!await result) {
+      throw StateError('バックアップ設定を保存できませんでした。');
+    }
   }
 }
