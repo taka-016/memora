@@ -12,7 +12,8 @@
 
 ## 主要コマンド
 
-- `flutter run` - アプリケーションを実行
+- `flutter run --flavor online --dart-define=MEMORA_APP_MODE=online` - オンライン版アプリケーションを実行
+- `flutter run --flavor offline --dart-define=MEMORA_APP_MODE=offline` - オフライン版アプリケーションを実行
 - `flutter pub get` - 依存関係をインストール
 - `flutter clean` - ビルドキャッシュをクリア
 - `dart run build_runner build` - モックやコード生成を実行

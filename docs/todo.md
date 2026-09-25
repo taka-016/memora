@@ -14,9 +14,9 @@
 - Repository、QueryService、Transaction、AuthServiceなどの全Factoryが同じ`AppMode`を参照し、モード間で実装の組み合わせが混在しないことを確認する
 - `MEMORA_APP_MODE`の`online`、`offline`、`auto`、未指定、不明値について既存の解析・モード判定テストを維持し、判定結果が実際の初期化・実装選択へ反映されることを検証する
 - オンラインモードの通常・フォールバックウィジェット更新は接続済みネットワークを要求し、オフラインモードの両更新経路は機内モードでも実行対象になることを確認する
-- TODO 9で生成するオフライン版release APKで、新規起動、再起動、機内モード、端末再起動後に対象機能とAndroidウィジェットを利用できることを確認する
+- オフライン版release APKで、新規起動、再起動、機内モード、端末再起動後に対象機能とAndroidウィジェットを利用できることを確認する
 - オフラインモードでFirebase、Firestore、Crashlytics、NTP、Places SDK、地図SDKが初期化されず、外部通信とオンライン機能の呼び出しが発生しないことを確認する
-- TODO 9で生成するオンライン版release APKで、既存のFirestore保存、認証、共有、招待、地図、Androidウィジェットの振る舞いが維持されることを確認する
+- オンライン版release APKで、既存のFirestore保存、認証、共有、招待、地図、Androidウィジェットの振る舞いが維持されることを確認する
 - モード指定に対応済みの`./check.sh`と、両方のビルドバリアントに対応する`./tools/ci/release_android_apk.sh`および既存の引数検証テストを維持し、両モードの実装を接続した状態で継続的に検証・ビルドする
 - 実装結果をユースケース図、ER図、README、Firebase・環境設定、ビルド・配布手順へ反映する
 
