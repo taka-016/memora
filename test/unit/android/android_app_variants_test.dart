@@ -26,13 +26,13 @@ void main() {
       expect(
         buildGradle,
         contains(
-          'buildConfigField("String", "RESOLVED_APP_MODE", "\\\"online\\\"")',
+          r'buildConfigField("String", "RESOLVED_APP_MODE", "\"online\"")',
         ),
       );
       expect(
         buildGradle,
         contains(
-          'buildConfigField("String", "RESOLVED_APP_MODE", "\\\"offline\\\"")',
+          r'buildConfigField("String", "RESOLVED_APP_MODE", "\"offline\"")',
         ),
       );
     });
