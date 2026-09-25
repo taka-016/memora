@@ -14,6 +14,7 @@
 - Repository、QueryService、Transaction、AuthServiceなどの全Factoryが同じ`AppMode`を参照し、モード間で実装の組み合わせが混在しないことを確認する
 - `MEMORA_APP_MODE`の`online`、`offline`、`auto`、未指定、不明値について既存の解析・モード判定テストを維持し、判定結果が実際の初期化・実装選択へ反映されることを検証する
 - オンラインモードの通常・フォールバックウィジェット更新は接続済みネットワークを要求し、オフラインモードの両更新経路は機内モードでも実行対象になることを確認する
+- オンライン版とオフライン版のrelease APKを同一端末へ同時にインストールして起動し、SQLite、SharedPreferences、認証状態、WorkManager、Androidウィジェットの設定とキャッシュが共有されず、一方のアンインストールまたはデータ消去がもう一方へ影響しないことを確認する
 - オフライン版release APKで、新規起動、再起動、機内モード、端末再起動後に対象機能とAndroidウィジェットを利用できることを確認する
 - オフラインモードでFirebase、Firestore、Crashlytics、NTP、Places SDK、地図SDKが初期化されず、外部通信とオンライン機能の呼び出しが発生しないことを確認する
 - オンライン版release APKで、既存のFirestore保存、認証、共有、招待、地図、Androidウィジェットの振る舞いが維持されることを確認する
