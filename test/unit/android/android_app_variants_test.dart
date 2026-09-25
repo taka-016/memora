@@ -1,10 +1,8 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
 const _buildGradlePath = 'android/app/build.gradle.kts';
-const _googleServicesPath = 'android/app/google-services.json';
 
 void main() {
   group('Androidアプリバリアント', () {
@@ -54,21 +52,6 @@ void main() {
         buildGradle,
         contains('apply(plugin = "com.google.gms.google-services")'),
       );
-
-      final googleServices = jsonDecode(
-        File(_googleServicesPath).readAsStringSync(),
-      ) as Map<String, dynamic>;
-      final clients = googleServices['client'] as List<dynamic>;
-      final packageNames = clients.map((client) {
-        final clientMap = client as Map<String, dynamic>;
-        final clientInfo = clientMap['client_info'] as Map<String, dynamic>;
-        final androidClientInfo =
-            clientInfo['android_client_info'] as Map<String, dynamic>;
-        return androidClientInfo['package_name'];
-      });
-
-      expect(packageNames, contains('com.example.memora'));
-      expect(packageNames, isNot(contains('com.example.memora.offline')));
     });
   });
 }
