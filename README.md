@@ -77,29 +77,62 @@ Google Cloud Consoleで以下のAPIを有効化し、対応するAPIキーを設
 
 ### アプリモード指定
 
-単一のAndroidアプリ構成のまま、`MEMORA_APP_MODE`で起動時に決定するアプリモードを指定できます。
+Androidではオンライン版とオフライン版を別アプリとしてビルドします。オンライン版のapplication IDは`com.example.memora`、オフライン版は`com.example.memora.offline`です。Androidのアプリサンドボックスも分かれるため、SQLite、SharedPreferences、認証状態、WorkManager、Androidウィジェットの設定とキャッシュは共有されません。
 
 - `online`: オンラインモードを強制
 - `offline`: オフラインモードを強制
 - `auto`: アプリの自動判定へ委譲。現在は既存動作を維持するためオンラインモードに決定
 - 未指定: `auto`と同じ
 
-実行、テスト、全体検証では次のように指定します。
+Androidで実行するときは、モードと同名のflavorを指定します。flavorと`MEMORA_APP_MODE`が一致しない構成はビルドできません。
 
 ```bash
-flutter run --dart-define=MEMORA_APP_MODE=offline
+flutter run \
+  --flavor online \
+  --dart-define=MEMORA_APP_MODE=online
+flutter run \
+  --flavor offline \
+  --dart-define=MEMORA_APP_MODE=offline
+```
+
+テストと全体検証はAndroidのflavorを選択しないため、従来どおり`MEMORA_APP_MODE`だけを指定します。
+
+```bash
 flutter test --dart-define=MEMORA_APP_MODE=offline
 ./check.sh --dart-define=MEMORA_APP_MODE=offline
 ```
 
-release APKは指定値をログへ表示し、`build/app/outputs/flutter-apk/memora-<version>-<mode>.apk`として出力します。
+release APKは次のコマンドでそれぞれ生成します。`auto`または未指定はオンライン版として扱います。
 
 ```bash
+./tools/ci/release_android_apk.sh \
+  --dart-define=MEMORA_APP_MODE=online
 ./tools/ci/release_android_apk.sh \
   --dart-define=MEMORA_APP_MODE=offline
 ```
 
-不明な値は設定誤りとして起動・テスト・ビルドを失敗させます。同じインストールのままモードを変更する運用には対応していないため、指定値を変更したAPKを利用するときは、先にアプリをアンインストールするかデータを消去してください。Firebase設定、`MAPS_API_KEY`、Android Manifestの権限は両モードで共通です。
+成果物は次のパスへ出力されます。
+
+- オンライン版: `build/app/outputs/flutter-apk/memora-<version>-online.apk`
+- オフライン版: `build/app/outputs/flutter-apk/memora-<version>-offline.apk`
+
+同一端末へ両方をインストールする場合は、生成したバージョンに合わせて次のように実行します。
+
+```bash
+adb install -r build/app/outputs/flutter-apk/memora-1.0.0-online.apk
+adb install -r build/app/outputs/flutter-apk/memora-1.0.0-offline.apk
+```
+
+一方だけを初期化またはアンインストールする場合は、対象のapplication IDを指定します。もう一方のデータとAndroidウィジェット更新には影響しません。
+
+```bash
+adb shell pm clear com.example.memora
+adb shell pm clear com.example.memora.offline
+adb uninstall com.example.memora
+adb uninstall com.example.memora.offline
+```
+
+不明なモードは設定誤りとして起動・テスト・ビルドを失敗させます。オンライン版だけが既存のFirebase設定を使用し、オフライン版のビルドは別application IDのFirebase設定を要求しません。`MAPS_API_KEY`とAndroid Manifestの権限定義は共通ですが、オフラインでは外部SDKを初期化しません。
 
 モード判定は各Factoryと起動処理に接続されています。オフラインでは外部SDKを初期化せず、端末時計を使用します。ログはdebug時だけ端末に出力し、releaseでは保存・送信しません。
 
