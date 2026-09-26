@@ -10,6 +10,13 @@ final appCapabilitiesProvider = Provider<AppCapabilities>((ref) {
   return AppCapabilities.forMode(ref.watch(appModeProvider));
 });
 
+final appDisplayNameProvider = Provider<String>((ref) {
+  return switch (ref.watch(appModeProvider)) {
+    AppMode.online => 'memora',
+    AppMode.offline => 'memora lite',
+  };
+});
+
 final appClockProvider = Provider<AppClock>((ref) {
   return switch (ref.watch(appModeProvider)) {
     AppMode.online => NtpSynchronizedAppClock(),

@@ -68,7 +68,7 @@ class MyApp extends ConsumerWidget {
     ref.watch(androidWidgetLaunchNotifierProvider);
     return MaterialApp.router(
       routerConfig: ref.watch(appRouterConfigProvider),
-      title: 'memora',
+      title: ref.watch(appDisplayNameProvider),
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.lightBlue),
         appBarTheme: const AppBarTheme(
