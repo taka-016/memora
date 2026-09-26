@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
-const _scriptPaths = ['run.sh', 'build.sh', 'release.sh', 'test.sh'];
+const _scriptPaths = ['run.sh', 'build.sh', 'release.sh'];
 const _appModeArgumentsScriptPath = 'tools/ci/app_mode_arguments.sh';
 const _releaseScriptPath = 'tools/ci/release_android_apk.sh';
 
@@ -59,12 +59,6 @@ if [ "\${1:-}" = 'build' ] && [ "\${3:-}" = '--release' ]; then
 fi
 ''');
     Process.runSync('chmod', ['+x', flutterStub.path]);
-
-    final dartStub = File('${testProject.path}/bin/dart');
-    dartStub.writeAsStringSync('''#!/usr/bin/env bash
-printf '%s\\n' "\$@" > "\$MEMORA_TEST_COMMAND_LOG"
-''');
-    Process.runSync('chmod', ['+x', dartStub.path]);
   });
 
   tearDown(() {
@@ -75,7 +69,6 @@ printf '%s\\n' "\$@" > "\$MEMORA_TEST_COMMAND_LOG"
     'run.sh': ['run'],
     'build.sh': ['build', 'apk', '--debug'],
     'release.sh': ['build', 'apk', '--release'],
-    'test.sh': ['pub', 'global', 'run', 'very_good_cli:very_good', 'test'],
   };
 
   for (final MapEntry(key: script, value: command) in commands.entries) {
@@ -87,7 +80,8 @@ printf '%s\\n' "\$@" > "\$MEMORA_TEST_COMMAND_LOG"
         commandLog.readAsLinesSync(),
         containsAllInOrder([
           ...command,
-          if (script != 'test.sh') ...['--flavor', 'offline'],
+          '--flavor',
+          'offline',
           '--dart-define=MEMORA_APP_MODE=offline',
         ]),
       );
@@ -101,7 +95,8 @@ printf '%s\\n' "\$@" > "\$MEMORA_TEST_COMMAND_LOG"
         commandLog.readAsLinesSync(),
         containsAllInOrder([
           ...command,
-          if (script != 'test.sh') ...['--flavor', 'online'],
+          '--flavor',
+          'online',
           '--dart-define=MEMORA_APP_MODE=online',
         ]),
       );
@@ -126,19 +121,17 @@ printf '%s\\n' "\$@" > "\$MEMORA_TEST_COMMAND_LOG"
       expect(commandLog.existsSync(), isFalse);
     });
 
-    if (script != 'test.sh') {
-      test('$scriptは追加引数によるflavorの上書きを拒否する', () {
-        final result = runScript(script, ['offline', '--flavor', 'online']);
+    test('$scriptは追加引数によるflavorの上書きを拒否する', () {
+      final result = runScript(script, ['offline', '--flavor', 'online']);
 
-        expect(result.exitCode, isNot(0));
-        expect(result.stderr, contains('flavor'));
-        expect(commandLog.existsSync(), isFalse);
-      });
-    }
+      expect(result.exitCode, isNot(0));
+      expect(result.stderr, contains('flavor'));
+      expect(commandLog.existsSync(), isFalse);
+    });
   }
 
-  test('test.shは短縮形式によるモードの上書きを拒否する', () {
-    final result = runScript('test.sh', [
+  test('build.shは短縮形式によるモードの上書きを拒否する', () {
+    final result = runScript('build.sh', [
       'offline',
       '-DMEMORA_APP_MODE=online',
     ]);

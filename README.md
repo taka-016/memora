@@ -83,7 +83,7 @@ Androidではオンライン版とオフライン版を別アプリとしてビ�
 - `offline`: オフラインモードを強制
 - 未指定: `online`として実行
 
-実行、debug APKビルド、release APKビルド、テストは、各スクリプトの第1引数に`online`または`offline`を指定します。省略時は`online`です。
+実行、debug APKビルド、release APKビルド、テストは、各スクリプトの第1引数に`online`または`offline`を指定します。省略時は`online`です。テストはフォーマット・コード生成・解析も行う`check.sh`から実行します。
 
 ```bash
 ./run.sh
@@ -92,16 +92,14 @@ Androidではオンライン版とオフライン版を別アプリとしてビ�
 ./build.sh offline
 ./release.sh
 ./release.sh offline
-./test.sh
-./test.sh offline
-```
-
-テスト対象や追加オプションを指定する場合は、モードの後ろへ指定します。フォーマット・コード生成・解析・全テストの一括検証も同じモード指定を使用します。
-
-```bash
-./test.sh offline test/unit/
 ./check.sh
 ./check.sh offline
+```
+
+テスト対象や追加オプションを指定する場合は、`check.sh`のモードの後ろへ指定します。
+
+```bash
+./check.sh offline test/unit/
 ```
 
 各スクリプトはflavorと`MEMORA_APP_MODE`を指定モードから一貫して設定します。`online`と`offline`以外は受け付けません。

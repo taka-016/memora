@@ -126,9 +126,9 @@
 ### 決定
 
 - アプリモードは`online`と`offline`だけを有効とし、`auto`を廃止する。モード未指定時は`online`とする。
-- 実行、debug APKビルド、release APKビルド、テストは、それぞれルートの`run.sh`、`build.sh`、`release.sh`、`test.sh`を入口とする。
+- 実行、debug APKビルド、release APKビルドは、それぞれルートの`run.sh`、`build.sh`、`release.sh`を入口とする。
 - 各スクリプトは第1引数のモードからflavorと`MEMORA_APP_MODE`を設定する。追加のFlutter引数はモードの後ろに指定する。
-- フォーマット、コード生成、解析、全テストを行う`check.sh`も同じモード引数を使用する。
+- テストはフォーマット、コード生成、解析も行う`check.sh`を入口とし、同じモード引数を使用する。
 
 ### 結果
 

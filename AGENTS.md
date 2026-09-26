@@ -15,15 +15,14 @@
 - `./run.sh [online|offline]` - アプリケーションを実行（デフォルト: online）
 - `./build.sh [online|offline]` - debug APKをビルド（デフォルト: online）
 - `./release.sh [online|offline]` - release APKをビルド（デフォルト: online）
-- `./test.sh [online|offline]` - 全テストを実行（デフォルト: online）
 - `flutter pub get` - 依存関係をインストール
 - `flutter clean` - ビルドキャッシュをクリア
 - `dart run build_runner build` - モックやコード生成を実行
 - `./check.sh [online|offline]` - フォーマット・解析・テストを一括実行（デフォルト: online）
 - `flutter analyze` - 静的コード解析
 - `dart format .` - コードフォーマット
-- `./test.sh online test/unit/` - オンライン版のユニットテストのみ実行
-- `./test.sh offline test/integration/` - オフライン版のインテグレーションテストを実行
+- `./check.sh online test/unit/` - オンライン版のユニットテストのみ実行
+- `./check.sh offline test/integration/` - オフライン版のインテグレーションテストを実行
 - `tree lib test` - アプリケーションとテストのディレクトリ構造を表示
 - `./release.sh [online|offline]` - `memora-<version>-<mode>.apk`を作成（デフォルト: online）
 
