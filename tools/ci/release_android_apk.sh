@@ -5,6 +5,12 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 source "$ROOT_DIR/tools/ci/app_mode_arguments.sh"
 cd "$ROOT_DIR"
 
+app_mode="$(resolve_memora_app_mode "${1:-}")"
+if [ "$#" -gt 0 ]; then
+  shift
+fi
+validate_memora_app_arguments "$@"
+
 build_name=''
 prev=''
 for arg in "$@"; do
@@ -24,16 +30,6 @@ for arg in "$@"; do
   esac
 done
 
-requested_app_mode="$(resolve_memora_app_mode "$@")"
-case "$requested_app_mode" in
-  auto|online)
-    app_mode='online'
-    ;;
-  offline)
-    app_mode='offline'
-    ;;
-esac
-
 if [ -z "$build_name" ]; then
   version_line="$(awk '/^version:/ {print $2; exit}' pubspec.yaml)"
   build_name="${version_line%%+*}"
@@ -47,24 +43,13 @@ fi
 build_arguments=()
 while [ "$#" -gt 0 ]; do
   case "$1" in
-    --dart-define=MEMORA_APP_MODE=*)
-      shift
-      ;;
     --dart-define)
-      if [ "$#" -gt 1 ] && [[ "$2" == MEMORA_APP_MODE=* ]]; then
-        shift 2
-      else
+      build_arguments+=("$1")
+      shift
+      if [ "$#" -gt 0 ]; then
         build_arguments+=("$1")
         shift
-        if [ "$#" -gt 0 ]; then
-          build_arguments+=("$1")
-          shift
-        fi
       fi
-      ;;
-    --flavor|--flavor=*)
-      echo 'flavorはMEMORA_APP_MODEから決定するため指定できません。' >&2
-      exit 1
       ;;
     *)
       build_arguments+=("$1")

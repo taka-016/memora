@@ -60,7 +60,7 @@ printf '%s\\n' "\$@" > flutter_arguments.txt
   });
 
   test('指定モードをログと成果物名で確認できる', () {
-    final result = runReleaseScript(['--dart-define=MEMORA_APP_MODE=offline']);
+    final result = runReleaseScript(['offline']);
 
     expect(result.exitCode, 0, reason: result.stderr as String);
     expect(result.stdout, contains('MEMORA_APP_MODE=offline'));
@@ -81,7 +81,7 @@ printf '%s\\n' "\$@" > flutter_arguments.txt
   });
 
   test('オンライン版を既存モードの成果物として生成する', () {
-    final result = runReleaseScript(['--dart-define=MEMORA_APP_MODE=online']);
+    final result = runReleaseScript(['online']);
 
     expect(result.exitCode, 0, reason: result.stderr as String);
     expect(result.stdout, contains('MEMORA_APP_MODE=online'));
@@ -119,14 +119,16 @@ printf '%s\\n' "\$@" > flutter_arguments.txt
     );
   });
 
-  test('不明なモードはビルド前に設定誤りとして終了する', () {
-    final result = runReleaseScript(['--dart-define=MEMORA_APP_MODE=invalid']);
+  for (final mode in ['auto', 'invalid']) {
+    test('$modeはビルド前に設定誤りとして終了する', () {
+      final result = runReleaseScript([mode]);
 
-    expect(result.exitCode, isNot(0));
-    expect(result.stderr, contains('MEMORA_APP_MODE'));
-    expect(
-      File('${testProject.path}/flutter_arguments.txt').existsSync(),
-      isFalse,
-    );
-  });
+      expect(result.exitCode, isNot(0));
+      expect(result.stderr, contains('online、offline'));
+      expect(
+        File('${testProject.path}/flutter_arguments.txt').existsSync(),
+        isFalse,
+      );
+    });
+  }
 }

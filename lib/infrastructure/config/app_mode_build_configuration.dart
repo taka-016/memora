@@ -12,16 +12,15 @@ class AppModeBuildConfiguration {
   final AppMode? forcedMode;
 
   factory AppModeBuildConfiguration.fromEnvironment() {
-    const value = String.fromEnvironment(environmentKey, defaultValue: 'auto');
+    const value = String.fromEnvironment(
+      environmentKey,
+      defaultValue: 'online',
+    );
     return AppModeBuildConfiguration.parse(value);
   }
 
   factory AppModeBuildConfiguration.parse(String value) {
     return switch (value) {
-      'auto' => const AppModeBuildConfiguration._(
-        requestedValue: 'auto',
-        forcedMode: null,
-      ),
       'online' => const AppModeBuildConfiguration._(
         requestedValue: 'online',
         forcedMode: AppMode.online,
@@ -33,7 +32,7 @@ class AppModeBuildConfiguration {
       _ => throw ArgumentError.value(
         value,
         environmentKey,
-        '$environmentKeyにはauto、online、offlineのいずれかを指定してください',
+        '$environmentKeyにはonline、offlineのいずれかを指定してください',
       ),
     };
   }

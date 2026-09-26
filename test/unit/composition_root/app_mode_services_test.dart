@@ -28,7 +28,7 @@ void main() {
   test('ビルド指定の判定結果がComposition Rootと時刻Providerへ接続される', () {
     const requested = String.fromEnvironment(
       'MEMORA_APP_MODE',
-      defaultValue: 'auto',
+      defaultValue: 'online',
     );
     final root = AppCompositionRoot.fromBuildConfiguration();
     final container = root.createContainer();
