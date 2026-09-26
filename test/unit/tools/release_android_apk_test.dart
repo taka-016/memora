@@ -37,7 +37,19 @@ void main() {
     flutterStub.writeAsStringSync('''#!/usr/bin/env bash
 set -e
 mkdir -p build/app/outputs/flutter-apk
-touch build/app/outputs/flutter-apk/app-release.apk
+flavor=''
+previous=''
+for argument in "\$@"; do
+  if [ "\$previous" = '--flavor' ]; then
+    flavor="\$argument"
+    previous=''
+    continue
+  fi
+  if [ "\$argument" = '--flavor' ]; then
+    previous='--flavor'
+  fi
+done
+touch "build/app/outputs/flutter-apk/app-\${flavor}-release.apk"
 printf '%s\\n' "\$@" > flutter_arguments.txt
 ''');
     Process.runSync('chmod', ['+x', flutterStub.path]);
@@ -61,21 +73,49 @@ printf '%s\\n' "\$@" > flutter_arguments.txt
     );
     expect(
       File('${testProject.path}/flutter_arguments.txt').readAsStringSync(),
-      contains('--dart-define=MEMORA_APP_MODE=offline'),
+      allOf(
+        contains('--flavor\noffline'),
+        contains('--dart-define=MEMORA_APP_MODE=offline'),
+      ),
     );
   });
 
-  test('未指定時はautoをログと成果物名へ使用する', () {
-    final result = runReleaseScript([]);
+  test('オンライン版を既存モードの成果物として生成する', () {
+    final result = runReleaseScript(['--dart-define=MEMORA_APP_MODE=online']);
 
     expect(result.exitCode, 0, reason: result.stderr as String);
-    expect(result.stdout, contains('MEMORA_APP_MODE=auto'));
+    expect(result.stdout, contains('MEMORA_APP_MODE=online'));
     expect(
       File(
         '${testProject.path}/build/app/outputs/flutter-apk/'
-        'memora-1.2.3-auto.apk',
+        'memora-1.2.3-online.apk',
       ).existsSync(),
       isTrue,
+    );
+    expect(
+      File('${testProject.path}/flutter_arguments.txt').readAsStringSync(),
+      allOf(
+        contains('--flavor\nonline'),
+        contains('--dart-define=MEMORA_APP_MODE=online'),
+      ),
+    );
+  });
+
+  test('未指定時はオンライン版を生成する', () {
+    final result = runReleaseScript([]);
+
+    expect(result.exitCode, 0, reason: result.stderr as String);
+    expect(result.stdout, contains('MEMORA_APP_MODE=online'));
+    expect(
+      File(
+        '${testProject.path}/build/app/outputs/flutter-apk/'
+        'memora-1.2.3-online.apk',
+      ).existsSync(),
+      isTrue,
+    );
+    expect(
+      File('${testProject.path}/flutter_arguments.txt').readAsStringSync(),
+      contains('--dart-define=MEMORA_APP_MODE=online'),
     );
   });
 

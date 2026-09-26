@@ -5,7 +5,7 @@ import java.util.Base64
 plugins {
     id("com.android.application")
     // START: FlutterFire Configuration
-    id("com.google.gms.google-services")
+    id("com.google.gms.google-services") apply false
     // END: FlutterFire Configuration
     id("org.jetbrains.kotlin.plugin.compose")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
@@ -38,6 +38,10 @@ val resolvedAppMode = when (requestedAppMode) {
     )
 }
 
+if (resolvedAppMode == "online") {
+    apply(plugin = "com.google.gms.google-services")
+}
+
 android {
     namespace = "com.example.memora"
     compileSdk = flutter.compileSdkVersion
@@ -57,7 +61,6 @@ android {
     val mapsApiKey = localProperties.getProperty("MAPS_API_KEY") ?: ""
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.example.memora"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
@@ -68,7 +71,19 @@ android {
 
         manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
         buildConfigField("String", "MAPS_API_KEY", "\"$mapsApiKey\"")
-        buildConfigField("String", "RESOLVED_APP_MODE", "\"$resolvedAppMode\"")
+    }
+
+    flavorDimensions += "appMode"
+    productFlavors {
+        create("online") {
+            dimension = "appMode"
+            buildConfigField("String", "RESOLVED_APP_MODE", "\"online\"")
+        }
+        create("offline") {
+            dimension = "appMode"
+            applicationIdSuffix = ".offline"
+            buildConfigField("String", "RESOLVED_APP_MODE", "\"offline\"")
+        }
     }
 
     buildFeatures {
@@ -90,6 +105,17 @@ android {
             signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = false
             isShrinkResources = false
+        }
+    }
+}
+
+androidComponents {
+    beforeVariants(selector().all()) { variantBuilder ->
+        val variantAppMode = variantBuilder.productFlavors
+            .firstOrNull { it.first == "appMode" }
+            ?.second
+        if (variantAppMode != null) {
+            variantBuilder.enable = variantAppMode == resolvedAppMode
         }
     }
 }

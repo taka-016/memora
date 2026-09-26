@@ -12,7 +12,8 @@
 
 ## 主要コマンド
 
-- `flutter run` - アプリケーションを実行
+- `flutter run --flavor online --dart-define=MEMORA_APP_MODE=online` - オンライン版アプリケーションを実行
+- `flutter run --flavor offline --dart-define=MEMORA_APP_MODE=offline` - オフライン版アプリケーションを実行
 - `flutter pub get` - 依存関係をインストール
 - `flutter clean` - ビルドキャッシュをクリア
 - `dart run build_runner build` - モックやコード生成を実行
@@ -35,10 +36,6 @@
 - `docs/todo.md`の項目はチェックボックス形式である必要はない（通常の箇条書きでも可）
 - `todo`を作成・整理する作業自体を表す`todo`項目は作成しないこと
 - `.gitignore`で除外されているファイルは意図してリポジトリに追加しない判断をしているため、`git add -f`での強制コミットや、処理を変更して対応する必要は無い
-
-## プルリクエスト操作前の独立レビュー
-
-- プルリクエストの作成、既存プルリクエストへのpush・本文等の更新、レビューコメントへの返信の前に、対象差分と判断根拠をサブエージェントに独立レビューしてもらう。指摘には`review-finding-handler`を適用し、妥当な指摘がなくなるまで修正と再レビューを繰り返す。ただし、今回の更新差分がドキュメントのみの場合は独立レビューを不要とする。
 
 ## MCP使用ルール
 
