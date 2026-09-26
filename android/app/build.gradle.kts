@@ -29,12 +29,12 @@ val requestedAppMode = project.findProperty("dart-defines")
     }
     ?.lastOrNull { it.startsWith("MEMORA_APP_MODE=") }
     ?.substringAfter("=")
-    ?: "auto"
+    ?: "online"
 val resolvedAppMode = when (requestedAppMode) {
-    "auto", "online" -> "online"
+    "online" -> "online"
     "offline" -> "offline"
     else -> throw GradleException(
-        "MEMORA_APP_MODEにはauto、online、offlineのいずれかを指定してください。",
+        "MEMORA_APP_MODEにはonline、offlineのいずれかを指定してください。",
     )
 }
 
