@@ -6,7 +6,13 @@ CHECK_STARTED_AT=$SECONDS
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$ROOT_DIR/tools/ci/app_mode_arguments.sh"
-if ! app_mode="$(resolve_memora_app_mode "$@")"; then
+if ! app_mode="$(resolve_memora_app_mode "${1:-}")"; then
+    exit 1
+fi
+if [ "$#" -gt 0 ]; then
+    shift
+fi
+if ! validate_memora_app_arguments "$@"; then
     exit 1
 fi
 
@@ -78,7 +84,8 @@ run_step "Build runner" dart run build_runner build
 run_step "Analyze" flutter analyze
 echo "MEMORA_APP_MODE=${app_mode}"
 
-run_step "Test" dart pub global run very_good_cli:very_good test "$@"
+run_step "Test" dart pub global run very_good_cli:very_good test \
+    "--dart-define=MEMORA_APP_MODE=$app_mode" "$@"
 
 TEST_COUNT="$(extract_test_count)"
 echo "テスト実施件数: ${TEST_COUNT}件"

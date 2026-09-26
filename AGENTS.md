@@ -12,19 +12,20 @@
 
 ## 主要コマンド
 
-- `flutter run --flavor online --dart-define=MEMORA_APP_MODE=online` - オンライン版アプリケーションを実行
-- `flutter run --flavor offline --dart-define=MEMORA_APP_MODE=offline` - オフライン版アプリケーションを実行
+- `./run.sh [online|offline]` - アプリケーションを実行（デフォルト: online）
+- `./build.sh [online|offline]` - debug APKをビルド（デフォルト: online）
+- `./release.sh [online|offline]` - release APKをビルド（デフォルト: online）
+- `./test.sh [online|offline]` - 全テストを実行（デフォルト: online）
 - `flutter pub get` - 依存関係をインストール
 - `flutter clean` - ビルドキャッシュをクリア
 - `dart run build_runner build` - モックやコード生成を実行
-- `./check.sh [--dart-define=MEMORA_APP_MODE=auto|online|offline]` - フォーマット・解析・テストを一括実行
+- `./check.sh [online|offline]` - フォーマット・解析・テストを一括実行（デフォルト: online）
 - `flutter analyze` - 静的コード解析
 - `dart format .` - コードフォーマット
-- `dart pub global run very_good_cli:very_good test` - 全テストを高速に実行
-- `flutter test test/unit/` - ユニットテストのみ実行
-- `flutter test test/integration/` - インテグレーションテストを実行
+- `./test.sh online test/unit/` - オンライン版のユニットテストのみ実行
+- `./test.sh offline test/integration/` - オフライン版のインテグレーションテストを実行
 - `tree lib test` - アプリケーションとテストのディレクトリ構造を表示
-- `./tools/ci/release_android_apk.sh [--dart-define=MEMORA_APP_MODE=auto|online|offline]` - release APKをビルドし、`memora-<version>-<mode>.apk`を作成
+- `./release.sh [online|offline]` - `memora-<version>-<mode>.apk`を作成（デフォルト: online）
 
 ## 基本ルール
 

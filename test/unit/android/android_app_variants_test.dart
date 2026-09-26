@@ -42,6 +42,12 @@ void main() {
       expect(buildGradle, contains('variantBuilder.enable ='));
     });
 
+    test('モード未指定時はオンラインを使用しautoを受け付けない', () {
+      expect(buildGradle, contains('?: "online"'));
+      expect(buildGradle, isNot(contains('"auto", "online"')));
+      expect(buildGradle, contains('MEMORA_APP_MODEにはonline、offlineのいずれか'));
+    });
+
     test('Firebase設定はオンライン版だけへ適用する', () {
       expect(
         buildGradle,

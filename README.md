@@ -81,35 +81,30 @@ Androidではオンライン版とオフライン版を別アプリとしてビ�
 
 - `online`: オンラインモードを強制
 - `offline`: オフラインモードを強制
-- `auto`: アプリの自動判定へ委譲。現在は既存動作を維持するためオンラインモードに決定
-- 未指定: `auto`と同じ
+- 未指定: `online`として実行
 
-Androidで実行するときは、モードと同名のflavorを指定します。flavorと`MEMORA_APP_MODE`が一致しない構成はビルドできません。
-
-```bash
-flutter run \
-  --flavor online \
-  --dart-define=MEMORA_APP_MODE=online
-flutter run \
-  --flavor offline \
-  --dart-define=MEMORA_APP_MODE=offline
-```
-
-テストと全体検証はAndroidのflavorを選択しないため、従来どおり`MEMORA_APP_MODE`だけを指定します。
+実行、debug APKビルド、release APKビルド、テストは、各スクリプトの第1引数に`online`または`offline`を指定します。省略時は`online`です。
 
 ```bash
-flutter test --dart-define=MEMORA_APP_MODE=offline
-./check.sh --dart-define=MEMORA_APP_MODE=offline
+./run.sh
+./run.sh offline
+./build.sh
+./build.sh offline
+./release.sh
+./release.sh offline
+./test.sh
+./test.sh offline
 ```
 
-release APKは次のコマンドでそれぞれ生成します。`auto`または未指定はオンライン版として扱います。
+テスト対象や追加オプションを指定する場合は、モードの後ろへ指定します。フォーマット・コード生成・解析・全テストの一括検証も同じモード指定を使用します。
 
 ```bash
-./tools/ci/release_android_apk.sh \
-  --dart-define=MEMORA_APP_MODE=online
-./tools/ci/release_android_apk.sh \
-  --dart-define=MEMORA_APP_MODE=offline
+./test.sh offline test/unit/
+./check.sh
+./check.sh offline
 ```
+
+各スクリプトはflavorと`MEMORA_APP_MODE`を指定モードから一貫して設定します。`online`と`offline`以外は受け付けません。
 
 成果物は次のパスへ出力されます。
 

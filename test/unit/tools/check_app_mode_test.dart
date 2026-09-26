@@ -47,7 +47,7 @@ printf '$command %s\\n' "\$*" >> "\$MEMORA_TEST_COMMAND_LOG"
   });
 
   test('モード指定をテストへ渡してログへ出力する', () {
-    final result = runCheckScript(['--dart-define=MEMORA_APP_MODE=offline']);
+    final result = runCheckScript(['offline']);
 
     expect(result.exitCode, 0, reason: result.stderr as String);
     expect(result.stdout, contains('MEMORA_APP_MODE=offline'));
@@ -60,8 +60,36 @@ printf '$command %s\\n' "\$*" >> "\$MEMORA_TEST_COMMAND_LOG"
     );
   });
 
-  test('不明なモードは検証開始前に設定誤りとして終了する', () {
-    final result = runCheckScript(['--dart-define=MEMORA_APP_MODE=invalid']);
+  test('未指定時はオンラインモードで検証する', () {
+    final result = runCheckScript([]);
+
+    expect(result.exitCode, 0, reason: result.stderr as String);
+    expect(result.stdout, contains('MEMORA_APP_MODE=online'));
+    expect(
+      commandLog.readAsStringSync(),
+      contains(
+        'dart pub global run very_good_cli:very_good test '
+        '--dart-define=MEMORA_APP_MODE=online',
+      ),
+    );
+  });
+
+  for (final mode in ['auto', 'invalid']) {
+    test('$modeは検証開始前に設定誤りとして終了する', () {
+      final result = runCheckScript([mode]);
+
+      expect(result.exitCode, isNot(0));
+      expect(result.stderr, contains('online、offline'));
+      expect(commandLog.existsSync(), isFalse);
+    });
+  }
+
+  test('追加引数によるモードの上書きは検証開始前に拒否する', () {
+    final result = runCheckScript([
+      'offline',
+      '--dart-define',
+      'MEMORA_APP_MODE=online',
+    ]);
 
     expect(result.exitCode, isNot(0));
     expect(result.stderr, contains('MEMORA_APP_MODE'));
