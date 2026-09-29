@@ -1,7 +1,11 @@
+import 'package:memora/composition_root/providers/location_providers.dart';
+import 'package:memora/presentation/shared/map_views/placeholder_map_view_builder.dart';
+import 'package:memora/composition_root/providers/app_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
+import 'package:memora/application/models/app_mode.dart';
 import 'package:memora/application/services/auth_service.dart';
 import 'package:memora/application/queries/group/group_query_service.dart';
 import 'package:memora/application/queries/member/member_query_service.dart';
@@ -15,6 +19,7 @@ import 'package:memora/presentation/notifiers/auth/auth_notifier.dart';
 import 'package:memora/presentation/app/top_page.dart';
 import 'package:memora/infrastructure/factories/auth_service_factory.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
+import 'package:memora/infrastructure/config/resolved_app_mode_provider.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
@@ -64,9 +69,10 @@ void main() {
     ).thenAnswer((_) async => []);
   });
 
-  Widget createTestApp() {
+  Widget createTestApp({AppMode appMode = AppMode.online}) {
     return ProviderScope(
       overrides: [
+        appModeProvider.overrideWithValue(appMode),
         authNotifierProvider.overrideWith(FakeAuthNotifier.authenticated),
         memberQueryServiceProvider.overrideWithValue(mockMemberQueryService),
         authServiceProvider.overrideWithValue(mockAuthService),
@@ -77,7 +83,9 @@ void main() {
         appInitialLocationProvider.overrideWithValue(
           const GroupListRoute().location,
         ),
-        appTestEnvironmentProvider.overrideWithValue(true),
+        mapViewBuilderProvider.overrideWithValue(
+          const PlaceholderMapViewBuilder(),
+        ),
       ],
       child: const app.MyApp(),
     );
@@ -101,6 +109,15 @@ void main() {
       // Assert
       final MaterialApp app = tester.widget(find.byType(MaterialApp));
       expect(app.title, 'memora');
+    });
+
+    testWidgets('オフライン版のアプリタイトルがmemora liteに設定されている', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(createTestApp(appMode: AppMode.offline));
+
+      final MaterialApp materialApp = tester.widget(find.byType(MaterialApp));
+      expect(materialApp.title, 'memora lite');
     });
 
     testWidgets('日本語ロケールが設定されている', (WidgetTester tester) async {

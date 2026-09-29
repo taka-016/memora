@@ -21,7 +21,8 @@ Memoraは、家族や友人などのグループで思い出を記録・整理�
 
 - [ユーザーストーリー](./docs/user_stories.md) - 利用シナリオと受け入れ条件
 - [ER図](./docs/er_diagram.md) - データベース設計
-- [ユースケース図](./docs/usecase_diagram.md) - システム利用シナリオ
+- [ユースケース図](./docs/usecase_diagram.md) - 主要な利用目的とアプリモードごとの利用可否
+- [ADR](./docs/adr.md) - 今後も維持するアーキテクチャ上の判断
 - [TODO一覧](./docs/todo.md) - 開発進捗
 
 ## 開発環境
@@ -76,33 +77,63 @@ Google Cloud Consoleで以下のAPIを有効化し、対応するAPIキーを設
 
 ### アプリモード指定
 
-単一のAndroidアプリ構成のまま、`MEMORA_APP_MODE`で起動時に決定するアプリモードを指定できます。
+Androidではオンライン版とオフライン版を別アプリとしてビルドします。オンライン版のapplication IDは`com.example.memora`、オフライン版は`com.example.memora.offline`です。Androidのアプリサンドボックスも分かれるため、SQLite、SharedPreferences、認証状態、WorkManager、Androidウィジェットの設定とキャッシュは共有されません。
 
 - `online`: オンラインモードを強制
 - `offline`: オフラインモードを強制
-- `auto`: アプリの自動判定へ委譲。現在は既存動作を維持するためオンラインモードに決定
-- 未指定: `auto`と同じ
+- 未指定: `online`として実行
 
-実行、テスト、全体検証では次のように指定します。
-
-```bash
-flutter run --dart-define=MEMORA_APP_MODE=offline
-flutter test --dart-define=MEMORA_APP_MODE=offline
-./check.sh --dart-define=MEMORA_APP_MODE=offline
-```
-
-release APKは指定値をログへ表示し、`build/app/outputs/flutter-apk/memora-<version>-<mode>.apk`として出力します。
+実行、debug APKビルド、release APKビルド、テストは、各スクリプトの第1引数に`online`または`offline`を指定します。省略時は`online`です。テストはフォーマット・コード生成・解析も行う`check.sh`から実行します。
 
 ```bash
-./tools/ci/release_android_apk.sh \
-  --dart-define=MEMORA_APP_MODE=offline
+./run.sh
+./run.sh offline
+./build.sh
+./build.sh offline
+./release.sh
+./release.sh offline
+./check.sh
+./check.sh offline
 ```
 
-不明な値は設定誤りとして起動・テスト・ビルドを失敗させます。同じインストールのままモードを変更する運用には対応していないため、指定値を変更したAPKを利用するときは、先にアプリをアンインストールするかデータを消去してください。Firebase設定、`MAPS_API_KEY`、Android Manifestの権限は両モードで共通です。
+テスト対象や追加オプションを指定する場合は、`check.sh`のモードの後ろへ指定します。
+
+```bash
+./check.sh offline test/unit/
+```
+
+各スクリプトはflavorと`MEMORA_APP_MODE`を指定モードから一貫して設定します。`online`と`offline`以外は受け付けません。
+
+成果物は次のパスへ出力されます。
+
+- オンライン版: `build/app/outputs/flutter-apk/memora-<version>-online.apk`
+- オフライン版: `build/app/outputs/flutter-apk/memora-<version>-offline.apk`
+
+同一端末へ両方をインストールする場合は、生成したバージョンに合わせて次のように実行します。
+
+```bash
+adb install -r build/app/outputs/flutter-apk/memora-1.0.0-online.apk
+adb install -r build/app/outputs/flutter-apk/memora-1.0.0-offline.apk
+```
+
+一方だけを初期化またはアンインストールする場合は、対象のapplication IDを指定します。もう一方のデータとAndroidウィジェット更新には影響しません。
+
+```bash
+adb shell pm clear com.example.memora
+adb shell pm clear com.example.memora.offline
+adb uninstall com.example.memora
+adb uninstall com.example.memora.offline
+```
+
+不明なモードは設定誤りとして起動・テスト・ビルドを失敗させます。オンライン版だけが既存のFirebase設定を使用し、オフライン版のビルドは別application IDのFirebase設定を要求しません。`MAPS_API_KEY`とAndroid Manifestの権限定義は共通ですが、オフラインでは外部SDKを初期化しません。
+
+モード判定は各Factoryと起動処理に接続されています。オフラインでは外部SDKを初期化せず、端末時計を使用します。ログはdebug時だけ端末に出力し、releaseでは保存・送信しません。
+
+オフラインでは端末内の利用者IDと本人情報を保存・復元し、ログインを経由せず通常の画面へ起動します。地図・訪問場所管理・場所検索・現在地・共有・招待とアカウント設定は利用できません。設定画面でモード、保存先、データ消失条件を確認できます。業務データはアプリ内部のSQLiteへ保存し、本人情報の編集内容も再起動後に復元します。場所付きの保存要求は拒否します。設定画面では、パスワードで認証付き暗号化した論理バックアップをシステムファイル選択画面へ保存し、全件置換で復元できます。アプリモードの依存構成、Androidウィジェット、オフラインデータベース、手動バックアップ・復元の判断は[ADR](docs/adr.md)を参照してください。
 
 ### Firebase設定
 
-本アプリはデータ永続化にFirebase/Firestore、認証にFirebase Authenticationを使用します。Firebase Consoleで以下のAPIを有効化してください。
+オンラインモードはデータ永続化にFirebase/Firestore、認証にFirebase Authenticationを使用します。Firebase Consoleで以下のAPIを有効化してください。
 
 - **Identity Toolkit API**: Firebase Authenticationに必要
 - **Token Service API**: セキュアなトークン管理に必要

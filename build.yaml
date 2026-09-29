@@ -4,3 +4,6 @@ targets:
       riverpod_generator:
         options:
           provider_name_strip_pattern: '^$'
+      drift_dev:
+        options:
+          generate_manager: false

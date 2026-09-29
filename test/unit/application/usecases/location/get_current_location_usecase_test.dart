@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/usecases/location/get_current_location_usecase.dart';
 import 'package:memora/core/models/coordinate.dart';
-import 'package:memora/domain/services/current_location_service.dart';
+import 'package:memora/application/services/current_location_service.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 

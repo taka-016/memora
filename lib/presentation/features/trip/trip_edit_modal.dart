@@ -1,3 +1,7 @@
+import 'package:memora/application/models/app_capabilities.dart';
+import 'package:memora/composition_root/providers/location_providers.dart';
+import 'package:memora/presentation/shared/map_views/map_view_builder.dart';
+import 'package:memora/composition_root/providers/app_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -7,9 +11,7 @@ import 'package:memora/application/dtos/trip/location_dto.dart';
 import 'package:memora/application/dtos/trip/task_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/exceptions/application_validation_exception.dart';
-import 'package:memora/application/usecases/location/get_nearby_location_name_usecase.dart';
 import 'package:memora/core/app_logger.dart';
-import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/features/trip/itinerary_view.dart';
 import 'package:memora/presentation/features/trip/task_view.dart';
 import 'package:memora/presentation/features/trip/trip_edit_form_view.dart';
@@ -27,7 +29,7 @@ class TripEditModal extends HookConsumerWidget {
     required this.groupMembers,
     this.tripEntry,
     required this.onSave,
-    this.isTestEnvironment = false,
+    this.mapViewBuilder,
     this.year,
   });
 
@@ -35,11 +37,19 @@ class TripEditModal extends HookConsumerWidget {
   final List<GroupMemberDto> groupMembers;
   final TripEntryDto? tripEntry;
   final TripEditSave onSave;
-  final bool isTestEnvironment;
+  final MapViewBuilder? mapViewBuilder;
   final int? year;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final mapsAvailable = ref
+        .watch(appCapabilitiesProvider)
+        .availability(AppFeature.maps)
+        .isAvailable;
+    final mapViewBuilder = mapsAvailable
+        ? (this.mapViewBuilder ??
+              ref.watch<MapViewBuilder>(mapViewBuilderProvider))
+        : null;
     final errorMessage = useState<String?>(null);
     final expandedSection = useState<TripEditExpandedSection?>(null);
     final editStateNotifier = ref.read(editStateNotifierProvider.notifier);
@@ -241,7 +251,7 @@ class TripEditModal extends HookConsumerWidget {
             child: TripEditFormView(
               value: draftTripEntry.value,
               locations: currentLocations(),
-              isTestEnvironment: isTestEnvironment,
+              mapViewBuilder: mapViewBuilder,
               configuredYear: tripEntry?.year ?? year,
               clock: clock,
               onChanged: updateDraftTripEntry,
@@ -301,6 +311,7 @@ class TripEditModal extends HookConsumerWidget {
           );
         case TripEditExpandedSection.itinerary:
           return ItineraryView(
+            clock: clock,
             tripId: tripEntry?.id,
             groupId: groupId,
             tripStartDate: draftTripEntry.value.startDate,
@@ -308,7 +319,7 @@ class TripEditModal extends HookConsumerWidget {
             locations: currentLocations(),
             onLocationCreated: saveTripLocation,
             onLocationDeleted: deleteTripLocation,
-            isTestEnvironment: isTestEnvironment,
+            mapViewBuilder: mapViewBuilder,
             onChanged: updateDraftItineraryItems,
             onClose: () => expandedSection.value = null,
           );

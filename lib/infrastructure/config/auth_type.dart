@@ -1,1 +1,0 @@
-enum AuthType { firebase, local }

@@ -50,6 +50,7 @@ erDiagram
         string groupId FK "NOT NULL"
         string memberId FK "NOT NULL"
         boolean isAdministrator "NOT NULL"
+        number orderIndex "NOT NULL"
     }
     group_events {
         string id PK
@@ -132,3 +133,7 @@ erDiagram
     groups ||--o{ dvc_point_usages : "id → groupId"
     externally_managed_accounts ||--|| members : "id → accountId"
 ```
+
+## オフラインモードの物理スキーマ
+
+上図は共通の業務モデルとFirestoreの関連を示す。SQLiteの物理定義と制約・indexは[`offline_schema.drift`](../lib/infrastructure/database/offline_schema.drift)、保存形式とマイグレーションの方針は[ADR-002](adr.md#adr-002-オフラインデータをsqliteへ保存する)を参照。

@@ -1,3 +1,19 @@
+import 'package:memora/composition_root/providers/offline_database_provider.dart';
+import 'package:memora/infrastructure/queries/trip/sqlite_trip_entry_query_service.dart';
+import 'package:memora/infrastructure/queries/trip/sqlite_itinerary_item_query_service.dart';
+import 'package:memora/infrastructure/queries/trip/sqlite_task_query_service.dart';
+import 'package:memora/infrastructure/queries/group/sqlite_group_query_service.dart';
+import 'package:memora/infrastructure/queries/group/sqlite_group_event_query_service.dart';
+import 'package:memora/infrastructure/queries/dvc/sqlite_dvc_point_usage_query_service.dart';
+import 'package:memora/infrastructure/queries/dvc/sqlite_dvc_point_contract_query_service.dart';
+import 'package:memora/infrastructure/queries/dvc/sqlite_dvc_limited_point_query_service.dart';
+import 'package:memora/infrastructure/queries/member/sqlite_member_event_query_service.dart';
+import 'package:memora/infrastructure/queries/member/sqlite_member_query_service.dart';
+import 'package:memora/application/models/app_mode.dart';
+import 'package:memora/application/models/app_capabilities.dart';
+import 'package:memora/application/exceptions/feature_unavailable_exception.dart';
+import 'package:memora/infrastructure/config/resolved_app_mode_provider.dart';
+import 'package:memora/composition_root/providers/app_providers.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/queries/dvc/dvc_limited_point_query_service.dart';
@@ -12,9 +28,6 @@ import 'package:memora/application/queries/trip/itinerary_item_query_service.dar
 import 'package:memora/application/queries/trip/location_query_service.dart';
 import 'package:memora/application/queries/trip/task_query_service.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
-import 'package:memora/core/time/app_clock.dart';
-import 'package:memora/infrastructure/config/database_type.dart';
-import 'package:memora/infrastructure/config/database_type_provider.dart';
 import 'package:memora/infrastructure/queries/dvc/firestore_dvc_limited_point_query_service.dart';
 import 'package:memora/infrastructure/queries/dvc/firestore_dvc_point_contract_query_service.dart';
 import 'package:memora/infrastructure/queries/dvc/firestore_dvc_point_usage_query_service.dart';
@@ -97,22 +110,89 @@ final dvcPointUsageQueryServiceProvider = Provider<DvcPointUsageQueryService>((
 });
 
 class QueryServiceFactory {
-  static T create<T extends Object>({required Ref ref}) {
-    final dbType = ref.watch(databaseTypeProvider);
-    return _createQueryServiceByType<T>(dbType, ref: ref);
+  static T create<T extends Object>({
+    required Ref ref,
+    bool rethrowOnError = false,
+  }) {
+    final mode = ref.watch(appModeProvider);
+    return _createQueryServiceByMode<T>(
+      mode,
+      ref: ref,
+      rethrowOnError: rethrowOnError,
+    );
   }
 
-  static T _createQueryServiceByType<T extends Object>(
-    DatabaseType dbType, {
+  static T _createQueryServiceByMode<T extends Object>(
+    AppMode mode, {
     required Ref ref,
+    required bool rethrowOnError,
   }) {
-    switch (dbType) {
-      case DatabaseType.firestore:
-        return _createFirestoreQueryService<T>(ref: ref);
-      case DatabaseType.sqlite:
-        throw UnimplementedError(
-          'Supabase implementation is not yet available',
+    switch (mode) {
+      case AppMode.online:
+        return _createFirestoreQueryService<T>(
+          ref: ref,
+          rethrowOnError: rethrowOnError,
         );
+      case AppMode.offline:
+        if (T == TripEntryQueryService) {
+          return SqliteTripEntryQueryService(ref.watch(offlineDatabaseProvider))
+              as T;
+        }
+        if (T == ItineraryItemQueryService) {
+          return SqliteItineraryItemQueryService(
+            ref.watch(offlineDatabaseProvider),
+          ) as T;
+        }
+        if (T == TaskQueryService) {
+          return SqliteTaskQueryService(ref.watch(offlineDatabaseProvider))
+              as T;
+        }
+        if (T == GroupQueryService) {
+          return SqliteGroupQueryService(ref.watch(offlineDatabaseProvider))
+              as T;
+        }
+        if (T == GroupEventQueryService) {
+          return SqliteGroupEventQueryService(
+            ref.watch(offlineDatabaseProvider),
+          ) as T;
+        }
+        if (T == DvcPointUsageQueryService) {
+          return SqliteDvcPointUsageQueryService(
+            ref.watch(offlineDatabaseProvider),
+          ) as T;
+        }
+        if (T == DvcPointContractQueryService) {
+          return SqliteDvcPointContractQueryService(
+            ref.watch(offlineDatabaseProvider),
+          ) as T;
+        }
+        if (T == DvcLimitedPointQueryService) {
+          return SqliteDvcLimitedPointQueryService(
+            ref.watch(offlineDatabaseProvider),
+          ) as T;
+        }
+        if (T == MemberEventQueryService) {
+          return SqliteMemberEventQueryService(
+            ref.watch(offlineDatabaseProvider),
+          ) as T;
+        }
+        if (T == MemberQueryService) {
+          return SqliteMemberQueryService(ref.watch(offlineDatabaseProvider))
+              as T;
+        }
+        if (T == MemberInvitationQueryService) {
+          throw const FeatureUnavailableException(
+            AppFeature.invitations,
+            'この機能はオンラインモードで利用できます。',
+          );
+        }
+        if (T == LocationQueryService) {
+          throw const FeatureUnavailableException(
+            AppFeature.maps,
+            'この機能はオンラインモードで利用できます。',
+          );
+        }
+        throw ArgumentError('Unknown query service type: $T');
     }
   }
 
@@ -120,22 +200,23 @@ class QueryServiceFactory {
     required Ref ref,
     bool rethrowOnError = false,
   }) {
-    final dbType = ref.watch(databaseTypeProvider);
-    switch (dbType) {
-      case DatabaseType.firestore:
+    final mode = ref.watch(appModeProvider);
+    switch (mode) {
+      case AppMode.online:
         return FirestoreTripEntryQueryService(
           firestore: ref.watch(firebaseFirestoreProvider),
           clock: ref.watch(appClockProvider),
           rethrowOnError: rethrowOnError,
         );
-      case DatabaseType.sqlite:
-        throw UnimplementedError(
-          'Supabase implementation is not yet available',
-        );
+      case AppMode.offline:
+        return SqliteTripEntryQueryService(ref.watch(offlineDatabaseProvider));
     }
   }
 
-  static T _createFirestoreQueryService<T>({required Ref ref}) {
+  static T _createFirestoreQueryService<T>({
+    required Ref ref,
+    required bool rethrowOnError,
+  }) {
     if (T == GroupQueryService) {
       return FirestoreGroupQueryService() as T;
     }
@@ -143,13 +224,17 @@ class QueryServiceFactory {
       return FirestoreGroupEventQueryService() as T;
     }
     if (T == TripEntryQueryService) {
-      return createTripEntryQueryService(ref: ref) as T;
+      return createTripEntryQueryService(
+        ref: ref,
+        rethrowOnError: rethrowOnError,
+      ) as T;
     }
     if (T == TaskQueryService) {
       return FirestoreTaskQueryService() as T;
     }
     if (T == ItineraryItemQueryService) {
       return FirestoreItineraryItemQueryService(
+        rethrowOnError: rethrowOnError,
         firestore: ref.watch(firebaseFirestoreProvider),
       ) as T;
     }
@@ -179,3 +264,11 @@ class QueryServiceFactory {
     throw ArgumentError('Unknown query service type: $T');
   }
 }
+
+final androidWidgetItineraryItemQueryServiceProvider =
+    Provider<ItineraryItemQueryService>((ref) {
+      return QueryServiceFactory.create<ItineraryItemQueryService>(
+        ref: ref,
+        rethrowOnError: true,
+      );
+    });

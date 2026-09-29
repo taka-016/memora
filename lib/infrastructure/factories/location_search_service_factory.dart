@@ -1,27 +1,17 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:memora/application/models/app_mode.dart';
 import 'package:memora/application/services/location_search_service.dart';
-import 'package:memora/infrastructure/config/location_search_api_type.dart';
-import 'package:memora/infrastructure/config/location_search_api_type_provider.dart';
+import 'package:memora/infrastructure/config/resolved_app_mode_provider.dart';
 import 'package:memora/infrastructure/services/places_sdk_location_search_service.dart';
+import 'package:memora/infrastructure/services/unavailable_location_services.dart';
 
 final locationSearchServiceProvider = Provider<LocationSearchService>((ref) {
-  return LocationSearchServiceFactory.create(ref: ref);
+  return LocationSearchServiceFactory.create(ref.watch(appModeProvider));
 });
 
 class LocationSearchServiceFactory {
-  static LocationSearchService create({required Ref ref}) {
-    final apiType = ref.watch(locationSearchApiTypeProvider);
-    return _createServiceByType(apiType: apiType);
-  }
-
-  static LocationSearchService _createServiceByType({
-    required LocationSearchApiType apiType,
-  }) {
-    switch (apiType) {
-      case LocationSearchApiType.googlePlaces:
-        return PlacesSdkLocationSearchService();
-      case LocationSearchApiType.local:
-        throw UnimplementedError('Local implementation is not yet available');
-    }
-  }
+  static LocationSearchService create(AppMode mode) => switch (mode) {
+    AppMode.online => PlacesSdkLocationSearchService(),
+    AppMode.offline => const UnavailableLocationSearchService(),
+  };
 }

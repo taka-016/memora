@@ -5,22 +5,26 @@
 - ユーザーストーリー: docs/user_stories.md
 - ユースケース図: docs/usecase_diagram.md
 - ER図: docs/er_diagram.md
+- ADR: docs/adr.md
 - todo: docs/todo.md
+
+今後も維持するアーキテクチャ上の判断は、機能領域を問わず`docs/adr.md`へADRとして追記すること。判断ごとに連番を付け、「ステータス」「コンテキスト」「決定」「結果」を記載し、機能ごとの設計資料を新たに作成しないこと。
 
 ## 主要コマンド
 
-- `flutter run` - アプリケーションを実行
+- `./run.sh [online|offline]` - アプリケーションを実行（デフォルト: online）
+- `./build.sh [online|offline]` - debug APKをビルド（デフォルト: online）
+- `./release.sh [online|offline]` - release APKをビルド（デフォルト: online）
 - `flutter pub get` - 依存関係をインストール
 - `flutter clean` - ビルドキャッシュをクリア
 - `dart run build_runner build` - モックやコード生成を実行
-- `./check.sh [--dart-define=MEMORA_APP_MODE=auto|online|offline]` - フォーマット・解析・テストを一括実行
+- `./check.sh [online|offline]` - フォーマット・解析・テストを一括実行（デフォルト: online）
 - `flutter analyze` - 静的コード解析
 - `dart format .` - コードフォーマット
-- `dart pub global run very_good_cli:very_good test` - 全テストを高速に実行
-- `flutter test test/unit/` - ユニットテストのみ実行
-- `flutter test test/integration/` - インテグレーションテストを実行
+- `./check.sh online test/unit/` - オンライン版のユニットテストのみ実行
+- `./check.sh offline test/integration/` - オフライン版のインテグレーションテストを実行
 - `tree lib test` - アプリケーションとテストのディレクトリ構造を表示
-- `./tools/ci/release_android_apk.sh [--dart-define=MEMORA_APP_MODE=auto|online|offline]` - release APKをビルドし、`memora-<version>-<mode>.apk`を作成
+- `./release.sh [online|offline]` - `memora-<version>-<mode>.apk`を作成（デフォルト: online）
 
 ## 基本ルール
 
@@ -58,6 +62,8 @@
 - UIが操作性、アクセシビリティ、表示崩れへの耐性を備えているか確認する
 - テストが仕様上重要な振る舞いと失敗ケースを安定して検証しているか確認する
 - 仕様、実装、テスト、ドキュメント、変更説明の間に矛盾がないか確認する
+- レビュー指摘は実際の発生条件と影響を確認し、対応による複雑性と比較して対応要否を判断する
+- ユーザーが認識する表示・操作結果に影響せず、Firestore・SQLite等の正本データに欠損・不整合を起こさず、ハング・クラッシュ・復旧不能にならない軽微なエッジケースは、対応不要とする
 
 ## アーキテクチャ
 

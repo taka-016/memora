@@ -1,3 +1,8 @@
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:memora/composition_root/providers/app_providers.dart';
+import 'package:memora/application/models/app_capabilities.dart';
+import 'package:memora/presentation/shared/map_views/map_view_builder.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -9,7 +14,7 @@ import 'package:memora/core/models/coordinate.dart';
 import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
 import 'package:memora/presentation/shared/map_views/location_map_dialog.dart';
-import 'package:memora/presentation/shared/map_views/map_view_factory.dart';
+
 import 'package:memora/presentation/shared/sheets/bottom_sheet_content_padding.dart';
 import 'package:memora/presentation/shared/sheets/location_detail_panel_frame.dart';
 import 'package:memora/presentation/shared/supported_year_range.dart';
@@ -19,7 +24,7 @@ typedef ItineraryLocationCreated = Future<LocationDto> Function(
   LocationDto location,
 );
 
-class ItineraryItemEditBottomSheet extends HookWidget {
+class ItineraryItemEditBottomSheet extends HookConsumerWidget {
   const ItineraryItemEditBottomSheet({
     super.key,
     required this.item,
@@ -29,9 +34,9 @@ class ItineraryItemEditBottomSheet extends HookWidget {
     this.onLocationCreated,
     this.onLocationUnassigned,
     this.otherLocationIds = const {},
-    this.isTestEnvironment = false,
+    required this.mapViewBuilder,
     required this.onSaved,
-    this.clock,
+    required this.clock,
   });
 
   final ItineraryItemDto item;
@@ -41,12 +46,16 @@ class ItineraryItemEditBottomSheet extends HookWidget {
   final ItineraryLocationCreated? onLocationCreated;
   final Future<void> Function(LocationDto location)? onLocationUnassigned;
   final Set<String> otherLocationIds;
-  final bool isTestEnvironment;
+  final MapViewBuilder? mapViewBuilder;
   final ValueChanged<ItineraryItemDto> onSaved;
-  final AppClock? clock;
+  final AppClock clock;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final mapsAvailable = ref
+        .watch(appCapabilitiesProvider)
+        .availability(AppFeature.maps)
+        .isAvailable;
     final nameController = useTextEditingController(text: item.name);
     final startDate = useState<DateTime?>(
       datePartOfDateTime(item.startDateTime),
@@ -67,7 +76,7 @@ class ItineraryItemEditBottomSheet extends HookWidget {
     final createdLocationIds = useRef(<String>{});
     final createdLocationsById = useRef(<String, LocationDto>{});
     final retainedCreatedLocationId = useRef<String?>(null);
-    final effectiveClock = clock ?? NtpSynchronizedAppClock();
+    final effectiveClock = clock;
 
     useEffect(() {
       mapLocations.value = List<LocationDto>.from(locations);
@@ -352,9 +361,6 @@ class ItineraryItemEditBottomSheet extends HookWidget {
       if (location == null && !hasMapCallbacks) {
         return const SizedBox.shrink();
       }
-      final mapViewType = isTestEnvironment
-          ? MapViewType.placeholder
-          : MapViewType.google;
 
       Future<void> showLocationMap() async {
         var dialogLocations = List<LocationDto>.from(mapLocations.value);
@@ -434,7 +440,7 @@ class ItineraryItemEditBottomSheet extends HookWidget {
 
                 return LocationMapDialog(
                   dialogKey: const Key('itinerary_location_map_dialog'),
-                  mapViewType: mapViewType,
+                  mapViewBuilder: mapViewBuilder!,
                   locations: dialogLocations,
                   selectedLocation: selectedLocation.value,
                   highlightSelectedLocation: true,
@@ -595,7 +601,7 @@ class ItineraryItemEditBottomSheet extends HookWidget {
                   : null,
             ),
             const SizedBox(height: 12),
-            buildLocationSection(),
+            if (mapsAvailable) buildLocationSection(),
             const SizedBox(height: 12),
             TextField(
               key: const Key('itinerary_edit_memo_field'),

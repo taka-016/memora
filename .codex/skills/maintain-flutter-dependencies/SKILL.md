@@ -46,7 +46,12 @@ flutter pub outdated
 - `android/app/build.gradle.kts`
   - Java、Kotlin JVM target、NDK、compileSdk、targetSdk、ネイティブ依存
 
-更新前に `./check.sh` と `flutter build apk --debug` を実行する。既存の失敗やログがある場合は更新起因と混同せず、結果を記録してから進める。
+更新前に `./check.sh` と、オンライン・オフライン両方のdebug APKビルドを実行する。既存の失敗やログがある場合は更新起因と混同せず、結果を記録してから進める。
+
+```bash
+flutter build apk --debug --flavor online --dart-define=MEMORA_APP_MODE=online
+flutter build apk --debug --flavor offline --dart-define=MEMORA_APP_MODE=offline
+```
 
 ## 2. 更新候補と互換性を調査する
 
@@ -112,7 +117,8 @@ Flutter更新後のAndroidテンプレート差分が必要なら、同じFlutte
 flutter pub get
 flutter pub outdated
 ./check.sh
-flutter build apk --debug
+flutter build apk --debug --flavor online --dart-define=MEMORA_APP_MODE=online
+flutter build apk --debug --flavor offline --dart-define=MEMORA_APP_MODE=offline
 ```
 
 加えて次を確認する。

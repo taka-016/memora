@@ -1,10 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:home_widget/home_widget.dart';
 import 'package:memora/application/dtos/android_widget/android_widget_itinerary_cache_dto.dart';
 import 'package:memora/application/services/android_widget_cache_storage.dart';
+import 'package:path_provider/path_provider.dart';
 
 class HomeWidgetAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
   const HomeWidgetAndroidWidgetCacheStorage();
@@ -35,18 +37,7 @@ class HomeWidgetAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
 
   @override
   Future<String?> getSelectedItineraryDateId() async {
-    final value = await HomeWidget.getWidgetData<String>(
-      selectedItineraryDateIdKey,
-    );
-    return value == null || value.isEmpty ? null : value;
-  }
-
-  @override
-  Future<void> saveSelectedItineraryDateId(String? itineraryDateId) async {
-    await HomeWidget.saveWidgetData<String>(
-      selectedItineraryDateIdKey,
-      itineraryDateId ?? '',
-    );
+    return (await loadItineraryCache())?.selectedItineraryDateId;
   }
 
   @override
@@ -70,27 +61,48 @@ class HomeWidgetAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
   @override
   Future<void> saveItineraryCache(AndroidWidgetItineraryCacheDto cache) async {
     final json = jsonEncode(cache.toJson());
-    await HomeWidget.saveFile(
-      cacheFileKey,
-      Uint8List.fromList(utf8.encode(json)),
-      extension: 'json',
+    await _saveCacheFile(Uint8List.fromList(utf8.encode(json)));
+    await HomeWidget.saveWidgetData<String>(
+      lastUpdatedAtKey,
+      cache.lastUpdatedAt.toIso8601String(),
     );
-    await Future.wait([
-      saveSelectedItineraryDateId(cache.selectedItineraryDateId),
-      HomeWidget.saveWidgetData<String>(
-        lastUpdatedAtKey,
-        cache.lastUpdatedAt.toIso8601String(),
-      ),
-    ]);
+  }
+
+  Future<void> _saveCacheFile(Uint8List bytes) async {
+    final supportDirectory = await getApplicationSupportDirectory();
+    final widgetDirectory = Directory('${supportDirectory.path}/home_widget');
+    await widgetDirectory.create(recursive: true);
+    final suffix =
+        '${DateTime.now().microsecondsSinceEpoch}_'
+        '${Random.secure().nextInt(1 << 32)}';
+    final temporaryFile = File(
+      '${widgetDirectory.path}/$cacheFileKey.$suffix.tmp',
+    );
+    await temporaryFile.create(exclusive: true);
+    try {
+      await temporaryFile.writeAsBytes(bytes, flush: true);
+      final publishedFile = await temporaryFile.rename(
+        '${widgetDirectory.path}/$cacheFileKey.json',
+      );
+      await HomeWidget.saveWidgetData<String>(
+        cacheFileKey,
+        publishedFile.path,
+        deleteFile: false,
+      );
+    } finally {
+      if (await temporaryFile.exists()) {
+        await temporaryFile.delete();
+      }
+    }
   }
 
   @override
   Future<void> clear() async {
     await Future.wait([
       clearTargetGroupId(),
-      saveSelectedItineraryDateId(null),
+      HomeWidget.saveWidgetData<String>(selectedItineraryDateIdKey, ''),
       HomeWidget.saveWidgetData<String>(lastUpdatedAtKey, ''),
-      HomeWidget.saveWidgetData<String>(cacheFileKey, ''),
+      HomeWidget.saveWidgetData<String>(cacheFileKey, null),
     ]);
   }
 

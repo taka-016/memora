@@ -1,3 +1,7 @@
+import 'package:memora/composition_root/providers/location_providers.dart';
+import 'package:memora/presentation/shared/map_views/map_view_builder.dart';
+import 'package:memora/composition_root/providers/trip_providers.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -5,7 +9,6 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/exceptions/application_validation_exception.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
-import 'package:memora/application/usecases/trip/get_trip_entry_by_id_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/features/trip/trip_edit_modal.dart';
 import 'package:memora/presentation/notifiers/trip/trip_management_notifier.dart';
@@ -16,7 +19,7 @@ class TripManagement extends HookConsumerWidget {
   final int year;
   final String? initialTripId;
   final VoidCallback? onBackPressed;
-  final bool isTestEnvironment;
+  final MapViewBuilder? mapViewBuilder;
 
   const TripManagement({
     super.key,
@@ -24,11 +27,14 @@ class TripManagement extends HookConsumerWidget {
     required this.year,
     this.initialTripId,
     this.onBackPressed,
-    this.isTestEnvironment = false,
+    this.mapViewBuilder,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final mapViewBuilder =
+        this.mapViewBuilder ??
+        ref.watch<MapViewBuilder>(mapViewBuilderProvider);
     final managementProvider = tripManagementNotifierProvider(
       TripManagementQuery(groupId: groupId, year: year),
     );
@@ -131,7 +137,7 @@ class TripManagement extends HookConsumerWidget {
             groupId: groupId,
             groupMembers: ref.read(managementProvider).groupMembers,
             year: year,
-            isTestEnvironment: isTestEnvironment,
+            mapViewBuilder: mapViewBuilder,
             onSave: handleAddTripSave,
           ),
         );
@@ -208,7 +214,7 @@ class TripManagement extends HookConsumerWidget {
             groupMembers: ref.read(managementProvider).groupMembers,
             tripEntry: detailedTripEntry,
             year: year,
-            isTestEnvironment: isTestEnvironment,
+            mapViewBuilder: mapViewBuilder,
             onSave: handleEditTripSave,
           ),
         );

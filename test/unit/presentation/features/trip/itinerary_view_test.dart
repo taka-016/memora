@@ -1,3 +1,7 @@
+import 'package:memora/infrastructure/time/fixed_app_clock.dart';
+import 'package:memora/infrastructure/map_views/google_map_view_builder.dart';
+import 'package:memora/presentation/shared/map_views/placeholder_map_view_builder.dart';
+import 'package:memora/composition_root/providers/location_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -9,13 +13,15 @@ import 'package:memora/application/services/location_search_service.dart';
 import 'package:memora/application/usecases/location/get_current_location_usecase.dart';
 import 'package:memora/application/usecases/location/search_locations_usecase.dart';
 import 'package:memora/core/models/coordinate.dart';
-import 'package:memora/domain/services/current_location_service.dart';
+import 'package:memora/application/services/current_location_service.dart';
 import 'package:memora/presentation/features/trip/itinerary_view.dart';
 import 'package:memora/presentation/shared/dialogs/custom_date_picker_dialog.dart';
 
 Widget _wrapWithApp(Widget child) {
-  return MaterialApp(
-    home: Scaffold(body: SizedBox(width: 480, height: 720, child: child)),
+  return ProviderScope(
+    child: MaterialApp(
+      home: Scaffold(body: SizedBox(width: 480, height: 720, child: child)),
+    ),
   );
 }
 
@@ -70,6 +76,8 @@ void main() {
       await tester.pumpWidget(
         _wrapWithApp(
           ItineraryView(
+            mapViewBuilder: const GoogleMapViewBuilder(),
+            clock: FixedAppClock(DateTime(2026, 1, 1)),
             tripId: 'trip-1',
             items: items,
             onChanged: (_) {},
@@ -119,6 +127,8 @@ void main() {
       await tester.pumpWidget(
         _wrapWithApp(
           ItineraryView(
+            mapViewBuilder: const GoogleMapViewBuilder(),
+            clock: FixedAppClock(DateTime(2026, 1, 1)),
             tripId: 'trip-1',
             items: const [item],
             locations: const [location],
@@ -138,6 +148,8 @@ void main() {
       await tester.pumpWidget(
         _wrapWithApp(
           ItineraryView(
+            mapViewBuilder: const GoogleMapViewBuilder(),
+            clock: FixedAppClock(DateTime(2026, 1, 1)),
             tripId: 'trip-1',
             items: const [],
             onChanged: (updated) => lastChanged = updated,
@@ -166,6 +178,8 @@ void main() {
       await tester.pumpWidget(
         _wrapWithApp(
           ItineraryView(
+            mapViewBuilder: const GoogleMapViewBuilder(),
+            clock: FixedAppClock(DateTime(2026, 1, 1)),
             tripId: 'trip-1',
             items: const [],
             onChanged: (_) {},
@@ -198,6 +212,8 @@ void main() {
       await tester.pumpWidget(
         _wrapWithApp(
           ItineraryView(
+            mapViewBuilder: const GoogleMapViewBuilder(),
+            clock: FixedAppClock(DateTime(2026, 1, 1)),
             tripId: 'trip-1',
             items: const [],
             onChanged: (_) => changeCount += 1,
@@ -227,6 +243,8 @@ void main() {
       await tester.pumpWidget(
         _wrapWithApp(
           ItineraryView(
+            mapViewBuilder: const GoogleMapViewBuilder(),
+            clock: FixedAppClock(DateTime(2026, 1, 1)),
             tripId: 'trip-1',
             items: [item],
             onChanged: (updated) => lastChanged = updated,
@@ -280,6 +298,8 @@ void main() {
       await tester.pumpWidget(
         _wrapWithApp(
           ItineraryView(
+            mapViewBuilder: const GoogleMapViewBuilder(),
+            clock: FixedAppClock(DateTime(2026, 1, 1)),
             tripId: 'trip-1',
             items: const [item],
             locations: const [location],
@@ -332,11 +352,12 @@ void main() {
       await tester.pumpWidget(
         _wrapWithApp(
           ItineraryView(
+            clock: FixedAppClock(DateTime(2026, 1, 1)),
             tripId: 'trip-1',
             groupId: 'group-1',
             items: const [item],
             locations: const [location],
-            isTestEnvironment: true,
+            mapViewBuilder: const PlaceholderMapViewBuilder(),
             onChanged: (_) {},
             onClose: () {},
           ),
@@ -384,6 +405,8 @@ void main() {
       await tester.pumpWidget(
         _wrapWithMapApp(
           ItineraryView(
+            mapViewBuilder: const GoogleMapViewBuilder(),
+            clock: FixedAppClock(DateTime(2026, 1, 1)),
             tripId: 'trip-1',
             groupId: 'group-1',
             items: const [item],
@@ -440,6 +463,8 @@ void main() {
       await tester.pumpWidget(
         _wrapWithMapApp(
           ItineraryView(
+            mapViewBuilder: const GoogleMapViewBuilder(),
+            clock: FixedAppClock(DateTime(2026, 1, 1)),
             tripId: 'trip-1',
             groupId: 'group-1',
             items: const [item],
@@ -474,6 +499,8 @@ void main() {
       await tester.pumpWidget(
         _wrapWithMapApp(
           ItineraryView(
+            mapViewBuilder: const GoogleMapViewBuilder(),
+            clock: FixedAppClock(DateTime(2026, 1, 1)),
             tripId: 'trip-1',
             groupId: 'group-1',
             items: const [item],
@@ -544,6 +571,8 @@ void main() {
       await tester.pumpWidget(
         _wrapWithMapApp(
           ItineraryView(
+            mapViewBuilder: const GoogleMapViewBuilder(),
+            clock: FixedAppClock(DateTime(2026, 1, 1)),
             tripId: 'trip-1',
             groupId: 'group-1',
             items: const [item],
@@ -613,6 +642,8 @@ void main() {
       await tester.pumpWidget(
         _wrapWithApp(
           ItineraryView(
+            mapViewBuilder: const GoogleMapViewBuilder(),
+            clock: FixedAppClock(DateTime(2026, 1, 1)),
             tripId: 'trip-1',
             items: [item],
             onChanged: (updated) => lastChanged = updated,
@@ -657,6 +688,8 @@ void main() {
       await tester.pumpWidget(
         _wrapWithApp(
           ItineraryView(
+            mapViewBuilder: const GoogleMapViewBuilder(),
+            clock: FixedAppClock(DateTime(2026, 1, 1)),
             tripId: 'trip-1',
             items: items,
             onChanged: (_) {},
@@ -727,6 +760,8 @@ void main() {
       await tester.pumpWidget(
         _wrapWithApp(
           ItineraryView(
+            mapViewBuilder: const GoogleMapViewBuilder(),
+            clock: FixedAppClock(DateTime(2026, 1, 1)),
             tripId: 'trip-1',
             items: items,
             onChanged: (_) {},
@@ -776,6 +811,8 @@ void main() {
       await tester.pumpWidget(
         _wrapWithApp(
           ItineraryView(
+            mapViewBuilder: const GoogleMapViewBuilder(),
+            clock: FixedAppClock(DateTime(2026, 1, 1)),
             tripId: 'trip-1',
             items: items,
             onChanged: (_) {},
@@ -801,6 +838,8 @@ void main() {
       await tester.pumpWidget(
         _wrapWithApp(
           ItineraryView(
+            mapViewBuilder: const GoogleMapViewBuilder(),
+            clock: FixedAppClock(DateTime(2026, 1, 1)),
             tripId: 'trip-1',
             items: [item],
             onChanged: (_) {},
@@ -839,6 +878,8 @@ void main() {
       await tester.pumpWidget(
         _wrapWithApp(
           ItineraryView(
+            mapViewBuilder: const GoogleMapViewBuilder(),
+            clock: FixedAppClock(DateTime(2026, 1, 1)),
             tripId: 'trip-1',
             items: [item],
             onChanged: (_) {},
@@ -879,6 +920,8 @@ void main() {
       await tester.pumpWidget(
         _wrapWithApp(
           ItineraryView(
+            mapViewBuilder: const GoogleMapViewBuilder(),
+            clock: FixedAppClock(DateTime(2026, 1, 1)),
             tripId: 'trip-1',
             items: [item],
             onChanged: (_) {},
@@ -940,6 +983,8 @@ void main() {
       await tester.pumpWidget(
         _wrapWithApp(
           ItineraryView(
+            mapViewBuilder: const GoogleMapViewBuilder(),
+            clock: FixedAppClock(DateTime(2026, 1, 1)),
             tripId: 'trip-1',
             items: [item],
             onChanged: (updated) => lastChanged = updated,
@@ -997,6 +1042,8 @@ void main() {
       await tester.pumpWidget(
         _wrapWithApp(
           ItineraryView(
+            mapViewBuilder: const GoogleMapViewBuilder(),
+            clock: FixedAppClock(DateTime(2026, 1, 1)),
             tripId: 'trip-1',
             tripStartDate: DateTime(2024, 7),
             items: [item],
@@ -1029,6 +1076,8 @@ void main() {
       await tester.pumpWidget(
         _wrapWithApp(
           ItineraryView(
+            mapViewBuilder: const GoogleMapViewBuilder(),
+            clock: FixedAppClock(DateTime(2026, 1, 1)),
             tripId: 'trip-1',
             tripStartDate: DateTime(2024, 7),
             items: [item],
@@ -1064,6 +1113,8 @@ void main() {
       await tester.pumpWidget(
         _wrapWithApp(
           ItineraryView(
+            mapViewBuilder: const GoogleMapViewBuilder(),
+            clock: FixedAppClock(DateTime(2026, 1, 1)),
             tripId: 'trip-1',
             tripStartDate: DateTime(2024, 7),
             items: [item],

@@ -1,3 +1,8 @@
+import 'package:memora/infrastructure/map_views/google_map_view_builder.dart';
+import 'package:memora/presentation/shared/map_views/placeholder_map_view_builder.dart';
+import 'package:memora/composition_root/providers/group_providers.dart';
+import 'package:memora/composition_root/providers/trip_providers.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -88,7 +93,13 @@ void main() {
           ),
         ],
         child: MaterialApp(
-          home: Scaffold(body: MapScreen(isTestEnvironment: isTestEnvironment)),
+          home: Scaffold(
+            body: MapScreen(
+              mapViewBuilder: isTestEnvironment
+                  ? const PlaceholderMapViewBuilder()
+                  : const GoogleMapViewBuilder(),
+            ),
+          ),
         ),
       );
     }

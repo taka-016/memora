@@ -82,8 +82,8 @@ void main() {
       isNot(contains('ref.read(deleteMemberUsecaseProvider)')),
     );
     expect(
-      memberManagementSource,
-      contains('ref.read(createOrUpdateMemberInvitationUsecaseProvider)'),
+      memberManagementSource.replaceAll(RegExp(r'\s+'), ''),
+      contains('ref.read(createOrUpdateMemberInvitationUsecaseProvider'),
     );
   });
 }

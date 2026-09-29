@@ -1,3 +1,4 @@
+import 'package:memora/application/services/authenticated_current_member_resolver.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/queries/member/member_query_service.dart';
@@ -18,7 +19,12 @@ void main() {
   setUp(() {
     mockMemberQueryService = MockMemberQueryService();
     mockAuthService = MockAuthService();
-    useCase = GetCurrentMemberUseCase(mockMemberQueryService, mockAuthService);
+    useCase = GetCurrentMemberUseCase(
+      AuthenticatedCurrentMemberResolver(
+        mockMemberQueryService,
+        mockAuthService,
+      ),
+    );
   });
 
   group('GetCurrentMemberUseCase', () {

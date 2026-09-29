@@ -1,0 +1,250 @@
+import 'dart:async';
+
+import 'package:drift/native.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/dtos/android_widget/android_widget_itinerary_cache_dto.dart';
+import 'package:memora/application/services/android_widget_cache_storage.dart';
+import 'package:memora/application/services/offline_backup_restore_operation_lock.dart';
+import 'package:memora/composition_root/android_widget_composition_root.dart';
+import 'package:memora/infrastructure/database/offline_database.dart';
+import 'package:memora/infrastructure/config/app_mode_build_configuration.dart';
+import 'package:memora/application/models/app_mode.dart';
+import 'package:memora/application/services/app_mode_resolver.dart';
+import 'package:mockito/annotations.dart';
+import 'package:mockito/mockito.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../helpers/test_exception.dart';
+import 'android_widget_composition_root_test.mocks.dart';
+
+@GenerateNiceMocks([
+  MockSpec<AndroidWidgetCacheStorage>(),
+  MockSpec<OfflineDatabase>(),
+])
+void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  final configuration = AppModeBuildConfiguration.fromEnvironment();
+  final buildMode = const AppModeResolver().resolve(
+    forcedMode: configuration.forcedMode,
+  );
+
+  setUp(() {
+    SharedPreferences.setMockInitialValues({'resolved_app_mode': 'offline'});
+  });
+
+  test(
+    '保存済みオフラインモードでSQLiteの旅程を定期更新と操作へ注入する',
+    skip: buildMode != AppMode.offline,
+    () async {
+      final database = OfflineDatabase(NativeDatabase.memory());
+      await database.initialize();
+      await database.insertRow('members', {
+        'id': 'member',
+        'display_name': '利用者',
+      });
+      await database.insertRow('groups', {
+        'id': 'group',
+        'owner_id': 'member',
+        'name': '旅行',
+      });
+      await database.insertRow('trip_entries', {
+        'id': 'trip',
+        'group_id': 'group',
+        'year': 2026,
+        'name': '端末内の旅行',
+      });
+      await database.insertRow('itinerary_items', {
+        'id': 'item',
+        'trip_id': 'trip',
+        'name': '端末内の旅程',
+        'start_date_time': DateTime(2026, 9, 12, 10).microsecondsSinceEpoch,
+      });
+      final storage = MockAndroidWidgetCacheStorage();
+      when(storage.getTargetGroupId()).thenAnswer((_) async => 'group');
+      var recovered = false;
+      var retried = false;
+
+      await withAndroidWidgetDependencies(
+        (refresh, handler) async {
+          expect(retried, isTrue);
+          await refresh.execute(
+            groupId: 'group',
+            updateWidgetAfterRefresh: false,
+          );
+          await handler.handle(Uri.parse('memora://recent'));
+          await refresh.executeForSelectedGroup();
+        },
+        createOfflineDatabase: () => database,
+        recoverPendingRestore: (target) async {
+          expect(target, same(database));
+          recovered = true;
+        },
+        retryPendingRestore: (_) async {
+          expect(recovered, isTrue);
+          retried = true;
+        },
+        operationLock: _TestOperationLock(),
+        cacheStorage: storage,
+      );
+
+      expect(recovered, isTrue);
+      final caches = verify(storage.saveItineraryCache(captureAny)).captured
+          .cast<AndroidWidgetItineraryCacheDto>();
+      expect(caches, hasLength(3));
+      for (final cache in caches) {
+        expect(cache.sourceMode, AppMode.offline);
+        expect(cache.itineraryDates.single.tripName, '端末内の旅行');
+        expect(
+          cache.itineraryDates.single.itineraryItems.single.name,
+          '端末内の旅程',
+        );
+      }
+    },
+  );
+
+  for (final failInitialization in [false, true]) {
+    test(
+      '${failInitialization ? '初期化' : '更新'}失敗時もDBの終了完了を待つ',
+      skip: buildMode != AppMode.offline,
+      () async {
+        final database = MockOfflineDatabase();
+        final closing = Completer<void>();
+        final release = Completer<void>();
+        final failure = TestException('処理失敗');
+        if (failInitialization) {
+          when(database.initialize()).thenThrow(failure);
+        }
+        when(database.close()).thenAnswer((_) {
+          closing.complete();
+          return release.future;
+        });
+        var completed = false;
+        final operation = withAndroidWidgetDependencies(
+          (refresh, handler) async {
+            throw failure;
+          },
+          createOfflineDatabase: () => database,
+          recoverPendingRestore: (_) async {},
+          retryPendingRestore: (_) async {},
+          operationLock: _TestOperationLock(),
+        );
+        final assertion = expectLater(operation, throwsA(same(failure)));
+        final tracked = assertion.whenComplete(() => completed = true);
+        await closing.future;
+        expect(completed, isFalse);
+        release.complete();
+        await tracked;
+        verify(database.close()).called(1);
+      },
+    );
+  }
+
+  test(
+    '復元後同期の再試行に失敗してもウィジェット操作を実行する',
+    skip: buildMode != AppMode.offline,
+    () async {
+      final database = OfflineDatabase(NativeDatabase.memory());
+      var actionCalled = false;
+
+      await withAndroidWidgetDependencies(
+        (refresh, handler) async {
+          actionCalled = true;
+        },
+        createOfflineDatabase: () => database,
+        recoverPendingRestore: (_) async {},
+        retryPendingRestore: (_) async {
+          throw TestException('定期更新の再登録に失敗');
+        },
+        operationLock: _TestOperationLock(),
+        cacheStorage: MockAndroidWidgetCacheStorage(),
+      );
+
+      expect(actionCalled, isTrue);
+    },
+  );
+
+  test('ウィジェット操作中は次の復元後同期を開始しない', skip: buildMode != AppMode.offline, () async {
+    final database = OfflineDatabase(NativeDatabase.memory());
+    final operationLock = _TestOperationLock();
+    final actionStarted = Completer<void>();
+    final releaseAction = Completer<void>();
+    var restoreStarted = false;
+
+    final widget = withAndroidWidgetDependencies(
+      (refresh, handler) async {
+        actionStarted.complete();
+        await releaseAction.future;
+      },
+      createOfflineDatabase: () => database,
+      recoverPendingRestore: (_) async {},
+      retryPendingRestore: (_) async {},
+      operationLock: operationLock,
+    );
+    await actionStarted.future;
+    final restore = operationLock.run(() async {
+      restoreStarted = true;
+    });
+    try {
+      await Future<void>.value();
+      expect(restoreStarted, isFalse);
+    } finally {
+      releaseAction.complete();
+      await Future.wait([widget, restore]);
+    }
+    expect(restoreStarted, isTrue);
+  });
+
+  test('APK更新前のモードが残っていても外部SDKやDBの初期化前に拒否する', () async {
+    final oldMode = buildMode == AppMode.offline ? 'online' : 'offline';
+    SharedPreferences.setMockInitialValues({'resolved_app_mode': oldMode});
+    var opened = false;
+    await expectLater(
+      withAndroidWidgetDependencies(
+        (refresh, handler) async {
+          fail('旧モードの更新処理を実行しない');
+        },
+        createOfflineDatabase: () {
+          opened = true;
+          return MockOfflineDatabase();
+        },
+      ),
+      throwsStateError,
+    );
+    expect(opened, isFalse);
+  });
+
+  test('モード未保存ならFirebaseやDBを初期化せず更新を拒否する', () async {
+    SharedPreferences.setMockInitialValues({});
+    var opened = false;
+    await expectLater(
+      withAndroidWidgetDependencies(
+        (refresh, handler) async {
+          fail('更新処理を実行しない');
+        },
+        createOfflineDatabase: () {
+          opened = true;
+          return MockOfflineDatabase();
+        },
+      ),
+      throwsStateError,
+    );
+    expect(opened, isFalse);
+  });
+}
+
+class _TestOperationLock implements OfflineBackupRestoreOperationLock {
+  Future<void> _previous = Future<void>.value();
+
+  @override
+  Future<T> run<T>(Future<T> Function() action) async {
+    final previous = _previous;
+    final completed = Completer<void>();
+    _previous = completed.future;
+    await previous;
+    try {
+      return await action();
+    } finally {
+      completed.complete();
+    }
+  }
+}

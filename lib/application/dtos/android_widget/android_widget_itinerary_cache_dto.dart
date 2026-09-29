@@ -1,8 +1,10 @@
 import 'package:equatable/equatable.dart';
+import 'package:memora/application/models/app_mode.dart';
 
 class AndroidWidgetItineraryCacheDto extends Equatable {
   const AndroidWidgetItineraryCacheDto({
     required this.version,
+    this.sourceMode = AppMode.online,
     required this.groupId,
     required this.selectedItineraryDateId,
     required this.lastUpdatedAt,
@@ -10,6 +12,7 @@ class AndroidWidgetItineraryCacheDto extends Equatable {
   });
 
   final int version;
+  final AppMode sourceMode;
   final String groupId;
   final String? selectedItineraryDateId;
   final DateTime lastUpdatedAt;
@@ -18,6 +21,7 @@ class AndroidWidgetItineraryCacheDto extends Equatable {
   Map<String, dynamic> toJson() {
     return {
       'version': version,
+      'sourceMode': sourceMode.name,
       'groupId': groupId,
       'selectedItineraryDateId': selectedItineraryDateId,
       'lastUpdatedAt': lastUpdatedAt.toIso8601String(),
@@ -30,6 +34,10 @@ class AndroidWidgetItineraryCacheDto extends Equatable {
   factory AndroidWidgetItineraryCacheDto.fromJson(Map<String, dynamic> json) {
     return AndroidWidgetItineraryCacheDto(
       version: json['version'] as int? ?? 1,
+      sourceMode: switch (json['sourceMode']) {
+        'offline' => AppMode.offline,
+        _ => AppMode.online,
+      },
       groupId: json['groupId'] as String? ?? '',
       selectedItineraryDateId: json['selectedItineraryDateId'] as String?,
       lastUpdatedAt:
@@ -45,6 +53,7 @@ class AndroidWidgetItineraryCacheDto extends Equatable {
   @override
   List<Object?> get props => [
     version,
+    sourceMode,
     groupId,
     selectedItineraryDateId,
     lastUpdatedAt,

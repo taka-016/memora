@@ -1,10 +1,11 @@
 import java.util.Properties
 import java.io.FileInputStream
+import java.util.Base64
 
 plugins {
     id("com.android.application")
     // START: FlutterFire Configuration
-    id("com.google.gms.google-services")
+    id("com.google.gms.google-services") apply false
     // END: FlutterFire Configuration
     id("org.jetbrains.kotlin.plugin.compose")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
@@ -16,6 +17,29 @@ val keystoreProperties = Properties().apply {
     if (keystorePropertiesFile.exists()) {
         FileInputStream(keystorePropertiesFile).use { load(it) }
     }
+}
+
+val requestedAppMode = project.findProperty("dart-defines")
+    ?.toString()
+    ?.split(",")
+    ?.mapNotNull { encoded ->
+        runCatching {
+            String(Base64.getDecoder().decode(encoded), Charsets.UTF_8)
+        }.getOrNull()
+    }
+    ?.lastOrNull { it.startsWith("MEMORA_APP_MODE=") }
+    ?.substringAfter("=")
+    ?: "online"
+val resolvedAppMode = when (requestedAppMode) {
+    "online" -> "online"
+    "offline" -> "offline"
+    else -> throw GradleException(
+        "MEMORA_APP_MODEにはonline、offlineのいずれかを指定してください。",
+    )
+}
+
+if (resolvedAppMode == "online") {
+    apply(plugin = "com.google.gms.google-services")
 }
 
 android {
@@ -37,7 +61,6 @@ android {
     val mapsApiKey = localProperties.getProperty("MAPS_API_KEY") ?: ""
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.example.memora"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
@@ -48,6 +71,19 @@ android {
 
         manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
         buildConfigField("String", "MAPS_API_KEY", "\"$mapsApiKey\"")
+    }
+
+    flavorDimensions += "appMode"
+    productFlavors {
+        create("online") {
+            dimension = "appMode"
+            buildConfigField("String", "RESOLVED_APP_MODE", "\"online\"")
+        }
+        create("offline") {
+            dimension = "appMode"
+            applicationIdSuffix = ".offline"
+            buildConfigField("String", "RESOLVED_APP_MODE", "\"offline\"")
+        }
     }
 
     buildFeatures {
@@ -69,6 +105,17 @@ android {
             signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = false
             isShrinkResources = false
+        }
+    }
+}
+
+androidComponents {
+    beforeVariants(selector().all()) { variantBuilder ->
+        val variantAppMode = variantBuilder.productFlavors
+            .firstOrNull { it.first == "appMode" }
+            ?.second
+        if (variantAppMode != null) {
+            variantBuilder.enable = variantAppMode == resolvedAppMode
         }
     }
 }

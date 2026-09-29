@@ -1,3 +1,5 @@
+import 'package:memora/presentation/shared/map_views/placeholder_map_view_builder.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -146,7 +148,7 @@ void main() {
               groupId: testGroupId,
               year: testYear,
               onBackPressed: null,
-              isTestEnvironment: true,
+              mapViewBuilder: const PlaceholderMapViewBuilder(),
             ),
           ),
         ),
@@ -181,7 +183,7 @@ void main() {
               groupId: testGroupId,
               year: testYear,
               onBackPressed: null,
-              isTestEnvironment: true,
+              mapViewBuilder: const PlaceholderMapViewBuilder(),
             ),
           ),
         ),
@@ -212,7 +214,7 @@ void main() {
               groupId: testGroupId,
               year: testYear,
               onBackPressed: null,
-              isTestEnvironment: true,
+              mapViewBuilder: const PlaceholderMapViewBuilder(),
             ),
           ),
         ),
@@ -270,7 +272,7 @@ void main() {
             groupId: testGroupId,
             year: testYear,
             onBackPressed: null,
-            isTestEnvironment: true,
+            mapViewBuilder: const PlaceholderMapViewBuilder(),
           ),
         ),
       );
@@ -320,7 +322,7 @@ void main() {
             groupId: testGroupId,
             year: testYear,
             initialTripId: 'trip-1',
-            isTestEnvironment: true,
+            mapViewBuilder: const PlaceholderMapViewBuilder(),
           ),
         ),
       );
@@ -371,7 +373,7 @@ void main() {
               groupId: testGroupId,
               year: testYear,
               initialTripId: 'trip-1',
-              isTestEnvironment: true,
+              mapViewBuilder: const PlaceholderMapViewBuilder(),
             ),
           ),
         ),
@@ -405,7 +407,7 @@ void main() {
               groupId: testGroupId,
               year: testYear,
               initialTripId: 'trip-1',
-              isTestEnvironment: true,
+              mapViewBuilder: const PlaceholderMapViewBuilder(),
             ),
           ),
         ),
@@ -439,7 +441,7 @@ void main() {
             groupId: testGroupId,
             year: testYear,
             initialTripId: 'trip-1',
-            isTestEnvironment: true,
+            mapViewBuilder: const PlaceholderMapViewBuilder(),
           ),
         ),
       );
@@ -495,7 +497,7 @@ void main() {
             groupId: testGroupId,
             year: testYear,
             initialTripId: 'trip-1',
-            isTestEnvironment: true,
+            mapViewBuilder: const PlaceholderMapViewBuilder(),
           ),
         ),
       );
@@ -537,7 +539,7 @@ void main() {
             groupId: testGroupId,
             year: testYear,
             initialTripId: 'trip-1',
-            isTestEnvironment: true,
+            mapViewBuilder: const PlaceholderMapViewBuilder(),
           ),
         ),
       );
@@ -573,7 +575,7 @@ void main() {
               groupId: testGroupId,
               year: testYear,
               onBackPressed: null,
-              isTestEnvironment: true,
+              mapViewBuilder: const PlaceholderMapViewBuilder(),
             ),
           ),
         ),
@@ -621,7 +623,7 @@ void main() {
             body: TripManagement(
               groupId: testGroupId,
               year: testYear,
-              isTestEnvironment: true,
+              mapViewBuilder: const PlaceholderMapViewBuilder(),
             ),
           ),
         ),
@@ -678,7 +680,7 @@ void main() {
             body: TripManagement(
               groupId: testGroupId,
               year: testYear,
-              isTestEnvironment: true,
+              mapViewBuilder: const PlaceholderMapViewBuilder(),
             ),
           ),
         ),
@@ -741,7 +743,7 @@ void main() {
             body: TripManagement(
               groupId: testGroupId,
               year: testYear,
-              isTestEnvironment: true,
+              mapViewBuilder: const PlaceholderMapViewBuilder(),
             ),
           ),
         ),
@@ -792,7 +794,7 @@ void main() {
             body: TripManagement(
               groupId: testGroupId,
               year: testYear,
-              isTestEnvironment: true,
+              mapViewBuilder: const PlaceholderMapViewBuilder(),
             ),
           ),
         ),
@@ -872,7 +874,7 @@ void main() {
               groupId: testGroupId,
               year: testYear,
               onBackPressed: null,
-              isTestEnvironment: true,
+              mapViewBuilder: const PlaceholderMapViewBuilder(),
             ),
           ),
         ),
@@ -929,7 +931,7 @@ void main() {
             body: TripManagement(
               groupId: testGroupId,
               year: testYear,
-              isTestEnvironment: true,
+              mapViewBuilder: const PlaceholderMapViewBuilder(),
             ),
           ),
         ),
@@ -977,7 +979,7 @@ void main() {
               groupId: testGroupId,
               year: testYear,
               onBackPressed: null,
-              isTestEnvironment: true,
+              mapViewBuilder: const PlaceholderMapViewBuilder(),
             ),
           ),
         ),
@@ -1013,7 +1015,7 @@ void main() {
             groupId: testGroupId,
             year: testYear,
             onBackPressed: null,
-            isTestEnvironment: true,
+            mapViewBuilder: const PlaceholderMapViewBuilder(),
           ),
         ),
       );
@@ -1051,7 +1053,7 @@ void main() {
               groupId: testGroupId,
               year: testYear,
               onBackPressed: null,
-              isTestEnvironment: true,
+              mapViewBuilder: const PlaceholderMapViewBuilder(),
             ),
           ),
         ),
@@ -1090,7 +1092,7 @@ void main() {
               groupId: testGroupId,
               year: testYear,
               onBackPressed: null,
-              isTestEnvironment: true,
+              mapViewBuilder: const PlaceholderMapViewBuilder(),
             ),
           ),
         ),
@@ -1126,7 +1128,7 @@ void main() {
             body: TripManagement(
               groupId: testGroupId,
               year: testYear,
-              isTestEnvironment: true,
+              mapViewBuilder: const PlaceholderMapViewBuilder(),
             ),
           ),
         ),
@@ -1187,7 +1189,7 @@ void main() {
               onBackPressed: () {
                 backPressed = true;
               },
-              isTestEnvironment: true,
+              mapViewBuilder: const PlaceholderMapViewBuilder(),
             ),
           ),
         ),
@@ -1222,7 +1224,7 @@ void main() {
             body: TripManagement(
               groupId: testGroupId,
               year: testYear,
-              isTestEnvironment: true,
+              mapViewBuilder: const PlaceholderMapViewBuilder(),
             ),
           ),
         ),
@@ -1283,7 +1285,7 @@ void main() {
             body: TripManagement(
               groupId: testGroupId,
               year: testYear,
-              isTestEnvironment: true,
+              mapViewBuilder: const PlaceholderMapViewBuilder(),
             ),
           ),
         ),
@@ -1340,7 +1342,7 @@ void main() {
             body: TripManagement(
               groupId: testGroupId,
               year: testYear,
-              isTestEnvironment: true,
+              mapViewBuilder: const PlaceholderMapViewBuilder(),
             ),
           ),
         ),

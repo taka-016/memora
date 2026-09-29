@@ -1,9 +1,9 @@
+import 'package:memora/infrastructure/time/fixed_app_clock.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
 import 'package:memora/application/dtos/trip/location_dto.dart';
 import 'package:memora/application/queries/order_by.dart';
-import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/infrastructure/queries/trip/firestore_trip_entry_query_service.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';

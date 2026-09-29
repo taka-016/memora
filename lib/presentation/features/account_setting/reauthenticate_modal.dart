@@ -1,7 +1,7 @@
+import 'package:memora/composition_root/providers/account_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:memora/application/usecases/account/reauthenticate_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 
 class ReauthenticateModal extends HookConsumerWidget {

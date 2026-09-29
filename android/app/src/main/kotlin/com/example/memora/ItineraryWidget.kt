@@ -81,6 +81,10 @@ private fun ItineraryWidgetContent(
     val prefs = state.preferences
     val targetGroupId = prefs.getString(TARGET_GROUP_ID_KEY, null).orEmpty()
     val cache = readCache(prefs.getString(CACHE_FILE_KEY, null))
+        ?.takeIf { cache ->
+            cache.sourceMode == BuildConfig.RESOLVED_APP_MODE &&
+                cache.groupId == targetGroupId
+        }
     val selectedItineraryDateId = cache?.selectedItineraryDateId
     val selectedItineraryDate = cache?.itineraryDates
         ?.firstOrNull { it.id == selectedItineraryDateId }
@@ -483,6 +487,8 @@ private fun readCache(path: String?): WidgetCache? {
     return runCatching {
         val root = JSONObject(file.readText(Charsets.UTF_8))
         WidgetCache(
+            sourceMode = root.optString("sourceMode", "online"),
+            groupId = root.optString("groupId"),
             selectedItineraryDateId = root
                 .optString("selectedItineraryDateId")
                 .ifBlank { null },
@@ -538,6 +544,8 @@ private fun formatLastUpdatedAt(value: String): String {
 }
 
 private data class WidgetCache(
+    val sourceMode: String,
+    val groupId: String,
     val selectedItineraryDateId: String?,
     val lastUpdatedAt: String,
     val itineraryDates: List<WidgetItineraryDate>,

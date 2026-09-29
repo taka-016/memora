@@ -1,14 +1,6 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
 import 'package:memora/application/queries/order_by.dart';
-import 'package:memora/infrastructure/factories/query_service_factory.dart';
-
-final getTripEntryByIdUsecaseProvider = Provider<GetTripEntryByIdUsecase>((
-  ref,
-) {
-  return GetTripEntryByIdUsecase(ref.watch(tripEntryQueryServiceProvider));
-});
 
 class GetTripEntryByIdUsecase {
   final TripEntryQueryService _tripEntryQueryService;

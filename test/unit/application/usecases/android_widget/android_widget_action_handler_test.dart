@@ -183,11 +183,6 @@ class _FakeAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
   Future<void> saveItineraryCache(AndroidWidgetItineraryCacheDto cache) async {}
 
   @override
-  Future<void> saveSelectedItineraryDateId(String? itineraryDateId) async {
-    selectedItineraryDateId = itineraryDateId;
-  }
-
-  @override
   Future<void> saveTargetGroupId(String groupId) async {
     targetGroupId = groupId;
   }

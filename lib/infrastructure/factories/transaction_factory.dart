@@ -1,7 +1,9 @@
+import 'package:memora/composition_root/providers/offline_database_provider.dart';
+import 'package:memora/infrastructure/transactions/sqlite_write_transaction.dart';
+import 'package:memora/application/models/app_mode.dart';
+import 'package:memora/infrastructure/config/resolved_app_mode_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/transactions/write_transaction.dart';
-import 'package:memora/infrastructure/config/database_type.dart';
-import 'package:memora/infrastructure/config/database_type_provider.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/infrastructure/transactions/firestore_write_transaction.dart';
 
@@ -11,21 +13,23 @@ final writeTransactionProvider = Provider<WriteTransaction>((ref) {
 
 class TransactionFactory {
   static T create<T extends Object>({required Ref ref}) {
-    final dbType = ref.watch(databaseTypeProvider);
-    return _createTransactionByType<T>(dbType, ref: ref);
+    final mode = ref.watch(appModeProvider);
+    return _createTransactionByMode<T>(mode, ref: ref);
   }
 
-  static T _createTransactionByType<T extends Object>(
-    DatabaseType dbType, {
+  static T _createTransactionByMode<T extends Object>(
+    AppMode mode, {
     required Ref ref,
   }) {
-    switch (dbType) {
-      case DatabaseType.firestore:
+    switch (mode) {
+      case AppMode.online:
         return _createFirestoreTransaction<T>(ref: ref);
-      case DatabaseType.sqlite:
-        throw UnimplementedError(
-          'Supabase implementation is not yet available',
-        );
+      case AppMode.offline:
+        if (T == WriteTransaction) {
+          return SqliteWriteTransaction(ref.watch(offlineDatabaseProvider))
+              as T;
+        }
+        throw ArgumentError('Unknown transaction type: $T');
     }
   }
 
