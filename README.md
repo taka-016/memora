@@ -21,7 +21,7 @@ Memoraは、家族や友人などのグループで思い出を記録・整理�
 
 - [ユーザーストーリー](./docs/user_stories.md) - 利用シナリオと受け入れ条件
 - [ER図](./docs/er_diagram.md) - データベース設計
-- [ユースケース](./docs/usecase_diagram.md) - 複雑なユーザーストーリーの利用フロー
+- [ユースケース図](./docs/usecase_diagram.md) - 主要な利用目的とアプリモードごとの利用可否
 - [ADR](./docs/adr.md) - 今後も維持するアーキテクチャ上の判断
 - [TODO一覧](./docs/todo.md) - 開発進捗
 
