@@ -119,6 +119,19 @@ erDiagram
         timestamp startDateTime "NOT NULL"
         timestamp endDateTime "NOT NULL"
         boolean isAllDay "NOT NULL"
+        string recurrenceRule
+        string timeZone
+    }
+    calendar_event_exceptions {
+        string id PK
+        string eventId FK "NOT NULL"
+        timestamp originalStartDateTime "NOT NULL"
+        boolean isCancelled "NOT NULL"
+        string title
+        timestamp startDateTime
+        timestamp endDateTime
+        boolean isAllDay
+        string labelId FK
     }
     calendar_labels {
         string id PK
@@ -157,6 +170,8 @@ erDiagram
     groups ||--o{ calendar_events : "id → groupId"
     groups ||--o{ calendar_labels : "id → groupId"
     calendar_labels ||--o{ calendar_events : "id → labelId"
+    calendar_events ||--o{ calendar_event_exceptions : "id → eventId"
+    calendar_labels |o--o{ calendar_event_exceptions : "id → labelId"
     members ||--o| google_calendar_connections : "id → memberId"
     google_calendar_connections ||--o{ google_calendar_selections : "memberId → memberId"
     externally_managed_accounts ||--|| members : "id → accountId"
