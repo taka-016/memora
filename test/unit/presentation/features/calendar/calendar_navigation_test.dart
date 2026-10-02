@@ -88,6 +88,25 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('2026年6月'), findsOneWidget);
   });
+  testWidgets('設定表示中のグループ更新で背面のカレンダーが画面を切り替えない', (tester) async {
+    await pump(tester);
+    final container = ProviderScope.containerOf(
+      tester.element(find.byKey(const Key('calendar_group_list'))),
+    );
+    await tester.tap(find.byIcon(Icons.menu));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('設定'));
+    await tester.pumpAndSettle();
+    container
+        .read(groupTimelineGroupSelectionNotifierProvider.notifier)
+        .setLoadedGroups(
+          memberId: 'default_member',
+          groups: [support.groupsWithMembers[1]],
+        );
+    await tester.pumpAndSettle();
+    final router = container.read(appRouterConfigProvider);
+    expect(router.state.uri.path, const SettingsRoute().location);
+  });
   testWidgets('所属が失効したら既存の予定表示を閉じる', (tester) async {
     await pump(tester);
     await tester.tap(find.text('グループ1'));
