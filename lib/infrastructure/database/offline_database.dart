@@ -36,13 +36,21 @@ class OfflineDatabase extends _$OfflineDatabase implements ReadTransaction {
   );
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) async => m.createAll(),
     onUpgrade: (m, from, to) async {
-      throw StateError('未対応のDBバージョンです: $from → $to');
+      if (from != 1 || to != 2) {
+        throw StateError('未対応のDBバージョンです: $from → $to');
+      }
+      await m.createTable(calendarLabels);
+      await m.createTable(calendarEvents);
+      for (final entity in allSchemaEntities.whereType<Index>()) {
+        if (entity.entityName.startsWith('calendar_'))
+          await m.createIndex(entity);
+      }
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');

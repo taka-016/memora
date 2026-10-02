@@ -23,6 +23,8 @@ class SqliteOfflineBackupDataStore implements OfflineBackupDataStore {
   final OfflineBackupRestoreSyncStorage restoreSyncStorage;
 
   static const _deleteOrder = <String>[
+    'calendar_events',
+    'calendar_labels',
     'tasks',
     'itinerary_items',
     'member_events',
@@ -39,6 +41,8 @@ class SqliteOfflineBackupDataStore implements OfflineBackupDataStore {
   static const _insertOrder = <String>[
     'members',
     'groups',
+    'calendar_labels',
+    'calendar_events',
     'group_members',
     'trip_entries',
     'tasks',
@@ -113,7 +117,8 @@ class SqliteOfflineBackupDataStore implements OfflineBackupDataStore {
           await database.customStatement('DELETE FROM "$table"');
         }
         for (final table in _insertOrder) {
-          for (final row in snapshot.tables[table]!) {
+          for (final row
+              in snapshot.tables[table] ?? const <Map<String, Object?>>[]) {
             await database.insertRow(table, row);
           }
         }
@@ -139,7 +144,8 @@ class SqliteOfflineBackupDataStore implements OfflineBackupDataStore {
         '未対応のバックアップ形式です: ${snapshot.formatVersion}',
       );
     }
-    if (snapshot.databaseSchemaVersion != database.schemaVersion) {
+    if (snapshot.databaseSchemaVersion != database.schemaVersion &&
+        snapshot.databaseSchemaVersion != 1) {
       throw OfflineBackupUnsupportedVersionException(
         '未対応のDBスキーマです: ${snapshot.databaseSchemaVersion}',
       );
@@ -151,13 +157,12 @@ class SqliteOfflineBackupDataStore implements OfflineBackupDataStore {
     )) {
       throw const FormatException('バックアップのウィジェット更新間隔が不正です。');
     }
-    if (snapshot.tables.keys
-            .toSet()
-            .difference(OfflineBackupSnapshot.tableNames)
-            .isNotEmpty ||
-        OfflineBackupSnapshot.tableNames
-            .difference(snapshot.tables.keys.toSet())
-            .isNotEmpty) {
+    final expectedTables = {...OfflineBackupSnapshot.tableNames};
+    if (snapshot.databaseSchemaVersion == 1) {
+      expectedTables.removeAll(['calendar_events', 'calendar_labels']);
+    }
+    if (snapshot.tables.keys.toSet().difference(expectedTables).isNotEmpty ||
+        expectedTables.difference(snapshot.tables.keys.toSet()).isNotEmpty) {
       throw const FormatException('バックアップのテーブル構成が不正です。');
     }
     final memberExists = snapshot.tables['members']!.any(

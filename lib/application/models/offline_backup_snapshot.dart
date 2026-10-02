@@ -170,6 +170,8 @@ class OfflineBackupSnapshot extends Equatable {
     'dvc_point_contracts',
     'dvc_limited_points',
     'dvc_point_usages',
+    'calendar_labels',
+    'calendar_events',
   };
 
   final int formatVersion;

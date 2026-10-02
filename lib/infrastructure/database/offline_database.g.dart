@@ -4940,6 +4940,802 @@ class DvcPointUsagesCompanion extends UpdateCompanion<SqliteDvcPointUsageRow> {
   }
 }
 
+class CalendarLabels extends Table
+    with TableInfo<CalendarLabels, SqliteCalendarLabelRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  CalendarLabels(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL PRIMARY KEY',
+  );
+  static const VerificationMeta _groupIdMeta = const VerificationMeta(
+    'groupId',
+  );
+  late final GeneratedColumn<String> groupId = GeneratedColumn<String>(
+    'group_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL REFERENCES "groups"(id)ON DELETE CASCADE',
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL CHECK (length(trim(name)) > 0)',
+  );
+  static const VerificationMeta _colorMeta = const VerificationMeta('color');
+  late final GeneratedColumn<String> color = GeneratedColumn<String>(
+    'color',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL CHECK (length(color) = 7 AND substr(color, 1, 1) = \'#\' AND substr(color, 2) NOT GLOB \'*[^0-9a-fA-F]*\')',
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, groupId, name, color];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'calendar_labels';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SqliteCalendarLabelRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('group_id')) {
+      context.handle(
+        _groupIdMeta,
+        groupId.isAcceptableOrUnknown(data['group_id']!, _groupIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_groupIdMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('color')) {
+      context.handle(
+        _colorMeta,
+        color.isAcceptableOrUnknown(data['color']!, _colorMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_colorMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {id, groupId},
+  ];
+  @override
+  SqliteCalendarLabelRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SqliteCalendarLabelRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      groupId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}group_id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      color: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}color'],
+      )!,
+    );
+  }
+
+  @override
+  CalendarLabels createAlias(String alias) {
+    return CalendarLabels(attachedDatabase, alias);
+  }
+
+  @override
+  List<String> get customConstraints => const ['UNIQUE(id, group_id)'];
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class SqliteCalendarLabelRow extends DataClass
+    implements Insertable<SqliteCalendarLabelRow> {
+  final String id;
+  final String groupId;
+  final String name;
+  final String color;
+  const SqliteCalendarLabelRow({
+    required this.id,
+    required this.groupId,
+    required this.name,
+    required this.color,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['group_id'] = Variable<String>(groupId);
+    map['name'] = Variable<String>(name);
+    map['color'] = Variable<String>(color);
+    return map;
+  }
+
+  CalendarLabelsCompanion toCompanion(bool nullToAbsent) {
+    return CalendarLabelsCompanion(
+      id: Value(id),
+      groupId: Value(groupId),
+      name: Value(name),
+      color: Value(color),
+    );
+  }
+
+  factory SqliteCalendarLabelRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SqliteCalendarLabelRow(
+      id: serializer.fromJson<String>(json['id']),
+      groupId: serializer.fromJson<String>(json['group_id']),
+      name: serializer.fromJson<String>(json['name']),
+      color: serializer.fromJson<String>(json['color']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'group_id': serializer.toJson<String>(groupId),
+      'name': serializer.toJson<String>(name),
+      'color': serializer.toJson<String>(color),
+    };
+  }
+
+  SqliteCalendarLabelRow copyWith({
+    String? id,
+    String? groupId,
+    String? name,
+    String? color,
+  }) => SqliteCalendarLabelRow(
+    id: id ?? this.id,
+    groupId: groupId ?? this.groupId,
+    name: name ?? this.name,
+    color: color ?? this.color,
+  );
+  SqliteCalendarLabelRow copyWithCompanion(CalendarLabelsCompanion data) {
+    return SqliteCalendarLabelRow(
+      id: data.id.present ? data.id.value : this.id,
+      groupId: data.groupId.present ? data.groupId.value : this.groupId,
+      name: data.name.present ? data.name.value : this.name,
+      color: data.color.present ? data.color.value : this.color,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SqliteCalendarLabelRow(')
+          ..write('id: $id, ')
+          ..write('groupId: $groupId, ')
+          ..write('name: $name, ')
+          ..write('color: $color')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, groupId, name, color);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SqliteCalendarLabelRow &&
+          other.id == this.id &&
+          other.groupId == this.groupId &&
+          other.name == this.name &&
+          other.color == this.color);
+}
+
+class CalendarLabelsCompanion extends UpdateCompanion<SqliteCalendarLabelRow> {
+  final Value<String> id;
+  final Value<String> groupId;
+  final Value<String> name;
+  final Value<String> color;
+  final Value<int> rowid;
+  const CalendarLabelsCompanion({
+    this.id = const Value.absent(),
+    this.groupId = const Value.absent(),
+    this.name = const Value.absent(),
+    this.color = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CalendarLabelsCompanion.insert({
+    required String id,
+    required String groupId,
+    required String name,
+    required String color,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       groupId = Value(groupId),
+       name = Value(name),
+       color = Value(color);
+  static Insertable<SqliteCalendarLabelRow> custom({
+    Expression<String>? id,
+    Expression<String>? groupId,
+    Expression<String>? name,
+    Expression<String>? color,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (groupId != null) 'group_id': groupId,
+      if (name != null) 'name': name,
+      if (color != null) 'color': color,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CalendarLabelsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? groupId,
+    Value<String>? name,
+    Value<String>? color,
+    Value<int>? rowid,
+  }) {
+    return CalendarLabelsCompanion(
+      id: id ?? this.id,
+      groupId: groupId ?? this.groupId,
+      name: name ?? this.name,
+      color: color ?? this.color,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (groupId.present) {
+      map['group_id'] = Variable<String>(groupId.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (color.present) {
+      map['color'] = Variable<String>(color.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CalendarLabelsCompanion(')
+          ..write('id: $id, ')
+          ..write('groupId: $groupId, ')
+          ..write('name: $name, ')
+          ..write('color: $color, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class CalendarEvents extends Table
+    with TableInfo<CalendarEvents, SqliteCalendarEventRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  CalendarEvents(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL PRIMARY KEY',
+  );
+  static const VerificationMeta _groupIdMeta = const VerificationMeta(
+    'groupId',
+  );
+  late final GeneratedColumn<String> groupId = GeneratedColumn<String>(
+    'group_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL REFERENCES "groups"(id)ON DELETE CASCADE',
+  );
+  static const VerificationMeta _labelIdMeta = const VerificationMeta(
+    'labelId',
+  );
+  late final GeneratedColumn<String> labelId = GeneratedColumn<String>(
+    'label_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _titleMeta = const VerificationMeta('title');
+  late final GeneratedColumn<String> title = GeneratedColumn<String>(
+    'title',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL CHECK (length(trim(title)) > 0)',
+  );
+  static const VerificationMeta _startDateTimeMeta = const VerificationMeta(
+    'startDateTime',
+  );
+  late final GeneratedColumn<int> startDateTime = GeneratedColumn<int>(
+    'start_date_time',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _endDateTimeMeta = const VerificationMeta(
+    'endDateTime',
+  );
+  late final GeneratedColumn<int> endDateTime = GeneratedColumn<int>(
+    'end_date_time',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL CHECK (end_date_time >= start_date_time)',
+  );
+  static const VerificationMeta _isAllDayMeta = const VerificationMeta(
+    'isAllDay',
+  );
+  late final GeneratedColumn<int> isAllDay = GeneratedColumn<int>(
+    'is_all_day',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL CHECK (is_all_day IN (0, 1))',
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    groupId,
+    labelId,
+    title,
+    startDateTime,
+    endDateTime,
+    isAllDay,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'calendar_events';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SqliteCalendarEventRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('group_id')) {
+      context.handle(
+        _groupIdMeta,
+        groupId.isAcceptableOrUnknown(data['group_id']!, _groupIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_groupIdMeta);
+    }
+    if (data.containsKey('label_id')) {
+      context.handle(
+        _labelIdMeta,
+        labelId.isAcceptableOrUnknown(data['label_id']!, _labelIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_labelIdMeta);
+    }
+    if (data.containsKey('title')) {
+      context.handle(
+        _titleMeta,
+        title.isAcceptableOrUnknown(data['title']!, _titleMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_titleMeta);
+    }
+    if (data.containsKey('start_date_time')) {
+      context.handle(
+        _startDateTimeMeta,
+        startDateTime.isAcceptableOrUnknown(
+          data['start_date_time']!,
+          _startDateTimeMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_startDateTimeMeta);
+    }
+    if (data.containsKey('end_date_time')) {
+      context.handle(
+        _endDateTimeMeta,
+        endDateTime.isAcceptableOrUnknown(
+          data['end_date_time']!,
+          _endDateTimeMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_endDateTimeMeta);
+    }
+    if (data.containsKey('is_all_day')) {
+      context.handle(
+        _isAllDayMeta,
+        isAllDay.isAcceptableOrUnknown(data['is_all_day']!, _isAllDayMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_isAllDayMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  SqliteCalendarEventRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SqliteCalendarEventRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      groupId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}group_id'],
+      )!,
+      labelId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}label_id'],
+      )!,
+      title: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}title'],
+      )!,
+      startDateTime: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}start_date_time'],
+      )!,
+      endDateTime: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}end_date_time'],
+      )!,
+      isAllDay: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}is_all_day'],
+      )!,
+    );
+  }
+
+  @override
+  CalendarEvents createAlias(String alias) {
+    return CalendarEvents(attachedDatabase, alias);
+  }
+
+  @override
+  List<String> get customConstraints => const [
+    'FOREIGN KEY(label_id, group_id)REFERENCES calendar_labels(id, group_id)ON DELETE NO ACTION',
+  ];
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class SqliteCalendarEventRow extends DataClass
+    implements Insertable<SqliteCalendarEventRow> {
+  final String id;
+  final String groupId;
+  final String labelId;
+  final String title;
+  final int startDateTime;
+  final int endDateTime;
+  final int isAllDay;
+  const SqliteCalendarEventRow({
+    required this.id,
+    required this.groupId,
+    required this.labelId,
+    required this.title,
+    required this.startDateTime,
+    required this.endDateTime,
+    required this.isAllDay,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['group_id'] = Variable<String>(groupId);
+    map['label_id'] = Variable<String>(labelId);
+    map['title'] = Variable<String>(title);
+    map['start_date_time'] = Variable<int>(startDateTime);
+    map['end_date_time'] = Variable<int>(endDateTime);
+    map['is_all_day'] = Variable<int>(isAllDay);
+    return map;
+  }
+
+  CalendarEventsCompanion toCompanion(bool nullToAbsent) {
+    return CalendarEventsCompanion(
+      id: Value(id),
+      groupId: Value(groupId),
+      labelId: Value(labelId),
+      title: Value(title),
+      startDateTime: Value(startDateTime),
+      endDateTime: Value(endDateTime),
+      isAllDay: Value(isAllDay),
+    );
+  }
+
+  factory SqliteCalendarEventRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SqliteCalendarEventRow(
+      id: serializer.fromJson<String>(json['id']),
+      groupId: serializer.fromJson<String>(json['group_id']),
+      labelId: serializer.fromJson<String>(json['label_id']),
+      title: serializer.fromJson<String>(json['title']),
+      startDateTime: serializer.fromJson<int>(json['start_date_time']),
+      endDateTime: serializer.fromJson<int>(json['end_date_time']),
+      isAllDay: serializer.fromJson<int>(json['is_all_day']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'group_id': serializer.toJson<String>(groupId),
+      'label_id': serializer.toJson<String>(labelId),
+      'title': serializer.toJson<String>(title),
+      'start_date_time': serializer.toJson<int>(startDateTime),
+      'end_date_time': serializer.toJson<int>(endDateTime),
+      'is_all_day': serializer.toJson<int>(isAllDay),
+    };
+  }
+
+  SqliteCalendarEventRow copyWith({
+    String? id,
+    String? groupId,
+    String? labelId,
+    String? title,
+    int? startDateTime,
+    int? endDateTime,
+    int? isAllDay,
+  }) => SqliteCalendarEventRow(
+    id: id ?? this.id,
+    groupId: groupId ?? this.groupId,
+    labelId: labelId ?? this.labelId,
+    title: title ?? this.title,
+    startDateTime: startDateTime ?? this.startDateTime,
+    endDateTime: endDateTime ?? this.endDateTime,
+    isAllDay: isAllDay ?? this.isAllDay,
+  );
+  SqliteCalendarEventRow copyWithCompanion(CalendarEventsCompanion data) {
+    return SqliteCalendarEventRow(
+      id: data.id.present ? data.id.value : this.id,
+      groupId: data.groupId.present ? data.groupId.value : this.groupId,
+      labelId: data.labelId.present ? data.labelId.value : this.labelId,
+      title: data.title.present ? data.title.value : this.title,
+      startDateTime: data.startDateTime.present
+          ? data.startDateTime.value
+          : this.startDateTime,
+      endDateTime: data.endDateTime.present
+          ? data.endDateTime.value
+          : this.endDateTime,
+      isAllDay: data.isAllDay.present ? data.isAllDay.value : this.isAllDay,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SqliteCalendarEventRow(')
+          ..write('id: $id, ')
+          ..write('groupId: $groupId, ')
+          ..write('labelId: $labelId, ')
+          ..write('title: $title, ')
+          ..write('startDateTime: $startDateTime, ')
+          ..write('endDateTime: $endDateTime, ')
+          ..write('isAllDay: $isAllDay')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    groupId,
+    labelId,
+    title,
+    startDateTime,
+    endDateTime,
+    isAllDay,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SqliteCalendarEventRow &&
+          other.id == this.id &&
+          other.groupId == this.groupId &&
+          other.labelId == this.labelId &&
+          other.title == this.title &&
+          other.startDateTime == this.startDateTime &&
+          other.endDateTime == this.endDateTime &&
+          other.isAllDay == this.isAllDay);
+}
+
+class CalendarEventsCompanion extends UpdateCompanion<SqliteCalendarEventRow> {
+  final Value<String> id;
+  final Value<String> groupId;
+  final Value<String> labelId;
+  final Value<String> title;
+  final Value<int> startDateTime;
+  final Value<int> endDateTime;
+  final Value<int> isAllDay;
+  final Value<int> rowid;
+  const CalendarEventsCompanion({
+    this.id = const Value.absent(),
+    this.groupId = const Value.absent(),
+    this.labelId = const Value.absent(),
+    this.title = const Value.absent(),
+    this.startDateTime = const Value.absent(),
+    this.endDateTime = const Value.absent(),
+    this.isAllDay = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CalendarEventsCompanion.insert({
+    required String id,
+    required String groupId,
+    required String labelId,
+    required String title,
+    required int startDateTime,
+    required int endDateTime,
+    required int isAllDay,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       groupId = Value(groupId),
+       labelId = Value(labelId),
+       title = Value(title),
+       startDateTime = Value(startDateTime),
+       endDateTime = Value(endDateTime),
+       isAllDay = Value(isAllDay);
+  static Insertable<SqliteCalendarEventRow> custom({
+    Expression<String>? id,
+    Expression<String>? groupId,
+    Expression<String>? labelId,
+    Expression<String>? title,
+    Expression<int>? startDateTime,
+    Expression<int>? endDateTime,
+    Expression<int>? isAllDay,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (groupId != null) 'group_id': groupId,
+      if (labelId != null) 'label_id': labelId,
+      if (title != null) 'title': title,
+      if (startDateTime != null) 'start_date_time': startDateTime,
+      if (endDateTime != null) 'end_date_time': endDateTime,
+      if (isAllDay != null) 'is_all_day': isAllDay,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CalendarEventsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? groupId,
+    Value<String>? labelId,
+    Value<String>? title,
+    Value<int>? startDateTime,
+    Value<int>? endDateTime,
+    Value<int>? isAllDay,
+    Value<int>? rowid,
+  }) {
+    return CalendarEventsCompanion(
+      id: id ?? this.id,
+      groupId: groupId ?? this.groupId,
+      labelId: labelId ?? this.labelId,
+      title: title ?? this.title,
+      startDateTime: startDateTime ?? this.startDateTime,
+      endDateTime: endDateTime ?? this.endDateTime,
+      isAllDay: isAllDay ?? this.isAllDay,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (groupId.present) {
+      map['group_id'] = Variable<String>(groupId.value);
+    }
+    if (labelId.present) {
+      map['label_id'] = Variable<String>(labelId.value);
+    }
+    if (title.present) {
+      map['title'] = Variable<String>(title.value);
+    }
+    if (startDateTime.present) {
+      map['start_date_time'] = Variable<int>(startDateTime.value);
+    }
+    if (endDateTime.present) {
+      map['end_date_time'] = Variable<int>(endDateTime.value);
+    }
+    if (isAllDay.present) {
+      map['is_all_day'] = Variable<int>(isAllDay.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CalendarEventsCompanion(')
+          ..write('id: $id, ')
+          ..write('groupId: $groupId, ')
+          ..write('labelId: $labelId, ')
+          ..write('title: $title, ')
+          ..write('startDateTime: $startDateTime, ')
+          ..write('endDateTime: $endDateTime, ')
+          ..write('isAllDay: $isAllDay, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$OfflineDatabase extends GeneratedDatabase {
   _$OfflineDatabase(QueryExecutor e) : super(e);
   late final Members members = Members(this);
@@ -5005,6 +5801,20 @@ abstract class _$OfflineDatabase extends GeneratedDatabase {
     'dvc_point_usages_group_month_idx',
     'CREATE INDEX dvc_point_usages_group_month_idx ON dvc_point_usages (group_id, usage_year_month)',
   );
+  late final CalendarLabels calendarLabels = CalendarLabels(this);
+  late final Index calendarLabelsGroupIdx = Index(
+    'calendar_labels_group_idx',
+    'CREATE INDEX calendar_labels_group_idx ON calendar_labels (group_id)',
+  );
+  late final CalendarEvents calendarEvents = CalendarEvents(this);
+  late final Index calendarEventsGroupStartIdx = Index(
+    'calendar_events_group_start_idx',
+    'CREATE INDEX calendar_events_group_start_idx ON calendar_events (group_id, start_date_time)',
+  );
+  late final Index calendarEventsLabelIdx = Index(
+    'calendar_events_label_idx',
+    'CREATE INDEX calendar_events_label_idx ON calendar_events (label_id)',
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -5034,6 +5844,11 @@ abstract class _$OfflineDatabase extends GeneratedDatabase {
     dvcPointContractsGroupStartIdx,
     dvcLimitedPointsGroupStartIdx,
     dvcPointUsagesGroupMonthIdx,
+    calendarLabels,
+    calendarLabelsGroupIdx,
+    calendarEvents,
+    calendarEventsGroupStartIdx,
+    calendarEventsLabelIdx,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -5113,6 +5928,20 @@ abstract class _$OfflineDatabase extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('dvc_point_usages', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'groups',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('calendar_labels', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'groups',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('calendar_events', kind: UpdateKind.delete)],
     ),
   ]);
 }
