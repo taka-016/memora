@@ -48,8 +48,9 @@ class OfflineDatabase extends _$OfflineDatabase implements ReadTransaction {
       await m.createTable(calendarLabels);
       await m.createTable(calendarEvents);
       for (final entity in allSchemaEntities.whereType<Index>()) {
-        if (entity.entityName.startsWith('calendar_'))
+        if (entity.entityName.startsWith('calendar_')) {
           await m.createIndex(entity);
+        }
       }
     },
     beforeOpen: (details) async {
