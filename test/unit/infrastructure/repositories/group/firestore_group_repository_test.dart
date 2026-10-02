@@ -139,7 +139,22 @@ void main() {
       when(mockBatch.delete(any)).thenReturn(null);
       when(mockBatch.commit()).thenAnswer((_) async {});
 
+      when(mockDocRef.update(any)).thenAnswer((_) async {});
+      for (final collectionName in ['calendar_events', 'calendar_labels']) {
+        final collection = MockCollectionReference<Map<String, dynamic>>();
+        final query = MockQuery<Map<String, dynamic>>();
+        final snapshot = MockQuerySnapshot<Map<String, dynamic>>();
+        when(mockFirestore.collection(collectionName)).thenReturn(collection);
+        when(collection.where('groupId', isEqualTo: groupId)).thenReturn(query);
+        when(query.get()).thenAnswer((_) async => snapshot);
+        when(snapshot.docs).thenReturn([]);
+      }
+
       await repository.deleteGroup(groupId);
+      verify(mockDocRef.update(argThat(containsPair('calendarDeleting', true))))
+          .called(1);
+      verify(mockFirestore.collection('calendar_events')).called(1);
+      verify(mockFirestore.collection('calendar_labels')).called(1);
 
       verify(mockFirestore.batch()).called(1);
       verify(mockBatch.delete(mockDocRef)).called(1);
