@@ -6,16 +6,15 @@ import 'package:memora/infrastructure/mappers/calendar/firestore_calendar_label_
 
 class FirestoreCalendarLabelRepository implements CalendarLabelRepository {
   FirestoreCalendarLabelRepository({
-    required FirebaseFirestore firestore,
-    required Future<void> Function(String) ensureMembership,
-  }) : _firestore = firestore,
-       _ensureMembership = ensureMembership;
+    required this._firestore,
+    this._ensureMembership,
+  });
   final FirebaseFirestore _firestore;
-  final Future<void> Function(String) _ensureMembership;
+  final Future<void> Function(String)? _ensureMembership;
 
   @override
   Future<String> saveCalendarLabel(CalendarLabel label) async {
-    await _ensureMembership(label.groupId);
+    await _ensureMembership?.call(label.groupId);
     final collection = _firestore.collection('calendar_labels');
     if (label.id.isEmpty) {
       final ref = await collection.add({

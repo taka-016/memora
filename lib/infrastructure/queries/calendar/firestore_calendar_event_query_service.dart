@@ -5,10 +5,9 @@ import 'package:memora/infrastructure/mappers/calendar/firestore_calendar_event_
 
 class FirestoreCalendarEventQueryService implements CalendarEventQueryService {
   FirestoreCalendarEventQueryService({
-    required FirebaseFirestore firestore,
-    required Future<void> Function(String) ensureMembership,
-  }) : _firestore = firestore,
-       _ensureMembership = ensureMembership;
+    required this._firestore,
+    required this._ensureMembership,
+  });
   final FirebaseFirestore _firestore;
   final Future<void> Function(String) _ensureMembership;
   @override

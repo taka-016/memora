@@ -85,7 +85,6 @@ class FirestoreGroupRepository implements GroupRepository {
         .get();
     final labelRepository = FirestoreCalendarLabelRepository(
       firestore: _firestore,
-      ensureMembership: (_) async {},
     );
     for (final label in labels.docs) {
       await labelRepository.deleteCalendarLabel(label.id);

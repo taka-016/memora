@@ -1,15 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:memora/infrastructure/factories/auth_service_factory.dart';
-import 'package:memora/infrastructure/factories/query_service_factory.dart';
-
-final calendarMembershipProvider = Provider<FirestoreCalendarMembership>(
-  (ref) => FirestoreCalendarMembership(
-    ref.watch(firebaseFirestoreProvider),
-    ref.watch(firebaseAuthProvider),
-  ),
-);
 
 class FirestoreCalendarMembership {
   FirestoreCalendarMembership(this._firestore, this._auth);

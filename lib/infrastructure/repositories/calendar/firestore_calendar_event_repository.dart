@@ -6,10 +6,9 @@ import 'package:memora/infrastructure/mappers/calendar/firestore_calendar_event_
 
 class FirestoreCalendarEventRepository implements CalendarEventRepository {
   FirestoreCalendarEventRepository({
-    required FirebaseFirestore firestore,
-    Future<void> Function(String)? ensureMembership,
-  }) : _firestore = firestore,
-       _ensureMembership = ensureMembership;
+    required this._firestore,
+    this._ensureMembership,
+  });
   final FirebaseFirestore _firestore;
   final Future<void> Function(String)? _ensureMembership;
 
