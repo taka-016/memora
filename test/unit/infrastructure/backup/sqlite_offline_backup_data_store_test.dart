@@ -88,6 +88,47 @@ void main() {
     expect(await syncStorage.isPending(), isTrue);
   });
 
+  test('予定と色ラベルをバックアップして参照を保ったまま復元する', () async {
+    await db.insertRow('calendar_labels', {
+      'id': 'label',
+      'group_id': 'group-1',
+      'name': '家族全員',
+      'color': '#123ABC',
+    });
+    await db.insertRow('calendar_events', {
+      'id': 'event',
+      'group_id': 'group-1',
+      'label_id': 'label',
+      'title': '旅行',
+      'start_date_time': 1,
+      'end_date_time': 2,
+      'is_all_day': 1,
+    });
+    final snapshot = await dataStore.exportSnapshot();
+    expect(snapshot.tables['calendar_events']!.single['title'], '旅行');
+    await db.deleteRows('groups', 'id', 'group-1');
+    await dataStore.restoreSnapshot(snapshot);
+    expect((await db.rows('calendar_events')).single['label_id'], 'label');
+    expect((await db.rows('calendar_labels')).single['name'], '家族全員');
+  });
+
+  test('旧スキーマのバックアップを空のカレンダーとして復元する', () async {
+    final snapshot = await dataStore.exportSnapshot();
+    final tables = Map<String, List<Map<String, Object?>>>.from(snapshot.tables)
+      ..remove('calendar_events')
+      ..remove('calendar_labels');
+    final legacy = OfflineBackupSnapshot(
+      formatVersion: snapshot.formatVersion,
+      databaseSchemaVersion: 1,
+      currentMember: snapshot.currentMember,
+      settings: snapshot.settings,
+      tables: tables,
+    );
+    await dataStore.restoreSnapshot(legacy);
+    expect((await db.rows('groups')).single['name'], '家族');
+    expect(await db.rows('calendar_events'), isEmpty);
+  });
+
   test('SQLite外の設定保存に失敗した場合はDBと端末内本人と設定をすべて維持する', () async {
     final snapshot = await dataStore.exportSnapshot();
     await db.updateRow('groups', 'group-1', {'name': '現在のデータ'});

@@ -1,3 +1,10 @@
+import 'package:memora/infrastructure/repositories/calendar/firestore_calendar_label_repository.dart';
+import 'package:memora/infrastructure/repositories/calendar/firestore_calendar_event_repository.dart';
+import 'package:memora/infrastructure/factories/query_service_factory.dart';
+import 'package:memora/domain/repositories/calendar/calendar_label_repository.dart';
+import 'package:memora/infrastructure/repositories/calendar/sqlite_calendar_label_repository.dart';
+import 'package:memora/domain/repositories/calendar/calendar_event_repository.dart';
+import 'package:memora/infrastructure/repositories/calendar/sqlite_calendar_event_repository.dart';
 import 'package:memora/composition_root/providers/offline_database_provider.dart';
 import 'package:memora/infrastructure/repositories/trip/sqlite_trip_entry_repository.dart';
 import 'package:memora/infrastructure/repositories/group/sqlite_group_event_repository.dart';
@@ -87,8 +94,18 @@ class RepositoryFactory {
   }) {
     switch (mode) {
       case AppMode.online:
-        return _createFirestoreRepository<T>();
+        return _createFirestoreRepository<T>(ref: ref);
       case AppMode.offline:
+        if (T == CalendarLabelRepository) {
+          return SqliteCalendarLabelRepository(
+            ref.watch(offlineDatabaseProvider),
+          ) as T;
+        }
+        if (T == CalendarEventRepository) {
+          return SqliteCalendarEventRepository(
+            ref.watch(offlineDatabaseProvider),
+          ) as T;
+        }
         if (T == TripEntryRepository) {
           return SqliteTripEntryRepository(ref.watch(offlineDatabaseProvider))
               as T;
@@ -133,12 +150,27 @@ class RepositoryFactory {
     }
   }
 
-  static T _createFirestoreRepository<T>() {
+  static T _createFirestoreRepository<T>({required Ref ref}) {
+    if (T == CalendarEventRepository) {
+      return FirestoreCalendarEventRepository(
+        firestore: ref.watch(firebaseFirestoreProvider),
+        ensureMembership: ref.watch(calendarMembershipProvider).ensure,
+      ) as T;
+    }
+    if (T == CalendarLabelRepository) {
+      return FirestoreCalendarLabelRepository(
+        firestore: ref.watch(firebaseFirestoreProvider),
+        ensureMembership: ref.watch(calendarMembershipProvider).ensure,
+      ) as T;
+    }
     if (T == MemberRepository) {
       return FirestoreMemberRepository() as T;
     }
     if (T == GroupRepository) {
-      return FirestoreGroupRepository() as T;
+      return FirestoreGroupRepository(
+        firestore: ref.watch(firebaseFirestoreProvider),
+        ensureMembership: ref.watch(calendarMembershipProvider).ensure,
+      ) as T;
     }
     if (T == MemberEventRepository) {
       return FirestoreMemberEventRepository() as T;
@@ -164,3 +196,11 @@ class RepositoryFactory {
     throw ArgumentError('Unknown repository type: $T');
   }
 }
+
+final calendarEventRepositoryProvider = Provider<CalendarEventRepository>(
+  (ref) => RepositoryFactory.create<CalendarEventRepository>(ref: ref),
+);
+
+final calendarLabelRepositoryProvider = Provider<CalendarLabelRepository>(
+  (ref) => RepositoryFactory.create<CalendarLabelRepository>(ref: ref),
+);

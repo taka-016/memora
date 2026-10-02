@@ -1,0 +1,83 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function membership(groupId) {
+      return get(/databases/$(database)/documents/calendar_memberships/$(groupId)/accounts/$(request.auth.uid)).data;
+    }
+    function belongsTo(groupId) {
+      let proof = membership(groupId);
+      let member = get(/databases/$(database)/documents/members/$(proof.memberId)).data;
+      let entry = get(/databases/$(database)/documents/group_members/$(proof.membershipId)).data;
+      return signedIn() && exists(/databases/$(database)/documents/groups/$(groupId))
+        && member.accountId == request.auth.uid
+        && entry.groupId == groupId && entry.memberId == proof.memberId;
+    }
+    function active(groupId) {
+      return get(/databases/$(database)/documents/groups/$(groupId)).data.get('calendarDeleting', false) == false;
+    }
+    function validEvent(data) {
+      return data.groupId is string && data.labelId is string
+        && data.title is string && data.title.matches('.*[^ \\t\\r\\n].*')
+        && data.startDateTime is timestamp && data.endDateTime is timestamp
+        && data.endDateTime >= data.startDateTime && data.isAllDay is bool
+        && getAfter(/databases/$(database)/documents/calendar_labels/$(data.labelId)).data.groupId == data.groupId;
+    }
+    function countChanged(labelId, eventId, delta) {
+      let before = get(/databases/$(database)/documents/calendar_labels/$(labelId)).data;
+      let after = getAfter(/databases/$(database)/documents/calendar_labels/$(labelId)).data;
+      return after.eventCount == before.eventCount + delta && after.lastEventId == eventId;
+    }
+    function validCountChange(labelId, data) {
+      let path = /databases/$(database)/documents/calendar_events/$(data.lastEventId);
+      let wasReferenced = exists(path) && get(path).data.labelId == labelId;
+      let isReferenced = existsAfter(path) && getAfter(path).data.labelId == labelId;
+      return data.lastEventId is string
+        && ((wasReferenced && !isReferenced && data.eventCount == resource.data.eventCount - 1)
+          || (!wasReferenced && isReferenced && data.eventCount == resource.data.eventCount + 1));
+    }
+    function validLabel(data) {
+      return data.groupId is string && data.name is string && data.name.matches('.*[^ \\t\\r\\n].*')
+        && data.color is string && data.color.matches('^#[0-9a-fA-F]{6}$')
+        && data.eventCount is int && data.eventCount >= 0;
+    }
+
+    match /calendar_memberships/{groupId}/accounts/{uid} {
+      allow get: if signedIn() && request.auth.uid == uid;
+      allow create, update: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['memberId', 'membershipId'])
+        && get(/databases/$(database)/documents/members/$(request.resource.data.memberId)).data.accountId == uid
+        && get(/databases/$(database)/documents/group_members/$(request.resource.data.membershipId)).data.groupId == groupId
+        && get(/databases/$(database)/documents/group_members/$(request.resource.data.membershipId)).data.memberId == request.resource.data.memberId;
+    }
+    match /calendar_events/{eventId} {
+      allow read: if signedIn() && belongsTo(resource.data.groupId);
+      allow create: if signedIn() && belongsTo(request.resource.data.groupId)
+        && active(request.resource.data.groupId) && validEvent(request.resource.data)
+        && countChanged(request.resource.data.labelId, eventId, 1);
+      allow update: if signedIn() && belongsTo(resource.data.groupId) && active(resource.data.groupId)
+        && request.resource.data.groupId == resource.data.groupId && validEvent(request.resource.data)
+        && (request.resource.data.labelId == resource.data.labelId
+          || (countChanged(resource.data.labelId, eventId, -1) && countChanged(request.resource.data.labelId, eventId, 1)));
+      allow delete: if signedIn() && belongsTo(resource.data.groupId)
+        && countChanged(resource.data.labelId, eventId, -1);
+    }
+    match /calendar_labels/{labelId} {
+      allow read: if signedIn() && belongsTo(resource.data.groupId);
+      allow create: if signedIn() && belongsTo(request.resource.data.groupId) && active(request.resource.data.groupId)
+        && validLabel(request.resource.data) && request.resource.data.eventCount == 0 && request.resource.data.lastEventId == null;
+      allow update: if signedIn() && belongsTo(resource.data.groupId)
+        && request.resource.data.groupId == resource.data.groupId && validLabel(request.resource.data)
+        && ((active(resource.data.groupId) && request.resource.data.eventCount == resource.data.eventCount
+              && request.resource.data.lastEventId == resource.data.lastEventId)
+          || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['eventCount', 'lastEventId'])
+              && validCountChange(labelId, request.resource.data)));
+      allow delete: if signedIn() && belongsTo(resource.data.groupId) && resource.data.eventCount == 0;
+    }
+
+    // 既存データの読取は所属参照の作成に必要。書込権限は既存ルールと統合する。
+    match /members/{memberId} { allow read: if signedIn(); }
+    match /group_members/{membershipId} { allow read: if signedIn(); }
+    match /groups/{groupId} { allow read: if signedIn(); }
+  }
+}

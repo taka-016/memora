@@ -129,3 +129,27 @@ CREATE INDEX group_events_group_year_idx ON group_events (group_id, year);
 CREATE INDEX dvc_point_contracts_group_start_idx ON dvc_point_contracts (group_id, contract_start_year_month);
 CREATE INDEX dvc_limited_points_group_start_idx ON dvc_limited_points (group_id, start_year_month);
 CREATE INDEX dvc_point_usages_group_month_idx ON dvc_point_usages (group_id, usage_year_month);
+
+CREATE TABLE calendar_labels (
+  id TEXT NOT NULL PRIMARY KEY,
+  group_id TEXT NOT NULL REFERENCES "groups"(id) ON DELETE CASCADE,
+  name TEXT NOT NULL CHECK (length(trim(name)) > 0),
+  color TEXT NOT NULL CHECK (length(color) = 7 AND substr(color, 1, 1) = '#' AND substr(color, 2) NOT GLOB '*[^0-9a-fA-F]*'),
+  UNIQUE (id, group_id)
+) AS SqliteCalendarLabelRow;
+
+CREATE INDEX calendar_labels_group_idx ON calendar_labels (group_id);
+
+CREATE TABLE calendar_events (
+  id TEXT NOT NULL PRIMARY KEY,
+  group_id TEXT NOT NULL REFERENCES "groups"(id) ON DELETE CASCADE,
+  label_id TEXT NOT NULL,
+  title TEXT NOT NULL CHECK (length(trim(title)) > 0),
+  start_date_time INTEGER NOT NULL,
+  end_date_time INTEGER NOT NULL CHECK (end_date_time >= start_date_time),
+  is_all_day INTEGER NOT NULL CHECK (is_all_day IN (0, 1)),
+  FOREIGN KEY (label_id, group_id) REFERENCES calendar_labels(id, group_id) ON DELETE NO ACTION
+) AS SqliteCalendarEventRow;
+
+CREATE INDEX calendar_events_group_start_idx ON calendar_events (group_id, start_date_time);
+CREATE INDEX calendar_events_label_idx ON calendar_events (label_id);

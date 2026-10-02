@@ -1,3 +1,11 @@
+import 'package:memora/infrastructure/factories/auth_service_factory.dart';
+import 'package:memora/infrastructure/queries/calendar/firestore_calendar_label_query_service.dart';
+import 'package:memora/infrastructure/queries/calendar/firestore_calendar_event_query_service.dart';
+import 'package:memora/infrastructure/services/firestore_calendar_membership.dart';
+import 'package:memora/application/queries/calendar/calendar_label_query_service.dart';
+import 'package:memora/infrastructure/queries/calendar/sqlite_calendar_label_query_service.dart';
+import 'package:memora/application/queries/calendar/calendar_event_query_service.dart';
+import 'package:memora/infrastructure/queries/calendar/sqlite_calendar_event_query_service.dart';
 import 'package:memora/composition_root/providers/offline_database_provider.dart';
 import 'package:memora/infrastructure/queries/trip/sqlite_trip_entry_query_service.dart';
 import 'package:memora/infrastructure/queries/trip/sqlite_itinerary_item_query_service.dart';
@@ -40,6 +48,13 @@ import 'package:memora/infrastructure/queries/trip/firestore_itinerary_item_quer
 import 'package:memora/infrastructure/queries/trip/firestore_location_query_service.dart';
 import 'package:memora/infrastructure/queries/trip/firestore_task_query_service.dart';
 import 'package:memora/infrastructure/queries/trip/firestore_trip_entry_query_service.dart';
+
+final calendarMembershipProvider = Provider<FirestoreCalendarMembership>((ref) {
+  return FirestoreCalendarMembership(
+    ref.watch(firebaseFirestoreProvider),
+    ref.watch(firebaseAuthProvider),
+  );
+});
 
 final groupQueryServiceProvider = Provider<GroupQueryService>((ref) {
   return QueryServiceFactory.create<GroupQueryService>(ref: ref);
@@ -134,6 +149,16 @@ class QueryServiceFactory {
           rethrowOnError: rethrowOnError,
         );
       case AppMode.offline:
+        if (T == CalendarLabelQueryService) {
+          return SqliteCalendarLabelQueryService(
+            ref.watch(offlineDatabaseProvider),
+          ) as T;
+        }
+        if (T == CalendarEventQueryService) {
+          return SqliteCalendarEventQueryService(
+            ref.watch(offlineDatabaseProvider),
+          ) as T;
+        }
         if (T == TripEntryQueryService) {
           return SqliteTripEntryQueryService(ref.watch(offlineDatabaseProvider))
               as T;
@@ -217,6 +242,18 @@ class QueryServiceFactory {
     required Ref ref,
     required bool rethrowOnError,
   }) {
+    if (T == CalendarEventQueryService) {
+      return FirestoreCalendarEventQueryService(
+        firestore: ref.watch(firebaseFirestoreProvider),
+        ensureMembership: ref.watch(calendarMembershipProvider).ensure,
+      ) as T;
+    }
+    if (T == CalendarLabelQueryService) {
+      return FirestoreCalendarLabelQueryService(
+        firestore: ref.watch(firebaseFirestoreProvider),
+        ensureMembership: ref.watch(calendarMembershipProvider).ensure,
+      ) as T;
+    }
     if (T == GroupQueryService) {
       return FirestoreGroupQueryService() as T;
     }
@@ -272,3 +309,11 @@ final androidWidgetItineraryItemQueryServiceProvider =
         rethrowOnError: true,
       );
     });
+
+final calendarEventQueryServiceProvider = Provider<CalendarEventQueryService>(
+  (ref) => QueryServiceFactory.create<CalendarEventQueryService>(ref: ref),
+);
+
+final calendarLabelQueryServiceProvider = Provider<CalendarLabelQueryService>(
+  (ref) => QueryServiceFactory.create<CalendarLabelQueryService>(ref: ref),
+);
