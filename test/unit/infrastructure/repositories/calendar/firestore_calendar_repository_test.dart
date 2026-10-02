@@ -69,7 +69,10 @@ void main() {
               as Future<void> Function(Transaction))(transaction),
     );
     container = ProviderContainer(
-      overrides: [firebaseFirestoreProvider.overrideWithValue(firestore)],
+      overrides: [
+        firebaseFirestoreProvider.overrideWithValue(firestore),
+        firebaseAuthProvider.overrideWithValue(MockFirebaseAuth()),
+      ],
     );
     events = container.read(
       Provider(
