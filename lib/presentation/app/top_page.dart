@@ -156,7 +156,8 @@ class TopPage extends HookConsumerWidget {
     useEffect(
       () {
         if (!isAuthenticated ||
-            selectedItem != AppNavigationItem.groupTimeline ||
+            (selectedItem != AppNavigationItem.groupTimeline &&
+                selectedItem != AppNavigationItem.calendar) ||
             currentMember == null ||
             shouldHideForAndroidWidgetLaunch) {
           return null;
@@ -298,7 +299,8 @@ class TopPage extends HookConsumerWidget {
     if (selectedItem == item) {
       return;
     }
-    if (item == AppNavigationItem.groupTimeline) {
+    if (item == AppNavigationItem.groupTimeline ||
+        item == AppNavigationItem.calendar) {
       final currentMember = ref.read(currentMemberNotifierProvider).member;
       if (currentMember != null) {
         unawaited(
@@ -310,12 +312,17 @@ class TopPage extends HookConsumerWidget {
         ref.read(groupTimelineGroupSelectionNotifierProvider.notifier).reset();
       }
 
-      const GroupListRoute().go(context);
+      if (item == AppNavigationItem.calendar) {
+        const CalendarGroupListRoute().go(context);
+      } else {
+        const GroupListRoute().go(context);
+      }
       return;
     }
 
     final location = switch (item) {
       AppNavigationItem.groupTimeline => null,
+      AppNavigationItem.calendar => null,
       AppNavigationItem.map => const MapRoute().location,
       AppNavigationItem.memberManagement =>
         const MemberManagementRoute().location,
@@ -328,7 +335,8 @@ class TopPage extends HookConsumerWidget {
     if (location == null) {
       return;
     }
-    if (selectedItem == AppNavigationItem.groupTimeline) {
+    if (selectedItem == AppNavigationItem.groupTimeline ||
+        selectedItem == AppNavigationItem.calendar) {
       unawaited(context.push<void>(location));
     } else {
       context.pushReplacement(location);
@@ -436,6 +444,14 @@ class TopPage extends HookConsumerWidget {
         Icons.timeline,
         'グループ年表',
         AppNavigationItem.groupTimeline,
+        closeDrawer,
+      ),
+      _buildDrawerItem(
+        context,
+        ref,
+        Icons.calendar_month,
+        'カレンダー',
+        AppNavigationItem.calendar,
         closeDrawer,
       ),
       if (ref

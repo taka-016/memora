@@ -119,7 +119,9 @@ bool _isAuthenticationLocation(String location) {
 }
 
 bool _isProtectedLocation(String path) {
-  return path == const GroupListRoute().location ||
+  return path == const CalendarGroupListRoute().location ||
+      path.startsWith('${const CalendarGroupListRoute().location}/') ||
+      path == const GroupListRoute().location ||
       path.startsWith('${const GroupListRoute().location}/') ||
       path == const MapRoute().location ||
       path == const MemberManagementRoute().location ||

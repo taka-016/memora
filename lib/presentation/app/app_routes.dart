@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:memora/presentation/app/top_page.dart';
+import 'package:memora/presentation/features/calendar/calendar_navigation_view.dart';
 import 'package:memora/presentation/features/account_setting/account_settings.dart';
 import 'package:memora/presentation/features/auth/auth_guard.dart';
 import 'package:memora/presentation/features/auth/login_page.dart';
@@ -22,6 +23,7 @@ List<RouteBase> get appRoutes => $appRoutes;
 
 enum AppNavigationItem {
   groupTimeline,
+  calendar,
   map,
   memberManagement,
   groupManagement,
@@ -40,6 +42,10 @@ class AppRootRoute extends GoRouteData with $AppRootRoute {
 }
 
 AppNavigationItem appNavigationItemForLocation(String location) {
+  if (location == const CalendarGroupListRoute().location ||
+      location.startsWith('${const CalendarGroupListRoute().location}/')) {
+    return AppNavigationItem.calendar;
+  }
   if (location == const MapRoute().location) {
     return AppNavigationItem.map;
   }
@@ -114,6 +120,12 @@ class MemberSetupRoute extends GoRouteData with $MemberSetupRoute {
             TypedGoRoute<DvcPointCalculationRoute>(path: 'dvc'),
           ],
         ),
+      ],
+    ),
+    TypedGoRoute<CalendarGroupListRoute>(
+      path: '/calendar',
+      routes: <TypedRoute<RouteData>>[
+        TypedGoRoute<CalendarRoute>(path: ':groupId'),
       ],
     ),
     TypedGoRoute<MapRoute>(path: '/map'),
@@ -200,6 +212,21 @@ class DvcPointCalculationRoute extends GoRouteData
       ),
     );
   }
+}
+
+class CalendarGroupListRoute extends GoRouteData with $CalendarGroupListRoute {
+  const CalendarGroupListRoute();
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      const Material(child: CalendarNavigationView());
+}
+
+class CalendarRoute extends GoRouteData with $CalendarRoute {
+  const CalendarRoute({required this.groupId});
+  final String groupId;
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      Material(child: CalendarNavigationView(groupId: groupId));
 }
 
 class MapRoute extends GoRouteData with $MapRoute {
