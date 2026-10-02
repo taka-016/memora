@@ -25,8 +25,9 @@ class SqliteCalendarLabelRepository implements CalendarLabelRepository {
           where: 'id = ?',
           args: [label.id],
         );
-        if (existing.isEmpty || existing.single['group_id'] != label.groupId)
+        if (existing.isEmpty || existing.single['group_id'] != label.groupId) {
           throw ValidationException('更新する色ラベルのグループは変更できません');
+        }
         await db.updateRow(
           'calendar_labels',
           label.id,
@@ -41,8 +42,9 @@ class SqliteCalendarLabelRepository implements CalendarLabelRepository {
       'calendar_events',
       where: 'label_id = ?',
       args: [labelId],
-    )).isNotEmpty)
+    )).isNotEmpty) {
       throw ValidationException('使用中の色ラベルは削除できません');
+    }
     await db.deleteRows('calendar_labels', 'id', labelId);
   });
 }

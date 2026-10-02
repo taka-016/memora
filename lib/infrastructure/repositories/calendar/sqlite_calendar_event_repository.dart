@@ -39,8 +39,9 @@ class SqliteCalendarEventRepository implements CalendarEventRepository {
           where: 'id = ?',
           args: [event.id],
         );
-        if (existing.isEmpty || existing.single['group_id'] != event.groupId)
+        if (existing.isEmpty || existing.single['group_id'] != event.groupId) {
           throw ValidationException('更新する予定のグループは変更できません');
+        }
         await db.updateRow(
           'calendar_events',
           event.id,
