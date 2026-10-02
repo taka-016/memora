@@ -1,3 +1,7 @@
+import 'package:memora/application/queries/calendar/calendar_label_query_service.dart';
+import 'package:memora/infrastructure/queries/calendar/sqlite_calendar_label_query_service.dart';
+import 'package:memora/application/queries/calendar/calendar_event_query_service.dart';
+import 'package:memora/infrastructure/queries/calendar/sqlite_calendar_event_query_service.dart';
 import 'package:memora/composition_root/providers/offline_database_provider.dart';
 import 'package:memora/infrastructure/queries/trip/sqlite_trip_entry_query_service.dart';
 import 'package:memora/infrastructure/queries/trip/sqlite_itinerary_item_query_service.dart';
@@ -134,6 +138,16 @@ class QueryServiceFactory {
           rethrowOnError: rethrowOnError,
         );
       case AppMode.offline:
+        if (T == CalendarLabelQueryService) {
+          return SqliteCalendarLabelQueryService(
+            ref.watch(offlineDatabaseProvider),
+          ) as T;
+        }
+        if (T == CalendarEventQueryService) {
+          return SqliteCalendarEventQueryService(
+            ref.watch(offlineDatabaseProvider),
+          ) as T;
+        }
         if (T == TripEntryQueryService) {
           return SqliteTripEntryQueryService(ref.watch(offlineDatabaseProvider))
               as T;

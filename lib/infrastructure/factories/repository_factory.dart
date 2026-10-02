@@ -1,3 +1,7 @@
+import 'package:memora/domain/repositories/calendar/calendar_label_repository.dart';
+import 'package:memora/infrastructure/repositories/calendar/sqlite_calendar_label_repository.dart';
+import 'package:memora/domain/repositories/calendar/calendar_event_repository.dart';
+import 'package:memora/infrastructure/repositories/calendar/sqlite_calendar_event_repository.dart';
 import 'package:memora/composition_root/providers/offline_database_provider.dart';
 import 'package:memora/infrastructure/repositories/trip/sqlite_trip_entry_repository.dart';
 import 'package:memora/infrastructure/repositories/group/sqlite_group_event_repository.dart';
@@ -89,6 +93,16 @@ class RepositoryFactory {
       case AppMode.online:
         return _createFirestoreRepository<T>();
       case AppMode.offline:
+        if (T == CalendarLabelRepository) {
+          return SqliteCalendarLabelRepository(
+            ref.watch(offlineDatabaseProvider),
+          ) as T;
+        }
+        if (T == CalendarEventRepository) {
+          return SqliteCalendarEventRepository(
+            ref.watch(offlineDatabaseProvider),
+          ) as T;
+        }
         if (T == TripEntryRepository) {
           return SqliteTripEntryRepository(ref.watch(offlineDatabaseProvider))
               as T;
