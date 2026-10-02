@@ -169,6 +169,7 @@ class RepositoryFactory {
     if (T == GroupRepository) {
       return FirestoreGroupRepository(
         firestore: ref.watch(firebaseFirestoreProvider),
+        ensureMembership: ref.watch(calendarMembershipProvider).ensure,
       ) as T;
     }
     if (T == MemberEventRepository) {

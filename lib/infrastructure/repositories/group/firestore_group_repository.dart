@@ -9,9 +9,12 @@ import 'package:memora/infrastructure/mappers/group/firestore_group_member_mappe
 
 class FirestoreGroupRepository implements GroupRepository {
   final FirebaseFirestore _firestore;
+  final Future<void> Function(String)? _ensureMembership;
 
-  FirestoreGroupRepository({FirebaseFirestore? firestore})
-    : _firestore = firestore ?? FirebaseFirestore.instance;
+  FirestoreGroupRepository({
+    FirebaseFirestore? firestore,
+    this._ensureMembership,
+  }) : _firestore = firestore ?? FirebaseFirestore.instance;
 
   @override
   Future<String> saveGroup(Group group) async {
@@ -66,6 +69,7 @@ class FirestoreGroupRepository implements GroupRepository {
 
   @override
   Future<void> deleteGroup(String groupId) async {
+    await _ensureMembership?.call(groupId);
     await _firestore.collection('groups').doc(groupId).update({
       'calendarDeleting': true,
     });
