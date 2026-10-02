@@ -58,15 +58,19 @@ void main() {
     when(transaction.get(eventRef)).thenAnswer((_) async => eventDoc);
     when(transaction.get(labelRef)).thenAnswer((_) async => labelDoc);
     when(transaction.get(otherRef)).thenAnswer((_) async => labelDoc);
-    when(firestore.runTransaction<String>(any)).thenAnswer(
-      (call) async =>
-          await (call.positionalArguments[0]
-              as Future<String> Function(Transaction))(transaction),
-    );
     when(firestore.runTransaction<void>(any)).thenAnswer(
       (call) async =>
           await (call.positionalArguments[0]
               as Future<void> Function(Transaction))(transaction),
+    );
+    when(
+      firestore.runTransaction<String>(
+        argThat(isA<Future<String> Function(Transaction)>()),
+      ),
+    ).thenAnswer(
+      (call) async =>
+          await (call.positionalArguments[0]
+              as Future<String> Function(Transaction))(transaction),
     );
     container = ProviderContainer(
       overrides: [
