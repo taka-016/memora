@@ -146,7 +146,7 @@ void main() {
     await db.customStatement(
       "INSERT INTO members (id, display_name) VALUES ('self', '本人')",
     );
-    await db.customStatement('PRAGMA user_version = 2');
+    await db.customStatement('PRAGMA user_version = 99');
     await db.close();
     db = OfflineDatabase(NativeDatabase(file));
     await expectLater(db.initialize(), throwsStateError);
