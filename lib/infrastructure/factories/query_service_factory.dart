@@ -1,3 +1,6 @@
+import 'package:memora/infrastructure/queries/calendar/firestore_calendar_label_query_service.dart';
+import 'package:memora/infrastructure/queries/calendar/firestore_calendar_event_query_service.dart';
+import 'package:memora/infrastructure/services/firestore_calendar_membership.dart';
 import 'package:memora/application/queries/calendar/calendar_label_query_service.dart';
 import 'package:memora/infrastructure/queries/calendar/sqlite_calendar_label_query_service.dart';
 import 'package:memora/application/queries/calendar/calendar_event_query_service.dart';
@@ -231,6 +234,18 @@ class QueryServiceFactory {
     required Ref ref,
     required bool rethrowOnError,
   }) {
+    if (T == CalendarEventQueryService) {
+      return FirestoreCalendarEventQueryService(
+        firestore: ref.watch(firebaseFirestoreProvider),
+        ensureMembership: ref.watch(calendarMembershipProvider).ensure,
+      ) as T;
+    }
+    if (T == CalendarLabelQueryService) {
+      return FirestoreCalendarLabelQueryService(
+        firestore: ref.watch(firebaseFirestoreProvider),
+        ensureMembership: ref.watch(calendarMembershipProvider).ensure,
+      ) as T;
+    }
     if (T == GroupQueryService) {
       return FirestoreGroupQueryService() as T;
     }

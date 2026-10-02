@@ -1,3 +1,5 @@
+import 'package:memora/infrastructure/repositories/calendar/firestore_calendar_event_repository.dart';
+import 'package:memora/infrastructure/repositories/calendar/firestore_calendar_label_repository.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/domain/entities/group/group_member.dart';
 import 'package:memora/domain/repositories/group/group_repository.dart';
@@ -64,6 +66,30 @@ class FirestoreGroupRepository implements GroupRepository {
 
   @override
   Future<void> deleteGroup(String groupId) async {
+    await _firestore.collection('groups').doc(groupId).update({
+      'calendarDeleting': true,
+    });
+    final events = await _firestore
+        .collection('calendar_events')
+        .where('groupId', isEqualTo: groupId)
+        .get();
+    final eventRepository = FirestoreCalendarEventRepository(
+      firestore: _firestore,
+    );
+    for (final event in events.docs) {
+      await eventRepository.deleteCalendarEvent(event.id);
+    }
+    final labels = await _firestore
+        .collection('calendar_labels')
+        .where('groupId', isEqualTo: groupId)
+        .get();
+    final labelRepository = FirestoreCalendarLabelRepository(
+      firestore: _firestore,
+      ensureMembership: (_) async {},
+    );
+    for (final label in labels.docs) {
+      await labelRepository.deleteCalendarLabel(label.id);
+    }
     final batch = _firestore.batch();
 
     final memberSnapshot = await _firestore
