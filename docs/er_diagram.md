@@ -111,6 +111,42 @@ erDiagram
         number usedPoint "NOT NULL"
         string memo
     }
+    calendar_events {
+        string id PK
+        string groupId FK "NOT NULL"
+        string labelId FK "NOT NULL"
+        string title "NOT NULL"
+        timestamp startDateTime "NOT NULL"
+        timestamp endDateTime "NOT NULL"
+        boolean isAllDay "NOT NULL"
+        string recurrenceRule
+        string timeZone
+    }
+    calendar_event_overrides {
+        string id PK
+        string eventId FK "NOT NULL"
+        timestamp originalStartDateTime "NOT NULL"
+        boolean isCancelled "NOT NULL"
+        string title
+        timestamp startDateTime
+        timestamp endDateTime
+        boolean isAllDay
+        string labelId FK
+    }
+    calendar_labels {
+        string id PK
+        string groupId FK "NOT NULL"
+        string name "NOT NULL"
+        string color "NOT NULL"
+    }
+    google_calendar_connections {
+        string memberId PK, FK
+        string googleAccountId "NOT NULL"
+    }
+    google_calendar_selections {
+        string memberId PK, FK
+        string calendarId PK
+    }
 
     trip_entries ||--o{ locations : "id → tripId"
     trip_entries ||--o{ tasks : "id → tripId"
@@ -131,6 +167,13 @@ erDiagram
     groups ||--o{ dvc_point_contracts : "id → groupId"
     groups ||--o{ dvc_limited_points : "id → groupId"
     groups ||--o{ dvc_point_usages : "id → groupId"
+    groups ||--o{ calendar_events : "id → groupId"
+    groups ||--o{ calendar_labels : "id → groupId"
+    calendar_labels ||--o{ calendar_events : "id → labelId"
+    calendar_events ||--o{ calendar_event_overrides : "id → eventId"
+    calendar_labels |o--o{ calendar_event_overrides : "id → labelId"
+    members ||--o| google_calendar_connections : "id → memberId"
+    google_calendar_connections ||--o{ google_calendar_selections : "memberId → memberId"
     externally_managed_accounts ||--|| members : "id → accountId"
 ```
 
