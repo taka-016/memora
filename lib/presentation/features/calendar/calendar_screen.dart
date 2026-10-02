@@ -219,7 +219,13 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                         : calendarLabelColor(label.color),
                   ),
                   title: Text(event.title),
-                  subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(label?.name ?? '色ラベルを確認してください'), Text(calendarPeriodText(event))]),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(label?.name ?? '色ラベルを確認してください'),
+                      Text(calendarPeriodText(event)),
+                    ],
+                  ),
                   onTap:
                       state.isSaving ||
                           state.isLoading ||
