@@ -122,7 +122,7 @@ erDiagram
         string recurrenceRule
         string timeZone
     }
-    calendar_event_exceptions {
+    calendar_event_overrides {
         string id PK
         string eventId FK "NOT NULL"
         timestamp originalStartDateTime "NOT NULL"
@@ -170,8 +170,8 @@ erDiagram
     groups ||--o{ calendar_events : "id → groupId"
     groups ||--o{ calendar_labels : "id → groupId"
     calendar_labels ||--o{ calendar_events : "id → labelId"
-    calendar_events ||--o{ calendar_event_exceptions : "id → eventId"
-    calendar_labels |o--o{ calendar_event_exceptions : "id → labelId"
+    calendar_events ||--o{ calendar_event_overrides : "id → eventId"
+    calendar_labels |o--o{ calendar_event_overrides : "id → labelId"
     members ||--o| google_calendar_connections : "id → memberId"
     google_calendar_connections ||--o{ google_calendar_selections : "memberId → memberId"
     externally_managed_accounts ||--|| members : "id → accountId"
