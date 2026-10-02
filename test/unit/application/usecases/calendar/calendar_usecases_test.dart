@@ -76,7 +76,8 @@ void main() {
         throwsA(isA<ApplicationValidationException>()),
       );
       await expectLater(
-        UpdateCalendarEventUsecase(events).execute(invalid),
+        UpdateCalendarEventUsecase(events)
+            .execute(invalid.copyWith(id: 'event')),
         throwsA(isA<ApplicationValidationException>()),
       );
       verifyZeroInteractions(events);
