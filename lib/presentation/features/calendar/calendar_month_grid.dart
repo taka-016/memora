@@ -220,19 +220,22 @@ class _CalendarDayCell extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 2),
           decoration: BoxDecoration(
-            color: color,
+            color: event.isAllDay ? color : Colors.transparent,
             borderRadius: BorderRadius.circular(3),
           ),
           child: Text(
             event.title,
             maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+            overflow: TextOverflow.clip,
+            softWrap: false,
             style: TextStyle(
               fontSize: 11,
               height: 1.4,
               color: label == null
                   ? Theme.of(context).colorScheme.onSurface
-                  : calendarLabelColor(label.textColor),
+                  : calendarLabelColor(
+                      event.isAllDay ? label.textColor : label.color,
+                    ),
             ),
           ),
         ),

@@ -78,10 +78,12 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       builder: (context) => CalendarDayEventsSheet(
         groupId: widget.groupId,
         date: date,
         onEdit: (event) => _edit(event),
+        onAdd: () => _edit(),
       ),
     );
   }

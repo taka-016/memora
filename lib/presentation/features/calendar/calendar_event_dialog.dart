@@ -237,7 +237,8 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                             value: label.id,
                             child: Text(
                               label.name,
-                              overflow: TextOverflow.ellipsis,
+                              overflow: TextOverflow.clip,
+                              softWrap: false,
                             ),
                           ),
                         )
@@ -256,29 +257,33 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                         ? null
                         : (value) => setState(() => _allDay = value),
                   ),
-                  TextButton(
-                    onPressed: state.isSaving ? null : () => _pick(true, false),
-                    child: Text('開始日: ${calendarDateText(_start)}'),
-                  ),
-                  if (!_allDay)
-                    TextButton(
-                      onPressed: state.isSaving
-                          ? null
-                          : () => _pick(true, true),
-                      child: Text('開始時刻: ${calendarTimeText(_start)}'),
-                    ),
-                  TextButton(
-                    onPressed: state.isSaving
-                        ? null
-                        : () => _pick(false, false),
-                    child: Text('終了日: ${calendarDateText(_end)}'),
-                  ),
-                  if (!_allDay)
-                    TextButton(
-                      onPressed: state.isSaving
-                          ? null
-                          : () => _pick(false, true),
-                      child: Text('終了時刻: ${calendarTimeText(_end)}'),
+                  for (final start in [true, false])
+                    Row(
+                      children: [
+                        Expanded(
+                          flex: 3,
+                          child: TextButton(
+                            onPressed: state.isSaving
+                                ? null
+                                : () => _pick(start, false),
+                            child: Text(
+                              '${start ? '開始' : '終了'}日: ${calendarDateText(start ? _start : _end)}',
+                            ),
+                          ),
+                        ),
+                        if (!_allDay)
+                          Expanded(
+                            flex: 2,
+                            child: TextButton(
+                              onPressed: state.isSaving
+                                  ? null
+                                  : () => _pick(start, true),
+                              child: Text(
+                                '${start ? '開始' : '終了'}時刻: ${calendarTimeText(start ? _start : _end)}',
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   if (_error.isNotEmpty)
                     Text(
