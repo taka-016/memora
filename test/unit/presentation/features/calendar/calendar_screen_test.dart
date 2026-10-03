@@ -38,12 +38,25 @@ class _CalendarHarness {
   final update = MockUpdateCalendarEventUsecase();
   final delete = MockDeleteCalendarEventUsecase();
   final saveLabel = MockSaveCalendarLabelUsecase();
+  final reorder = MockReorderCalendarLabelsUsecase();
   final savedEvents = <CalendarEventDto>[];
   final savedLabels = <CalendarLabelDto>[_family];
 
   Future<void> pump(WidgetTester tester, {double textScale = 1}) async {
     when(events.execute('g1')).thenAnswer((_) async => List.of(savedEvents));
     when(labels.execute('g1')).thenAnswer((_) async => List.of(savedLabels));
+    when(reorder.execute('g1', any)).thenAnswer((call) async {
+      final ids = call.positionalArguments[1] as List<String>;
+      final ordered = [
+        for (var index = 0; index < ids.length; index++)
+          savedLabels
+              .firstWhere((label) => label.id == ids[index])
+              .copyWith(sortOrder: index),
+      ];
+      savedLabels
+        ..clear()
+        ..addAll(ordered);
+    });
     when(create.execute(any)).thenAnswer((call) async {
       savedEvents.add(
         (call.positionalArguments.single as CalendarEventDto).copyWith(
@@ -85,6 +98,7 @@ class _CalendarHarness {
           updateCalendarEventUsecaseProvider.overrideWithValue(update),
           deleteCalendarEventUsecaseProvider.overrideWithValue(delete),
           saveCalendarLabelUsecaseProvider.overrideWithValue(saveLabel),
+          reorderCalendarLabelsUsecaseProvider.overrideWithValue(reorder),
         ],
         child: MaterialApp(
           builder: (context, child) => MediaQuery(
@@ -446,7 +460,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('ラベルの並び順と終日・時刻指定の両プレビューを保存する', (tester) async {
+  testWidgets('番号入力を表示せず終日・時刻指定のプレビューを横並びで表示する', (tester) async {
     final harness = _CalendarHarness();
     await harness.pump(tester);
     await tester.tap(find.byTooltip('色ラベルの設定'));
@@ -455,11 +469,20 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('終日'), findsOneWidget);
     expect(find.text('時間指定'), findsOneWidget);
-    await tester.enterText(find.widgetWithText(TextFormField, '並び順'), '3');
+    expect(find.widgetWithText(TextFormField, '並び順'), findsNothing);
     await tester.ensureVisible(
       find.byKey(const Key('calendar_label_timed_preview')),
     );
     await tester.pump();
+    final allDay = tester.getRect(
+      find.byKey(const Key('calendar_label_preview')),
+    );
+    final timed = tester.getRect(
+      find.byKey(const Key('calendar_label_timed_preview')),
+    );
+    expect(allDay.center.dy, timed.center.dy);
+    expect(allDay.right, lessThan(timed.left));
+
     final text = tester.widget<Text>(
       find.descendant(
         of: find.byKey(const Key('calendar_label_timed_preview')),
@@ -469,7 +492,53 @@ void main() {
     expect(text.style!.color, const Color(0xFF123ABC));
     await tester.tap(find.text('保存'));
     await tester.pumpAndSettle();
-    expect(harness.savedLabels.single.sortOrder, 3);
+    expect(harness.savedLabels.single.sortOrder, _family.sortOrder);
+  });
+
+  testWidgets('ラベルをドラッグして並び替え保存後の一覧と予定入力に反映する', (tester) async {
+    final harness = _CalendarHarness()
+      ..savedLabels.addAll([
+        _family.copyWith(id: 'child', name: '子供', sortOrder: 1),
+        _family.copyWith(id: 'parent', name: '親', sortOrder: 2),
+      ]);
+    await harness.pump(tester);
+    await tester.tap(find.byTooltip('色ラベルの設定'));
+    await tester.pumpAndSettle();
+    final firstHandle = find.byKey(const Key('calendar_label_drag_family'));
+    final last = tester.getRect(find.widgetWithText(ListTile, '親'));
+    final gesture = await tester.startGesture(tester.getCenter(firstHandle));
+    await gesture.moveTo(Offset(last.center.dx, last.bottom + 8));
+    await tester.pump(const Duration(milliseconds: 300));
+    await gesture.up();
+    await tester.pumpAndSettle();
+    expect(harness.savedLabels.map((label) => label.id), [
+      'child',
+      'parent',
+      'family',
+    ]);
+    verify(harness.reorder.execute('g1', ['child', 'parent', 'family']))
+        .called(1);
+    await tester.tap(find.text('閉じる'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('色ラベルの設定'));
+    await tester.pumpAndSettle();
+    expect(
+      tester.getCenter(find.text('子供')).dy,
+      lessThan(tester.getCenter(find.text('家族全員')).dy),
+    );
+    await tester.tap(find.text('閉じる'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('予定を追加'));
+    await tester.pumpAndSettle();
+    final dropdown = tester.widget<DropdownButtonFormField<String>>(
+      find.byType(DropdownButtonFormField<String>),
+    );
+    expect(dropdown.items!.map((item) => item.value), [
+      'child',
+      'parent',
+      'family',
+    ]);
+    expect(tester.takeException(), isNull);
   });
 
   for (final minutes in [60, 90]) {

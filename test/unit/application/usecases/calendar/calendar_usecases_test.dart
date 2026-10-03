@@ -15,6 +15,7 @@ import 'package:memora/application/usecases/calendar/get_calendar_events_usecase
 import 'package:memora/application/usecases/calendar/save_calendar_label_usecase.dart';
 import 'package:memora/application/usecases/calendar/delete_calendar_label_usecase.dart';
 import 'package:memora/application/usecases/calendar/get_calendar_labels_usecase.dart';
+import 'package:memora/application/usecases/calendar/reorder_calendar_labels_usecase.dart';
 import 'package:memora/domain/repositories/calendar/calendar_event_repository.dart';
 import 'package:memora/domain/repositories/calendar/calendar_label_repository.dart';
 
@@ -54,6 +55,23 @@ void main() {
     labelQuery = MockCalendarLabelQueryService();
   });
 
+  test('並び替えで空のグループ・空ID・重複IDを保存前に拒否する', () async {
+    final usecase = ReorderCalendarLabelsUsecase(labels);
+    for (final ids in [
+      ['a', 'a'],
+      ['a', ''],
+    ]) {
+      await expectLater(
+        usecase.execute('group', ids),
+        throwsA(isA<ApplicationValidationException>()),
+      );
+    }
+    await expectLater(
+      usecase.execute('', ['a']),
+      throwsA(isA<ApplicationValidationException>()),
+    );
+    verifyZeroInteractions(labels);
+  });
   test('登録で予定の全内容を保存し発行されたIDを返す', () async {
     when(events.saveCalendarEvent(any)).thenAnswer((_) async => 'event');
     expect(await CreateCalendarEventUsecase(events).execute(dto), 'event');

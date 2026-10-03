@@ -155,6 +155,30 @@ void main() {
     );
   });
 
+  test('並び替えは全ラベルのグループを確認して順序だけを一括更新する', () async {
+    await labels.reorderCalendarLabels('group', ['other', 'label']);
+    final first =
+        verify(transaction.update(otherRef, captureAny)).captured.single
+            as Map<String, dynamic>;
+    final last =
+        verify(transaction.update(labelRef, captureAny)).captured.single
+            as Map<String, dynamic>;
+    expect(first['sortOrder'], 0);
+    expect(last['sortOrder'], 1);
+    expect(first.keys.toSet(), {'sortOrder', 'updatedAt'});
+    expect(last.keys.toSet(), {'sortOrder', 'updatedAt'});
+  });
+  test('並び替えに別グループが混ざると更新を一件も書き込まない', () async {
+    final foreign = MockDocumentSnapshot();
+    when(foreign.exists).thenReturn(true);
+    when(foreign.data()).thenReturn({'groupId': 'foreign'});
+    when(transaction.get(otherRef)).thenAnswer((_) async => foreign);
+    await expectLater(
+      labels.reorderCalendarLabels('group', ['label', 'other']),
+      throwsA(isA<ValidationException>()),
+    );
+    verifyNever(transaction.update(any, any));
+  });
   test('別グループのラベルを拒否しトランザクションに書き込みを残さない', () async {
     when(labelDoc.data())
         .thenReturn({'groupId': 'other-group', 'eventCount': 1});

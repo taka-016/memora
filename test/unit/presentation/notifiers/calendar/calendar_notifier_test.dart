@@ -13,6 +13,7 @@ import 'package:memora/application/usecases/calendar/update_calendar_event_useca
 import 'package:memora/application/usecases/calendar/delete_calendar_event_usecase.dart';
 import 'package:memora/application/usecases/calendar/save_calendar_label_usecase.dart';
 import 'package:memora/application/usecases/calendar/delete_calendar_label_usecase.dart';
+import 'package:memora/application/usecases/calendar/reorder_calendar_labels_usecase.dart';
 import 'package:memora/composition_root/providers/calendar_providers.dart';
 import 'package:memora/composition_root/providers/app_providers.dart';
 import 'package:memora/infrastructure/time/fixed_app_clock.dart';
@@ -29,6 +30,7 @@ import 'calendar_notifier_test.mocks.dart';
   DeleteCalendarEventUsecase,
   SaveCalendarLabelUsecase,
   DeleteCalendarLabelUsecase,
+  ReorderCalendarLabelsUsecase,
 ])
 void main() {
   late ProviderContainer container;
@@ -39,6 +41,7 @@ void main() {
   late MockDeleteCalendarEventUsecase delete;
   late MockSaveCalendarLabelUsecase saveLabel;
   late MockDeleteCalendarLabelUsecase deleteLabel;
+  late MockReorderCalendarLabelsUsecase reorder;
   const label = CalendarLabelDto(
     id: 'family',
     groupId: 'g1',
@@ -63,6 +66,7 @@ void main() {
     delete = MockDeleteCalendarEventUsecase();
     saveLabel = MockSaveCalendarLabelUsecase();
     deleteLabel = MockDeleteCalendarLabelUsecase();
+    reorder = MockReorderCalendarLabelsUsecase();
     when(events.execute(any)).thenAnswer((_) async => [event]);
     when(labels.execute(any)).thenAnswer((_) async => [label]);
     container = ProviderContainer(
@@ -77,10 +81,58 @@ void main() {
         deleteCalendarEventUsecaseProvider.overrideWithValue(delete),
         saveCalendarLabelUsecaseProvider.overrideWithValue(saveLabel),
         deleteCalendarLabelUsecaseProvider.overrideWithValue(deleteLabel),
+        reorderCalendarLabelsUsecaseProvider.overrideWithValue(reorder),
       ],
     );
     container.listen(provider, (_, _) {});
     addTearDown(container.dispose);
+  });
+  test('ドラッグ順をすぐ表示し保存失敗では元へ戻して再試行できる', () async {
+    final child = label.copyWith(id: 'child', name: '子供', sortOrder: 1);
+    when(labels.execute('g1')).thenAnswer((_) async => [label, child]);
+    final notifier = container.read(provider.notifier);
+    await notifier.load();
+    final pending = Completer<void>();
+    when(reorder.execute('g1', any)).thenAnswer((_) => pending.future);
+    final result = notifier.reorderLabels(0, 2);
+    expect(container.read(provider).labels.map((label) => label.id), [
+      'child',
+      'family',
+    ]);
+    expect(container.read(provider).isSaving, isTrue);
+    expect(await notifier.reorderLabels(1, 0), isFalse);
+    pending.completeError(TestException('保存失敗'));
+    expect(await result, isFalse);
+    expect(container.read(provider).labels.map((label) => label.id), [
+      'family',
+      'child',
+    ]);
+    expect(container.read(provider).mutationError, isNotEmpty);
+    when(reorder.execute('g1', any)).thenAnswer((_) async {});
+    when(labels.execute('g1')).thenAnswer(
+      (_) async => [child.copyWith(sortOrder: 0), label.copyWith(sortOrder: 1)],
+    );
+    expect(await notifier.reorderLabels(0, 2), isTrue);
+    expect(container.read(provider).labels.map((label) => label.id), [
+      'child',
+      'family',
+    ]);
+    verify(reorder.execute('g1', ['child', 'family'])).called(2);
+  });
+  test('順序保存後の再取得失敗では保存済みの順序を保つ', () async {
+    final child = label.copyWith(id: 'child', name: '子供', sortOrder: 1);
+    when(labels.execute('g1')).thenAnswer((_) async => [label, child]);
+    final notifier = container.read(provider.notifier);
+    await notifier.load();
+    when(reorder.execute('g1', any)).thenAnswer((_) async {});
+    when(labels.execute('g1')).thenThrow(TestException('取得失敗'));
+    expect(await notifier.reorderLabels(0, 2), isTrue);
+    expect(container.read(provider).labels.map((label) => label.id), [
+      'child',
+      'family',
+    ]);
+    expect(container.read(provider).loadError, isNotEmpty);
+    expect(container.read(provider).mutationError, isEmpty);
   });
   test('月境界にまたがる時刻付き予定は重なる日に表示し終了時刻の翌日は表示しない', () async {
     await container.read(provider.notifier).load();
