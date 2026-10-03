@@ -22,84 +22,126 @@ class CalendarMonthGrid extends StatefulWidget {
 }
 
 class _CalendarMonthGridState extends State<CalendarMonthGrid> {
-  double _horizontalDragDistance = 0;
+  late final PageController _pageController;
+  late int _pageIndex;
+
+  int _indexForMonth(DateTime month) => (month.year - 1) * 12 + month.month - 1;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageIndex = _indexForMonth(widget.state.month);
+    _pageController = PageController(initialPage: _pageIndex, keepPage: false);
+  }
+
+  @override
+  void didUpdateWidget(CalendarMonthGrid oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final target = _indexForMonth(widget.state.month);
+    if (target == _pageIndex) return;
+    _pageIndex = target;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted &&
+          _pageController.hasClients &&
+          _indexForMonth(widget.state.month) == target) {
+        _pageController.jumpToPage(target);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => PageView.builder(
+    key: const Key('calendar_month_grid'),
+    controller: _pageController,
+    itemCount: 9999 * 12,
+    onPageChanged: (index) {
+      _pageIndex = index;
+      final offset = index - _indexForMonth(widget.state.month);
+      if (offset != 0) widget.onMoveMonth(offset);
+    },
+    itemBuilder: (context, index) => _CalendarMonthPage(
+      key: ValueKey('calendar_month_${index ~/ 12 + 1}_${index % 12 + 1}'),
+      state: widget.state,
+      month: DateTime(index ~/ 12 + 1, index % 12 + 1),
+      onSelectDay: widget.onSelectDay,
+    ),
+  );
+}
+
+class _CalendarMonthPage extends StatelessWidget {
+  const _CalendarMonthPage({
+    super.key,
+    required this.state,
+    required this.month,
+    required this.onSelectDay,
+  });
+  final CalendarState state;
+  final DateTime month;
+  final ValueChanged<DateTime> onSelectDay;
 
   @override
   Widget build(BuildContext context) {
-    final month = widget.state.month;
     final firstOffset = month.weekday % 7;
     final days = DateTime(month.year, month.month + 1, 0).day;
     final rows = ((firstOffset + days) / 7).ceil();
-    return GestureDetector(
-      key: const Key('calendar_month_grid'),
-      behavior: HitTestBehavior.opaque,
-      onHorizontalDragStart: (_) => _horizontalDragDistance = 0,
-      onHorizontalDragUpdate: (details) =>
-          _horizontalDragDistance += details.delta.dx,
-      onHorizontalDragEnd: (details) {
-        final velocity = details.primaryVelocity ?? 0;
-        if (_horizontalDragDistance.abs() >= 50 || velocity.abs() >= 300) {
-          final direction = _horizontalDragDistance.abs() >= 50
-              ? _horizontalDragDistance
-              : velocity;
-          widget.onMoveMonth(direction < 0 ? 1 : -1);
-        }
-      },
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final textScaler = MediaQuery.textScalerOf(context);
-          final minHeight =
-              16 + textScaler.scale(14) * 1.4 + textScaler.scale(11) * 1.4 * 4;
-          final rowHeight = math.max(constraints.maxHeight / rows, minHeight);
-          return SingleChildScrollView(
-            child: Column(
-              children: [
-                for (var row = 0; row < rows; row++)
-                  SizedBox(
-                    height: rowHeight,
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        for (var column = 0; column < 7; column++)
-                          Expanded(
-                            child: Builder(
-                              builder: (context) {
-                                final day = row * 7 + column - firstOffset + 1;
-                                if (day < 1 || day > days) {
-                                  return Container(
-                                    decoration: BoxDecoration(
-                                      border: Border.all(
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .outlineVariant,
-                                      ),
-                                    ),
-                                  );
-                                }
-                                return _CalendarDayCell(
-                                  state: widget.state,
-                                  date: DateTime(month.year, month.month, day),
-                                  onTap: widget.state.isSaving
-                                      ? null
-                                      : () => widget.onSelectDay(
-                                          DateTime(
-                                            month.year,
-                                            month.month,
-                                            day,
-                                          ),
-                                        ),
-                                );
-                              },
-                            ),
-                          ),
-                      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final textScaler = MediaQuery.textScalerOf(context);
+        final minHeight =
+            16 + textScaler.scale(14) * 1.4 + textScaler.scale(11) * 1.4 * 4;
+        final rowHeight = math.max(constraints.maxHeight / rows, minHeight);
+        return SingleChildScrollView(
+          child: Column(
+            children: [
+              for (var row = 0; row < rows; row++)
+                Container(
+                  height: rowHeight,
+                  decoration: BoxDecoration(
+                    border: Border(
+                      top: BorderSide(
+                        color: Theme.of(context).colorScheme.outlineVariant,
+                        width: .5,
+                      ),
                     ),
                   ),
-              ],
-            ),
-          );
-        },
-      ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      for (var column = 0; column < 7; column++)
+                        Expanded(
+                          child: Builder(
+                            builder: (context) {
+                              final day = row * 7 + column - firstOffset + 1;
+                              if (day < 1 || day > days)
+                                return const SizedBox.shrink();
+                              final date = DateTime(
+                                month.year,
+                                month.month,
+                                day,
+                              );
+                              return _CalendarDayCell(
+                                state: state,
+                                date: date,
+                                onTap: state.isSaving
+                                    ? null
+                                    : () => onSelectDay(date),
+                              );
+                            },
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
@@ -133,12 +175,6 @@ class _CalendarDayCell extends StatelessWidget {
           onTap: onTap,
           child: Container(
             padding: const EdgeInsets.all(2),
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: selected ? scheme.primary : scheme.outlineVariant,
-                width: selected ? 2 : 1,
-              ),
-            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
