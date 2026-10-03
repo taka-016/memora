@@ -78,6 +78,22 @@ void main() {
         isAllDay: allDay,
       );
 
+  test('SQLiteで白黒以外の文字色も登録・変更・取得する', () async {
+    final id = await labels.saveCalendarLabel(
+      label().copyWith(textColor: '#Ab12Cd'),
+    );
+    expect(
+      (await labelQuery.getCalendarLabelsByGroupId('family')).single.textColor,
+      '#Ab12Cd',
+    );
+    await labels.saveCalendarLabel(
+      label(id: id).copyWith(textColor: '#000000'),
+    );
+    expect(
+      (await labelQuery.getCalendarLabelsByGroupId('family')).single.textColor,
+      '#000000',
+    );
+  });
   test('モード別依存から予定とラベルの登録・取得・変更・削除を完結する', () async {
     final labelId = await labels.saveCalendarLabel(label());
     final otherId = await labels.saveCalendarLabel(label(name: '太郎'));

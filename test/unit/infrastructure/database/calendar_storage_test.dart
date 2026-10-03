@@ -91,6 +91,66 @@ void main() {
     expect((await old.rows('members')).single['display_name'], '本人');
     expect(await old.rows('calendar_events'), isEmpty);
     expect(await old.rows('calendar_labels'), isEmpty);
-    expect(old.schemaVersion, 2);
+    expect(old.schemaVersion, 3);
+  });
+  test('文字色は任意のRGB色を保存し不正な色を拒否する', () async {
+    await label('label', 'family');
+    await db.updateRow('calendar_labels', 'label', {'text_color': '#Ab12Cd'});
+    expect((await db.rows('calendar_labels')).single['text_color'], '#Ab12Cd');
+    await expectLater(
+      db.updateRow('calendar_labels', 'label', {'text_color': '#GGGGGG'}),
+      throwsA(isA<Exception>()),
+    );
+  });
+
+  test('バージョン2のラベルと予定を保ち既存の文字色を補完する', () async {
+    final directory = await Directory.systemTemp.createTemp(
+      'memora-calendar-color-',
+    );
+    addTearDown(() => directory.delete(recursive: true));
+    final file = File('${directory.path}/old.sqlite');
+    var old = OfflineDatabase(NativeDatabase(file));
+    await old.insertRow('members', {'id': 'self', 'display_name': '本人'});
+    await old.insertRow('groups', {
+      'id': 'family',
+      'owner_id': 'self',
+      'name': '家族',
+    });
+    await old.customStatement('DROP TABLE calendar_events');
+    await old.customStatement('DROP TABLE calendar_labels');
+    await old.customStatement(
+      "CREATE TABLE calendar_labels (id TEXT PRIMARY KEY, group_id TEXT NOT NULL REFERENCES groups(id), name TEXT NOT NULL, color TEXT NOT NULL, UNIQUE (id, group_id))",
+    );
+    await old.insertRow('calendar_labels', {
+      'id': 'light',
+      'group_id': 'family',
+      'name': '明色',
+      'color': '#FFFFFF',
+    });
+    await old.insertRow('calendar_labels', {
+      'id': 'dark',
+      'group_id': 'family',
+      'name': '暗色',
+      'color': '#123ABC',
+    });
+    await old.customStatement(
+      'CREATE TABLE calendar_events (id TEXT PRIMARY KEY, group_id TEXT NOT NULL REFERENCES groups(id), label_id TEXT NOT NULL, title TEXT NOT NULL, start_date_time INTEGER NOT NULL, end_date_time INTEGER NOT NULL, is_all_day INTEGER NOT NULL, FOREIGN KEY (label_id, group_id) REFERENCES calendar_labels(id, group_id))',
+    );
+    await old.insertRow('calendar_events', {...event(labelId: 'dark')});
+    await old.customStatement('PRAGMA user_version = 2');
+    await old.close();
+    old = OfflineDatabase(NativeDatabase(file));
+    addTearDown(old.close);
+    final rows = await old.rows('calendar_labels');
+    expect((await old.rows('calendar_events')).single['label_id'], 'dark');
+    expect(
+      rows.firstWhere((row) => row['id'] == 'light')['text_color'],
+      '#000000',
+    );
+    expect(
+      rows.firstWhere((row) => row['id'] == 'dark')['text_color'],
+      '#FFFFFF',
+    );
+    expect(await old.customSelect('PRAGMA foreign_key_check').get(), isEmpty);
   });
 }

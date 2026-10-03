@@ -94,6 +94,7 @@ void main() {
       'group_id': 'group-1',
       'name': '家族全員',
       'color': '#123ABC',
+      'text_color': '#Ab12Cd',
     });
     await db.insertRow('calendar_events', {
       'id': 'event',
@@ -110,6 +111,17 @@ void main() {
     await dataStore.restoreSnapshot(snapshot);
     expect((await db.rows('calendar_events')).single['label_id'], 'label');
     expect((await db.rows('calendar_labels')).single['name'], '家族全員');
+    expect((await db.rows('calendar_labels')).single['text_color'], '#Ab12Cd');
+    final tables = {
+      ...snapshot.tables,
+      'calendar_labels': [
+        {...snapshot.tables['calendar_labels']!.single}..remove('text_color'),
+      ],
+    };
+    await dataStore.restoreSnapshot(
+      snapshot.copyWith(databaseSchemaVersion: 2, tables: tables),
+    );
+    expect((await db.rows('calendar_labels')).single['text_color'], '#FFFFFF');
   });
 
   test('旧スキーマのバックアップを空のカレンダーとして復元する', () async {

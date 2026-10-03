@@ -10,6 +10,7 @@ import 'package:memora/domain/repositories/calendar/calendar_event_repository.da
 import 'package:memora/domain/repositories/calendar/calendar_label_repository.dart';
 import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
+import 'package:memora/infrastructure/mappers/calendar/firestore_calendar_label_mapper.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
@@ -35,6 +36,38 @@ void main() {
   late MockDocumentSnapshot eventDoc;
   late MockDocumentSnapshot labelDoc;
 
+  test('Firestoreの文字色を往復し旧ラベルには従来の白黒を補完する', () {
+    final doc = MockDocumentSnapshot();
+    when(doc.id).thenReturn('label');
+    for (final color in ['#FFFFFF', '#123ABC']) {
+      final data = {'groupId': 'group', 'name': '全員', 'color': color};
+      when(doc.data()).thenReturn(data);
+      expect(
+        FirestoreCalendarLabelMapper.fromFirestore(doc).textColor,
+        color == '#FFFFFF' ? '#000000' : '#FFFFFF',
+      );
+      when(doc.data()).thenReturn({...data, 'textColor': '#Ab12Cd'});
+      expect(
+        FirestoreCalendarLabelMapper.fromFirestore(doc).textColor,
+        '#Ab12Cd',
+      );
+      final value = CalendarLabel(
+        id: 'label',
+        groupId: 'group',
+        name: '全員',
+        color: color,
+        textColor: '#Ab12Cd',
+      );
+      expect(
+        FirestoreCalendarLabelMapper.toCreateFirestore(value)['textColor'],
+        '#Ab12Cd',
+      );
+      expect(
+        FirestoreCalendarLabelMapper.toUpdateFirestore(value)['textColor'],
+        '#Ab12Cd',
+      );
+    }
+  });
   setUp(() {
     firestore = MockFirebaseFirestore();
     transaction = MockTransaction();
