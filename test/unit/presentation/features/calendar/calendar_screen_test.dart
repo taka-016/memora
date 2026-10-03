@@ -530,8 +530,8 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('予定を追加'));
     await tester.pumpAndSettle();
-    final dropdown = tester.widget<DropdownButtonFormField<String>>(
-      find.byType(DropdownButtonFormField<String>),
+    final dropdown = tester.widget<DropdownButton<String>>(
+      find.byType(DropdownButton<String>),
     );
     expect(dropdown.items!.map((item) => item.value), [
       'child',
