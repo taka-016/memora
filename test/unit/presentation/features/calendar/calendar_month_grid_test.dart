@@ -51,6 +51,28 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  for (final direction in [-1, 1]) {
+    testWidgets('幅の3割を少し超えるゆっくりしたスワイプで月を切り替える（$direction）', (tester) async {
+      await _pumpGrid(tester);
+      final grid = find.byKey(const Key('calendar_month_grid'));
+      final bounds = tester.getRect(grid);
+      final gesture = await tester.startGesture(bounds.center);
+      await gesture.moveBy(Offset(20.0 * direction, 0));
+      await tester.pump();
+      await gesture.moveBy(Offset(bounds.width * .35 * direction, 0));
+      await tester.pump(const Duration(milliseconds: 400));
+      await gesture.up();
+      await tester.pumpAndSettle();
+      final month = direction == -1 ? 11 : 9;
+      final page = find.byKey(Key('calendar_month_2026_$month'));
+      expect(page, findsOneWidget);
+      expect(tester.getRect(page).contains(bounds.center), isTrue);
+      await tester.tap(find.byKey(Key('calendar_day_2026_${month}_2')));
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+    });
+  }
+
   testWidgets('左右へのスワイプ確定後も選択日が表示月と一致する', (tester) async {
     await _pumpGrid(tester);
     final grid = find.byKey(const Key('calendar_month_grid'));
@@ -75,7 +97,7 @@ void main() {
       final gesture = await tester.startGesture(bounds.center);
       await gesture.moveBy(Offset(20.0 * direction, 0));
       await tester.pump();
-      await gesture.moveBy(Offset(bounds.width * .49 * direction, 0));
+      await gesture.moveBy(Offset(bounds.width * .29 * direction, 0));
       await tester.pump();
       await gesture.moveBy(Offset(bounds.width * .02 * direction, 0));
       await gesture.moveBy(Offset(-bounds.width * .02 * direction, 0));
