@@ -264,6 +264,7 @@ void main() {
     await tester.tap(find.text('保存'));
     await tester.pumpAndSettle();
     expect(harness.savedLabels.single.textColor, '#000000');
+    expect(tester.widget<Text>(find.text('全員')).style!.color, Colors.black);
     await tester.tap(find.text('閉じる'));
     await tester.pumpAndSettle();
     expect(tester.widget<Text>(find.text('予定')).style!.color, Colors.black);
@@ -298,6 +299,28 @@ void main() {
     await tester.tap(find.text('保存'));
     await tester.pumpAndSettle();
     expect(harness.savedLabels.single.textColor, '#Ab12Cd');
+  });
+
+  testWidgets('小画面と拡大文字でも配色プレビューへスクロールして保存できる', (tester) async {
+    tester.view.physicalSize = const Size(320, 480);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final harness = _CalendarHarness();
+    await harness.pump(tester, textScale: 1.5);
+    await tester.tap(find.byTooltip('色ラベルの設定'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('家族全員'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('黒'));
+    await tester.tap(find.text('黒'));
+    await tester.pump();
+    await tester.ensureVisible(find.byKey(const Key('calendar_label_preview')));
+    await tester.pump();
+    await tester.tap(find.text('保存'));
+    await tester.pumpAndSettle();
+    expect(harness.savedLabels.single.textColor, '#000000');
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('小さい画面と拡大文字でも日付・追加ボタン・予定一覧を操作できる', (tester) async {
