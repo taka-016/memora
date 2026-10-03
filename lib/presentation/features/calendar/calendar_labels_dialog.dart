@@ -14,6 +14,8 @@ class CalendarLabelsDialog extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(calendarNotifierProvider(groupId));
+    final canReorder =
+        !state.isSaving && !state.isLoading && state.loadError.isEmpty;
     Future<void> edit([CalendarLabelDto? label]) async {
       await showDialog<void>(
         context: context,
@@ -28,15 +30,45 @@ class CalendarLabelsDialog extends ConsumerWidget {
         content: SizedBox(
           width: 420,
           height: 320,
-          child: ListView(
+          child: ReorderableListView(
+            buildDefaultDragHandles: false,
+            onReorderItem: (oldIndex, newIndex) async {
+              if (!canReorder) return;
+              final success = await ref
+                  .read(calendarNotifierProvider(groupId).notifier)
+                  .reorderLabels(oldIndex, newIndex);
+              if (!success && context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      ref.read(calendarNotifierProvider(groupId)).mutationError,
+                    ),
+                  ),
+                );
+              }
+            },
             children: [
               if (state.labels.isEmpty)
-                const Text('家族の名前や「家族全員」などのラベルを追加してください'),
-              for (final label in state.labels)
+                const Text(
+                  '家族の名前や「家族全員」などのラベルを追加してください',
+                  key: Key('calendar_labels_empty'),
+                ),
+              for (final (index, label) in state.labels.indexed)
                 ListTile(
-                  leading: Icon(
-                    Icons.circle,
-                    color: calendarLabelColor(label.color),
+                  key: ValueKey(label.id),
+                  leading: ReorderableDragStartListener(
+                    key: Key('calendar_label_drag_${label.id}'),
+                    index: index,
+                    enabled: canReorder,
+                    child: Tooltip(
+                      message: 'ドラッグで並び替え',
+                      child: Icon(
+                        Icons.drag_handle,
+                        color: canReorder
+                            ? null
+                            : Theme.of(context).disabledColor,
+                      ),
+                    ),
                   ),
                   title: Container(
                     padding: const EdgeInsets.symmetric(
@@ -130,7 +162,7 @@ class _LabelEditDialogState extends ConsumerState<_LabelEditDialog> {
   final _form = GlobalKey<FormState>();
   late final TextEditingController _name;
   late final TextEditingController _color;
-  late final TextEditingController _order;
+  late final int _sortOrder;
   String _error = '';
   bool _showHex = false;
   late Color _selectedColor;
@@ -146,9 +178,7 @@ class _LabelEditDialogState extends ConsumerState<_LabelEditDialog> {
           (order, label) => label.sortOrder > order ? label.sortOrder : order,
         ) +
         1;
-    _order = TextEditingController(
-      text: '${widget.label?.sortOrder ?? nextOrder}',
-    );
+    _sortOrder = widget.label?.sortOrder ?? nextOrder;
     _color = TextEditingController(text: widget.label?.color ?? '#2196F3');
     _selectedColor = calendarLabelColor(_color.text);
     _textColor = widget.label?.textColor ?? '#FFFFFF';
@@ -158,7 +188,6 @@ class _LabelEditDialogState extends ConsumerState<_LabelEditDialog> {
   void dispose() {
     _name.dispose();
     _color.dispose();
-    _order.dispose();
     super.dispose();
   }
 
@@ -182,19 +211,6 @@ class _LabelEditDialogState extends ConsumerState<_LabelEditDialog> {
                   onChanged: (_) => setState(() {}),
                   validator: (value) => value == null || value.trim().isEmpty
                       ? '名前を入力してください'
-                      : null,
-                ),
-                TextFormField(
-                  controller: _order,
-                  enabled: !saving,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: '並び順',
-                    helperText: '小さい番号から表示',
-                  ),
-                  validator: (value) =>
-                      int.tryParse(value ?? '') == null || int.parse(value!) < 0
-                      ? '0以上の整数を入力してください'
                       : null,
                 ),
                 const SizedBox(height: 16),
@@ -260,36 +276,65 @@ class _LabelEditDialogState extends ConsumerState<_LabelEditDialog> {
                 ),
                 const SizedBox(height: 12),
                 const Text('プレビュー'),
-                const Text('終日'),
-                Container(
-                  key: const Key('calendar_label_preview'),
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _selectedColor,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    _name.text.trim().isEmpty ? 'ラベル名' : _name.text.trim(),
-                    style: TextStyle(color: calendarLabelColor(_textColor)),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Text('時間指定'),
-                Container(
-                  key: const Key('calendar_label_timed_preview'),
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  child: Text(
-                    _name.text.trim().isEmpty ? 'ラベル名' : _name.text.trim(),
-                    style: TextStyle(color: _selectedColor),
-                  ),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const Text('終日', textAlign: TextAlign.center),
+                          Container(
+                            key: const Key('calendar_label_preview'),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: _selectedColor,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              _name.text.trim().isEmpty
+                                  ? 'ラベル名'
+                                  : _name.text.trim(),
+                              maxLines: 1,
+                              softWrap: false,
+                              overflow: TextOverflow.clip,
+                              style: TextStyle(
+                                color: calendarLabelColor(_textColor),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const Text('時間指定', textAlign: TextAlign.center),
+                          Container(
+                            key: const Key('calendar_label_timed_preview'),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            child: Text(
+                              _name.text.trim().isEmpty
+                                  ? 'ラベル名'
+                                  : _name.text.trim(),
+                              maxLines: 1,
+                              softWrap: false,
+                              overflow: TextOverflow.clip,
+                              style: TextStyle(color: _selectedColor),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
                 if (_error.isNotEmpty) Text(_error),
               ],
@@ -315,7 +360,7 @@ class _LabelEditDialogState extends ConsumerState<_LabelEditDialog> {
                             name: _name.text.trim(),
                             color: _color.text.trim(),
                             textColor: _textColor,
-                            sortOrder: int.parse(_order.text),
+                            sortOrder: _sortOrder,
                           ),
                         );
                     if (!context.mounted) return;

@@ -99,6 +99,33 @@ class CalendarNotifier extends _$CalendarNotifier {
     await ref.read(saveCalendarLabelUsecaseProvider).execute(label);
   });
 
+  Future<bool> reorderLabels(int oldIndex, int newIndex) async {
+    if (state.isSaving ||
+        state.isLoading ||
+        state.loadError.isNotEmpty ||
+        oldIndex < 0 ||
+        newIndex < 0 ||
+        oldIndex >= state.labels.length ||
+        newIndex >= state.labels.length)
+      return false;
+    if (oldIndex == newIndex) return true;
+    final previous = state.labels;
+    final ordered = previous.toList();
+    ordered.insert(newIndex, ordered.removeAt(oldIndex));
+    final updated = [
+      for (var index = 0; index < ordered.length; index++)
+        ordered[index].copyWith(sortOrder: index),
+    ];
+    state = state.copyWith(labels: updated);
+    final success = await _mutate(() async {
+      await ref
+          .read(reorderCalendarLabelsUsecaseProvider)
+          .execute(groupId, ordered.map((label) => label.id).toList());
+    });
+    if (!success && ref.mounted) state = state.copyWith(labels: previous);
+    return success;
+  }
+
   Future<bool> deleteLabel(String id) => _mutate(() async {
     if (!state.labels.any(
       (label) => label.id == id && label.groupId == groupId,

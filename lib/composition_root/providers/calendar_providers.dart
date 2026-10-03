@@ -1,3 +1,4 @@
+import 'package:memora/application/usecases/calendar/reorder_calendar_labels_usecase.dart';
 import 'package:memora/application/services/calendar_default_duration_storage.dart';
 import 'package:memora/infrastructure/services/shared_preferences_calendar_default_duration_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -48,4 +49,11 @@ final deleteCalendarLabelUsecaseProvider = Provider<DeleteCalendarLabelUsecase>(
 final calendarDefaultDurationStorageProvider =
     Provider<CalendarDefaultDurationStorage>(
       (ref) => const SharedPreferencesCalendarDefaultDurationStorage(),
+    );
+
+final reorderCalendarLabelsUsecaseProvider =
+    Provider<ReorderCalendarLabelsUsecase>(
+      (ref) => ReorderCalendarLabelsUsecase(
+        ref.watch(calendarLabelRepositoryProvider),
+      ),
     );
