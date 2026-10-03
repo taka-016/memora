@@ -113,7 +113,7 @@ class _CalendarMonthScrollPhysics extends PageScrollPhysics {
   double get minFlingVelocity => super.minFlingVelocity * .3;
 
   @override
-  double get minFlingDistance => super.minFlingDistance * .3;
+  double get minFlingDistance => 0;
 
   @override
   _CalendarMonthScrollPhysics applyTo(ScrollPhysics? ancestor) =>
@@ -137,7 +137,7 @@ class _CalendarMonthScrollPhysics extends PageScrollPhysics {
     final page = position.pixels / position.viewportDimension;
     final distance = page - start;
     final double targetPage;
-    if (velocity.abs() > tolerance.velocity) {
+    if (velocity.abs() > minFlingVelocity) {
       targetPage = (page + .5 * velocity.sign).roundToDouble();
     } else {
       targetPage = distance.abs() >= .4
