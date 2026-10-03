@@ -41,6 +41,7 @@ service cloud.firestore {
         && data.color is string && data.color.matches('^#[0-9a-fA-F]{6}$')
         && data.get('textColor', '#FFFFFF') is string
         && data.get('textColor', '#FFFFFF').matches('^#[0-9a-fA-F]{6}$')
+        && data.get('sortOrder', 0) is int && data.get('sortOrder', 0) >= 0
         && data.eventCount is int && data.eventCount >= 0;
     }
 

@@ -7,6 +7,7 @@ class CalendarLabelDto extends Equatable {
     required this.name,
     required this.color,
     this.textColor = '#FFFFFF',
+    this.sortOrder = 0,
   });
 
   final String id;
@@ -14,6 +15,7 @@ class CalendarLabelDto extends Equatable {
   final String name;
   final String color;
   final String textColor;
+  final int sortOrder;
 
   CalendarLabelDto copyWith({
     String? id,
@@ -21,6 +23,7 @@ class CalendarLabelDto extends Equatable {
     String? name,
     String? color,
     String? textColor,
+    int? sortOrder,
   }) {
     return CalendarLabelDto(
       id: id ?? this.id,
@@ -28,9 +31,17 @@ class CalendarLabelDto extends Equatable {
       name: name ?? this.name,
       color: color ?? this.color,
       textColor: textColor ?? this.textColor,
+      sortOrder: sortOrder ?? this.sortOrder,
     );
   }
 
   @override
-  List<Object?> get props => [id, groupId, name, color, textColor];
+  List<Object?> get props => [id, groupId, name, color, textColor, sortOrder];
+}
+
+int compareCalendarLabels(CalendarLabelDto a, CalendarLabelDto b) {
+  final order = a.sortOrder.compareTo(b.sortOrder);
+  if (order != 0) return order;
+  final name = a.name.compareTo(b.name);
+  return name != 0 ? name : a.id.compareTo(b.id);
 }

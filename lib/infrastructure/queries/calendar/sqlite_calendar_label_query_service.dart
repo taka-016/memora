@@ -9,9 +9,11 @@ class SqliteCalendarLabelQueryService implements CalendarLabelQueryService {
   @override
   Future<List<CalendarLabelDto>> getCalendarLabelsByGroupId(
     String groupId,
-  ) async => (await db.rows(
-    'calendar_labels',
-    where: 'group_id = ?',
-    args: [groupId],
-  )).map(SqliteCalendarLabelMapper.fromRow).toList();
+  ) async =>
+      (await db.rows(
+          'calendar_labels',
+          where: 'group_id = ?',
+          args: [groupId],
+        )).map(SqliteCalendarLabelMapper.fromRow).toList()
+        ..sort(compareCalendarLabels);
 }

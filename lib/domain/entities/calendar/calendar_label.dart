@@ -8,7 +8,11 @@ class CalendarLabel extends Equatable {
     required this.name,
     required this.color,
     this.textColor = '#FFFFFF',
+    this.sortOrder = 0,
   }) {
+    if (sortOrder < 0) {
+      throw ValidationException('並び順は0以上で指定してください');
+    }
     if (groupId.trim().isEmpty) {
       throw ValidationException('グループは必須です');
     }
@@ -28,6 +32,7 @@ class CalendarLabel extends Equatable {
   final String name;
   final String color;
   final String textColor;
+  final int sortOrder;
 
   CalendarLabel copyWith({
     String? id,
@@ -35,6 +40,7 @@ class CalendarLabel extends Equatable {
     String? name,
     String? color,
     String? textColor,
+    int? sortOrder,
   }) {
     return CalendarLabel(
       id: id ?? this.id,
@@ -42,9 +48,10 @@ class CalendarLabel extends Equatable {
       name: name ?? this.name,
       color: color ?? this.color,
       textColor: textColor ?? this.textColor,
+      sortOrder: sortOrder ?? this.sortOrder,
     );
   }
 
   @override
-  List<Object?> get props => [id, groupId, name, color, textColor];
+  List<Object?> get props => [id, groupId, name, color, textColor, sortOrder];
 }

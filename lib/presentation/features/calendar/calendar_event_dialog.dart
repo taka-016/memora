@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_notifier.dart';
+import 'package:memora/presentation/notifiers/calendar/calendar_preferences_notifier.dart';
 
 String calendarDateText(DateTime value) =>
     '${value.year}/${value.month}/${value.day}';
@@ -124,6 +125,13 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
     setState(() {
       if (start) {
         _start = result!;
+        if (time) {
+          final minutes = ref
+              .read(calendarPreferencesNotifierProvider)
+              .value!
+              .minutes;
+          _end = _start.add(Duration(minutes: minutes));
+        }
       } else {
         _end = result!;
       }
@@ -204,6 +212,7 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
   Widget build(BuildContext context) {
     final state = ref.watch(calendarNotifierProvider(widget.groupId));
     final labels = state.labels;
+    final preferences = ref.watch(calendarPreferencesNotifierProvider);
     return PopScope(
       canPop: !state.isSaving,
       child: AlertDialog(
@@ -275,15 +284,26 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                           Expanded(
                             flex: 2,
                             child: TextButton(
-                              onPressed: state.isSaving
+                              key: Key(
+                                'calendar_${start ? 'start' : 'end'}_time',
+                              ),
+                              onPressed:
+                                  state.isSaving ||
+                                      (start && preferences.value == null)
                                   ? null
                                   : () => _pick(start, true),
                               child: Text(
-                                '${start ? '開始' : '終了'}時刻: ${calendarTimeText(start ? _start : _end)}',
+                                calendarTimeText(start ? _start : _end),
                               ),
                             ),
                           ),
                       ],
+                    ),
+                  if (!_allDay && preferences.hasError)
+                    TextButton(
+                      onPressed: () =>
+                          ref.invalidate(calendarPreferencesNotifierProvider),
+                      child: const Text('標準時間を再取得'),
                     ),
                   if (_error.isNotEmpty)
                     Text(

@@ -13,6 +13,7 @@ class FirestoreCalendarLabelMapper {
       id: doc.id,
       groupId: data['groupId'] as String,
       name: data['name'] as String,
+      sortOrder: data['sortOrder'] as int? ?? 0,
       color: data['color'] as String,
       textColor:
           data['textColor'] as String? ??
@@ -25,6 +26,7 @@ class FirestoreCalendarLabelMapper {
     'name': value.name,
     'color': value.color,
     'textColor': value.textColor,
+    'sortOrder': value.sortOrder,
   };
   static Map<String, dynamic> toCreateFirestore(CalendarLabel value) => {
     ...toFirestore(value),

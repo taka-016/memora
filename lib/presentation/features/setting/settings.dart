@@ -1,4 +1,5 @@
 import 'package:memora/application/models/app_capabilities.dart';
+import 'package:memora/presentation/features/setting/calendar_default_duration_setting.dart';
 import 'package:memora/application/models/offline_backup_snapshot.dart';
 import 'package:memora/composition_root/providers/app_providers.dart';
 import 'package:memora/composition_root/providers/android_widget_providers.dart';
@@ -239,6 +240,9 @@ class Settings extends ConsumerWidget {
           padding: const EdgeInsets.all(24),
           children: [
             ..._buildModeInformation(ref),
+            const SizedBox(height: 24),
+            Text('カレンダー', style: Theme.of(context).textTheme.titleMedium),
+            const CalendarDefaultDurationSetting(),
             if (isOffline) ...[
               const SizedBox(height: 24),
               _buildOfflineBackupSection(context, ref),

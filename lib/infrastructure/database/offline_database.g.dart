@@ -4996,8 +4996,27 @@ class CalendarLabels extends Table
     $customConstraints: 'NOT NULL DEFAULT \'#FFFFFF\' CHECK (length(text_color) = 7 AND substr(text_color, 1, 1) = \'#\' AND substr(text_color, 2) NOT GLOB \'*[^0-9a-fA-F]*\')',
     defaultValue: const CustomExpression('\'#FFFFFF\''),
   );
+  static const VerificationMeta _sortOrderMeta = const VerificationMeta(
+    'sortOrder',
+  );
+  late final GeneratedColumn<int> sortOrder = GeneratedColumn<int>(
+    'sort_order',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    $customConstraints: 'NOT NULL DEFAULT 0 CHECK (sort_order >= 0)',
+    defaultValue: const CustomExpression('0'),
+  );
   @override
-  List<GeneratedColumn> get $columns => [id, groupId, name, color, textColor];
+  List<GeneratedColumn> get $columns => [
+    id,
+    groupId,
+    name,
+    color,
+    textColor,
+    sortOrder,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -5045,6 +5064,12 @@ class CalendarLabels extends Table
         textColor.isAcceptableOrUnknown(data['text_color']!, _textColorMeta),
       );
     }
+    if (data.containsKey('sort_order')) {
+      context.handle(
+        _sortOrderMeta,
+        sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta),
+      );
+    }
     return context;
   }
 
@@ -5078,6 +5103,10 @@ class CalendarLabels extends Table
         DriftSqlType.string,
         data['${effectivePrefix}text_color'],
       )!,
+      sortOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sort_order'],
+      )!,
     );
   }
 
@@ -5099,12 +5128,14 @@ class SqliteCalendarLabelRow extends DataClass
   final String name;
   final String color;
   final String textColor;
+  final int sortOrder;
   const SqliteCalendarLabelRow({
     required this.id,
     required this.groupId,
     required this.name,
     required this.color,
     required this.textColor,
+    required this.sortOrder,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -5114,6 +5145,7 @@ class SqliteCalendarLabelRow extends DataClass
     map['name'] = Variable<String>(name);
     map['color'] = Variable<String>(color);
     map['text_color'] = Variable<String>(textColor);
+    map['sort_order'] = Variable<int>(sortOrder);
     return map;
   }
 
@@ -5124,6 +5156,7 @@ class SqliteCalendarLabelRow extends DataClass
       name: Value(name),
       color: Value(color),
       textColor: Value(textColor),
+      sortOrder: Value(sortOrder),
     );
   }
 
@@ -5138,6 +5171,7 @@ class SqliteCalendarLabelRow extends DataClass
       name: serializer.fromJson<String>(json['name']),
       color: serializer.fromJson<String>(json['color']),
       textColor: serializer.fromJson<String>(json['text_color']),
+      sortOrder: serializer.fromJson<int>(json['sort_order']),
     );
   }
   @override
@@ -5149,6 +5183,7 @@ class SqliteCalendarLabelRow extends DataClass
       'name': serializer.toJson<String>(name),
       'color': serializer.toJson<String>(color),
       'text_color': serializer.toJson<String>(textColor),
+      'sort_order': serializer.toJson<int>(sortOrder),
     };
   }
 
@@ -5158,12 +5193,14 @@ class SqliteCalendarLabelRow extends DataClass
     String? name,
     String? color,
     String? textColor,
+    int? sortOrder,
   }) => SqliteCalendarLabelRow(
     id: id ?? this.id,
     groupId: groupId ?? this.groupId,
     name: name ?? this.name,
     color: color ?? this.color,
     textColor: textColor ?? this.textColor,
+    sortOrder: sortOrder ?? this.sortOrder,
   );
   SqliteCalendarLabelRow copyWithCompanion(CalendarLabelsCompanion data) {
     return SqliteCalendarLabelRow(
@@ -5172,6 +5209,7 @@ class SqliteCalendarLabelRow extends DataClass
       name: data.name.present ? data.name.value : this.name,
       color: data.color.present ? data.color.value : this.color,
       textColor: data.textColor.present ? data.textColor.value : this.textColor,
+      sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
     );
   }
 
@@ -5182,13 +5220,15 @@ class SqliteCalendarLabelRow extends DataClass
           ..write('groupId: $groupId, ')
           ..write('name: $name, ')
           ..write('color: $color, ')
-          ..write('textColor: $textColor')
+          ..write('textColor: $textColor, ')
+          ..write('sortOrder: $sortOrder')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, groupId, name, color, textColor);
+  int get hashCode =>
+      Object.hash(id, groupId, name, color, textColor, sortOrder);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -5197,7 +5237,8 @@ class SqliteCalendarLabelRow extends DataClass
           other.groupId == this.groupId &&
           other.name == this.name &&
           other.color == this.color &&
-          other.textColor == this.textColor);
+          other.textColor == this.textColor &&
+          other.sortOrder == this.sortOrder);
 }
 
 class CalendarLabelsCompanion extends UpdateCompanion<SqliteCalendarLabelRow> {
@@ -5206,6 +5247,7 @@ class CalendarLabelsCompanion extends UpdateCompanion<SqliteCalendarLabelRow> {
   final Value<String> name;
   final Value<String> color;
   final Value<String> textColor;
+  final Value<int> sortOrder;
   final Value<int> rowid;
   const CalendarLabelsCompanion({
     this.id = const Value.absent(),
@@ -5213,6 +5255,7 @@ class CalendarLabelsCompanion extends UpdateCompanion<SqliteCalendarLabelRow> {
     this.name = const Value.absent(),
     this.color = const Value.absent(),
     this.textColor = const Value.absent(),
+    this.sortOrder = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   CalendarLabelsCompanion.insert({
@@ -5221,6 +5264,7 @@ class CalendarLabelsCompanion extends UpdateCompanion<SqliteCalendarLabelRow> {
     required String name,
     required String color,
     this.textColor = const Value.absent(),
+    this.sortOrder = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        groupId = Value(groupId),
@@ -5232,6 +5276,7 @@ class CalendarLabelsCompanion extends UpdateCompanion<SqliteCalendarLabelRow> {
     Expression<String>? name,
     Expression<String>? color,
     Expression<String>? textColor,
+    Expression<int>? sortOrder,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -5240,6 +5285,7 @@ class CalendarLabelsCompanion extends UpdateCompanion<SqliteCalendarLabelRow> {
       if (name != null) 'name': name,
       if (color != null) 'color': color,
       if (textColor != null) 'text_color': textColor,
+      if (sortOrder != null) 'sort_order': sortOrder,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -5250,6 +5296,7 @@ class CalendarLabelsCompanion extends UpdateCompanion<SqliteCalendarLabelRow> {
     Value<String>? name,
     Value<String>? color,
     Value<String>? textColor,
+    Value<int>? sortOrder,
     Value<int>? rowid,
   }) {
     return CalendarLabelsCompanion(
@@ -5258,6 +5305,7 @@ class CalendarLabelsCompanion extends UpdateCompanion<SqliteCalendarLabelRow> {
       name: name ?? this.name,
       color: color ?? this.color,
       textColor: textColor ?? this.textColor,
+      sortOrder: sortOrder ?? this.sortOrder,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -5280,6 +5328,9 @@ class CalendarLabelsCompanion extends UpdateCompanion<SqliteCalendarLabelRow> {
     if (textColor.present) {
       map['text_color'] = Variable<String>(textColor.value);
     }
+    if (sortOrder.present) {
+      map['sort_order'] = Variable<int>(sortOrder.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -5294,6 +5345,7 @@ class CalendarLabelsCompanion extends UpdateCompanion<SqliteCalendarLabelRow> {
           ..write('name: $name, ')
           ..write('color: $color, ')
           ..write('textColor: $textColor, ')
+          ..write('sortOrder: $sortOrder, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();

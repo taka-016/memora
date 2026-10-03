@@ -8,6 +8,7 @@ class SqliteCalendarLabelMapper {
     name: row['name'] as String,
     color: row['color'] as String,
     textColor: row['text_color'] as String,
+    sortOrder: row['sort_order'] as int,
   );
   static Map<String, Object?> toRow(CalendarLabel value) => {
     'id': value.id,
@@ -15,5 +16,6 @@ class SqliteCalendarLabelMapper {
     'name': value.name,
     'color': value.color,
     'text_color': value.textColor,
+    'sort_order': value.sortOrder,
   };
 }

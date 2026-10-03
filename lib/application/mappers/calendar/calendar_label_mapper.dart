@@ -9,6 +9,7 @@ class CalendarLabelMapper {
       name: value.name,
       color: value.color,
       textColor: value.textColor,
+      sortOrder: value.sortOrder,
     );
   }
 
@@ -19,6 +20,7 @@ class CalendarLabelMapper {
       name: value.name,
       color: value.color,
       textColor: value.textColor,
+      sortOrder: value.sortOrder,
     );
   }
 }

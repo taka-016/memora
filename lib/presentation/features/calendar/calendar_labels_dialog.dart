@@ -130,6 +130,7 @@ class _LabelEditDialogState extends ConsumerState<_LabelEditDialog> {
   final _form = GlobalKey<FormState>();
   late final TextEditingController _name;
   late final TextEditingController _color;
+  late final TextEditingController _order;
   String _error = '';
   bool _showHex = false;
   late Color _selectedColor;
@@ -138,6 +139,16 @@ class _LabelEditDialogState extends ConsumerState<_LabelEditDialog> {
   void initState() {
     super.initState();
     _name = TextEditingController(text: widget.label?.name ?? '');
+    final labels = ref.read(calendarNotifierProvider(widget.groupId)).labels;
+    final nextOrder =
+        labels.fold(
+          0,
+          (order, label) => label.sortOrder > order ? label.sortOrder : order,
+        ) +
+        1;
+    _order = TextEditingController(
+      text: '${widget.label?.sortOrder ?? nextOrder}',
+    );
     _color = TextEditingController(text: widget.label?.color ?? '#2196F3');
     _selectedColor = calendarLabelColor(_color.text);
     _textColor = widget.label?.textColor ?? '#FFFFFF';
@@ -147,6 +158,7 @@ class _LabelEditDialogState extends ConsumerState<_LabelEditDialog> {
   void dispose() {
     _name.dispose();
     _color.dispose();
+    _order.dispose();
     super.dispose();
   }
 
@@ -170,6 +182,19 @@ class _LabelEditDialogState extends ConsumerState<_LabelEditDialog> {
                   onChanged: (_) => setState(() {}),
                   validator: (value) => value == null || value.trim().isEmpty
                       ? '名前を入力してください'
+                      : null,
+                ),
+                TextFormField(
+                  controller: _order,
+                  enabled: !saving,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: '並び順',
+                    helperText: '小さい番号から表示',
+                  ),
+                  validator: (value) =>
+                      int.tryParse(value ?? '') == null || int.parse(value!) < 0
+                      ? '0以上の整数を入力してください'
                       : null,
                 ),
                 const SizedBox(height: 16),
@@ -235,6 +260,7 @@ class _LabelEditDialogState extends ConsumerState<_LabelEditDialog> {
                 ),
                 const SizedBox(height: 12),
                 const Text('プレビュー'),
+                const Text('終日'),
                 Container(
                   key: const Key('calendar_label_preview'),
                   width: double.infinity,
@@ -249,6 +275,20 @@ class _LabelEditDialogState extends ConsumerState<_LabelEditDialog> {
                   child: Text(
                     _name.text.trim().isEmpty ? 'ラベル名' : _name.text.trim(),
                     style: TextStyle(color: calendarLabelColor(_textColor)),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text('時間指定'),
+                Container(
+                  key: const Key('calendar_label_timed_preview'),
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  child: Text(
+                    _name.text.trim().isEmpty ? 'ラベル名' : _name.text.trim(),
+                    style: TextStyle(color: _selectedColor),
                   ),
                 ),
                 if (_error.isNotEmpty) Text(_error),
@@ -275,6 +315,7 @@ class _LabelEditDialogState extends ConsumerState<_LabelEditDialog> {
                             name: _name.text.trim(),
                             color: _color.text.trim(),
                             textColor: _textColor,
+                            sortOrder: int.parse(_order.text),
                           ),
                         );
                     if (!context.mounted) return;
