@@ -73,6 +73,31 @@ void main() {
     });
   }
 
+  for (final direction in [-1, 1]) {
+    for (final (duration, switchesMonth) in [
+      (const Duration(seconds: 2), true),
+      (const Duration(milliseconds: 3200), false),
+    ]) {
+      testWidgets(
+        '${switchesMonth ? '控えめな速度でも月が切り替わる' : 'それより遅い短い横移動は元へ戻る'}（$direction）',
+        (tester) async {
+          await _pumpGrid(tester);
+          final grid = find.byKey(const Key('calendar_month_grid'));
+          final bounds = tester.getRect(grid);
+          await tester.timedDrag(grid, Offset(80.0 * direction, 0), duration);
+          await tester.pumpAndSettle();
+          final month = switchesMonth ? (direction == -1 ? 11 : 9) : 10;
+          final page = find.byKey(Key('calendar_month_2026_$month'));
+          expect(page, findsOneWidget);
+          expect(tester.getRect(page).contains(bounds.center), isTrue);
+          await tester.tap(find.byKey(Key('calendar_day_2026_${month}_2')));
+          await tester.pump();
+          expect(tester.takeException(), isNull);
+        },
+      );
+    }
+  }
+
   testWidgets('左右へのスワイプ確定後も選択日が表示月と一致する', (tester) async {
     await _pumpGrid(tester);
     final grid = find.byKey(const Key('calendar_month_grid'));
