@@ -6,7 +6,6 @@ import 'package:memora/application/services/offline_backup_restore_journal_stora
 import 'package:memora/application/services/offline_backup_restore_sync_storage.dart';
 import 'package:memora/application/services/offline_backup_settings_storage.dart';
 import 'package:memora/infrastructure/database/offline_database.dart';
-import 'package:memora/infrastructure/mappers/calendar/legacy_calendar_label_text_color.dart';
 
 class SqliteOfflineBackupDataStore implements OfflineBackupDataStore {
   const SqliteOfflineBackupDataStore({
@@ -120,17 +119,7 @@ class SqliteOfflineBackupDataStore implements OfflineBackupDataStore {
         for (final table in _insertOrder) {
           for (final row
               in snapshot.tables[table] ?? const <Map<String, Object?>>[]) {
-            await database.insertRow(
-              table,
-              table == 'calendar_labels' && snapshot.databaseSchemaVersion == 2
-                  ? {
-                      ...row,
-                      'text_color': legacyCalendarLabelTextColor(
-                        row['color'] as String,
-                      ),
-                    }
-                  : row,
-            );
+            await database.insertRow(table, row);
           }
         }
         await currentMemberStorage.save(snapshot.currentMember);
@@ -155,9 +144,7 @@ class SqliteOfflineBackupDataStore implements OfflineBackupDataStore {
         '未対応のバックアップ形式です: ${snapshot.formatVersion}',
       );
     }
-    if (snapshot.databaseSchemaVersion != database.schemaVersion &&
-        snapshot.databaseSchemaVersion != 1 &&
-        snapshot.databaseSchemaVersion != 2) {
+    if (snapshot.databaseSchemaVersion != database.schemaVersion) {
       throw OfflineBackupUnsupportedVersionException(
         '未対応のDBスキーマです: ${snapshot.databaseSchemaVersion}',
       );
@@ -170,9 +157,6 @@ class SqliteOfflineBackupDataStore implements OfflineBackupDataStore {
       throw const FormatException('バックアップのウィジェット更新間隔が不正です。');
     }
     final expectedTables = {...OfflineBackupSnapshot.tableNames};
-    if (snapshot.databaseSchemaVersion == 1) {
-      expectedTables.removeAll(['calendar_events', 'calendar_labels']);
-    }
     if (snapshot.tables.keys.toSet().difference(expectedTables).isNotEmpty ||
         expectedTables.difference(snapshot.tables.keys.toSet()).isNotEmpty) {
       throw const FormatException('バックアップのテーブル構成が不正です。');
