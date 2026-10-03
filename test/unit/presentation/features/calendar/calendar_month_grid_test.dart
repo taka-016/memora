@@ -52,31 +52,36 @@ void main() {
   });
 
   for (final direction in [-1, 1]) {
-    testWidgets('幅の3割を少し超えるゆっくりしたスワイプで月を切り替える（$direction）', (tester) async {
-      await _pumpGrid(tester);
-      final grid = find.byKey(const Key('calendar_month_grid'));
-      final bounds = tester.getRect(grid);
-      final gesture = await tester.startGesture(bounds.center);
-      await gesture.moveBy(Offset(20.0 * direction, 0));
-      await tester.pump();
-      await gesture.moveBy(Offset(bounds.width * .35 * direction, 0));
-      await tester.pump(const Duration(milliseconds: 400));
-      await gesture.up();
-      await tester.pumpAndSettle();
-      final month = direction == -1 ? 11 : 9;
-      final page = find.byKey(Key('calendar_month_2026_$month'));
-      expect(page, findsOneWidget);
-      expect(tester.getRect(page).contains(bounds.center), isTrue);
-      await tester.tap(find.byKey(Key('calendar_day_2026_${month}_2')));
-      await tester.pump();
-      expect(tester.takeException(), isNull);
-    });
+    for (final (distance, switchesMonth) in [(.35, false), (.45, true)]) {
+      testWidgets(
+        '${switchesMonth ? '幅の4割を超える低速スワイプで切り替わる' : '幅の4割未満の低速スワイプは戻る'}（$direction）',
+        (tester) async {
+          await _pumpGrid(tester);
+          final grid = find.byKey(const Key('calendar_month_grid'));
+          final bounds = tester.getRect(grid);
+          final gesture = await tester.startGesture(bounds.center);
+          await gesture.moveBy(Offset(20.0 * direction, 0));
+          await tester.pump();
+          await gesture.moveBy(Offset(bounds.width * distance * direction, 0));
+          await tester.pump(const Duration(milliseconds: 400));
+          await gesture.up();
+          await tester.pumpAndSettle();
+          final month = switchesMonth ? (direction == -1 ? 11 : 9) : 10;
+          final page = find.byKey(Key('calendar_month_2026_$month'));
+          expect(page, findsOneWidget);
+          expect(tester.getRect(page).contains(bounds.center), isTrue);
+          await tester.tap(find.byKey(Key('calendar_day_2026_${month}_2')));
+          await tester.pump();
+          expect(tester.takeException(), isNull);
+        },
+      );
+    }
   }
 
   for (final direction in [-1, 1]) {
     for (final (duration, switchesMonth) in [
-      (const Duration(milliseconds: 500), true),
-      (const Duration(milliseconds: 800), false),
+      (const Duration(milliseconds: 700), true),
+      (const Duration(milliseconds: 1100), false),
     ]) {
       testWidgets(
         '${switchesMonth ? '控えめな速度でも月が切り替わる' : 'それより遅い短い横移動は元へ戻る'}（$direction）',
