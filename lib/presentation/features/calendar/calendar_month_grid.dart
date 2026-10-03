@@ -110,6 +110,12 @@ class _CalendarMonthScrollPhysics extends PageScrollPhysics {
   final int? Function() swipeStartPage;
 
   @override
+  double get minFlingVelocity => super.minFlingVelocity * .7;
+
+  @override
+  double get minFlingDistance => super.minFlingDistance * .7;
+
+  @override
   _CalendarMonthScrollPhysics applyTo(ScrollPhysics? ancestor) =>
       _CalendarMonthScrollPhysics(
         swipeStartPage: swipeStartPage,
