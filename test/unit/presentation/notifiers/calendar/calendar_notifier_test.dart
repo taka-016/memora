@@ -94,7 +94,7 @@ void main() {
     await notifier.load();
     final pending = Completer<void>();
     when(reorder.execute('g1', any)).thenAnswer((_) => pending.future);
-    final result = notifier.reorderLabels(0, 2);
+    final result = notifier.reorderLabels(0, 1);
     expect(container.read(provider).labels.map((label) => label.id), [
       'child',
       'family',
@@ -112,7 +112,7 @@ void main() {
     when(labels.execute('g1')).thenAnswer(
       (_) async => [child.copyWith(sortOrder: 0), label.copyWith(sortOrder: 1)],
     );
-    expect(await notifier.reorderLabels(0, 2), isTrue);
+    expect(await notifier.reorderLabels(0, 1), isTrue);
     expect(container.read(provider).labels.map((label) => label.id), [
       'child',
       'family',
@@ -126,7 +126,7 @@ void main() {
     await notifier.load();
     when(reorder.execute('g1', any)).thenAnswer((_) async {});
     when(labels.execute('g1')).thenThrow(TestException('取得失敗'));
-    expect(await notifier.reorderLabels(0, 2), isTrue);
+    expect(await notifier.reorderLabels(0, 1), isTrue);
     expect(container.read(provider).labels.map((label) => label.id), [
       'child',
       'family',
