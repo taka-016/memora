@@ -3,10 +3,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/presentation/features/calendar/calendar_month_grid.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_state.dart';
 
-Future<void> _pumpGrid(WidgetTester tester, {DateTime? initialDate}) async {
+Future<void> _pumpGrid(
+  WidgetTester tester, {
+  DateTime? initialDate,
+  TargetPlatform platform = TargetPlatform.android,
+}) async {
   var state = CalendarState(selectedDate: initialDate ?? DateTime(2026, 10, 1));
   await tester.pumpWidget(
     MaterialApp(
+      theme: ThemeData(platform: platform),
       home: Scaffold(
         body: StatefulBuilder(
           builder: (context, setState) => CalendarMonthGrid(
@@ -78,28 +83,30 @@ void main() {
     }
   }
 
-  for (final direction in [-1, 1]) {
-    for (final (duration, switchesMonth) in [
-      (const Duration(seconds: 1), true),
-      (const Duration(milliseconds: 1800), false),
-    ]) {
-      testWidgets(
-        '${switchesMonth ? '控えめな速度でも月が切り替わる' : 'それより遅い短い横移動は元へ戻る'}（$direction）',
-        (tester) async {
-          await _pumpGrid(tester);
-          final grid = find.byKey(const Key('calendar_month_grid'));
-          final bounds = tester.getRect(grid);
-          await tester.timedDrag(grid, Offset(80.0 * direction, 0), duration);
-          await tester.pumpAndSettle();
-          final month = switchesMonth ? (direction == -1 ? 11 : 9) : 10;
-          final page = find.byKey(Key('calendar_month_2026_$month'));
-          expect(page, findsOneWidget);
-          expect(tester.getRect(page).contains(bounds.center), isTrue);
-          await tester.tap(find.byKey(Key('calendar_day_2026_${month}_2')));
-          await tester.pump();
-          expect(tester.takeException(), isNull);
-        },
-      );
+  for (final platform in [TargetPlatform.android, TargetPlatform.iOS]) {
+    for (final direction in [-1, 1]) {
+      for (final (duration, switchesMonth) in [
+        (const Duration(seconds: 2), true),
+        (const Duration(seconds: 8), false),
+      ]) {
+        testWidgets(
+          '${switchesMonth ? '控えめな速度でも月が切り替わる' : 'それより遅い短い横移動は元へ戻る'}（$platform、$direction）',
+          (tester) async {
+            await _pumpGrid(tester, platform: platform);
+            final grid = find.byKey(const Key('calendar_month_grid'));
+            final bounds = tester.getRect(grid);
+            await tester.timedDrag(grid, Offset(80.0 * direction, 0), duration);
+            await tester.pumpAndSettle();
+            final month = switchesMonth ? (direction == -1 ? 11 : 9) : 10;
+            final page = find.byKey(Key('calendar_month_2026_$month'));
+            expect(page, findsOneWidget);
+            expect(tester.getRect(page).contains(bounds.center), isTrue);
+            await tester.tap(find.byKey(Key('calendar_day_2026_${month}_2')));
+            await tester.pump();
+            expect(tester.takeException(), isNull);
+          },
+        );
+      }
     }
   }
 
