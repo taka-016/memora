@@ -134,15 +134,19 @@ void main() {
   testWidgets('左右スワイプと矢印の両方で前月翌月へ移動する', (tester) async {
     await _CalendarHarness().pump(tester);
     final grid = find.byKey(const Key('calendar_month_grid'));
-    await tester.drag(grid, const Offset(-250, 0));
+    final width = tester.getSize(grid).width;
+    await tester.drag(grid, Offset(-width * .8, 0));
     await tester.pumpAndSettle();
     expect(find.text('2026年11月'), findsOneWidget);
-    await tester.drag(grid, const Offset(250, 0));
+    await tester.drag(grid, Offset(width * .8, 0));
     await tester.pumpAndSettle();
     expect(find.text('2026年10月'), findsOneWidget);
     await tester.tap(find.byTooltip('前の月'));
     await tester.pump();
     expect(find.text('2026年9月'), findsOneWidget);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('calendar_day_2026_9_2')));
+    await tester.pump();
     await tester.tap(find.byTooltip('次の月'));
     await tester.pump();
     expect(find.text('2026年10月'), findsOneWidget);
