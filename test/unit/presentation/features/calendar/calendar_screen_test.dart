@@ -232,7 +232,8 @@ void main() {
   });
 
   testWidgets('白黒の文字色を選び背景色と名前を含むプレビューと予定表示へ反映する', (tester) async {
-    final harness = _CalendarHarness()..savedEvents.add(_event('e', '予定'));
+    final harness = _CalendarHarness()
+      ..savedEvents.add(_event('e', '予定').copyWith(isAllDay: true));
     await harness.pump(tester);
     await tester.tap(find.byTooltip('色ラベルの設定'));
     await tester.pumpAndSettle();
@@ -285,7 +286,7 @@ void main() {
   testWidgets('任意の文字色を表示し名前だけの編集では文字色を保持する', (tester) async {
     final harness = _CalendarHarness()
       ..savedLabels[0] = _family.copyWith(textColor: '#Ab12Cd')
-      ..savedEvents.add(_event('e', '予定'));
+      ..savedEvents.add(_event('e', '予定').copyWith(isAllDay: true));
     await harness.pump(tester);
     expect(
       tester.widget<Text>(find.text('予定')).style!.color,
@@ -299,6 +300,105 @@ void main() {
     await tester.tap(find.text('保存'));
     await tester.pumpAndSettle();
     expect(harness.savedLabels.single.textColor, '#Ab12Cd');
+  });
+
+  testWidgets('終日は背景と文字色、時刻付きはラベル色の文字で表示し長いタイトルを切る', (tester) async {
+    const title = '非常に長いタイトルが日付枠の幅を超えている予定';
+    final harness = _CalendarHarness()
+      ..savedLabels[0] = _family.copyWith(textColor: '#FFFFFF')
+      ..savedEvents.addAll([
+        _event('all', '終日の予定').copyWith(isAllDay: true),
+        _event('timed', title),
+      ]);
+    await harness.pump(tester);
+    final allDay = tester.widget<Text>(find.text('終日の予定'));
+    final timed = tester.widget<Text>(find.text(title));
+    expect(allDay.style!.color, Colors.white);
+    expect(timed.style!.color, const Color(0xFF123ABC));
+    expect(timed.overflow, TextOverflow.clip);
+    expect(timed.softWrap, isFalse);
+    Container titleContainer(String title) => tester.widget<Container>(
+      find
+          .ancestor(of: find.text(title), matching: find.byType(Container))
+          .first,
+    );
+    expect(
+      (titleContainer('終日の予定').decoration as BoxDecoration).color,
+      const Color(0xFF123ABC),
+    );
+    expect(
+      (titleContainer(title).decoration as BoxDecoration).color,
+      Colors.transparent,
+    );
+    await tester.tap(find.byKey(_day2));
+    await tester.pump();
+    await tester.tap(find.byKey(_day2));
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<Text>(find.text(title).last).style!.color,
+      const Color(0xFF123ABC),
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('日別一覧は画面上部まで開き一覧の追加ボタンでその日の予定を登録する', (tester) async {
+    final harness = _CalendarHarness();
+    await harness.pump(tester);
+    await tester.tap(find.byKey(_day2));
+    await tester.pump();
+    await tester.tap(find.byKey(_day2));
+    await tester.pumpAndSettle();
+    final screenHeight =
+        tester.view.physicalSize.height / tester.view.devicePixelRatio;
+    final bounds = tester.getRect(find.byType(BottomSheet));
+    expect(bounds.top, lessThan(screenHeight * .1));
+    await tester.tap(find.byTooltip('この日に予定を追加'));
+    await tester.pumpAndSettle();
+    expect(find.text('開始日: 2026/10/2'), findsOneWidget);
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'タイトル'),
+      '一覧から追加',
+    );
+    await tester.tap(find.text('保存'));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(ListTile, '一覧から追加'), findsOneWidget);
+    expect(harness.savedEvents.single.startDateTime, DateTime(2026, 10, 2));
+    await tester.tap(find.byTooltip('予定一覧を閉じる'));
+    await tester.pumpAndSettle();
+    expect(
+      find.descendant(of: find.byKey(_day2), matching: find.text('一覧から追加')),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('小画面と拡大文字でも開始と終了の年月日・時間を横並びで変更できる', (tester) async {
+    tester.view.physicalSize = const Size(320, 480);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await _CalendarHarness().pump(tester, textScale: 1.5);
+    await tester.tap(find.byTooltip('予定を追加'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(SwitchListTile, '終日'));
+    await tester.pump();
+    for (final prefix in ['開始', '終了']) {
+      final date = find.widgetWithText(TextButton, '${prefix}日: 2026/10/1');
+      final time = find.widgetWithText(TextButton, '${prefix}時刻: 00:00');
+      await tester.ensureVisible(time);
+      await tester.pumpAndSettle();
+      expect(tester.getCenter(date).dy, tester.getCenter(time).dy);
+      expect(tester.getCenter(date).dx, lessThan(tester.getCenter(time).dx));
+      await tester.tap(time);
+      await tester.pumpAndSettle();
+      expect(find.byType(TimePickerDialog), findsOneWidget);
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+    }
+    await tester.tap(find.widgetWithText(SwitchListTile, '終日'));
+    await tester.pump();
+    expect(find.text('開始時刻: 00:00'), findsNothing);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('小画面と拡大文字でも配色プレビューへスクロールして保存できる', (tester) async {
