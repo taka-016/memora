@@ -495,51 +495,65 @@ void main() {
     expect(harness.savedLabels.single.sortOrder, _family.sortOrder);
   });
 
-  testWidgets('ラベルをドラッグして並び替え保存後の一覧と予定入力に反映する', (tester) async {
-    final harness = _CalendarHarness()
-      ..savedLabels.addAll([
-        _family.copyWith(id: 'child', name: '子供', sortOrder: 1),
-        _family.copyWith(id: 'parent', name: '親', sortOrder: 2),
+  for (final dragFromRow in [false, true]) {
+    testWidgets('${dragFromRow ? '行の長押し' : 'ハンドルの端'}から案内なしで並び替えて一覧と予定入力へ反映する', (
+      tester,
+    ) async {
+      final harness = _CalendarHarness()
+        ..savedLabels.addAll([
+          _family.copyWith(id: 'child', name: '子供', sortOrder: 1),
+          _family.copyWith(id: 'parent', name: '親', sortOrder: 2),
+        ]);
+      await harness.pump(tester);
+      await tester.tap(find.byTooltip('色ラベルの設定'));
+      await tester.pumpAndSettle();
+      final firstHandle = find.byKey(const Key('calendar_label_drag_family'));
+      final last = tester.getRect(find.widgetWithText(ListTile, '親'));
+      final handleRect = tester.getRect(firstHandle);
+      expect(handleRect.width, greaterThanOrEqualTo(kMinInteractiveDimension));
+      expect(handleRect.height, greaterThanOrEqualTo(kMinInteractiveDimension));
+      final origin = dragFromRow
+          ? tester.getCenter(find.text('家族全員'))
+          : Offset(handleRect.left + 4, handleRect.center.dy);
+      final gesture = await tester.startGesture(origin);
+      await tester.pump(const Duration(milliseconds: 700));
+      expect(find.text('ドラッグで並び替え'), findsNothing);
+      expect(find.text('ドラッグして並び替え'), findsNothing);
+      expect(find.text('ラベルを編集'), findsNothing);
+      await gesture.moveTo(Offset(last.center.dx, last.bottom + last.height));
+      await tester.pump(const Duration(milliseconds: 300));
+      await gesture.up();
+      await tester.pumpAndSettle();
+      expect(harness.savedLabels.map((label) => label.id), [
+        'child',
+        'parent',
+        'family',
       ]);
-    await harness.pump(tester);
-    await tester.tap(find.byTooltip('色ラベルの設定'));
-    await tester.pumpAndSettle();
-    final firstHandle = find.byKey(const Key('calendar_label_drag_family'));
-    final last = tester.getRect(find.widgetWithText(ListTile, '親'));
-    final gesture = await tester.startGesture(tester.getCenter(firstHandle));
-    await gesture.moveTo(Offset(last.center.dx, last.bottom + last.height));
-    await tester.pump(const Duration(milliseconds: 300));
-    await gesture.up();
-    await tester.pumpAndSettle();
-    expect(harness.savedLabels.map((label) => label.id), [
-      'child',
-      'parent',
-      'family',
-    ]);
-    verify(harness.reorder.execute('g1', ['child', 'parent', 'family']))
-        .called(1);
-    await tester.tap(find.text('閉じる'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('色ラベルの設定'));
-    await tester.pumpAndSettle();
-    expect(
-      tester.getCenter(find.text('子供')).dy,
-      lessThan(tester.getCenter(find.text('家族全員')).dy),
-    );
-    await tester.tap(find.text('閉じる'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('予定を追加'));
-    await tester.pumpAndSettle();
-    final dropdown = tester.widget<DropdownButton<String>>(
-      find.byType(DropdownButton<String>),
-    );
-    expect(dropdown.items!.map((item) => item.value), [
-      'child',
-      'parent',
-      'family',
-    ]);
-    expect(tester.takeException(), isNull);
-  });
+      verify(harness.reorder.execute('g1', ['child', 'parent', 'family']))
+          .called(1);
+      await tester.tap(find.text('閉じる'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('色ラベルの設定'));
+      await tester.pumpAndSettle();
+      expect(
+        tester.getCenter(find.text('子供')).dy,
+        lessThan(tester.getCenter(find.text('家族全員')).dy),
+      );
+      await tester.tap(find.text('閉じる'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('予定を追加'));
+      await tester.pumpAndSettle();
+      final dropdown = tester.widget<DropdownButton<String>>(
+        find.byType(DropdownButton<String>),
+      );
+      expect(dropdown.items!.map((item) => item.value), [
+        'child',
+        'parent',
+        'family',
+      ]);
+      expect(tester.takeException(), isNull);
+    });
+  }
 
   for (final minutes in [60, 90]) {
     testWidgets('標準時間$minutes分を端末設定で保持し開始時刻から終了を自動設定する', (tester) async {
