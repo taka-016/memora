@@ -137,7 +137,8 @@ erDiagram
         string id PK
         string groupId FK "NOT NULL"
         string name "NOT NULL"
-        string color "NOT NULL"
+        string color "NOT NULL、#RRGGBB"
+        string textColor "NOT NULL、#RRGGBB"
     }
     google_calendar_connections {
         string memberId PK, FK
