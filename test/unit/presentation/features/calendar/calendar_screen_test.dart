@@ -211,6 +211,8 @@ void main() {
     expect(saved.color, '#F44336');
     await tester.tap(find.text('家族全員'));
     await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('16進数で指定'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('16進数で指定'));
     await tester.pump();
     await tester.enterText(
@@ -413,6 +415,37 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('複数日終日予定は週ごとに連続した帯と中央のタイトルを表示する', (tester) async {
+    final harness = _CalendarHarness()
+      ..savedEvents.add(
+        _event(
+          'trip',
+          '家族旅行',
+        ).copyWith(isAllDay: true, endDateTime: DateTime(2026, 10, 6)),
+      );
+    await harness.pump(tester);
+    expect(find.text('家族旅行'), findsNWidgets(2));
+    for (final key in [
+      'calendar_event_trip_2026_9_27',
+      'calendar_event_trip_2026_10_4',
+    ]) {
+      final span = find.byKey(Key(key));
+      final text = find.descendant(of: span, matching: find.text('家族旅行'));
+      expect(tester.widget<Text>(text).textAlign, TextAlign.center);
+      expect(
+        tester.getSize(span).width,
+        greaterThan(tester.getSize(find.byKey(_day2)).width),
+      );
+    }
+    final day3 = find.byKey(const Key('calendar_day_2026_10_3'));
+    await tester.tap(day3);
+    await tester.pump();
+    await tester.tap(day3);
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(ListTile, '家族旅行'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('ラベルの並び順と終日・時刻指定の両プレビューを保存する', (tester) async {
     final harness = _CalendarHarness();
     await harness.pump(tester);
@@ -459,6 +492,8 @@ void main() {
         await tester.tap(find.text('保存'));
         await tester.pumpAndSettle();
       }
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
       final harness = _CalendarHarness();
       await harness.pump(tester);
       await tester.tap(find.byKey(_day2));
