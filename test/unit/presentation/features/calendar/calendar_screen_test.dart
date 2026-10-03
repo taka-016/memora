@@ -507,7 +507,7 @@ void main() {
     final firstHandle = find.byKey(const Key('calendar_label_drag_family'));
     final last = tester.getRect(find.widgetWithText(ListTile, '親'));
     final gesture = await tester.startGesture(tester.getCenter(firstHandle));
-    await gesture.moveTo(Offset(last.center.dx, last.bottom + 8));
+    await gesture.moveTo(Offset(last.center.dx, last.bottom + last.height));
     await tester.pump(const Duration(milliseconds: 300));
     await gesture.up();
     await tester.pumpAndSettle();
