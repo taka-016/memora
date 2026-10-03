@@ -11,7 +11,6 @@ import 'package:memora/presentation/features/calendar/calendar_screen.dart';
 
 import '../../notifiers/calendar/calendar_notifier_test.mocks.dart';
 
-const _day1 = Key('calendar_day_2026_10_1');
 const _day2 = Key('calendar_day_2026_10_2');
 const _family = CalendarLabelDto(
   id: 'family',

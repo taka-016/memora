@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,6 +6,7 @@ import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/presentation/features/calendar/calendar_event_dialog.dart';
 import 'package:memora/presentation/features/calendar/calendar_labels_dialog.dart';
 import 'package:memora/presentation/features/calendar/calendar_day_events_sheet.dart';
+import 'package:memora/presentation/features/calendar/calendar_month_grid.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_notifier.dart';
 
 class CalendarScreen extends ConsumerStatefulWidget {
@@ -24,8 +24,6 @@ class CalendarScreen extends ConsumerStatefulWidget {
 }
 
 class _CalendarScreenState extends ConsumerState<CalendarScreen> {
-  double _horizontalDragDistance = 0;
-
   @override
   void initState() {
     super.initState();
@@ -94,9 +92,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final state = ref.watch(provider);
     final notifier = ref.read(provider.notifier);
     final month = state.month;
-    final firstOffset = month.weekday % 7;
-    final days = DateTime(month.year, month.month + 1, 0).day;
-    final rows = ((firstOffset + days) / 7).ceil();
     final canEdit =
         !state.isSaving && !state.isLoading && state.loadError.isEmpty;
     return PopScope(
@@ -210,235 +205,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                     ],
                   ),
                   Expanded(
-                    child: GestureDetector(
-                      key: const Key('calendar_month_grid'),
-                      behavior: HitTestBehavior.opaque,
-                      onHorizontalDragStart: (_) => _horizontalDragDistance = 0,
-                      onHorizontalDragUpdate: (details) =>
-                          _horizontalDragDistance += details.delta.dx,
-                      onHorizontalDragEnd: (details) {
-                        final velocity = details.primaryVelocity ?? 0;
-                        if (_horizontalDragDistance.abs() >= 50 ||
-                            velocity.abs() >= 300) {
-                          final direction = _horizontalDragDistance.abs() >= 50
-                              ? _horizontalDragDistance
-                              : velocity;
-                          _moveMonth(direction < 0 ? 1 : -1);
-                        }
-                      },
-                      child: LayoutBuilder(
-                        builder: (context, constraints) {
-                          final minHeight =
-                              16 +
-                              MediaQuery.textScalerOf(context).scale(14) * 1.4 +
-                              MediaQuery.textScalerOf(context).scale(11) *
-                                  1.4 *
-                                  4;
-                          final rowHeight = math.max(
-                            constraints.maxHeight / rows,
-                            minHeight,
-                          );
-                          return SingleChildScrollView(
-                            child: Column(
-                              children: [
-                                for (var row = 0; row < rows; row++)
-                                  SizedBox(
-                                    height: rowHeight,
-                                    child: Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.stretch,
-                                      children: [
-                                        for (
-                                          var column = 0;
-                                          column < 7;
-                                          column++
-                                        )
-                                          Expanded(
-                                            child: Builder(
-                                              builder: (context) {
-                                                final day =
-                                                    row * 7 +
-                                                    column -
-                                                    firstOffset +
-                                                    1;
-                                                if (day < 1 || day > days) {
-                                                  return Container(
-                                                    decoration: BoxDecoration(
-                                                      border: Border.all(
-                                                        color: Theme.of(context)
-                                                            .colorScheme
-                                                            .outlineVariant,
-                                                      ),
-                                                    ),
-                                                  );
-                                                }
-                                                final date = DateTime(
-                                                  month.year,
-                                                  month.month,
-                                                  day,
-                                                );
-                                                final events = state
-                                                    .eventsForDay(date);
-                                                final selected =
-                                                    date == state.selectedDate;
-                                                return Semantics(
-                                                  selected: selected,
-                                                  button: true,
-                                                  label:
-                                                      '${calendarDateText(date)}、予定${events.length}件${selected ? '、再タップで予定一覧' : ''}',
-                                                  child: Material(
-                                                    color: selected
-                                                        ? Theme.of(context)
-                                                              .colorScheme
-                                                              .primaryContainer
-                                                              .withValues(
-                                                                alpha: .35,
-                                                              )
-                                                        : Colors.transparent,
-                                                    child: InkWell(
-                                                      key: Key(
-                                                        'calendar_day_${month.year}_${month.month}_$day',
-                                                      ),
-                                                      onTap: state.isSaving
-                                                          ? null
-                                                          : () => _selectDay(
-                                                              date,
-                                                            ),
-                                                      child: Container(
-                                                        padding:
-                                                            const EdgeInsets.all(
-                                                              2,
-                                                            ),
-                                                        decoration: BoxDecoration(
-                                                          border: Border.all(
-                                                            color: selected
-                                                                ? Theme.of(
-                                                                        context,
-                                                                      )
-                                                                      .colorScheme
-                                                                      .primary
-                                                                : Theme.of(
-                                                                        context,
-                                                                      )
-                                                                      .colorScheme
-                                                                      .outlineVariant,
-                                                            width: selected
-                                                                ? 2
-                                                                : 1,
-                                                          ),
-                                                        ),
-                                                        child: Column(
-                                                          crossAxisAlignment:
-                                                              CrossAxisAlignment
-                                                                  .stretch,
-                                                          children: [
-                                                            Text(
-                                                              '$day',
-                                                              textAlign:
-                                                                  TextAlign
-                                                                      .center,
-                                                            ),
-                                                            for (final event
-                                                                in events.take(
-                                                                  3,
-                                                                ))
-                                                              Builder(
-                                                                builder: (context) {
-                                                                  final label = state
-                                                                      .labels
-                                                                      .where(
-                                                                        (
-                                                                          label,
-                                                                        ) =>
-                                                                            label.id ==
-                                                                            event.labelId,
-                                                                      )
-                                                                      .firstOrNull;
-                                                                  final color =
-                                                                      label ==
-                                                                          null
-                                                                      ? Theme.of(
-                                                                          context,
-                                                                        ).colorScheme.surfaceContainerHighest
-                                                                      : calendarLabelColor(
-                                                                          label
-                                                                              .color,
-                                                                        );
-                                                                  return Padding(
-                                                                    padding:
-                                                                        const EdgeInsets.only(
-                                                                          top:
-                                                                              2,
-                                                                        ),
-                                                                    child: Semantics(
-                                                                      label:
-                                                                          '${event.title}、${label?.name ?? '色ラベルを確認してください'}',
-                                                                      child: Container(
-                                                                        padding: const EdgeInsets.symmetric(
-                                                                          horizontal:
-                                                                              2,
-                                                                        ),
-                                                                        decoration: BoxDecoration(
-                                                                          color:
-                                                                              color,
-                                                                          borderRadius:
-                                                                              BorderRadius.circular(
-                                                                                3,
-                                                                              ),
-                                                                        ),
-                                                                        child: Text(
-                                                                          event
-                                                                              .title,
-                                                                          maxLines:
-                                                                              1,
-                                                                          overflow:
-                                                                              TextOverflow.ellipsis,
-                                                                          style: TextStyle(
-                                                                            fontSize:
-                                                                                11,
-                                                                            height:
-                                                                                1.4,
-                                                                            color:
-                                                                                color.computeLuminance() > .179
-                                                                                ? Colors.black
-                                                                                : Colors.white,
-                                                                          ),
-                                                                        ),
-                                                                      ),
-                                                                    ),
-                                                                  );
-                                                                },
-                                                              ),
-                                                            if (events.length >
-                                                                3)
-                                                              Text(
-                                                                '他${events.length - 3}件',
-                                                                maxLines: 1,
-                                                                style:
-                                                                    const TextStyle(
-                                                                      fontSize:
-                                                                          11,
-                                                                      height:
-                                                                          1.4,
-                                                                    ),
-                                                              ),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                );
-                                              },
-                                            ),
-                                          ),
-                                      ],
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
+                    child: CalendarMonthGrid(
+                      state: state,
+                      onSelectDay: (date) => _selectDay(date),
+                      onMoveMonth: _moveMonth,
                     ),
                   ),
                 ],
