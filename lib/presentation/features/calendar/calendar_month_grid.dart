@@ -61,8 +61,8 @@ class _CalendarMonthGridState extends State<CalendarMonthGrid> {
     controller: _pageController,
     itemCount: 9999 * 12,
     onPageChanged: (index) {
+      final offset = index - _pageIndex;
       _pageIndex = index;
-      final offset = index - _indexForMonth(widget.state.month);
       if (offset != 0) widget.onMoveMonth(offset);
     },
     itemBuilder: (context, index) {
