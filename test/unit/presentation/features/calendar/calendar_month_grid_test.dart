@@ -66,6 +66,29 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  for (final direction in [-1, 1]) {
+    testWidgets('同じフレーム内で切替境界を往復しても指を戻した月を表示する（$direction）', (tester) async {
+      await _pumpGrid(tester);
+      final bounds = tester.getRect(
+        find.byKey(const Key('calendar_month_grid')),
+      );
+      final gesture = await tester.startGesture(bounds.center);
+      await gesture.moveBy(Offset(20.0 * direction, 0));
+      await tester.pump();
+      await gesture.moveBy(Offset(bounds.width * .49 * direction, 0));
+      await tester.pump();
+      await gesture.moveBy(Offset(bounds.width * .02 * direction, 0));
+      await gesture.moveBy(Offset(-bounds.width * .02 * direction, 0));
+      await tester.pump(const Duration(milliseconds: 400));
+      await gesture.up();
+      await tester.pumpAndSettle();
+      final current = find.byKey(const Key('calendar_month_2026_10'));
+      expect(current, findsOneWidget);
+      expect(tester.getRect(current).contains(bounds.center), isTrue);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
   for (final (date, direction) in [
     (DateTime(1), 1),
     (DateTime(9999, 12), -1),
