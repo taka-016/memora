@@ -38,7 +38,9 @@ class _CalendarMonthGridState extends State<CalendarMonthGrid> {
   void didUpdateWidget(CalendarMonthGrid oldWidget) {
     super.didUpdateWidget(oldWidget);
     final target = _indexForMonth(widget.state.month);
-    if (target == _pageIndex) return;
+    if (target == _pageIndex) {
+      return;
+    }
     _pageIndex = target;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted &&
@@ -63,7 +65,9 @@ class _CalendarMonthGridState extends State<CalendarMonthGrid> {
     onPageChanged: (index) {
       final offset = index - _pageIndex;
       _pageIndex = index;
-      if (offset != 0) widget.onMoveMonth(offset);
+      if (offset != 0) {
+        widget.onMoveMonth(offset);
+      }
     },
     itemBuilder: (context, index) {
       final month = DateTime(index ~/ 12 + 1, index % 12 + 1);
