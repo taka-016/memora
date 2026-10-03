@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:memora/presentation/features/calendar/calendar_color_picker.dart';
 import 'package:memora/application/dtos/calendar/calendar_label_dto.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_notifier.dart';
 
@@ -115,11 +116,14 @@ class _LabelEditDialogState extends ConsumerState<_LabelEditDialog> {
   late final TextEditingController _name;
   late final TextEditingController _color;
   String _error = '';
+  bool _showHex = false;
+  late Color _selectedColor;
   @override
   void initState() {
     super.initState();
     _name = TextEditingController(text: widget.label?.name ?? '');
     _color = TextEditingController(text: widget.label?.color ?? '#2196F3');
+    _selectedColor = calendarLabelColor(_color.text);
   }
 
   @override
@@ -150,25 +154,48 @@ class _LabelEditDialogState extends ConsumerState<_LabelEditDialog> {
                       ? '名前を入力してください'
                       : null,
                 ),
-                TextFormField(
-                  controller: _color,
-                  enabled: !saving,
-                  decoration: const InputDecoration(
-                    labelText: '色（#RRGGBB）',
-                    helperText: '例: #2196F3',
-                  ),
-                  onChanged: (_) => setState(() {}),
-                  validator: (value) =>
-                      !RegExp(r'^#[0-9a-fA-F]{6}$')
-                          .hasMatch(value?.trim() ?? '')
-                      ? '#RRGGBB形式で入力してください'
-                      : null,
+                const SizedBox(height: 16),
+                CalendarColorPicker(
+                  color: _selectedColor,
+                  onChanged: saving
+                      ? null
+                      : (color) => setState(() {
+                          _selectedColor = color;
+                          _color.text =
+                              '#${color.toARGB32().toRadixString(16).substring(2).toUpperCase()}';
+                        }),
                 ),
-                if (RegExp(r'^#[0-9a-fA-F]{6}$').hasMatch(_color.text.trim()))
-                  Icon(
-                    Icons.circle,
-                    semanticLabel: '選択した色',
-                    color: calendarLabelColor(_color.text.trim()),
+                TextButton(
+                  onPressed: saving
+                      ? null
+                      : () => setState(() {
+                          _showHex = !_showHex;
+                          _color.text =
+                              '#${_selectedColor.toARGB32().toRadixString(16).substring(2).toUpperCase()}';
+                        }),
+                  child: Text(_showHex ? '16進数入力を閉じる' : '16進数で指定'),
+                ),
+                if (_showHex)
+                  TextFormField(
+                    controller: _color,
+                    enabled: !saving,
+                    decoration: const InputDecoration(
+                      labelText: '色（#RRGGBB）',
+                      helperText: '例: #2196F3',
+                    ),
+                    onChanged: (value) {
+                      if (RegExp(r'^#[0-9a-fA-F]{6}$').hasMatch(value.trim())) {
+                        setState(
+                          () =>
+                              _selectedColor = calendarLabelColor(value.trim()),
+                        );
+                      }
+                    },
+                    validator: (value) =>
+                        !RegExp(r'^#[0-9a-fA-F]{6}$')
+                            .hasMatch(value?.trim() ?? '')
+                        ? '#RRGGBB形式で入力してください'
+                        : null,
                   ),
                 if (_error.isNotEmpty) Text(_error),
               ],
