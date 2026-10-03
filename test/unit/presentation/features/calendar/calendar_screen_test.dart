@@ -214,6 +214,8 @@ void main() {
     await tester.tap(find.text('保存'));
     await tester.pump();
     expect(find.text('#RRGGBB形式で入力してください'), findsOneWidget);
+    await tester.ensureVisible(find.byTooltip('青'));
+    await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('青'));
     await tester.pump();
     await tester.tap(find.text('保存'));
