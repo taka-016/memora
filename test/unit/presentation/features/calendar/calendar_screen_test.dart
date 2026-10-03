@@ -392,9 +392,16 @@ void main() {
       await tester.tap(time);
       await tester.pumpAndSettle();
       expect(find.byType(TimePickerDialog), findsOneWidget);
-      await tester.tap(find.text('Cancel'));
+      await tester.tap(
+        find.descendant(
+          of: find.byType(TimePickerDialog),
+          matching: find.text('キャンセル'),
+        ),
+      );
       await tester.pumpAndSettle();
     }
+    await tester.ensureVisible(find.widgetWithText(SwitchListTile, '終日'));
+    await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(SwitchListTile, '終日'));
     await tester.pump();
     expect(find.text('開始時刻: 00:00'), findsNothing);
