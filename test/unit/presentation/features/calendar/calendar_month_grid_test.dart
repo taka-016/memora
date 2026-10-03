@@ -86,8 +86,8 @@ void main() {
   for (final platform in [TargetPlatform.android, TargetPlatform.iOS]) {
     for (final direction in [-1, 1]) {
       for (final (duration, switchesMonth) in [
-        (const Duration(seconds: 2), true),
-        (const Duration(seconds: 8), false),
+        (const Duration(seconds: 3), true),
+        (const Duration(seconds: 10), false),
       ]) {
         testWidgets(
           '${switchesMonth ? '控えめな速度でも月が切り替わる' : 'それより遅い短い横移動は元へ戻る'}（$platform、$direction）',
@@ -95,7 +95,7 @@ void main() {
             await _pumpGrid(tester, platform: platform);
             final grid = find.byKey(const Key('calendar_month_grid'));
             final bounds = tester.getRect(grid);
-            await tester.timedDrag(grid, Offset(80.0 * direction, 0), duration);
+            await tester.timedDrag(grid, Offset(40.0 * direction, 0), duration);
             await tester.pumpAndSettle();
             final month = switchesMonth ? (direction == -1 ? 11 : 9) : 10;
             final page = find.byKey(Key('calendar_month_2026_$month'));
