@@ -117,8 +117,7 @@ class SqliteOfflineBackupDataStore implements OfflineBackupDataStore {
           await database.customStatement('DELETE FROM "$table"');
         }
         for (final table in _insertOrder) {
-          for (final row
-              in snapshot.tables[table] ?? const <Map<String, Object?>>[]) {
+          for (final row in snapshot.tables[table]!) {
             await database.insertRow(table, row);
           }
         }
