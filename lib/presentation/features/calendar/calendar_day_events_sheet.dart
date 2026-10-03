@@ -22,6 +22,8 @@ class CalendarDayEventsSheet extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(calendarNotifierProvider(groupId));
     final events = state.eventsForDay(date);
+    final canEdit =
+        !state.isSaving && !state.isLoading && state.loadError.isEmpty;
     return PopScope(
       canPop: !state.isSaving,
       child: FractionallySizedBox(
@@ -109,12 +111,7 @@ class CalendarDayEventsSheet extends ConsumerWidget {
                                     Text(calendarPeriodText(event)),
                                   ],
                                 ),
-                                onTap:
-                                    state.isSaving ||
-                                        state.isLoading ||
-                                        state.loadError.isNotEmpty
-                                    ? null
-                                    : () => onEdit(event),
+                                onTap: canEdit ? () => onEdit(event) : null,
                               );
                             },
                           ),
@@ -133,12 +130,7 @@ class CalendarDayEventsSheet extends ConsumerWidget {
                       .colorScheme
                       .primaryContainer
                       .withValues(alpha: .85),
-                  onPressed:
-                      state.isSaving ||
-                          state.isLoading ||
-                          state.loadError.isNotEmpty
-                      ? null
-                      : onAdd,
+                  onPressed: canEdit ? onAdd : null,
                   child: const Icon(Icons.add),
                 ),
               ),

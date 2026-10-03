@@ -372,7 +372,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('小画面と拡大文字でも開始と終了の年月日・時間を横並びで変更できる', (tester) async {
+  testWidgets('小画面と拡大文字でも開始と終了の年月日・時間を横並びで操作できる', (tester) async {
     tester.view.physicalSize = const Size(320, 480);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -383,8 +383,8 @@ void main() {
     await tester.tap(find.widgetWithText(SwitchListTile, '終日'));
     await tester.pump();
     for (final prefix in ['開始', '終了']) {
-      final date = find.widgetWithText(TextButton, '${prefix}日: 2026/10/1');
-      final time = find.widgetWithText(TextButton, '${prefix}時刻: 00:00');
+      final date = find.widgetWithText(TextButton, '$prefix日: 2026/10/1');
+      final time = find.widgetWithText(TextButton, '$prefix時刻: 00:00');
       await tester.ensureVisible(time);
       await tester.pumpAndSettle();
       expect(tester.getCenter(date).dy, tester.getCenter(time).dy);
