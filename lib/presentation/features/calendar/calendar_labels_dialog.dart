@@ -60,29 +60,43 @@ class CalendarLabelsDialog extends ConsumerWidget {
                     key: Key('calendar_label_drag_${label.id}'),
                     index: index,
                     enabled: canReorder,
-                    child: Tooltip(
-                      message: 'ドラッグで並び替え',
-                      child: Icon(
-                        Icons.drag_handle,
-                        color: canReorder
-                            ? null
-                            : Theme.of(context).disabledColor,
+                    child: Semantics(
+                      label: 'ラベルの並び替え',
+                      child: Container(
+                        width: kMinInteractiveDimension,
+                        height: kMinInteractiveDimension,
+                        alignment: Alignment.center,
+                        color: Colors.transparent,
+                        child: Icon(
+                          Icons.drag_handle,
+                          color: canReorder
+                              ? null
+                              : Theme.of(context).disabledColor,
+                        ),
                       ),
                     ),
                   ),
-                  title: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: calendarLabelColor(label.color),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      label.name,
-                      style: TextStyle(
-                        color: calendarLabelColor(label.textColor),
+                  title: ReorderableDelayedDragStartListener(
+                    index: index,
+                    enabled: canReorder,
+                    child: Container(
+                      constraints: const BoxConstraints(
+                        minHeight: kMinInteractiveDimension,
+                      ),
+                      alignment: Alignment.centerLeft,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: calendarLabelColor(label.color),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        label.name,
+                        style: TextStyle(
+                          color: calendarLabelColor(label.textColor),
+                        ),
                       ),
                     ),
                   ),
