@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:memora/infrastructure/mappers/calendar/legacy_calendar_label_text_color.dart';
+
 import 'package:drift/drift.dart' hide OrderBy;
 import 'package:drift/native.dart';
 import 'package:memora/application/queries/order_by.dart';
@@ -36,20 +38,29 @@ class OfflineDatabase extends _$OfflineDatabase implements ReadTransaction {
   );
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) async => m.createAll(),
     onUpgrade: (m, from, to) async {
-      if (from != 1 || to != 2) {
+      if (from < 1 || from > 2 || to != 3) {
         throw StateError('未対応のDBバージョンです: $from → $to');
       }
-      await m.createTable(calendarLabels);
-      await m.createTable(calendarEvents);
-      for (final entity in allSchemaEntities.whereType<Index>()) {
-        if (entity.entityName.startsWith('calendar_')) {
-          await m.createIndex(entity);
+      if (from == 1) {
+        await m.createTable(calendarLabels);
+        await m.createTable(calendarEvents);
+        for (final entity in allSchemaEntities.whereType<Index>()) {
+          if (entity.entityName.startsWith('calendar_')) {
+            await m.createIndex(entity);
+          }
+        }
+      } else {
+        await m.addColumn(calendarLabels, calendarLabels.textColor);
+        for (final row in await rows('calendar_labels')) {
+          await updateRow('calendar_labels', row['id'] as String, {
+            'text_color': legacyCalendarLabelTextColor(row['color'] as String),
+          });
         }
       }
     },

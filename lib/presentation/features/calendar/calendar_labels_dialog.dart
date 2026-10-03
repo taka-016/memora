@@ -118,12 +118,14 @@ class _LabelEditDialogState extends ConsumerState<_LabelEditDialog> {
   String _error = '';
   bool _showHex = false;
   late Color _selectedColor;
+  late String _textColor;
   @override
   void initState() {
     super.initState();
     _name = TextEditingController(text: widget.label?.name ?? '');
     _color = TextEditingController(text: widget.label?.color ?? '#2196F3');
     _selectedColor = calendarLabelColor(_color.text);
+    _textColor = widget.label?.textColor ?? '#FFFFFF';
   }
 
   @override
@@ -150,6 +152,7 @@ class _LabelEditDialogState extends ConsumerState<_LabelEditDialog> {
                   controller: _name,
                   enabled: !saving,
                   decoration: const InputDecoration(labelText: '名前'),
+                  onChanged: (_) => setState(() {}),
                   validator: (value) => value == null || value.trim().isEmpty
                       ? '名前を入力してください'
                       : null,
@@ -197,6 +200,42 @@ class _LabelEditDialogState extends ConsumerState<_LabelEditDialog> {
                         ? '#RRGGBB形式で入力してください'
                         : null,
                   ),
+                const SizedBox(height: 8),
+                const Text('文字色'),
+                Wrap(
+                  spacing: 12,
+                  children: [
+                    for (final entry in const {
+                      '#FFFFFF': '白',
+                      '#000000': '黒',
+                    }.entries)
+                      ChoiceChip(
+                        label: Text(entry.value),
+                        selected: _textColor.toUpperCase() == entry.key,
+                        onSelected: saving
+                            ? null
+                            : (_) => setState(() => _textColor = entry.key),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                const Text('プレビュー'),
+                Container(
+                  key: const Key('calendar_label_preview'),
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _selectedColor,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    _name.text.trim().isEmpty ? 'ラベル名' : _name.text.trim(),
+                    style: TextStyle(color: calendarLabelColor(_textColor)),
+                  ),
+                ),
                 if (_error.isNotEmpty) Text(_error),
               ],
             ),
@@ -220,6 +259,7 @@ class _LabelEditDialogState extends ConsumerState<_LabelEditDialog> {
                             groupId: widget.groupId,
                             name: _name.text.trim(),
                             color: _color.text.trim(),
+                            textColor: _textColor,
                           ),
                         );
                     if (!context.mounted) return;

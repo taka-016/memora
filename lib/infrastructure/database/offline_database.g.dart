@@ -4984,8 +4984,20 @@ class CalendarLabels extends Table
     requiredDuringInsert: true,
     $customConstraints: 'NOT NULL CHECK (length(color) = 7 AND substr(color, 1, 1) = \'#\' AND substr(color, 2) NOT GLOB \'*[^0-9a-fA-F]*\')',
   );
+  static const VerificationMeta _textColorMeta = const VerificationMeta(
+    'textColor',
+  );
+  late final GeneratedColumn<String> textColor = GeneratedColumn<String>(
+    'text_color',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: 'NOT NULL DEFAULT \'#FFFFFF\' CHECK (length(text_color) = 7 AND substr(text_color, 1, 1) = \'#\' AND substr(text_color, 2) NOT GLOB \'*[^0-9a-fA-F]*\')',
+    defaultValue: const CustomExpression('\'#FFFFFF\''),
+  );
   @override
-  List<GeneratedColumn> get $columns => [id, groupId, name, color];
+  List<GeneratedColumn> get $columns => [id, groupId, name, color, textColor];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -5027,6 +5039,12 @@ class CalendarLabels extends Table
     } else if (isInserting) {
       context.missing(_colorMeta);
     }
+    if (data.containsKey('text_color')) {
+      context.handle(
+        _textColorMeta,
+        textColor.isAcceptableOrUnknown(data['text_color']!, _textColorMeta),
+      );
+    }
     return context;
   }
 
@@ -5056,6 +5074,10 @@ class CalendarLabels extends Table
         DriftSqlType.string,
         data['${effectivePrefix}color'],
       )!,
+      textColor: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}text_color'],
+      )!,
     );
   }
 
@@ -5076,11 +5098,13 @@ class SqliteCalendarLabelRow extends DataClass
   final String groupId;
   final String name;
   final String color;
+  final String textColor;
   const SqliteCalendarLabelRow({
     required this.id,
     required this.groupId,
     required this.name,
     required this.color,
+    required this.textColor,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -5089,6 +5113,7 @@ class SqliteCalendarLabelRow extends DataClass
     map['group_id'] = Variable<String>(groupId);
     map['name'] = Variable<String>(name);
     map['color'] = Variable<String>(color);
+    map['text_color'] = Variable<String>(textColor);
     return map;
   }
 
@@ -5098,6 +5123,7 @@ class SqliteCalendarLabelRow extends DataClass
       groupId: Value(groupId),
       name: Value(name),
       color: Value(color),
+      textColor: Value(textColor),
     );
   }
 
@@ -5111,6 +5137,7 @@ class SqliteCalendarLabelRow extends DataClass
       groupId: serializer.fromJson<String>(json['group_id']),
       name: serializer.fromJson<String>(json['name']),
       color: serializer.fromJson<String>(json['color']),
+      textColor: serializer.fromJson<String>(json['text_color']),
     );
   }
   @override
@@ -5121,6 +5148,7 @@ class SqliteCalendarLabelRow extends DataClass
       'group_id': serializer.toJson<String>(groupId),
       'name': serializer.toJson<String>(name),
       'color': serializer.toJson<String>(color),
+      'text_color': serializer.toJson<String>(textColor),
     };
   }
 
@@ -5129,11 +5157,13 @@ class SqliteCalendarLabelRow extends DataClass
     String? groupId,
     String? name,
     String? color,
+    String? textColor,
   }) => SqliteCalendarLabelRow(
     id: id ?? this.id,
     groupId: groupId ?? this.groupId,
     name: name ?? this.name,
     color: color ?? this.color,
+    textColor: textColor ?? this.textColor,
   );
   SqliteCalendarLabelRow copyWithCompanion(CalendarLabelsCompanion data) {
     return SqliteCalendarLabelRow(
@@ -5141,6 +5171,7 @@ class SqliteCalendarLabelRow extends DataClass
       groupId: data.groupId.present ? data.groupId.value : this.groupId,
       name: data.name.present ? data.name.value : this.name,
       color: data.color.present ? data.color.value : this.color,
+      textColor: data.textColor.present ? data.textColor.value : this.textColor,
     );
   }
 
@@ -5150,13 +5181,14 @@ class SqliteCalendarLabelRow extends DataClass
           ..write('id: $id, ')
           ..write('groupId: $groupId, ')
           ..write('name: $name, ')
-          ..write('color: $color')
+          ..write('color: $color, ')
+          ..write('textColor: $textColor')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, groupId, name, color);
+  int get hashCode => Object.hash(id, groupId, name, color, textColor);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -5164,7 +5196,8 @@ class SqliteCalendarLabelRow extends DataClass
           other.id == this.id &&
           other.groupId == this.groupId &&
           other.name == this.name &&
-          other.color == this.color);
+          other.color == this.color &&
+          other.textColor == this.textColor);
 }
 
 class CalendarLabelsCompanion extends UpdateCompanion<SqliteCalendarLabelRow> {
@@ -5172,12 +5205,14 @@ class CalendarLabelsCompanion extends UpdateCompanion<SqliteCalendarLabelRow> {
   final Value<String> groupId;
   final Value<String> name;
   final Value<String> color;
+  final Value<String> textColor;
   final Value<int> rowid;
   const CalendarLabelsCompanion({
     this.id = const Value.absent(),
     this.groupId = const Value.absent(),
     this.name = const Value.absent(),
     this.color = const Value.absent(),
+    this.textColor = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   CalendarLabelsCompanion.insert({
@@ -5185,6 +5220,7 @@ class CalendarLabelsCompanion extends UpdateCompanion<SqliteCalendarLabelRow> {
     required String groupId,
     required String name,
     required String color,
+    this.textColor = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        groupId = Value(groupId),
@@ -5195,6 +5231,7 @@ class CalendarLabelsCompanion extends UpdateCompanion<SqliteCalendarLabelRow> {
     Expression<String>? groupId,
     Expression<String>? name,
     Expression<String>? color,
+    Expression<String>? textColor,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -5202,6 +5239,7 @@ class CalendarLabelsCompanion extends UpdateCompanion<SqliteCalendarLabelRow> {
       if (groupId != null) 'group_id': groupId,
       if (name != null) 'name': name,
       if (color != null) 'color': color,
+      if (textColor != null) 'text_color': textColor,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -5211,6 +5249,7 @@ class CalendarLabelsCompanion extends UpdateCompanion<SqliteCalendarLabelRow> {
     Value<String>? groupId,
     Value<String>? name,
     Value<String>? color,
+    Value<String>? textColor,
     Value<int>? rowid,
   }) {
     return CalendarLabelsCompanion(
@@ -5218,6 +5257,7 @@ class CalendarLabelsCompanion extends UpdateCompanion<SqliteCalendarLabelRow> {
       groupId: groupId ?? this.groupId,
       name: name ?? this.name,
       color: color ?? this.color,
+      textColor: textColor ?? this.textColor,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -5237,6 +5277,9 @@ class CalendarLabelsCompanion extends UpdateCompanion<SqliteCalendarLabelRow> {
     if (color.present) {
       map['color'] = Variable<String>(color.value);
     }
+    if (textColor.present) {
+      map['text_color'] = Variable<String>(textColor.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -5250,6 +5293,7 @@ class CalendarLabelsCompanion extends UpdateCompanion<SqliteCalendarLabelRow> {
           ..write('groupId: $groupId, ')
           ..write('name: $name, ')
           ..write('color: $color, ')
+          ..write('textColor: $textColor, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();

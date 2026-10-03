@@ -135,6 +135,7 @@ CREATE TABLE calendar_labels (
   group_id TEXT NOT NULL REFERENCES "groups"(id) ON DELETE CASCADE,
   name TEXT NOT NULL CHECK (length(trim(name)) > 0),
   color TEXT NOT NULL CHECK (length(color) = 7 AND substr(color, 1, 1) = '#' AND substr(color, 2) NOT GLOB '*[^0-9a-fA-F]*'),
+  text_color TEXT NOT NULL DEFAULT '#FFFFFF' CHECK (length(text_color) = 7 AND substr(text_color, 1, 1) = '#' AND substr(text_color, 2) NOT GLOB '*[^0-9a-fA-F]*'),
   UNIQUE (id, group_id)
 ) AS SqliteCalendarLabelRow;
 

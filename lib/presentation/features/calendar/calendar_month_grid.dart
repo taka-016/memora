@@ -230,9 +230,9 @@ class _CalendarDayCell extends StatelessWidget {
             style: TextStyle(
               fontSize: 11,
               height: 1.4,
-              color: color.computeLuminance() > .179
-                  ? Colors.black
-                  : Colors.white,
+              color: label == null
+                  ? Theme.of(context).colorScheme.onSurface
+                  : calendarLabelColor(label.textColor),
             ),
           ),
         ),

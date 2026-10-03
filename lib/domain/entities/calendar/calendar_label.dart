@@ -7,6 +7,7 @@ class CalendarLabel extends Equatable {
     required this.groupId,
     required this.name,
     required this.color,
+    this.textColor = '#FFFFFF',
   }) {
     if (groupId.trim().isEmpty) {
       throw ValidationException('グループは必須です');
@@ -17,27 +18,33 @@ class CalendarLabel extends Equatable {
     if (!RegExp(r'^#[0-9a-fA-F]{6}$').hasMatch(color)) {
       throw ValidationException('色は#RRGGBB形式で指定してください');
     }
+    if (!RegExp(r'^#[0-9a-fA-F]{6}$').hasMatch(textColor)) {
+      throw ValidationException('文字色は#RRGGBB形式で指定してください');
+    }
   }
 
   final String id;
   final String groupId;
   final String name;
   final String color;
+  final String textColor;
 
   CalendarLabel copyWith({
     String? id,
     String? groupId,
     String? name,
     String? color,
+    String? textColor,
   }) {
     return CalendarLabel(
       id: id ?? this.id,
       groupId: groupId ?? this.groupId,
       name: name ?? this.name,
       color: color ?? this.color,
+      textColor: textColor ?? this.textColor,
     );
   }
 
   @override
-  List<Object?> get props => [id, groupId, name, color];
+  List<Object?> get props => [id, groupId, name, color, textColor];
 }

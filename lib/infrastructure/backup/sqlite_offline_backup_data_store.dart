@@ -6,6 +6,7 @@ import 'package:memora/application/services/offline_backup_restore_journal_stora
 import 'package:memora/application/services/offline_backup_restore_sync_storage.dart';
 import 'package:memora/application/services/offline_backup_settings_storage.dart';
 import 'package:memora/infrastructure/database/offline_database.dart';
+import 'package:memora/infrastructure/mappers/calendar/legacy_calendar_label_text_color.dart';
 
 class SqliteOfflineBackupDataStore implements OfflineBackupDataStore {
   const SqliteOfflineBackupDataStore({
@@ -119,7 +120,17 @@ class SqliteOfflineBackupDataStore implements OfflineBackupDataStore {
         for (final table in _insertOrder) {
           for (final row
               in snapshot.tables[table] ?? const <Map<String, Object?>>[]) {
-            await database.insertRow(table, row);
+            await database.insertRow(
+              table,
+              table == 'calendar_labels' && snapshot.databaseSchemaVersion == 2
+                  ? {
+                      ...row,
+                      'text_color': legacyCalendarLabelTextColor(
+                        row['color'] as String,
+                      ),
+                    }
+                  : row,
+            );
           }
         }
         await currentMemberStorage.save(snapshot.currentMember);
@@ -145,7 +156,8 @@ class SqliteOfflineBackupDataStore implements OfflineBackupDataStore {
       );
     }
     if (snapshot.databaseSchemaVersion != database.schemaVersion &&
-        snapshot.databaseSchemaVersion != 1) {
+        snapshot.databaseSchemaVersion != 1 &&
+        snapshot.databaseSchemaVersion != 2) {
       throw OfflineBackupUnsupportedVersionException(
         '未対応のDBスキーマです: ${snapshot.databaseSchemaVersion}',
       );
