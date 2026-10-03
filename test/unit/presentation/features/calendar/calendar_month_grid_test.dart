@@ -97,10 +97,10 @@ void main() {
       final gesture = await tester.startGesture(bounds.center);
       await gesture.moveBy(Offset(20.0 * direction, 0));
       await tester.pump();
-      await gesture.moveBy(Offset(bounds.width * .29 * direction, 0));
+      await gesture.moveBy(Offset(bounds.width * .49 * direction, 0));
       await tester.pump();
       await gesture.moveBy(Offset(bounds.width * .02 * direction, 0));
-      await gesture.moveBy(Offset(-bounds.width * .02 * direction, 0));
+      await gesture.moveBy(Offset(-bounds.width * .22 * direction, 0));
       await tester.pump(const Duration(milliseconds: 400));
       await gesture.up();
       await tester.pumpAndSettle();

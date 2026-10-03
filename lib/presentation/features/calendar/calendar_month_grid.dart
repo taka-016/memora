@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/physics.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/presentation/features/calendar/calendar_event_dialog.dart';
 import 'package:memora/presentation/features/calendar/calendar_labels_dialog.dart';
@@ -109,7 +108,6 @@ class _CalendarMonthScrollPhysics extends PageScrollPhysics {
     super.parent,
   });
   final int? Function() swipeStartPage;
-  static const _SWIPE_DISTANCE_THRESHOLD = .3;
 
   @override
   _CalendarMonthScrollPhysics applyTo(ScrollPhysics? ancestor) =>
@@ -136,7 +134,7 @@ class _CalendarMonthScrollPhysics extends PageScrollPhysics {
     if (velocity.abs() > tolerance.velocity) {
       targetPage = (page + .5 * velocity.sign).roundToDouble();
     } else {
-      targetPage = distance.abs() >= _SWIPE_DISTANCE_THRESHOLD
+      targetPage = distance.abs() >= .3
           ? start + distance.sign
           : start.toDouble();
     }
