@@ -106,8 +106,9 @@ class CalendarNotifier extends _$CalendarNotifier {
         oldIndex < 0 ||
         newIndex < 0 ||
         oldIndex >= state.labels.length ||
-        newIndex >= state.labels.length)
+        newIndex >= state.labels.length) {
       return false;
+    }
     if (oldIndex == newIndex) return true;
     final previous = state.labels;
     final ordered = previous.toList();
