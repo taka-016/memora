@@ -38,7 +38,22 @@ class CalendarLabelsDialog extends ConsumerWidget {
                     Icons.circle,
                     color: calendarLabelColor(label.color),
                   ),
-                  title: Text(label.name),
+                  title: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: calendarLabelColor(label.color),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      label.name,
+                      style: TextStyle(
+                        color: calendarLabelColor(label.textColor),
+                      ),
+                    ),
+                  ),
                   onTap: state.isSaving ? null : () => edit(label),
                   trailing: IconButton(
                     tooltip: '色ラベルを削除',

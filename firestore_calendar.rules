@@ -39,6 +39,8 @@ service cloud.firestore {
     function validLabel(data) {
       return data.groupId is string && data.name is string && data.name.matches('.*[^ \\t\\r\\n].*')
         && data.color is string && data.color.matches('^#[0-9a-fA-F]{6}$')
+        && data.get('textColor', '#FFFFFF') is string
+        && data.get('textColor', '#FFFFFF').matches('^#[0-9a-fA-F]{6}$')
         && data.eventCount is int && data.eventCount >= 0;
     }
 
