@@ -139,6 +139,7 @@ erDiagram
         string name "NOT NULL"
         string color "NOT NULL、#RRGGBB"
         string textColor "NOT NULL、#RRGGBB"
+        integer sortOrder "NOT NULL、0以上"
     }
     google_calendar_connections {
         string memberId PK, FK

@@ -9,11 +9,12 @@ class CalendarDefaultDurationSetting extends ConsumerWidget {
     final setting = ref.watch(calendarPreferencesNotifierProvider);
     final value = setting.value;
     if (value == null) {
-      if (setting.hasError)
+      if (setting.hasError) {
         return TextButton(
           onPressed: () => ref.invalidate(calendarPreferencesNotifierProvider),
           child: const Text('予定の標準時間を再取得'),
         );
+      }
       return const LinearProgressIndicator();
     }
     return ListTile(
@@ -94,8 +95,9 @@ class _DurationDialogState extends State<_DurationDialog> {
       ),
       FilledButton(
         onPressed: () {
-          if (_form.currentState!.validate())
+          if (_form.currentState!.validate()) {
             Navigator.pop(context, int.parse(_controller.text));
+          }
         },
         child: const Text('保存'),
       ),

@@ -37,8 +37,9 @@ class CalendarWeekLayout {
         if (List.generate(
           end - start + 1,
           (i) => lanes[lane][start + i],
-        ).any((occupied) => occupied))
+        ).any((occupied) => occupied)) {
           continue;
+        }
         entries.add(
           CalendarWeekEntry(
             event: event,

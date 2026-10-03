@@ -19,16 +19,21 @@ class CalendarPreferencesNotifier extends _$CalendarPreferencesNotifier {
   );
   Future<bool> save(int minutes) async {
     final previous = state.value;
-    if (previous == null || previous.isSaving || minutes < 1 || minutes > 1440)
+    if (previous == null ||
+        previous.isSaving ||
+        minutes < 1 ||
+        minutes > 1440) {
       return false;
+    }
     final link = ref.keepAlive();
     state = AsyncData(
       CalendarPreferencesState(minutes: previous.minutes, isSaving: true),
     );
     try {
       await ref.read(calendarDefaultDurationStorageProvider).save(minutes);
-      if (ref.mounted)
+      if (ref.mounted) {
         state = AsyncData(CalendarPreferencesState(minutes: minutes));
+      }
       return true;
     } catch (_) {
       if (ref.mounted) state = AsyncData(previous);

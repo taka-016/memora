@@ -176,8 +176,9 @@ class _CalendarWeekRow extends StatelessWidget {
                           weekStart.day + column,
                         );
                         if (date.month != month.month ||
-                            date.year != month.year)
+                            date.year != month.year) {
                           return const SizedBox.shrink();
+                        }
                         return _CalendarDayCell(
                           state: state,
                           date: date,

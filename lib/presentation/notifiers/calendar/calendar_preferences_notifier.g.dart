@@ -39,7 +39,7 @@ final class CalendarPreferencesNotifierProvider
 }
 
 String _$calendarPreferencesNotifierHash() =>
-    r'4e2d63bf5325125d414f5d048deb89f1e31cd9a0';
+    r'c9ac85ff3e083d879469d5d76e218c90f777375d';
 
 abstract class _$CalendarPreferencesNotifier
     extends $AsyncNotifier<CalendarPreferencesState> {
