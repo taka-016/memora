@@ -65,12 +65,15 @@ class _CalendarMonthGridState extends State<CalendarMonthGrid> {
       final offset = index - _indexForMonth(widget.state.month);
       if (offset != 0) widget.onMoveMonth(offset);
     },
-    itemBuilder: (context, index) => _CalendarMonthPage(
-      key: ValueKey('calendar_month_${index ~/ 12 + 1}_${index % 12 + 1}'),
-      state: widget.state,
-      month: DateTime(index ~/ 12 + 1, index % 12 + 1),
-      onSelectDay: widget.onSelectDay,
-    ),
+    itemBuilder: (context, index) {
+      final month = DateTime(index ~/ 12 + 1, index % 12 + 1);
+      return _CalendarMonthPage(
+        key: ValueKey('calendar_month_${month.year}_${month.month}'),
+        state: widget.state,
+        month: month,
+        onSelectDay: widget.onSelectDay,
+      );
+    },
   );
 }
 
@@ -118,8 +121,9 @@ class _CalendarMonthPage extends StatelessWidget {
                           child: Builder(
                             builder: (context) {
                               final day = row * 7 + column - firstOffset + 1;
-                              if (day < 1 || day > days)
+                              if (day < 1 || day > days) {
                                 return const SizedBox.shrink();
+                              }
                               final date = DateTime(
                                 month.year,
                                 month.month,
