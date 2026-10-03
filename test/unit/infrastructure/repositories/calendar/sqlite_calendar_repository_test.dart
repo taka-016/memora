@@ -94,6 +94,15 @@ void main() {
       '#000000',
     );
   });
+  test('並び順を保存してラベルを指定順に取得する', () async {
+    await labels.saveCalendarLabel(label(name: '後').copyWith(sortOrder: 5));
+    await labels.saveCalendarLabel(label(name: '先').copyWith(sortOrder: 1));
+    expect(
+      (await labelQuery.getCalendarLabelsByGroupId('family'))
+          .map((label) => label.name),
+      ['先', '後'],
+    );
+  });
   test('モード別依存から予定とラベルの登録・取得・変更・削除を完結する', () async {
     final labelId = await labels.saveCalendarLabel(label());
     final otherId = await labels.saveCalendarLabel(label(name: '太郎'));

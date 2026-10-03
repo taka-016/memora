@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mockito/mockito.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:memora/presentation/features/setting/calendar_default_duration_setting.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/application/dtos/calendar/calendar_label_dto.dart';
 import 'package:memora/composition_root/providers/calendar_providers.dart';
@@ -102,6 +104,7 @@ class _CalendarHarness {
 }
 
 void main() {
+  setUp(() => SharedPreferences.setMockInitialValues({}));
   testWidgets('各日の枠に先頭3件を表示し選択日の再タップで全予定と期間を確認する', (tester) async {
     final harness = _CalendarHarness()
       ..savedEvents.addAll([
@@ -384,7 +387,9 @@ void main() {
     await tester.pump();
     for (final prefix in ['開始', '終了']) {
       final date = find.widgetWithText(TextButton, '$prefix日: 2026/10/1');
-      final time = find.widgetWithText(TextButton, '$prefix時刻: 00:00');
+      final time = find.byKey(
+        Key('calendar_${prefix == '開始' ? 'start' : 'end'}_time'),
+      );
       await tester.ensureVisible(time);
       await tester.pumpAndSettle();
       expect(tester.getCenter(date).dy, tester.getCenter(time).dy);
@@ -404,9 +409,83 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(SwitchListTile, '終日'));
     await tester.pump();
-    expect(find.text('開始時刻: 00:00'), findsNothing);
+    expect(find.byKey(const Key('calendar_start_time')), findsNothing);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('ラベルの並び順と終日・時刻指定の両プレビューを保存する', (tester) async {
+    final harness = _CalendarHarness();
+    await harness.pump(tester);
+    await tester.tap(find.byTooltip('色ラベルの設定'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('家族全員'));
+    await tester.pumpAndSettle();
+    expect(find.text('終日'), findsOneWidget);
+    expect(find.text('時間指定'), findsOneWidget);
+    await tester.enterText(find.widgetWithText(TextFormField, '並び順'), '3');
+    await tester.ensureVisible(
+      find.byKey(const Key('calendar_label_timed_preview')),
+    );
+    await tester.pump();
+    final text = tester.widget<Text>(
+      find.descendant(
+        of: find.byKey(const Key('calendar_label_timed_preview')),
+        matching: find.byType(Text),
+      ),
+    );
+    expect(text.style!.color, const Color(0xFF123ABC));
+    await tester.tap(find.text('保存'));
+    await tester.pumpAndSettle();
+    expect(harness.savedLabels.single.sortOrder, 3);
+  });
+
+  for (final minutes in [60, 90]) {
+    testWidgets('標準時間$minutes分を端末設定で保持し開始時刻から終了を自動設定する', (tester) async {
+      if (minutes != 60) {
+        await tester.pumpWidget(
+          const ProviderScope(
+            child: MaterialApp(
+              home: Scaffold(body: CalendarDefaultDurationSetting()),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('予定の標準時間'));
+        await tester.pumpAndSettle();
+        await tester.enterText(
+          find.widgetWithText(TextFormField, '分'),
+          '$minutes',
+        );
+        await tester.tap(find.text('保存'));
+        await tester.pumpAndSettle();
+      }
+      final harness = _CalendarHarness();
+      await harness.pump(tester);
+      await tester.tap(find.byKey(_day2));
+      await tester.pump();
+      await tester.tap(find.byTooltip('予定を追加'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'タイトル'),
+        '自動終了',
+      );
+      await tester.tap(find.widgetWithText(SwitchListTile, '終日'));
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('calendar_start_time')));
+      await tester.pumpAndSettle();
+      final pickerContext = tester.element(find.byType(TimePickerDialog));
+      Navigator.of(pickerContext).pop(const TimeOfDay(hour: 23, minute: 30));
+      await tester.pumpAndSettle();
+      expect(find.text('開始時刻: 23:30'), findsNothing);
+      expect(find.text('終了日: 2026/10/3'), findsOneWidget);
+      await tester.tap(find.text('保存'));
+      await tester.pumpAndSettle();
+      expect(
+        harness.savedEvents.single.endDateTime,
+        DateTime(2026, 10, 2, 23, 30).add(Duration(minutes: minutes)),
+      );
+    });
+  }
 
   testWidgets('小画面と拡大文字でも配色プレビューへスクロールして保存できる', (tester) async {
     tester.view.physicalSize = const Size(320, 480);

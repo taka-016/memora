@@ -31,12 +31,14 @@ void main() {
       name: '家族全員',
       color: '#123ABC',
       textColor: '#A1b2C3',
+      sortOrder: 3,
     );
     final entity = CalendarLabelMapper.toEntity(dto);
     expect(entity.groupId, dto.groupId);
     expect(entity.name, dto.name);
     expect(entity.color, dto.color);
     expect(entity.textColor, dto.textColor);
+    expect(entity.sortOrder, 3);
     expect(dto.copyWith(textColor: '#000000').textColor, '#000000');
     expect(dto.copyWith(textColor: '#000000'), isNot(dto));
     expect(CalendarLabelMapper.toDto(entity), dto);

@@ -27,6 +27,13 @@ void main() {
       );
     }
   });
+  test('並び順を指定でき負の並び順を拒否する', () {
+    expect(label().copyWith(sortOrder: 2).sortOrder, 2);
+    expect(
+      () => label().copyWith(sortOrder: -1),
+      throwsA(isA<ValidationException>()),
+    );
+  });
   for (final name in ['', '  ']) {
     test('空のラベル名「$name」を拒否する', () {
       expect(() => label(name: name), throwsA(isA<ValidationException>()));

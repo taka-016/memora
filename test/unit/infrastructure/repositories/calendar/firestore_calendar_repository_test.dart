@@ -46,7 +46,8 @@ void main() {
         FirestoreCalendarLabelMapper.fromFirestore(doc).textColor,
         color == '#FFFFFF' ? '#000000' : '#FFFFFF',
       );
-      when(doc.data()).thenReturn({...data, 'textColor': '#Ab12Cd'});
+      when(doc.data())
+          .thenReturn({...data, 'textColor': '#Ab12Cd', 'sortOrder': 3});
       expect(
         FirestoreCalendarLabelMapper.fromFirestore(doc).textColor,
         '#Ab12Cd',
@@ -57,6 +58,11 @@ void main() {
         name: '全員',
         color: color,
         textColor: '#Ab12Cd',
+        sortOrder: 3,
+      );
+      expect(
+        FirestoreCalendarLabelMapper.toCreateFirestore(value)['sortOrder'],
+        3,
       );
       expect(
         FirestoreCalendarLabelMapper.toCreateFirestore(value)['textColor'],
