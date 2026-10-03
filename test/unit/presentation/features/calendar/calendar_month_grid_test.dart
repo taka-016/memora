@@ -80,8 +80,8 @@ void main() {
 
   for (final direction in [-1, 1]) {
     for (final (duration, switchesMonth) in [
-      (const Duration(milliseconds: 700), true),
-      (const Duration(milliseconds: 1100), false),
+      (const Duration(seconds: 1), true),
+      (const Duration(milliseconds: 1800), false),
     ]) {
       testWidgets(
         '${switchesMonth ? '控えめな速度でも月が切り替わる' : 'それより遅い短い横移動は元へ戻る'}（$direction）',
