@@ -119,7 +119,13 @@ void main() {
       ],
     };
     await dataStore.restoreSnapshot(
-      snapshot.copyWith(databaseSchemaVersion: 2, tables: tables),
+      OfflineBackupSnapshot(
+        formatVersion: snapshot.formatVersion,
+        databaseSchemaVersion: 2,
+        currentMember: snapshot.currentMember,
+        settings: snapshot.settings,
+        tables: tables,
+      ),
     );
     expect((await db.rows('calendar_labels')).single['text_color'], '#FFFFFF');
   });

@@ -1,11 +1,20 @@
 import 'dart:io';
 
+import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/infrastructure/database/offline_database.dart';
 
 void main() {
   late OfflineDatabase db;
+  late bool previousWarningSetting;
+  setUp(() {
+    previousWarningSetting = driftRuntimeOptions.dontWarnAboutMultipleDatabases;
+    driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
+  });
+  tearDown(() {
+    driftRuntimeOptions.dontWarnAboutMultipleDatabases = previousWarningSetting;
+  });
   setUp(() async {
     db = OfflineDatabase(NativeDatabase.memory());
     await db.insertRow('members', {'id': 'self', 'display_name': '本人'});
