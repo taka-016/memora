@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/physics.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/presentation/features/calendar/calendar_event_dialog.dart';
 import 'package:memora/presentation/features/calendar/calendar_labels_dialog.dart';
@@ -25,6 +26,7 @@ class CalendarMonthGrid extends StatefulWidget {
 class _CalendarMonthGridState extends State<CalendarMonthGrid> {
   late final PageController _pageController;
   late int _pageIndex;
+  int? _swipeStartPage;
 
   int _indexForMonth(DateTime month) => (month.year - 1) * 12 + month.month - 1;
 
@@ -59,27 +61,98 @@ class _CalendarMonthGridState extends State<CalendarMonthGrid> {
   }
 
   @override
-  Widget build(BuildContext context) => PageView.builder(
-    key: const Key('calendar_month_grid'),
-    controller: _pageController,
-    itemCount: 9999 * 12,
-    onPageChanged: (index) {
-      final offset = index - _pageIndex;
-      _pageIndex = index;
-      if (offset != 0) {
-        widget.onMoveMonth(offset);
-      }
-    },
-    itemBuilder: (context, index) {
-      final month = DateTime(index ~/ 12 + 1, index % 12 + 1);
-      return _CalendarMonthPage(
-        key: ValueKey('calendar_month_${month.year}_${month.month}'),
-        state: widget.state,
-        month: month,
-        onSelectDay: widget.onSelectDay,
+  Widget build(BuildContext context) =>
+      NotificationListener<ScrollNotification>(
+        onNotification: (notification) {
+          if (notification.depth == 0 && notification.metrics is PageMetrics) {
+            if (notification is ScrollStartNotification) {
+              _swipeStartPage = notification.dragDetails == null
+                  ? null
+                  : _pageController.page?.round();
+            } else if (notification is ScrollEndNotification) {
+              _swipeStartPage = null;
+            }
+          }
+          return false;
+        },
+        child: PageView.builder(
+          key: const Key('calendar_month_grid'),
+          controller: _pageController,
+          pageSnapping: false,
+          physics: _CalendarMonthScrollPhysics(
+            swipeStartPage: () => _swipeStartPage,
+          ),
+          itemCount: 9999 * 12,
+          onPageChanged: (index) {
+            final offset = index - _pageIndex;
+            _pageIndex = index;
+            if (offset != 0) {
+              widget.onMoveMonth(offset);
+            }
+          },
+          itemBuilder: (context, index) {
+            final month = DateTime(index ~/ 12 + 1, index % 12 + 1);
+            return _CalendarMonthPage(
+              key: ValueKey('calendar_month_${month.year}_${month.month}'),
+              state: widget.state,
+              month: month,
+              onSelectDay: widget.onSelectDay,
+            );
+          },
+        ),
       );
-    },
-  );
+}
+
+class _CalendarMonthScrollPhysics extends PageScrollPhysics {
+  const _CalendarMonthScrollPhysics({
+    required this.swipeStartPage,
+    super.parent,
+  });
+  final int? Function() swipeStartPage;
+  static const _SWIPE_DISTANCE_THRESHOLD = .3;
+
+  @override
+  _CalendarMonthScrollPhysics applyTo(ScrollPhysics? ancestor) =>
+      _CalendarMonthScrollPhysics(
+        swipeStartPage: swipeStartPage,
+        parent: buildParent(ancestor),
+      );
+
+  @override
+  Simulation? createBallisticSimulation(
+    ScrollMetrics position,
+    double velocity,
+  ) {
+    final start = swipeStartPage();
+    if (start == null ||
+        (velocity <= 0 && position.pixels <= position.minScrollExtent) ||
+        (velocity >= 0 && position.pixels >= position.maxScrollExtent)) {
+      return super.createBallisticSimulation(position, velocity);
+    }
+    final tolerance = toleranceFor(position);
+    final page = position.pixels / position.viewportDimension;
+    final distance = page - start;
+    final double targetPage;
+    if (velocity.abs() > tolerance.velocity) {
+      targetPage = (page + .5 * velocity.sign).roundToDouble();
+    } else {
+      targetPage = distance.abs() >= _SWIPE_DISTANCE_THRESHOLD
+          ? start + distance.sign
+          : start.toDouble();
+    }
+    final target = (targetPage * position.viewportDimension).clamp(
+      position.minScrollExtent,
+      position.maxScrollExtent,
+    );
+    if (target == position.pixels) return null;
+    return ScrollSpringSimulation(
+      spring,
+      position.pixels,
+      target,
+      velocity,
+      tolerance: tolerance,
+    );
+  }
 }
 
 class _CalendarMonthPage extends StatelessWidget {
