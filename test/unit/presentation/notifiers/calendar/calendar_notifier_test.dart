@@ -87,6 +87,49 @@ void main() {
     container.listen(provider, (_, _) {});
     addTearDown(container.dispose);
   });
+  test('展開済みの回を単発予定として保存・削除して系列を失う操作を拒否する', () async {
+    when(events.execute(any)).thenAnswer(
+      (_) async => [
+        event.copyWith(
+          recurrenceRule: 'FREQ=DAILY;COUNT=3',
+          timeZone: 'Asia/Tokyo',
+        ),
+      ],
+    );
+    final notifier = container.read(provider.notifier);
+    await notifier.load();
+    final occurrence = container.read(provider).events.first;
+    expect(await notifier.saveEvent(occurrence), isFalse);
+    expect(await notifier.deleteEvent(occurrence.id), isFalse);
+    verifyNever(update.execute(any));
+    verifyNever(delete.execute(any));
+  });
+
+  test('月切替で系列を表示期間だけ展開し再取得せず次の月の回を表示する', () async {
+    when(events.execute(any)).thenAnswer(
+      (_) async => [
+        event.copyWith(
+          recurrenceRule: 'FREQ=MONTHLY;COUNT=3',
+          timeZone: 'Asia/Tokyo',
+          startDateTime: DateTime(2026, 10, 15, 10),
+          endDateTime: DateTime(2026, 10, 15, 11),
+        ),
+      ],
+    );
+    final notifier = container.read(provider.notifier);
+    await notifier.load();
+    expect(
+      container.read(provider).eventsForDay(DateTime(2026, 10, 15)).length,
+      1,
+    );
+    notifier.selectDate(DateTime(2026, 11, 15));
+    expect(
+      container.read(provider).eventsForDay(DateTime(2026, 11, 15)).length,
+      1,
+    );
+    verify(events.execute('g1')).called(1);
+  });
+
   test('ドラッグ順をすぐ表示し保存失敗では元へ戻して再試行できる', () async {
     final child = label.copyWith(id: 'child', name: '子供', sortOrder: 1);
     when(labels.execute('g1')).thenAnswer((_) async => [label, child]);

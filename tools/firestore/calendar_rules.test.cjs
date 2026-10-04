@@ -130,3 +130,89 @@ test('ラベルの並び順は非負整数として保存し不正値を拒否�
     await assertFails(updateDoc(doc(store, 'calendar_labels/label'), {sortOrder}));
   }
 });
+
+test('繰り返し系列と別ラベルの個別回を同時保存し共有・参照数・取消しを維持する', async () => {
+  const store = db('alice');
+  await setDoc(doc(store, 'calendar_labels/child'), {groupId: 'family', name: '子ども', color: '#123ABC', eventCount: 0, lastEventId: null});
+  const original = Timestamp.fromDate(new Date('2026-10-02T00:00:00Z'));
+  const batch = writeBatch(store);
+  batch.set(doc(store, 'calendar_events/series'), {...event(), recurrenceRule: 'FREQ=DAILY;COUNT=3', timeZone: null,
+    referencedLabelIds: ['label', 'child'], overrides: {child: [{originalStartDateTime: original, isCancelled: false,
+      title: '移動', startDateTime: original, endDateTime: original, isAllDay: true}]}, cancelledOccurrences: []});
+  batch.update(doc(store, 'calendar_labels/label'), {eventCount: 1, lastEventId: 'series'});
+  batch.update(doc(store, 'calendar_labels/child'), {eventCount: 1, lastEventId: 'series'});
+  await assertSucceeds(batch.commit());
+  await assertSucceeds(getDoc(doc(db('bob'), 'calendar_events/series')));
+  await assertFails(getDoc(doc(db('outsider'), 'calendar_events/series')));
+  await assertFails(deleteDoc(doc(store, 'calendar_labels/child')));
+  const cancelled = writeBatch(store);
+  cancelled.update(doc(store, 'calendar_events/series'), {referencedLabelIds: ['label'], overrides: {}, cancelledOccurrences: [original]});
+  cancelled.update(doc(store, 'calendar_labels/child'), {eventCount: 0, lastEventId: 'series'});
+  await assertSucceeds(cancelled.commit());
+  await assertSucceeds(deleteDoc(doc(store, 'calendar_labels/child')));
+});
+
+
+test('個別回の参照数省略・別グループ・存在しないラベルをルールで拒否する', async () => {
+  const store = db('alice');
+  await create('alice');
+  await setDoc(doc(store, 'calendar_labels/child'), {groupId: 'family', name: '子', color: '#123ABC', eventCount: 0, lastEventId: null});
+  for (const labelId of ['child', 'other-label', 'missing']) {
+    await assertFails(updateDoc(doc(store, 'calendar_events/event'), {recurrenceRule: 'FREQ=DAILY',
+      referencedLabelIds: ['label', labelId], overrides: {[labelId]: [{originalStartDateTime: event().startDateTime,
+        title: '変更', startDateTime: event().startDateTime, endDateTime: event().endDateTime, isAllDay: true}]}, cancelledOccurrences: []}));
+  }
+});
+test('親ラベルを個別回で既に使用しているラベルへ付け替えて参照集合を保つ', async () => {
+  const store = db('alice');
+  await setDoc(doc(store, 'calendar_labels/child'), {groupId: 'family', name: '子', color: '#123ABC', eventCount: 0, lastEventId: null});
+  const batch = writeBatch(store);
+  batch.set(doc(store, 'calendar_events/series'), {...event(), recurrenceRule: 'FREQ=DAILY',
+    referencedLabelIds: ['label', 'child'], overrides: {child: []}, cancelledOccurrences: []});
+  batch.update(doc(store, 'calendar_labels/label'), {eventCount: 1, lastEventId: 'series'});
+  batch.update(doc(store, 'calendar_labels/child'), {eventCount: 1, lastEventId: 'series'});
+  await assertSucceeds(batch.commit());
+  const changed = writeBatch(store);
+  changed.update(doc(store, 'calendar_events/series'), {labelId: 'child', referencedLabelIds: ['child']});
+  changed.update(doc(store, 'calendar_labels/label'), {eventCount: 0, lastEventId: 'series'});
+  await assertSucceeds(changed.commit());
+});
+
+test('上限の3ラベルを参照する系列も一括作成・削除できる', async () => {
+  const store = db('alice');
+  for (const id of ['child', 'friend']) {
+    await setDoc(doc(store, `calendar_labels/${id}`), {groupId: 'family', name: id, color: '#123ABC', eventCount: 0, lastEventId: null});
+  }
+  const batch = writeBatch(store);
+  batch.set(doc(store, 'calendar_events/series'), {...event(), recurrenceRule: 'FREQ=DAILY',
+    referencedLabelIds: ['label', 'child', 'friend'], overrides: {child: [], friend: []}, cancelledOccurrences: []});
+  for (const id of ['label', 'child', 'friend']) batch.update(doc(store, `calendar_labels/${id}`), {eventCount: 1, lastEventId: 'series'});
+  await assertSucceeds(batch.commit());
+  const deleted = writeBatch(store);
+  deleted.delete(doc(store, 'calendar_events/series'));
+  for (const id of ['label', 'child', 'friend']) deleted.update(doc(store, `calendar_labels/${id}`), {eventCount: 0, lastEventId: 'series'});
+  await assertSucceeds(deleted.commit());
+  for (const id of ['label', 'child', 'friend']) await assertSucceeds(deleteDoc(doc(store, `calendar_labels/${id}`)));
+});
+
+test('3ラベルを別の3ラベルへ同時置換して読取上限を超える場合は全体を維持する', async () => {
+  const store = db('alice');
+  const old = ['label', 'child', 'friend'];
+  const next = ['new1', 'new2', 'new3'];
+  for (const id of ['child', 'friend', ...next]) {
+    await setDoc(doc(store, `calendar_labels/${id}`), {groupId: 'family', name: id, color: '#123ABC', eventCount: 0, lastEventId: null});
+  }
+  const created = writeBatch(store);
+  created.set(doc(store, 'calendar_events/series'), {...event(), recurrenceRule: 'FREQ=DAILY', referencedLabelIds: old,
+    overrides: {child: [], friend: []}, cancelledOccurrences: []});
+  for (const id of old) created.update(doc(store, `calendar_labels/${id}`), {eventCount: 1, lastEventId: 'series'});
+  await assertSucceeds(created.commit());
+  const replaced = writeBatch(store);
+  replaced.update(doc(store, 'calendar_events/series'), {labelId: 'new1', referencedLabelIds: next, overrides: {new2: [], new3: []}});
+  for (const id of old) replaced.update(doc(store, `calendar_labels/${id}`), {eventCount: 0, lastEventId: 'series'});
+  for (const id of next) replaced.update(doc(store, `calendar_labels/${id}`), {eventCount: 1, lastEventId: 'series'});
+  await assertFails(replaced.commit());
+  if ((await getDoc(doc(store, 'calendar_events/series'))).data().labelId !== 'label') throw new Error('元の系列が失われました');
+  for (const id of old) if ((await getDoc(doc(store, `calendar_labels/${id}`))).data().eventCount !== 1) throw new Error('元の参照数が失われました');
+  for (const id of next) if ((await getDoc(doc(store, `calendar_labels/${id}`))).data().eventCount !== 0) throw new Error('失敗した更新が残りました');
+});

@@ -1,0 +1,154 @@
+import 'package:memora/domain/exceptions/validation_exception.dart';
+
+class CalendarRecurrenceRule {
+  CalendarRecurrenceRule._(
+    this.frequency,
+    this.interval,
+    this.count,
+    this.until,
+    this.weekdays,
+    this.monthDay,
+    this.ordinal,
+  );
+  final String frequency;
+  final int interval;
+  final int? count;
+  final DateTime? until;
+  final List<int> weekdays;
+  final int? monthDay;
+  final int? ordinal;
+  static const _days = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU'];
+  static Never _invalid() => throw ValidationException('繰り返しルールが不正です');
+
+  factory CalendarRecurrenceRule.parse(String text) {
+    final parts = <String, String>{};
+    for (final field in text.replaceFirst(RegExp(r'^RRULE:'), '').split(';')) {
+      final pair = field.split('=');
+      if (pair.length != 2 || pair[1].isEmpty || parts.containsKey(pair[0])) {
+        _invalid();
+      }
+      parts[pair[0]] = pair[1];
+    }
+    if (parts.keys.any(
+      (k) => ![
+        'FREQ',
+        'INTERVAL',
+        'COUNT',
+        'UNTIL',
+        'BYDAY',
+        'BYMONTHDAY',
+      ].contains(k),
+    )) {
+      _invalid();
+    }
+    final frequency = parts['FREQ'];
+    if (!['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY'].contains(frequency)) {
+      _invalid();
+    }
+    int positive(String key, int fallback) {
+      if (!parts.containsKey(key)) return fallback;
+      final value = int.tryParse(parts[key]!);
+      if (value == null || value <= 0) _invalid();
+      return value;
+    }
+
+    final interval = positive('INTERVAL', 1);
+    final count = parts.containsKey('COUNT') ? positive('COUNT', 1) : null;
+    if (count != null && parts.containsKey('UNTIL')) _invalid();
+    DateTime? until;
+    if (parts.containsKey('UNTIL')) {
+      final value = parts['UNTIL']!;
+      if (!RegExp(r'^\d{8}(T\d{6}Z)?$').hasMatch(value)) _invalid();
+      until = DateTime.tryParse(value);
+      if (until == null ||
+          '${until.year.toString().padLeft(4, '0')}${until.month.toString().padLeft(2, '0')}${until.day.toString().padLeft(2, '0')}' !=
+              value.substring(0, 8)) {
+        _invalid();
+      }
+      if (value.length == 8) {
+        until = DateTime.utc(until.year, until.month, until.day);
+      }
+    }
+    final weekdays = <int>[];
+    int? ordinal;
+    if (parts.containsKey('BYDAY')) {
+      for (final day in parts['BYDAY']!.split(',')) {
+        final match = RegExp(r'^(-1|[1-5])?(MO|TU|WE|TH|FR|SA|SU)$')
+            .firstMatch(day);
+        if (match == null) _invalid();
+        final n = match.group(1);
+        if (frequency == 'MONTHLY') {
+          if (n == null || weekdays.isNotEmpty) _invalid();
+          ordinal = int.parse(n);
+        } else if (frequency != 'WEEKLY' || n != null) {
+          _invalid();
+        }
+        final weekday = _days.indexOf(match.group(2)!) + 1;
+        if (weekdays.contains(weekday)) _invalid();
+        weekdays.add(weekday);
+      }
+    }
+    int? monthDay;
+    if (parts.containsKey('BYMONTHDAY')) {
+      monthDay = positive('BYMONTHDAY', 1);
+      if (frequency != 'MONTHLY' || monthDay > 31 || weekdays.isNotEmpty) {
+        _invalid();
+      }
+    }
+    return CalendarRecurrenceRule._(
+      frequency!,
+      interval,
+      count,
+      until,
+      List.unmodifiable(weekdays),
+      monthDay,
+      ordinal,
+    );
+  }
+
+  void validateStart(DateTime start, bool allDay, String text) {
+    final date = DateTime.utc(start.year, start.month, start.day);
+    if (until != null &&
+        until!.isBefore(
+          allDay || !text.contains(RegExp(r'UNTIL=\d{8}T')) ? date : start,
+        )) {
+      _invalid();
+    }
+    final hasUtcUntil = text.contains(RegExp(r'UNTIL=\d{8}T'));
+    if (until != null &&
+        ((allDay && hasUtcUntil) || (!allDay && !hasUtcUntil))) {
+      _invalid();
+    }
+  }
+
+  bool matches(DateTime day, DateTime start) {
+    final days = day
+        .difference(DateTime.utc(start.year, start.month, start.day))
+        .inDays;
+    if (days < 0) return false;
+    switch (frequency) {
+      case 'DAILY':
+        return days % interval == 0;
+      case 'WEEKLY':
+        final weeks = (days + start.weekday - 1) ~/ 7;
+        return weeks % interval == 0 &&
+            (weekdays.isEmpty
+                ? day.weekday == start.weekday
+                : weekdays.contains(day.weekday));
+      case 'MONTHLY':
+        final months = (day.year - start.year) * 12 + day.month - start.month;
+        if (months % interval != 0) return false;
+        if (ordinal == null) return day.day == (monthDay ?? start.day);
+        if (day.weekday != weekdays.single) return false;
+        return ordinal == -1
+            ? DateTime.utc(day.year, day.month, day.day + 7).month != day.month
+            : (day.day - 1) ~/ 7 + 1 == ordinal;
+      case 'YEARLY':
+        return (day.year - start.year) % interval == 0 &&
+            day.month == start.month &&
+            day.day == start.day;
+      default:
+        return false;
+    }
+  }
+}

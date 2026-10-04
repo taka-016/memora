@@ -16,12 +16,48 @@ service cloud.firestore {
     function active(groupId) {
       return get(/databases/$(database)/documents/groups/$(groupId)).data.get('calendarDeleting', false) == false;
     }
+    function references(data) {
+      return data.get('referencedLabelIds', [data.labelId]);
+    }
+    function validOverrideLabel(data, index) {
+      let refs = references(data);
+      let changes = data.get('overrides', {});
+      return refs.size() <= index || !(refs[index] in changes)
+        || (changes[refs[index]] is list);
+    }
     function validEvent(data) {
+      let refs = references(data);
+      let changes = data.get('overrides', {});
+      let cancellations = data.get('cancelledOccurrences', []);
+      let rule = data.get('recurrenceRule', null);
       return data.groupId is string && data.labelId is string
         && data.title is string && data.title.matches('.*[^ \\t\\r\\n].*')
         && data.startDateTime is timestamp && data.endDateTime is timestamp
         && data.endDateTime >= data.startDateTime && data.isAllDay is bool
-        && getAfter(/databases/$(database)/documents/calendar_labels/$(data.labelId)).data.groupId == data.groupId;
+        && getAfter(/databases/$(database)/documents/calendar_labels/$(data.labelId)).data.groupId == data.groupId
+        && refs is list && refs.size() >= 1 && refs.size() <= 3
+        && refs.toSet().size() == refs.size() && refs.hasAny([data.labelId])
+        && changes is map && cancellations is list
+        && changes.keys().toSet().union([data.labelId].toSet()) == refs.toSet()
+        && validOverrideLabel(data, 0) && validOverrideLabel(data, 1) && validOverrideLabel(data, 2)
+        && ((rule == null && changes.size() == 0 && cancellations.size() == 0)
+          || (rule is string && rule.size() > 0 && (data.isAllDay || (data.get('timeZone', null) is string && data.timeZone.size() > 0))));
+    }
+    function referenceChange(groupId, eventId, before, after, index, delta) {
+      let refs = delta == 1 ? after : before;
+      let other = delta == 1 ? before : after;
+      return refs.size() <= index || other.hasAny([refs[index]])
+        || (getAfter(/databases/$(database)/documents/calendar_labels/$(refs[index])).data.groupId == groupId
+          && countChanged(refs[index], eventId, delta));
+    }
+    function validReferenceChanges(groupId, eventId, before, after) {
+      return before.toSet().union(after.toSet()).size() <= 3
+        && referenceChange(groupId, eventId, before, after, 0, 1)
+        && referenceChange(groupId, eventId, before, after, 1, 1)
+        && referenceChange(groupId, eventId, before, after, 2, 1)
+        && referenceChange(groupId, eventId, before, after, 0, -1)
+        && referenceChange(groupId, eventId, before, after, 1, -1)
+        && referenceChange(groupId, eventId, before, after, 2, -1);
     }
     function countChanged(labelId, eventId, delta) {
       let before = get(/databases/$(database)/documents/calendar_labels/$(labelId)).data;
@@ -30,8 +66,8 @@ service cloud.firestore {
     }
     function validCountChange(labelId, data) {
       let path = /databases/$(database)/documents/calendar_events/$(data.lastEventId);
-      let wasReferenced = exists(path) && get(path).data.labelId == labelId;
-      let isReferenced = existsAfter(path) && getAfter(path).data.labelId == labelId;
+      let wasReferenced = exists(path) && references(get(path).data).hasAny([labelId]);
+      let isReferenced = existsAfter(path) && references(getAfter(path).data).hasAny([labelId]);
       return data.lastEventId is string
         && ((wasReferenced && !isReferenced && data.eventCount == resource.data.eventCount - 1)
           || (!wasReferenced && isReferenced && data.eventCount == resource.data.eventCount + 1));
@@ -57,13 +93,12 @@ service cloud.firestore {
       allow read: if signedIn() && belongsTo(resource.data.groupId);
       allow create: if signedIn() && belongsTo(request.resource.data.groupId)
         && active(request.resource.data.groupId) && validEvent(request.resource.data)
-        && countChanged(request.resource.data.labelId, eventId, 1);
+        && validReferenceChanges(request.resource.data.groupId, eventId, [], references(request.resource.data));
       allow update: if signedIn() && belongsTo(resource.data.groupId) && active(resource.data.groupId)
         && request.resource.data.groupId == resource.data.groupId && validEvent(request.resource.data)
-        && (request.resource.data.labelId == resource.data.labelId
-          || (countChanged(resource.data.labelId, eventId, -1) && countChanged(request.resource.data.labelId, eventId, 1)));
+        && validReferenceChanges(resource.data.groupId, eventId, references(resource.data), references(request.resource.data));
       allow delete: if signedIn() && belongsTo(resource.data.groupId)
-        && countChanged(resource.data.labelId, eventId, -1);
+        && validReferenceChanges(resource.data.groupId, eventId, references(resource.data), []);
     }
     match /calendar_labels/{labelId} {
       allow read: if signedIn() && belongsTo(resource.data.groupId);

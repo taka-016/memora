@@ -1,3 +1,4 @@
+import 'package:memora/domain/entities/calendar/calendar_event_override.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -77,6 +78,51 @@ void main() {
         endDateTime: DateTime(2026, 10, 3),
         isAllDay: allDay,
       );
+
+  test('系列と個別回を一括保存し不正ラベル時は全体を維持する', () async {
+    final base = await labels.saveCalendarLabel(label());
+    final changed = await labels.saveCalendarLabel(label(name: '太郎'));
+    final foreign = await labels.saveCalendarLabel(label(group: 'friends'));
+    CalendarEvent series(String overrideLabel) =>
+        event(base, allDay: true).copyWith(
+          recurrenceRule: 'FREQ=DAILY;COUNT=3',
+          overrides: [
+            CalendarEventOverride(
+              originalStartDateTime: DateTime.utc(2026, 10, 2),
+              isCancelled: false,
+              title: '移動',
+              startDateTime: DateTime.utc(2026, 11, 2),
+              endDateTime: DateTime.utc(2026, 11, 3),
+              isAllDay: true,
+              labelId: overrideLabel,
+            ),
+          ],
+        );
+    final id = await events.saveCalendarEvent(series(changed));
+    final saved = (await eventQuery.getCalendarEventsByGroupId('family'))
+        .single;
+    expect(saved.recurrenceRule, 'FREQ=DAILY;COUNT=3');
+    expect(saved.overrides.single.title, '移動');
+    await expectLater(
+      events.updateCalendarEvent(series(foreign).copyWith(id: id)),
+      throwsA(isA<ValidationException>()),
+    );
+    expect(
+      (await eventQuery.getCalendarEventsByGroupId('family'))
+          .single
+          .overrides
+          .single
+          .labelId,
+      changed,
+    );
+    await expectLater(
+      labels.deleteCalendarLabel(changed),
+      throwsA(isA<ValidationException>()),
+    );
+    await events.deleteCalendarEvent(id);
+    expect(await db.rows('calendar_event_overrides'), isEmpty);
+    await labels.deleteCalendarLabel(changed);
+  });
 
   test('SQLiteで白黒以外の文字色も登録・変更・取得する', () async {
     final id = await labels.saveCalendarLabel(
