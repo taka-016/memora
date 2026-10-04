@@ -248,8 +248,9 @@ void main() {
       ],
     );
     await events.updateCalendarEvent(value);
-    verify(transaction.update(eventRef, argThat(containsPair('labelId', 'other'))))
-        .called(1);
+    verify(
+      transaction.update(eventRef, argThat(containsPair('labelId', 'other'))),
+    ).called(1);
     verify(transaction.update(labelRef, argThat(containsPair('eventCount', 0))))
         .called(1);
     verifyNever(transaction.update(otherRef, any));

@@ -4,17 +4,12 @@ import 'package:memora/application/queries/calendar/calendar_label_query_service
 import 'package:memora/infrastructure/mappers/calendar/firestore_calendar_label_mapper.dart';
 
 class FirestoreCalendarLabelQueryService implements CalendarLabelQueryService {
-  FirestoreCalendarLabelQueryService({
-    required this._firestore,
-    required this._ensureMembership,
-  });
+  FirestoreCalendarLabelQueryService({required this._firestore});
   final FirebaseFirestore _firestore;
-  final Future<void> Function(String) _ensureMembership;
   @override
   Future<List<CalendarLabelDto>> getCalendarLabelsByGroupId(
     String groupId,
   ) async {
-    await _ensureMembership(groupId);
     final snapshot = await _firestore
         .collection('calendar_labels')
         .where('groupId', isEqualTo: groupId)

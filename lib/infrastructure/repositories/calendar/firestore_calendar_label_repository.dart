@@ -6,22 +6,16 @@ import 'package:memora/infrastructure/mappers/calendar/firestore_calendar_label_
 import 'package:memora/infrastructure/mappers/firestore_write_metadata.dart';
 
 class FirestoreCalendarLabelRepository implements CalendarLabelRepository {
-  FirestoreCalendarLabelRepository({
-    required this._firestore,
-    this._ensureMembership,
-  });
+  FirestoreCalendarLabelRepository({required this._firestore});
   final FirebaseFirestore _firestore;
-  final Future<void> Function(String)? _ensureMembership;
 
   @override
   Future<String> saveCalendarLabel(CalendarLabel label) async {
-    await _ensureMembership?.call(label.groupId);
     final collection = _firestore.collection('calendar_labels');
     if (label.id.isEmpty) {
       final ref = await collection.add({
         ...FirestoreCalendarLabelMapper.toCreateFirestore(label),
         'eventCount': 0,
-        'lastEventId': null,
       });
       return ref.id;
     }
@@ -44,7 +38,6 @@ class FirestoreCalendarLabelRepository implements CalendarLabelRepository {
     String groupId,
     List<String> labelIds,
   ) async {
-    await _ensureMembership?.call(groupId);
     final refs = labelIds
         .map((id) => _firestore.collection('calendar_labels').doc(id))
         .toList();

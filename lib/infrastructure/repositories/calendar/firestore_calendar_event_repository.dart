@@ -8,12 +8,8 @@ import 'package:memora/infrastructure/mappers/calendar/firestore_calendar_event_
 import 'package:memora/infrastructure/services/validate_calendar_recurrence.dart';
 
 class FirestoreCalendarEventRepository implements CalendarEventRepository {
-  FirestoreCalendarEventRepository({
-    required this._firestore,
-    this._ensureMembership,
-  });
+  FirestoreCalendarEventRepository({required this._firestore});
   final FirebaseFirestore _firestore;
-  final Future<void> Function(String)? _ensureMembership;
   DocumentReference<Map<String, dynamic>> _label(String id) =>
       _firestore.collection('calendar_labels').doc(id);
   Set<String> _references(Map<String, dynamic> data) =>
@@ -24,7 +20,6 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
   Future<void> _adjustLabels(
     Transaction transaction,
     String groupId,
-    String eventId,
     Set<String> before,
     Set<String> after,
   ) async {
@@ -42,7 +37,6 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
       if (delta != 0) {
         transaction.update(_label(id), {
           'eventCount': (snapshots[id]!.data()!['eventCount'] as int) + delta,
-          'lastEventId': eventId,
         });
       }
     }
@@ -65,7 +59,6 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
     }
     if (replacement != null) validateCalendarRecurrence(replacement);
     if (following != null) validateCalendarRecurrence(following);
-    await _ensureMembership?.call(expected.groupId);
     final ref = _firestore.collection('calendar_events').doc(expected.id);
     final nextRef = following == null
         ? null
@@ -107,18 +100,16 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
         if (delta != 0) {
           transaction.update(_label(id), {
             'eventCount': (snapshots[id]!.data()!['eventCount'] as int) + delta,
-            'lastEventId': expected.id,
-            'lastMutationAt': FieldValue.serverTimestamp(),
           });
         }
       }
       if (head == null) {
         transaction.delete(ref);
       } else {
-        transaction.update(ref, {...head, 'splitEventId': nextRef?.id});
+        transaction.update(ref, head);
       }
       if (tail != null) {
-        transaction.set(nextRef!, {...tail, 'splitFromEventId': expected.id});
+        transaction.set(nextRef!, tail);
       }
     });
   }
@@ -126,17 +117,10 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
   @override
   Future<String> saveCalendarEvent(CalendarEvent event) async {
     validateCalendarRecurrence(event);
-    await _ensureMembership?.call(event.groupId);
     final ref = _firestore.collection('calendar_events').doc();
     final data = FirestoreCalendarEventMapper.toCreateFirestore(event);
     return _firestore.runTransaction((transaction) async {
-      await _adjustLabels(
-        transaction,
-        event.groupId,
-        ref.id,
-        {},
-        _references(data),
-      );
+      await _adjustLabels(transaction, event.groupId, {}, _references(data));
       transaction.set(ref, data);
       return ref.id;
     });
@@ -145,7 +129,6 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
   @override
   Future<void> updateCalendarEvent(CalendarEvent event) async {
     validateCalendarRecurrence(event);
-    await _ensureMembership?.call(event.groupId);
     final ref = _firestore.collection('calendar_events').doc(event.id);
     final data = FirestoreCalendarEventMapper.toUpdateFirestore(event);
     await _firestore.runTransaction<void>((transaction) async {
@@ -156,7 +139,6 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
       await _adjustLabels(
         transaction,
         event.groupId,
-        event.id,
         _references(existing.data()!),
         _references(data),
       );
@@ -173,7 +155,6 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
       await _adjustLabels(
         transaction,
         existing.data()!['groupId'] as String,
-        eventId,
         _references(existing.data()!),
         {},
       );

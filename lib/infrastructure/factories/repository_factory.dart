@@ -154,13 +154,11 @@ class RepositoryFactory {
     if (T == CalendarEventRepository) {
       return FirestoreCalendarEventRepository(
         firestore: ref.watch(firebaseFirestoreProvider),
-        ensureMembership: ref.watch(calendarMembershipProvider).ensure,
       ) as T;
     }
     if (T == CalendarLabelRepository) {
       return FirestoreCalendarLabelRepository(
         firestore: ref.watch(firebaseFirestoreProvider),
-        ensureMembership: ref.watch(calendarMembershipProvider).ensure,
       ) as T;
     }
     if (T == MemberRepository) {
@@ -169,7 +167,6 @@ class RepositoryFactory {
     if (T == GroupRepository) {
       return FirestoreGroupRepository(
         firestore: ref.watch(firebaseFirestoreProvider),
-        ensureMembership: ref.watch(calendarMembershipProvider).ensure,
       ) as T;
     }
     if (T == MemberEventRepository) {

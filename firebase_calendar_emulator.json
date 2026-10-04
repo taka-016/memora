@@ -1,4 +1,0 @@
-{
-  "firestore": {"rules": "firestore_calendar.rules"},
-  "emulators": {"firestore": {"port": 8080}, "ui": {"enabled": false}}
-}
