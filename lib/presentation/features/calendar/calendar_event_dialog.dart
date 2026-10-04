@@ -49,7 +49,7 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
   String _error = '';
   late CalendarRecurrenceSettings _recurrence;
   bool _recurrenceEdited = false;
-  late String _zone;
+  late final String _zone;
   bool? _seriesAllDay;
 
   @override
@@ -539,21 +539,6 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                                       }
                                     },
                             ),
-                            if (!_allDay && _recurrence.frequency != null)
-                              TextFormField(
-                                initialValue: _zone,
-                                enabled: !state.isSaving,
-                                decoration: const InputDecoration(
-                                  labelText: 'タイムゾーン',
-                                  border: OutlineInputBorder(),
-                                  helperText: 'IANA名（例: Asia/Tokyo）で指定',
-                                ),
-                                onChanged: (value) => _zone = value.trim(),
-                                validator: (value) =>
-                                    value == null || value.trim().isEmpty
-                                    ? 'タイムゾーンを指定してください'
-                                    : null,
-                              ),
                             if (!_allDay && preferences.hasError)
                               TextButton(
                                 onPressed: () => ref.invalidate(
