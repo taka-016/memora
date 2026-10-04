@@ -1,3 +1,4 @@
+import 'package:memora/application/mappers/calendar/calendar_event_mapper.dart';
 import 'package:memora/domain/entities/calendar/calendar_event_override.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -78,6 +79,51 @@ void main() {
         endDateTime: DateTime(2026, 10, 3),
         isAllDay: allDay,
       );
+
+  test('分割は原子的に保存し別ラベルの失敗と競合時には元の系列を維持する', () async {
+    final labelId = await labels.saveCalendarLabel(label());
+    final foreign = await labels.saveCalendarLabel(label(group: 'friends'));
+    final id = await events.saveCalendarEvent(
+      event(
+        labelId,
+        allDay: true,
+      ).copyWith(recurrenceRule: 'FREQ=DAILY;COUNT=5'),
+    );
+    final source = (await eventQuery.getCalendarEventsByGroupId('family'))
+        .single;
+    final expected = CalendarEventMapper.toEntity(source);
+    final before = expected.copyWith(recurrenceRule: 'FREQ=DAILY;COUNT=2');
+    final after = expected.copyWith(
+      id: '',
+      startDateTime: DateTime.utc(2026, 10, 3),
+      endDateTime: DateTime.utc(2026, 10, 5),
+      recurrenceRule: 'FREQ=DAILY;COUNT=3',
+    );
+    await expectLater(
+      events.replaceCalendarEvent(
+        expected,
+        before,
+        after.copyWith(labelId: foreign),
+      ),
+      throwsA(isA<ValidationException>()),
+    );
+    expect(
+      (await eventQuery.getCalendarEventsByGroupId('family')).single,
+      source,
+    );
+    await events.replaceCalendarEvent(expected, before, after);
+    final saved = await eventQuery.getCalendarEventsByGroupId('family');
+    expect(saved, hasLength(2));
+    expect(
+      saved.singleWhere((v) => v.id == id).recurrenceRule,
+      'FREQ=DAILY;COUNT=2',
+    );
+    await expectLater(
+      events.replaceCalendarEvent(expected, before, after),
+      throwsA(isA<ValidationException>()),
+    );
+    expect(await eventQuery.getCalendarEventsByGroupId('family'), saved);
+  });
 
   test('系列と個別回を一括保存し不正ラベル時は全体を維持する', () async {
     final base = await labels.saveCalendarLabel(label());
