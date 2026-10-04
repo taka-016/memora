@@ -226,8 +226,12 @@ void main() {
   for (final until in [false, true]) {
     testWidgets('23時59分でも選択画面の初期日と確定後の日付を維持する（$until）', (tester) async {
       final source = calendarTestEvent('e', '夜の予定').copyWith(
-        startDateTime: DateTime.utc(2026, 10, 2, until ? 9 : 22),
-        endDateTime: DateTime.utc(2026, 10, 2, until ? 10 : 23, until ? 0 : 59),
+        startDateTime: until
+            ? DateTime.utc(2026, 10, 2, 9)
+            : DateTime(2026, 10, 2, 22),
+        endDateTime: until
+            ? DateTime.utc(2026, 10, 2, 10)
+            : DateTime(2026, 10, 2, 23, 59),
         recurrenceRule: until ? 'FREQ=DAILY;UNTIL=20261005T145959Z' : null,
         timeZone: until ? 'Asia/Tokyo' : null,
       );
