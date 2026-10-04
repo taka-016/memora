@@ -29,8 +29,9 @@ Future<CalendarRecurrenceSettings?> showCalendarRecurrencePicker(
     ),
   );
   if (choice == null || !context.mounted) return null;
-  if (choice != 'custom')
+  if (choice != 'custom') {
     return CalendarRecurrenceSettings.preset(choice, start);
+  }
   return showDialog<CalendarRecurrenceSettings>(
     context: context,
     builder: (_) =>

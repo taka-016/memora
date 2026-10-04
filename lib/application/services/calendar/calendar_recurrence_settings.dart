@@ -91,8 +91,9 @@ class CalendarRecurrenceSettings {
       result += 'の$monthDay日';
     }
     if (count != null) result += '、$count回';
-    if (until != null)
+    if (until != null) {
       result += '、${until!.year}/${until!.month}/${until!.day}まで';
+    }
     return result;
   }
 
@@ -127,8 +128,12 @@ class CalendarRecurrenceSettings {
       ].join(';');
       final parsed = CalendarRecurrenceRule.parse(text);
       parsed.validateStart(instant, allDay, text);
-      if (!parsed.matches(DateTime.utc(wall.year, wall.month, wall.day), wall))
+      if (!parsed.matches(
+        DateTime.utc(wall.year, wall.month, wall.day),
+        wall,
+      )) {
         throw ValidationException('開始日は繰り返し条件に一致する必要があります');
+      }
       return text;
     } on ValidationException catch (e) {
       throw ApplicationValidationException(e.message);

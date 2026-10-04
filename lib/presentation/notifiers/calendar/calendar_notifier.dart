@@ -90,8 +90,9 @@ class CalendarNotifier extends _$CalendarNotifier {
     final source = _series.where((v) => v.id == occurrence.id).firstOrNull;
     if (source == null ||
         occurrence.groupId != groupId ||
-        occurrence.originalStartDateTime == null)
+        occurrence.originalStartDateTime == null) {
       throw const ApplicationValidationException('変更する予定が見つかりません。再読み込みしてください');
+    }
     await ref
         .read(changeCalendarRecurrenceUsecaseProvider)
         .execute(

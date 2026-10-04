@@ -194,12 +194,12 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
             );
       final inputZone = rule != null ? _zone : widget.event?.timeZone;
       final start = _allDay
-          ? DateTime.utc(_start.year, _start.month, _start.day)
+          ? DateTime(_start.year, _start.month, _start.day)
           : inputZone != null
           ? expander.resolveTime(_start, inputZone)
           : _start;
       final end = _allDay
-          ? DateTime.utc(_end.year, _end.month, _end.day)
+          ? DateTime(_end.year, _end.month, _end.day)
           : inputZone != null
           ? expander.resolveTime(_end, inputZone)
           : _end;
@@ -463,11 +463,12 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                               _recurrence,
                               _start,
                             );
-                            if (value != null && mounted)
+                            if (value != null && mounted) {
                               setState(() {
                                 _recurrence = value;
                                 _recurrenceEdited = true;
                               });
+                            }
                           },
                   ),
                   if (!_allDay && _recurrence.frequency != null)
