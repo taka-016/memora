@@ -268,6 +268,7 @@ class _CalendarWeekRow extends StatelessWidget {
                     state: state,
                     event: entry.event,
                     centered: true,
+                    filled: entry.event.isAllDay || entry.isMultiDay,
                   ),
                 ),
               ),
@@ -334,6 +335,8 @@ class _CalendarDayCell extends StatelessWidget {
                                 state: state,
                                 event: entry.event,
                                 centered: entry.isMultiDay,
+                                filled:
+                                    entry.event.isAllDay || entry.isMultiDay,
                               );
                       },
                     ),
@@ -358,11 +361,13 @@ class _CalendarEventPreview extends StatelessWidget {
     super.key,
     required this.state,
     required this.event,
+    required this.filled,
     this.centered = false,
   });
   final CalendarState state;
   final CalendarEventDto event;
   final bool centered;
+  final bool filled;
   @override
   Widget build(BuildContext context) {
     final label = state.labels
@@ -379,7 +384,7 @@ class _CalendarEventPreview extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 2),
           decoration: BoxDecoration(
-            color: event.isAllDay ? color : Colors.transparent,
+            color: filled ? color : Colors.transparent,
             borderRadius: BorderRadius.circular(3),
           ),
           child: Text(
@@ -393,9 +398,7 @@ class _CalendarEventPreview extends StatelessWidget {
               height: 1.4,
               color: label == null
                   ? scheme.onSurface
-                  : calendarLabelColor(
-                      event.isAllDay ? label.textColor : label.color,
-                    ),
+                  : calendarLabelColor(filled ? label.textColor : label.color),
             ),
           ),
         ),
