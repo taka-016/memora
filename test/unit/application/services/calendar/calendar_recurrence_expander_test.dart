@@ -1,4 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mockito/annotations.dart';
+import 'package:mockito/mockito.dart';
+import 'package:memora/domain/services/calendar/calendar_time_zone.dart';
+
+import 'calendar_recurrence_expander_test.mocks.dart';
+
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/application/services/calendar/calendar_recurrence_expander.dart';
 import 'package:memora/domain/entities/calendar/calendar_event.dart';
@@ -6,6 +12,7 @@ import 'package:memora/domain/entities/calendar/calendar_event_override.dart';
 import 'package:memora/domain/exceptions/validation_exception.dart';
 import 'package:memora/infrastructure/services/iana_calendar_time_zone.dart';
 
+@GenerateMocks([CalendarTimeZone])
 void main() {
   final expander = CalendarRecurrenceExpander(IanaCalendarTimeZone());
   CalendarEventDto event(
@@ -32,6 +39,77 @@ void main() {
     DateTime from,
     DateTime to,
   ) => expander.expand(value, from, to);
+
+  for (final frequency in ['DAILY', 'WEEKLY']) {
+    test('古い$frequency系列は表示前を解決せずCOUNT終了と個別回を判定する', () {
+      final zone = MockCalendarTimeZone();
+      when(zone.local(any, any))
+          .thenAnswer((call) => call.positionalArguments[0] as DateTime);
+      when(zone.resolve(any, any))
+          .thenAnswer((call) => call.positionalArguments[0] as DateTime);
+      when(zone.skippedDates(any, any, any)).thenReturn([]);
+      final start = DateTime.utc(1900, 1, 1, 9);
+      final value = event(
+        'FREQ=$frequency;COUNT=1000000',
+        start,
+        allDay: false,
+        zone: 'UTC',
+      );
+      final fast = CalendarRecurrenceExpander(zone);
+      final result = fast.expand(
+        value,
+        DateTime.utc(2026),
+        DateTime.utc(2026, 2),
+      );
+      expect(result.length, frequency == 'DAILY' ? 31 : 4);
+      final resolutions = verify(zone.resolve(captureAny, 'UTC')).captured;
+      expect(resolutions.length, lessThan(40));
+      final expired = value.copyWith(
+        recurrenceRule: 'FREQ=$frequency;COUNT=10',
+      );
+      expect(
+        fast.expand(expired, DateTime.utc(2026), DateTime.utc(2026, 2)),
+        isEmpty,
+      );
+      final invalid = expired.copyWith(
+        overrides: [
+          CalendarEventOverride(
+            originalStartDateTime: DateTime.utc(
+              2026,
+              1,
+              frequency == 'DAILY' ? 1 : 5,
+              9,
+            ),
+            isCancelled: true,
+          ),
+        ],
+      );
+      expect(
+        () => fast.expand(invalid, DateTime.utc(2026), DateTime.utc(2026, 2)),
+        throwsA(isA<ValidationException>()),
+      );
+      expect(
+        verify(zone.resolve(captureAny, 'UTC')).captured.length,
+        lessThan(10),
+      );
+    });
+  }
+
+  test('表示前の夏時間欠落をCOUNTに含めず残りの回を表示する', () {
+    final value = event(
+      'FREQ=DAILY;COUNT=4',
+      DateTime.utc(2026, 3, 7, 7, 30),
+      allDay: false,
+    );
+    expect(
+      expand(
+        value,
+        DateTime.utc(2026, 3, 10),
+        DateTime.utc(2026, 3, 14),
+      ).map((v) => v.startDateTime.toUtc()),
+      [DateTime.utc(2026, 3, 10, 6, 30), DateTime.utc(2026, 3, 11, 6, 30)],
+    );
+  });
 
   test('間隔と複数曜日を月曜起点で計算し初回を含む回数で終了する', () {
     final values = expand(

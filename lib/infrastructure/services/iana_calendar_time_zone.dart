@@ -20,6 +20,44 @@ class IanaCalendarTimeZone implements CalendarTimeZone {
   }
 
   @override
+  List<DateTime> skippedDates(
+    DateTime wallStart,
+    DateTime before,
+    String zone,
+  ) {
+    final location = _location(zone);
+    final skipped = <DateTime>{};
+    final time = wallStart.difference(
+      DateTime.utc(wallStart.year, wallStart.month, wallStart.day),
+    );
+    for (final transition in location.transitionAt) {
+      final oldOffset = location.timeZone(transition - 1).offset;
+      final newOffset = location.timeZone(transition).offset;
+      if (newOffset <= oldOffset) continue;
+      final instant = DateTime.fromMillisecondsSinceEpoch(
+        transition,
+        isUtc: true,
+      );
+      final gapStart = instant.add(oldOffset);
+      final gapEnd = instant.add(newOffset);
+      for (
+        var day = DateTime.utc(gapStart.year, gapStart.month, gapStart.day);
+        day.isBefore(gapEnd) && day.isBefore(before);
+        day = day.add(const Duration(days: 1))
+      ) {
+        final wall = day.add(time);
+        if (!wall.isBefore(wallStart) &&
+            !wall.isBefore(gapStart) &&
+            wall.isBefore(gapEnd) &&
+            resolve(wall, zone) == null) {
+          skipped.add(day);
+        }
+      }
+    }
+    return skipped.toList()..sort();
+  }
+
+  @override
   DateTime local(DateTime instant, String zone) {
     final value = tz.TZDateTime.from(instant, _location(zone));
     return DateTime.utc(

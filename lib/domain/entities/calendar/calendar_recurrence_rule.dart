@@ -124,6 +124,28 @@ class CalendarRecurrenceRule {
     }
   }
 
+  int candidateCountBefore(DateTime start, DateTime before) {
+    final first = DateTime.utc(start.year, start.month, start.day);
+    if (!before.isAfter(first)) return 0;
+    if (frequency == 'DAILY') {
+      final days = before.difference(first).inDays;
+      return days == 0 ? 0 : (days - 1) ~/ interval + 1;
+    }
+    if (frequency == 'WEEKLY') {
+      final weekStart = first.subtract(Duration(days: first.weekday - 1));
+      var count = 0;
+      for (final weekday in weekdays.isEmpty ? [first.weekday] : weekdays) {
+        final candidate = weekStart.add(Duration(days: weekday - 1));
+        final days = before.difference(candidate).inDays;
+        if (days <= 0) continue;
+        count += ((days - 1) ~/ 7) ~/ interval + 1;
+        if (candidate.isBefore(first)) count--;
+      }
+      return count;
+    }
+    return candidateDays(first, first, before).length;
+  }
+
   // 終了条件と夏時間による回数判定は呼出側が行う。
   Iterable<DateTime> candidateDays(
     DateTime start,

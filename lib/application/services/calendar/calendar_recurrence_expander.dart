@@ -72,6 +72,14 @@ class CalendarRecurrenceExpander {
 
     DateTime originalKey(DateTime value) =>
         event.isAllDay ? _date(value) : value.toUtc();
+    int countBefore(DateTime before) {
+      final candidates = rule.candidateCountBefore(start, before);
+      if (event.isAllDay) return candidates;
+      final skipped = timeZone.skippedDates(start, before, event.timeZone!);
+      return candidates -
+          skipped.where((day) => rule.matches(day, start)).length;
+    }
+
     final overridden = event.overrides
         .map((v) => originalKey(v.originalStartDateTime))
         .toSet();
@@ -81,23 +89,20 @@ class CalendarRecurrenceExpander {
         : _date(timeZone.local(to, event.timeZone!))
               .add(const Duration(days: 1));
     var day = _date(start);
-    // 回数指定のない系列は表示期間に必要な日付からだけ走査する。
-    if (rule.count == null) {
-      final lower =
-          (event.isAllDay
-                  ? _date(from)
-                  : _date(timeZone.local(from, event.timeZone!)))
-              .subtract(duration)
-              .subtract(const Duration(days: 1));
-      if (lower.isAfter(day)) day = _date(lower);
-    }
-    var count = 0;
+    final lower =
+        (event.isAllDay
+                ? _date(from)
+                : _date(timeZone.local(from, event.timeZone!)))
+            .subtract(duration)
+            .subtract(const Duration(days: 1));
+    if (lower.isAfter(day)) day = _date(lower);
+    var count = rule.count == null ? 0 : countBefore(day);
     final originals = <DateTime>{};
     for (final candidate in rule.candidateDays(start, day, endDay)) {
+      if (rule.count != null && count >= rule.count!) break;
       final instant = occurrence(candidate);
       if (instant == null) continue;
       count++;
-      if (rule.count != null && count > rule.count!) break;
       originals.add(instant.toUtc());
       if (overridden.contains(instant.toUtc())) continue;
       final value = event.copyWith(
@@ -119,15 +124,7 @@ class CalendarRecurrenceExpander {
           throw ValidationException('上書き対象の回が系列に存在しません');
         }
         if (rule.count != null) {
-          var n = 0;
-          for (final d in rule.candidateDays(
-            start,
-            _date(start),
-            _date(wall).add(const Duration(days: 1)),
-          )) {
-            if (occurrence(d) != null) n++;
-            if (n > rule.count!) break;
-          }
+          final n = countBefore(_date(wall).add(const Duration(days: 1)));
           if (n > rule.count!) throw ValidationException('上書き対象が指定回数を超えています');
         }
       }
