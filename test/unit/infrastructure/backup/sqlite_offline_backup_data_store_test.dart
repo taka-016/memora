@@ -1,3 +1,11 @@
+import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
+import 'package:memora/application/mappers/calendar/calendar_event_mapper.dart';
+import 'package:memora/application/services/calendar/calendar_recurrence_expander.dart';
+import 'package:memora/application/usecases/calendar/change_calendar_recurrence_usecase.dart';
+import 'package:memora/domain/entities/calendar/calendar_event_override.dart';
+import 'package:memora/infrastructure/queries/calendar/sqlite_calendar_event_query_service.dart';
+import 'package:memora/infrastructure/repositories/calendar/sqlite_calendar_event_repository.dart';
+import 'package:memora/infrastructure/services/iana_calendar_time_zone.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/models/offline_backup_snapshot.dart';
@@ -86,6 +94,74 @@ void main() {
     expect(memberStorage.value, originalMember);
     expect(settingsStorage.value, originalSettings);
     expect(await syncStorage.isPending(), isTrue);
+  });
+
+  test('個別回の移動・取消しと分割した系列を復元して同じ予定を再現する', () async {
+    await db.insertRow('calendar_labels', {
+      'id': 'label',
+      'group_id': 'group-1',
+      'name': '全員',
+      'color': '#123ABC',
+    });
+    final repository = SqliteCalendarEventRepository(db);
+    final query = SqliteCalendarEventQueryService(db);
+    final expander = CalendarRecurrenceExpander(IanaCalendarTimeZone());
+    final usecase = ChangeCalendarRecurrenceUsecase(repository, expander);
+    final value = CalendarEventDto(
+      id: '',
+      groupId: 'group-1',
+      labelId: 'label',
+      title: '予定',
+      startDateTime: DateTime.utc(2026, 10, 1),
+      endDateTime: DateTime.utc(2026, 10, 3),
+      isAllDay: true,
+      recurrenceRule: 'FREQ=DAILY;COUNT=6',
+      overrides: [
+        CalendarEventOverride(
+          originalStartDateTime: DateTime.utc(2026, 10, 2),
+          isCancelled: true,
+        ),
+      ],
+    );
+    await repository.saveCalendarEvent(CalendarEventMapper.toEntity(value));
+    var source = (await query.getCalendarEventsByGroupId('group-1')).single;
+    await usecase.execute(
+      source,
+      source.startDateTime,
+      CalendarChangeScope.only,
+      changes: source.copyWith(
+        title: '移動',
+        startDateTime: DateTime.utc(2026, 11, 1),
+        endDateTime: DateTime.utc(2026, 11, 2),
+      ),
+    );
+    source = (await query.getCalendarEventsByGroupId('group-1')).single;
+    await usecase.execute(
+      source,
+      DateTime.utc(2026, 10, 3),
+      CalendarChangeScope.following,
+      changes: source.copyWith(
+        startDateTime: DateTime.utc(2026, 10, 3),
+        endDateTime: DateTime.utc(2026, 10, 5),
+      ),
+    );
+    Future<List<CalendarEventDto>> expanded() async =>
+        (await query.getCalendarEventsByGroupId('group-1'))
+            .expand(
+              (v) => expander.expand(
+                v,
+                DateTime.utc(2026, 10),
+                DateTime.utc(2026, 12),
+              ),
+            )
+            .toList();
+    final before = await expanded();
+    expect(before, hasLength(5));
+    expect(before.where((v) => v.title == '移動'), hasLength(1));
+    final snapshot = await dataStore.exportSnapshot();
+    await db.deleteRows('groups', 'id', 'group-1');
+    await dataStore.restoreSnapshot(snapshot);
+    expect(await expanded(), before);
   });
 
   test('繰り返しルールと取消しを復元後も保持する', () async {

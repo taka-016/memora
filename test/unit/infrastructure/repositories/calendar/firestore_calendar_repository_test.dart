@@ -1,3 +1,4 @@
+import 'package:memora/application/mappers/calendar/calendar_event_mapper.dart';
 import 'package:memora/domain/entities/calendar/calendar_event_override.dart';
 import 'package:memora/infrastructure/mappers/calendar/firestore_calendar_event_mapper.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -141,6 +142,47 @@ void main() {
     endDateTime: DateTime.utc(2026, 10, 3),
     isAllDay: false,
   );
+
+  test('系列分割は全読取の後に両系列と参照数を一括保存する', () async {
+    final original = event(id: 'event')
+        .copyWith(recurrenceRule: 'FREQ=DAILY;COUNT=5', timeZone: 'Asia/Tokyo');
+    when(eventDoc.id).thenReturn('event');
+    when(eventDoc.data())
+        .thenReturn(FirestoreCalendarEventMapper.toCreateFirestore(original));
+    final expected = CalendarEventMapper.toEntity(
+      FirestoreCalendarEventMapper.fromFirestore(eventDoc),
+    );
+    final nextRef = MockDocumentReference();
+    when(nextRef.id).thenReturn('following');
+    final collection = firestore.collection('calendar_events');
+    when(collection.doc()).thenReturn(nextRef);
+    final head = expected.copyWith(recurrenceRule: 'FREQ=DAILY;COUNT=2');
+    final tail = expected.copyWith(
+      id: '',
+      recurrenceRule: 'FREQ=DAILY;COUNT=3',
+      startDateTime: expected.startDateTime.add(const Duration(days: 2)),
+      endDateTime: expected.endDateTime.add(const Duration(days: 2)),
+    );
+    await events.replaceCalendarEvent(expected, head, tail);
+    verifyInOrder([
+      transaction.get(eventRef),
+      transaction.get(labelRef),
+      transaction.update(labelRef, argThat(containsPair('eventCount', 2))),
+      transaction.update(
+        eventRef,
+        argThat(containsPair('splitEventId', 'following')),
+      ),
+      transaction.set(
+        nextRef,
+        argThat(containsPair('splitFromEventId', 'event')),
+      ),
+    ]);
+    await expectLater(
+      events.replaceCalendarEvent(expected.copyWith(title: '古い内容'), head, tail),
+      throwsA(isA<ValidationException>()),
+    );
+    verifyNever(transaction.set(any, any));
+  });
 
   test('Firestoreでは系列と個別回と各ラベルの参照を同時に保存する', () async {
     final value = event().copyWith(
