@@ -381,6 +381,15 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
     final state = ref.watch(calendarNotifierProvider(widget.groupId));
     final labels = state.labels;
     final preferences = ref.watch(calendarPreferencesNotifierProvider);
+    final dateInputStyle = TextButton.styleFrom(
+      alignment: Alignment.centerLeft,
+      foregroundColor: Theme.of(context).colorScheme.onSurface,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+      shape: RoundedRectangleBorder(
+        side: BorderSide(color: Theme.of(context).colorScheme.outline),
+        borderRadius: BorderRadius.circular(4),
+      ),
+    );
     return PopScope(
       canPop: !state.isSaving,
       child: Dialog(
@@ -409,6 +418,7 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                         key: _form,
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
+                          spacing: 16,
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             TextFormField(
@@ -416,6 +426,7 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                               enabled: !state.isSaving,
                               decoration: const InputDecoration(
                                 labelText: 'タイトル',
+                                border: OutlineInputBorder(),
                               ),
                               validator: (value) =>
                                   value == null || value.trim().isEmpty
@@ -430,6 +441,7 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                               isExpanded: true,
                               decoration: const InputDecoration(
                                 labelText: '色ラベル',
+                                border: OutlineInputBorder(),
                               ),
                               items: labels
                                   .map(
@@ -463,14 +475,22 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                                   Expanded(
                                     flex: 3,
                                     child: TextButton(
-                                      style: TextButton.styleFrom(
-                                        alignment: Alignment.centerLeft,
-                                      ),
+                                      style: dateInputStyle,
                                       onPressed: state.isSaving
                                           ? null
                                           : () => _pick(start, false),
-                                      child: Text(
-                                        '${start ? '開始' : '終了'}日: ${calendarDateText(start ? _start : _end)}',
+                                      child: Row(
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              '${start ? '開始' : '終了'}日: ${calendarDateText(start ? _start : _end)}',
+                                            ),
+                                          ),
+                                          const Icon(
+                                            Icons.calendar_today,
+                                            size: 20,
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ),
@@ -478,9 +498,7 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                                     Expanded(
                                       flex: 2,
                                       child: TextButton(
-                                        style: TextButton.styleFrom(
-                                          alignment: Alignment.centerLeft,
-                                        ),
+                                        style: dateInputStyle,
                                         key: Key(
                                           'calendar_${start ? 'start' : 'end'}_time',
                                         ),
@@ -527,6 +545,7 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                                 enabled: !state.isSaving,
                                 decoration: const InputDecoration(
                                   labelText: 'タイムゾーン',
+                                  border: OutlineInputBorder(),
                                   helperText: 'IANA名（例: Asia/Tokyo）で指定',
                                 ),
                                 onChanged: (value) => _zone = value.trim(),

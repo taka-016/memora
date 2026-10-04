@@ -251,6 +251,7 @@ class _CalendarRecurrenceCustomDialogState
                 ),
               if (_endMode == 'until')
                 TextButton(
+                  style: TextButton.styleFrom(alignment: Alignment.centerLeft),
                   onPressed: () async {
                     final date = await DatePickerHelper.showCustomDatePicker(
                       context,
