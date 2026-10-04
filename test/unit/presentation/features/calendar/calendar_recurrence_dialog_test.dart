@@ -150,6 +150,75 @@ void main() {
       });
     }
   }
+  for (final allDay in [true, false]) {
+    for (final scope in [
+      CalendarChangeScope.all,
+      CalendarChangeScope.following,
+    ]) {
+      testWidgets('日付と終日区分を同時に変更して系列の保存へ進める（$allDay・$scope）', (tester) async {
+        final harness = CalendarTestHarness()
+          ..savedEvents.add(
+            CalendarEventDto(
+              id: 'e',
+              groupId: 'g1',
+              labelId: 'family',
+              title: '週の系列',
+              startDateTime: DateTime.utc(2026, 10, 2, allDay ? 0 : 9),
+              endDateTime: DateTime.utc(2026, 10, 5, allDay ? 0 : 9),
+              isAllDay: allDay,
+              timeZone: allDay ? null : 'Asia/Tokyo',
+              recurrenceRule: allDay
+                  ? 'FREQ=WEEKLY;BYDAY=FR;UNTIL=20270101'
+                  : 'FREQ=WEEKLY;BYDAY=FR;UNTIL=20270101T145959Z',
+            ),
+          );
+        await harness.pump(tester);
+        await tester.tap(find.byKey(calendarTestDay2));
+        await tester.pump();
+        await tester.tap(find.byKey(calendarTestDay2));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.tap(find.widgetWithText(ListTile, '週の系列'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.tap(find.text('開始日: 2026/10/2'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.tap(find.text('3').last);
+        await tester.tap(find.text('決定'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.tap(find.text('終日'));
+        await tester.pump();
+        await tester.tap(find.text('保存'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.tap(
+          find.text(scope == CalendarChangeScope.all ? 'すべての予定' : 'この予定とこれ以降'),
+        );
+        await tester.pump();
+        await tester.tap(find.text('変更する'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        final saved =
+            verify(
+                  harness.changeRecurrence.execute(
+                    any,
+                    any,
+                    scope,
+                    changes: captureAnyNamed('changes'),
+                  ),
+                ).captured.single
+                as CalendarEventDto;
+        expect(saved.isAllDay, !allDay);
+        expect(
+          saved.recurrenceRule,
+          endsWith(allDay ? 'UNTIL=20270101T145959Z' : 'UNTIL=20270101'),
+        );
+        expect(tester.takeException(), isNull);
+      });
+    }
+  }
   testWidgets('繰り返しの編集と削除は範囲を確認してUseCaseへ渡す', (tester) async {
     final harness = CalendarTestHarness()
       ..savedEvents.add(

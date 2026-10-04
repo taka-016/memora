@@ -214,6 +214,57 @@ void main() {
       });
     }
   }
+  for (final allDay in [true, false]) {
+    for (final scope in [
+      CalendarChangeScope.all,
+      CalendarChangeScope.following,
+    ]) {
+      test('日付移動と終日区分変更でも曜日と終了日を維持する（$allDay・$scope）', () async {
+        final series = source.copyWith(
+          startDateTime: DateTime.utc(2026, 10, 2, allDay ? 0 : 9),
+          endDateTime: DateTime.utc(2026, 10, 5, allDay ? 0 : 9),
+          isAllDay: allDay,
+          timeZone: allDay ? null : 'Asia/Tokyo',
+          recurrenceRule: allDay
+              ? 'FREQ=WEEKLY;BYDAY=FR;UNTIL=20270101'
+              : 'FREQ=WEEKLY;BYDAY=FR;UNTIL=20270101T145959Z',
+          overrides: [],
+        );
+        await usecase.execute(
+          series,
+          series.startDateTime,
+          scope,
+          changes: series.copyWith(
+            startDateTime: DateTime.utc(2026, 10, 3, allDay ? 9 : 0),
+            endDateTime: DateTime.utc(2026, 10, 6, allDay ? 9 : 0),
+            isAllDay: !allDay,
+            timeZone: allDay ? 'Asia/Tokyo' : null,
+            recurrenceRule: allDay
+                ? 'FREQ=WEEKLY;BYDAY=FR;UNTIL=20270101T145959Z'
+                : 'FREQ=WEEKLY;BYDAY=FR;UNTIL=20270101',
+          ),
+        );
+        final result =
+            verify(repository.replaceCalendarEvent(any, captureAny, null))
+                    .captured
+                    .single
+                as CalendarEvent;
+        expect(result.recurrenceRule, contains('BYDAY=SA'));
+        expect(
+          result.recurrenceRule,
+          endsWith(allDay ? 'UNTIL=20270101T145959Z' : 'UNTIL=20270101'),
+        );
+        expect(
+          expander.expand(
+            CalendarEventMapper.toDto(result),
+            DateTime.utc(2026, 10),
+            DateTime.utc(2027),
+          ),
+          isNotEmpty,
+        );
+      });
+    }
+  }
   test('個別回の移動では元の系列の曜日を変更しない', () async {
     final series = source.copyWith(
       recurrenceRule: 'FREQ=WEEKLY;BYDAY=TH;COUNT=5',
