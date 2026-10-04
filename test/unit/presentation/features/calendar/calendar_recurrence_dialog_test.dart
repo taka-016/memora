@@ -223,6 +223,93 @@ void main() {
       });
     }
   }
+  for (final until in [false, true]) {
+    testWidgets('23時59分でも選択画面の初期日と確定後の日付を維持する（$until）', (tester) async {
+      final source = calendarTestEvent('e', '夜の予定').copyWith(
+        startDateTime: DateTime.utc(2026, 10, 2, until ? 9 : 22),
+        endDateTime: DateTime.utc(2026, 10, 2, until ? 10 : 23, until ? 0 : 59),
+        recurrenceRule: until ? 'FREQ=DAILY;UNTIL=20261005T145959Z' : null,
+        timeZone: until ? 'Asia/Tokyo' : null,
+      );
+      final harness = CalendarTestHarness()..savedEvents.add(source);
+      await harness.pump(tester);
+      await tester.tap(find.byKey(calendarTestDay2));
+      await tester.pump();
+      await tester.tap(find.byKey(calendarTestDay2));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.tap(find.widgetWithText(ListTile, '夜の予定'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      if (until) {
+        final summary = find.text('毎日、2026/10/5まで');
+        await tester.ensureVisible(summary);
+        await tester.tap(summary);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.tap(find.text('カスタム').last);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+      }
+      final date = until
+          ? find.descendant(
+              of: find.widgetWithText(AlertDialog, 'カスタムの繰り返し'),
+              matching: find.textContaining('終了日:'),
+            )
+          : find.text('終了日: 2026/10/2');
+      await tester.ensureVisible(date);
+      await tester.tap(date);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.byType(CustomDatePickerDialog), findsOneWidget);
+      expect(
+        find.text(until ? '2026年10月5日 (月)' : '2026年10月2日 (金)'),
+        findsOneWidget,
+      );
+      await tester.tap(find.byKey(const Key('date_header')));
+      await tester.pump();
+      final input = tester.widget<TextField>(
+        find.byKey(const Key('date_field')),
+      );
+      expect(input.controller!.text, until ? '2026/10/05' : '2026/10/02');
+      await tester.tap(find.text('確定'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      if (until) {
+        await tester.ensureVisible(find.text('決定').last);
+        await tester.tap(find.text('決定').last);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+      }
+      await tester.tap(find.text('保存'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      if (until) {
+        await tester.tap(find.text('すべての予定'));
+        await tester.pump();
+        await tester.tap(find.text('変更する'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        final saved =
+            verify(
+                  harness.changeRecurrence.execute(
+                    any,
+                    any,
+                    CalendarChangeScope.all,
+                    changes: captureAnyNamed('changes'),
+                  ),
+                ).captured.single
+                as CalendarEventDto;
+        expect(saved.recurrenceRule, source.recurrenceRule);
+      } else {
+        final saved =
+            verify(harness.update.execute(captureAny)).captured.single
+                as CalendarEventDto;
+        expect(saved.endDateTime, source.endDateTime);
+      }
+      expect(tester.takeException(), isNull);
+    });
+  }
   testWidgets('繰り返しの終了日も共通の日付直接入力で設定して保存できる', (tester) async {
     final harness = CalendarTestHarness();
     await harness.pump(tester);
@@ -237,6 +324,7 @@ void main() {
     await tester.tap(find.text('カスタム').last);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.widgetWithText(FilterChip, '木'));
     await tester.ensureVisible(find.text('終了しない'));
     await tester.tap(find.text('終了しない'));
     await tester.pump();
