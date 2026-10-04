@@ -360,6 +360,28 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('時間指定の複数日予定は各週に一つのタイトルを中央表示し日別一覧から確認できる', (tester) async {
+    final harness = _CalendarHarness()
+      ..savedEvents.add(
+        _event('trip', '宿泊の予定').copyWith(
+          startDateTime: DateTime(2026, 10, 2, 18),
+          endDateTime: DateTime(2026, 10, 6, 10),
+        ),
+      );
+    await harness.pump(tester);
+    expect(find.text('宿泊の予定'), findsNWidgets(2));
+    for (final title in tester.widgetList<Text>(find.text('宿泊の予定'))) {
+      expect(title.textAlign, TextAlign.center);
+      expect(title.style!.color, const Color(0xFF123ABC));
+    }
+    await tester.tap(find.byKey(_day2));
+    await tester.pump();
+    await tester.tap(find.byKey(_day2));
+    await tester.pumpAndSettle();
+    expect(find.text('宿泊の予定'), findsNWidgets(3));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('日別一覧は画面上部まで開き一覧の追加ボタンでその日の予定を登録する', (tester) async {
     final harness = _CalendarHarness();
     await harness.pump(tester);

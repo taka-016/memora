@@ -38,6 +38,53 @@ void main() {
     expect(next.entries.single.startColumn, 0);
     expect(next.entries.single.endColumn, 2);
   });
+  test('時刻付きの複数日予定を週と月の境界で切り重複なく帯で表示する', () {
+    final state = CalendarState(
+      selectedDate: DateTime(2026, 10, 1),
+      events: [
+        event(
+          'timed',
+          DateTime(2026, 9, 30, 18),
+          DateTime(2026, 10, 6, 10),
+          allDay: false,
+        ),
+      ],
+    );
+    for (final (weekStart, start, end) in [
+      (DateTime(2026, 9, 27), 4, 6),
+      (DateTime(2026, 10, 4), 0, 2),
+    ]) {
+      final layout = CalendarWeekLayout(
+        state: state,
+        weekStart: weekStart,
+        month: DateTime(2026, 10),
+      );
+      expect(layout.entries.single.startColumn, start);
+      expect(layout.entries.single.endColumn, end);
+      expect(layout.visibleCounts.sublist(start, end + 1), everyElement(1));
+    }
+  });
+  test('時刻付きの帯は終了が午前0時の場合は前日まで表示する', () {
+    final state = CalendarState(
+      selectedDate: DateTime(2026, 10, 4),
+      events: [
+        event(
+          'timed',
+          DateTime(2026, 10, 4, 18),
+          DateTime(2026, 10, 6),
+          allDay: false,
+        ),
+      ],
+    );
+    final layout = CalendarWeekLayout(
+      state: state,
+      weekStart: DateTime(2026, 10, 4),
+      month: DateTime(2026, 10),
+    );
+    expect(layout.entries.single.startColumn, 0);
+    expect(layout.entries.single.endColumn, 1);
+    expect(layout.visibleCounts[2], 0);
+  });
   test('重複する帯を別段へ配置し同日に時刻付き予定を含め3段まで表示する', () {
     final state = CalendarState(
       selectedDate: DateTime(2026, 10, 4),
