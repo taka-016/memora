@@ -114,6 +114,7 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
           transaction.update(_label(id), {
             'eventCount': (snapshots[id]!.data()!['eventCount'] as int) + delta,
             'lastEventId': expected.id,
+            'lastMutationAt': FieldValue.serverTimestamp(),
           });
         }
       }

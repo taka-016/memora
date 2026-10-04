@@ -82,6 +82,9 @@ class CalendarNotifier extends _$CalendarNotifier {
     return true;
   }
 
+  CalendarEventDto? seriesForEvent(String id) =>
+      _series.where((v) => v.id == id).firstOrNull;
+
   Future<bool> changeRecurringEvent(
     CalendarEventDto occurrence,
     CalendarChangeScope scope, {

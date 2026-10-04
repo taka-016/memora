@@ -49,6 +49,7 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
   late CalendarRecurrenceSettings _recurrence;
   bool _recurrenceEdited = false;
   late String _zone;
+  bool? _seriesAllDay;
 
   @override
   void initState() {
@@ -74,6 +75,13 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
             event.endDateTime.day,
           )
         : event.endDateTime.toLocal();
+    _seriesAllDay = event == null
+        ? null
+        : ref
+                  .read(calendarNotifierProvider(widget.groupId).notifier)
+                  .seriesForEvent(event.id)
+                  ?.isAllDay ??
+              event.isAllDay;
     _zone = event?.timeZone ?? 'Asia/Tokyo';
     final expander = ref.read(calendarRecurrenceExpanderProvider);
     if (event != null && !event.isAllDay && event.timeZone != null) {
@@ -184,7 +192,7 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
       final expander = ref.read(calendarRecurrenceExpanderProvider);
       final rule =
           scope == CalendarChangeScope.only ||
-              (!_recurrenceEdited && _allDay == widget.event?.isAllDay)
+              (!_recurrenceEdited && _allDay == _seriesAllDay)
           ? widget.event?.recurrenceRule
           : _recurrence.toRule(
               start: _start,

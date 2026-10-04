@@ -91,31 +91,36 @@ service cloud.firestore {
       let source = getAfter(sourcePath).data;
       return id is string && id != eventId && exists(sourcePath)
         && source.get('splitEventId', null) == eventId && source.groupId == data.groupId
-        && source.get('recurrenceRule', null) is string && data.get('recurrenceRule', null) is string;
+        && source.get('recurrenceRule', null) is string;
     }
     function splitDelta(labelId, before, head, tail) {
       return (head.hasAny([labelId]) ? 1 : 0) + (tail.hasAny([labelId]) ? 1 : 0) - (before.hasAny([labelId]) ? 1 : 0);
     }
-    function splitReference(groupId, eventId, before, head, tail, refs, index) {
-      return refs.size() <= index
-        || (getAfter(/databases/$(database)/documents/calendar_labels/$(refs[index])).data.groupId == groupId
-          && (splitDelta(refs[index], before, head, tail) == 0
-            || countChanged(refs[index], eventId, splitDelta(refs[index], before, head, tail))));
+    function splitLabel(groupId, eventId, before, head, tail, labelId) {
+      let delta = splitDelta(labelId, before, head, tail);
+      let label = getAfter(/databases/$(database)/documents/calendar_labels/$(labelId)).data;
+      return label.groupId == groupId
+        && (delta == 0 || (label.lastEventId == eventId && label.get('lastMutationAt', null) == request.time));
+    }
+    function splitReference(identity, before, head, tail, refs, index, checked) {
+      return refs.size() <= index || checked.hasAny([refs[index]])
+        || splitLabel(identity[0], identity[1], before, head, tail, refs[index]);
     }
     function validSplitReferences(eventId, data) {
+      let identity = [data.groupId, eventId];
       let before = references(resource.data);
       let head = references(data);
       let tail = references(getAfter(/databases/$(database)/documents/calendar_events/$(data.splitEventId)).data);
       return before.toSet().union(head.toSet()).union(tail.toSet()).size() <= 3
-        && splitReference(data.groupId, eventId, before, head, tail, before, 0)
-        && splitReference(data.groupId, eventId, before, head, tail, before, 1)
-        && splitReference(data.groupId, eventId, before, head, tail, before, 2)
-        && splitReference(data.groupId, eventId, before, head, tail, head, 0)
-        && splitReference(data.groupId, eventId, before, head, tail, head, 1)
-        && splitReference(data.groupId, eventId, before, head, tail, head, 2)
-        && splitReference(data.groupId, eventId, before, head, tail, tail, 0)
-        && splitReference(data.groupId, eventId, before, head, tail, tail, 1)
-        && splitReference(data.groupId, eventId, before, head, tail, tail, 2);
+        && splitReference(identity, before, head, tail, before, 0, [])
+        && splitReference(identity, before, head, tail, before, 1, [])
+        && splitReference(identity, before, head, tail, before, 2, [])
+        && splitReference(identity, before, head, tail, head, 0, before)
+        && splitReference(identity, before, head, tail, head, 1, before)
+        && splitReference(identity, before, head, tail, head, 2, before)
+        && splitReference(identity, before, head, tail, tail, 0, before.concat(head))
+        && splitReference(identity, before, head, tail, tail, 1, before.concat(head))
+        && splitReference(identity, before, head, tail, tail, 2, before.concat(head));
     }
     function validSplitCount(labelId, data, path) {
       let source = getAfter(path).data;
@@ -165,8 +170,9 @@ service cloud.firestore {
       allow update: if signedIn() && belongsTo(resource.data.groupId)
         && request.resource.data.groupId == resource.data.groupId && validLabel(request.resource.data)
         && ((active(resource.data.groupId) && request.resource.data.eventCount == resource.data.eventCount
-              && request.resource.data.lastEventId == resource.data.lastEventId)
-          || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['eventCount', 'lastEventId'])
+              && request.resource.data.lastEventId == resource.data.lastEventId
+              && request.resource.data.get('lastMutationAt', null) == resource.data.get('lastMutationAt', null))
+          || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['eventCount', 'lastEventId', 'lastMutationAt'])
               && validCountChange(labelId, request.resource.data)));
       allow delete: if signedIn() && belongsTo(resource.data.groupId) && resource.data.eventCount == 0;
     }
