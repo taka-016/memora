@@ -1,3 +1,4 @@
+import 'package:memora/presentation/shared/dialogs/custom_date_picker_dialog.dart';
 import 'package:memora/domain/entities/calendar/calendar_event_override.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -184,8 +185,11 @@ void main() {
         await tester.tap(find.text('開始日: 2026/10/2'));
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 300));
-        await tester.tap(find.text('3').last);
-        await tester.tap(find.text('決定'));
+        expect(find.byType(CustomDatePickerDialog), findsOneWidget);
+        await tester.tap(find.byKey(const Key('date_header')));
+        await tester.pump();
+        await tester.enterText(find.byKey(const Key('date_field')), '20261003');
+        await tester.tap(find.text('確定'));
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 300));
         await tester.tap(find.text('終日'));
@@ -219,6 +223,51 @@ void main() {
       });
     }
   }
+  testWidgets('繰り返しの終了日も共通の日付直接入力で設定して保存できる', (tester) async {
+    final harness = CalendarTestHarness();
+    await harness.pump(tester);
+    await tester.tap(find.byTooltip('予定を追加'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.enterText(find.widgetWithText(TextFormField, 'タイトル'), '期日付き');
+    await tester.ensureVisible(find.text('繰り返さない'));
+    await tester.tap(find.text('繰り返さない'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text('カスタム').last);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.ensureVisible(find.text('終了しない'));
+    await tester.tap(find.text('終了しない'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text('終了日指定').last);
+    await tester.pump();
+    final until = find.textContaining('終了日:');
+    await tester.ensureVisible(until);
+    await tester.tap(until);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.byType(CustomDatePickerDialog), findsOneWidget);
+    await tester.tap(find.byKey(const Key('date_header')));
+    await tester.pump();
+    await tester.enterText(find.byKey(const Key('date_field')), '20261031');
+    await tester.tap(find.text('確定'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.ensureVisible(find.text('決定').last);
+    await tester.tap(find.text('決定').last);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text('保存'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    final saved =
+        verify(harness.create.execute(captureAny)).captured.single
+            as CalendarEventDto;
+    expect(saved.recurrenceRule, endsWith('UNTIL=20261031'));
+    expect(tester.takeException(), isNull);
+  });
   testWidgets('繰り返しの編集と削除は範囲を確認してUseCaseへ渡す', (tester) async {
     final harness = CalendarTestHarness()
       ..savedEvents.add(
