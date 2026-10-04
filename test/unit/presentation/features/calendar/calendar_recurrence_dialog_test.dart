@@ -243,7 +243,10 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     await tester.tap(find.text('終了日指定').last);
     await tester.pump();
-    final until = find.textContaining('終了日:');
+    final until = find.descendant(
+      of: find.widgetWithText(AlertDialog, 'カスタムの繰り返し'),
+      matching: find.textContaining('終了日:'),
+    );
     await tester.ensureVisible(until);
     await tester.tap(until);
     await tester.pump();
