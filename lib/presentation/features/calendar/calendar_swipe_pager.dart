@@ -1,5 +1,5 @@
 import 'package:flutter/widgets.dart';
-import 'package:memora/presentation/features/calendar/calendar_month_swipe_controller.dart';
+import 'package:memora/presentation/features/calendar/calendar_page_swipe_controller.dart';
 
 class CalendarSwipePager extends StatefulWidget {
   const CalendarSwipePager({
@@ -19,7 +19,7 @@ class CalendarSwipePager extends StatefulWidget {
 }
 
 class _CalendarSwipePagerState extends State<CalendarSwipePager> {
-  late final _swipeController = CalendarMonthSwipeController(widget.controller);
+  late final _swipeController = CalendarPageSwipeController(widget.controller);
 
   @override
   Widget build(BuildContext context) => Listener(

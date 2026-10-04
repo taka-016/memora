@@ -1,15 +1,15 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:memora/presentation/features/calendar/calendar_month_swipe_controller.dart';
+import 'package:memora/presentation/features/calendar/calendar_page_swipe_controller.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
-import 'calendar_month_swipe_controller_test.mocks.dart';
+import 'calendar_page_swipe_controller_test.mocks.dart';
 
 @GenerateMocks([PageController, BuildContext])
 void main() {
   late MockPageController pages;
-  late CalendarMonthSwipeController controller;
+  late CalendarPageSwipeController controller;
   late MockBuildContext context;
   late PageMetrics metrics;
 
@@ -60,11 +60,11 @@ void main() {
       viewportFraction: 1,
       devicePixelRatio: 1,
     );
-    controller = CalendarMonthSwipeController(pages);
+    controller = CalendarPageSwipeController(pages);
   });
 
   for (final direction in [-1, 1]) {
-    test('少ない移動サンプルと短い離指の間隔でも月を切り替える（$direction）', () {
+    test('少ない移動サンプルと短い離指の間隔でもページを切り替える（$direction）', () {
       begin();
       move(20, 100 + 20.0 * direction);
       move(100, 100 + 60.0 * direction);

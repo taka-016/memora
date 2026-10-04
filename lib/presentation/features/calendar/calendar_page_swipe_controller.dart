@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 
-class CalendarMonthSwipeController {
-  CalendarMonthSwipeController(this._pageController);
+class CalendarPageSwipeController {
+  CalendarPageSwipeController(this._pageController);
   final PageController _pageController;
   final List<({Duration time, double x})> _samples = [];
   int? _pointer;
