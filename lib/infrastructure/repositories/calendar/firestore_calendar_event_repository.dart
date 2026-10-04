@@ -28,9 +28,6 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
     Set<String> before,
     Set<String> after,
   ) async {
-    if ({...before, ...after}.length > 3) {
-      throw ValidationException('オンラインの系列は変更前後を合わせて色ラベル3種類まで一括保存できます');
-    }
     final snapshots = <String, DocumentSnapshot<Map<String, dynamic>>>{};
     for (final id in {...before, ...after}) {
       final label = await transaction.get(_label(id));
@@ -94,9 +91,6 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
       final headRefs = head == null ? <String>{} : _references(head);
       final tailRefs = tail == null ? <String>{} : _references(tail);
       final ids = {...before, ...headRefs, ...tailRefs};
-      if (ids.length > 3) {
-        throw ValidationException('オンラインの系列は変更前後を合わせて色ラベル3種類まで一括保存できます');
-      }
       final snapshots = <String, DocumentSnapshot<Map<String, dynamic>>>{};
       for (final id in ids) {
         final label = await transaction.get(_label(id));
@@ -132,15 +126,6 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
   @override
   Future<String> saveCalendarEvent(CalendarEvent event) async {
     validateCalendarRecurrence(event);
-    if ({
-          event.labelId,
-          ...event.overrides
-              .where((v) => !v.isCancelled)
-              .map((v) => v.labelId!),
-        }.length >
-        3) {
-      throw ValidationException('オンラインの1系列に指定できる色ラベルは3種類までです');
-    }
     await _ensureMembership?.call(event.groupId);
     final ref = _firestore.collection('calendar_events').doc();
     final data = FirestoreCalendarEventMapper.toCreateFirestore(event);
@@ -160,15 +145,6 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
   @override
   Future<void> updateCalendarEvent(CalendarEvent event) async {
     validateCalendarRecurrence(event);
-    if ({
-          event.labelId,
-          ...event.overrides
-              .where((v) => !v.isCancelled)
-              .map((v) => v.labelId!),
-        }.length >
-        3) {
-      throw ValidationException('オンラインの1系列に指定できる色ラベルは3種類までです');
-    }
     await _ensureMembership?.call(event.groupId);
     final ref = _firestore.collection('calendar_events').doc(event.id);
     final data = FirestoreCalendarEventMapper.toUpdateFirestore(event);
