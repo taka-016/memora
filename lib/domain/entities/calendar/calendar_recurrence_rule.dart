@@ -67,6 +67,9 @@ class CalendarRecurrenceRule {
       }
       if (value.length == 8) {
         until = DateTime.utc(until.year, until.month, until.day);
+      } else if ('${until.hour.toString().padLeft(2, '0')}${until.minute.toString().padLeft(2, '0')}${until.second.toString().padLeft(2, '0')}' !=
+          value.substring(9, 15)) {
+        _invalid();
       }
     }
     final weekdays = <int>[];

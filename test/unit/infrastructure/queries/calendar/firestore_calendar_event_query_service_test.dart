@@ -54,6 +54,7 @@ void main() {
 
   final invalidCases = <String, Map<String, dynamic>>{
     '不正な繰り返しルール': {'recurrenceRule': 'x'},
+    'UNTILの時刻が不正': {'recurrenceRule': 'FREQ=DAILY;UNTIL=20261004T096000Z'},
     '上書きの要素型が不正': {
       'overrides': {
         'label': [1],
