@@ -362,6 +362,7 @@ void main() {
 
   testWidgets('時間指定の複数日予定は各週に一つのタイトルを中央表示し日別一覧から確認できる', (tester) async {
     final harness = _CalendarHarness()
+      ..savedLabels[0] = _family.copyWith(textColor: '#FFFFFF')
       ..savedEvents.add(
         _event('trip', '宿泊の予定').copyWith(
           startDateTime: DateTime(2026, 10, 2, 18),
@@ -372,7 +373,19 @@ void main() {
     expect(find.text('宿泊の予定'), findsNWidgets(2));
     for (final title in tester.widgetList<Text>(find.text('宿泊の予定'))) {
       expect(title.textAlign, TextAlign.center);
-      expect(title.style!.color, const Color(0xFF123ABC));
+      final container = tester.widget<Container>(
+        find
+            .ancestor(
+              of: find.byWidget(title),
+              matching: find.byType(Container),
+            )
+            .first,
+      );
+      expect(
+        (container.decoration as BoxDecoration).color,
+        const Color(0xFF123ABC),
+      );
+      expect(title.style!.color, Colors.white);
     }
     await tester.tap(find.byKey(_day2));
     await tester.pump();
@@ -385,6 +398,7 @@ void main() {
   for (final allDay in [false, true]) {
     testWidgets('週の端で1日分になる複数日予定の帯も中央表示する（終日: $allDay）', (tester) async {
       final harness = _CalendarHarness()
+        ..savedLabels[0] = _family.copyWith(textColor: '#FFFFFF')
         ..savedEvents.add(
           _event('trip', '週末からの予定').copyWith(
             startDateTime: DateTime(2026, 10, 3, 18),
@@ -395,7 +409,20 @@ void main() {
       await harness.pump(tester);
       expect(find.text('週末からの予定'), findsNWidgets(2));
       for (final title in tester.widgetList<Text>(find.text('週末からの予定'))) {
+        expect(title.style!.color, Colors.white);
         expect(title.textAlign, TextAlign.center);
+        final container = tester.widget<Container>(
+          find
+              .ancestor(
+                of: find.byWidget(title),
+                matching: find.byType(Container),
+              )
+              .first,
+        );
+        expect(
+          (container.decoration as BoxDecoration).color,
+          const Color(0xFF123ABC),
+        );
       }
       expect(tester.takeException(), isNull);
     });
