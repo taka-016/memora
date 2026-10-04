@@ -33,17 +33,38 @@ class SqliteCalendarEventRepository implements CalendarEventRepository {
     CalendarEvent? replacement,
     CalendarEvent? following,
   ) => db.transaction(() async {
-    final rows = await db.rows('calendar_events', where: 'id = ?', args: [expected.id]);
-    final overrides = await db.rows('calendar_event_overrides', where: 'event_id = ?', args: [expected.id]);
-    final current = rows.isEmpty ? null : SqliteCalendarEventMapper.fromRow(rows.single, overrides: overrides.map((row) => CalendarOverrideMapper.fromRow(row, expected.isAllDay)).toList());
-    if (current == null || CalendarEventMapper.toEntity(current) != expected)
+    final rows = await db.rows(
+      'calendar_events',
+      where: 'id = ?',
+      args: [expected.id],
+    );
+    final overrides = await db.rows(
+      'calendar_event_overrides',
+      where: 'event_id = ?',
+      args: [expected.id],
+    );
+    final current = rows.isEmpty
+        ? null
+        : SqliteCalendarEventMapper.fromRow(
+            rows.single,
+            overrides: overrides
+                .map(
+                  (row) =>
+                      CalendarOverrideMapper.fromRow(row, expected.isAllDay),
+                )
+                .toList(),
+          );
+    if (current == null || CalendarEventMapper.toEntity(current) != expected) {
       throw ValidationException('予定が変更されています。再読み込みしてからやり直してください');
+    }
     if (replacement != null &&
             (replacement.id != expected.id ||
                 replacement.groupId != expected.groupId) ||
         following != null &&
-            (following.id.isNotEmpty || following.groupId != expected.groupId))
+            (following.id.isNotEmpty ||
+                following.groupId != expected.groupId)) {
       throw ValidationException('系列の分割対象が不正です');
+    }
     if (replacement != null) await _validateLabel(replacement);
     if (following != null) await _validateLabel(following);
     if (replacement == null) {

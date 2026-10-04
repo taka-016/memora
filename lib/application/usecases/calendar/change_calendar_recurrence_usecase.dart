@@ -129,11 +129,12 @@ class ChangeCalendarRecurrenceUsecase {
                 : _expander.timeZone.local(key, source.timeZone!);
             final day = DateTime.utc(before.year, before.month, before.day);
             var consumed = parsed.candidateCountBefore(wall, day);
-            if (!source.isAllDay)
+            if (!source.isAllDay) {
               consumed -= _expander.timeZone
                   .skippedDates(wall, day, source.timeZone!)
                   .where((d) => parsed.matches(d, wall))
                   .length;
+            }
             nextRule = nextRule!.replaceFirst(
               RegExp(r'COUNT=\d+'),
               'COUNT=${parsed.count! - consumed}',
