@@ -48,7 +48,7 @@ void main() {
     expect(saved.recurrenceRule, 'FREQ=WEEKLY;INTERVAL=2;BYDAY=TH,SA;COUNT=10');
     expect(tester.takeException(), isNull);
   });
-  testWidgets('単発予定を毎日に変更し繰り返し予定へ保存できる', (tester) async {
+  testWidgets('単発予定を毎日に変更しタイムゾーン入力なしで日本時間を保存できる', (tester) async {
     final harness = CalendarTestHarness()
       ..savedEvents.add(calendarTestEvent('e', '予定'));
     await harness.pump(tester);
@@ -67,6 +67,7 @@ void main() {
     await tester.tap(find.text('毎日').last);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
+    expect(find.widgetWithText(TextFormField, 'タイムゾーン'), findsNothing);
     await tester.tap(find.text('保存'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
