@@ -382,6 +382,25 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  for (final allDay in [false, true]) {
+    testWidgets('週の端で1日分になる複数日予定の帯も中央表示する（終日: $allDay）', (tester) async {
+      final harness = _CalendarHarness()
+        ..savedEvents.add(
+          _event('trip', '週末からの予定').copyWith(
+            startDateTime: DateTime(2026, 10, 3, 18),
+            endDateTime: DateTime(2026, 10, 6, 10),
+            isAllDay: allDay,
+          ),
+        );
+      await harness.pump(tester);
+      expect(find.text('週末からの予定'), findsNWidgets(2));
+      for (final title in tester.widgetList<Text>(find.text('週末からの予定'))) {
+        expect(title.textAlign, TextAlign.center);
+      }
+      expect(tester.takeException(), isNull);
+    });
+  }
+
   testWidgets('日別一覧は画面上部まで開き一覧の追加ボタンでその日の予定を登録する', (tester) async {
     final harness = _CalendarHarness();
     await harness.pump(tester);
