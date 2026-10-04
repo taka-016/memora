@@ -170,11 +170,11 @@ void main() {
       transaction.update(labelRef, argThat(containsPair('eventCount', 2))),
       transaction.update(
         eventRef,
-        argThat(containsPair('splitEventId', 'following')),
+        argThat(containsPair('recurrenceRule', 'FREQ=DAILY;COUNT=2')),
       ),
       transaction.set(
         nextRef,
-        argThat(containsPair('splitFromEventId', 'event')),
+        argThat(containsPair('recurrenceRule', 'FREQ=DAILY;COUNT=3')),
       ),
     ]);
     await expectLater(
@@ -216,7 +216,7 @@ void main() {
         .called(1);
   });
 
-  test('変更前後の参照ラベルが読み取り上限を超える更新は保存前に説明して拒否する', () async {
+  test('変更前後で異なる複数ラベルを参照する系列を一括更新できる', () async {
     final collection = firestore.collection('calendar_labels');
     for (final id in ['old', 'new1', 'new2']) {
       final ref = MockDocumentReference();
@@ -247,17 +247,12 @@ void main() {
           ),
       ],
     );
-    await expectLater(
-      events.updateCalendarEvent(value),
-      throwsA(
-        isA<ValidationException>().having(
-          (e) => e.message,
-          '変更前後の上限説明',
-          contains('変更前後'),
-        ),
-      ),
-    );
-    verifyNever(transaction.update(any, any));
+    await events.updateCalendarEvent(value);
+    verify(transaction.update(eventRef, argThat(containsPair('labelId', 'other'))))
+        .called(1);
+    verify(transaction.update(labelRef, argThat(containsPair('eventCount', 0))))
+        .called(1);
+    verifyNever(transaction.update(otherRef, any));
   });
 
   test('予定の新規保存は同じグループのラベルを検証し参照数と予定を同時に保存する', () async {
