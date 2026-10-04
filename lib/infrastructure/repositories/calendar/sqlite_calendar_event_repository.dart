@@ -1,3 +1,4 @@
+import 'package:memora/infrastructure/services/calendar_event_content.dart';
 import 'package:memora/application/mappers/calendar/calendar_event_mapper.dart';
 import 'package:memora/infrastructure/mappers/calendar/calendar_override_mapper.dart';
 import 'package:memora/infrastructure/services/validate_calendar_recurrence.dart';
@@ -54,7 +55,9 @@ class SqliteCalendarEventRepository implements CalendarEventRepository {
                 )
                 .toList(),
           );
-    if (current == null || CalendarEventMapper.toEntity(current) != expected) {
+    if (current == null ||
+        calendarEventContent(CalendarEventMapper.toEntity(current)) !=
+            calendarEventContent(expected)) {
       throw ValidationException('予定が変更されています。再読み込みしてからやり直してください');
     }
     if (replacement != null &&

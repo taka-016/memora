@@ -1,3 +1,4 @@
+import 'package:memora/infrastructure/services/calendar_event_content.dart';
 import 'package:memora/application/mappers/calendar/calendar_event_mapper.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/domain/entities/calendar/calendar_event.dart';
@@ -75,10 +76,12 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
     await _firestore.runTransaction<void>((transaction) async {
       final current = await transaction.get(ref);
       if (!current.exists ||
-          CalendarEventMapper.toEntity(
-                FirestoreCalendarEventMapper.fromFirestore(current),
+          calendarEventContent(
+                CalendarEventMapper.toEntity(
+                  FirestoreCalendarEventMapper.fromFirestore(current),
+                ),
               ) !=
-              expected) {
+              calendarEventContent(expected)) {
         throw ValidationException('予定が変更されています。再読み込みしてからやり直してください');
       }
       final before = _references(current.data()!);
