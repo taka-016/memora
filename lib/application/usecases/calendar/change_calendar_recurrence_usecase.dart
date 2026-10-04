@@ -104,7 +104,7 @@ class ChangeCalendarRecurrenceUsecase {
             changes,
             id: source.id,
             start: start,
-            rule: changes.recurrenceRule == source.recurrenceRule
+            rule: _sameSchedule(changes.recurrenceRule, source.recurrenceRule)
                 ? _moveRule(changes.recurrenceRule, oldWall, wall)
                 : changes.recurrenceRule,
             end: start.add(
@@ -161,7 +161,7 @@ class ChangeCalendarRecurrenceUsecase {
               'COUNT=${parsed.count! - consumed}',
             );
           }
-          if (changes.recurrenceRule == source.recurrenceRule) {
+          if (_sameSchedule(changes.recurrenceRule, source.recurrenceRule)) {
             nextRule = _moveRule(
               nextRule,
               _wall(source, key),
@@ -187,6 +187,18 @@ class ChangeCalendarRecurrenceUsecase {
   DateTime _wall(CalendarEventDto event, DateTime value) => event.isAllDay
       ? _key(value, true)
       : _expander.timeZone.local(value, event.timeZone!);
+
+  static bool _sameSchedule(String? before, String? after) {
+    if (before == null || after == null) return false;
+    final first = CalendarRecurrenceRule.parse(before);
+    final second = CalendarRecurrenceRule.parse(after);
+    return first.frequency == second.frequency &&
+        first.interval == second.interval &&
+        first.monthDay == second.monthDay &&
+        first.ordinal == second.ordinal &&
+        first.weekdays.length == second.weekdays.length &&
+        first.weekdays.every(second.weekdays.contains);
+  }
 
   static String? _moveRule(String? text, DateTime before, DateTime after) {
     if (text == null) return null;

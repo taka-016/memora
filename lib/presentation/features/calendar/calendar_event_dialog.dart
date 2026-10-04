@@ -190,12 +190,23 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
     bool success;
     try {
       final expander = ref.read(calendarRecurrenceExpanderProvider);
+      final original = widget.event?.originalStartDateTime;
+      final series = recurring
+          ? ref
+                .read(calendarNotifierProvider(widget.groupId).notifier)
+                .seriesForEvent(widget.event!.id)
+          : null;
+      final recurrenceStart = recurring && !_recurrenceEdited
+          ? _seriesAllDay == true
+                ? DateTime.utc(original!.year, original.month, original.day)
+                : expander.localTime(original!, series?.timeZone ?? _zone)
+          : _start;
       final rule =
           scope == CalendarChangeScope.only ||
               (!_recurrenceEdited && _allDay == _seriesAllDay)
           ? widget.event?.recurrenceRule
           : _recurrence.toRule(
-              start: _start,
+              start: recurrenceStart,
               allDay: _allDay,
               zone: _zone,
               expander: expander,
