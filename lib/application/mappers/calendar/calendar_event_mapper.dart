@@ -11,6 +11,9 @@ class CalendarEventMapper {
       startDateTime: value.startDateTime,
       endDateTime: value.endDateTime,
       isAllDay: value.isAllDay,
+      recurrenceRule: value.recurrenceRule,
+      timeZone: value.timeZone,
+      overrides: value.overrides,
     );
   }
 
@@ -23,6 +26,9 @@ class CalendarEventMapper {
       startDateTime: value.startDateTime,
       endDateTime: value.endDateTime,
       isAllDay: value.isAllDay,
+      recurrenceRule: value.recurrenceRule,
+      timeZone: value.timeZone,
+      overrides: value.overrides,
     );
   }
 }

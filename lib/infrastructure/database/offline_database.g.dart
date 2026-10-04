@@ -5431,6 +5431,28 @@ class CalendarEvents extends Table
     requiredDuringInsert: true,
     $customConstraints: 'NOT NULL CHECK (is_all_day IN (0, 1))',
   );
+  static const VerificationMeta _recurrenceRuleMeta = const VerificationMeta(
+    'recurrenceRule',
+  );
+  late final GeneratedColumn<String> recurrenceRule = GeneratedColumn<String>(
+    'recurrence_rule',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  static const VerificationMeta _timeZoneMeta = const VerificationMeta(
+    'timeZone',
+  );
+  late final GeneratedColumn<String> timeZone = GeneratedColumn<String>(
+    'time_zone',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -5440,6 +5462,8 @@ class CalendarEvents extends Table
     startDateTime,
     endDateTime,
     isAllDay,
+    recurrenceRule,
+    timeZone,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -5512,11 +5536,30 @@ class CalendarEvents extends Table
     } else if (isInserting) {
       context.missing(_isAllDayMeta);
     }
+    if (data.containsKey('recurrence_rule')) {
+      context.handle(
+        _recurrenceRuleMeta,
+        recurrenceRule.isAcceptableOrUnknown(
+          data['recurrence_rule']!,
+          _recurrenceRuleMeta,
+        ),
+      );
+    }
+    if (data.containsKey('time_zone')) {
+      context.handle(
+        _timeZoneMeta,
+        timeZone.isAcceptableOrUnknown(data['time_zone']!, _timeZoneMeta),
+      );
+    }
     return context;
   }
 
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {id, groupId},
+  ];
   @override
   SqliteCalendarEventRow map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -5549,6 +5592,14 @@ class CalendarEvents extends Table
         DriftSqlType.int,
         data['${effectivePrefix}is_all_day'],
       )!,
+      recurrenceRule: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}recurrence_rule'],
+      ),
+      timeZone: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}time_zone'],
+      ),
     );
   }
 
@@ -5559,6 +5610,9 @@ class CalendarEvents extends Table
 
   @override
   List<String> get customConstraints => const [
+    'UNIQUE(id, group_id)',
+    'CHECK(recurrence_rule IS NOT NULL OR time_zone IS NULL)',
+    'CHECK(recurrence_rule IS NULL OR is_all_day = 1 OR length(trim(time_zone)) > 0)',
     'FOREIGN KEY(label_id, group_id)REFERENCES calendar_labels(id, group_id)ON DELETE NO ACTION',
   ];
   @override
@@ -5574,6 +5628,8 @@ class SqliteCalendarEventRow extends DataClass
   final int startDateTime;
   final int endDateTime;
   final int isAllDay;
+  final String? recurrenceRule;
+  final String? timeZone;
   const SqliteCalendarEventRow({
     required this.id,
     required this.groupId,
@@ -5582,6 +5638,8 @@ class SqliteCalendarEventRow extends DataClass
     required this.startDateTime,
     required this.endDateTime,
     required this.isAllDay,
+    this.recurrenceRule,
+    this.timeZone,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -5593,6 +5651,12 @@ class SqliteCalendarEventRow extends DataClass
     map['start_date_time'] = Variable<int>(startDateTime);
     map['end_date_time'] = Variable<int>(endDateTime);
     map['is_all_day'] = Variable<int>(isAllDay);
+    if (!nullToAbsent || recurrenceRule != null) {
+      map['recurrence_rule'] = Variable<String>(recurrenceRule);
+    }
+    if (!nullToAbsent || timeZone != null) {
+      map['time_zone'] = Variable<String>(timeZone);
+    }
     return map;
   }
 
@@ -5605,6 +5669,12 @@ class SqliteCalendarEventRow extends DataClass
       startDateTime: Value(startDateTime),
       endDateTime: Value(endDateTime),
       isAllDay: Value(isAllDay),
+      recurrenceRule: recurrenceRule == null && nullToAbsent
+          ? const Value.absent()
+          : Value(recurrenceRule),
+      timeZone: timeZone == null && nullToAbsent
+          ? const Value.absent()
+          : Value(timeZone),
     );
   }
 
@@ -5621,6 +5691,8 @@ class SqliteCalendarEventRow extends DataClass
       startDateTime: serializer.fromJson<int>(json['start_date_time']),
       endDateTime: serializer.fromJson<int>(json['end_date_time']),
       isAllDay: serializer.fromJson<int>(json['is_all_day']),
+      recurrenceRule: serializer.fromJson<String?>(json['recurrence_rule']),
+      timeZone: serializer.fromJson<String?>(json['time_zone']),
     );
   }
   @override
@@ -5634,6 +5706,8 @@ class SqliteCalendarEventRow extends DataClass
       'start_date_time': serializer.toJson<int>(startDateTime),
       'end_date_time': serializer.toJson<int>(endDateTime),
       'is_all_day': serializer.toJson<int>(isAllDay),
+      'recurrence_rule': serializer.toJson<String?>(recurrenceRule),
+      'time_zone': serializer.toJson<String?>(timeZone),
     };
   }
 
@@ -5645,6 +5719,8 @@ class SqliteCalendarEventRow extends DataClass
     int? startDateTime,
     int? endDateTime,
     int? isAllDay,
+    Value<String?> recurrenceRule = const Value.absent(),
+    Value<String?> timeZone = const Value.absent(),
   }) => SqliteCalendarEventRow(
     id: id ?? this.id,
     groupId: groupId ?? this.groupId,
@@ -5653,6 +5729,10 @@ class SqliteCalendarEventRow extends DataClass
     startDateTime: startDateTime ?? this.startDateTime,
     endDateTime: endDateTime ?? this.endDateTime,
     isAllDay: isAllDay ?? this.isAllDay,
+    recurrenceRule: recurrenceRule.present
+        ? recurrenceRule.value
+        : this.recurrenceRule,
+    timeZone: timeZone.present ? timeZone.value : this.timeZone,
   );
   SqliteCalendarEventRow copyWithCompanion(CalendarEventsCompanion data) {
     return SqliteCalendarEventRow(
@@ -5667,6 +5747,10 @@ class SqliteCalendarEventRow extends DataClass
           ? data.endDateTime.value
           : this.endDateTime,
       isAllDay: data.isAllDay.present ? data.isAllDay.value : this.isAllDay,
+      recurrenceRule: data.recurrenceRule.present
+          ? data.recurrenceRule.value
+          : this.recurrenceRule,
+      timeZone: data.timeZone.present ? data.timeZone.value : this.timeZone,
     );
   }
 
@@ -5679,7 +5763,9 @@ class SqliteCalendarEventRow extends DataClass
           ..write('title: $title, ')
           ..write('startDateTime: $startDateTime, ')
           ..write('endDateTime: $endDateTime, ')
-          ..write('isAllDay: $isAllDay')
+          ..write('isAllDay: $isAllDay, ')
+          ..write('recurrenceRule: $recurrenceRule, ')
+          ..write('timeZone: $timeZone')
           ..write(')'))
         .toString();
   }
@@ -5693,6 +5779,8 @@ class SqliteCalendarEventRow extends DataClass
     startDateTime,
     endDateTime,
     isAllDay,
+    recurrenceRule,
+    timeZone,
   );
   @override
   bool operator ==(Object other) =>
@@ -5704,7 +5792,9 @@ class SqliteCalendarEventRow extends DataClass
           other.title == this.title &&
           other.startDateTime == this.startDateTime &&
           other.endDateTime == this.endDateTime &&
-          other.isAllDay == this.isAllDay);
+          other.isAllDay == this.isAllDay &&
+          other.recurrenceRule == this.recurrenceRule &&
+          other.timeZone == this.timeZone);
 }
 
 class CalendarEventsCompanion extends UpdateCompanion<SqliteCalendarEventRow> {
@@ -5715,6 +5805,8 @@ class CalendarEventsCompanion extends UpdateCompanion<SqliteCalendarEventRow> {
   final Value<int> startDateTime;
   final Value<int> endDateTime;
   final Value<int> isAllDay;
+  final Value<String?> recurrenceRule;
+  final Value<String?> timeZone;
   final Value<int> rowid;
   const CalendarEventsCompanion({
     this.id = const Value.absent(),
@@ -5724,6 +5816,8 @@ class CalendarEventsCompanion extends UpdateCompanion<SqliteCalendarEventRow> {
     this.startDateTime = const Value.absent(),
     this.endDateTime = const Value.absent(),
     this.isAllDay = const Value.absent(),
+    this.recurrenceRule = const Value.absent(),
+    this.timeZone = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   CalendarEventsCompanion.insert({
@@ -5734,6 +5828,8 @@ class CalendarEventsCompanion extends UpdateCompanion<SqliteCalendarEventRow> {
     required int startDateTime,
     required int endDateTime,
     required int isAllDay,
+    this.recurrenceRule = const Value.absent(),
+    this.timeZone = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        groupId = Value(groupId),
@@ -5750,6 +5846,8 @@ class CalendarEventsCompanion extends UpdateCompanion<SqliteCalendarEventRow> {
     Expression<int>? startDateTime,
     Expression<int>? endDateTime,
     Expression<int>? isAllDay,
+    Expression<String>? recurrenceRule,
+    Expression<String>? timeZone,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -5760,6 +5858,8 @@ class CalendarEventsCompanion extends UpdateCompanion<SqliteCalendarEventRow> {
       if (startDateTime != null) 'start_date_time': startDateTime,
       if (endDateTime != null) 'end_date_time': endDateTime,
       if (isAllDay != null) 'is_all_day': isAllDay,
+      if (recurrenceRule != null) 'recurrence_rule': recurrenceRule,
+      if (timeZone != null) 'time_zone': timeZone,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -5772,6 +5872,8 @@ class CalendarEventsCompanion extends UpdateCompanion<SqliteCalendarEventRow> {
     Value<int>? startDateTime,
     Value<int>? endDateTime,
     Value<int>? isAllDay,
+    Value<String?>? recurrenceRule,
+    Value<String?>? timeZone,
     Value<int>? rowid,
   }) {
     return CalendarEventsCompanion(
@@ -5782,6 +5884,8 @@ class CalendarEventsCompanion extends UpdateCompanion<SqliteCalendarEventRow> {
       startDateTime: startDateTime ?? this.startDateTime,
       endDateTime: endDateTime ?? this.endDateTime,
       isAllDay: isAllDay ?? this.isAllDay,
+      recurrenceRule: recurrenceRule ?? this.recurrenceRule,
+      timeZone: timeZone ?? this.timeZone,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -5810,6 +5914,12 @@ class CalendarEventsCompanion extends UpdateCompanion<SqliteCalendarEventRow> {
     if (isAllDay.present) {
       map['is_all_day'] = Variable<int>(isAllDay.value);
     }
+    if (recurrenceRule.present) {
+      map['recurrence_rule'] = Variable<String>(recurrenceRule.value);
+    }
+    if (timeZone.present) {
+      map['time_zone'] = Variable<String>(timeZone.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -5826,6 +5936,620 @@ class CalendarEventsCompanion extends UpdateCompanion<SqliteCalendarEventRow> {
           ..write('startDateTime: $startDateTime, ')
           ..write('endDateTime: $endDateTime, ')
           ..write('isAllDay: $isAllDay, ')
+          ..write('recurrenceRule: $recurrenceRule, ')
+          ..write('timeZone: $timeZone, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class CalendarEventOverrides extends Table
+    with TableInfo<CalendarEventOverrides, SqliteCalendarEventOverrideRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  CalendarEventOverrides(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _eventIdMeta = const VerificationMeta(
+    'eventId',
+  );
+  late final GeneratedColumn<String> eventId = GeneratedColumn<String>(
+    'event_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _groupIdMeta = const VerificationMeta(
+    'groupId',
+  );
+  late final GeneratedColumn<String> groupId = GeneratedColumn<String>(
+    'group_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _originalStartDateTimeMeta =
+      const VerificationMeta('originalStartDateTime');
+  late final GeneratedColumn<int> originalStartDateTime = GeneratedColumn<int>(
+    'original_start_date_time',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _isCancelledMeta = const VerificationMeta(
+    'isCancelled',
+  );
+  late final GeneratedColumn<int> isCancelled = GeneratedColumn<int>(
+    'is_cancelled',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL CHECK (is_cancelled IN (0, 1))',
+  );
+  static const VerificationMeta _titleMeta = const VerificationMeta('title');
+  late final GeneratedColumn<String> title = GeneratedColumn<String>(
+    'title',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  static const VerificationMeta _startDateTimeMeta = const VerificationMeta(
+    'startDateTime',
+  );
+  late final GeneratedColumn<int> startDateTime = GeneratedColumn<int>(
+    'start_date_time',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  static const VerificationMeta _endDateTimeMeta = const VerificationMeta(
+    'endDateTime',
+  );
+  late final GeneratedColumn<int> endDateTime = GeneratedColumn<int>(
+    'end_date_time',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  static const VerificationMeta _isAllDayMeta = const VerificationMeta(
+    'isAllDay',
+  );
+  late final GeneratedColumn<int> isAllDay = GeneratedColumn<int>(
+    'is_all_day',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    $customConstraints: 'CHECK (is_all_day IN (0, 1))',
+  );
+  static const VerificationMeta _labelIdMeta = const VerificationMeta(
+    'labelId',
+  );
+  late final GeneratedColumn<String> labelId = GeneratedColumn<String>(
+    'label_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    eventId,
+    groupId,
+    originalStartDateTime,
+    isCancelled,
+    title,
+    startDateTime,
+    endDateTime,
+    isAllDay,
+    labelId,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'calendar_event_overrides';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SqliteCalendarEventOverrideRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('event_id')) {
+      context.handle(
+        _eventIdMeta,
+        eventId.isAcceptableOrUnknown(data['event_id']!, _eventIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_eventIdMeta);
+    }
+    if (data.containsKey('group_id')) {
+      context.handle(
+        _groupIdMeta,
+        groupId.isAcceptableOrUnknown(data['group_id']!, _groupIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_groupIdMeta);
+    }
+    if (data.containsKey('original_start_date_time')) {
+      context.handle(
+        _originalStartDateTimeMeta,
+        originalStartDateTime.isAcceptableOrUnknown(
+          data['original_start_date_time']!,
+          _originalStartDateTimeMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_originalStartDateTimeMeta);
+    }
+    if (data.containsKey('is_cancelled')) {
+      context.handle(
+        _isCancelledMeta,
+        isCancelled.isAcceptableOrUnknown(
+          data['is_cancelled']!,
+          _isCancelledMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_isCancelledMeta);
+    }
+    if (data.containsKey('title')) {
+      context.handle(
+        _titleMeta,
+        title.isAcceptableOrUnknown(data['title']!, _titleMeta),
+      );
+    }
+    if (data.containsKey('start_date_time')) {
+      context.handle(
+        _startDateTimeMeta,
+        startDateTime.isAcceptableOrUnknown(
+          data['start_date_time']!,
+          _startDateTimeMeta,
+        ),
+      );
+    }
+    if (data.containsKey('end_date_time')) {
+      context.handle(
+        _endDateTimeMeta,
+        endDateTime.isAcceptableOrUnknown(
+          data['end_date_time']!,
+          _endDateTimeMeta,
+        ),
+      );
+    }
+    if (data.containsKey('is_all_day')) {
+      context.handle(
+        _isAllDayMeta,
+        isAllDay.isAcceptableOrUnknown(data['is_all_day']!, _isAllDayMeta),
+      );
+    }
+    if (data.containsKey('label_id')) {
+      context.handle(
+        _labelIdMeta,
+        labelId.isAcceptableOrUnknown(data['label_id']!, _labelIdMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {eventId, originalStartDateTime};
+  @override
+  SqliteCalendarEventOverrideRow map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SqliteCalendarEventOverrideRow(
+      eventId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}event_id'],
+      )!,
+      groupId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}group_id'],
+      )!,
+      originalStartDateTime: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}original_start_date_time'],
+      )!,
+      isCancelled: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}is_cancelled'],
+      )!,
+      title: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}title'],
+      ),
+      startDateTime: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}start_date_time'],
+      ),
+      endDateTime: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}end_date_time'],
+      ),
+      isAllDay: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}is_all_day'],
+      ),
+      labelId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}label_id'],
+      ),
+    );
+  }
+
+  @override
+  CalendarEventOverrides createAlias(String alias) {
+    return CalendarEventOverrides(attachedDatabase, alias);
+  }
+
+  @override
+  List<String> get customConstraints => const [
+    'PRIMARY KEY(event_id, original_start_date_time)',
+    'FOREIGN KEY(event_id, group_id)REFERENCES calendar_events(id, group_id)ON DELETE CASCADE',
+    'FOREIGN KEY(label_id, group_id)REFERENCES calendar_labels(id, group_id)ON DELETE NO ACTION',
+    'CHECK(is_cancelled = 1 OR(title IS NOT NULL AND length(trim(title)) > 0 AND start_date_time IS NOT NULL AND end_date_time IS NOT NULL AND end_date_time >= start_date_time AND is_all_day IS NOT NULL AND label_id IS NOT NULL))',
+  ];
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class SqliteCalendarEventOverrideRow extends DataClass
+    implements Insertable<SqliteCalendarEventOverrideRow> {
+  final String eventId;
+  final String groupId;
+  final int originalStartDateTime;
+  final int isCancelled;
+  final String? title;
+  final int? startDateTime;
+  final int? endDateTime;
+  final int? isAllDay;
+  final String? labelId;
+  const SqliteCalendarEventOverrideRow({
+    required this.eventId,
+    required this.groupId,
+    required this.originalStartDateTime,
+    required this.isCancelled,
+    this.title,
+    this.startDateTime,
+    this.endDateTime,
+    this.isAllDay,
+    this.labelId,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['event_id'] = Variable<String>(eventId);
+    map['group_id'] = Variable<String>(groupId);
+    map['original_start_date_time'] = Variable<int>(originalStartDateTime);
+    map['is_cancelled'] = Variable<int>(isCancelled);
+    if (!nullToAbsent || title != null) {
+      map['title'] = Variable<String>(title);
+    }
+    if (!nullToAbsent || startDateTime != null) {
+      map['start_date_time'] = Variable<int>(startDateTime);
+    }
+    if (!nullToAbsent || endDateTime != null) {
+      map['end_date_time'] = Variable<int>(endDateTime);
+    }
+    if (!nullToAbsent || isAllDay != null) {
+      map['is_all_day'] = Variable<int>(isAllDay);
+    }
+    if (!nullToAbsent || labelId != null) {
+      map['label_id'] = Variable<String>(labelId);
+    }
+    return map;
+  }
+
+  CalendarEventOverridesCompanion toCompanion(bool nullToAbsent) {
+    return CalendarEventOverridesCompanion(
+      eventId: Value(eventId),
+      groupId: Value(groupId),
+      originalStartDateTime: Value(originalStartDateTime),
+      isCancelled: Value(isCancelled),
+      title: title == null && nullToAbsent
+          ? const Value.absent()
+          : Value(title),
+      startDateTime: startDateTime == null && nullToAbsent
+          ? const Value.absent()
+          : Value(startDateTime),
+      endDateTime: endDateTime == null && nullToAbsent
+          ? const Value.absent()
+          : Value(endDateTime),
+      isAllDay: isAllDay == null && nullToAbsent
+          ? const Value.absent()
+          : Value(isAllDay),
+      labelId: labelId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(labelId),
+    );
+  }
+
+  factory SqliteCalendarEventOverrideRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SqliteCalendarEventOverrideRow(
+      eventId: serializer.fromJson<String>(json['event_id']),
+      groupId: serializer.fromJson<String>(json['group_id']),
+      originalStartDateTime: serializer.fromJson<int>(
+        json['original_start_date_time'],
+      ),
+      isCancelled: serializer.fromJson<int>(json['is_cancelled']),
+      title: serializer.fromJson<String?>(json['title']),
+      startDateTime: serializer.fromJson<int?>(json['start_date_time']),
+      endDateTime: serializer.fromJson<int?>(json['end_date_time']),
+      isAllDay: serializer.fromJson<int?>(json['is_all_day']),
+      labelId: serializer.fromJson<String?>(json['label_id']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'event_id': serializer.toJson<String>(eventId),
+      'group_id': serializer.toJson<String>(groupId),
+      'original_start_date_time': serializer.toJson<int>(originalStartDateTime),
+      'is_cancelled': serializer.toJson<int>(isCancelled),
+      'title': serializer.toJson<String?>(title),
+      'start_date_time': serializer.toJson<int?>(startDateTime),
+      'end_date_time': serializer.toJson<int?>(endDateTime),
+      'is_all_day': serializer.toJson<int?>(isAllDay),
+      'label_id': serializer.toJson<String?>(labelId),
+    };
+  }
+
+  SqliteCalendarEventOverrideRow copyWith({
+    String? eventId,
+    String? groupId,
+    int? originalStartDateTime,
+    int? isCancelled,
+    Value<String?> title = const Value.absent(),
+    Value<int?> startDateTime = const Value.absent(),
+    Value<int?> endDateTime = const Value.absent(),
+    Value<int?> isAllDay = const Value.absent(),
+    Value<String?> labelId = const Value.absent(),
+  }) => SqliteCalendarEventOverrideRow(
+    eventId: eventId ?? this.eventId,
+    groupId: groupId ?? this.groupId,
+    originalStartDateTime: originalStartDateTime ?? this.originalStartDateTime,
+    isCancelled: isCancelled ?? this.isCancelled,
+    title: title.present ? title.value : this.title,
+    startDateTime: startDateTime.present
+        ? startDateTime.value
+        : this.startDateTime,
+    endDateTime: endDateTime.present ? endDateTime.value : this.endDateTime,
+    isAllDay: isAllDay.present ? isAllDay.value : this.isAllDay,
+    labelId: labelId.present ? labelId.value : this.labelId,
+  );
+  SqliteCalendarEventOverrideRow copyWithCompanion(
+    CalendarEventOverridesCompanion data,
+  ) {
+    return SqliteCalendarEventOverrideRow(
+      eventId: data.eventId.present ? data.eventId.value : this.eventId,
+      groupId: data.groupId.present ? data.groupId.value : this.groupId,
+      originalStartDateTime: data.originalStartDateTime.present
+          ? data.originalStartDateTime.value
+          : this.originalStartDateTime,
+      isCancelled: data.isCancelled.present
+          ? data.isCancelled.value
+          : this.isCancelled,
+      title: data.title.present ? data.title.value : this.title,
+      startDateTime: data.startDateTime.present
+          ? data.startDateTime.value
+          : this.startDateTime,
+      endDateTime: data.endDateTime.present
+          ? data.endDateTime.value
+          : this.endDateTime,
+      isAllDay: data.isAllDay.present ? data.isAllDay.value : this.isAllDay,
+      labelId: data.labelId.present ? data.labelId.value : this.labelId,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SqliteCalendarEventOverrideRow(')
+          ..write('eventId: $eventId, ')
+          ..write('groupId: $groupId, ')
+          ..write('originalStartDateTime: $originalStartDateTime, ')
+          ..write('isCancelled: $isCancelled, ')
+          ..write('title: $title, ')
+          ..write('startDateTime: $startDateTime, ')
+          ..write('endDateTime: $endDateTime, ')
+          ..write('isAllDay: $isAllDay, ')
+          ..write('labelId: $labelId')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    eventId,
+    groupId,
+    originalStartDateTime,
+    isCancelled,
+    title,
+    startDateTime,
+    endDateTime,
+    isAllDay,
+    labelId,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SqliteCalendarEventOverrideRow &&
+          other.eventId == this.eventId &&
+          other.groupId == this.groupId &&
+          other.originalStartDateTime == this.originalStartDateTime &&
+          other.isCancelled == this.isCancelled &&
+          other.title == this.title &&
+          other.startDateTime == this.startDateTime &&
+          other.endDateTime == this.endDateTime &&
+          other.isAllDay == this.isAllDay &&
+          other.labelId == this.labelId);
+}
+
+class CalendarEventOverridesCompanion
+    extends UpdateCompanion<SqliteCalendarEventOverrideRow> {
+  final Value<String> eventId;
+  final Value<String> groupId;
+  final Value<int> originalStartDateTime;
+  final Value<int> isCancelled;
+  final Value<String?> title;
+  final Value<int?> startDateTime;
+  final Value<int?> endDateTime;
+  final Value<int?> isAllDay;
+  final Value<String?> labelId;
+  final Value<int> rowid;
+  const CalendarEventOverridesCompanion({
+    this.eventId = const Value.absent(),
+    this.groupId = const Value.absent(),
+    this.originalStartDateTime = const Value.absent(),
+    this.isCancelled = const Value.absent(),
+    this.title = const Value.absent(),
+    this.startDateTime = const Value.absent(),
+    this.endDateTime = const Value.absent(),
+    this.isAllDay = const Value.absent(),
+    this.labelId = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CalendarEventOverridesCompanion.insert({
+    required String eventId,
+    required String groupId,
+    required int originalStartDateTime,
+    required int isCancelled,
+    this.title = const Value.absent(),
+    this.startDateTime = const Value.absent(),
+    this.endDateTime = const Value.absent(),
+    this.isAllDay = const Value.absent(),
+    this.labelId = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : eventId = Value(eventId),
+       groupId = Value(groupId),
+       originalStartDateTime = Value(originalStartDateTime),
+       isCancelled = Value(isCancelled);
+  static Insertable<SqliteCalendarEventOverrideRow> custom({
+    Expression<String>? eventId,
+    Expression<String>? groupId,
+    Expression<int>? originalStartDateTime,
+    Expression<int>? isCancelled,
+    Expression<String>? title,
+    Expression<int>? startDateTime,
+    Expression<int>? endDateTime,
+    Expression<int>? isAllDay,
+    Expression<String>? labelId,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (eventId != null) 'event_id': eventId,
+      if (groupId != null) 'group_id': groupId,
+      if (originalStartDateTime != null)
+        'original_start_date_time': originalStartDateTime,
+      if (isCancelled != null) 'is_cancelled': isCancelled,
+      if (title != null) 'title': title,
+      if (startDateTime != null) 'start_date_time': startDateTime,
+      if (endDateTime != null) 'end_date_time': endDateTime,
+      if (isAllDay != null) 'is_all_day': isAllDay,
+      if (labelId != null) 'label_id': labelId,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CalendarEventOverridesCompanion copyWith({
+    Value<String>? eventId,
+    Value<String>? groupId,
+    Value<int>? originalStartDateTime,
+    Value<int>? isCancelled,
+    Value<String?>? title,
+    Value<int?>? startDateTime,
+    Value<int?>? endDateTime,
+    Value<int?>? isAllDay,
+    Value<String?>? labelId,
+    Value<int>? rowid,
+  }) {
+    return CalendarEventOverridesCompanion(
+      eventId: eventId ?? this.eventId,
+      groupId: groupId ?? this.groupId,
+      originalStartDateTime:
+          originalStartDateTime ?? this.originalStartDateTime,
+      isCancelled: isCancelled ?? this.isCancelled,
+      title: title ?? this.title,
+      startDateTime: startDateTime ?? this.startDateTime,
+      endDateTime: endDateTime ?? this.endDateTime,
+      isAllDay: isAllDay ?? this.isAllDay,
+      labelId: labelId ?? this.labelId,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (eventId.present) {
+      map['event_id'] = Variable<String>(eventId.value);
+    }
+    if (groupId.present) {
+      map['group_id'] = Variable<String>(groupId.value);
+    }
+    if (originalStartDateTime.present) {
+      map['original_start_date_time'] = Variable<int>(
+        originalStartDateTime.value,
+      );
+    }
+    if (isCancelled.present) {
+      map['is_cancelled'] = Variable<int>(isCancelled.value);
+    }
+    if (title.present) {
+      map['title'] = Variable<String>(title.value);
+    }
+    if (startDateTime.present) {
+      map['start_date_time'] = Variable<int>(startDateTime.value);
+    }
+    if (endDateTime.present) {
+      map['end_date_time'] = Variable<int>(endDateTime.value);
+    }
+    if (isAllDay.present) {
+      map['is_all_day'] = Variable<int>(isAllDay.value);
+    }
+    if (labelId.present) {
+      map['label_id'] = Variable<String>(labelId.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CalendarEventOverridesCompanion(')
+          ..write('eventId: $eventId, ')
+          ..write('groupId: $groupId, ')
+          ..write('originalStartDateTime: $originalStartDateTime, ')
+          ..write('isCancelled: $isCancelled, ')
+          ..write('title: $title, ')
+          ..write('startDateTime: $startDateTime, ')
+          ..write('endDateTime: $endDateTime, ')
+          ..write('isAllDay: $isAllDay, ')
+          ..write('labelId: $labelId, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -5911,6 +6635,16 @@ abstract class _$OfflineDatabase extends GeneratedDatabase {
     'calendar_events_label_idx',
     'CREATE INDEX calendar_events_label_idx ON calendar_events (label_id)',
   );
+  late final CalendarEventOverrides calendarEventOverrides =
+      CalendarEventOverrides(this);
+  late final Index calendarOverridesLabelIdx = Index(
+    'calendar_overrides_label_idx',
+    'CREATE INDEX calendar_overrides_label_idx ON calendar_event_overrides (label_id)',
+  );
+  late final Index calendarOverridesGroupStartIdx = Index(
+    'calendar_overrides_group_start_idx',
+    'CREATE INDEX calendar_overrides_group_start_idx ON calendar_event_overrides (group_id, start_date_time)',
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -5945,6 +6679,9 @@ abstract class _$OfflineDatabase extends GeneratedDatabase {
     calendarEvents,
     calendarEventsGroupStartIdx,
     calendarEventsLabelIdx,
+    calendarEventOverrides,
+    calendarOverridesLabelIdx,
+    calendarOverridesGroupStartIdx,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -6038,6 +6775,15 @@ abstract class _$OfflineDatabase extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('calendar_events', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'calendar_events',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [
+        TableUpdate('calendar_event_overrides', kind: UpdateKind.delete),
+      ],
     ),
   ]);
 }

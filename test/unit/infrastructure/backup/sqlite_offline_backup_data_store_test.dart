@@ -88,6 +88,86 @@ void main() {
     expect(await syncStorage.isPending(), isTrue);
   });
 
+  test('繰り返しルールと取消しを復元後も保持する', () async {
+    await db.insertRow('calendar_labels', {
+      'id': 'label',
+      'group_id': 'group-1',
+      'name': '全員',
+      'color': '#123ABC',
+    });
+    await db.insertRow('calendar_events', {
+      'id': 'series',
+      'group_id': 'group-1',
+      'label_id': 'label',
+      'title': '予定',
+      'start_date_time': 1,
+      'end_date_time': 2,
+      'is_all_day': 0,
+      'recurrence_rule': 'FREQ=DAILY;COUNT=3',
+      'time_zone': 'Asia/Tokyo',
+    });
+    await db.insertRow('calendar_event_overrides', {
+      'event_id': 'series',
+      'group_id': 'group-1',
+      'original_start_date_time': 86400000001,
+      'is_cancelled': 1,
+    });
+    final snapshot = await dataStore.exportSnapshot();
+    await db.deleteRows('groups', 'id', 'group-1');
+    await dataStore.restoreSnapshot(snapshot);
+    expect(
+      (await db.rows('calendar_events')).single['recurrence_rule'],
+      'FREQ=DAILY;COUNT=3',
+    );
+    expect(
+      (await db.rows('calendar_event_overrides')).single['is_cancelled'],
+      1,
+    );
+  });
+
+  test('不正な繰り返しルールと親のない上書きは復元確認前に拒否する', () async {
+    final original = await dataStore.exportSnapshot();
+    final tables = {...original.tables};
+    tables['calendar_events'] = [
+      {
+        'id': 'invalid',
+        'group_id': 'group-1',
+        'label_id': 'label',
+        'title': '予定',
+        'start_date_time': 1,
+        'end_date_time': 2,
+        'is_all_day': 1,
+        'recurrence_rule': 'FREQ=DAILY;COUNT=0',
+        'time_zone': null,
+      },
+    ];
+    final invalid = OfflineBackupSnapshot(
+      formatVersion: original.formatVersion,
+      databaseSchemaVersion: db.schemaVersion,
+      currentMember: original.currentMember,
+      settings: original.settings,
+      tables: tables,
+    );
+    expect(
+      () => dataStore.validateSnapshot(invalid),
+      throwsA(isA<Exception>()),
+    );
+    tables['calendar_events'] = [];
+    tables['calendar_event_overrides'] = [
+      {
+        'event_id': 'missing',
+        'group_id': 'group-1',
+        'original_start_date_time': 1,
+        'is_cancelled': 1,
+      },
+    ];
+    expect(
+      () => dataStore.validateSnapshot(invalid),
+      throwsA(isA<Exception>()),
+    );
+    expect((await db.rows('groups')).single['name'], '家族');
+  });
+
   test('予定と色ラベルをバックアップして参照を保ったまま復元する', () async {
     await db.insertRow('calendar_labels', {
       'id': 'label',

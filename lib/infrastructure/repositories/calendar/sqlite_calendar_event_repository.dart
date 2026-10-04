@@ -1,3 +1,5 @@
+import 'package:memora/infrastructure/mappers/calendar/calendar_override_mapper.dart';
+import 'package:memora/infrastructure/services/validate_calendar_recurrence.dart';
 import 'package:uuid/uuid.dart';
 import 'package:memora/domain/entities/calendar/calendar_event.dart';
 import 'package:memora/domain/exceptions/validation_exception.dart';
@@ -10,12 +12,18 @@ class SqliteCalendarEventRepository implements CalendarEventRepository {
   final OfflineDatabase db;
 
   Future<void> _validateLabel(CalendarEvent event) async {
-    final labels = await db.rows(
-      'calendar_labels',
-      where: 'id = ? AND group_id = ?',
-      args: [event.labelId, event.groupId],
-    );
-    if (labels.isEmpty) throw ValidationException('同じグループの色ラベルを指定してください');
+    validateCalendarRecurrence(event);
+    for (final id in {
+      event.labelId,
+      ...event.overrides.where((v) => !v.isCancelled).map((v) => v.labelId!),
+    }) {
+      final labels = await db.rows(
+        'calendar_labels',
+        where: 'id = ? AND group_id = ?',
+        args: [id, event.groupId],
+      );
+      if (labels.isEmpty) throw ValidationException('同じグループの色ラベルを指定してください');
+    }
   }
 
   @override
@@ -27,6 +35,7 @@ class SqliteCalendarEventRepository implements CalendarEventRepository {
           'calendar_events',
           SqliteCalendarEventMapper.toRow(event.copyWith(id: id)),
         );
+        await _saveOverrides(event.copyWith(id: id));
         return id;
       });
 
@@ -47,7 +56,23 @@ class SqliteCalendarEventRepository implements CalendarEventRepository {
           event.id,
           SqliteCalendarEventMapper.toRow(event),
         );
+        await _saveOverrides(event);
       });
+
+  Future<void> _saveOverrides(CalendarEvent event) async {
+    await db.deleteRows('calendar_event_overrides', 'event_id', event.id);
+    for (final value in event.overrides) {
+      await db.insertRow(
+        'calendar_event_overrides',
+        CalendarOverrideMapper.toRow(
+          value,
+          event.id,
+          event.groupId,
+          event.isAllDay,
+        ),
+      );
+    }
+  }
 
   @override
   Future<void> deleteCalendarEvent(String eventId) =>
