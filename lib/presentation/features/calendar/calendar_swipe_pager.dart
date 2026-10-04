@@ -30,15 +30,22 @@ class _CalendarSwipePagerState extends State<CalendarSwipePager> {
     onPointerCancel: _swipeController.onPointerCancel,
     child: NotificationListener<ScrollNotification>(
       onNotification: _swipeController.onScrollNotification,
-      child: PageView.builder(
-        controller: widget.controller,
-        pageSnapping: false,
-        physics: _CalendarPageScrollPhysics(
-          targetPage: () => _swipeController.targetPage,
+      child: LayoutBuilder(
+        builder: (context, constraints) => Align(
+          child: SizedBox(
+            width: constraints.maxWidth.floorToDouble(),
+            child: PageView.builder(
+              controller: widget.controller,
+              pageSnapping: false,
+              physics: _CalendarPageScrollPhysics(
+                targetPage: () => _swipeController.targetPage,
+              ),
+              itemCount: widget.itemCount,
+              onPageChanged: widget.onPageChanged,
+              itemBuilder: widget.itemBuilder,
+            ),
+          ),
         ),
-        itemCount: widget.itemCount,
-        onPageChanged: widget.onPageChanged,
-        itemBuilder: widget.itemBuilder,
       ),
     ),
   );
