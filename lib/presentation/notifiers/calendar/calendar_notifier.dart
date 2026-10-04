@@ -152,7 +152,11 @@ class CalendarNotifier extends _$CalendarNotifier {
     )) {
       throw const ApplicationValidationException('削除する色ラベルが見つかりません');
     }
-    if (state.events.any((event) => event.labelId == id)) {
+    if (_series.any(
+      (event) =>
+          event.labelId == id ||
+          event.overrides.any((v) => !v.isCancelled && v.labelId == id),
+    )) {
       throw const ApplicationValidationException('予定で使用中の色ラベルは削除できません');
     }
     await ref.read(deleteCalendarLabelUsecaseProvider).execute(id);
