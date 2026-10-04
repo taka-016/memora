@@ -1,3 +1,5 @@
+import 'package:memora/application/services/calendar/calendar_recurrence_expander.dart';
+import 'package:memora/infrastructure/services/iana_calendar_time_zone.dart';
 import 'package:memora/application/usecases/calendar/reorder_calendar_labels_usecase.dart';
 import 'package:memora/application/services/calendar_default_duration_storage.dart';
 import 'package:memora/infrastructure/services/shared_preferences_calendar_default_duration_storage.dart';
@@ -57,3 +59,7 @@ final reorderCalendarLabelsUsecaseProvider =
         ref.watch(calendarLabelRepositoryProvider),
       ),
     );
+
+final calendarRecurrenceExpanderProvider = Provider<CalendarRecurrenceExpander>(
+  (ref) => CalendarRecurrenceExpander(IanaCalendarTimeZone()),
+);

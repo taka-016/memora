@@ -11,6 +11,7 @@ part 'calendar_notifier.g.dart';
 @riverpod
 class CalendarNotifier extends _$CalendarNotifier {
   int _loadVersion = 0;
+  List<CalendarEventDto> _series = const [];
 
   @override
   CalendarState build(String groupId) {
@@ -21,7 +22,15 @@ class CalendarNotifier extends _$CalendarNotifier {
   void selectDate(DateTime day) {
     state = state.copyWith(
       selectedDate: DateTime(day.year, day.month, day.day),
+      events: _expand(_series, day),
     );
+  }
+
+  List<CalendarEventDto> _expand(List<CalendarEventDto> series, DateTime day) {
+    final from = DateTime(day.year, day.month, -6);
+    final to = DateTime(day.year, day.month + 1, 8);
+    final expander = ref.read(calendarRecurrenceExpanderProvider);
+    return series.expand((event) => expander.expand(event, from, to)).toList();
   }
 
   Future<void> load() async {
@@ -33,8 +42,11 @@ class CalendarNotifier extends _$CalendarNotifier {
         ref.read(getCalendarLabelsUsecaseProvider).execute(groupId),
       ]);
       if (!ref.mounted || version != _loadVersion) return;
+      final series = results[0] as List<CalendarEventDto>;
+      final expanded = _expand(series, state.selectedDate);
+      _series = series;
       state = state.copyWith(
-        events: results[0] as List<CalendarEventDto>,
+        events: expanded,
         labels: results[1] as List<CalendarLabelDto>,
         isLoading: false,
       );
@@ -70,6 +82,10 @@ class CalendarNotifier extends _$CalendarNotifier {
   }
 
   Future<bool> saveEvent(CalendarEventDto event) => _mutate(() async {
+    if (event.originalStartDateTime != null ||
+        _series.any((v) => v.id == event.id && v.recurrenceRule != null)) {
+      throw const ApplicationValidationException('繰り返し予定の変更はまだ利用できません');
+    }
     if (event.groupId != groupId ||
         !state.labels.any(
           (label) => label.id == event.labelId && label.groupId == groupId,
@@ -84,6 +100,9 @@ class CalendarNotifier extends _$CalendarNotifier {
   });
 
   Future<bool> deleteEvent(String id) => _mutate(() async {
+    if (_series.any((v) => v.id == id && v.recurrenceRule != null)) {
+      throw const ApplicationValidationException('繰り返し予定の削除はまだ利用できません');
+    }
     if (!state.events.any(
       (event) => event.id == id && event.groupId == groupId,
     )) {
@@ -133,7 +152,11 @@ class CalendarNotifier extends _$CalendarNotifier {
     )) {
       throw const ApplicationValidationException('削除する色ラベルが見つかりません');
     }
-    if (state.events.any((event) => event.labelId == id)) {
+    if (_series.any(
+      (event) =>
+          event.labelId == id ||
+          event.overrides.any((v) => !v.isCancelled && v.labelId == id),
+    )) {
       throw const ApplicationValidationException('予定で使用中の色ラベルは削除できません');
     }
     await ref.read(deleteCalendarLabelUsecaseProvider).execute(id);

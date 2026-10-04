@@ -1,3 +1,5 @@
+import 'package:memora/domain/entities/calendar/calendar_event_override.dart';
+import 'package:memora/infrastructure/mappers/calendar/firestore_calendar_event_mapper.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:memora/infrastructure/factories/auth_service_factory.dart';
@@ -139,6 +141,82 @@ void main() {
     endDateTime: DateTime.utc(2026, 10, 3),
     isAllDay: false,
   );
+
+  test('Firestoreでは系列と個別回と各ラベルの参照を同時に保存する', () async {
+    final value = event().copyWith(
+      recurrenceRule: 'FREQ=DAILY;COUNT=3',
+      timeZone: 'Asia/Tokyo',
+      overrides: [
+        CalendarEventOverride(
+          originalStartDateTime: event().startDateTime.add(
+            const Duration(days: 1),
+          ),
+          isCancelled: false,
+          title: '移動',
+          startDateTime: DateTime.utc(2026, 11, 2),
+          endDateTime: DateTime.utc(2026, 11, 3),
+          isAllDay: true,
+          labelId: 'other',
+        ),
+      ],
+    );
+    await events.saveCalendarEvent(value);
+    final data =
+        verify(transaction.set(eventRef, captureAny)).captured.single
+            as Map<String, dynamic>;
+    when(eventDoc.id).thenReturn('event');
+    when(eventDoc.data()).thenReturn(data);
+    final saved = FirestoreCalendarEventMapper.fromFirestore(eventDoc);
+    expect(saved.recurrenceRule, value.recurrenceRule);
+    expect(saved.timeZone, 'Asia/Tokyo');
+    expect(saved.overrides, value.overrides);
+    verify(transaction.update(otherRef, argThat(containsPair('eventCount', 2))))
+        .called(1);
+  });
+
+  test('変更前後の参照ラベルが読み取り上限を超える更新は保存前に説明して拒否する', () async {
+    final collection = firestore.collection('calendar_labels');
+    for (final id in ['old', 'new1', 'new2']) {
+      final ref = MockDocumentReference();
+      when(collection.doc(id)).thenReturn(ref);
+      when(transaction.get(ref)).thenAnswer((_) async => labelDoc);
+    }
+    when(eventDoc.data()).thenReturn({
+      'groupId': 'group',
+      'labelId': 'label',
+      'referencedLabelIds': ['label', 'other', 'old'],
+    });
+    final value = event(id: 'event').copyWith(
+      labelId: 'other',
+      recurrenceRule: 'FREQ=DAILY;COUNT=3',
+      timeZone: 'Asia/Tokyo',
+      overrides: [
+        for (var day = 1; day <= 2; day++)
+          CalendarEventOverride(
+            originalStartDateTime: event().startDateTime.add(
+              Duration(days: day),
+            ),
+            isCancelled: false,
+            title: '変更',
+            startDateTime: event().startDateTime,
+            endDateTime: event().endDateTime,
+            isAllDay: false,
+            labelId: 'new$day',
+          ),
+      ],
+    );
+    await expectLater(
+      events.updateCalendarEvent(value),
+      throwsA(
+        isA<ValidationException>().having(
+          (e) => e.message,
+          '変更前後の上限説明',
+          contains('変更前後'),
+        ),
+      ),
+    );
+    verifyNever(transaction.update(any, any));
+  });
 
   test('予定の新規保存は同じグループのラベルを検証し参照数と予定を同時に保存する', () async {
     final id = await events.saveCalendarEvent(event());

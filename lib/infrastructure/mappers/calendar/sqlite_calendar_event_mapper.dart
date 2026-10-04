@@ -1,8 +1,15 @@
+import 'package:memora/domain/entities/calendar/calendar_event_override.dart';
 import 'package:memora/domain/entities/calendar/calendar_event.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 
 class SqliteCalendarEventMapper {
-  static CalendarEventDto fromRow(Map<String, Object?> row) => CalendarEventDto(
+  static CalendarEventDto fromRow(
+    Map<String, Object?> row, {
+    List<CalendarEventOverride> overrides = const [],
+  }) => CalendarEventDto(
+    recurrenceRule: row['recurrence_rule'] as String?,
+    timeZone: row['time_zone'] as String?,
+    overrides: overrides,
     id: row['id'] as String,
     groupId: row['group_id'] as String,
     labelId: row['label_id'] as String,
@@ -18,6 +25,8 @@ class SqliteCalendarEventMapper {
     isAllDay: row['is_all_day'] == 1,
   );
   static Map<String, Object?> toRow(CalendarEvent value) => {
+    'recurrence_rule': value.recurrenceRule,
+    'time_zone': value.timeZone,
     'id': value.id,
     'group_id': value.groupId,
     'label_id': value.labelId,

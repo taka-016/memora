@@ -1,3 +1,4 @@
+import 'package:memora/domain/entities/calendar/calendar_event_override.dart';
 import 'package:equatable/equatable.dart';
 
 class CalendarEventDto extends Equatable {
@@ -9,6 +10,10 @@ class CalendarEventDto extends Equatable {
     required this.startDateTime,
     required this.endDateTime,
     required this.isAllDay,
+    this.recurrenceRule,
+    this.timeZone,
+    this.overrides = const [],
+    this.originalStartDateTime,
   });
 
   final String id;
@@ -18,6 +23,10 @@ class CalendarEventDto extends Equatable {
   final DateTime startDateTime;
   final DateTime endDateTime;
   final bool isAllDay;
+  final String? recurrenceRule;
+  final String? timeZone;
+  final List<CalendarEventOverride> overrides;
+  final DateTime? originalStartDateTime;
 
   CalendarEventDto copyWith({
     String? id,
@@ -27,6 +36,10 @@ class CalendarEventDto extends Equatable {
     DateTime? startDateTime,
     DateTime? endDateTime,
     bool? isAllDay,
+    String? recurrenceRule,
+    String? timeZone,
+    List<CalendarEventOverride>? overrides,
+    DateTime? originalStartDateTime,
   }) {
     return CalendarEventDto(
       id: id ?? this.id,
@@ -36,6 +49,11 @@ class CalendarEventDto extends Equatable {
       startDateTime: startDateTime ?? this.startDateTime,
       endDateTime: endDateTime ?? this.endDateTime,
       isAllDay: isAllDay ?? this.isAllDay,
+      recurrenceRule: recurrenceRule ?? this.recurrenceRule,
+      timeZone: timeZone ?? this.timeZone,
+      overrides: overrides ?? this.overrides,
+      originalStartDateTime:
+          originalStartDateTime ?? this.originalStartDateTime,
     );
   }
 
@@ -48,5 +66,9 @@ class CalendarEventDto extends Equatable {
     startDateTime,
     endDateTime,
     isAllDay,
+    recurrenceRule,
+    timeZone,
+    overrides,
+    originalStartDateTime,
   ];
 }

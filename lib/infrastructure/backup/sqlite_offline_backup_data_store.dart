@@ -1,3 +1,7 @@
+import 'package:memora/application/mappers/calendar/calendar_event_mapper.dart';
+import 'package:memora/infrastructure/mappers/calendar/sqlite_calendar_event_mapper.dart';
+import 'package:memora/infrastructure/mappers/calendar/calendar_override_mapper.dart';
+import 'package:memora/infrastructure/services/validate_calendar_recurrence.dart';
 import 'package:memora/application/dtos/android_widget/android_widget_update_interval.dart';
 import 'package:memora/application/models/offline_backup_snapshot.dart';
 import 'package:memora/application/services/offline_backup_current_member_storage.dart';
@@ -23,6 +27,7 @@ class SqliteOfflineBackupDataStore implements OfflineBackupDataStore {
   final OfflineBackupRestoreSyncStorage restoreSyncStorage;
 
   static const _deleteOrder = <String>[
+    'calendar_event_overrides',
     'calendar_events',
     'calendar_labels',
     'tasks',
@@ -43,6 +48,7 @@ class SqliteOfflineBackupDataStore implements OfflineBackupDataStore {
     'groups',
     'calendar_labels',
     'calendar_events',
+    'calendar_event_overrides',
     'group_members',
     'trip_entries',
     'tasks',
@@ -159,6 +165,43 @@ class SqliteOfflineBackupDataStore implements OfflineBackupDataStore {
     if (snapshot.tables.keys.toSet().difference(expectedTables).isNotEmpty ||
         expectedTables.difference(snapshot.tables.keys.toSet()).isNotEmpty) {
       throw const FormatException('バックアップのテーブル構成が不正です。');
+    }
+    final events = snapshot.tables['calendar_events']!;
+    final overrides = snapshot.tables['calendar_event_overrides']!;
+    final labels = snapshot.tables['calendar_labels']!;
+    for (final override in overrides) {
+      if (!events.any(
+        (event) =>
+            event['id'] == override['event_id'] &&
+            event['group_id'] == override['group_id'] &&
+            event['recurrence_rule'] != null,
+      )) {
+        throw const FormatException('上書き対象の系列が存在しません。');
+      }
+    }
+    for (final row in events) {
+      final dto = SqliteCalendarEventMapper.fromRow(
+        row,
+        overrides: overrides
+            .where((v) => v['event_id'] == row['id'])
+            .map(
+              (v) => CalendarOverrideMapper.fromRow(v, row['is_all_day'] == 1),
+            )
+            .toList(),
+      );
+      final event = CalendarEventMapper.toEntity(dto);
+      validateCalendarRecurrence(event);
+      for (final labelId in {
+        event.labelId,
+        ...event.overrides.where((v) => !v.isCancelled).map((v) => v.labelId!),
+      }) {
+        if (!labels.any(
+          (label) =>
+              label['id'] == labelId && label['group_id'] == event.groupId,
+        )) {
+          throw const FormatException('予定の色ラベルが不正です。');
+        }
+      }
     }
     final memberExists = snapshot.tables['members']!.any(
       (row) =>
