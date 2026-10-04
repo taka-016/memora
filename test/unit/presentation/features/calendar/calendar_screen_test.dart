@@ -482,9 +482,9 @@ void main() {
     final harness = _CalendarHarness();
     await harness.pump(tester);
     final lastDay = find.byKey(const Key('calendar_day_2026_10_31'));
-    await tester.tap(lastDay);
+    await tester.tapAt(tester.getTopLeft(lastDay) + const Offset(8, 8));
     await tester.pump();
-    await tester.tap(lastDay);
+    await tester.tapAt(tester.getTopLeft(lastDay) + const Offset(8, 8));
     await tester.pumpAndSettle();
     final bounds = tester.getRect(find.byType(BottomSheet));
     for (final (distance, title) in [
@@ -796,7 +796,11 @@ void main() {
       scrollable: find
           .descendant(
             of: find.byType(BottomSheet),
-            matching: find.byType(Scrollable),
+            matching: find.byWidgetPredicate(
+              (widget) =>
+                  widget is Scrollable &&
+                  widget.axisDirection == AxisDirection.down,
+            ),
           )
           .first,
     );
