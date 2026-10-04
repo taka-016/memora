@@ -191,12 +191,12 @@ class ChangeCalendarRecurrenceUsecase {
   static String? _moveRule(String? text, DateTime before, DateTime after) {
     if (text == null) return null;
     final rule = CalendarRecurrenceRule.parse(text);
+    const codes = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU'];
     if (rule.frequency == 'WEEKLY' && rule.weekdays.isNotEmpty) {
       final shift = after.weekday - before.weekday;
       final days =
           rule.weekdays.map((day) => (day - 1 + shift) % 7 + 1).toList()
             ..sort();
-      const codes = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU'];
       return text.replaceFirst(
         RegExp(r'BYDAY=[^;]+'),
         'BYDAY=${days.map((day) => codes[day - 1]).join(',')}',
@@ -215,7 +215,6 @@ class ChangeCalendarRecurrenceUsecase {
       final ordinal = rule.ordinal == -1 && last
           ? -1
           : (after.day - 1) ~/ 7 + 1;
-      const codes = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU'];
       return text.replaceFirst(
         RegExp(r'BYDAY=[^;]+'),
         'BYDAY=$ordinal${codes[after.weekday - 1]}',
