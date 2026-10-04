@@ -333,6 +333,7 @@ class _CalendarDayCell extends StatelessWidget {
                             : _CalendarEventPreview(
                                 state: state,
                                 event: entry.event,
+                                centered: entry.isMultiDay,
                               );
                       },
                     ),

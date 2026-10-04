@@ -14,6 +14,7 @@ class CalendarWeekEntry {
   final int startColumn;
   final int endColumn;
   final int lane;
+  bool get isMultiDay => CalendarWeekLayout._isMultiDay(event);
 }
 
 class CalendarWeekLayout {
@@ -91,7 +92,9 @@ class CalendarWeekLayout {
   }
 
   static bool _isBand(CalendarEventDto event) =>
-      event.isAllDay || _day(_startDate(event)) != _day(_endDate(event));
+      event.isAllDay || _isMultiDay(event);
+  static bool _isMultiDay(CalendarEventDto event) =>
+      _day(_startDate(event)) != _day(_endDate(event));
   static int _day(DateTime date) =>
       DateTime.utc(date.year, date.month, date.day).millisecondsSinceEpoch ~/
       Duration.millisecondsPerDay;
