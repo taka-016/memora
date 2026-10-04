@@ -56,14 +56,14 @@ class CalendarWeekLayout {
       }
     }
 
-    final allDayEvents = state.events.where((event) => event.isAllDay).toList()
+    final bandEvents = state.events.where(_isBand).toList()
       ..sort((a, b) {
         final order = a.startDateTime.compareTo(b.startDateTime);
         return order != 0 ? order : a.id.compareTo(b.id);
       });
-    for (final event in allDayEvents) {
-      final start = math.max(firstColumn, _day(event.startDateTime) - weekDay);
-      final end = math.min(lastColumn, _day(event.endDateTime) - weekDay);
+    for (final event in bandEvents) {
+      final start = math.max(firstColumn, _day(_startDate(event)) - weekDay);
+      final end = math.min(lastColumn, _day(_endDate(event)) - weekDay);
       if (start <= end) place(event, start, end);
     }
     for (var column = firstColumn; column <= lastColumn; column++) {
@@ -73,13 +73,25 @@ class CalendarWeekLayout {
         weekStart.day + column,
       );
       for (final event
-          in state.eventsForDay(date).where((event) => !event.isAllDay)) {
+          in state.eventsForDay(date).where((event) => !_isBand(event))) {
         place(event, column, column);
       }
     }
   }
   final entries = <CalendarWeekEntry>[];
   final visibleCounts = List.filled(7, 0);
+  static DateTime _startDate(CalendarEventDto event) =>
+      event.isAllDay ? event.startDateTime : event.startDateTime.toLocal();
+  static DateTime _endDate(CalendarEventDto event) {
+    if (event.isAllDay) return event.endDateTime;
+    final end = event.endDateTime.toLocal();
+    return end.isAfter(_startDate(event))
+        ? end.subtract(const Duration(microseconds: 1))
+        : end;
+  }
+
+  static bool _isBand(CalendarEventDto event) =>
+      event.isAllDay || _day(_startDate(event)) != _day(_endDate(event));
   static int _day(DateTime date) =>
       DateTime.utc(date.year, date.month, date.day).millisecondsSinceEpoch ~/
       Duration.millisecondsPerDay;
