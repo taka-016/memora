@@ -104,6 +104,9 @@ class ChangeCalendarRecurrenceUsecase {
             changes,
             id: source.id,
             start: start,
+            rule: changes.recurrenceRule == source.recurrenceRule
+                ? _moveRule(changes.recurrenceRule, oldWall, wall)
+                : changes.recurrenceRule,
             end: start.add(
               changes.endDateTime.difference(changes.startDateTime),
             ),
@@ -158,6 +161,13 @@ class ChangeCalendarRecurrenceUsecase {
               'COUNT=${parsed.count! - consumed}',
             );
           }
+          if (changes.recurrenceRule == source.recurrenceRule) {
+            nextRule = _moveRule(
+              nextRule,
+              _wall(source, key),
+              _wall(changes, changes.startDateTime),
+            );
+          }
           following = _with(changes, id: '', rule: nextRule);
         }
       }
@@ -172,6 +182,46 @@ class ChangeCalendarRecurrenceUsecase {
         stack,
       );
     }
+  }
+
+  DateTime _wall(CalendarEventDto event, DateTime value) => event.isAllDay
+      ? _key(value, true)
+      : _expander.timeZone.local(value, event.timeZone!);
+
+  static String? _moveRule(String? text, DateTime before, DateTime after) {
+    if (text == null) return null;
+    final rule = CalendarRecurrenceRule.parse(text);
+    if (rule.frequency == 'WEEKLY' && rule.weekdays.isNotEmpty) {
+      final shift = after.weekday - before.weekday;
+      final days =
+          rule.weekdays.map((day) => (day - 1 + shift) % 7 + 1).toList()
+            ..sort();
+      const codes = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU'];
+      return text.replaceFirst(
+        RegExp(r'BYDAY=[^;]+'),
+        'BYDAY=${days.map((day) => codes[day - 1]).join(',')}',
+      );
+    }
+    if (rule.frequency == 'MONTHLY' && rule.monthDay != null) {
+      return text.replaceFirst(
+        RegExp(r'BYMONTHDAY=\d+'),
+        'BYMONTHDAY=${after.day}',
+      );
+    }
+    if (rule.frequency == 'MONTHLY' && rule.ordinal != null) {
+      final last =
+          DateTime.utc(after.year, after.month, after.day + 7).month !=
+          after.month;
+      final ordinal = rule.ordinal == -1 && last
+          ? -1
+          : (after.day - 1) ~/ 7 + 1;
+      const codes = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU'];
+      return text.replaceFirst(
+        RegExp(r'BYDAY=[^;]+'),
+        'BYDAY=$ordinal${codes[after.weekday - 1]}',
+      );
+    }
+    return text;
   }
 
   static DateTime _key(DateTime value, bool allDay) =>
