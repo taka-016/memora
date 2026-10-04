@@ -93,8 +93,8 @@ class CalendarRecurrenceExpander {
     }
     var count = 0;
     final originals = <DateTime>{};
-    for (; day.isBefore(endDay); day = day.add(const Duration(days: 1))) {
-      final instant = occurrence(day);
+    for (final candidate in rule.candidateDays(start, day, endDay)) {
+      final instant = occurrence(candidate);
       if (instant == null) continue;
       count++;
       if (rule.count != null && count > rule.count!) break;
@@ -120,12 +120,13 @@ class CalendarRecurrenceExpander {
         }
         if (rule.count != null) {
           var n = 0;
-          for (
-            var d = _date(start);
-            !d.isAfter(_date(wall));
-            d = d.add(const Duration(days: 1))
-          ) {
+          for (final d in rule.candidateDays(
+            start,
+            _date(start),
+            _date(wall).add(const Duration(days: 1)),
+          )) {
             if (occurrence(d) != null) n++;
+            if (n > rule.count!) break;
           }
           if (n > rule.count!) throw ValidationException('上書き対象が指定回数を超えています');
         }

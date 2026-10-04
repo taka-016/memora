@@ -121,6 +121,77 @@ class CalendarRecurrenceRule {
     }
   }
 
+  // 終了条件と夏時間による回数判定は呼出側が行う。
+  Iterable<DateTime> candidateDays(
+    DateTime start,
+    DateTime from,
+    DateTime to,
+  ) sync* {
+    final first = DateTime.utc(start.year, start.month, start.day);
+    final weekStart = first.subtract(Duration(days: first.weekday - 1));
+    int elapsedPeriods(DateTime value) => switch (frequency) {
+      'DAILY' => value.difference(first).inDays,
+      'WEEKLY' => value.difference(weekStart).inDays ~/ 7,
+      'MONTHLY' => (value.year - first.year) * 12 + value.month - first.month,
+      'YEARLY' => value.year - first.year,
+      _ => 0,
+    };
+    final elapsed = elapsedPeriods(from);
+    var period = elapsed > 0 ? elapsed ~/ interval : 0;
+    final lastPeriod = elapsedPeriods(to) ~/ interval;
+    final selectedWeekdays = weekdays.isEmpty
+        ? [first.weekday]
+        : (weekdays.toList()..sort());
+    while (period <= lastPeriod) {
+      final offset = period * interval;
+      final base = switch (frequency) {
+        'DAILY' => first.add(Duration(days: offset)),
+        'WEEKLY' => weekStart.add(Duration(days: offset * 7)),
+        'MONTHLY' => DateTime.utc(first.year, first.month + offset),
+        'YEARLY' => DateTime.utc(first.year + offset),
+        _ => throw StateError('未対応の繰り返し単位です'),
+      };
+      if (!base.isBefore(to)) break;
+      final candidates = <DateTime>[];
+      switch (frequency) {
+        case 'DAILY':
+          candidates.add(base);
+        case 'WEEKLY':
+          for (final weekday in selectedWeekdays) {
+            candidates.add(base.add(Duration(days: weekday - 1)));
+          }
+        case 'MONTHLY':
+          if (ordinal == null) {
+            final day = DateTime.utc(
+              base.year,
+              base.month,
+              monthDay ?? first.day,
+            );
+            if (day.month == base.month) candidates.add(day);
+          } else {
+            final anchor = ordinal == -1
+                ? DateTime.utc(base.year, base.month + 1, 0)
+                : base;
+            final shift = ordinal == -1
+                ? -((anchor.weekday - weekdays.single + 7) % 7)
+                : (weekdays.single - anchor.weekday + 7) % 7 +
+                      (ordinal! - 1) * 7;
+            final day = anchor.add(Duration(days: shift));
+            if (day.month == base.month) candidates.add(day);
+          }
+        case 'YEARLY':
+          final day = DateTime.utc(base.year, first.month, first.day);
+          if (day.month == first.month) candidates.add(day);
+      }
+      for (final day in candidates) {
+        if (!day.isBefore(from) && day.isBefore(to) && !day.isBefore(first)) {
+          yield day;
+        }
+      }
+      period++;
+    }
+  }
+
   bool matches(DateTime day, DateTime start) {
     final days = day
         .difference(DateTime.utc(start.year, start.month, start.day))
