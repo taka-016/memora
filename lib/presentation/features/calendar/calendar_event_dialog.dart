@@ -1,3 +1,4 @@
+import 'package:memora/presentation/helpers/date_picker_helper.dart';
 import 'package:memora/application/services/calendar/calendar_recurrence_settings.dart';
 import 'package:memora/application/usecases/calendar/change_calendar_recurrence_usecase.dart';
 import 'package:memora/application/exceptions/application_validation_exception.dart';
@@ -146,14 +147,11 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
         );
       }
     } else {
-      final picked = await showDatePicker(
-        context: context,
-        initialDate: current,
+      final picked = await DatePickerHelper.showCustomDatePicker(
+        context,
+        initialDate: DateTime(current.year, current.month, current.day),
         firstDate: DateTime(1),
         lastDate: DateTime(9999, 12, 31),
-        helpText: start ? '開始日' : '終了日',
-        cancelText: 'キャンセル',
-        confirmText: '決定',
       );
       if (picked != null) {
         result = DateTime(

@@ -1,3 +1,4 @@
+import 'package:memora/presentation/helpers/date_picker_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:memora/application/services/calendar/calendar_recurrence_settings.dart';
 
@@ -251,14 +252,15 @@ class _CalendarRecurrenceCustomDialogState
               if (_endMode == 'until')
                 TextButton(
                   onPressed: () async {
-                    final date = await showDatePicker(
-                      context: context,
-                      initialDate: _until,
+                    final date = await DatePickerHelper.showCustomDatePicker(
+                      context,
+                      initialDate: DateTime(
+                        _until.year,
+                        _until.month,
+                        _until.day,
+                      ),
                       firstDate: DateTime(1),
                       lastDate: DateTime(9999, 12, 31),
-                      helpText: '繰り返しの終了日',
-                      cancelText: 'キャンセル',
-                      confirmText: '決定',
                     );
                     if (date != null && mounted) setState(() => _until = date);
                   },
