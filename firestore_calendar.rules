@@ -69,9 +69,63 @@ service cloud.firestore {
       let wasReferenced = exists(path) && references(get(path).data).hasAny([labelId]);
       let isReferenced = existsAfter(path) && references(getAfter(path).data).hasAny([labelId]);
       return data.lastEventId is string
-        && ((wasReferenced && !isReferenced && data.eventCount == resource.data.eventCount - 1)
-          || (!wasReferenced && isReferenced && data.eventCount == resource.data.eventCount + 1));
+        && ((existsAfter(path) && splitting(getAfter(path).data))
+          ? validSplitCount(labelId, data, path)
+          : ((wasReferenced && !isReferenced && data.eventCount == resource.data.eventCount - 1)
+            || (!wasReferenced && isReferenced && data.eventCount == resource.data.eventCount + 1)));
     }
+    function splitting(data) {
+      let id = data.get('splitEventId', null);
+      return id != null && !exists(/databases/$(database)/documents/calendar_events/$(id));
+    }
+    function validSplitSource(eventId, data) {
+      let tailId = data.splitEventId;
+      let tail = getAfter(/databases/$(database)/documents/calendar_events/$(tailId)).data;
+      return tailId is string && tailId != eventId
+        && tail.get('splitFromEventId', null) == eventId && tail.groupId == data.groupId
+        && resource.data.get('recurrenceRule', null) is string && data.get('recurrenceRule', null) is string;
+    }
+    function validSplitTail(eventId, data) {
+      let id = data.splitFromEventId;
+      let sourcePath = /databases/$(database)/documents/calendar_events/$(id);
+      let source = getAfter(sourcePath).data;
+      return id is string && id != eventId && exists(sourcePath)
+        && source.get('splitEventId', null) == eventId && source.groupId == data.groupId
+        && source.get('recurrenceRule', null) is string && data.get('recurrenceRule', null) is string;
+    }
+    function splitDelta(labelId, before, head, tail) {
+      return (head.hasAny([labelId]) ? 1 : 0) + (tail.hasAny([labelId]) ? 1 : 0) - (before.hasAny([labelId]) ? 1 : 0);
+    }
+    function splitReference(groupId, eventId, before, head, tail, refs, index) {
+      return refs.size() <= index
+        || (getAfter(/databases/$(database)/documents/calendar_labels/$(refs[index])).data.groupId == groupId
+          && (splitDelta(refs[index], before, head, tail) == 0
+            || countChanged(refs[index], eventId, splitDelta(refs[index], before, head, tail))));
+    }
+    function validSplitReferences(eventId, data) {
+      let before = references(resource.data);
+      let head = references(data);
+      let tail = references(getAfter(/databases/$(database)/documents/calendar_events/$(data.splitEventId)).data);
+      return before.toSet().union(head.toSet()).union(tail.toSet()).size() <= 3
+        && splitReference(data.groupId, eventId, before, head, tail, before, 0)
+        && splitReference(data.groupId, eventId, before, head, tail, before, 1)
+        && splitReference(data.groupId, eventId, before, head, tail, before, 2)
+        && splitReference(data.groupId, eventId, before, head, tail, head, 0)
+        && splitReference(data.groupId, eventId, before, head, tail, head, 1)
+        && splitReference(data.groupId, eventId, before, head, tail, head, 2)
+        && splitReference(data.groupId, eventId, before, head, tail, tail, 0)
+        && splitReference(data.groupId, eventId, before, head, tail, tail, 1)
+        && splitReference(data.groupId, eventId, before, head, tail, tail, 2);
+    }
+    function validSplitCount(labelId, data, path) {
+      let source = getAfter(path).data;
+      let before = references(get(path).data);
+      let head = references(source);
+      let tail = references(getAfter(/databases/$(database)/documents/calendar_events/$(source.splitEventId)).data);
+      let delta = splitDelta(labelId, before, head, tail);
+      return delta != 0 && data.eventCount == resource.data.eventCount + delta;
+    }
+
     function validLabel(data) {
       return data.groupId is string && data.name is string && data.name.matches('.*[^ \\t\\r\\n].*')
         && data.color is string && data.color.matches('^#[0-9a-fA-F]{6}$')
@@ -93,10 +147,14 @@ service cloud.firestore {
       allow read: if signedIn() && belongsTo(resource.data.groupId);
       allow create: if signedIn() && belongsTo(request.resource.data.groupId)
         && active(request.resource.data.groupId) && validEvent(request.resource.data)
-        && validReferenceChanges(request.resource.data.groupId, eventId, [], references(request.resource.data));
+        && (request.resource.data.get('splitFromEventId', null) != null
+          ? validSplitTail(eventId, request.resource.data)
+          : validReferenceChanges(request.resource.data.groupId, eventId, [], references(request.resource.data)));
       allow update: if signedIn() && belongsTo(resource.data.groupId) && active(resource.data.groupId)
         && request.resource.data.groupId == resource.data.groupId && validEvent(request.resource.data)
-        && validReferenceChanges(resource.data.groupId, eventId, references(resource.data), references(request.resource.data));
+        && (splitting(request.resource.data)
+          ? (validSplitSource(eventId, request.resource.data) && validSplitReferences(eventId, request.resource.data))
+          : validReferenceChanges(resource.data.groupId, eventId, references(resource.data), references(request.resource.data)));
       allow delete: if signedIn() && belongsTo(resource.data.groupId)
         && validReferenceChanges(resource.data.groupId, eventId, references(resource.data), []);
     }

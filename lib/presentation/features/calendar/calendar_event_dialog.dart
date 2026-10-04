@@ -1,3 +1,8 @@
+import 'package:memora/application/services/calendar/calendar_recurrence_settings.dart';
+import 'package:memora/application/usecases/calendar/change_calendar_recurrence_usecase.dart';
+import 'package:memora/application/exceptions/application_validation_exception.dart';
+import 'package:memora/composition_root/providers/calendar_providers.dart';
+import 'package:memora/presentation/features/calendar/calendar_recurrence_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
@@ -41,6 +46,9 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
   late bool _allDay;
   String? _labelId;
   String _error = '';
+  late CalendarRecurrenceSettings _recurrence;
+  bool _recurrenceEdited = false;
+  late String _zone;
 
   @override
   void initState() {
@@ -66,6 +74,34 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
             event.endDateTime.day,
           )
         : event.endDateTime.toLocal();
+    _zone = event?.timeZone ?? 'Asia/Tokyo';
+    final expander = ref.read(calendarRecurrenceExpanderProvider);
+    if (event != null && !event.isAllDay && event.timeZone != null) {
+      final start = expander.localTime(event.startDateTime, _zone);
+      final end = expander.localTime(event.endDateTime, _zone);
+      _start = DateTime(
+        start.year,
+        start.month,
+        start.day,
+        start.hour,
+        start.minute,
+        start.second,
+      );
+      _end = DateTime(
+        end.year,
+        end.month,
+        end.day,
+        end.hour,
+        end.minute,
+        end.second,
+      );
+    }
+    _recurrence = CalendarRecurrenceSettings.fromRule(
+      event?.recurrenceRule,
+      _start,
+      zone: event?.timeZone,
+      expander: expander,
+    );
     _labelId =
         event?.labelId ??
         ref
@@ -140,19 +176,38 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
 
   Future<void> _save() async {
     if (!_form.currentState!.validate()) return;
-    final start = _allDay
-        ? DateTime(_start.year, _start.month, _start.day)
-        : _start;
-    final end = _allDay ? DateTime(_end.year, _end.month, _end.day) : _end;
-    if (end.isBefore(start)) {
-      setState(() => _error = '終了日時は開始日時以降にしてください');
-      return;
-    }
-    final notifier = ref.read(
-      calendarNotifierProvider(widget.groupId).notifier,
-    );
-    final success = await notifier.saveEvent(
-      CalendarEventDto(
+    final recurring = widget.event?.originalStartDateTime != null;
+    final scope = recurring ? await _chooseScope(false) : null;
+    if (!mounted || recurring && scope == null) return;
+    bool success;
+    try {
+      final expander = ref.read(calendarRecurrenceExpanderProvider);
+      final rule =
+          scope == CalendarChangeScope.only ||
+              (!_recurrenceEdited && _allDay == widget.event?.isAllDay)
+          ? widget.event?.recurrenceRule
+          : _recurrence.toRule(
+              start: _start,
+              allDay: _allDay,
+              zone: _zone,
+              expander: expander,
+            );
+      final inputZone = rule != null ? _zone : widget.event?.timeZone;
+      final start = _allDay
+          ? DateTime.utc(_start.year, _start.month, _start.day)
+          : inputZone != null
+          ? expander.resolveTime(_start, inputZone)
+          : _start;
+      final end = _allDay
+          ? DateTime.utc(_end.year, _end.month, _end.day)
+          : inputZone != null
+          ? expander.resolveTime(_end, inputZone)
+          : _end;
+      if (end.isBefore(start)) {
+        setState(() => _error = '終了日時は開始日時以降にしてください');
+        return;
+      }
+      final input = CalendarEventDto(
         id: widget.event?.id ?? '',
         groupId: widget.groupId,
         labelId: _labelId!,
@@ -160,8 +215,23 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
         startDateTime: start,
         endDateTime: end,
         isAllDay: _allDay,
-      ),
-    );
+        recurrenceRule: rule,
+        timeZone: rule != null && !_allDay ? _zone : null,
+      );
+      final notifier = ref.read(
+        calendarNotifierProvider(widget.groupId).notifier,
+      );
+      success = recurring
+          ? await notifier.changeRecurringEvent(
+              widget.event!,
+              scope!,
+              changes: input,
+            )
+          : await notifier.saveEvent(input);
+    } on ApplicationValidationException catch (e) {
+      if (mounted) setState(() => _error = e.message);
+      return;
+    }
     if (!mounted) return;
     if (success) {
       Navigator.of(context).pop();
@@ -174,7 +244,88 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
     }
   }
 
+  Future<CalendarChangeScope?> _chooseScope(bool deleting) async {
+    var scope = CalendarChangeScope.only;
+    return showDialog<CalendarChangeScope>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, update) {
+          final impact = ref
+              .read(calendarNotifierProvider(widget.groupId).notifier)
+              .recurrenceImpact(widget.event!, scope);
+          return AlertDialog(
+            title: Text(deleting ? '予定を削除' : '予定の変更範囲'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  RadioGroup<CalendarChangeScope>(
+                    groupValue: scope,
+                    onChanged: (value) => update(() => scope = value!),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        for (final entry in {
+                          CalendarChangeScope.only: 'この予定のみ',
+                          CalendarChangeScope.following: 'この予定とこれ以降',
+                          CalendarChangeScope.all: 'すべての予定',
+                        }.entries)
+                          RadioListTile<CalendarChangeScope>(
+                            value: entry.key,
+                            title: Text(entry.value),
+                          ),
+                      ],
+                    ),
+                  ),
+                  if (scope == CalendarChangeScope.only)
+                    const Text('この回だけを変更します。系列の繰り返し設定は変更しません。'),
+                  if (scope == CalendarChangeScope.following)
+                    const Text('元の開始日時を境に系列を分割します。対象範囲外の回は変更しません。'),
+                  if (scope != CalendarChangeScope.only)
+                    Text(
+                      '対象範囲の個別回の上書き（移動・取消しを含む）${impact.reset}件を解除します。対象範囲外の${impact.retained}件は引き継ぎます。',
+                    ),
+                  if (deleting && scope == CalendarChangeScope.only)
+                    const Text('この回の取消しを保存します。'),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('キャンセル'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(context, scope),
+                child: Text(deleting ? '削除する' : '変更する'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
   Future<void> _delete() async {
+    if (widget.event!.originalStartDateTime != null) {
+      final scope = await _chooseScope(true);
+      if (!mounted || scope == null) return;
+      final success = await ref
+          .read(calendarNotifierProvider(widget.groupId).notifier)
+          .changeRecurringEvent(widget.event!, scope);
+      if (!mounted) return;
+      if (success) {
+        Navigator.pop(context);
+      } else {
+        setState(
+          () => _error = ref
+              .read(calendarNotifierProvider(widget.groupId))
+              .mutationError,
+        );
+      }
+      return;
+    }
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -298,6 +449,40 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                             ),
                           ),
                       ],
+                    ),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('繰り返し'),
+                    subtitle: Text(_recurrence.summary),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: state.isSaving
+                        ? null
+                        : () async {
+                            final value = await showCalendarRecurrencePicker(
+                              context,
+                              _recurrence,
+                              _start,
+                            );
+                            if (value != null && mounted)
+                              setState(() {
+                                _recurrence = value;
+                                _recurrenceEdited = true;
+                              });
+                          },
+                  ),
+                  if (!_allDay && _recurrence.frequency != null)
+                    TextFormField(
+                      initialValue: _zone,
+                      enabled: !state.isSaving,
+                      decoration: const InputDecoration(
+                        labelText: 'タイムゾーン',
+                        helperText: 'IANA名（例: Asia/Tokyo）で指定',
+                      ),
+                      onChanged: (value) => _zone = value.trim(),
+                      validator: (value) =>
+                          value == null || value.trim().isEmpty
+                          ? 'タイムゾーンを指定してください'
+                          : null,
                     ),
                   if (!_allDay && preferences.hasError)
                     TextButton(

@@ -1,3 +1,4 @@
+import 'package:memora/application/exceptions/application_validation_exception.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/domain/entities/calendar/calendar_recurrence_rule.dart';
 import 'package:memora/domain/services/calendar/calendar_time_zone.dart';
@@ -6,6 +7,34 @@ import 'package:memora/domain/exceptions/validation_exception.dart';
 class CalendarRecurrenceExpander {
   const CalendarRecurrenceExpander(this.timeZone);
   final CalendarTimeZone timeZone;
+  DateTime localTime(DateTime instant, String zone) {
+    try {
+      return timeZone.local(instant, zone);
+    } on ValidationException catch (e) {
+      throw ApplicationValidationException(e.message);
+    }
+  }
+
+  DateTime resolveTime(DateTime wall, String zone) {
+    try {
+      final normalized = DateTime.utc(
+        wall.year,
+        wall.month,
+        wall.day,
+        wall.hour,
+        wall.minute,
+        wall.second,
+        wall.millisecond,
+        wall.microsecond,
+      );
+      final value = timeZone.resolve(normalized, zone);
+      if (value == null) throw ValidationException('指定したタイムゾーンにこの時刻は存在しません');
+      return value;
+    } on ValidationException catch (e) {
+      throw ApplicationValidationException(e.message);
+    }
+  }
+
   static DateTime _date(DateTime value) =>
       DateTime.utc(value.year, value.month, value.day);
   bool _overlaps(CalendarEventDto event, DateTime from, DateTime to) {

@@ -68,18 +68,36 @@ class ChangeCalendarRecurrenceUsecase {
           final selectedWall = source.isAllDay
               ? key
               : _expander.timeZone.local(key, source.timeZone!);
-          final changedWall = changes.isAllDay
-              ? _key(changes.startDateTime, true)
+          final changedWall =
+              (changes.isAllDay ||
+                  (changes.timeZone ?? source.timeZone) == null)
+              ? DateTime.utc(
+                  changes.startDateTime.year,
+                  changes.startDateTime.month,
+                  changes.startDateTime.day,
+                  changes.startDateTime.hour,
+                  changes.startDateTime.minute,
+                  changes.startDateTime.second,
+                )
               : _expander.timeZone.local(
                   changes.startDateTime,
                   changes.timeZone ?? source.timeZone!,
                 );
           final wall = oldWall.add(changedWall.difference(selectedWall));
+          final zone = changes.timeZone ?? source.timeZone;
           final start = changes.isAllDay
               ? wall
-              : _expander.timeZone.resolve(
-                  wall,
-                  changes.timeZone ?? source.timeZone!,
+              : zone != null
+              ? _expander.timeZone.resolve(wall, zone)
+              : changes.startDateTime.isUtc
+              ? wall
+              : DateTime(
+                  wall.year,
+                  wall.month,
+                  wall.day,
+                  wall.hour,
+                  wall.minute,
+                  wall.second,
                 );
           if (start == null) throw ValidationException('変更後の初回の時刻が存在しません');
           replacement = _with(
