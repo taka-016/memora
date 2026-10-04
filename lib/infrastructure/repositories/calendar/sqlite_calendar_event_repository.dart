@@ -1,3 +1,4 @@
+import 'package:memora/application/mappers/calendar/calendar_event_mapper.dart';
 import 'package:memora/infrastructure/mappers/calendar/calendar_override_mapper.dart';
 import 'package:memora/infrastructure/services/validate_calendar_recurrence.dart';
 import 'package:uuid/uuid.dart';
@@ -25,6 +26,33 @@ class SqliteCalendarEventRepository implements CalendarEventRepository {
       if (labels.isEmpty) throw ValidationException('同じグループの色ラベルを指定してください');
     }
   }
+
+  @override
+  Future<void> replaceCalendarEvent(
+    CalendarEvent expected,
+    CalendarEvent? replacement,
+    CalendarEvent? following,
+  ) => db.transaction(() async {
+    final rows = await db.rows('calendar_events', where: 'id = ?', args: [expected.id]);
+    final overrides = await db.rows('calendar_event_overrides', where: 'event_id = ?', args: [expected.id]);
+    final current = rows.isEmpty ? null : SqliteCalendarEventMapper.fromRow(rows.single, overrides: overrides.map((row) => CalendarOverrideMapper.fromRow(row, expected.isAllDay)).toList());
+    if (current == null || CalendarEventMapper.toEntity(current) != expected)
+      throw ValidationException('予定が変更されています。再読み込みしてからやり直してください');
+    if (replacement != null &&
+            (replacement.id != expected.id ||
+                replacement.groupId != expected.groupId) ||
+        following != null &&
+            (following.id.isNotEmpty || following.groupId != expected.groupId))
+      throw ValidationException('系列の分割対象が不正です');
+    if (replacement != null) await _validateLabel(replacement);
+    if (following != null) await _validateLabel(following);
+    if (replacement == null) {
+      await deleteCalendarEvent(expected.id);
+    } else {
+      await updateCalendarEvent(replacement);
+    }
+    if (following != null) await saveCalendarEvent(following);
+  });
 
   @override
   Future<String> saveCalendarEvent(CalendarEvent event) =>

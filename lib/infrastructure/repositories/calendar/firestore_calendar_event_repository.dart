@@ -1,3 +1,4 @@
+import 'package:memora/application/mappers/calendar/calendar_event_mapper.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/domain/entities/calendar/calendar_event.dart';
 import 'package:memora/domain/exceptions/validation_exception.dart';
@@ -47,6 +48,75 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
         });
       }
     }
+  }
+
+  @override
+  Future<void> replaceCalendarEvent(
+    CalendarEvent expected,
+    CalendarEvent? replacement,
+    CalendarEvent? following,
+  ) async {
+    if (replacement != null &&
+            (replacement.id != expected.id ||
+                replacement.groupId != expected.groupId) ||
+        following != null &&
+            (following.id.isNotEmpty ||
+                following.groupId != expected.groupId ||
+                replacement == null))
+      throw ValidationException('系列の分割対象が不正です');
+    if (replacement != null) validateCalendarRecurrence(replacement);
+    if (following != null) validateCalendarRecurrence(following);
+    await _ensureMembership?.call(expected.groupId);
+    final ref = _firestore.collection('calendar_events').doc(expected.id);
+    final nextRef = following == null
+        ? null
+        : _firestore.collection('calendar_events').doc();
+    await _firestore.runTransaction<void>((transaction) async {
+      final current = await transaction.get(ref);
+      if (!current.exists ||
+          CalendarEventMapper.toEntity(
+                FirestoreCalendarEventMapper.fromFirestore(current),
+              ) !=
+              expected)
+        throw ValidationException('予定が変更されています。再読み込みしてからやり直してください');
+      final before = _references(current.data()!);
+      final head = replacement == null
+          ? null
+          : FirestoreCalendarEventMapper.toUpdateFirestore(replacement);
+      final tail = following == null
+          ? null
+          : FirestoreCalendarEventMapper.toCreateFirestore(following);
+      final headRefs = head == null ? <String>{} : _references(head);
+      final tailRefs = tail == null ? <String>{} : _references(tail);
+      final ids = {...before, ...headRefs, ...tailRefs};
+      if (ids.length > 3)
+        throw ValidationException('オンラインの系列は変更前後を合わせて色ラベル3種類まで一括保存できます');
+      final snapshots = <String, DocumentSnapshot<Map<String, dynamic>>>{};
+      for (final id in ids) {
+        final label = await transaction.get(_label(id));
+        if (!label.exists || label.data()!['groupId'] != expected.groupId)
+          throw ValidationException('同じグループの色ラベルを指定してください');
+        snapshots[id] = label;
+      }
+      for (final id in ids) {
+        final delta =
+            (headRefs.contains(id) ? 1 : 0) +
+            (tailRefs.contains(id) ? 1 : 0) -
+            (before.contains(id) ? 1 : 0);
+        if (delta != 0)
+          transaction.update(_label(id), {
+            'eventCount': (snapshots[id]!.data()!['eventCount'] as int) + delta,
+            'lastEventId': expected.id,
+          });
+      }
+      if (head == null) {
+        transaction.delete(ref);
+      } else {
+        transaction.update(ref, {...head, 'splitEventId': nextRef?.id});
+      }
+      if (tail != null)
+        transaction.set(nextRef!, {...tail, 'splitFromEventId': expected.id});
+    });
   }
 
   @override
