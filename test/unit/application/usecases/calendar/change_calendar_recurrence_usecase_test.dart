@@ -150,6 +150,73 @@ void main() {
     }
     verify(repository.replaceCalendarEvent(any, null, null)).called(2);
   });
+  test('終日系列を時刻付き単発へ変更して繰り返しとタイムゾーンを解除する', () async {
+    final changes = CalendarEventDto(
+      id: source.id,
+      groupId: source.groupId,
+      labelId: source.labelId,
+      title: '単発',
+      startDateTime: DateTime.utc(2026, 10, 3, 9),
+      endDateTime: DateTime.utc(2026, 10, 3, 10),
+      isAllDay: false,
+    );
+    await usecase.execute(
+      source,
+      DateTime.utc(2026, 10, 3),
+      CalendarChangeScope.all,
+      changes: changes,
+    );
+    final saved =
+        verify(repository.replaceCalendarEvent(any, captureAny, null))
+                .captured
+                .single
+            as CalendarEvent;
+    expect(saved.recurrenceRule, isNull);
+    expect(saved.timeZone, isNull);
+    expect(saved.startDateTime, DateTime.utc(2026, 10, 1, 9));
+  });
+  test('夏時間で欠落した回を除いて分割後の残り回数を決める', () async {
+    final timed = CalendarEventDto(
+      id: 'event',
+      groupId: 'group',
+      labelId: 'label',
+      title: '予定',
+      startDateTime: DateTime.utc(2026, 3, 7, 7, 30),
+      endDateTime: DateTime.utc(2026, 3, 7, 8, 30),
+      isAllDay: false,
+      recurrenceRule: 'FREQ=DAILY;COUNT=4',
+      timeZone: 'America/New_York',
+    );
+    final original = DateTime.utc(2026, 3, 10, 6, 30);
+    await usecase.execute(
+      timed,
+      original,
+      CalendarChangeScope.following,
+      changes: timed.copyWith(
+        startDateTime: original,
+        endDateTime: original.add(const Duration(hours: 1)),
+      ),
+    );
+    final saved = verify(
+      repository.replaceCalendarEvent(any, captureAny, captureAny),
+    ).captured;
+    expect(
+      expander.expand(
+        CalendarEventMapper.toDto(saved[0] as CalendarEvent),
+        DateTime.utc(2026, 3, 7),
+        DateTime.utc(2026, 3, 15),
+      ),
+      hasLength(2),
+    );
+    expect(
+      expander.expand(
+        CalendarEventMapper.toDto(saved[1] as CalendarEvent),
+        DateTime.utc(2026, 3, 7),
+        DateTime.utc(2026, 3, 15),
+      ),
+      hasLength(2),
+    );
+  });
   test('系列にない回と別グループの入力は保存前に拒否する', () async {
     for (final original in [
       DateTime.utc(2026, 9, 30),

@@ -37,6 +37,7 @@ class CalendarTestHarness {
   final delete = MockDeleteCalendarEventUsecase();
   final saveLabel = MockSaveCalendarLabelUsecase();
   final reorder = MockReorderCalendarLabelsUsecase();
+  final changeRecurrence = MockChangeCalendarRecurrenceUsecase();
   final savedEvents = <CalendarEventDto>[];
   final savedLabels = <CalendarLabelDto>[calendarTestFamily];
 
@@ -87,6 +88,9 @@ class CalendarTestHarness {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          changeCalendarRecurrenceUsecaseProvider.overrideWithValue(
+            changeRecurrence,
+          ),
           appClockProvider.overrideWithValue(
             FixedAppClock(DateTime(2026, 10, 1)),
           ),

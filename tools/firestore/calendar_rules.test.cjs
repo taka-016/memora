@@ -216,3 +216,44 @@ test('3ラベルを別の3ラベルへ同時置換して読取上限を超える
   for (const id of old) if ((await getDoc(doc(store, `calendar_labels/${id}`))).data().eventCount !== 1) throw new Error('元の参照数が失われました');
   for (const id of next) if ((await getDoc(doc(store, `calendar_labels/${id}`))).data().eventCount !== 0) throw new Error('失敗した更新が残りました');
 });
+
+test('これ以降の分割で両系列と3ラベルの参照数を同時に保存し共有できる', async () => {
+  const store = db('alice');
+  for (const id of ['child', 'friend']) await setDoc(doc(store, `calendar_labels/${id}`), {groupId: 'family', name: id, color: '#123ABC', eventCount: 0, lastEventId: null});
+  const created = writeBatch(store);
+  created.set(doc(store, 'calendar_events/series'), {...event(), recurrenceRule: 'FREQ=DAILY;COUNT=5', referencedLabelIds: ['label', 'child', 'friend'], overrides: {child: [], friend: []}});
+  for (const id of ['label', 'child', 'friend']) created.update(doc(store, `calendar_labels/${id}`), {eventCount: 1, lastEventId: 'series'});
+  await assertSucceeds(created.commit());
+  const split = writeBatch(store);
+  split.update(doc(store, 'calendar_events/series'), {recurrenceRule: 'FREQ=DAILY;COUNT=2', referencedLabelIds: ['label', 'child'], overrides: {child: []}, splitEventId: 'following'});
+  split.set(doc(store, 'calendar_events/following'), {...event('friend'), recurrenceRule: 'FREQ=DAILY;COUNT=3', referencedLabelIds: ['friend'], overrides: {}, splitFromEventId: 'series'});
+  await assertSucceeds(split.commit());
+  const bob = db('bob');
+  const values = await getDocs(query(collection(bob, 'calendar_events'), where('groupId', '==', 'family')));
+  if (values.size !== 2) throw new Error('分割した系列を共有できません');
+  for (const id of ['label', 'child', 'friend']) if ((await getDoc(doc(bob, `calendar_labels/${id}`))).data().eventCount !== 1) throw new Error('参照数が一致しません');
+  await assertSucceeds(updateDoc(doc(bob, 'calendar_events/series'), {title: '再編集', splitEventId: null}));
+});
+test('同じラベルの系列分割は参照数を増やし省略した分割を拒否する', async () => {
+  await create('alice');
+  const store = db('alice');
+  await updateDoc(doc(store, 'calendar_events/event'), {recurrenceRule: 'FREQ=DAILY;COUNT=5'});
+  function split(withCount) {
+    const batch = writeBatch(store);
+    batch.update(doc(store, 'calendar_events/event'), {recurrenceRule: 'FREQ=DAILY;COUNT=2', splitEventId: 'following'});
+    batch.set(doc(store, 'calendar_events/following'), {...event(), recurrenceRule: 'FREQ=DAILY;COUNT=3', splitFromEventId: 'event'});
+    if (withCount) batch.update(doc(store, 'calendar_labels/label'), {eventCount: 2, lastEventId: 'event'});
+    return batch.commit();
+  }
+  await assertFails(split(false));
+  await assertSucceeds(split(true));
+  if ((await getDoc(doc(db('bob'), 'calendar_labels/label'))).data().eventCount !== 2) throw new Error('分割後の参照数が一致しません');
+});
+test('分割先だけの作成と別グループの分割先は拒否する', async () => {
+  await create('alice'); const store = db('alice');
+  await assertFails(setDoc(doc(store, 'calendar_events/orphan'), {...event(), recurrenceRule: 'FREQ=DAILY', splitFromEventId: 'event'}));
+  const batch = writeBatch(store);
+  batch.update(doc(store, 'calendar_events/event'), {recurrenceRule: 'FREQ=DAILY', splitEventId: 'wrong'});
+  batch.set(doc(store, 'calendar_events/wrong'), {...event('other-label'), groupId: 'other', recurrenceRule: 'FREQ=DAILY', splitFromEventId: 'event'});
+  await assertFails(batch.commit());
+});
