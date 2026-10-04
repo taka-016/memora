@@ -385,158 +385,205 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
     final preferences = ref.watch(calendarPreferencesNotifierProvider);
     return PopScope(
       canPop: !state.isSaving,
-      child: AlertDialog(
-        title: Text(widget.event == null ? '予定を追加' : '予定を編集'),
-        content: SizedBox(
-          width: 420,
-          child: SingleChildScrollView(
-            child: Form(
-              key: _form,
+      child: Dialog(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        child: Material(
+          type: MaterialType.card,
+          child: SizedBox(
+            width: MediaQuery.sizeOf(context).width * 0.95,
+            height: MediaQuery.sizeOf(context).height * 0.8,
+            child: Padding(
+              padding: const EdgeInsets.all(24),
               child: Column(
-                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  TextFormField(
-                    controller: _title,
-                    enabled: !state.isSaving,
-                    decoration: const InputDecoration(labelText: 'タイトル'),
-                    validator: (value) => value == null || value.trim().isEmpty
-                        ? 'タイトルを入力してください'
-                        : null,
+                  Text(
+                    widget.event == null ? '予定を追加' : '予定を編集',
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                  DropdownButtonFormField<String>(
-                    initialValue: labels.any((label) => label.id == _labelId)
-                        ? _labelId
-                        : null,
-                    isExpanded: true,
-                    decoration: const InputDecoration(labelText: '色ラベル'),
-                    items: labels
-                        .map(
-                          (label) => DropdownMenuItem(
-                            value: label.id,
-                            child: Text(
-                              label.name,
-                              overflow: TextOverflow.clip,
-                              softWrap: false,
-                            ),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: state.isSaving
-                        ? null
-                        : (value) => setState(() => _labelId = value),
-                    validator: (value) =>
-                        value == null ? '色ラベルを指定してください' : null,
-                  ),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text('終日'),
-                    value: _allDay,
-                    onChanged: state.isSaving
-                        ? null
-                        : (value) => setState(() => _allDay = value),
-                  ),
-                  for (final start in [true, false])
-                    Row(
-                      children: [
-                        Expanded(
-                          flex: 3,
-                          child: TextButton(
-                            onPressed: state.isSaving
-                                ? null
-                                : () => _pick(start, false),
-                            child: Text(
-                              '${start ? '開始' : '終了'}日: ${calendarDateText(start ? _start : _end)}',
-                            ),
-                          ),
-                        ),
-                        if (!_allDay)
-                          Expanded(
-                            flex: 2,
-                            child: TextButton(
-                              key: Key(
-                                'calendar_${start ? 'start' : 'end'}_time',
+                  const SizedBox(height: 16),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Form(
+                        key: _form,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            TextFormField(
+                              controller: _title,
+                              enabled: !state.isSaving,
+                              decoration: const InputDecoration(
+                                labelText: 'タイトル',
                               ),
-                              onPressed:
-                                  state.isSaving ||
-                                      (start && preferences.value == null)
+                              validator: (value) =>
+                                  value == null || value.trim().isEmpty
+                                  ? 'タイトルを入力してください'
+                                  : null,
+                            ),
+                            DropdownButtonFormField<String>(
+                              initialValue:
+                                  labels.any((label) => label.id == _labelId)
+                                  ? _labelId
+                                  : null,
+                              isExpanded: true,
+                              decoration: const InputDecoration(
+                                labelText: '色ラベル',
+                              ),
+                              items: labels
+                                  .map(
+                                    (label) => DropdownMenuItem(
+                                      value: label.id,
+                                      child: Text(
+                                        label.name,
+                                        overflow: TextOverflow.clip,
+                                        softWrap: false,
+                                      ),
+                                    ),
+                                  )
+                                  .toList(),
+                              onChanged: state.isSaving
                                   ? null
-                                  : () => _pick(start, true),
-                              child: Text(
-                                calendarTimeText(start ? _start : _end),
-                              ),
+                                  : (value) => setState(() => _labelId = value),
+                              validator: (value) =>
+                                  value == null ? '色ラベルを指定してください' : null,
                             ),
-                          ),
-                      ],
+                            SwitchListTile(
+                              contentPadding: EdgeInsets.zero,
+                              title: const Text('終日'),
+                              value: _allDay,
+                              onChanged: state.isSaving
+                                  ? null
+                                  : (value) => setState(() => _allDay = value),
+                            ),
+                            for (final start in [true, false])
+                              Row(
+                                children: [
+                                  Expanded(
+                                    flex: 3,
+                                    child: TextButton(
+                                      style: TextButton.styleFrom(
+                                        alignment: Alignment.centerLeft,
+                                      ),
+                                      onPressed: state.isSaving
+                                          ? null
+                                          : () => _pick(start, false),
+                                      child: Text(
+                                        '${start ? '開始' : '終了'}日: ${calendarDateText(start ? _start : _end)}',
+                                      ),
+                                    ),
+                                  ),
+                                  if (!_allDay)
+                                    Expanded(
+                                      flex: 2,
+                                      child: TextButton(
+                                        style: TextButton.styleFrom(
+                                          alignment: Alignment.centerLeft,
+                                        ),
+                                        key: Key(
+                                          'calendar_${start ? 'start' : 'end'}_time',
+                                        ),
+                                        onPressed:
+                                            state.isSaving ||
+                                                (start &&
+                                                    preferences.value == null)
+                                            ? null
+                                            : () => _pick(start, true),
+                                        child: Text(
+                                          calendarTimeText(
+                                            start ? _start : _end,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              title: const Text('繰り返し'),
+                              subtitle: Text(_recurrence.summary),
+                              trailing: const Icon(Icons.chevron_right),
+                              onTap: state.isSaving
+                                  ? null
+                                  : () async {
+                                      final value =
+                                          await showCalendarRecurrencePicker(
+                                            context,
+                                            _recurrence,
+                                            _start,
+                                          );
+                                      if (value != null && mounted) {
+                                        setState(() {
+                                          _recurrence = value;
+                                          _recurrenceEdited = true;
+                                        });
+                                      }
+                                    },
+                            ),
+                            if (!_allDay && _recurrence.frequency != null)
+                              TextFormField(
+                                initialValue: _zone,
+                                enabled: !state.isSaving,
+                                decoration: const InputDecoration(
+                                  labelText: 'タイムゾーン',
+                                  helperText: 'IANA名（例: Asia/Tokyo）で指定',
+                                ),
+                                onChanged: (value) => _zone = value.trim(),
+                                validator: (value) =>
+                                    value == null || value.trim().isEmpty
+                                    ? 'タイムゾーンを指定してください'
+                                    : null,
+                              ),
+                            if (!_allDay && preferences.hasError)
+                              TextButton(
+                                onPressed: () => ref.invalidate(
+                                  calendarPreferencesNotifierProvider,
+                                ),
+                                child: const Text('標準時間を再取得'),
+                              ),
+                            if (_error.isNotEmpty)
+                              Text(
+                                _error,
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.error,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
                     ),
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text('繰り返し'),
-                    subtitle: Text(_recurrence.summary),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: state.isSaving
-                        ? null
-                        : () async {
-                            final value = await showCalendarRecurrencePicker(
-                              context,
-                              _recurrence,
-                              _start,
-                            );
-                            if (value != null && mounted) {
-                              setState(() {
-                                _recurrence = value;
-                                _recurrenceEdited = true;
-                              });
-                            }
-                          },
                   ),
-                  if (!_allDay && _recurrence.frequency != null)
-                    TextFormField(
-                      initialValue: _zone,
-                      enabled: !state.isSaving,
-                      decoration: const InputDecoration(
-                        labelText: 'タイムゾーン',
-                        helperText: 'IANA名（例: Asia/Tokyo）で指定',
+                  const SizedBox(height: 24),
+                  OverflowBar(
+                    alignment: MainAxisAlignment.end,
+                    spacing: 8,
+                    overflowSpacing: 8,
+                    children: [
+                      if (widget.event != null)
+                        TextButton(
+                          onPressed: state.isSaving ? null : _delete,
+                          child: const Text('削除'),
+                        ),
+                      TextButton(
+                        onPressed: state.isSaving
+                            ? null
+                            : () => Navigator.pop(context),
+                        child: const Text('キャンセル'),
                       ),
-                      onChanged: (value) => _zone = value.trim(),
-                      validator: (value) =>
-                          value == null || value.trim().isEmpty
-                          ? 'タイムゾーンを指定してください'
-                          : null,
-                    ),
-                  if (!_allDay && preferences.hasError)
-                    TextButton(
-                      onPressed: () =>
-                          ref.invalidate(calendarPreferencesNotifierProvider),
-                      child: const Text('標準時間を再取得'),
-                    ),
-                  if (_error.isNotEmpty)
-                    Text(
-                      _error,
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.error,
+                      ElevatedButton(
+                        onPressed: state.isSaving ? null : _save,
+                        child: Text(state.isSaving ? '保存中' : '保存'),
                       ),
-                    ),
+                    ],
+                  ),
                 ],
               ),
             ),
           ),
         ),
-        actions: [
-          if (widget.event != null)
-            TextButton(
-              onPressed: state.isSaving ? null : _delete,
-              child: const Text('削除'),
-            ),
-          TextButton(
-            onPressed: state.isSaving ? null : () => Navigator.pop(context),
-            child: const Text('キャンセル'),
-          ),
-          FilledButton(
-            onPressed: state.isSaving ? null : _save,
-            child: Text(state.isSaving ? '保存中' : '保存'),
-          ),
-        ],
       ),
     );
   }
