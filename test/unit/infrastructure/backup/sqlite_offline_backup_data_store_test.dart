@@ -94,6 +94,7 @@ void main() {
       'group_id': 'group-1',
       'name': '家族全員',
       'color': '#123ABC',
+      'text_color': '#Ab12Cd',
     });
     await db.insertRow('calendar_events', {
       'id': 'event',
@@ -110,24 +111,43 @@ void main() {
     await dataStore.restoreSnapshot(snapshot);
     expect((await db.rows('calendar_events')).single['label_id'], 'label');
     expect((await db.rows('calendar_labels')).single['name'], '家族全員');
+    expect((await db.rows('calendar_labels')).single['text_color'], '#Ab12Cd');
   });
 
-  test('旧スキーマのバックアップを空のカレンダーとして復元する', () async {
-    final snapshot = await dataStore.exportSnapshot();
-    final tables = Map<String, List<Map<String, Object?>>>.from(snapshot.tables)
-      ..remove('calendar_events')
-      ..remove('calendar_labels');
-    final legacy = OfflineBackupSnapshot(
-      formatVersion: snapshot.formatVersion,
-      databaseSchemaVersion: 1,
-      currentMember: snapshot.currentMember,
-      settings: snapshot.settings,
-      tables: tables,
-    );
-    await dataStore.restoreSnapshot(legacy);
-    expect((await db.rows('groups')).single['name'], '家族');
-    expect(await db.rows('calendar_events'), isEmpty);
-  });
+  for (final version in [1, 2]) {
+    test('旧バージョン$versionのバックアップは書き込み前に拒否する', () async {
+      final snapshot = await dataStore.exportSnapshot();
+      final tables = {...snapshot.tables};
+      if (version == 1) {
+        tables.remove('calendar_events');
+        tables.remove('calendar_labels');
+      } else {
+        tables['calendar_labels'] = [
+          {
+            'id': 'label',
+            'group_id': 'group-1',
+            'name': '旧ラベル',
+            'color': '#123ABC',
+          },
+        ];
+      }
+      final legacy = OfflineBackupSnapshot(
+        formatVersion: snapshot.formatVersion,
+        databaseSchemaVersion: version,
+        currentMember: snapshot.currentMember,
+        settings: snapshot.settings,
+        tables: tables,
+      );
+      await db.updateRow('groups', 'group-1', {'name': '現在のデータ'});
+      await expectLater(
+        dataStore.restoreSnapshot(legacy),
+        throwsA(isA<OfflineBackupUnsupportedVersionException>()),
+      );
+      expect((await db.rows('groups')).single['name'], '現在のデータ');
+      expect(await db.rows('calendar_labels'), isEmpty);
+      expect(await syncStorage.isPending(), isFalse);
+    });
+  }
 
   test('SQLite外の設定保存に失敗した場合はDBと端末内本人と設定をすべて維持する', () async {
     final snapshot = await dataStore.exportSnapshot();

@@ -8,6 +8,8 @@ class CalendarLabelMapper {
       groupId: value.groupId,
       name: value.name,
       color: value.color,
+      textColor: value.textColor,
+      sortOrder: value.sortOrder,
     );
   }
 
@@ -17,6 +19,8 @@ class CalendarLabelMapper {
       groupId: value.groupId,
       name: value.name,
       color: value.color,
+      textColor: value.textColor,
+      sortOrder: value.sortOrder,
     );
   }
 }

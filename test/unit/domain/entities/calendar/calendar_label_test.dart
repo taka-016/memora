@@ -15,6 +15,25 @@ void main() {
     expect(changed.color, '#FF0000');
     expect(changed.groupId, 'group');
   });
+  test('白黒以外の文字色も保持し不正な文字色を拒否する', () {
+    final changed = label().copyWith(textColor: '#Ab12Cd');
+    expect(changed.textColor, '#Ab12Cd');
+    expect(changed.copyWith(name: '全員').textColor, '#Ab12Cd');
+    expect(changed, isNot(label()));
+    for (final color in ['', 'white', '#12345', '#GG0000', '#12345678']) {
+      expect(
+        () => label().copyWith(textColor: color),
+        throwsA(isA<ValidationException>()),
+      );
+    }
+  });
+  test('並び順を指定でき負の並び順を拒否する', () {
+    expect(label().copyWith(sortOrder: 2).sortOrder, 2);
+    expect(
+      () => label().copyWith(sortOrder: -1),
+      throwsA(isA<ValidationException>()),
+    );
+  });
   for (final name in ['', '  ']) {
     test('空のラベル名「$name」を拒否する', () {
       expect(() => label(name: name), throwsA(isA<ValidationException>()));

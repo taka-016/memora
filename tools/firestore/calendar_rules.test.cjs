@@ -111,3 +111,22 @@ test('グループ削除開始後は新規登録や変更を拒否し削除処�
   await assertSucceeds(batch.commit());
   await assertSucceeds(deleteDoc(doc(store, 'calendar_labels/label')));
 });
+
+test('任意のRGB文字色を保存し不正な文字色を拒否する', async () => {
+  const store = db('alice');
+  const data = {groupId: 'family', name: '全員', color: '#123ABC', textColor: '#Ab12Cd', eventCount: 0, lastEventId: null};
+  await assertSucceeds(setDoc(doc(store, 'calendar_labels/text-color'), data));
+  await assertSucceeds(updateDoc(doc(store, 'calendar_labels/text-color'), {textColor: '#000000'}));
+  for (const textColor of ['white', '#GGGGGG', '#12345', '#12345678', null, 123]) {
+    await assertFails(setDoc(doc(store, 'calendar_labels/invalid-color'), {...data, textColor}));
+    await assertFails(updateDoc(doc(store, 'calendar_labels/text-color'), {textColor}));
+  }
+});
+
+test('ラベルの並び順は非負整数として保存し不正値を拒否する', async () => {
+  const store = db('alice');
+  await assertSucceeds(updateDoc(doc(store, 'calendar_labels/label'), {sortOrder: 3}));
+  for (const sortOrder of [-1, 1.5, '1', null]) {
+    await assertFails(updateDoc(doc(store, 'calendar_labels/label'), {sortOrder}));
+  }
+});

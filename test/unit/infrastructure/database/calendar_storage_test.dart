@@ -1,11 +1,20 @@
 import 'dart:io';
 
+import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/infrastructure/database/offline_database.dart';
 
 void main() {
   late OfflineDatabase db;
+  late bool previousWarningSetting;
+  setUp(() {
+    previousWarningSetting = driftRuntimeOptions.dontWarnAboutMultipleDatabases;
+    driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
+  });
+  tearDown(() {
+    driftRuntimeOptions.dontWarnAboutMultipleDatabases = previousWarningSetting;
+  });
   setUp(() async {
     db = OfflineDatabase(NativeDatabase.memory());
     await db.insertRow('members', {'id': 'self', 'display_name': '本人'});
@@ -75,22 +84,35 @@ void main() {
     );
   });
 
-  test('バージョン1のDBを既存データを保ったまま移行する', () async {
-    final directory = await Directory.systemTemp.createTemp('memora-calendar-');
-    addTearDown(() => directory.delete(recursive: true));
-    final file = File('${directory.path}/old.sqlite');
-    var old = OfflineDatabase(NativeDatabase(file));
-    await old.insertRow('members', {'id': 'self', 'display_name': '本人'});
-    await old.customStatement('DROP TABLE IF EXISTS calendar_events');
-    await old.customStatement('DROP TABLE IF EXISTS calendar_labels');
-    await old.customStatement('PRAGMA user_version = 1');
-    await old.close();
-    old = OfflineDatabase(NativeDatabase(file));
-    addTearDown(old.close);
-    await old.initialize();
-    expect((await old.rows('members')).single['display_name'], '本人');
-    expect(await old.rows('calendar_events'), isEmpty);
-    expect(await old.rows('calendar_labels'), isEmpty);
-    expect(old.schemaVersion, 2);
+  test('文字色は任意のRGB色を保存し不正な色を拒否する', () async {
+    await label('label', 'family');
+    await db.updateRow('calendar_labels', 'label', {'text_color': '#Ab12Cd'});
+    expect((await db.rows('calendar_labels')).single['text_color'], '#Ab12Cd');
+    await expectLater(
+      db.updateRow('calendar_labels', 'label', {'text_color': '#GGGGGG'}),
+      throwsA(isA<Exception>()),
+    );
   });
+
+  for (final version in [1, 2]) {
+    test('旧バージョン$versionのDBは移行せず拒否する', () async {
+      final directory = await Directory.systemTemp.createTemp('memora-old-db-');
+      addTearDown(() => directory.delete(recursive: true));
+      final file = File('${directory.path}/old.sqlite');
+      var old = OfflineDatabase(NativeDatabase(file));
+      await old.initialize();
+      await old.customStatement('DROP TABLE calendar_events');
+      await old.customStatement('DROP TABLE calendar_labels');
+      if (version == 2) {
+        await old.customStatement(
+          'CREATE TABLE calendar_labels (id TEXT PRIMARY KEY, group_id TEXT NOT NULL, name TEXT NOT NULL, color TEXT NOT NULL, UNIQUE(id, group_id))',
+        );
+      }
+      await old.customStatement('PRAGMA user_version = $version');
+      await old.close();
+      old = OfflineDatabase(NativeDatabase(file));
+      addTearDown(old.close);
+      await expectLater(old.initialize(), throwsStateError);
+    });
+  }
 }

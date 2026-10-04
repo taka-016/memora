@@ -37,6 +37,24 @@ class SqliteCalendarLabelRepository implements CalendarLabelRepository {
       });
 
   @override
+  Future<void> reorderCalendarLabels(String groupId, List<String> labelIds) =>
+      db.transaction(() async {
+        for (var index = 0; index < labelIds.length; index++) {
+          final rows = await db.rows(
+            'calendar_labels',
+            where: 'id = ?',
+            args: [labelIds[index]],
+          );
+          if (rows.isEmpty || rows.single['group_id'] != groupId) {
+            throw ValidationException('同じグループの色ラベルを指定してください');
+          }
+          await db.updateRow('calendar_labels', labelIds[index], {
+            'sort_order': index,
+          });
+        }
+      });
+
+  @override
   Future<void> deleteCalendarLabel(String labelId) => db.transaction(() async {
     if ((await db.rows(
       'calendar_events',

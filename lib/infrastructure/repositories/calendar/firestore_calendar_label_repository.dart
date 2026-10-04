@@ -3,6 +3,7 @@ import 'package:memora/domain/entities/calendar/calendar_label.dart';
 import 'package:memora/domain/exceptions/validation_exception.dart';
 import 'package:memora/domain/repositories/calendar/calendar_label_repository.dart';
 import 'package:memora/infrastructure/mappers/calendar/firestore_calendar_label_mapper.dart';
+import 'package:memora/infrastructure/mappers/firestore_write_metadata.dart';
 
 class FirestoreCalendarLabelRepository implements CalendarLabelRepository {
   FirestoreCalendarLabelRepository({
@@ -35,6 +36,31 @@ class FirestoreCalendarLabelRepository implements CalendarLabelRepository {
         FirestoreCalendarLabelMapper.toUpdateFirestore(label),
       );
       return label.id;
+    });
+  }
+
+  @override
+  Future<void> reorderCalendarLabels(
+    String groupId,
+    List<String> labelIds,
+  ) async {
+    await _ensureMembership?.call(groupId);
+    final refs = labelIds
+        .map((id) => _firestore.collection('calendar_labels').doc(id))
+        .toList();
+    await _firestore.runTransaction<void>((transaction) async {
+      for (final ref in refs) {
+        final existing = await transaction.get(ref);
+        if (!existing.exists || existing.data()!['groupId'] != groupId) {
+          throw ValidationException('同じグループの色ラベルを指定してください');
+        }
+      }
+      for (var index = 0; index < refs.length; index++) {
+        transaction.update(refs[index], <String, dynamic>{
+          'sortOrder': index,
+          ...FirestoreWriteMetadata.forUpdate(),
+        });
+      }
     });
   }
 

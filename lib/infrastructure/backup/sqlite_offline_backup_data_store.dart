@@ -117,8 +117,7 @@ class SqliteOfflineBackupDataStore implements OfflineBackupDataStore {
           await database.customStatement('DELETE FROM "$table"');
         }
         for (final table in _insertOrder) {
-          for (final row
-              in snapshot.tables[table] ?? const <Map<String, Object?>>[]) {
+          for (final row in snapshot.tables[table]!) {
             await database.insertRow(table, row);
           }
         }
@@ -144,8 +143,7 @@ class SqliteOfflineBackupDataStore implements OfflineBackupDataStore {
         '未対応のバックアップ形式です: ${snapshot.formatVersion}',
       );
     }
-    if (snapshot.databaseSchemaVersion != database.schemaVersion &&
-        snapshot.databaseSchemaVersion != 1) {
+    if (snapshot.databaseSchemaVersion != database.schemaVersion) {
       throw OfflineBackupUnsupportedVersionException(
         '未対応のDBスキーマです: ${snapshot.databaseSchemaVersion}',
       );
@@ -158,9 +156,6 @@ class SqliteOfflineBackupDataStore implements OfflineBackupDataStore {
       throw const FormatException('バックアップのウィジェット更新間隔が不正です。');
     }
     final expectedTables = {...OfflineBackupSnapshot.tableNames};
-    if (snapshot.databaseSchemaVersion == 1) {
-      expectedTables.removeAll(['calendar_events', 'calendar_labels']);
-    }
     if (snapshot.tables.keys.toSet().difference(expectedTables).isNotEmpty ||
         expectedTables.difference(snapshot.tables.keys.toSet()).isNotEmpty) {
       throw const FormatException('バックアップのテーブル構成が不正です。');

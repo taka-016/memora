@@ -21,6 +21,7 @@ class FirestoreCalendarLabelQueryService implements CalendarLabelQueryService {
         .get();
     return snapshot.docs
         .map(FirestoreCalendarLabelMapper.fromFirestore)
-        .toList();
+        .toList()
+      ..sort(compareCalendarLabels);
   }
 }

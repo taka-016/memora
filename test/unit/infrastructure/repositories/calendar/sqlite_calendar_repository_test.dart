@@ -78,6 +78,55 @@ void main() {
         isAllDay: allDay,
       );
 
+  test('SQLiteで白黒以外の文字色も登録・変更・取得する', () async {
+    final id = await labels.saveCalendarLabel(
+      label().copyWith(textColor: '#Ab12Cd'),
+    );
+    expect(
+      (await labelQuery.getCalendarLabelsByGroupId('family')).single.textColor,
+      '#Ab12Cd',
+    );
+    await labels.saveCalendarLabel(
+      label(id: id).copyWith(textColor: '#000000'),
+    );
+    expect(
+      (await labelQuery.getCalendarLabelsByGroupId('family')).single.textColor,
+      '#000000',
+    );
+  });
+  test('並び順を保存してラベルを指定順に取得する', () async {
+    await labels.saveCalendarLabel(label(name: '後').copyWith(sortOrder: 5));
+    await labels.saveCalendarLabel(label(name: '先').copyWith(sortOrder: 1));
+    expect(
+      (await labelQuery.getCalendarLabelsByGroupId('family'))
+          .map((label) => label.name),
+      ['先', '後'],
+    );
+  });
+  test('ドラッグ順を一括保存し名前と色を保ち不正な参照では全件を戻す', () async {
+    final a = await labels.saveCalendarLabel(
+      label(name: '先').copyWith(sortOrder: 7),
+    );
+    final b = await labels.saveCalendarLabel(
+      label(name: '後').copyWith(sortOrder: 8),
+    );
+    final foreign = await labels.saveCalendarLabel(label(group: 'friends'));
+    await expectLater(
+      labels.reorderCalendarLabels('family', [a, foreign]),
+      throwsA(isA<ValidationException>()),
+    );
+    expect(
+      (await labelQuery.getCalendarLabelsByGroupId('family'))
+          .map((label) => label.sortOrder),
+      [7, 8],
+    );
+    await labels.reorderCalendarLabels('family', [b, a]);
+    final sorted = await labelQuery.getCalendarLabelsByGroupId('family');
+    expect(sorted.map((label) => label.id), [b, a]);
+    expect(sorted.map((label) => label.sortOrder), [0, 1]);
+    expect(sorted.map((label) => label.name), ['後', '先']);
+    expect(sorted.every((label) => label.color == '#123ABC'), isTrue);
+  });
   test('モード別依存から予定とラベルの登録・取得・変更・削除を完結する', () async {
     final labelId = await labels.saveCalendarLabel(label());
     final otherId = await labels.saveCalendarLabel(label(name: '太郎'));

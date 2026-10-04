@@ -174,6 +174,18 @@ RouteBase get $appShellRoute => ShellRouteData.$route(
       ],
     ),
     GoRouteData.$route(
+      path: '/calendar',
+      hasOverriddenOnExit: false,
+      factory: $CalendarGroupListRoute._fromState,
+      routes: [
+        GoRouteData.$route(
+          path: ':groupId',
+          hasOverriddenOnExit: false,
+          factory: $CalendarRoute._fromState,
+        ),
+      ],
+    ),
+    GoRouteData.$route(
       path: '/map',
       hasOverriddenOnExit: false,
       factory: $MapRoute._fromState,
@@ -291,6 +303,51 @@ mixin $DvcPointCalculationRoute on GoRouteData {
   String get location => GoRouteData.$location(
     '/groups/${Uri.encodeComponent(_self.groupId)}/timeline/dvc',
   );
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $CalendarGroupListRoute on GoRouteData {
+  static CalendarGroupListRoute _fromState(GoRouterState state) =>
+      const CalendarGroupListRoute();
+
+  @override
+  String get location => GoRouteData.$location('/calendar');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $CalendarRoute on GoRouteData {
+  static CalendarRoute _fromState(GoRouterState state) =>
+      CalendarRoute(groupId: state.pathParameters['groupId']!);
+
+  CalendarRoute get _self => this as CalendarRoute;
+
+  @override
+  String get location =>
+      GoRouteData.$location('/calendar/${Uri.encodeComponent(_self.groupId)}');
 
   @override
   void go(BuildContext context) => context.go(location);

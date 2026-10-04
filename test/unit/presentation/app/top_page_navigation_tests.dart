@@ -2,6 +2,18 @@ part of 'top_page_test_support.dart';
 
 extension TopPageNavigationTests on TopPageTestContext {
   void registerNavigationTests() {
+    testWidgets('メニューの年表直下にカレンダーがあり選択するとグループ選択を開く', (tester) async {
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pumpAndSettle();
+      final tiles = tester.widgetList<ListTile>(find.byType(ListTile)).toList();
+      final names = tiles.map((tile) => (tile.title as Text).data).toList();
+      expect(names.indexOf('カレンダー'), names.indexOf('グループ年表') + 1);
+      await tester.tap(find.text('カレンダー'));
+      await tester.pumpAndSettle();
+      expect(find.text('グループを選択'), findsOneWidget);
+    });
     testWidgets('メニューから「グループ年表」を選択すると、グループ一覧画面が表示される', (
       WidgetTester tester,
     ) async {
