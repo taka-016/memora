@@ -104,9 +104,13 @@ class ChangeCalendarRecurrenceUsecase {
             changes,
             id: source.id,
             start: start,
-            rule: _sameSchedule(changes.recurrenceRule, source.recurrenceRule)
-                ? _moveRule(changes.recurrenceRule, oldWall, wall)
-                : changes.recurrenceRule,
+            rule: _moveRule(
+              changes.recurrenceRule,
+              _sameSchedule(changes.recurrenceRule, source.recurrenceRule)
+                  ? oldWall
+                  : changedWall,
+              wall,
+            ),
             end: start.add(
               changes.endDateTime.difference(changes.startDateTime),
             ),
