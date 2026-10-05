@@ -265,6 +265,57 @@ void main() {
       });
     }
   }
+  for (final pattern in [
+    (
+      rule: 'FREQ=WEEKLY;BYDAY=FR;COUNT=4',
+      expected: 'FREQ=WEEKLY;BYDAY=TH;COUNT=4',
+    ),
+    (
+      rule: 'FREQ=WEEKLY;BYDAY=FR,SU;COUNT=4',
+      expected: 'FREQ=WEEKLY;BYDAY=TH,SA;COUNT=4',
+    ),
+    (
+      rule: 'FREQ=MONTHLY;BYMONTHDAY=2;COUNT=4',
+      expected: 'FREQ=MONTHLY;BYMONTHDAY=1;COUNT=4',
+    ),
+    (
+      rule: 'FREQ=MONTHLY;BYDAY=1FR;UNTIL=20270101',
+      expected: 'FREQ=MONTHLY;BYDAY=1TH;UNTIL=20270101',
+    ),
+  ]) {
+    test('後続回で明示変更した条件を全系列の保存初回へ整合する（${pattern.rule}）', () async {
+      final series = source.copyWith(overrides: []);
+      final selected = DateTime.utc(2026, 10, 2);
+      await usecase.execute(
+        series,
+        selected,
+        CalendarChangeScope.all,
+        changes: series.copyWith(
+          startDateTime: selected,
+          endDateTime: selected.add(const Duration(days: 2)),
+          recurrenceRule: pattern.rule,
+        ),
+      );
+      final result =
+          verify(repository.replaceCalendarEvent(any, captureAny, null))
+                  .captured
+                  .single
+              as CalendarEvent;
+      expect(result.startDateTime, series.startDateTime);
+      expect(
+        result.endDateTime.difference(result.startDateTime),
+        const Duration(days: 2),
+      );
+      expect(result.recurrenceRule, pattern.expected);
+      final occurrences = expander.expand(
+        CalendarEventMapper.toDto(result),
+        DateTime.utc(2026, 10),
+        DateTime.utc(2027, 2),
+      );
+      expect(occurrences.first.startDateTime, series.startDateTime);
+      if (pattern.rule.contains('COUNT=4')) expect(occurrences, hasLength(4));
+    });
+  }
   test('個別回の移動では元の系列の曜日を変更しない', () async {
     final series = source.copyWith(
       recurrenceRule: 'FREQ=WEEKLY;BYDAY=TH;COUNT=5',
