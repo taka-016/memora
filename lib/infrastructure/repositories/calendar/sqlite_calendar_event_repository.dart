@@ -32,8 +32,9 @@ class SqliteCalendarEventRepository implements CalendarEventRepository {
   Future<void> replaceCalendarEvent(
     CalendarEvent expected,
     CalendarEvent? replacement,
-    CalendarEvent? following,
-  ) => db.transaction(() async {
+    CalendarEvent? following, {
+    List<CalendarEvent> preservedEvents = const [],
+  }) => db.transaction(() async {
     final rows = await db.rows(
       'calendar_events',
       where: 'id = ?',
@@ -68,6 +69,17 @@ class SqliteCalendarEventRepository implements CalendarEventRepository {
                 following.groupId != expected.groupId)) {
       throw ValidationException('系列の分割対象が不正です');
     }
+    if (preservedEvents.any(
+      (value) =>
+          value.id.isNotEmpty ||
+          value.groupId != expected.groupId ||
+          value.recurrenceRule != null,
+    )) {
+      throw ValidationException('維持する個別予定が不正です');
+    }
+    for (final value in preservedEvents) {
+      await _validateLabel(value);
+    }
     if (replacement != null) await _validateLabel(replacement);
     if (following != null) await _validateLabel(following);
     if (replacement == null) {
@@ -76,6 +88,9 @@ class SqliteCalendarEventRepository implements CalendarEventRepository {
       await updateCalendarEvent(replacement);
     }
     if (following != null) await saveCalendarEvent(following);
+    for (final value in preservedEvents) {
+      await saveCalendarEvent(value);
+    }
   });
 
   @override

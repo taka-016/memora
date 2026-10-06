@@ -46,8 +46,9 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
   Future<void> replaceCalendarEvent(
     CalendarEvent expected,
     CalendarEvent? replacement,
-    CalendarEvent? following,
-  ) async {
+    CalendarEvent? following, {
+    List<CalendarEvent> preservedEvents = const [],
+  }) async {
     if (replacement != null &&
             (replacement.id != expected.id ||
                 replacement.groupId != expected.groupId) ||
@@ -57,12 +58,27 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
                 replacement == null)) {
       throw ValidationException('系列の分割対象が不正です');
     }
+    if (preservedEvents.any(
+      (value) =>
+          value.id.isNotEmpty ||
+          value.groupId != expected.groupId ||
+          value.recurrenceRule != null,
+    )) {
+      throw ValidationException('維持する個別予定が不正です');
+    }
     if (replacement != null) validateCalendarRecurrence(replacement);
     if (following != null) validateCalendarRecurrence(following);
     final ref = _firestore.collection('calendar_events').doc(expected.id);
     final nextRef = following == null
         ? null
         : _firestore.collection('calendar_events').doc();
+    final preservedRefs = [
+      for (final value in preservedEvents)
+        _firestore.collection('calendar_events').doc(),
+    ];
+    final preservedData = preservedEvents
+        .map(FirestoreCalendarEventMapper.toCreateFirestore)
+        .toList();
     await _firestore.runTransaction<void>((transaction) async {
       final current = await transaction.get(ref);
       if (!current.exists ||
@@ -83,7 +99,13 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
           : FirestoreCalendarEventMapper.toCreateFirestore(following);
       final headRefs = head == null ? <String>{} : _references(head);
       final tailRefs = tail == null ? <String>{} : _references(tail);
-      final ids = {...before, ...headRefs, ...tailRefs};
+      final preservedLabels = preservedData.map(_references).toList();
+      final ids = {
+        ...before,
+        ...headRefs,
+        ...tailRefs,
+        ...preservedLabels.expand((value) => value),
+      };
       final snapshots = <String, DocumentSnapshot<Map<String, dynamic>>>{};
       for (final id in ids) {
         final label = await transaction.get(_label(id));
@@ -95,7 +117,8 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
       for (final id in ids) {
         final delta =
             (headRefs.contains(id) ? 1 : 0) +
-            (tailRefs.contains(id) ? 1 : 0) -
+            (tailRefs.contains(id) ? 1 : 0) +
+            preservedLabels.where((value) => value.contains(id)).length -
             (before.contains(id) ? 1 : 0);
         if (delta != 0) {
           transaction.update(_label(id), {
@@ -110,6 +133,9 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
       }
       if (tail != null) {
         transaction.set(nextRef!, tail);
+      }
+      for (var index = 0; index < preservedData.length; index++) {
+        transaction.set(preservedRefs[index], preservedData[index]);
       }
     });
   }
