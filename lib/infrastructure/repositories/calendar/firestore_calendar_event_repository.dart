@@ -72,10 +72,9 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
     final nextRef = following == null
         ? null
         : _firestore.collection('calendar_events').doc();
-    final preservedRefs = [
-      for (final value in preservedEvents)
-        _firestore.collection('calendar_events').doc(),
-    ];
+    final preservedRefs = preservedEvents
+        .map((_) => _firestore.collection('calendar_events').doc())
+        .toList();
     final preservedData = preservedEvents
         .map(FirestoreCalendarEventMapper.toCreateFirestore)
         .toList();
