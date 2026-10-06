@@ -150,7 +150,8 @@ void main() {
         .thenReturn(FirestoreCalendarEventMapper.toCreateFirestore(expected));
     final extraRef = MockDocumentReference();
     when(extraRef.id).thenReturn('individual');
-    when(firestore.collection('calendar_events').doc()).thenReturn(extraRef);
+    final collection = firestore.collection('calendar_events');
+    when(collection.doc()).thenReturn(extraRef);
     await events.replaceCalendarEvent(
       expected,
       expected.copyWith(title: '変更'),
