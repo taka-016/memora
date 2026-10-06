@@ -245,7 +245,7 @@ void main() {
       DateTime.utc(2026, 11, 2, 6, 30),
     ]);
   });
-  test('存在しない取消し対象と開始日に一致しない条件を拒否する', () {
+  test('終了条件から外れた個別取消しを維持し開始日に一致しない条件を拒否する', () {
     final invalid = event(
       'FREQ=DAILY;COUNT=2',
       DateTime.utc(2026),
@@ -257,8 +257,8 @@ void main() {
       ],
     );
     expect(
-      () => expand(invalid, DateTime.utc(2026), DateTime.utc(2026, 2)),
-      throwsA(isA<ValidationException>()),
+      expand(invalid, DateTime.utc(2026), DateTime.utc(2026, 2)),
+      hasLength(2),
     );
     expect(
       () => expand(

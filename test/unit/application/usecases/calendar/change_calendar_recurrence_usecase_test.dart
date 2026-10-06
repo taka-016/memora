@@ -135,7 +135,7 @@ void main() {
     );
     expect(result.where((v) => v.title == '移動'), hasLength(1));
   });
-  test('これ以降の分割は過去の上書きを維持し対象範囲の上書きを解除して残り回数を保つ', () async {
+  test('これ以降の分割は対象範囲の個別変更も引き継いで残り回数を保つ', () async {
     await usecase.execute(
       source,
       DateTime.utc(2026, 10, 3),
@@ -152,7 +152,7 @@ void main() {
     final before = CalendarEventMapper.toDto(saved[0] as CalendarEvent);
     final after = CalendarEventMapper.toDto(saved[1] as CalendarEvent);
     expect(before.overrides, [source.overrides.first]);
-    expect(after.overrides, isEmpty);
+    expect(after.overrides, [source.overrides.last]);
     expect(
       expander
           .expand(before, DateTime.utc(2026, 10), DateTime.utc(2026, 12))
@@ -164,7 +164,7 @@ void main() {
       hasLength(3),
     );
   });
-  test('すべての変更は選択した回の差分を初回へ適用し上書きを解除する', () async {
+  test('すべての変更は個別の内容を維持して系列の初回へ日時差分を適用する', () async {
     await usecase.execute(
       source,
       DateTime.utc(2026, 10, 3),
@@ -179,8 +179,49 @@ void main() {
         .captured
         .single;
     expect(saved.startDateTime, DateTime.utc(2026, 10, 2));
-    expect(saved.overrides, isEmpty);
+    expect(saved.overrides.map((value) => value.originalStartDateTime), [
+      DateTime.utc(2026, 10, 3),
+      DateTime.utc(2026, 10, 5),
+    ]);
+    expect(
+      saved.overrides.last.startDateTime,
+      source.overrides.last.startDateTime,
+    );
+    expect(saved.overrides.last.title, source.overrides.last.title);
   });
+  for (final scope in [
+    CalendarChangeScope.all,
+    CalendarChangeScope.following,
+  ]) {
+    test('繰り返し条件と終了回数を変えても個別変更を維持する（$scope）', () async {
+      await usecase.execute(
+        source,
+        DateTime.utc(2026, 10, 3),
+        scope,
+        changes: source.copyWith(
+          startDateTime: DateTime.utc(2026, 10, 3),
+          endDateTime: DateTime.utc(2026, 10, 5),
+          recurrenceRule: 'FREQ=MONTHLY;BYMONTHDAY=3;COUNT=1',
+        ),
+      );
+      final saved = verify(
+        repository.replaceCalendarEvent(any, captureAny, captureAny),
+      ).captured;
+      final result =
+          (scope == CalendarChangeScope.all ? saved[0] : saved[1])
+              as CalendarEvent;
+      expect(result.overrides.last, source.overrides.last);
+      final occurrences = expander.expand(
+        CalendarEventMapper.toDto(result),
+        DateTime.utc(2026, 10),
+        DateTime.utc(2026, 12),
+      );
+      expect(
+        occurrences.singleWhere((value) => value.title == '移動').startDateTime,
+        DateTime.utc(2026, 11, 1),
+      );
+    });
+  }
   for (final scope in [
     CalendarChangeScope.all,
     CalendarChangeScope.following,
