@@ -143,6 +143,14 @@ class ChangeCalendarRecurrenceUsecase {
                     start,
                   ),
           );
+          if (changes.recurrenceRule == null &&
+              source.overrides.any(
+                (value) =>
+                    _key(value.originalStartDateTime, source.isAllDay) ==
+                    _key(source.startDateTime, source.isAllDay),
+              )) {
+            replacement = null;
+          }
         }
       } else {
         final boundary = source.isAllDay
