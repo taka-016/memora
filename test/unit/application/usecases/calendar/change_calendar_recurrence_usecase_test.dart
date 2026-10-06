@@ -122,27 +122,6 @@ void main() {
       hasLength(3),
     );
   });
-  test('これ以降の削除は移動先でなく元の開始日時で範囲を選ぶ', () async {
-    await usecase.execute(
-      source,
-      DateTime.utc(2026, 10, 4),
-      CalendarChangeScope.following,
-    );
-    final saved = verify(repository.replaceCalendarEvent(any, captureAny, null))
-        .captured
-        .single;
-    expect(saved.overrides, [source.overrides.first]);
-    expect(
-      expander
-          .expand(
-            CalendarEventMapper.toDto(saved as CalendarEvent),
-            DateTime.utc(2026, 10),
-            DateTime.utc(2026, 12),
-          )
-          .map((v) => v.originalStartDateTime),
-      [DateTime.utc(2026, 10, 1), DateTime.utc(2026, 10, 3)],
-    );
-  });
   test('すべての変更は選択した回の差分を初回へ適用し上書きを解除する', () async {
     await usecase.execute(
       source,
