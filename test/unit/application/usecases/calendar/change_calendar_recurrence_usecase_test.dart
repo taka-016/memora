@@ -44,6 +44,25 @@ void main() {
     repository = MockCalendarEventRepository();
     usecase = ChangeCalendarRecurrenceUsecase(repository, expander);
   });
+  for (final scope in [
+    CalendarChangeScope.all,
+    CalendarChangeScope.following,
+  ]) {
+    for (final deleting in [false, true]) {
+      test('個別変更済みの回から系列の変更と削除を拒否する（$scope・$deleting）', () async {
+        await expectLater(
+          usecase.execute(
+            source,
+            DateTime.utc(2026, 10, 4),
+            scope,
+            changes: deleting ? null : source.copyWith(title: '再編集'),
+          ),
+          throwsA(isA<ApplicationValidationException>()),
+        );
+        verifyZeroInteractions(repository);
+      });
+    }
+  }
   test('個別回の移動は元のキーで保存し他の取消しと移動を維持する', () async {
     final changes = source.copyWith(
       startDateTime: DateTime.utc(2026, 12, 3),
