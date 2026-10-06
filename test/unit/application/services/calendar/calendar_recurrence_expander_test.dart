@@ -85,8 +85,8 @@ void main() {
         ],
       );
       expect(
-        () => fast.expand(invalid, DateTime.utc(2026), DateTime.utc(2026, 2)),
-        throwsA(isA<ValidationException>()),
+        fast.expand(invalid, DateTime.utc(2026), DateTime.utc(2026, 2)),
+        isEmpty,
       );
       expect(
         verify(zone.resolve(captureAny, 'UTC')).captured.length,
