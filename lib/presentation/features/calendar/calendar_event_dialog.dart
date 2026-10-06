@@ -305,7 +305,9 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                     const Text('元の開始日時を境に系列を分割します。対象範囲外の回は変更しません。'),
                   if (scope != CalendarChangeScope.only)
                     Text(
-                      '対象範囲の個別回の上書き（移動・取消しを含む）${impact.reset}件を解除します。対象範囲外の${impact.retained}件は引き継ぎます。',
+                      deleting
+                          ? '対象範囲の個別変更した予定${impact.reset}件も削除します。移動済みの予定も元の予定日時を基準に削除します。対象範囲外の個別変更は維持します。'
+                          : '個別変更した予定はそのまま維持します。日時・タイトル・色ラベル・終日区分の個別変更と個別の取消しは変更しません。',
                     ),
                   if (deleting && scope == CalendarChangeScope.only)
                     const Text('この回の取消しを保存します。'),
@@ -333,7 +335,7 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
       calendarNotifierProvider(widget.groupId).notifier,
     );
     final original = notifier.originalOccurrenceForEvent(widget.event!);
-    if (original == null) {
+    if (notifier.seriesForEvent(widget.event!.id) == null) {
       setState(() => _error = '元の予定が見つかりません。再読み込みしてください');
       return;
     }
@@ -342,7 +344,9 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
       builder: (context) => AlertDialog(
         title: const Text('個別変更をリセット'),
         content: Text(
-          '日時・タイトル・色ラベル・終日区分の個別変更をすべて取り消し、元の繰り返し予定に戻します。\n\n${original.title}\n${calendarPeriodText(original)}',
+          original == null
+              ? '現在の繰り返し条件に対応する回がないため、リセットするとこの個別予定は削除されます。'
+              : '日時・タイトル・色ラベル・終日区分の個別変更をすべて取り消し、現在の繰り返し予定に戻します。\n\n${original.title}\n${calendarPeriodText(original)}',
         ),
         actions: [
           TextButton(
