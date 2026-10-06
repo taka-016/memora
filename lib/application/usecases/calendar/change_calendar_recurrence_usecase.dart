@@ -30,6 +30,11 @@ class ChangeCalendarRecurrenceUsecase {
       final key = source.isAllDay
           ? DateTime.utc(original.year, original.month, original.day)
           : original.toUtc();
+      if (scope != CalendarChangeScope.only &&
+          source.overrides.any((value) =>
+              _key(value.originalStartDateTime, source.isAllDay) == key)) {
+        throw ValidationException('個別変更した予定から繰り返し全体を変更できません。個別変更をリセットしてください');
+      }
       final base = source.copyWith(overrides: []);
       final occurrence = _expander
           .expand(base, key, key.add(const Duration(days: 1)))
