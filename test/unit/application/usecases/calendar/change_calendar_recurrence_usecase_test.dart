@@ -220,6 +220,24 @@ void main() {
         occurrences.singleWhere((value) => value.title == '移動').startDateTime,
         DateTime.utc(2026, 11, 1),
       );
+      final savedSeries = CalendarEventMapper.toDto(result)
+          .copyWith(id: '保存済み');
+      await usecase.execute(
+        savedSeries,
+        result.overrides.last.originalStartDateTime,
+        CalendarChangeScope.only,
+        changes: savedSeries.copyWith(
+          title: '個別の再編集',
+          startDateTime: result.overrides.last.startDateTime,
+          endDateTime: result.overrides.last.endDateTime,
+        ),
+      );
+      final edited =
+          verify(repository.replaceCalendarEvent(any, captureAny, null))
+                  .captured
+                  .single
+              as CalendarEvent;
+      expect(edited.overrides.last.title, '個別の再編集');
     });
   }
   for (final scope in [
@@ -419,6 +437,66 @@ void main() {
     expect(result.recurrenceRule, series.recurrenceRule);
     expect(result.overrides.single.startDateTime, DateTime.utc(2026, 10, 9));
   });
+  test('これ以降の削除は移動先に関係なく元のキーで個別変更も削除する', () async {
+    await usecase.execute(
+      source,
+      DateTime.utc(2026, 10, 3),
+      CalendarChangeScope.following,
+    );
+    final result =
+        verify(repository.replaceCalendarEvent(any, captureAny, null))
+                .captured
+                .single
+            as CalendarEvent;
+    expect(result.overrides, [source.overrides.first]);
+    expect(
+      expander
+          .expand(
+            CalendarEventMapper.toDto(result),
+            DateTime.utc(2026, 10),
+            DateTime.utc(2026, 12),
+          )
+          .any((value) => value.title == '移動'),
+      isFalse,
+    );
+  });
+  test('系列の時刻変更は個別の実日時を維持し二重に表示しない', () async {
+    final timed = source.copyWith(isAllDay: false, timeZone: 'Asia/Tokyo');
+    await usecase.execute(
+      timed,
+      DateTime.utc(2026, 10, 3),
+      CalendarChangeScope.all,
+      changes: timed.copyWith(
+        startDateTime: DateTime.utc(2026, 10, 3, 1),
+        endDateTime: DateTime.utc(2026, 10, 5, 1),
+      ),
+    );
+    final result =
+        verify(repository.replaceCalendarEvent(any, captureAny, null))
+                .captured
+                .single
+            as CalendarEvent;
+    expect(
+      result.overrides.last.startDateTime,
+      source.overrides.last.startDateTime,
+    );
+    expect(
+      result.overrides.last.originalStartDateTime,
+      DateTime.utc(2026, 10, 4, 1),
+    );
+    final occurrences = expander.expand(
+      CalendarEventMapper.toDto(result),
+      DateTime.utc(2026, 10),
+      DateTime.utc(2026, 12),
+    );
+    expect(occurrences, hasLength(4));
+    expect(
+      occurrences.where(
+        (value) => value.originalStartDateTime == DateTime.utc(2026, 10, 4, 1),
+      ),
+      hasLength(1),
+    );
+  });
   test('初回からの削除と全系列の削除は親を削除する', () async {
     for (final scope in [
       CalendarChangeScope.following,
@@ -428,6 +506,48 @@ void main() {
     }
     verify(repository.replaceCalendarEvent(any, null, null)).called(2);
   });
+  for (final cancelled in [false, true]) {
+    test('繰り返し解除で個別変更または取消し済みの初回を再生成しない（$cancelled）', () async {
+      final first = CalendarEventOverride(
+        originalStartDateTime: source.startDateTime,
+        isCancelled: cancelled,
+        title: cancelled ? null : '初回個別',
+        labelId: cancelled ? null : source.labelId,
+        isAllDay: cancelled ? null : true,
+        startDateTime: cancelled ? null : DateTime.utc(2026, 11, 10),
+        endDateTime: cancelled ? null : DateTime.utc(2026, 11, 11),
+      );
+      final series = source.copyWith(overrides: [first, ...source.overrides]);
+      await usecase.execute(
+        series,
+        DateTime.utc(2026, 10, 3),
+        CalendarChangeScope.all,
+        changes: CalendarEventDto(
+          id: source.id,
+          groupId: source.groupId,
+          labelId: source.labelId,
+          title: '単発',
+          startDateTime: DateTime.utc(2026, 10, 3),
+          endDateTime: DateTime.utc(2026, 10, 5),
+          isAllDay: true,
+        ),
+      );
+      final captured = verify(
+        repository.replaceCalendarEvent(
+          any,
+          captureAny,
+          null,
+          preservedEvents: captureAnyNamed('preservedEvents'),
+        ),
+      ).captured;
+      expect(captured.first, isNull);
+      final individuals = captured.last as List<CalendarEvent>;
+      expect(
+        individuals.map((value) => value.title),
+        cancelled ? ['移動'] : ['初回個別', '移動'],
+      );
+    });
+  }
   test('終日系列を時刻付き単発へ変更して繰り返しとタイムゾーンを解除する', () async {
     final changes = CalendarEventDto(
       id: source.id,
