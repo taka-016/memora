@@ -79,7 +79,9 @@ void main() {
           DateTime.utc(2026, 10, 4),
           DateTime.utc(2026, 10, 5),
         )
-.singleWhere((value) => value.originalStartDateTime == DateTime.utc(2026, 10, 4));
+        .singleWhere(
+          (value) => value.originalStartDateTime == DateTime.utc(2026, 10, 4),
+        );
     expect(restored.title, source.title);
     expect(restored.labelId, source.labelId);
     expect(restored.startDateTime, DateTime.utc(2026, 10, 4));

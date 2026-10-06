@@ -109,8 +109,9 @@ class CalendarNotifier extends _$CalendarNotifier {
   CalendarEventDto? originalOccurrenceForEvent(CalendarEventDto occurrence) {
     final source = seriesForEvent(occurrence.id);
     final key = occurrence.originalStartDateTime;
-    if (source == null || key == null || occurrence.groupId != groupId)
+    if (source == null || key == null || occurrence.groupId != groupId) {
       return null;
+    }
     return ref
         .read(calendarRecurrenceExpanderProvider)
         .expand(

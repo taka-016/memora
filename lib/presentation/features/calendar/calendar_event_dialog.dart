@@ -566,12 +566,15 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                             ListTile(
                               contentPadding: EdgeInsets.zero,
                               title: const Text('繰り返し'),
+                              enabled: !_hasIndividualChanges,
                               subtitle: Text(
                                 _hasIndividualChanges
                                     ? '${_recurrence.summary}\n個別変更した予定です。繰り返しに戻すには個別変更をリセットしてください。'
                                     : _recurrence.summary,
                               ),
-                              trailing: const Icon(Icons.chevron_right),
+                              trailing: _hasIndividualChanges
+                                  ? null
+                                  : const Icon(Icons.chevron_right),
                               onTap: state.isSaving || _hasIndividualChanges
                                   ? null
                                   : () async {
