@@ -444,14 +444,20 @@ void main() {
       CalendarChangeScope.all,
       changes: changes,
     );
-    final saved =
-        verify(repository.replaceCalendarEvent(any, captureAny, null))
-                .captured
-                .single
-            as CalendarEvent;
+    final captured = verify(
+      repository.replaceCalendarEvent(
+        any,
+        captureAny,
+        null,
+        preservedEvents: captureAnyNamed('preservedEvents'),
+      ),
+    ).captured;
+    final saved = captured.first as CalendarEvent;
     expect(saved.recurrenceRule, isNull);
     expect(saved.timeZone, isNull);
     expect(saved.startDateTime, DateTime.utc(2026, 10, 1, 9));
+    final retained = captured.last as List<CalendarEvent>;
+    expect(retained.single.startDateTime, source.overrides.last.startDateTime);
   });
   test('夏時間で欠落した回を除いて分割後の残り回数を決める', () async {
     final timed = CalendarEventDto(

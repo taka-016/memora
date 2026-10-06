@@ -143,6 +143,28 @@ void main() {
     isAllDay: false,
   );
 
+  test('単発変更と維持する個別予定の保存は参照数とともに一括更新する', () async {
+    final expected = event(id: 'event');
+    when(eventDoc.id).thenReturn('event');
+    when(eventDoc.data())
+        .thenReturn(FirestoreCalendarEventMapper.toCreateFirestore(expected));
+    final extraRef = MockDocumentReference();
+    when(extraRef.id).thenReturn('individual');
+    when(firestore.collection('calendar_events').doc()).thenReturn(extraRef);
+    await events.replaceCalendarEvent(
+      expected,
+      expected.copyWith(title: '変更'),
+      null,
+      preservedEvents: [event().copyWith(title: '個別予定')],
+    );
+    verifyInOrder([
+      transaction.get(eventRef),
+      transaction.get(labelRef),
+      transaction.update(labelRef, argThat(containsPair('eventCount', 2))),
+      transaction.update(eventRef, argThat(containsPair('title', '変更'))),
+      transaction.set(extraRef, argThat(containsPair('title', '個別予定'))),
+    ]);
+  });
   test('系列分割は全読取の後に両系列と参照数を一括保存する', () async {
     final original = event(id: 'event')
         .copyWith(recurrenceRule: 'FREQ=DAILY;COUNT=5', timeZone: 'Asia/Tokyo');

@@ -80,6 +80,47 @@ void main() {
         isAllDay: allDay,
       );
 
+  test('系列を単発へ変更するとき個別予定を同じトランザクションで維持する', () async {
+    final labelId = await labels.saveCalendarLabel(label());
+    final foreign = await labels.saveCalendarLabel(label(group: 'friends'));
+    final id = await events.saveCalendarEvent(
+      event(
+        labelId,
+        allDay: true,
+      ).copyWith(recurrenceRule: 'FREQ=DAILY;COUNT=3'),
+    );
+    final source = (await eventQuery.getCalendarEventsByGroupId('family'))
+        .single;
+    final expected = CalendarEventMapper.toEntity(source);
+    final replacement = event(labelId, id: id, allDay: true);
+    final individual = event(labelId).copyWith(title: '個別予定');
+    await expectLater(
+      events.replaceCalendarEvent(
+        expected,
+        replacement,
+        null,
+        preservedEvents: [individual.copyWith(labelId: foreign)],
+      ),
+      throwsA(isA<ValidationException>()),
+    );
+    expect(
+      (await eventQuery.getCalendarEventsByGroupId('family')).single,
+      source,
+    );
+    await events.replaceCalendarEvent(
+      expected,
+      replacement,
+      null,
+      preservedEvents: [individual],
+    );
+    final saved = await eventQuery.getCalendarEventsByGroupId('family');
+    expect(saved, hasLength(2));
+    expect(
+      saved.singleWhere((value) => value.title == '個別予定').recurrenceRule,
+      isNull,
+    );
+    expect(saved.singleWhere((value) => value.id == id).recurrenceRule, isNull);
+  });
   test('分割は原子的に保存し別ラベルの失敗と競合時には元の系列を維持する', () async {
     final labelId = await labels.saveCalendarLabel(label());
     final foreign = await labels.saveCalendarLabel(label(group: 'friends'));
