@@ -193,6 +193,27 @@ class ChangeCalendarRecurrenceUsecase {
     }
   }
 
+  Future<void> resetOverride(CalendarEventDto source, DateTime original) async {
+    final key = _key(original, source.isAllDay);
+    if (source.id.isEmpty || source.recurrenceRule == null ||
+        !source.overrides.any((value) =>
+            _key(value.originalStartDateTime, source.isAllDay) == key)) {
+      throw const ApplicationValidationException('リセットする個別変更が見つかりません。再読み込みしてください');
+    }
+    final replacement = source.copyWith(overrides: source.overrides.where(
+      (value) => _key(value.originalStartDateTime, source.isAllDay) != key,
+    ).toList());
+    try {
+      await _repository.replaceCalendarEvent(
+        CalendarEventMapper.toEntity(source),
+        CalendarEventMapper.toEntity(replacement),
+        null,
+      );
+    } on ValidationException catch (e, stack) {
+      Error.throwWithStackTrace(ApplicationValidationException(e.message), stack);
+    }
+  }
+
   DateTime _wall(CalendarEventDto event, DateTime value) => event.isAllDay
       ? _key(value, true)
       : _expander.timeZone.local(value, event.timeZone!);
