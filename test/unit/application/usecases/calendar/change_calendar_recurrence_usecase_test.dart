@@ -63,6 +63,46 @@ void main() {
       });
     }
   }
+  test('個別変更のリセットは対象の上書きだけを外して元の系列へ戻す', () async {
+    await usecase.resetOverride(source, DateTime.utc(2026, 10, 4));
+    final saved = verify(
+      repository.replaceCalendarEvent(captureAny, captureAny, null),
+    ).captured;
+    expect(saved.first, CalendarEventMapper.toEntity(source));
+    final result = saved.last as CalendarEvent;
+    expect(result.overrides, [source.overrides.first]);
+    expect(result.recurrenceRule, source.recurrenceRule);
+    expect(result.startDateTime, source.startDateTime);
+    final restored = expander
+        .expand(
+          CalendarEventMapper.toDto(result),
+          DateTime.utc(2026, 10, 4),
+          DateTime.utc(2026, 10, 5),
+        )
+        .single;
+    expect(restored.title, source.title);
+    expect(restored.labelId, source.labelId);
+    expect(restored.startDateTime, DateTime.utc(2026, 10, 4));
+    expect(restored.endDateTime, DateTime.utc(2026, 10, 6));
+    expect(restored.isAllDay, source.isAllDay);
+    await usecase.execute(
+      CalendarEventMapper.toDto(result),
+      DateTime.utc(2026, 10, 4),
+      CalendarChangeScope.all,
+      changes: CalendarEventMapper.toDto(result).copyWith(
+        startDateTime: DateTime.utc(2026, 10, 4),
+        endDateTime: DateTime.utc(2026, 10, 6),
+      ),
+    );
+    verify(repository.replaceCalendarEvent(any, any, null)).called(1);
+  });
+  test('個別変更のない回はリセットせず保存を拒否する', () async {
+    await expectLater(
+      usecase.resetOverride(source, DateTime.utc(2026, 10, 3)),
+      throwsA(isA<ApplicationValidationException>()),
+    );
+    verifyZeroInteractions(repository);
+  });
   test('個別回の移動は元のキーで保存し他の取消しと移動を維持する', () async {
     final changes = source.copyWith(
       startDateTime: DateTime.utc(2026, 12, 3),
