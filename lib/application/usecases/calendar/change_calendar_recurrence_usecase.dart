@@ -37,12 +37,19 @@ class ChangeCalendarRecurrenceUsecase {
           )) {
         throw ValidationException('個別変更した予定から繰り返し全体を変更できません。個別変更をリセットしてください');
       }
-      final base = source.copyWith(overrides: []);
-      final occurrence = _expander
-          .expand(base, key, key.add(const Duration(days: 1)))
-          .where((v) => v.originalStartDateTime == key)
-          .firstOrNull;
-      if (occurrence == null) throw ValidationException('変更する回が系列に存在しません');
+      if (!source.overrides.any(
+        (value) => _key(value.originalStartDateTime, source.isAllDay) == key,
+      )) {
+        final occurrence = _expander
+            .expand(
+              source.copyWith(overrides: []),
+              key,
+              key.add(const Duration(days: 1)),
+            )
+            .where((value) => value.originalStartDateTime == key)
+            .firstOrNull;
+        if (occurrence == null) throw ValidationException('変更する回が系列に存在しません');
+      }
       CalendarEventDto? replacement;
       CalendarEventDto? following;
       if (scope == CalendarChangeScope.only) {
@@ -121,6 +128,15 @@ class ChangeCalendarRecurrenceUsecase {
             end: start.add(
               changes.endDateTime.difference(changes.startDateTime),
             ),
+            overrides: changes.recurrenceRule == null
+                ? []
+                : _moveOverrides(
+                    source,
+                    changes,
+                    source.overrides,
+                    source.startDateTime,
+                    start,
+                  ),
           );
         }
       } else {
@@ -179,7 +195,27 @@ class ChangeCalendarRecurrenceUsecase {
               _wall(changes, changes.startDateTime),
             );
           }
-          following = _with(changes, id: '', rule: nextRule);
+          following = _with(
+            changes,
+            id: '',
+            rule: nextRule,
+            overrides: nextRule == null
+                ? []
+                : _moveOverrides(
+                    source,
+                    changes,
+                    source.overrides
+                        .where(
+                          (value) => !_key(
+                            value.originalStartDateTime,
+                            source.isAllDay,
+                          ).isBefore(key),
+                        )
+                        .toList(),
+                    key,
+                    changes.startDateTime,
+                  ),
+          );
         }
       }
       await _repository.replaceCalendarEvent(
@@ -226,6 +262,31 @@ class ChangeCalendarRecurrenceUsecase {
         stack,
       );
     }
+  }
+
+  List<CalendarEventOverride> _moveOverrides(
+    CalendarEventDto source,
+    CalendarEventDto target,
+    List<CalendarEventOverride> overrides,
+    DateTime before,
+    DateTime after,
+  ) {
+    final shift = _wall(target, after).difference(_wall(source, before));
+    return overrides.map((value) {
+      final wall = _wall(source, value.originalStartDateTime).add(shift);
+      final key = target.isAllDay
+          ? _key(wall, true)
+          : _expander.resolveTime(wall, target.timeZone!);
+      return CalendarEventOverride(
+        originalStartDateTime: key,
+        isCancelled: value.isCancelled,
+        title: value.title,
+        labelId: value.labelId,
+        isAllDay: value.isAllDay,
+        startDateTime: value.startDateTime,
+        endDateTime: value.endDateTime,
+      );
+    }).toList();
   }
 
   DateTime _wall(CalendarEventDto event, DateTime value) => event.isAllDay

@@ -126,13 +126,11 @@ class CalendarRecurrenceExpander {
             .subtract(const Duration(days: 1));
     if (lower.isAfter(day)) day = _date(lower);
     var count = rule.count == null ? 0 : countBefore(day);
-    final originals = <DateTime>{};
     for (final candidate in rule.candidateDays(start, day, endDay)) {
       if (rule.count != null && count >= rule.count!) break;
       final instant = occurrence(candidate);
       if (instant == null) continue;
       count++;
-      originals.add(instant.toUtc());
       if (overridden.contains(instant.toUtc())) continue;
       final value = event.copyWith(
         startDateTime: event.isAllDay ? instant : instant.toLocal(),
@@ -145,18 +143,6 @@ class CalendarRecurrenceExpander {
     }
     for (final override in event.overrides) {
       final original = originalKey(override.originalStartDateTime);
-      if (!originals.contains(original.toUtc())) {
-        final wall = event.isAllDay
-            ? _date(original)
-            : timeZone.local(original, event.timeZone!);
-        if (occurrence(_date(wall)) != original.toUtc()) {
-          throw ValidationException('上書き対象の回が系列に存在しません');
-        }
-        if (rule.count != null) {
-          final n = countBefore(_date(wall).add(const Duration(days: 1)));
-          if (n > rule.count!) throw ValidationException('上書き対象が指定回数を超えています');
-        }
-      }
       if (override.isCancelled) continue;
       final value = event.copyWith(
         title: override.title,
