@@ -28,6 +28,14 @@ class CalendarEventDto extends Equatable {
   final List<CalendarEventOverride> overrides;
   final DateTime? originalStartDateTime;
 
+  bool get hasIndividualChanges =>
+      originalStartDateTime != null &&
+      overrides.any(
+        (value) =>
+            value.originalStartDateTime.toUtc() ==
+            originalStartDateTime!.toUtc(),
+      );
+
   CalendarEventDto copyWith({
     String? id,
     String? groupId,

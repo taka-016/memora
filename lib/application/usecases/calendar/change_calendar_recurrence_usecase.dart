@@ -31,8 +31,10 @@ class ChangeCalendarRecurrenceUsecase {
           ? DateTime.utc(original.year, original.month, original.day)
           : original.toUtc();
       if (scope != CalendarChangeScope.only &&
-          source.overrides.any((value) =>
-              _key(value.originalStartDateTime, source.isAllDay) == key)) {
+          source.overrides.any(
+            (value) =>
+                _key(value.originalStartDateTime, source.isAllDay) == key,
+          )) {
         throw ValidationException('個別変更した予定から繰り返し全体を変更できません。個別変更をリセットしてください');
       }
       final base = source.copyWith(overrides: []);
@@ -195,14 +197,23 @@ class ChangeCalendarRecurrenceUsecase {
 
   Future<void> resetOverride(CalendarEventDto source, DateTime original) async {
     final key = _key(original, source.isAllDay);
-    if (source.id.isEmpty || source.recurrenceRule == null ||
-        !source.overrides.any((value) =>
-            _key(value.originalStartDateTime, source.isAllDay) == key)) {
-      throw const ApplicationValidationException('リセットする個別変更が見つかりません。再読み込みしてください');
+    if (source.id.isEmpty ||
+        source.recurrenceRule == null ||
+        !source.overrides.any(
+          (value) => _key(value.originalStartDateTime, source.isAllDay) == key,
+        )) {
+      throw const ApplicationValidationException(
+        'リセットする個別変更が見つかりません。再読み込みしてください',
+      );
     }
-    final replacement = source.copyWith(overrides: source.overrides.where(
-      (value) => _key(value.originalStartDateTime, source.isAllDay) != key,
-    ).toList());
+    final replacement = source.copyWith(
+      overrides: source.overrides
+          .where(
+            (value) =>
+                _key(value.originalStartDateTime, source.isAllDay) != key,
+          )
+          .toList(),
+    );
     try {
       await _repository.replaceCalendarEvent(
         CalendarEventMapper.toEntity(source),
@@ -210,7 +221,10 @@ class ChangeCalendarRecurrenceUsecase {
         null,
       );
     } on ValidationException catch (e, stack) {
-      Error.throwWithStackTrace(ApplicationValidationException(e.message), stack);
+      Error.throwWithStackTrace(
+        ApplicationValidationException(e.message),
+        stack,
+      );
     }
   }
 

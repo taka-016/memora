@@ -106,6 +106,37 @@ class CalendarNotifier extends _$CalendarNotifier {
         );
   });
 
+  CalendarEventDto? originalOccurrenceForEvent(CalendarEventDto occurrence) {
+    final source = seriesForEvent(occurrence.id);
+    final key = occurrence.originalStartDateTime;
+    if (source == null || key == null || occurrence.groupId != groupId)
+      return null;
+    return ref
+        .read(calendarRecurrenceExpanderProvider)
+        .expand(
+          source.copyWith(overrides: []),
+          key,
+          key.add(const Duration(days: 1)),
+        )
+        .where((value) => value.originalStartDateTime == key)
+        .firstOrNull;
+  }
+
+  Future<bool> resetRecurringEvent(CalendarEventDto occurrence) =>
+      _mutate(() async {
+        final source = seriesForEvent(occurrence.id);
+        if (source == null ||
+            occurrence.groupId != groupId ||
+            occurrence.originalStartDateTime == null) {
+          throw const ApplicationValidationException(
+            'リセットする予定が見つかりません。再読み込みしてください',
+          );
+        }
+        await ref
+            .read(changeCalendarRecurrenceUsecaseProvider)
+            .resetOverride(source, occurrence.originalStartDateTime!);
+      });
+
   ({int reset, int retained}) recurrenceImpact(
     CalendarEventDto occurrence,
     CalendarChangeScope scope,

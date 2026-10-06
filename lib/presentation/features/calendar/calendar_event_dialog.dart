@@ -52,6 +52,8 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
   late final String _zone;
   bool? _seriesAllDay;
 
+  bool get _hasIndividualChanges => widget.event?.hasIndividualChanges ?? false;
+
   @override
   void initState() {
     super.initState();
@@ -285,8 +287,10 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                       children: [
                         for (final entry in {
                           CalendarChangeScope.only: 'この予定のみ',
-                          CalendarChangeScope.following: 'この予定とこれ以降',
-                          CalendarChangeScope.all: 'すべての予定',
+                          if (!_hasIndividualChanges)
+                            CalendarChangeScope.following: 'この予定とこれ以降',
+                          if (!_hasIndividualChanges)
+                            CalendarChangeScope.all: 'すべての予定',
                         }.entries)
                           RadioListTile<CalendarChangeScope>(
                             value: entry.key,
@@ -322,6 +326,48 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
         },
       ),
     );
+  }
+
+  Future<void> _resetOverride() async {
+    final notifier = ref.read(
+      calendarNotifierProvider(widget.groupId).notifier,
+    );
+    final original = notifier.originalOccurrenceForEvent(widget.event!);
+    if (original == null) {
+      setState(() => _error = '元の予定が見つかりません。再読み込みしてください');
+      return;
+    }
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('個別変更をリセット'),
+        content: Text(
+          '日時・タイトル・色ラベル・終日区分の個別変更をすべて取り消し、元の繰り返し予定に戻します。\n\n${original.title}\n${calendarPeriodText(original)}',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('リセットする'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    final success = await notifier.resetRecurringEvent(widget.event!);
+    if (!mounted) return;
+    if (success) {
+      Navigator.pop(context);
+    } else {
+      setState(
+        () => _error = ref
+            .read(calendarNotifierProvider(widget.groupId))
+            .mutationError,
+      );
+    }
   }
 
   Future<void> _delete() async {
@@ -520,9 +566,13 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                             ListTile(
                               contentPadding: EdgeInsets.zero,
                               title: const Text('繰り返し'),
-                              subtitle: Text(_recurrence.summary),
+                              subtitle: Text(
+                                _hasIndividualChanges
+                                    ? '${_recurrence.summary}\n個別変更した予定です。繰り返しに戻すには個別変更をリセットしてください。'
+                                    : _recurrence.summary,
+                              ),
                               trailing: const Icon(Icons.chevron_right),
-                              onTap: state.isSaving
+                              onTap: state.isSaving || _hasIndividualChanges
                                   ? null
                                   : () async {
                                       final value =
@@ -545,6 +595,13 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                                   calendarPreferencesNotifierProvider,
                                 ),
                                 child: const Text('標準時間を再取得'),
+                              ),
+                            if (_hasIndividualChanges)
+                              TextButton(
+                                onPressed: state.isSaving
+                                    ? null
+                                    : _resetOverride,
+                                child: const Text('個別変更をリセット'),
                               ),
                             if (_error.isNotEmpty)
                               Text(
