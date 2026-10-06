@@ -146,6 +146,96 @@ void main() {
       ).called(1);
     });
   }
+  for (final deleting in [false, true]) {
+    testWidgets('系列操作の確認で個別予定の維持と削除を明示する（$deleting）', (tester) async {
+      final source = calendarTestEvent('e', '系列').copyWith(
+        recurrenceRule: 'FREQ=DAILY;COUNT=3',
+        timeZone: 'Asia/Tokyo',
+        overrides: [
+          CalendarEventOverride(
+            originalStartDateTime: DateTime(2026, 10, 3, 9),
+            isCancelled: false,
+            title: '個別変更',
+            labelId: 'family',
+            isAllDay: false,
+            startDateTime: DateTime(2026, 10, 6, 12),
+            endDateTime: DateTime(2026, 10, 6, 13),
+          ),
+        ],
+      );
+      final harness = CalendarTestHarness()..savedEvents.add(source);
+      await harness.pump(tester);
+      await tester.tap(find.byKey(calendarTestDay2));
+      await tester.pump();
+      await tester.tap(find.byKey(calendarTestDay2));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.tap(find.widgetWithText(ListTile, '系列'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.tap(find.text(deleting ? '削除' : '保存'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.tap(find.text('この予定とこれ以降'));
+      await tester.pump();
+      expect(
+        find.textContaining(deleting ? '個別変更した予定1件も削除' : '個別変更した予定はそのまま維持'),
+        findsOneWidget,
+      );
+      await tester.tap(find.text(deleting ? '削除する' : '変更する'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      verify(
+        harness.changeRecurrence.execute(
+          any,
+          source.startDateTime.toUtc(),
+          CalendarChangeScope.following,
+          changes: deleting ? null : anyNamed('changes'),
+        ),
+      ).called(1);
+    });
+  }
+  testWidgets('現在の繰り返しに対応する回がない個別予定のリセットは削除を確認する', (tester) async {
+    final source = calendarTestEvent('e', '系列').copyWith(
+      recurrenceRule: 'FREQ=DAILY;COUNT=1',
+      timeZone: 'Asia/Tokyo',
+      overrides: [
+        CalendarEventOverride(
+          originalStartDateTime: DateTime(2026, 10, 3, 9),
+          isCancelled: false,
+          title: '個別変更',
+          labelId: 'family',
+          isAllDay: false,
+          startDateTime: DateTime(2026, 10, 2, 12),
+          endDateTime: DateTime(2026, 10, 2, 13),
+        ),
+      ],
+    );
+    final harness = CalendarTestHarness()..savedEvents.add(source);
+    await harness.pump(tester);
+    await tester.tap(find.byKey(calendarTestDay2));
+    await tester.pump();
+    await tester.tap(find.byKey(calendarTestDay2));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.widgetWithText(ListTile, '個別変更'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.ensureVisible(find.text('個別変更をリセット'));
+    await tester.tap(find.text('個別変更をリセット'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.textContaining('リセットするとこの個別予定は削除'), findsOneWidget);
+    await tester.tap(find.text('リセットする'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    verify(
+      harness.changeRecurrence.resetOverride(
+        source,
+        DateTime(2026, 10, 3, 9).toUtc(),
+      ),
+    ).called(1);
+  });
   testWidgets('個別変更のリセットは戻り先を確認し系列の変更操作を再び選べる', (tester) async {
     final source = calendarTestEvent('e', '系列').copyWith(
       recurrenceRule: 'FREQ=DAILY;COUNT=3',
@@ -442,7 +532,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     await tester.tap(find.text('この予定とこれ以降'));
     await tester.pump();
-    expect(find.textContaining('対象範囲の個別回の上書き'), findsOneWidget);
+    expect(find.textContaining('個別変更した予定はそのまま維持'), findsOneWidget);
     await tester.tap(find.text('変更する'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
