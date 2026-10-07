@@ -6,11 +6,55 @@ import 'package:mockito/mockito.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/application/usecases/calendar/change_calendar_recurrence_usecase.dart';
+import 'package:memora/application/services/calendar/calendar_recurrence_settings.dart';
+import 'package:memora/application/services/calendar/calendar_recurrence_expander.dart';
+import 'package:memora/infrastructure/services/iana_calendar_time_zone.dart';
+import 'package:memora/presentation/features/calendar/calendar_recurrence_dialog.dart';
 
 import 'calendar_test_support.dart';
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
+  for (var day = 5; day <= 11; day++) {
+    final start = DateTime(2026, 10, day, 9);
+    final isWeekday = start.weekday <= DateTime.friday;
+    testWidgets('平日プリセットは平日開始だけ選択できる（${start.weekday}）', (tester) async {
+      CalendarRecurrenceSettings? selected;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) => TextButton(
+              onPressed: () async {
+                selected = await showCalendarRecurrencePicker(
+                  context,
+                  const CalendarRecurrenceSettings(),
+                  start,
+                );
+              },
+              child: const Text('設定'),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('設定'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('平日（月〜金）'), isWeekday ? findsOneWidget : findsNothing);
+      await tester.tap(find.text(isWeekday ? '平日（月〜金）' : '毎日'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(
+        selected!.toRule(
+          start: start,
+          allDay: false,
+          zone: 'Asia/Tokyo',
+          expander: CalendarRecurrenceExpander(IanaCalendarTimeZone()),
+        ),
+        isWeekday ? 'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR' : 'FREQ=DAILY',
+      );
+      expect(tester.takeException(), isNull);
+    });
+  }
   testWidgets('予定入力からカスタムの複数曜日・間隔・回数を確認して保存できる', (tester) async {
     final harness = CalendarTestHarness();
     await harness.pump(tester);
