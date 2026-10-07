@@ -19,7 +19,7 @@ Future<CalendarRecurrenceSettings?> showCalendarRecurrencePicker(
               '毎週（${CalendarRecurrenceSettings.dayNames[start.weekday - 1]}曜日）',
           'monthly': '毎月',
           'yearly': '毎年',
-          'weekdays': '平日（月〜金）',
+          if (start.weekday <= DateTime.friday) 'weekdays': '平日（月〜金）',
           'custom': 'カスタム',
         }.entries)
           SimpleDialogOption(
