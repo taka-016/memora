@@ -14,10 +14,10 @@ void main() {
         final source = calendarTestEvent('e', '複数日の予定').copyWith(
           isAllDay: allDay,
           startDateTime: allDay
-              ? DateTime.utc(2026, 10, 2)
+              ? DateTime(2026, 10, 2)
               : DateTime(2026, 10, 2, 9),
           endDateTime: allDay
-              ? DateTime.utc(2026, 10, 4)
+              ? DateTime(2026, 10, 4)
               : DateTime(2026, 10, 4, 23, 59),
         );
         final target = source.startDateTime.add(Duration(days: days));
