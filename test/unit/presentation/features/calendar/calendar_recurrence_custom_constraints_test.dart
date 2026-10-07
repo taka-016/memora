@@ -84,4 +84,38 @@ void main() {
     expect(find.text('終了日は開始日以降にしてください'), findsOneWidget);
     expect(result, isNull);
   });
+  testWidgets('月の間隔だけの変更では月末補正前の31日基準を維持する', (tester) async {
+    CalendarRecurrenceSettings? result;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => TextButton(
+            onPressed: () async {
+              result = await showDialog<CalendarRecurrenceSettings>(
+                context: context,
+                builder: (_) => CalendarRecurrenceCustomDialog(
+                  settings: const CalendarRecurrenceSettings(
+                    frequency: 'MONTHLY',
+                    monthDay: 31,
+                  ),
+                  start: DateTime(2026, 2, 28),
+                ),
+              );
+            },
+            child: const Text('設定'),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('設定'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('毎月31日'), findsOneWidget);
+    await tester.enterText(find.widgetWithText(TextFormField, '間隔'), '2');
+    await tester.tap(find.text('決定'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(result!.monthDay, 31);
+    expect(result!.interval, 2);
+  });
 }

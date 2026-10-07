@@ -41,7 +41,11 @@ class CalendarTestHarness {
   final savedEvents = <CalendarEventDto>[];
   final savedLabels = <CalendarLabelDto>[calendarTestFamily];
 
-  Future<void> pump(WidgetTester tester, {double textScale = 1}) async {
+  Future<void> pump(
+    WidgetTester tester, {
+    double textScale = 1,
+    DateTime? now,
+  }) async {
     when(events.execute('g1')).thenAnswer((_) async => List.of(savedEvents));
     when(labels.execute('g1')).thenAnswer((_) async => List.of(savedLabels));
     when(reorder.execute('g1', any)).thenAnswer((call) async {
@@ -92,7 +96,7 @@ class CalendarTestHarness {
             changeRecurrence,
           ),
           appClockProvider.overrideWithValue(
-            FixedAppClock(DateTime(2026, 10, 1)),
+            FixedAppClock(now ?? DateTime(2026, 10, 1)),
           ),
           getCalendarEventsUsecaseProvider.overrideWithValue(events),
           getCalendarLabelsUsecaseProvider.overrideWithValue(labels),

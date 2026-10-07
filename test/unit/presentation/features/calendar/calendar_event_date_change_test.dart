@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
+import 'package:memora/application/usecases/calendar/change_calendar_recurrence_usecase.dart';
 import 'package:mockito/mockito.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -8,6 +9,61 @@ import 'calendar_test_support.dart';
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
+  for (final move in [false, true]) {
+    testWidgets('月末補正回の同日確定は基準維持し個別移動は終了条件外も許可する（$move）', (tester) async {
+      final source = calendarTestEvent('e', '月末の予定').copyWith(
+        isAllDay: true,
+        startDateTime: DateTime.utc(2026, 1, 31),
+        endDateTime: DateTime.utc(2026, 1, 31),
+        recurrenceRule: 'FREQ=MONTHLY;BYMONTHDAY=31;UNTIL=20260228',
+      );
+      final harness = CalendarTestHarness()..savedEvents.add(source);
+      await harness.pump(tester, now: DateTime(2026, 2, 1));
+      final day = find.byKey(const Key('calendar_day_2026_2_28'));
+      await tester.tap(day);
+      await tester.pump();
+      await tester.tap(day);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.tap(find.widgetWithText(ListTile, '月末の予定'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.tap(find.text('開始日: 2026/2/28'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.tap(find.byKey(const Key('date_header')));
+      await tester.pump();
+      await tester.enterText(
+        find.byKey(const Key('date_field')),
+        move ? '20260301' : '20260228',
+      );
+      await tester.tap(find.text('確定'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      if (!move) expect(find.text('毎月の31日、2026/2/28まで'), findsOneWidget);
+      await tester.tap(find.text('保存'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      if (!move) {
+        await tester.tap(find.text('すべての予定'));
+        await tester.pump();
+      }
+      await tester.tap(find.text('変更する'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      final saved =
+          verify(
+                harness.changeRecurrence.execute(
+                  any,
+                  any,
+                  move ? CalendarChangeScope.only : CalendarChangeScope.all,
+                  changes: captureAnyNamed('changes'),
+                ),
+              ).captured.single
+              as CalendarEventDto;
+      expect(saved.recurrenceRule, source.recurrenceRule);
+    });
+  }
   testWidgets('繰り返し設定後の開始日変更で要約と保存条件が追従する', (tester) async {
     tester.view.physicalSize = const Size(900, 1400);
     addTearDown(tester.view.resetPhysicalSize);
