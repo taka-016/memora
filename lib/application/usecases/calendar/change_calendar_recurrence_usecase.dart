@@ -200,7 +200,7 @@ class ChangeCalendarRecurrenceUsecase {
                   .where((d) => parsed.matches(d, wall))
                   .length;
             }
-            nextRule = nextRule!.replaceFirst(
+            nextRule = nextRule.replaceFirst(
               RegExp(r'COUNT=\d+'),
               'COUNT=${parsed.count! - consumed}',
             );
@@ -416,8 +416,9 @@ class ChangeCalendarRecurrenceUsecase {
     if (text == null) return null;
     if (before.year == after.year &&
         before.month == after.month &&
-        before.day == after.day)
+        before.day == after.day) {
       return text;
+    }
     final rule = CalendarRecurrenceRule.parse(text);
     const codes = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU'];
     if (rule.frequency == 'WEEKLY' && rule.weekdays.isNotEmpty) {

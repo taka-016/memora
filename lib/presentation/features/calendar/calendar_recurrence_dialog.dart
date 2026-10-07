@@ -74,7 +74,10 @@ class _CalendarRecurrenceCustomDialogState
     _weekdays = {...value.weekdays, widget.start.weekday};
     final lastDay = DateTime(widget.start.year, widget.start.month + 1, 0).day;
     final requested = value.monthDay ?? widget.start.day;
-    _monthlyDay = (requested > lastDay ? lastDay : requested) == widget.start.day ? requested : widget.start.day;
+    _monthlyDay =
+        (requested > lastDay ? lastDay : requested) == widget.start.day
+        ? requested
+        : widget.start.day;
     _endMode = value.count != null
         ? 'count'
         : value.until != null

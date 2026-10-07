@@ -36,7 +36,7 @@ void main() {
     );
   });
 
-  test('月末と閏日の欠落は次の有効な候補まで飛ばす', () {
+  test('毎月の月末補正は間隔を維持し毎年の閏日の欠落は飛ばす', () {
     expect(
       CalendarRecurrenceRule.parse('FREQ=MONTHLY;INTERVAL=2')
           .candidateDays(
@@ -45,7 +45,11 @@ void main() {
             DateTime.utc(2027, 2),
           )
           .toList(),
-      [DateTime.utc(2027, 1, 31)],
+      [
+        DateTime.utc(2026, 9, 30),
+        DateTime.utc(2026, 11, 30),
+        DateTime.utc(2027, 1, 31),
+      ],
     );
     expect(
       CalendarRecurrenceRule.parse('FREQ=YEARLY')

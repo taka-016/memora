@@ -44,6 +44,42 @@ void main() {
     repository = MockCalendarEventRepository();
     usecase = ChangeCalendarRecurrenceUsecase(repository, expander);
   });
+  test('個別回の参照先が衝突する系列変更は全体を保存前に拒否する', () async {
+    final original = source.copyWith(
+      startDateTime: DateTime.utc(2026, 1, 31),
+      endDateTime: DateTime.utc(2026, 1, 31),
+      recurrenceRule: 'FREQ=MONTHLY;BYMONTHDAY=31;COUNT=4',
+      overrides: [
+        for (final date in [
+          DateTime.utc(2026, 2, 28),
+          DateTime.utc(2026, 3, 1),
+        ])
+          CalendarEventOverride(
+            originalStartDateTime: date,
+            isCancelled: false,
+            title: '個別',
+            labelId: 'label',
+            isAllDay: true,
+            startDateTime: date,
+            endDateTime: date,
+          ),
+      ],
+    );
+    await expectLater(
+      usecase.execute(
+        original,
+        original.startDateTime,
+        CalendarChangeScope.all,
+        changes: original.copyWith(
+          startDateTime: DateTime.utc(2026, 1, 30),
+          endDateTime: DateTime.utc(2026, 1, 30),
+          recurrenceRule: 'FREQ=MONTHLY;BYMONTHDAY=30;COUNT=4',
+        ),
+      ),
+      throwsA(isA<ApplicationValidationException>()),
+    );
+    verifyZeroInteractions(repository);
+  });
   for (final cancelled in [false, true]) {
     test('月末補正後の対応回へ個別変更と取消しのキーを追従させる（$cancelled）', () async {
       final february = DateTime.utc(2026, 2, 28);

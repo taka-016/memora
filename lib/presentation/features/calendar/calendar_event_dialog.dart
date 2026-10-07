@@ -166,17 +166,21 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
       }
     }
     if (!mounted || result == null) return;
+    final next = result;
     setState(() {
       if (start) {
         if (!time) {
-          _end = _end.add(result!.difference(_start));
-          if (!_hasIndividualChanges && _recurrence.frequency != null &&
-              (result!.year != _start.year || result!.month != _start.month || result!.day != _start.day)) {
-            _recurrence = _recurrence.alignedTo(result!, previous: _start);
+          _end = _end.add(next.difference(_start));
+          if (!_hasIndividualChanges &&
+              _recurrence.frequency != null &&
+              (next.year != _start.year ||
+                  next.month != _start.month ||
+                  next.day != _start.day)) {
+            _recurrence = _recurrence.alignedTo(next, previous: _start);
             _recurrenceEdited = true;
           }
         }
-        _start = result!;
+        _start = next;
         if (time) {
           final minutes = ref
               .read(calendarPreferencesNotifierProvider)
@@ -185,7 +189,7 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
           _end = _start.add(Duration(minutes: minutes));
         }
       } else {
-        _end = result!;
+        _end = next;
       }
     });
   }
@@ -195,7 +199,8 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
     final recurring = widget.event?.originalStartDateTime != null;
     final scope = recurring ? await _chooseScope(false) : null;
     if (!mounted || recurring && scope == null) return;
-    if (scope != CalendarChangeScope.only && !_hasIndividualChanges &&
+    if (scope != CalendarChangeScope.only &&
+        !_hasIndividualChanges &&
         _recurrence.until != null &&
         DateTime(
           _recurrence.until!.year,
