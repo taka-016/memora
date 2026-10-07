@@ -178,7 +178,8 @@ class ChangeCalendarRecurrenceUsecase {
         if (changes != null) {
           var nextRule = changes.recurrenceRule;
           final parsed = CalendarRecurrenceRule.parse(source.recurrenceRule!);
-          if (nextRule == source.recurrenceRule && parsed.count != null) {
+          if (nextRule != null && parsed.count != null &&
+              CalendarRecurrenceRule.parse(nextRule).count == parsed.count) {
             final wall = source.isAllDay
                 ? _key(source.startDateTime, true)
                 : _expander.timeZone.local(
@@ -200,6 +201,11 @@ class ChangeCalendarRecurrenceUsecase {
               RegExp(r'COUNT=\d+'),
               'COUNT=${parsed.count! - consumed}',
             );
+          }
+          if (parsed.frequency == 'MONTHLY' && parsed.ordinal == null &&
+              parsed.monthDay == null && nextRule != null &&
+              _sameSchedule(changes.recurrenceRule, source.recurrenceRule)) {
+            nextRule = '$nextRule;BYMONTHDAY=${_wall(source, source.startDateTime).day}';
           }
           if (_sameSchedule(changes.recurrenceRule, source.recurrenceRule)) {
             nextRule = _moveRule(
@@ -368,6 +374,7 @@ class ChangeCalendarRecurrenceUsecase {
 
   static String? _moveRule(String? text, DateTime before, DateTime after) {
     if (text == null) return null;
+    if (before.year == after.year && before.month == after.month && before.day == after.day) return text;
     final rule = CalendarRecurrenceRule.parse(text);
     const codes = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU'];
     if (rule.frequency == 'WEEKLY' && rule.weekdays.isNotEmpty) {
