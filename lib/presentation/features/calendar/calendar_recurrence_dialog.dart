@@ -59,11 +59,7 @@ class _CalendarRecurrenceCustomDialogState
   late String _frequency;
   late final TextEditingController _interval;
   late final TextEditingController _count;
-  late final TextEditingController _monthDay;
   late Set<int> _weekdays;
-  late int _weekday;
-  late int _ordinal;
-  late String _monthlyMode;
   late String _endMode;
   late DateTime _until;
   String _error = '';
@@ -74,13 +70,7 @@ class _CalendarRecurrenceCustomDialogState
     _frequency = value.frequency ?? 'WEEKLY';
     _interval = TextEditingController(text: '${value.interval}');
     _count = TextEditingController(text: '${value.count ?? 10}');
-    _monthDay = TextEditingController(
-      text: '${value.monthDay ?? widget.start.day}',
-    );
-    _weekdays = value.weekdays.toSet();
-    _weekday = value.weekdays.firstOrNull ?? widget.start.weekday;
-    _ordinal = value.ordinal ?? (widget.start.day - 1) ~/ 7 + 1;
-    _monthlyMode = value.ordinal == null ? 'date' : 'weekday';
+    _weekdays = {...value.weekdays, widget.start.weekday};
     _endMode = value.count != null
         ? 'count'
         : value.until != null
@@ -93,7 +83,6 @@ class _CalendarRecurrenceCustomDialogState
   void dispose() {
     _interval.dispose();
     _count.dispose();
-    _monthDay.dispose();
     super.dispose();
   }
 
@@ -101,8 +90,11 @@ class _CalendarRecurrenceCustomDialogState
       (int.tryParse(value ?? '') ?? 0) > 0 ? null : '1以上の整数を入力してください';
   void _confirm() {
     if (!_form.currentState!.validate()) return;
-    if (_frequency == 'WEEKLY' && _weekdays.isEmpty) {
-      setState(() => _error = '曜日を選択してください');
+    if (_endMode == 'until' &&
+        DateTime(_until.year, _until.month, _until.day).isBefore(
+          DateTime(widget.start.year, widget.start.month, widget.start.day),
+        )) {
+      setState(() => _error = '終了日は開始日以降にしてください');
       return;
     }
     Navigator.pop(
@@ -110,17 +102,8 @@ class _CalendarRecurrenceCustomDialogState
       CalendarRecurrenceSettings(
         frequency: _frequency,
         interval: int.parse(_interval.text),
-        weekdays: _frequency == 'WEEKLY'
-            ? (_weekdays.toList()..sort())
-            : _frequency == 'MONTHLY' && _monthlyMode == 'weekday'
-            ? [_weekday]
-            : [],
-        monthDay: _frequency == 'MONTHLY' && _monthlyMode == 'date'
-            ? int.parse(_monthDay.text)
-            : null,
-        ordinal: _frequency == 'MONTHLY' && _monthlyMode == 'weekday'
-            ? _ordinal
-            : null,
+        weekdays: _frequency == 'WEEKLY' ? (_weekdays.toList()..sort()) : [],
+        monthDay: _frequency == 'MONTHLY' ? widget.start.day : null,
         count: _endMode == 'count' ? int.parse(_count.text) : null,
         until: _endMode == 'until' ? _until : null,
       ),
@@ -172,66 +155,19 @@ class _CalendarRecurrenceCustomDialogState
                           CalendarRecurrenceSettings.dayNames[day - 1],
                         ),
                         selected: _weekdays.contains(day),
-                        onSelected: (selected) => setState(() {
-                          if (selected) {
-                            _weekdays.add(day);
-                          } else {
-                            _weekdays.remove(day);
-                          }
-                        }),
+                        onSelected: day == widget.start.weekday
+                            ? null
+                            : (selected) => setState(() {
+                                if (selected) {
+                                  _weekdays.add(day);
+                                } else {
+                                  _weekdays.remove(day);
+                                }
+                              }),
                       ),
                   ],
                 ),
-              if (_frequency == 'MONTHLY') ...[
-                DropdownButtonFormField<String>(
-                  initialValue: _monthlyMode,
-                  decoration: const InputDecoration(labelText: '月の指定方法'),
-                  items: const [
-                    DropdownMenuItem(value: 'date', child: Text('日付指定')),
-                    DropdownMenuItem(value: 'weekday', child: Text('曜日指定')),
-                  ],
-                  onChanged: (value) => setState(() => _monthlyMode = value!),
-                ),
-                if (_monthlyMode == 'date')
-                  TextFormField(
-                    controller: _monthDay,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: '日付'),
-                    validator: (value) =>
-                        (int.tryParse(value ?? '') ?? 0) >= 1 &&
-                            (int.tryParse(value ?? '') ?? 0) <= 31
-                        ? null
-                        : '1〜31を入力してください',
-                  ),
-                if (_monthlyMode == 'weekday') ...[
-                  DropdownButtonFormField<int>(
-                    initialValue: _ordinal,
-                    decoration: const InputDecoration(labelText: '週の指定'),
-                    items: [
-                      for (final n in [1, 2, 3, 4, 5, -1])
-                        DropdownMenuItem(
-                          value: n,
-                          child: Text(n == -1 ? '最終' : '第$n'),
-                        ),
-                    ],
-                    onChanged: (value) => setState(() => _ordinal = value!),
-                  ),
-                  DropdownButtonFormField<int>(
-                    initialValue: _weekday,
-                    decoration: const InputDecoration(labelText: '曜日'),
-                    items: [
-                      for (var day = 1; day <= 7; day++)
-                        DropdownMenuItem(
-                          value: day,
-                          child: Text(
-                            '${CalendarRecurrenceSettings.dayNames[day - 1]}曜日',
-                          ),
-                        ),
-                    ],
-                    onChanged: (value) => setState(() => _weekday = value!),
-                  ),
-                ],
-              ],
+              if (_frequency == 'MONTHLY') Text('毎月${widget.start.day}日'),
               DropdownButtonFormField<String>(
                 initialValue: _endMode,
                 decoration: const InputDecoration(labelText: '終了条件'),
@@ -256,11 +192,18 @@ class _CalendarRecurrenceCustomDialogState
                     final date = await DatePickerHelper.showCustomDatePicker(
                       context,
                       initialDate: DateTime(
-                        _until.year,
-                        _until.month,
-                        _until.day,
+                        (_until.isBefore(widget.start) ? widget.start : _until)
+                            .year,
+                        (_until.isBefore(widget.start) ? widget.start : _until)
+                            .month,
+                        (_until.isBefore(widget.start) ? widget.start : _until)
+                            .day,
                       ),
-                      firstDate: DateTime(1),
+                      firstDate: DateTime(
+                        widget.start.year,
+                        widget.start.month,
+                        widget.start.day,
+                      ),
                       lastDate: DateTime(9999, 12, 31),
                     );
                     if (date != null && mounted) setState(() => _until = date);

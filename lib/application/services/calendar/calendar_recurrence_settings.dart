@@ -23,6 +23,24 @@ class CalendarRecurrenceSettings {
   static const dayCodes = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU'];
   static const dayNames = ['月', '火', '水', '木', '金', '土', '日'];
 
+  CalendarRecurrenceSettings alignedTo(DateTime start, {DateTime? previous}) {
+    final shift = previous == null ? 0 : start.weekday - previous.weekday;
+    final days = frequency == 'WEEKLY'
+        ? ({
+            ...weekdays.map((day) => (day - 1 + shift) % 7 + 1),
+            start.weekday,
+          }.toList()..sort())
+        : <int>[];
+    return CalendarRecurrenceSettings(
+      frequency: frequency,
+      interval: interval,
+      weekdays: days,
+      monthDay: frequency == 'MONTHLY' ? start.day : null,
+      count: count,
+      until: until,
+    );
+  }
+
   factory CalendarRecurrenceSettings.preset(String name, DateTime start) =>
       switch (name) {
         'daily' => const CalendarRecurrenceSettings(frequency: 'DAILY'),

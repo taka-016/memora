@@ -170,6 +170,10 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
       if (start) {
         if (!time) {
           _end = _end.add(result!.difference(_start));
+          if (!_hasIndividualChanges && _recurrence.frequency != null) {
+            _recurrence = _recurrence.alignedTo(result!, previous: _start);
+            _recurrenceEdited = true;
+          }
         }
         _start = result!;
         if (time) {
@@ -187,6 +191,16 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
 
   Future<void> _save() async {
     if (!_form.currentState!.validate()) return;
+    if (!_hasIndividualChanges &&
+        _recurrence.until != null &&
+        DateTime(
+          _recurrence.until!.year,
+          _recurrence.until!.month,
+          _recurrence.until!.day,
+        ).isBefore(DateTime(_start.year, _start.month, _start.day))) {
+      setState(() => _error = '繰り返しの終了日は開始日以降にしてください');
+      return;
+    }
     final recurring = widget.event?.originalStartDateTime != null;
     final scope = recurring ? await _chooseScope(false) : null;
     if (!mounted || recurring && scope == null) return;
