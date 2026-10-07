@@ -39,7 +39,7 @@ void main() {
         await tester.pump();
         await tester.enterText(
           find.byKey(const Key('date_field')),
-          '${target.year}/${target.month}/${target.day}',
+          '${target.year}${target.month.toString().padLeft(2, '0')}${target.day.toString().padLeft(2, '0')}',
         );
         await tester.tap(find.text('確定'));
         await tester.pump();
