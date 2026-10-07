@@ -168,6 +168,9 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
     if (!mounted || result == null) return;
     setState(() {
       if (start) {
+        if (!time) {
+          _end = _end.add(result!.difference(_start));
+        }
         _start = result!;
         if (time) {
           final minutes = ref
