@@ -119,17 +119,18 @@ class ChangeCalendarRecurrenceUsecase {
           if (changes.recurrenceRule == null) {
             preservedEvents.addAll(_individualEvents(source, source.overrides));
           }
+          final movedRule = _moveRule(
+            changes.recurrenceRule,
+            _sameSchedule(changes.recurrenceRule, source.recurrenceRule)
+                ? oldWall
+                : changedWall,
+            wall,
+          );
           replacement = _with(
             changes,
             id: source.id,
             start: start,
-            rule: _moveRule(
-              changes.recurrenceRule,
-              _sameSchedule(changes.recurrenceRule, source.recurrenceRule)
-                  ? oldWall
-                  : changedWall,
-              wall,
-            ),
+            rule: movedRule,
             end: start.add(
               changes.endDateTime.difference(changes.startDateTime),
             ),
@@ -141,6 +142,7 @@ class ChangeCalendarRecurrenceUsecase {
                     source.overrides,
                     source.startDateTime,
                     start,
+                    movedRule!,
                   ),
           );
           if (changes.recurrenceRule == null &&
@@ -178,7 +180,8 @@ class ChangeCalendarRecurrenceUsecase {
         if (changes != null) {
           var nextRule = changes.recurrenceRule;
           final parsed = CalendarRecurrenceRule.parse(source.recurrenceRule!);
-          if (nextRule != null && parsed.count != null &&
+          if (nextRule != null &&
+              parsed.count != null &&
               CalendarRecurrenceRule.parse(nextRule).count == parsed.count) {
             final wall = source.isAllDay
                 ? _key(source.startDateTime, true)
@@ -202,10 +205,13 @@ class ChangeCalendarRecurrenceUsecase {
               'COUNT=${parsed.count! - consumed}',
             );
           }
-          if (parsed.frequency == 'MONTHLY' && parsed.ordinal == null &&
-              parsed.monthDay == null && nextRule != null &&
+          if (parsed.frequency == 'MONTHLY' &&
+              parsed.ordinal == null &&
+              parsed.monthDay == null &&
+              nextRule != null &&
               _sameSchedule(changes.recurrenceRule, source.recurrenceRule)) {
-            nextRule = '$nextRule;BYMONTHDAY=${_wall(source, source.startDateTime).day}';
+            nextRule =
+                '$nextRule;BYMONTHDAY=${_wall(source, source.startDateTime).day}';
           }
           if (_sameSchedule(changes.recurrenceRule, source.recurrenceRule)) {
             nextRule = _moveRule(
@@ -248,6 +254,7 @@ class ChangeCalendarRecurrenceUsecase {
                         .toList(),
                     key,
                     changes.startDateTime,
+                    nextRule,
                   ),
           );
         }
@@ -337,10 +344,43 @@ class ChangeCalendarRecurrenceUsecase {
     List<CalendarEventOverride> overrides,
     DateTime before,
     DateTime after,
+    String targetRule,
   ) {
-    final shift = _wall(target, after).difference(_wall(source, before));
+    final beforeWall = _wall(source, before);
+    final afterWall = _wall(target, after);
+    final shift = afterWall.difference(beforeWall);
+    final originalRule = CalendarRecurrenceRule.parse(source.recurrenceRule!);
+    final nextRule = CalendarRecurrenceRule.parse(targetRule);
+    final first = _wall(source, source.startDateTime);
     return overrides.map((value) {
-      final wall = _wall(source, value.originalStartDateTime).add(shift);
+      final original = _wall(source, value.originalStartDateTime);
+      var wall = original.add(shift);
+      if (originalRule.frequency == 'MONTHLY' &&
+          originalRule.ordinal == null &&
+          nextRule.frequency == 'MONTHLY' &&
+          nextRule.ordinal == null &&
+          originalRule.matches(
+            DateTime.utc(original.year, original.month, original.day),
+            first,
+          )) {
+        final offset =
+            (original.year - beforeWall.year) * 12 +
+            original.month -
+            beforeWall.month;
+        final month = DateTime.utc(afterWall.year, afterWall.month + offset);
+        final lastDay = DateTime.utc(month.year, month.month + 1, 0).day;
+        final requested = nextRule.monthDay ?? afterWall.day;
+        wall = DateTime.utc(
+          month.year,
+          month.month,
+          requested > lastDay ? lastDay : requested,
+          wall.hour,
+          wall.minute,
+          wall.second,
+          wall.millisecond,
+          wall.microsecond,
+        );
+      }
       final key = target.isAllDay
           ? _key(wall, true)
           : _expander.resolveTime(wall, target.timeZone!);
@@ -374,7 +414,10 @@ class ChangeCalendarRecurrenceUsecase {
 
   static String? _moveRule(String? text, DateTime before, DateTime after) {
     if (text == null) return null;
-    if (before.year == after.year && before.month == after.month && before.day == after.day) return text;
+    if (before.year == after.year &&
+        before.month == after.month &&
+        before.day == after.day)
+      return text;
     final rule = CalendarRecurrenceRule.parse(text);
     const codes = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU'];
     if (rule.frequency == 'WEEKLY' && rule.weekdays.isNotEmpty) {
