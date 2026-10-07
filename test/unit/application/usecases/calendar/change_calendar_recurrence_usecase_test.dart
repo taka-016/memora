@@ -44,6 +44,50 @@ void main() {
     repository = MockCalendarEventRepository();
     usecase = ChangeCalendarRecurrenceUsecase(repository, expander);
   });
+  for (final cancelled in [false, true]) {
+    test('月末補正後の対応回へ個別変更と取消しのキーを追従させる（$cancelled）', () async {
+      final february = DateTime.utc(2026, 2, 28);
+      final original = source.copyWith(
+        startDateTime: DateTime.utc(2026, 1, 31),
+        endDateTime: DateTime.utc(2026, 1, 31),
+        recurrenceRule: 'FREQ=MONTHLY;BYMONTHDAY=31;COUNT=3',
+        overrides: [
+          CalendarEventOverride(
+            originalStartDateTime: february,
+            isCancelled: cancelled,
+            title: cancelled ? null : '個別変更',
+            labelId: cancelled ? null : 'label',
+            isAllDay: cancelled ? null : true,
+            startDateTime: cancelled ? null : february,
+            endDateTime: cancelled ? null : february,
+          ),
+        ],
+      );
+      await usecase.execute(
+        original,
+        original.startDateTime,
+        CalendarChangeScope.all,
+        changes: original.copyWith(
+          startDateTime: DateTime.utc(2026, 1, 30),
+          endDateTime: DateTime.utc(2026, 1, 30),
+          recurrenceRule: 'FREQ=MONTHLY;BYMONTHDAY=30;COUNT=3',
+        ),
+      );
+      final saved =
+          verify(repository.replaceCalendarEvent(any, captureAny, null))
+                  .captured
+                  .single
+              as CalendarEvent;
+      expect(saved.overrides.single.originalStartDateTime, february);
+      final values = expander.expand(
+        CalendarEventMapper.toDto(saved),
+        DateTime.utc(2026, 2),
+        DateTime.utc(2026, 3),
+      );
+      expect(values, hasLength(cancelled ? 0 : 1));
+      if (!cancelled) expect(values.single.title, '個別変更');
+    });
+  }
   for (final explicit in [false, true]) {
     test('月末補正回からの分割でも元の31日基準と残り回数を維持する（$explicit）', () async {
       final original = source.copyWith(
