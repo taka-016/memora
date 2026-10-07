@@ -60,6 +60,7 @@ class _CalendarRecurrenceCustomDialogState
   late final TextEditingController _interval;
   late final TextEditingController _count;
   late Set<int> _weekdays;
+  late int _monthlyDay;
   late String _endMode;
   late DateTime _until;
   String _error = '';
@@ -71,6 +72,9 @@ class _CalendarRecurrenceCustomDialogState
     _interval = TextEditingController(text: '${value.interval}');
     _count = TextEditingController(text: '${value.count ?? 10}');
     _weekdays = {...value.weekdays, widget.start.weekday};
+    final lastDay = DateTime(widget.start.year, widget.start.month + 1, 0).day;
+    final requested = value.monthDay ?? widget.start.day;
+    _monthlyDay = (requested > lastDay ? lastDay : requested) == widget.start.day ? requested : widget.start.day;
     _endMode = value.count != null
         ? 'count'
         : value.until != null
@@ -103,7 +107,7 @@ class _CalendarRecurrenceCustomDialogState
         frequency: _frequency,
         interval: int.parse(_interval.text),
         weekdays: _frequency == 'WEEKLY' ? (_weekdays.toList()..sort()) : [],
-        monthDay: _frequency == 'MONTHLY' ? widget.start.day : null,
+        monthDay: _frequency == 'MONTHLY' ? _monthlyDay : null,
         count: _endMode == 'count' ? int.parse(_count.text) : null,
         until: _endMode == 'until' ? _until : null,
       ),
@@ -167,7 +171,7 @@ class _CalendarRecurrenceCustomDialogState
                       ),
                   ],
                 ),
-              if (_frequency == 'MONTHLY') Text('毎月${widget.start.day}日'),
+              if (_frequency == 'MONTHLY') Text('毎月$_monthlyDay日'),
               DropdownButtonFormField<String>(
                 initialValue: _endMode,
                 decoration: const InputDecoration(labelText: '終了条件'),
