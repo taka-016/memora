@@ -36,6 +36,12 @@
 
 以下の番号順に対応する。各段階で関連するテストを追加・実行し、保存・表示の整合性を確認してから次へ進む。モデルの説明は末尾の補足を参照する。
 
+### Firestoreの個別回の保存構造を他の関連データと揃える
+
+- 繰り返し予定の個別変更・取消しを、親の`calendar_events`内の`overrides`・`cancelledOccurrences`への埋め込みから、独立した`calendar_event_overrides`コレクションへ変更する。`eventId`と`originalStartDateTime`で親予定・対象の回を関連付け、個別変更と取消しを同じ形式で扱う
+- 取得・保存・削除とグループ削除を新しい構造に合わせ、系列の分割・変更・個別変更のリセット、競合照合、原子的保存、色ラベルの参照整合性を維持する
+- 系列変更時の個別維持と系列削除時の対象範囲の個別削除を検証し、ER図の保存構造に関する補足を更新する
+
 ### 6. 本人のGoogleカレンダー連携（ストーリー25・オンラインのみ）
 
 - Composition Rootでモード別に依存実装を選択し、オフラインでは連携の入口を利用不可にしてGoogleカレンダーのSDK初期化と通信を行わない
@@ -49,7 +55,7 @@
 
 ### 補足: カレンダー関連モデル（Googleカレンダー連携は実装予定）
 
-[ユーザーストーリー23〜25](user_stories.md)と[ADR-004](adr.md#adr-004-グループの予定と個人の外部予定を分離して扱う)および繰り返し設定の追加要望に対応する設計を示す。[ER図](er_diagram.md)の`calendar_events`と`calendar_labels`は単発予定の保存基盤をFirestore・SQLiteへ実装済み。`calendar_events.recurrenceRule`・`timeZone`と個別回の上書きは実装済み。繰り返しの入力画面と個別回・系列の編集・削除は実装済み。`google_calendar_connections`・`google_calendar_selections`は実装予定。Firestoreでは個別回の上書きを親予定内にラベル別で保存し、SQLiteでは`calendar_event_overrides`に保存する。保存構造・夏時間・終了条件は[ER図の補足](er_diagram.md#繰り返し予定の保存と展開)を参照。
+[ユーザーストーリー23〜25](user_stories.md)と[ADR-004](adr.md#adr-004-グループの予定と個人の外部予定を分離して扱う)および繰り返し設定の追加要望に対応する設計を示す。[ER図](er_diagram.md)の`calendar_events`と`calendar_labels`は単発予定の保存基盤をFirestore・SQLiteへ実装済み。`calendar_events.recurrenceRule`・`timeZone`と個別回の上書きは実装済み。繰り返しの入力画面と個別回・系列の編集・削除は実装済み。`google_calendar_connections`・`google_calendar_selections`は実装予定。Firestoreでは個別回の上書きを親予定内にラベル別で保存し、SQLiteでは`calendar_event_overrides`に保存する。現在の保存構造は[ER図の補足](er_diagram.md#図の補足)を参照。
 
 | エンティティ | 役割 | 保存・公開範囲 |
 | --- | --- | --- |
