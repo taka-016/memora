@@ -122,14 +122,14 @@ void main() {
     );
     expect(values.map((v) => v.startDateTime.day), [5, 7, 19, 21]);
   });
-  test('存在しない月末とうるう日はスキップし回数に含めない', () {
+  test('毎月の存在しない日は月末に補正し毎年のうるう日はスキップする', () {
     expect(
       expand(
         event('FREQ=MONTHLY;COUNT=3', DateTime.utc(2026, 1, 31)),
         DateTime.utc(2026),
         DateTime.utc(2026, 7),
       ).map((v) => v.startDateTime.month),
-      [1, 3, 5],
+      [1, 2, 3],
     );
     expect(
       expand(
@@ -138,6 +138,52 @@ void main() {
         DateTime.utc(2029),
       ).map((v) => v.startDateTime.year),
       [2024, 2028],
+    );
+  });
+  test('月末補正は基準日を維持し間隔・回数・終了日・個別取消しにも適用する', () {
+    final start = DateTime.utc(2024, 1, 31);
+    final source = event('FREQ=MONTHLY;BYMONTHDAY=31;COUNT=4', start);
+    final from = DateTime.utc(2024, 2);
+    final to = DateTime.utc(2024, 5);
+    expect(expand(source, from, to).map((v) => v.startDateTime), [
+      DateTime.utc(2024, 2, 29),
+      DateTime.utc(2024, 3, 31),
+      DateTime.utc(2024, 4, 30),
+    ]);
+    expect(
+      expand(
+        source.copyWith(
+          recurrenceRule: 'FREQ=MONTHLY;BYMONTHDAY=31;UNTIL=20240229',
+        ),
+        from,
+        to,
+      ).map((v) => v.startDateTime),
+      [DateTime.utc(2024, 2, 29)],
+    );
+    expect(
+      expand(
+        source.copyWith(
+          recurrenceRule: 'FREQ=MONTHLY;INTERVAL=3;BYMONTHDAY=31;COUNT=2',
+        ),
+        DateTime.utc(2024),
+        to,
+      ).map((v) => v.startDateTime),
+      [start, DateTime.utc(2024, 4, 30)],
+    );
+    expect(
+      expand(
+        source.copyWith(
+          overrides: [
+            CalendarEventOverride(
+              originalStartDateTime: DateTime.utc(2024, 2, 29),
+              isCancelled: true,
+            ),
+          ],
+        ),
+        from,
+        to,
+      ).map((v) => v.startDateTime),
+      [DateTime.utc(2024, 3, 31), DateTime.utc(2024, 4, 30)],
     );
   });
   test('第2火曜日と最終金曜日と日付指定を展開する', () {
