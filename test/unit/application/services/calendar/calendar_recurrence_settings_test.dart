@@ -8,6 +8,28 @@ import 'package:memora/infrastructure/services/iana_calendar_time_zone.dart';
 void main() {
   final expander = CalendarRecurrenceExpander(IanaCalendarTimeZone());
   final start = DateTime.utc(2026, 1, 5);
+  test('開始日への追従で週の複数曜日と月の日付を更新し終了条件は維持する', () {
+    final until = DateTime.utc(2026, 12, 31);
+    final weekly = CalendarRecurrenceSettings(
+      frequency: 'WEEKLY',
+      weekdays: [1, 3],
+      interval: 2,
+      until: until,
+    ).alignedTo(DateTime.utc(2026, 1, 6), previous: start);
+    expect(weekly.weekdays, [2, 4]);
+    expect(weekly.interval, 2);
+    expect(weekly.until, until);
+    final monthly = const CalendarRecurrenceSettings(
+      frequency: 'MONTHLY',
+      weekdays: [1],
+      ordinal: 1,
+      count: 4,
+    ).alignedTo(DateTime.utc(2026, 1, 10));
+    expect(monthly.monthDay, 10);
+    expect(monthly.weekdays, isEmpty);
+    expect(monthly.ordinal, isNull);
+    expect(monthly.count, 4);
+  });
   String? rule(CalendarRecurrenceSettings settings, {bool allDay = true}) =>
       settings.toRule(
         start: start,
