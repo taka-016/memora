@@ -24,6 +24,7 @@ void main() {
     await tester.tap(find.text('毎月').last);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
+    await tester.ensureVisible(find.text('開始日: 2026/10/2'));
     await tester.tap(find.text('開始日: 2026/10/2'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
