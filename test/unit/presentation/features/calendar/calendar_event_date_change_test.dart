@@ -20,9 +20,9 @@ void main() {
       final harness = CalendarTestHarness()..savedEvents.add(source);
       await harness.pump(tester, now: DateTime(2026, 2, 1));
       final day = find.byKey(const Key('calendar_day_2026_2_28'));
-      await tester.tap(day);
+      await tester.tap(find.descendant(of: day, matching: find.text('28')));
       await tester.pump();
-      await tester.tap(day);
+      await tester.tap(find.descendant(of: day, matching: find.text('28')));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
       await tester.tap(find.widgetWithText(ListTile, '月末の予定'));
