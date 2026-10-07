@@ -44,6 +44,68 @@ void main() {
     repository = MockCalendarEventRepository();
     usecase = ChangeCalendarRecurrenceUsecase(repository, expander);
   });
+  for (final explicit in [false, true]) {
+    test('月末補正回からの分割でも元の31日基準と残り回数を維持する（$explicit）', () async {
+      final original = source.copyWith(
+        startDateTime: DateTime.utc(2026, 1, 31),
+        endDateTime: DateTime.utc(2026, 1, 31),
+        recurrenceRule:
+            'FREQ=MONTHLY;${explicit ? 'BYMONTHDAY=31;' : ''}COUNT=4',
+        overrides: [],
+      );
+      final day = DateTime.utc(2026, 2, 28);
+      await usecase.execute(
+        original,
+        day,
+        CalendarChangeScope.following,
+        changes: original.copyWith(
+          title: '変更',
+          startDateTime: day,
+          endDateTime: day,
+        ),
+      );
+      final saved = verify(
+        repository.replaceCalendarEvent(any, captureAny, captureAny),
+      ).captured;
+      final next = saved.last as CalendarEvent;
+      expect(next.recurrenceRule, contains('BYMONTHDAY=31'));
+      expect(next.recurrenceRule, contains('COUNT=3'));
+      expect(
+        expander
+            .expand(
+              CalendarEventMapper.toDto(next),
+              DateTime.utc(2026, 2),
+              DateTime.utc(2026, 6),
+            )
+            .map((v) => v.startDateTime),
+        [day, DateTime.utc(2026, 3, 31), DateTime.utc(2026, 4, 30)],
+      );
+    });
+  }
+  test('曜日を自動追従した回を分割しても元の回数を超えない', () async {
+    final original = source.copyWith(
+      startDateTime: DateTime.utc(2026, 10, 1),
+      endDateTime: DateTime.utc(2026, 10, 1),
+      recurrenceRule: 'FREQ=WEEKLY;BYDAY=TH;COUNT=5',
+      overrides: [],
+    );
+    await usecase.execute(
+      original,
+      DateTime.utc(2026, 10, 15),
+      CalendarChangeScope.following,
+      changes: original.copyWith(
+        startDateTime: DateTime.utc(2026, 10, 16),
+        endDateTime: DateTime.utc(2026, 10, 16),
+        recurrenceRule: 'FREQ=WEEKLY;BYDAY=FR;COUNT=5',
+      ),
+    );
+    final next =
+        verify(repository.replaceCalendarEvent(any, any, captureAny))
+                .captured
+                .single
+            as CalendarEvent;
+    expect(next.recurrenceRule, 'FREQ=WEEKLY;BYDAY=FR;COUNT=3');
+  });
   for (final scope in [
     CalendarChangeScope.all,
     CalendarChangeScope.following,
