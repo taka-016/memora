@@ -9,6 +9,8 @@ import 'calendar_test_support.dart';
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
   testWidgets('繰り返し設定後の開始日変更で要約と保存条件が追従する', (tester) async {
+    tester.view.physicalSize = const Size(900, 1400);
+    addTearDown(tester.view.resetPhysicalSize);
     final harness = CalendarTestHarness();
     await harness.pump(tester);
     await tester.tap(find.byKey(calendarTestDay2));
@@ -24,6 +26,8 @@ void main() {
     await tester.tap(find.text('毎月').last);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
+    tester.testTextInput.hide();
+    await tester.pump();
     await tester.ensureVisible(find.text('開始日: 2026/10/2'));
     await tester.tap(find.text('開始日: 2026/10/2'));
     await tester.pump();
