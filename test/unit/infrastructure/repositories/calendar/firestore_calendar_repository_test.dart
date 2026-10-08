@@ -1,3 +1,4 @@
+import 'package:memora/application/mappers/calendar/calendar_event_mapper.dart';
 import 'package:memora/domain/entities/calendar/calendar_event_override.dart';
 import 'package:memora/infrastructure/mappers/calendar/firestore_calendar_event_mapper.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -142,6 +143,70 @@ void main() {
     isAllDay: false,
   );
 
+  test('単発変更と維持する個別予定の保存は参照数とともに一括更新する', () async {
+    final expected = event(id: 'event');
+    when(eventDoc.id).thenReturn('event');
+    when(eventDoc.data())
+        .thenReturn(FirestoreCalendarEventMapper.toCreateFirestore(expected));
+    final extraRef = MockDocumentReference();
+    when(extraRef.id).thenReturn('individual');
+    final collection = firestore.collection('calendar_events');
+    when(collection.doc()).thenReturn(extraRef);
+    await events.replaceCalendarEvent(
+      expected,
+      expected.copyWith(title: '変更'),
+      null,
+      preservedEvents: [event().copyWith(title: '個別予定')],
+    );
+    verifyInOrder([
+      transaction.get(eventRef),
+      transaction.get(labelRef),
+      transaction.update(labelRef, argThat(containsPair('eventCount', 2))),
+      transaction.update(eventRef, argThat(containsPair('title', '変更'))),
+      transaction.set(extraRef, argThat(containsPair('title', '個別予定'))),
+    ]);
+  });
+  test('系列分割は全読取の後に両系列と参照数を一括保存する', () async {
+    final original = event(id: 'event')
+        .copyWith(recurrenceRule: 'FREQ=DAILY;COUNT=5', timeZone: 'Asia/Tokyo');
+    when(eventDoc.id).thenReturn('event');
+    when(eventDoc.data())
+        .thenReturn(FirestoreCalendarEventMapper.toCreateFirestore(original));
+    final expected = CalendarEventMapper.toEntity(
+      FirestoreCalendarEventMapper.fromFirestore(eventDoc),
+    );
+    final nextRef = MockDocumentReference();
+    when(nextRef.id).thenReturn('following');
+    final collection = firestore.collection('calendar_events');
+    when(collection.doc()).thenReturn(nextRef);
+    final head = expected.copyWith(recurrenceRule: 'FREQ=DAILY;COUNT=2');
+    final tail = expected.copyWith(
+      id: '',
+      recurrenceRule: 'FREQ=DAILY;COUNT=3',
+      startDateTime: expected.startDateTime.add(const Duration(days: 2)),
+      endDateTime: expected.endDateTime.add(const Duration(days: 2)),
+    );
+    await events.replaceCalendarEvent(expected, head, tail);
+    verifyInOrder([
+      transaction.get(eventRef),
+      transaction.get(labelRef),
+      transaction.update(labelRef, argThat(containsPair('eventCount', 2))),
+      transaction.update(
+        eventRef,
+        argThat(containsPair('recurrenceRule', 'FREQ=DAILY;COUNT=2')),
+      ),
+      transaction.set(
+        nextRef,
+        argThat(containsPair('recurrenceRule', 'FREQ=DAILY;COUNT=3')),
+      ),
+    ]);
+    await expectLater(
+      events.replaceCalendarEvent(expected.copyWith(title: '古い内容'), head, tail),
+      throwsA(isA<ValidationException>()),
+    );
+    verifyNever(transaction.set(any, any));
+  });
+
   test('Firestoreでは系列と個別回と各ラベルの参照を同時に保存する', () async {
     final value = event().copyWith(
       recurrenceRule: 'FREQ=DAILY;COUNT=3',
@@ -174,7 +239,7 @@ void main() {
         .called(1);
   });
 
-  test('変更前後の参照ラベルが読み取り上限を超える更新は保存前に説明して拒否する', () async {
+  test('変更前後で異なる複数ラベルを参照する系列を一括更新できる', () async {
     final collection = firestore.collection('calendar_labels');
     for (final id in ['old', 'new1', 'new2']) {
       final ref = MockDocumentReference();
@@ -205,17 +270,13 @@ void main() {
           ),
       ],
     );
-    await expectLater(
-      events.updateCalendarEvent(value),
-      throwsA(
-        isA<ValidationException>().having(
-          (e) => e.message,
-          '変更前後の上限説明',
-          contains('変更前後'),
-        ),
-      ),
-    );
-    verifyNever(transaction.update(any, any));
+    await events.updateCalendarEvent(value);
+    verify(
+      transaction.update(eventRef, argThat(containsPair('labelId', 'other'))),
+    ).called(1);
+    verify(transaction.update(labelRef, argThat(containsPair('eventCount', 0))))
+        .called(1);
+    verifyNever(transaction.update(otherRef, any));
   });
 
   test('予定の新規保存は同じグループのラベルを検証し参照数と予定を同時に保存する', () async {

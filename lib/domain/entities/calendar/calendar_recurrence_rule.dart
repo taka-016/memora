@@ -190,7 +190,7 @@ class CalendarRecurrenceRule {
             final day = DateTime.utc(
               base.year,
               base.month,
-              monthDay ?? first.day,
+              _monthlyDay(base, first),
             );
             if (day.month == base.month) candidates.add(day);
           } else {
@@ -234,7 +234,7 @@ class CalendarRecurrenceRule {
       case 'MONTHLY':
         final months = (day.year - start.year) * 12 + day.month - start.month;
         if (months % interval != 0) return false;
-        if (ordinal == null) return day.day == (monthDay ?? start.day);
+        if (ordinal == null) return day.day == _monthlyDay(day, start);
         if (day.weekday != weekdays.single) return false;
         return ordinal == -1
             ? DateTime.utc(day.year, day.month, day.day + 7).month != day.month
@@ -246,5 +246,11 @@ class CalendarRecurrenceRule {
       default:
         return false;
     }
+  }
+
+  int _monthlyDay(DateTime month, DateTime start) {
+    final lastDay = DateTime.utc(month.year, month.month + 1, 0).day;
+    final requested = monthDay ?? start.day;
+    return requested > lastDay ? lastDay : requested;
   }
 }

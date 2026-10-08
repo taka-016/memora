@@ -1,3 +1,4 @@
+import 'package:memora/application/exceptions/application_validation_exception.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/domain/entities/calendar/calendar_recurrence_rule.dart';
 import 'package:memora/domain/services/calendar/calendar_time_zone.dart';
@@ -6,6 +7,34 @@ import 'package:memora/domain/exceptions/validation_exception.dart';
 class CalendarRecurrenceExpander {
   const CalendarRecurrenceExpander(this.timeZone);
   final CalendarTimeZone timeZone;
+  DateTime localTime(DateTime instant, String zone) {
+    try {
+      return timeZone.local(instant, zone);
+    } on ValidationException catch (e) {
+      throw ApplicationValidationException(e.message);
+    }
+  }
+
+  DateTime resolveTime(DateTime wall, String zone) {
+    try {
+      final normalized = DateTime.utc(
+        wall.year,
+        wall.month,
+        wall.day,
+        wall.hour,
+        wall.minute,
+        wall.second,
+        wall.millisecond,
+        wall.microsecond,
+      );
+      final value = timeZone.resolve(normalized, zone);
+      if (value == null) throw ValidationException('指定したタイムゾーンにこの時刻は存在しません');
+      return value;
+    } on ValidationException catch (e) {
+      throw ApplicationValidationException(e.message);
+    }
+  }
+
   static DateTime _date(DateTime value) =>
       DateTime.utc(value.year, value.month, value.day);
   bool _overlaps(CalendarEventDto event, DateTime from, DateTime to) {
@@ -97,13 +126,11 @@ class CalendarRecurrenceExpander {
             .subtract(const Duration(days: 1));
     if (lower.isAfter(day)) day = _date(lower);
     var count = rule.count == null ? 0 : countBefore(day);
-    final originals = <DateTime>{};
     for (final candidate in rule.candidateDays(start, day, endDay)) {
       if (rule.count != null && count >= rule.count!) break;
       final instant = occurrence(candidate);
       if (instant == null) continue;
       count++;
-      originals.add(instant.toUtc());
       if (overridden.contains(instant.toUtc())) continue;
       final value = event.copyWith(
         startDateTime: event.isAllDay ? instant : instant.toLocal(),
@@ -116,18 +143,6 @@ class CalendarRecurrenceExpander {
     }
     for (final override in event.overrides) {
       final original = originalKey(override.originalStartDateTime);
-      if (!originals.contains(original.toUtc())) {
-        final wall = event.isAllDay
-            ? _date(original)
-            : timeZone.local(original, event.timeZone!);
-        if (occurrence(_date(wall)) != original.toUtc()) {
-          throw ValidationException('上書き対象の回が系列に存在しません');
-        }
-        if (rule.count != null) {
-          final n = countBefore(_date(wall).add(const Duration(days: 1)));
-          if (n > rule.count!) throw ValidationException('上書き対象が指定回数を超えています');
-        }
-      }
       if (override.isCancelled) continue;
       final value = event.copyWith(
         title: override.title,

@@ -1,3 +1,5 @@
+import 'package:memora/application/usecases/calendar/change_calendar_recurrence_usecase.dart';
+
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -24,6 +26,7 @@ import '../../../../helpers/test_exception.dart';
 import 'calendar_notifier_test.mocks.dart';
 
 @GenerateMocks([
+  ChangeCalendarRecurrenceUsecase,
   GetCalendarEventsUsecase,
   GetCalendarLabelsUsecase,
   CreateCalendarEventUsecase,
@@ -35,6 +38,7 @@ import 'calendar_notifier_test.mocks.dart';
 ])
 void main() {
   late ProviderContainer container;
+  late MockChangeCalendarRecurrenceUsecase change;
   late MockGetCalendarEventsUsecase events;
   late MockGetCalendarLabelsUsecase labels;
   late MockCreateCalendarEventUsecase create;
@@ -60,6 +64,7 @@ void main() {
   );
   final provider = calendarNotifierProvider('g1');
   setUp(() {
+    change = MockChangeCalendarRecurrenceUsecase();
     events = MockGetCalendarEventsUsecase();
     labels = MockGetCalendarLabelsUsecase();
     create = MockCreateCalendarEventUsecase();
@@ -75,6 +80,7 @@ void main() {
         appClockProvider.overrideWithValue(
           FixedAppClock(DateTime(2026, 10, 1)),
         ),
+        changeCalendarRecurrenceUsecaseProvider.overrideWithValue(change),
         getCalendarEventsUsecaseProvider.overrideWithValue(events),
         getCalendarLabelsUsecaseProvider.overrideWithValue(labels),
         createCalendarEventUsecaseProvider.overrideWithValue(create),
@@ -87,6 +93,52 @@ void main() {
     );
     container.listen(provider, (_, _) {});
     addTearDown(container.dispose);
+  });
+  test('個別変更のリセット失敗は再試行でき成功後は元の系列を再表示する', () async {
+    final original = DateTime(2026, 10, 2, 9);
+    final series = event.copyWith(
+      startDateTime: original,
+      endDateTime: original.add(const Duration(hours: 1)),
+      recurrenceRule: 'FREQ=DAILY;COUNT=3',
+      timeZone: 'Asia/Tokyo',
+      overrides: [
+        CalendarEventOverride(
+          originalStartDateTime: original,
+          isCancelled: false,
+          title: '個別変更',
+          startDateTime: original.add(const Duration(hours: 3)),
+          endDateTime: original.add(const Duration(hours: 4)),
+          isAllDay: false,
+          labelId: 'family',
+        ),
+      ],
+    );
+    when(events.execute('g1')).thenAnswer((_) async => [series]);
+    final notifier = container.read(provider.notifier);
+    await notifier.load();
+    final occurrence = container
+        .read(provider)
+        .events
+        .singleWhere((value) => value.title == '個別変更');
+    when(change.resetOverride(any, any)).thenThrow(TestException('失敗'));
+    expect(await notifier.resetRecurringEvent(occurrence), isFalse);
+    expect(container.read(provider).isSaving, isFalse);
+    expect(container.read(provider).mutationError, isNotEmpty);
+    expect(
+      container.read(provider).events.any((value) => value.title == '個別変更'),
+      isTrue,
+    );
+    when(change.resetOverride(any, any)).thenAnswer((_) async {
+      when(events.execute('g1'))
+          .thenAnswer((_) async => [series.copyWith(overrides: [])]);
+    });
+    expect(await notifier.resetRecurringEvent(occurrence), isTrue);
+    verify(change.resetOverride(series, original.toUtc())).called(2);
+    expect(container.read(provider).mutationError, isEmpty);
+    expect(
+      container.read(provider).events.any((value) => value.title == '個別変更'),
+      isFalse,
+    );
   });
   final hiddenEvents = <String, CalendarEventDto>{
     '過去の単発予定': event.copyWith(
@@ -168,6 +220,48 @@ void main() {
     verify(deleteLabel.execute('child')).called(1);
   });
 
+  test('個別回の変更は取得済みの親系列と元の開始日時を渡し失敗後に再試行できる', () async {
+    final source = event.copyWith(
+      recurrenceRule: 'FREQ=DAILY;COUNT=3',
+      timeZone: 'Asia/Tokyo',
+    );
+    when(events.execute(any)).thenAnswer((_) async => [source]);
+    final notifier = container.read(provider.notifier);
+    await notifier.load();
+    final occurrence = container.read(provider).events.last;
+    final edited = occurrence.copyWith(title: '変更');
+    when(change.execute(any, any, any, changes: anyNamed('changes')))
+        .thenThrow(TestException('保存失敗'));
+    expect(
+      await notifier.changeRecurringEvent(
+        occurrence,
+        CalendarChangeScope.only,
+        changes: edited,
+      ),
+      isFalse,
+    );
+    expect(container.read(provider).isSaving, isFalse);
+    expect(container.read(provider).mutationError, isNotEmpty);
+    when(change.execute(any, any, any, changes: anyNamed('changes')))
+        .thenAnswer((_) async {});
+    expect(
+      await notifier.changeRecurringEvent(
+        occurrence,
+        CalendarChangeScope.only,
+        changes: edited,
+      ),
+      isTrue,
+    );
+    verify(
+      change.execute(
+        source,
+        occurrence.originalStartDateTime!,
+        CalendarChangeScope.only,
+        changes: edited,
+      ),
+    ).called(2);
+    expect(container.read(provider).mutationError, isEmpty);
+  });
   test('展開済みの回を単発予定として保存・削除して系列を失う操作を拒否する', () async {
     when(events.execute(any)).thenAnswer(
       (_) async => [

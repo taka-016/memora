@@ -1,3 +1,4 @@
+import 'package:memora/application/usecases/calendar/change_calendar_recurrence_usecase.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/application/dtos/calendar/calendar_label_dto.dart';
@@ -81,10 +82,87 @@ class CalendarNotifier extends _$CalendarNotifier {
     return true;
   }
 
+  CalendarEventDto? seriesForEvent(String id) =>
+      _series.where((v) => v.id == id).firstOrNull;
+
+  Future<bool> changeRecurringEvent(
+    CalendarEventDto occurrence,
+    CalendarChangeScope scope, {
+    CalendarEventDto? changes,
+  }) => _mutate(() async {
+    final source = _series.where((v) => v.id == occurrence.id).firstOrNull;
+    if (source == null ||
+        occurrence.groupId != groupId ||
+        occurrence.originalStartDateTime == null) {
+      throw const ApplicationValidationException('変更する予定が見つかりません。再読み込みしてください');
+    }
+    await ref
+        .read(changeCalendarRecurrenceUsecaseProvider)
+        .execute(
+          source,
+          occurrence.originalStartDateTime!,
+          scope,
+          changes: changes,
+        );
+  });
+
+  CalendarEventDto? originalOccurrenceForEvent(CalendarEventDto occurrence) {
+    final source = seriesForEvent(occurrence.id);
+    final key = occurrence.originalStartDateTime;
+    if (source == null || key == null || occurrence.groupId != groupId) {
+      return null;
+    }
+    return ref
+        .read(calendarRecurrenceExpanderProvider)
+        .expand(
+          source.copyWith(overrides: []),
+          key,
+          key.add(const Duration(days: 1)),
+        )
+        .where((value) => value.originalStartDateTime == key)
+        .firstOrNull;
+  }
+
+  Future<bool> resetRecurringEvent(CalendarEventDto occurrence) =>
+      _mutate(() async {
+        final source = seriesForEvent(occurrence.id);
+        if (source == null ||
+            occurrence.groupId != groupId ||
+            occurrence.originalStartDateTime == null) {
+          throw const ApplicationValidationException(
+            'リセットする予定が見つかりません。再読み込みしてください',
+          );
+        }
+        await ref
+            .read(changeCalendarRecurrenceUsecaseProvider)
+            .resetOverride(source, occurrence.originalStartDateTime!);
+      });
+
+  ({int reset, int retained}) recurrenceImpact(
+    CalendarEventDto occurrence,
+    CalendarChangeScope scope,
+  ) {
+    final source = _series.where((v) => v.id == occurrence.id).firstOrNull;
+    final key = occurrence.originalStartDateTime;
+    if (source == null || key == null) return (reset: 0, retained: 0);
+    final reset = source.overrides
+        .where(
+          (v) => switch (scope) {
+            CalendarChangeScope.only => v.originalStartDateTime == key,
+            CalendarChangeScope.following => !v.originalStartDateTime.isBefore(
+              key,
+            ),
+            CalendarChangeScope.all => true,
+          },
+        )
+        .length;
+    return (reset: reset, retained: source.overrides.length - reset);
+  }
+
   Future<bool> saveEvent(CalendarEventDto event) => _mutate(() async {
     if (event.originalStartDateTime != null ||
         _series.any((v) => v.id == event.id && v.recurrenceRule != null)) {
-      throw const ApplicationValidationException('繰り返し予定の変更はまだ利用できません');
+      throw const ApplicationValidationException('繰り返し予定は変更範囲を指定してください');
     }
     if (event.groupId != groupId ||
         !state.labels.any(
@@ -101,7 +179,7 @@ class CalendarNotifier extends _$CalendarNotifier {
 
   Future<bool> deleteEvent(String id) => _mutate(() async {
     if (_series.any((v) => v.id == id && v.recurrenceRule != null)) {
-      throw const ApplicationValidationException('繰り返し予定の削除はまだ利用できません');
+      throw const ApplicationValidationException('繰り返し予定は削除範囲を指定してください');
     }
     if (!state.events.any(
       (event) => event.id == id && event.groupId == groupId,

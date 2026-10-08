@@ -269,13 +269,15 @@ class CustomDatePickerDialog extends HookWidget {
       return Dialog(
         child: Container(
           padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              buildHeader(context),
-              const SizedBox(height: 16),
-              buildContent(),
-            ],
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                buildHeader(context),
+                const SizedBox(height: 16),
+                buildContent(),
+              ],
+            ),
           ),
         ),
       );

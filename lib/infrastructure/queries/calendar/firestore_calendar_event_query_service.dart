@@ -4,17 +4,12 @@ import 'package:memora/application/queries/calendar/calendar_event_query_service
 import 'package:memora/infrastructure/mappers/calendar/firestore_calendar_event_mapper.dart';
 
 class FirestoreCalendarEventQueryService implements CalendarEventQueryService {
-  FirestoreCalendarEventQueryService({
-    required this._firestore,
-    required this._ensureMembership,
-  });
+  FirestoreCalendarEventQueryService({required this._firestore});
   final FirebaseFirestore _firestore;
-  final Future<void> Function(String) _ensureMembership;
   @override
   Future<List<CalendarEventDto>> getCalendarEventsByGroupId(
     String groupId,
   ) async {
-    await _ensureMembership(groupId);
     final snapshot = await _firestore
         .collection('calendar_events')
         .where('groupId', isEqualTo: groupId)

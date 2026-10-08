@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/infrastructure/factories/repository_factory.dart';
-import 'package:memora/infrastructure/services/firestore_calendar_membership.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
@@ -19,7 +18,6 @@ import 'package:memora/domain/entities/group/group.dart';
   Query,
   WriteBatch,
   FirestoreGroupRepository,
-  FirestoreCalendarMembership,
 ])
 import 'firestore_group_repository_test.mocks.dart';
 
@@ -144,23 +142,12 @@ void main() {
       when(mockBatch.delete(any)).thenReturn(null);
       when(mockBatch.commit()).thenAnswer((_) async {});
 
-      final membership = MockFirestoreCalendarMembership();
-      var ensured = false;
-      when(membership.ensure(groupId)).thenAnswer((_) async {
-        ensured = true;
-      });
       final container = ProviderContainer(
-        overrides: [
-          firebaseFirestoreProvider.overrideWithValue(mockFirestore),
-          calendarMembershipProvider.overrideWithValue(membership),
-        ],
+        overrides: [firebaseFirestoreProvider.overrideWithValue(mockFirestore)],
       );
       addTearDown(container.dispose);
       repository =
           container.read(groupRepositoryProvider) as FirestoreGroupRepository;
-      when(mockDocRef.update(any)).thenAnswer((_) async {
-        expect(ensured, isTrue, reason: 'カレンダーにアクセスする前に所属参照を確保する');
-      });
       for (final collectionName in ['calendar_events', 'calendar_labels']) {
         final collection = MockCollectionReference<Map<String, dynamic>>();
         final query = MockQuery<Map<String, dynamic>>();
@@ -172,9 +159,7 @@ void main() {
       }
 
       await repository.deleteGroup(groupId);
-      verify(membership.ensure(groupId)).called(1);
-      verify(mockDocRef.update(argThat(containsPair('calendarDeleting', true))))
-          .called(1);
+      verifyNever(mockDocRef.update(any));
       verify(mockFirestore.collection('calendar_events')).called(1);
       verify(mockFirestore.collection('calendar_labels')).called(1);
 

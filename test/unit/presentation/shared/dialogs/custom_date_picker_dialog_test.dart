@@ -190,5 +190,47 @@ void main() {
       expect(find.byKey(const Key('date_field')), findsOneWidget);
       expect(find.byType(CalendarDatePicker), findsNothing);
     });
+    testWidgets('キーボード表示中も直接入力の日付をスクロールして確定できる', (tester) async {
+      tester.view.physicalSize = const Size(411, 731);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.view.resetViewInsets);
+      DateTime? selected;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: TextButton(
+                onPressed: () async {
+                  selected = await showCustomDatePickerDialog(
+                    context,
+                    initialDate: DateTime(2026, 10, 1),
+                    firstDate: DateTime(1),
+                    lastDate: DateTime(9999, 12, 31),
+                  );
+                },
+                child: const Text('日付を選択'),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('日付を選択'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('date_header')));
+      await tester.pump();
+      tester.view.viewInsets = const FakeViewPadding(bottom: 300);
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      await tester.ensureVisible(find.byKey(const Key('date_field')));
+      await tester.enterText(find.byKey(const Key('date_field')), '20261003');
+      await tester.ensureVisible(find.text('確定'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('確定'));
+      await tester.pumpAndSettle();
+      expect(selected, DateTime(2026, 10, 3));
+      expect(tester.takeException(), isNull);
+    });
   });
 }
