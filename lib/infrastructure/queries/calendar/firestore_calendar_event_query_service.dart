@@ -15,6 +15,18 @@ class FirestoreCalendarEventQueryService implements CalendarEventQueryService {
         .where('groupId', isEqualTo: groupId)
         .get();
     final store = FirestoreCalendarEventStore(_firestore);
-    return Future.wait(snapshot.docs.map(store.read));
+    final events = await Future.wait(
+      snapshot.docs.map(
+        (doc) =>
+            _firestore.runTransaction<CalendarEventDto?>((transaction) async {
+              final current = await transaction.get(
+                _firestore.collection('calendar_events').doc(doc.id),
+              );
+              if (!current.exists) return null;
+              return await store.read(current, transaction: transaction);
+            }),
+      ),
+    );
+    return events.whereType<CalendarEventDto>().toList();
   }
 }
