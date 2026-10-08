@@ -88,8 +88,9 @@ class FirestoreCalendarEventStore {
     Transaction transaction,
     CalendarEvent? event,
     String eventId,
-    List<String> previousIds,
-  ) {
+    List<String> previousIds, {
+    CalendarEvent? previousEvent,
+  }) {
     final collection = firestore.collection('calendar_event_overrides');
     final values = {
       for (final value in event?.overrides ?? <CalendarEventOverride>[])
@@ -98,6 +99,19 @@ class FirestoreCalendarEventStore {
           value,
           event!.isAllDay,
         ): value,
+    };
+    final previousValues = {
+      for (final value in previousEvent?.overrides ?? <CalendarEventOverride>[])
+        FirestoreCalendarEventOverrideMapper.documentId(
+          eventId,
+          value,
+          previousEvent!.isAllDay,
+        ): FirestoreCalendarEventOverrideMapper.toFirestore(
+          value,
+          eventId: eventId,
+          groupId: previousEvent.groupId,
+          parentAllDay: previousEvent.isAllDay,
+        ),
     };
     for (final id in previousIds) {
       if (!values.containsKey(id)) transaction.delete(collection.doc(id));
@@ -111,6 +125,11 @@ class FirestoreCalendarEventStore {
       );
       final ref = collection.doc(entry.key);
       if (previousIds.contains(entry.key)) {
+        final previous = previousValues[entry.key];
+        if (previous != null &&
+            data.entries.every((entry) => previous[entry.key] == entry.value)) {
+          continue;
+        }
         transaction.update(ref, {
           ...data,
           ...FirestoreWriteMetadata.forUpdate(),

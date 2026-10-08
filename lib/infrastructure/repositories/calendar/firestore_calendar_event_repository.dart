@@ -86,13 +86,14 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
     ];
     await _firestore.runTransaction<void>((transaction) async {
       final current = await transaction.get(ref);
-      if (!current.exists ||
-          calendarEventContent(
-                CalendarEventMapper.toEntity(
-                  await _store.read(current, transaction: transaction),
-                ),
-              ) !=
-              calendarEventContent(expected)) {
+      if (!current.exists) {
+        throw ValidationException('予定が変更されています。再読み込みしてからやり直してください');
+      }
+      final currentEvent = CalendarEventMapper.toEntity(
+        await _store.read(current, transaction: transaction),
+      );
+      if (calendarEventContent(currentEvent) !=
+          calendarEventContent(expected)) {
         throw ValidationException('予定が変更されています。再読み込みしてからやり直してください');
       }
       final before = _references(current.data()!);
@@ -136,6 +137,7 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
         replacement,
         ref.id,
         _store.overrideIds(current.data()!),
+        previousEvent: currentEvent,
       );
       if (head == null) {
         transaction.delete(ref);
@@ -175,6 +177,12 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
       if (!existing.exists || existing.data()!['groupId'] != event.groupId) {
         throw ValidationException('更新する予定のグループは変更できません');
       }
+      final previousIds = _store.overrideIds(existing.data()!);
+      final previousEvent = previousIds.isEmpty
+          ? null
+          : CalendarEventMapper.toEntity(
+              await _store.read(existing, transaction: transaction),
+            );
       await _adjustLabels(
         transaction,
         event.groupId,
@@ -186,7 +194,8 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
         transaction,
         event,
         ref.id,
-        _store.overrideIds(existing.data()!),
+        previousIds,
+        previousEvent: previousEvent,
       );
     });
   }
