@@ -326,6 +326,7 @@ void main() {
     when(doc.exists).thenReturn(true);
     when(doc.data()).thenReturn(cancellation(value));
     when(transaction.get(ref)).thenAnswer((_) async => doc);
+    when(ref.get()).thenAnswer((_) async => doc);
   }
 
   Future<List<CalendarEventDto>> readStoredEvents({
@@ -345,92 +346,6 @@ void main() {
     ).getCalendarEventsByGroupId('group');
     return result;
   }
-
-  test('一覧取得中に個別回がリセットされても更新後の親と個別回を取得する', () async {
-    final value = recurring();
-    stored(value);
-    final oldData = eventDoc.data()!;
-    when(eventDoc.data()).thenReturn({
-      ...FirestoreCalendarEventMapper.toCreateFirestore(
-        value.copyWith(title: '更新後', overrides: []),
-      ),
-      'overrideIds': <String>[],
-    });
-    final result = await readStoredEvents(snapshotData: oldData);
-    expect(result.single.title, '更新後');
-    expect(result.single.overrides, isEmpty);
-    verifyNever(overrideRefs['stored']!.get());
-  });
-
-  test('一覧取得中に削除された系列は個別回を読まず一覧から除外する', () async {
-    stored(recurring());
-    when(eventDoc.exists).thenReturn(false);
-    final result = await readStoredEvents();
-    expect(result, isEmpty);
-    verifyNever(overrideRefs['stored']!.get());
-    verifyNever(transaction.get(overrideRefs['stored']!));
-  });
-
-  test('親読取後に子が消えても照合を中断せず競合再試行後の系列を返す', () async {
-    final value = recurring();
-    stored(value);
-    final oldData = eventDoc.data()!;
-    var retried = false;
-    when(eventDoc.data()).thenAnswer(
-      (_) => retried
-          ? {
-              ...FirestoreCalendarEventMapper.toCreateFirestore(
-                value.copyWith(title: '更新後', overrides: []),
-              ),
-              'overrideIds': <String>[],
-            }
-          : oldData,
-    );
-    final missing = MockDocumentSnapshot();
-    when(missing.data()).thenReturn(null);
-    when(transaction.get(overrideRefs['stored']!))
-        .thenAnswer((_) async => missing);
-    when(
-      firestore.runTransaction<_ReadResult>(
-        argThat(isA<Future<_ReadResult> Function(Transaction)>()),
-      ),
-    ).thenAnswer((call) async {
-      final callback =
-          call.positionalArguments[0]
-              as Future<_ReadResult> Function(Transaction);
-      final first = await callback(transaction);
-      expect(first.error, isA<ValidationException>());
-      retried = true;
-      return await callback(transaction);
-    });
-    final result = await readStoredEvents(snapshotData: oldData);
-    expect(retried, true);
-    expect(result.single.title, '更新後');
-    expect(result.single.overrides, isEmpty);
-  });
-
-  test('競合ではない個別回の欠損は読取照合を終えてから拒否する', () async {
-    stored(recurring());
-    final missing = MockDocumentSnapshot();
-    when(missing.data()).thenReturn(null);
-    when(transaction.get(overrideRefs['stored']!))
-        .thenAnswer((_) async => missing);
-    var verified = false;
-    when(
-      firestore.runTransaction<_ReadResult>(
-        argThat(isA<Future<_ReadResult> Function(Transaction)>()),
-      ),
-    ).thenAnswer((call) async {
-      final callback =
-          call.positionalArguments[0]
-              as Future<_ReadResult> Function(Transaction);
-      final result = await callback(transaction);
-      verified = true;
-      return result;
-    });
-    await expectLater(readStoredEvents(), throwsA(isA<ValidationException>()));
-    expect(verified, true);
-  });
 
   test('保存済みの埋め込み個別回を読み次回保存で独立コレクションへ移す', () async {
     final change = CalendarEventOverride(
@@ -540,11 +455,14 @@ void main() {
     ]);
   });
 
-  test('独立した取消しを取得して親系列へ復元する', () async {
+  test('通常の取得で取消しを復元し読取トランザクションを実行しない', () async {
     final value = recurring();
     stored(value);
     final result = await readStoredEvents();
     expect(result.single.overrides, value.overrides);
+    verifyNever(firestore.runTransaction(any));
+    verify(overrideRefs['stored']!.get()).called(1);
+    verifyNever(transaction.get(any));
   });
 
   test('系列変更で取消しを維持し個別変更の競合も照合する', () async {
