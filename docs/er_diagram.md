@@ -183,4 +183,5 @@ erDiagram
 
 - 図は共通の業務モデルを示す。SQLiteの物理定義・制約・インデックスは[`offline_schema.drift`](../lib/infrastructure/database/offline_schema.drift)を参照。
 - 繰り返し予定は`calendar_events`の`recurrenceRule`（RRULE形式）で表し、各回は保存しない。`calendar_event_overrides`は個別回の変更・取消しを表し、`eventId`と`originalStartDateTime`で対象の回を識別する。取消しの場合、変更内容の各フィールドは空になる。
-- Firestoreでは`calendar_event_overrides`を独立したコレクションにせず、親の`calendar_events`内の`overrides`（色ラベルID別の配列）と`cancelledOccurrences`に保存する。
+- Firestoreでは個別回の変更・取消しを独立した`calendar_event_overrides`コレクションへ保存する。`eventId`・`groupId`・`originalStartDateTime`・`isCancelled`と変更内容を持ち、ドキュメントIDは親予定IDと正規化した元の開始日時（マイクロ秒）の組で一意にする。終日の元日時・変更後の期間はUTCの年月日として保存する。
+- Firestoreの親予定は`overrideIds`（個別回のドキュメントID一覧）と`referencedLabelIds`（親と個別回が参照する色ラベルID一覧）を持つ。系列の分割・変更・削除は、親予定・対象の個別回・色ラベルの参照数を同じトランザクションで保存し、競合照合では個別回もトランザクション内で読み取る。グループ削除も予定ごとの削除処理を経由して個別回を削除する。

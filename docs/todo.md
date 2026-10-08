@@ -55,7 +55,7 @@
 
 ### 補足: カレンダー関連モデル（Googleカレンダー連携は実装予定）
 
-[ユーザーストーリー23〜25](user_stories.md)と[ADR-004](adr.md#adr-004-グループの予定と個人の外部予定を分離して扱う)および繰り返し設定の追加要望に対応する設計を示す。[ER図](er_diagram.md)の`calendar_events`と`calendar_labels`は単発予定の保存基盤をFirestore・SQLiteへ実装済み。`calendar_events.recurrenceRule`・`timeZone`と個別回の上書きは実装済み。繰り返しの入力画面と個別回・系列の編集・削除は実装済み。`google_calendar_connections`・`google_calendar_selections`は実装予定。Firestoreでは個別回の上書きを親予定内にラベル別で保存し、SQLiteでは`calendar_event_overrides`に保存する。現在の保存構造は[ER図の補足](er_diagram.md#図の補足)を参照。
+[ユーザーストーリー23〜25](user_stories.md)と[ADR-004](adr.md#adr-004-グループの予定と個人の外部予定を分離して扱う)および繰り返し設定の追加要望に対応する設計を示す。[ER図](er_diagram.md)の`calendar_events`と`calendar_labels`は単発予定の保存基盤をFirestore・SQLiteへ実装済み。`calendar_events.recurrenceRule`・`timeZone`と個別回の上書きは実装済み。繰り返しの入力画面と個別回・系列の編集・削除は実装済み。`google_calendar_connections`・`google_calendar_selections`は実装予定。Firestore・SQLiteともに個別回の変更・取消しを`calendar_event_overrides`に保存する。現在の保存構造は[ER図の補足](er_diagram.md#図の補足)を参照。
 
 | エンティティ | 役割 | 保存・公開範囲 |
 | --- | --- | --- |

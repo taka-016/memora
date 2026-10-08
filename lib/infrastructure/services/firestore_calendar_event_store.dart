@@ -82,17 +82,21 @@ class FirestoreCalendarEventStore {
       if (!values.containsKey(id)) transaction.delete(collection.doc(id));
     }
     for (final entry in values.entries) {
-      transaction.set(collection.doc(entry.key), {
-        ...FirestoreCalendarEventOverrideMapper.toFirestore(
-          entry.value,
-          eventId: eventId,
-          groupId: event!.groupId,
-          parentAllDay: event.isAllDay,
-        ),
-        ...previousIds.contains(entry.key)
-            ? FirestoreWriteMetadata.forUpdate()
-            : FirestoreWriteMetadata.forCreate(),
-      });
+      final data = FirestoreCalendarEventOverrideMapper.toFirestore(
+        entry.value,
+        eventId: eventId,
+        groupId: event!.groupId,
+        parentAllDay: event.isAllDay,
+      );
+      final ref = collection.doc(entry.key);
+      if (previousIds.contains(entry.key)) {
+        transaction.update(ref, {
+          ...data,
+          ...FirestoreWriteMetadata.forUpdate(),
+        });
+      } else {
+        transaction.set(ref, {...data, ...FirestoreWriteMetadata.forCreate()});
+      }
     }
   }
 }
