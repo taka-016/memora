@@ -1,3 +1,4 @@
+import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/infrastructure/repositories/group/firestore_group_repository.dart';
 import 'package:memora/infrastructure/queries/calendar/firestore_calendar_event_query_service.dart';
 import 'package:memora/application/mappers/calendar/calendar_event_mapper.dart';
@@ -133,6 +134,15 @@ void main() {
       (call) async =>
           await (call.positionalArguments[0]
               as Future<String> Function(Transaction))(transaction),
+    );
+    when(
+      firestore.runTransaction<CalendarEventDto?>(
+        argThat(isA<Future<CalendarEventDto?> Function(Transaction)>()),
+      ),
+    ).thenAnswer(
+      (call) async =>
+          await (call.positionalArguments[0]
+              as Future<CalendarEventDto?> Function(Transaction))(transaction),
     );
     container = ProviderContainer(
       overrides: [
@@ -317,12 +327,14 @@ void main() {
     when(ref.get()).thenAnswer((_) async => doc);
   }
 
-  Future<CalendarEvent> readStoredEvent() async {
+  Future<List<CalendarEventDto>> readStoredEvents({
+    Map<String, dynamic>? snapshotData,
+  }) async {
     final query = MockQuery();
     final snapshot = MockQuerySnapshot();
     final doc = MockQueryDocumentSnapshot();
     when(doc.id).thenReturn('event');
-    when(doc.data()).thenAnswer((_) => eventDoc.data()!);
+    when(doc.data()).thenReturn(snapshotData ?? eventDoc.data()!);
     final collection = firestore.collection('calendar_events');
     when(collection.where('groupId', isEqualTo: 'group')).thenReturn(query);
     when(query.get()).thenAnswer((_) async => snapshot);
@@ -330,8 +342,33 @@ void main() {
     final result = await FirestoreCalendarEventQueryService(
       firestore: firestore,
     ).getCalendarEventsByGroupId('group');
-    return CalendarEventMapper.toEntity(result.single);
+    return result;
   }
+
+  test('一覧取得中に個別回がリセットされても更新後の親と個別回を取得する', () async {
+    final value = recurring();
+    stored(value);
+    final oldData = eventDoc.data()!;
+    when(eventDoc.data()).thenReturn({
+      ...FirestoreCalendarEventMapper.toCreateFirestore(
+        value.copyWith(title: '更新後', overrides: []),
+      ),
+      'overrideIds': <String>[],
+    });
+    final result = await readStoredEvents(snapshotData: oldData);
+    expect(result.single.title, '更新後');
+    expect(result.single.overrides, isEmpty);
+    verifyNever(overrideRefs['stored']!.get());
+  });
+
+  test('一覧取得中に削除された系列は個別回を読まず一覧から除外する', () async {
+    stored(recurring());
+    when(eventDoc.exists).thenReturn(false);
+    final result = await readStoredEvents();
+    expect(result, isEmpty);
+    verifyNever(overrideRefs['stored']!.get());
+    verifyNever(transaction.get(overrideRefs['stored']!));
+  });
 
   test('保存済みの埋め込み個別回を読み次回保存で独立コレクションへ移す', () async {
     final change = CalendarEventOverride(
@@ -366,7 +403,9 @@ void main() {
         Timestamp.fromDate(value.overrides.last.originalStartDateTime),
       ],
     });
-    final saved = await readStoredEvent();
+    final saved = CalendarEventMapper.toEntity(
+      (await readStoredEvents()).single,
+    );
     expect(saved.overrides, value.overrides);
     await events.replaceCalendarEvent(saved, saved.copyWith(title: '移行'), null);
     final parent =
