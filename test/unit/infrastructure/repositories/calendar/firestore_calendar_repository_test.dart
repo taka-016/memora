@@ -138,15 +138,6 @@ void main() {
               as Future<String> Function(Transaction))(transaction),
     );
     when(
-      firestore.runTransaction<CalendarEventDto?>(
-        argThat(isA<Future<CalendarEventDto?> Function(Transaction)>()),
-      ),
-    ).thenAnswer(
-      (call) async =>
-          await (call.positionalArguments[0]
-              as Future<CalendarEventDto?> Function(Transaction))(transaction),
-    );
-    when(
       firestore.runTransaction<_ReadResult>(
         argThat(isA<Future<_ReadResult> Function(Transaction)>()),
       ),
@@ -335,7 +326,6 @@ void main() {
     when(doc.exists).thenReturn(true);
     when(doc.data()).thenReturn(cancellation(value));
     when(transaction.get(ref)).thenAnswer((_) async => doc);
-    when(ref.get()).thenAnswer((_) async => doc);
   }
 
   Future<List<CalendarEventDto>> readStoredEvents({
@@ -553,18 +543,7 @@ void main() {
   test('独立した取消しを取得して親系列へ復元する', () async {
     final value = recurring();
     stored(value);
-    final query = MockQuery();
-    final snapshot = MockQuerySnapshot();
-    final doc = MockQueryDocumentSnapshot();
-    when(doc.id).thenReturn('event');
-    when(doc.data()).thenAnswer((_) => eventDoc.data()!);
-    final collection = firestore.collection('calendar_events');
-    when(collection.where('groupId', isEqualTo: 'group')).thenReturn(query);
-    when(query.get()).thenAnswer((_) async => snapshot);
-    when(snapshot.docs).thenReturn([doc]);
-    final result = await FirestoreCalendarEventQueryService(
-      firestore: firestore,
-    ).getCalendarEventsByGroupId('group');
+    final result = await readStoredEvents();
     expect(result.single.overrides, value.overrides);
   });
 
