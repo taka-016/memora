@@ -1,3 +1,4 @@
+import 'package:memora/infrastructure/queries/calendar/firestore_calendar_event_query_service.dart';
 import 'package:memora/application/mappers/calendar/calendar_event_mapper.dart';
 import 'package:memora/domain/entities/calendar/calendar_event_override.dart';
 import 'package:memora/infrastructure/mappers/calendar/firestore_calendar_event_mapper.dart';
@@ -21,6 +22,9 @@ import 'package:mockito/mockito.dart';
   MockSpec<FirebaseFirestore>(),
   MockSpec<FirebaseAuth>(),
   MockSpec<Transaction>(),
+  MockSpec<Query<Map<String, dynamic>>>(),
+  MockSpec<QuerySnapshot<Map<String, dynamic>>>(),
+  MockSpec<QueryDocumentSnapshot<Map<String, dynamic>>>(),
   MockSpec<CollectionReference<Map<String, dynamic>>>(),
   MockSpec<DocumentReference<Map<String, dynamic>>>(),
   MockSpec<DocumentSnapshot<Map<String, dynamic>>>(),
@@ -38,6 +42,8 @@ void main() {
   late CalendarLabelRepository labels;
   late MockDocumentSnapshot eventDoc;
   late MockDocumentSnapshot labelDoc;
+  late MockCollectionReference overrideCollection;
+  final overrideRefs = <String, MockDocumentReference>{};
 
   test('Firestoreの文字色を往復し旧ラベルには従来の白黒を補完する', () {
     final doc = MockDocumentSnapshot();
@@ -78,7 +84,19 @@ void main() {
     }
   });
   setUp(() {
+    overrideRefs.clear();
     firestore = MockFirebaseFirestore();
+    overrideCollection = MockCollectionReference();
+    when(firestore.collection('calendar_event_overrides'))
+        .thenReturn(overrideCollection);
+    when(overrideCollection.doc(any)).thenAnswer((call) {
+      final id = call.positionalArguments.single as String;
+      return overrideRefs.putIfAbsent(id, () {
+        final ref = MockDocumentReference();
+        when(ref.id).thenReturn(id);
+        return ref;
+      });
+    });
     transaction = MockTransaction();
     final labelCollection = MockCollectionReference();
     final eventCollection = MockCollectionReference();
@@ -234,9 +252,150 @@ void main() {
     final saved = FirestoreCalendarEventMapper.fromFirestore(eventDoc);
     expect(saved.recurrenceRule, value.recurrenceRule);
     expect(saved.timeZone, 'Asia/Tokyo');
-    expect(saved.overrides, value.overrides);
+    expect(data.containsKey('overrides'), isFalse);
+    expect(data.containsKey('cancelledOccurrences'), isFalse);
+    final overrideData =
+        verify(transaction.set(overrideRefs.values.single, captureAny))
+                .captured
+                .single
+            as Map<String, dynamic>;
+    expect(overrideData['eventId'], 'event');
+    expect(overrideData['groupId'], 'group');
+    expect(overrideData['labelId'], 'other');
+    expect(overrideData['isCancelled'], false);
+    expect(
+      overrideData['startDateTime'],
+      Timestamp.fromDate(DateTime.utc(2026, 11, 2)),
+    );
+    expect(data['overrideIds'], [overrideRefs.keys.single]);
     verify(transaction.update(otherRef, argThat(containsPair('eventCount', 2))))
         .called(1);
+  });
+
+  CalendarEvent recurring() => event(id: 'event').copyWith(
+    recurrenceRule: 'FREQ=DAILY;COUNT=3',
+    timeZone: 'Asia/Tokyo',
+    overrides: [
+      CalendarEventOverride(
+        originalStartDateTime: event().startDateTime.add(
+          const Duration(days: 1),
+        ),
+        isCancelled: true,
+      ),
+    ],
+  );
+
+  Map<String, dynamic> cancellation(CalendarEvent value) => {
+    'eventId': value.id,
+    'groupId': value.groupId,
+    'originalStartDateTime': Timestamp.fromDate(
+      value.overrides.single.originalStartDateTime,
+    ),
+    'isCancelled': true,
+    'title': null,
+    'labelId': null,
+    'startDateTime': null,
+    'endDateTime': null,
+    'isAllDay': null,
+  };
+
+  void stored(CalendarEvent value) {
+    when(eventDoc.id).thenReturn('event');
+    when(eventDoc.data()).thenReturn({
+      ...FirestoreCalendarEventMapper.toCreateFirestore(
+        value.copyWith(overrides: []),
+      ),
+      'overrideIds': ['stored'],
+    });
+    final ref = overrideCollection.doc('stored');
+    final doc = MockDocumentSnapshot();
+    when(doc.exists).thenReturn(true);
+    when(doc.data()).thenReturn(cancellation(value));
+    when(transaction.get(ref)).thenAnswer((_) async => doc);
+    when(ref.get()).thenAnswer((_) async => doc);
+  }
+
+  test('独立した取消しを取得して親系列へ復元する', () async {
+    final value = recurring();
+    stored(value);
+    final query = MockQuery();
+    final snapshot = MockQuerySnapshot();
+    final doc = MockQueryDocumentSnapshot();
+    when(doc.id).thenReturn('event');
+    when(doc.data()).thenAnswer((_) => eventDoc.data()!);
+    final collection = firestore.collection('calendar_events');
+    when(collection.where('groupId', isEqualTo: 'group')).thenReturn(query);
+    when(query.get()).thenAnswer((_) async => snapshot);
+    when(snapshot.docs).thenReturn([doc]);
+    final result = await FirestoreCalendarEventQueryService(
+      firestore: firestore,
+    ).getCalendarEventsByGroupId('group');
+    expect(result.single.overrides, value.overrides);
+  });
+
+  test('系列変更で取消しを維持し個別変更の競合も照合する', () async {
+    final value = recurring();
+    stored(value);
+    await events.replaceCalendarEvent(
+      value,
+      value.copyWith(title: '系列変更'),
+      null,
+    );
+    final data =
+        verify(transaction.set(any, captureAny)).captured.single
+            as Map<String, dynamic>;
+    expect(data['eventId'], 'event');
+    expect(data['isCancelled'], true);
+    clearInteractions(transaction);
+    await expectLater(
+      events.replaceCalendarEvent(value.copyWith(overrides: []), value, null),
+      throwsA(isA<ValidationException>()),
+    );
+    verifyNever(transaction.update(any, any));
+    verifyNever(transaction.set(any, any));
+    verifyNever(transaction.delete(any));
+  });
+
+  test('個別変更のリセットと系列削除は独立した個別回も削除する', () async {
+    final value = recurring();
+    stored(value);
+    await events.updateCalendarEvent(value.copyWith(overrides: []));
+    verify(transaction.delete(overrideRefs['stored']!)).called(1);
+    final data =
+        verify(transaction.update(eventRef, captureAny)).captured.single
+            as Map<String, dynamic>;
+    expect(data['overrideIds'], isEmpty);
+    await events.deleteCalendarEvent('event');
+    verify(transaction.delete(overrideRefs['stored']!)).called(1);
+    verify(transaction.delete(eventRef)).called(1);
+  });
+
+  test('系列分割で個別回を後半に移し前半の対象から削除する', () async {
+    final value = recurring();
+    stored(value);
+    final nextRef = MockDocumentReference();
+    when(nextRef.id).thenReturn('following');
+    final collection = firestore.collection('calendar_events');
+    when(collection.doc()).thenReturn(nextRef);
+    await events.replaceCalendarEvent(
+      value,
+      value.copyWith(recurrenceRule: 'FREQ=DAILY;COUNT=1', overrides: []),
+      value.copyWith(
+        id: '',
+        startDateTime: value.startDateTime.add(const Duration(days: 1)),
+        endDateTime: value.endDateTime.add(const Duration(days: 1)),
+        recurrenceRule: 'FREQ=DAILY;COUNT=2',
+      ),
+    );
+    verify(transaction.delete(overrideRefs['stored']!)).called(1);
+    final writes = verify(transaction.set(any, captureAny)).captured
+        .cast<Map<String, dynamic>>();
+    expect(
+      writes
+          .where((row) => row['eventId'] == 'following')
+          .single['isCancelled'],
+      true,
+    );
   });
 
   test('変更前後で異なる複数ラベルを参照する系列を一括更新できる', () async {
