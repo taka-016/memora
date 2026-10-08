@@ -34,8 +34,6 @@ import 'package:mockito/mockito.dart';
 ])
 import 'firestore_calendar_repository_test.mocks.dart';
 
-typedef _ReadResult = ({CalendarEventDto? event, ValidationException? error});
-
 void main() {
   late MockFirebaseFirestore firestore;
   late MockTransaction transaction;
@@ -136,15 +134,6 @@ void main() {
       (call) async =>
           await (call.positionalArguments[0]
               as Future<String> Function(Transaction))(transaction),
-    );
-    when(
-      firestore.runTransaction<_ReadResult>(
-        argThat(isA<Future<_ReadResult> Function(Transaction)>()),
-      ),
-    ).thenAnswer(
-      (call) async =>
-          await (call.positionalArguments[0]
-              as Future<_ReadResult> Function(Transaction))(transaction),
     );
     container = ProviderContainer(
       overrides: [
@@ -329,14 +318,12 @@ void main() {
     when(ref.get()).thenAnswer((_) async => doc);
   }
 
-  Future<List<CalendarEventDto>> readStoredEvents({
-    Map<String, dynamic>? snapshotData,
-  }) async {
+  Future<List<CalendarEventDto>> readStoredEvents() async {
     final query = MockQuery();
     final snapshot = MockQuerySnapshot();
     final doc = MockQueryDocumentSnapshot();
     when(doc.id).thenReturn('event');
-    when(doc.data()).thenReturn(snapshotData ?? eventDoc.data()!);
+    when(doc.data()).thenReturn(eventDoc.data()!);
     final collection = firestore.collection('calendar_events');
     when(collection.where('groupId', isEqualTo: 'group')).thenReturn(query);
     when(query.get()).thenAnswer((_) async => snapshot);
