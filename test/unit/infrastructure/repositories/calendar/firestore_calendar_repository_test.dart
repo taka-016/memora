@@ -1,3 +1,4 @@
+import 'package:memora/infrastructure/mappers/calendar/firestore_calendar_event_override_mapper.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/infrastructure/repositories/group/firestore_group_repository.dart';
 import 'package:memora/infrastructure/queries/calendar/firestore_calendar_event_query_service.dart';
@@ -163,6 +164,104 @@ void main() {
     endDateTime: DateTime.utc(2026, 10, 3),
     isAllDay: false,
   );
+
+  for (final replace in [false, true]) {
+    for (final changeChildren in [false, true]) {
+      test(
+        '${replace ? '系列変更' : '予定更新'}では${changeChildren ? '追加・変更・削除された個別回だけを保存する' : '未変更の個別回を書き込まない'}',
+        () async {
+          CalendarEventOverride cancelled(int day) => CalendarEventOverride(
+            originalStartDateTime: DateTime.utc(2026, 10, day),
+            isCancelled: true,
+          );
+          final unchanged = cancelled(2);
+          final changed = cancelled(3);
+          final removed = cancelled(4);
+          final expected = event(id: 'event').copyWith(
+            recurrenceRule: 'FREQ=DAILY;COUNT=10',
+            timeZone: 'Asia/Tokyo',
+            overrides: [unchanged, changed, removed],
+          );
+          String id(CalendarEventOverride value) =>
+              FirestoreCalendarEventOverrideMapper.documentId(
+                'event',
+                value,
+                false,
+              );
+          when(eventDoc.id).thenReturn('event');
+          when(eventDoc.data()).thenReturn({
+            ...FirestoreCalendarEventMapper.toCreateFirestore(expected),
+            'overrideIds': expected.overrides.map(id).toList(),
+          });
+          for (final value in expected.overrides) {
+            final ref = overrideCollection.doc(id(value));
+            final doc = MockDocumentSnapshot();
+            when(doc.exists).thenReturn(true);
+            when(doc.data()).thenReturn({
+              ...FirestoreCalendarEventOverrideMapper.toFirestore(
+                value,
+                eventId: 'event',
+                groupId: 'group',
+                parentAllDay: false,
+              ),
+              'createdAt': Timestamp.fromDate(DateTime.utc(2026, 9, 1)),
+              'updatedAt': Timestamp.fromDate(DateTime.utc(2026, 9, 2)),
+            });
+            when(transaction.get(ref)).thenAnswer((_) async => doc);
+          }
+          final modified = CalendarEventOverride(
+            originalStartDateTime: changed.originalStartDateTime,
+            isCancelled: false,
+            title: '変更された回',
+            labelId: 'label',
+            isAllDay: false,
+            startDateTime: DateTime.utc(2026, 10, 3, 10),
+            endDateTime: DateTime.utc(2026, 10, 3, 11),
+          );
+          final added = cancelled(5);
+          final replacement = expected.copyWith(
+            title: '親予定の変更',
+            overrides: changeChildren
+                ? [unchanged, modified, added]
+                : expected.overrides,
+          );
+          if (replace) {
+            await events.replaceCalendarEvent(expected, replacement, null);
+          } else {
+            await events.updateCalendarEvent(replacement);
+          }
+          verify(
+            transaction.update(
+              eventRef,
+              argThat(containsPair('title', '親予定の変更')),
+            ),
+          ).called(1);
+          verifyNever(transaction.update(overrideRefs[id(unchanged)]!, any));
+          verifyNever(transaction.set(overrideRefs[id(unchanged)]!, any));
+          verifyNever(transaction.delete(overrideRefs[id(unchanged)]!));
+          if (changeChildren) {
+            verify(
+              transaction.update(
+                overrideRefs[id(changed)]!,
+                argThat(containsPair('title', '変更された回')),
+              ),
+            ).called(1);
+            verify(
+              transaction.set(
+                overrideRefs[id(added)]!,
+                argThat(containsPair('isCancelled', true)),
+              ),
+            ).called(1);
+            verify(transaction.delete(overrideRefs[id(removed)]!)).called(1);
+          } else {
+            verifyNever(transaction.set(any, any));
+            verifyNever(transaction.delete(any));
+            verifyNever(transaction.update(any, any));
+          }
+        },
+      );
+    }
+  }
 
   test('単発変更と維持する個別予定の保存は参照数とともに一括更新する', () async {
     final expected = event(id: 'event');
