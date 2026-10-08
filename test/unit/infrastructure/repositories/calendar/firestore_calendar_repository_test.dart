@@ -34,6 +34,8 @@ import 'package:mockito/mockito.dart';
 ])
 import 'firestore_calendar_repository_test.mocks.dart';
 
+typedef _ReadResult = ({CalendarEventDto? event, ValidationException? error});
+
 void main() {
   late MockFirebaseFirestore firestore;
   late MockTransaction transaction;
@@ -143,6 +145,15 @@ void main() {
       (call) async =>
           await (call.positionalArguments[0]
               as Future<CalendarEventDto?> Function(Transaction))(transaction),
+    );
+    when(
+      firestore.runTransaction<_ReadResult>(
+        argThat(isA<Future<_ReadResult> Function(Transaction)>()),
+      ),
+    ).thenAnswer(
+      (call) async =>
+          await (call.positionalArguments[0]
+              as Future<_ReadResult> Function(Transaction))(transaction),
     );
     container = ProviderContainer(
       overrides: [
@@ -368,6 +379,67 @@ void main() {
     expect(result, isEmpty);
     verifyNever(overrideRefs['stored']!.get());
     verifyNever(transaction.get(overrideRefs['stored']!));
+  });
+
+  test('親読取後に子が消えても照合を中断せず競合再試行後の系列を返す', () async {
+    final value = recurring();
+    stored(value);
+    final oldData = eventDoc.data()!;
+    var retried = false;
+    when(eventDoc.data()).thenAnswer(
+      (_) => retried
+          ? {
+              ...FirestoreCalendarEventMapper.toCreateFirestore(
+                value.copyWith(title: '更新後', overrides: []),
+              ),
+              'overrideIds': <String>[],
+            }
+          : oldData,
+    );
+    final missing = MockDocumentSnapshot();
+    when(missing.data()).thenReturn(null);
+    when(transaction.get(overrideRefs['stored']!))
+        .thenAnswer((_) async => missing);
+    when(
+      firestore.runTransaction<_ReadResult>(
+        argThat(isA<Future<_ReadResult> Function(Transaction)>()),
+      ),
+    ).thenAnswer((call) async {
+      final callback =
+          call.positionalArguments[0]
+              as Future<_ReadResult> Function(Transaction);
+      final first = await callback(transaction);
+      expect(first.error, isA<ValidationException>());
+      retried = true;
+      return await callback(transaction);
+    });
+    final result = await readStoredEvents(snapshotData: oldData);
+    expect(retried, true);
+    expect(result.single.title, '更新後');
+    expect(result.single.overrides, isEmpty);
+  });
+
+  test('競合ではない個別回の欠損は読取照合を終えてから拒否する', () async {
+    stored(recurring());
+    final missing = MockDocumentSnapshot();
+    when(missing.data()).thenReturn(null);
+    when(transaction.get(overrideRefs['stored']!))
+        .thenAnswer((_) async => missing);
+    var verified = false;
+    when(
+      firestore.runTransaction<_ReadResult>(
+        argThat(isA<Future<_ReadResult> Function(Transaction)>()),
+      ),
+    ).thenAnswer((call) async {
+      final callback =
+          call.positionalArguments[0]
+              as Future<_ReadResult> Function(Transaction);
+      final result = await callback(transaction);
+      verified = true;
+      return result;
+    });
+    await expectLater(readStoredEvents(), throwsA(isA<ValidationException>()));
+    expect(verified, true);
   });
 
   test('保存済みの埋め込み個別回を読み次回保存で独立コレクションへ移す', () async {
