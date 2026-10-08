@@ -16,7 +16,7 @@ class FirestoreCalendarEventStore {
 
   Future<CalendarEventDto> read(
     DocumentSnapshot<Map<String, dynamic>> event, {
-    required Transaction transaction,
+    Transaction? transaction,
   }) async {
     final data = event.data()!;
     final overrides = data.containsKey('overrideIds')
@@ -24,7 +24,9 @@ class FirestoreCalendarEventStore {
         : _embeddedOverrides(data);
     for (final id in overrideIds(data)) {
       final ref = firestore.collection('calendar_event_overrides').doc(id);
-      final doc = await transaction.get(ref);
+      final doc = transaction == null
+          ? await ref.get()
+          : await transaction.get(ref);
       final row = doc.data();
       if (row == null ||
           row['eventId'] != event.id ||
