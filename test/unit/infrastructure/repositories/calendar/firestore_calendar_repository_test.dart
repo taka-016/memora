@@ -1,3 +1,4 @@
+import 'package:memora/infrastructure/repositories/group/firestore_group_repository.dart';
 import 'package:memora/infrastructure/queries/calendar/firestore_calendar_event_query_service.dart';
 import 'package:memora/application/mappers/calendar/calendar_event_mapper.dart';
 import 'package:memora/domain/entities/calendar/calendar_event_override.dart';
@@ -22,6 +23,7 @@ import 'package:mockito/mockito.dart';
   MockSpec<FirebaseFirestore>(),
   MockSpec<FirebaseAuth>(),
   MockSpec<Transaction>(),
+  MockSpec<WriteBatch>(),
   MockSpec<Query<Map<String, dynamic>>>(),
   MockSpec<QuerySnapshot<Map<String, dynamic>>>(),
   MockSpec<QueryDocumentSnapshot<Map<String, dynamic>>>(),
@@ -314,6 +316,128 @@ void main() {
     when(transaction.get(ref)).thenAnswer((_) async => doc);
     when(ref.get()).thenAnswer((_) async => doc);
   }
+
+  Future<CalendarEvent> readStoredEvent() async {
+    final query = MockQuery();
+    final snapshot = MockQuerySnapshot();
+    final doc = MockQueryDocumentSnapshot();
+    when(doc.id).thenReturn('event');
+    when(doc.data()).thenAnswer((_) => eventDoc.data()!);
+    final collection = firestore.collection('calendar_events');
+    when(collection.where('groupId', isEqualTo: 'group')).thenReturn(query);
+    when(query.get()).thenAnswer((_) async => snapshot);
+    when(snapshot.docs).thenReturn([doc]);
+    final result = await FirestoreCalendarEventQueryService(
+      firestore: firestore,
+    ).getCalendarEventsByGroupId('group');
+    return CalendarEventMapper.toEntity(result.single);
+  }
+
+  test('保存済みの埋め込み個別回を読み次回保存で独立コレクションへ移す', () async {
+    final change = CalendarEventOverride(
+      originalStartDateTime: event().startDateTime,
+      isCancelled: false,
+      title: '個別変更',
+      labelId: 'other',
+      isAllDay: true,
+      startDateTime: DateTime.utc(2026, 11, 1),
+      endDateTime: DateTime.utc(2026, 11, 2),
+    );
+    final value = recurring().copyWith(
+      overrides: [change, recurring().overrides.single],
+    );
+    when(eventDoc.id).thenReturn('event');
+    when(eventDoc.data()).thenReturn({
+      ...FirestoreCalendarEventMapper.toCreateFirestore(value),
+      'overrides': {
+        'other': [
+          {
+            'originalStartDateTime': Timestamp.fromDate(
+              change.originalStartDateTime,
+            ),
+            'title': change.title,
+            'isAllDay': true,
+            'startDateTime': Timestamp.fromDate(change.startDateTime!),
+            'endDateTime': Timestamp.fromDate(change.endDateTime!),
+          },
+        ],
+      },
+      'cancelledOccurrences': [
+        Timestamp.fromDate(value.overrides.last.originalStartDateTime),
+      ],
+    });
+    final saved = await readStoredEvent();
+    expect(saved.overrides, value.overrides);
+    await events.replaceCalendarEvent(saved, saved.copyWith(title: '移行'), null);
+    final parent =
+        verify(transaction.update(eventRef, captureAny)).captured.single
+            as Map<String, dynamic>;
+    expect(parent['overrides'], FieldValue.delete());
+    expect(parent['cancelledOccurrences'], FieldValue.delete());
+    expect(parent['overrideIds'], hasLength(2));
+    final rows = verify(transaction.set(any, captureAny)).captured
+        .cast<Map<String, dynamic>>();
+    expect(
+      rows.where((row) => row['isCancelled'] == false).single['labelId'],
+      'other',
+    );
+    expect(
+      rows.where((row) => row['isCancelled'] == true).single['title'],
+      isNull,
+    );
+    verifyNever(transaction.update(otherRef, any));
+  });
+
+  test('グループ削除は予定に属する個別回を削除してから色ラベルを削除する', () async {
+    stored(recurring());
+    final event = MockQueryDocumentSnapshot();
+    when(event.id).thenReturn('event');
+    final label = MockQueryDocumentSnapshot();
+    when(label.id).thenReturn('label');
+    var labelCount = 1;
+    when(labelDoc.data())
+        .thenAnswer((_) => {'groupId': 'group', 'eventCount': labelCount});
+    when(transaction.update(labelRef, any)).thenAnswer((call) {
+      labelCount = (call.positionalArguments[1] as Map)['eventCount'] as int;
+      return transaction;
+    });
+    for (final name in [
+      'calendar_events',
+      'calendar_labels',
+      'group_members',
+    ]) {
+      final collection = name == 'group_members'
+          ? MockCollectionReference()
+          : firestore.collection(name);
+      when(firestore.collection(name)).thenReturn(collection);
+      final query = MockQuery();
+      final snapshot = MockQuerySnapshot();
+      when(collection.where('groupId', isEqualTo: 'group')).thenReturn(query);
+      when(query.get()).thenAnswer((_) async => snapshot);
+      when(snapshot.docs).thenReturn(
+        name == 'calendar_events'
+            ? [event]
+            : name == 'calendar_labels'
+            ? [label]
+            : [],
+      );
+    }
+    final groups = MockCollectionReference();
+    final groupRef = MockDocumentReference();
+    final batch = MockWriteBatch();
+    when(firestore.collection('groups')).thenReturn(groups);
+    when(groups.doc('group')).thenReturn(groupRef);
+    when(firestore.batch()).thenReturn(batch);
+    when(batch.commit()).thenAnswer((_) async {});
+    await FirestoreGroupRepository(firestore: firestore).deleteGroup('group');
+    verifyInOrder([
+      transaction.delete(eventRef),
+      transaction.delete(overrideRefs['stored']!),
+      transaction.delete(labelRef),
+      batch.delete(groupRef),
+      batch.commit(),
+    ]);
+  });
 
   test('独立した取消しを取得して親系列へ復元する', () async {
     final value = recurring();
