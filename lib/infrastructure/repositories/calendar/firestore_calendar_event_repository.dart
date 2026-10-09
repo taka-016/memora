@@ -4,12 +4,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/domain/entities/calendar/calendar_event.dart';
 import 'package:memora/domain/exceptions/validation_exception.dart';
 import 'package:memora/domain/repositories/calendar/calendar_event_repository.dart';
-import 'package:memora/infrastructure/mappers/calendar/firestore_calendar_event_mapper.dart';
+import 'package:memora/infrastructure/services/firestore_calendar_event_store.dart';
 import 'package:memora/infrastructure/services/validate_calendar_recurrence.dart';
 
 class FirestoreCalendarEventRepository implements CalendarEventRepository {
   FirestoreCalendarEventRepository({required this._firestore});
   final FirebaseFirestore _firestore;
+  late final _store = FirestoreCalendarEventStore(_firestore);
   DocumentReference<Map<String, dynamic>> _label(String id) =>
       _firestore.collection('calendar_labels').doc(id);
   Set<String> _references(Map<String, dynamic> data) =>
@@ -75,27 +76,33 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
     final preservedRefs = preservedEvents
         .map((_) => _firestore.collection('calendar_events').doc())
         .toList();
-    final preservedData = preservedEvents
-        .map(FirestoreCalendarEventMapper.toCreateFirestore)
-        .toList();
+    final preservedData = [
+      for (var index = 0; index < preservedEvents.length; index++)
+        _store.data(
+          preservedEvents[index],
+          preservedRefs[index].id,
+          create: true,
+        ),
+    ];
     await _firestore.runTransaction<void>((transaction) async {
       final current = await transaction.get(ref);
-      if (!current.exists ||
-          calendarEventContent(
-                CalendarEventMapper.toEntity(
-                  FirestoreCalendarEventMapper.fromFirestore(current),
-                ),
-              ) !=
-              calendarEventContent(expected)) {
+      if (!current.exists) {
+        throw ValidationException('予定が変更されています。再読み込みしてからやり直してください');
+      }
+      final currentEvent = CalendarEventMapper.toEntity(
+        await _store.read(current, transaction: transaction),
+      );
+      if (calendarEventContent(currentEvent) !=
+          calendarEventContent(expected)) {
         throw ValidationException('予定が変更されています。再読み込みしてからやり直してください');
       }
       final before = _references(current.data()!);
       final head = replacement == null
           ? null
-          : FirestoreCalendarEventMapper.toUpdateFirestore(replacement);
+          : _store.data(replacement, ref.id, create: false);
       final tail = following == null
           ? null
-          : FirestoreCalendarEventMapper.toCreateFirestore(following);
+          : _store.data(following, nextRef!.id, create: true);
       final headRefs = head == null ? <String>{} : _references(head);
       final tailRefs = tail == null ? <String>{} : _references(tail);
       final preservedLabels = preservedData.map(_references).toList();
@@ -125,6 +132,13 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
           });
         }
       }
+      _store.writeOverrides(
+        transaction,
+        replacement,
+        ref.id,
+        _store.overrideIds(current.data()!),
+        previousEvent: currentEvent,
+      );
       if (head == null) {
         transaction.delete(ref);
       } else {
@@ -132,6 +146,7 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
       }
       if (tail != null) {
         transaction.set(nextRef!, tail);
+        _store.writeOverrides(transaction, following, nextRef.id, []);
       }
       for (var index = 0; index < preservedData.length; index++) {
         transaction.set(preservedRefs[index], preservedData[index]);
@@ -143,10 +158,11 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
   Future<String> saveCalendarEvent(CalendarEvent event) async {
     validateCalendarRecurrence(event);
     final ref = _firestore.collection('calendar_events').doc();
-    final data = FirestoreCalendarEventMapper.toCreateFirestore(event);
+    final data = _store.data(event, ref.id, create: true);
     return _firestore.runTransaction((transaction) async {
       await _adjustLabels(transaction, event.groupId, {}, _references(data));
       transaction.set(ref, data);
+      _store.writeOverrides(transaction, event, ref.id, []);
       return ref.id;
     });
   }
@@ -155,12 +171,18 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
   Future<void> updateCalendarEvent(CalendarEvent event) async {
     validateCalendarRecurrence(event);
     final ref = _firestore.collection('calendar_events').doc(event.id);
-    final data = FirestoreCalendarEventMapper.toUpdateFirestore(event);
+    final data = _store.data(event, ref.id, create: false);
     await _firestore.runTransaction<void>((transaction) async {
       final existing = await transaction.get(ref);
       if (!existing.exists || existing.data()!['groupId'] != event.groupId) {
         throw ValidationException('更新する予定のグループは変更できません');
       }
+      final previousIds = _store.overrideIds(existing.data()!);
+      final previousEvent = previousIds.isEmpty
+          ? null
+          : CalendarEventMapper.toEntity(
+              await _store.read(existing, transaction: transaction),
+            );
       await _adjustLabels(
         transaction,
         event.groupId,
@@ -168,6 +190,13 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
         _references(data),
       );
       transaction.update(ref, data);
+      _store.writeOverrides(
+        transaction,
+        event,
+        ref.id,
+        previousIds,
+        previousEvent: previousEvent,
+      );
     });
   }
 
@@ -184,6 +213,12 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
         {},
       );
       transaction.delete(ref);
+      _store.writeOverrides(
+        transaction,
+        null,
+        ref.id,
+        _store.overrideIds(existing.data()!),
+      );
     });
   }
 }
