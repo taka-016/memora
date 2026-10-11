@@ -9,5 +9,5 @@ git pull
 git fetch --prune
 LC_ALL=C git for-each-ref \
   --format='%(refname:short) %(upstream:track) %(worktreepath)' refs/heads/ \
-  | awk '$2 == "[gone]" && NF == 2 {print $1}' \
-  | xargs -r git branch -d
+  | awk '$2 == "[gone]" && NF == 2 {printf "%s%c", $1, 0}' \
+  | xargs -0 -r git branch -d
