@@ -133,7 +133,7 @@ void main() {
         ],
       };
       expect(
-        () => dataStore.validateSnapshot(snapshot.copyWith(tables: tables)),
+        () => dataStore.validateSnapshot(OfflineBackupSnapshot(formatVersion: snapshot.formatVersion, databaseSchemaVersion: snapshot.databaseSchemaVersion, currentMember: snapshot.currentMember, settings: snapshot.settings, tables: tables)),
         throwsFormatException,
       );
       expect((await db.rows(table)).single['contract_id'], 'c1');

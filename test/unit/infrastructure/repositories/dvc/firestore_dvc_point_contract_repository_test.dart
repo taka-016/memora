@@ -74,7 +74,7 @@ void main() {
   });
 
   test('単独保存でも既存IDを指定して保存する', () async {
-    final reference = collection.doc('c1');
+    final reference = references.putIfAbsent('c1', () => MockDocumentReference<Map<String, dynamic>>());
     when(reference.set(any, any)).thenAnswer((_) async {});
     await repository.saveDvcPointContract(contract);
     verify(reference.set(argThat(containsPair('contractName', '契約A')), any))
