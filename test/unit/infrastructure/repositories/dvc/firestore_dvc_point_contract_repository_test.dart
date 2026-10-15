@@ -74,7 +74,10 @@ void main() {
   });
 
   test('単独保存でも既存IDを指定して保存する', () async {
-    final reference = references.putIfAbsent('c1', () => MockDocumentReference<Map<String, dynamic>>());
+    final reference = references.putIfAbsent(
+      'c1',
+      () => MockDocumentReference<Map<String, dynamic>>(),
+    );
     when(reference.set(any, any)).thenAnswer((_) async {});
     await repository.saveDvcPointContract(contract);
     verify(reference.set(argThat(containsPair('contractName', '契約A')), any))
@@ -89,12 +92,15 @@ void main() {
     ]);
     verify(
       batch.update(
-        collection.doc('c1'),
+        references['c1']!,
         argThat(containsPair('contractName', '契約A')),
       ),
     ).called(1);
     verify(
-      batch.set(collection.doc(), argThat(containsPair('contractName', '追加'))),
+      batch.set(
+        references['new']!,
+        argThat(containsPair('contractName', '追加')),
+      ),
     ).called(1);
     verifyNever(batch.delete(any));
     verify(batch.commit()).called(1);
@@ -117,7 +123,7 @@ void main() {
 
   test('子がない契約を同一バッチで削除する', () async {
     await repository.saveDvcPointContracts('g1', []);
-    verify(batch.delete(collection.doc('c1'))).called(1);
+    verify(batch.delete(references['c1']!)).called(1);
     verify(batch.commit()).called(1);
   });
 

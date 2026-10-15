@@ -153,7 +153,7 @@ void main() {
       final currentMonth = _monthStart(fixedNow);
       contractQueryService = _FakeDvcPointContractQueryService([
         DvcPointContractDto(
-          id: 'c-current',
+          id: 'c1',
           groupId: 'g1',
           contractName: '契約A',
           contractStartYearMonth: currentMonth,
@@ -509,7 +509,7 @@ void main() {
       final currentMonth = _monthStart(fixedNow);
       contractQueryService = _FakeDvcPointContractQueryService([
         DvcPointContractDto(
-          id: 'c-current',
+          id: 'c1',
           groupId: 'g1',
           contractName: '契約A',
           contractStartYearMonth: currentMonth,
@@ -548,7 +548,7 @@ void main() {
       final currentMonth = _monthStart(fixedNow);
       contractQueryService = _FakeDvcPointContractQueryService([
         DvcPointContractDto(
-          id: 'c-current',
+          id: 'c1',
           groupId: 'g1',
           contractName: '契約A',
           contractStartYearMonth: currentMonth,
@@ -577,7 +577,17 @@ void main() {
 
     testWidgets('利用可能ポイント内訳の期間限定ポイントは削除できる', (tester) async {
       final currentMonth = _monthStart(fixedNow);
-      contractQueryService = _FakeDvcPointContractQueryService(const []);
+      contractQueryService = _FakeDvcPointContractQueryService([
+        DvcPointContractDto(
+          id: 'c1',
+          groupId: groupId,
+          contractName: '契約A',
+          contractStartYearMonth: currentMonth,
+          contractEndYearMonth: currentMonth,
+          useYearStartMonth: currentMonth.month,
+          annualPoint: 0,
+        ),
+      ]);
       limitedQueryService = _FakeDvcLimitedPointQueryService([
         DvcLimitedPointDto(
           contractId: 'c1',
@@ -618,7 +628,17 @@ void main() {
 
     testWidgets('利用可能ポイント内訳の有効期限はfrom〜to形式で表示する', (tester) async {
       final currentMonth = _monthStart(fixedNow);
-      contractQueryService = _FakeDvcPointContractQueryService(const []);
+      contractQueryService = _FakeDvcPointContractQueryService([
+        DvcPointContractDto(
+          id: 'c1',
+          groupId: groupId,
+          contractName: '契約A',
+          contractStartYearMonth: currentMonth,
+          contractEndYearMonth: currentMonth,
+          useYearStartMonth: currentMonth.month,
+          annualPoint: 0,
+        ),
+      ]);
       limitedQueryService = _FakeDvcLimitedPointQueryService([
         DvcLimitedPointDto(
           contractId: 'c1',
@@ -655,7 +675,17 @@ void main() {
 
     testWidgets('期間限定ポイントの内訳はメモを有効期限より先に表示する', (tester) async {
       final currentMonth = _monthStart(fixedNow);
-      contractQueryService = _FakeDvcPointContractQueryService(const []);
+      contractQueryService = _FakeDvcPointContractQueryService([
+        DvcPointContractDto(
+          id: 'c1',
+          groupId: groupId,
+          contractName: '契約A',
+          contractStartYearMonth: currentMonth,
+          contractEndYearMonth: currentMonth,
+          useYearStartMonth: currentMonth.month,
+          annualPoint: 0,
+        ),
+      ]);
       limitedQueryService = _FakeDvcLimitedPointQueryService([
         DvcLimitedPointDto(
           contractId: 'c1',
@@ -695,9 +725,10 @@ void main() {
           .whereType<String>()
           .toList();
 
-      expect(subtitleTexts[0], '期間限定メモ');
+      expect(subtitleTexts, contains('契約A'));
+      expect(subtitleTexts[1], '期間限定メモ');
       expect(
-        subtitleTexts[1],
+        subtitleTexts[2],
         '${_formatYearMonthForTest(currentMonth)}〜${_formatYearMonthForTest(currentMonth)}',
       );
     });
