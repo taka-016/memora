@@ -8,13 +8,29 @@ class SqliteDvcPointContractRepository implements DvcPointContractRepository {
   SqliteDvcPointContractRepository(this.db);
   final OfflineDatabase db;
   @override
-  Future<void> saveDvcPointContract(DvcPointContract value) async =>
-      db.insertRow(
+  Future<void> saveDvcPointContract(DvcPointContract value) async {
+    if (value.id.isEmpty) {
+      await db.insertRow(
         'dvc_point_contracts',
         SqliteDvcPointContractMapper.toRow(
           value.copyWith(id: const Uuid().v4()),
         ),
       );
+      return;
+    }
+    final existing = await db.rows(
+      'dvc_point_contracts',
+      where: 'id = ?',
+      args: [value.id],
+    );
+    final row = SqliteDvcPointContractMapper.toRow(value);
+    if (existing.isEmpty) {
+      await db.insertRow('dvc_point_contracts', row);
+    } else {
+      await db.updateRow('dvc_point_contracts', value.id, row);
+    }
+  }
+
   @override
   Future<void> deleteDvcPointContract(String id) async =>
       db.deleteRows('dvc_point_contracts', 'id', id);
