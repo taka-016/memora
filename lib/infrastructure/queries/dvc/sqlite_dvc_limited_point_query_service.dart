@@ -11,10 +11,13 @@ class SqliteDvcLimitedPointQueryService implements DvcLimitedPointQueryService {
   Future<List<DvcLimitedPointDto>> getDvcLimitedPointsByGroupId(
     String groupId, {
     List<OrderBy>? orderBy,
+    String? contractId,
   }) async => (await db.rows(
     'dvc_limited_points',
-    where: 'group_id = ?',
-    args: [groupId],
+    where: contractId == null
+        ? 'group_id = ?'
+        : 'group_id = ? AND contract_id = ?',
+    args: [groupId, ?contractId],
     orderBy: orderBy,
   )).map(SqliteDvcLimitedPointMapper.fromRow).toList();
 }

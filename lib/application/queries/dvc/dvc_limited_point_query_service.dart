@@ -5,5 +5,6 @@ abstract class DvcLimitedPointQueryService {
   Future<List<DvcLimitedPointDto>> getDvcLimitedPointsByGroupId(
     String groupId, {
     List<OrderBy>? orderBy,
+    String? contractId,
   });
 }

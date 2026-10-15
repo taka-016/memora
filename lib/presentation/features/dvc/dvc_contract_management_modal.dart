@@ -13,6 +13,7 @@ Future<void> showDvcContractManagementModal({
   required List<DvcPointContractDto> contracts,
   required DvcContractSaveCallback onSave,
   required AppClock clock,
+  Set<String> protectedContractIds = const {},
 }) async {
   final now = clock.now();
   final editable = contracts
@@ -74,11 +75,16 @@ Future<void> showDvcContractManagementModal({
                                         'dvc_contract_delete_button_$index',
                                       ),
                                       icon: const Icon(Icons.delete_outline),
-                                      onPressed: () {
-                                        setState(() {
-                                          editable.removeAt(index);
-                                        });
-                                      },
+                                      onPressed:
+                                          protectedContractIds.contains(
+                                            contract.id,
+                                          )
+                                          ? null
+                                          : () {
+                                              setState(() {
+                                                editable.removeAt(index);
+                                              });
+                                            },
                                     ),
                                     Icon(
                                       contract.expanded
@@ -95,6 +101,8 @@ Future<void> showDvcContractManagementModal({
                                   });
                                 },
                               ),
+                              if (protectedContractIds.contains(contract.id))
+                                const Text('利用履歴・期間限定ポイントがある契約は削除できません'),
                               if (contract.expanded)
                                 _ContractForm(
                                   contract: contract,
@@ -243,6 +251,7 @@ class _ContractForm extends StatelessWidget {
 
 class DvcEditableContract {
   DvcEditableContract({
+    this.id = '',
     required this.contractName,
     required this.contractStartYearMonth,
     required this.contractEndYearMonth,
@@ -256,6 +265,7 @@ class DvcEditableContract {
     required bool expanded,
   }) {
     return DvcEditableContract(
+      id: dto.id,
       contractName: dto.contractName,
       contractStartYearMonth: dvcMonthStart(dto.contractStartYearMonth),
       contractEndYearMonth: dvcMonthStart(dto.contractEndYearMonth),
@@ -265,6 +275,7 @@ class DvcEditableContract {
     );
   }
 
+  final String id;
   final String contractName;
   final DateTime contractStartYearMonth;
   final DateTime contractEndYearMonth;
@@ -289,6 +300,7 @@ class DvcEditableContract {
     bool? expanded,
   }) {
     return DvcEditableContract(
+      id: id,
       contractName: contractName ?? this.contractName,
       contractStartYearMonth:
           contractStartYearMonth ?? this.contractStartYearMonth,

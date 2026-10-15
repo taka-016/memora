@@ -5,5 +5,6 @@ abstract class DvcPointUsageQueryService {
   Future<List<DvcPointUsageDto>> getDvcPointUsagesByGroupId(
     String groupId, {
     List<OrderBy>? orderBy,
+    String? contractId,
   });
 }

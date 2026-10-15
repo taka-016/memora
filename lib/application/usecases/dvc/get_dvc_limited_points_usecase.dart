@@ -7,9 +7,13 @@ class GetDvcLimitedPointsUsecase {
 
   final DvcLimitedPointQueryService _dvcLimitedPointQueryService;
 
-  Future<List<DvcLimitedPointDto>> execute(String groupId) async {
+  Future<List<DvcLimitedPointDto>> execute(
+    String groupId, {
+    String? contractId,
+  }) async {
     return _dvcLimitedPointQueryService.getDvcLimitedPointsByGroupId(
       groupId,
+      contractId: contractId,
       orderBy: [const OrderBy('startYearMonth', descending: false)],
     );
   }

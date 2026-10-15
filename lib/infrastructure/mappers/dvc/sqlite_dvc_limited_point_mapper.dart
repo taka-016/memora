@@ -7,6 +7,7 @@ class SqliteDvcLimitedPointMapper {
       DvcLimitedPointDto(
         id: row['id'] as String,
         groupId: row['group_id'] as String,
+        contractId: row['contract_id'] as String,
         startYearMonth: SqliteValues.date(row['start_year_month'])!,
         endYearMonth: SqliteValues.date(row['end_year_month'])!,
         point: row['point'] as int,
@@ -15,6 +16,7 @@ class SqliteDvcLimitedPointMapper {
   static Map<String, Object?> toRow(DvcLimitedPoint value) => {
     'id': value.id,
     'group_id': value.groupId,
+    'contract_id': value.contractId,
     'start_year_month': value.startYearMonth.microsecondsSinceEpoch,
     'end_year_month': value.endYearMonth.microsecondsSinceEpoch,
     'point': value.point,

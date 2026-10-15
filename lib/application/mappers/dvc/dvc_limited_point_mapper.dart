@@ -6,6 +6,7 @@ class DvcLimitedPointMapper {
     return DvcLimitedPoint(
       id: dto.id,
       groupId: dto.groupId,
+      contractId: dto.contractId,
       startYearMonth: dto.startYearMonth,
       endYearMonth: dto.endYearMonth,
       point: dto.point,
@@ -17,6 +18,7 @@ class DvcLimitedPointMapper {
     return DvcLimitedPointDto(
       id: entity.id,
       groupId: entity.groupId,
+      contractId: entity.contractId,
       startYearMonth: entity.startYearMonth,
       endYearMonth: entity.endYearMonth,
       point: entity.point,

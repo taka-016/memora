@@ -16,11 +16,16 @@ class FirestoreDvcLimitedPointQueryService
   Future<List<DvcLimitedPointDto>> getDvcLimitedPointsByGroupId(
     String groupId, {
     List<OrderBy>? orderBy,
+    String? contractId,
   }) async {
     try {
       Query<Map<String, dynamic>> query = _firestore
           .collection('dvc_limited_points')
           .where('groupId', isEqualTo: groupId);
+
+      if (contractId != null) {
+        query = query.where('contractId', isEqualTo: contractId);
+      }
 
       if (orderBy != null && orderBy.isNotEmpty) {
         for (final order in orderBy) {

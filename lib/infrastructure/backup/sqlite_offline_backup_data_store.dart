@@ -34,9 +34,9 @@ class SqliteOfflineBackupDataStore implements OfflineBackupDataStore {
     'itinerary_items',
     'member_events',
     'group_events',
-    'dvc_point_contracts',
     'dvc_limited_points',
     'dvc_point_usages',
+    'dvc_point_contracts',
     'trip_entries',
     'group_members',
     'groups',
@@ -165,6 +165,18 @@ class SqliteOfflineBackupDataStore implements OfflineBackupDataStore {
     if (snapshot.tables.keys.toSet().difference(expectedTables).isNotEmpty ||
         expectedTables.difference(snapshot.tables.keys.toSet()).isNotEmpty) {
       throw const FormatException('バックアップのテーブル構成が不正です。');
+    }
+    final contracts = snapshot.tables['dvc_point_contracts']!;
+    for (final table in ['dvc_point_usages', 'dvc_limited_points']) {
+      for (final child in snapshot.tables[table]!) {
+        if (!contracts.any(
+          (contract) =>
+              contract['id'] == child['contract_id'] &&
+              contract['group_id'] == child['group_id'],
+        )) {
+          throw const FormatException('DVCの利用データに対応する契約が存在しません。');
+        }
+      }
     }
     final events = snapshot.tables['calendar_events']!;
     final overrides = snapshot.tables['calendar_event_overrides']!;

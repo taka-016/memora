@@ -14,6 +14,7 @@ class FirestoreDvcLimitedPointMapper {
     return DvcLimitedPointDto(
       id: doc.id,
       groupId: data['groupId'] as String? ?? '',
+      contractId: data['contractId'] as String,
       startYearMonth:
           FirestoreMapperValueParser.asDateTime(data['startYearMonth']) ??
           _defaultDate,
@@ -28,6 +29,7 @@ class FirestoreDvcLimitedPointMapper {
   static Map<String, dynamic> toCreateFirestore(DvcLimitedPoint limitedPoint) {
     return {
       'groupId': limitedPoint.groupId,
+      'contractId': limitedPoint.contractId,
       'startYearMonth': Timestamp.fromDate(limitedPoint.startYearMonth),
       'endYearMonth': Timestamp.fromDate(limitedPoint.endYearMonth),
       'point': limitedPoint.point,

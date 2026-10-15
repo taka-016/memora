@@ -63,7 +63,17 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
     }
 
     Future<bool> runOperationWithFeedback(Future<bool> operation) async {
-      final didRun = await operation;
+      bool didRun;
+      try {
+        didRun = await operation;
+      } catch (_) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('保存に失敗しました。入力内容を確認して再度お試しください')),
+          );
+        }
+        return false;
+      }
       if (!didRun && context.mounted) {
         ScaffoldMessenger.of(
           context,
@@ -79,7 +89,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
           .where((contract) => contract.isValid)
           .map(
             (contract) => DvcPointContractDto(
-              id: '',
+              id: contract.id,
               groupId: groupId,
               contractName: contract.contractName.trim(),
               contractStartYearMonth: contract.contractStartYearMonth,
@@ -94,6 +104,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
     }
 
     Future<bool> saveLimitedPoint({
+      required String contractId,
       required DateTime startYearMonth,
       required DateTime endYearMonth,
       required int point,
@@ -102,6 +113,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
       final limitedPoint = DvcLimitedPointDto(
         id: '',
         groupId: groupId,
+        contractId: contractId,
         startYearMonth: dvcMonthStart(startYearMonth),
         endYearMonth: dvcMonthStart(endYearMonth),
         point: point,
@@ -111,6 +123,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
     }
 
     Future<bool> saveUsage({
+      required String contractId,
       required DateTime usageYearMonth,
       required int usedPoint,
       required String memo,
@@ -118,6 +131,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
       final usage = DvcPointUsageDto(
         id: '',
         groupId: groupId,
+        contractId: contractId,
         usageYearMonth: dvcMonthStart(usageYearMonth),
         usedPoint: usedPoint,
         memo: memo.isEmpty ? null : memo,
@@ -173,6 +187,10 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
                           () => showDvcContractManagementModal(
                             context: context,
                             contracts: state.contracts,
+                            protectedContractIds: {
+                              ...state.pointUsages.map((v) => v.contractId),
+                              ...state.limitedPoints.map((v) => v.contractId),
+                            },
                             onSave: saveContractSettings,
                             clock: clock,
                           ),
@@ -184,6 +202,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
                         showDialogOnce(
                           () => showDvcLimitedPointRegistrationModal(
                             context: context,
+                            contracts: state.contracts,
                             onSave: saveLimitedPoint,
                             clock: clock,
                           ),
@@ -371,7 +390,8 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
             final summary = summaryByMonthKey[dvcMonthKey(month)];
             final usedPoint = summary?.usedPoint ?? 0;
             final usageDetails = summary?.usageDetails ?? const [];
-            final availablePoint = summary?.availablePoint ?? 0;
+            final availablePointsByContract =
+                summary?.availablePointsByContract ?? const <String, int>{};
             return buildMonthCell(
               month: month,
               keyPrefix: 'dvc_used_cell_',
@@ -384,6 +404,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
                       context: context,
                       month: month,
                       usages: usageDetails,
+                      contracts: state.contracts,
                       onDelete: deleteUsage,
                     ),
                   ),
@@ -403,7 +424,8 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
                         () => showDvcUsageRegistrationModal(
                           context: context,
                           targetYearMonth: month,
-                          maxAvailablePoint: availablePoint,
+                          contracts: state.contracts,
+                          availablePointsByContract: availablePointsByContract,
                           onSave: saveUsage,
                         ),
                       ),
