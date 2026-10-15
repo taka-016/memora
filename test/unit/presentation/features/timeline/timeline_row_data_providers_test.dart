@@ -123,21 +123,21 @@ void main() {
     test('グループの全期間データを1回取得して年別に保持する', () async {
       final queryService = _FakeDvcPointUsageQueryService([
         DvcPointUsageDto(
-        contractId: 'c1',
+          contractId: 'c1',
           id: 'usage-2',
           groupId: 'group-1',
           usageYearMonth: DateTime(2025, 8),
           usedPoint: 20,
         ),
         DvcPointUsageDto(
-        contractId: 'c1',
+          contractId: 'c1',
           id: 'usage-1',
           groupId: 'group-1',
           usageYearMonth: DateTime(2025, 4),
           usedPoint: 10,
         ),
         DvcPointUsageDto(
-        contractId: 'c1',
+          contractId: 'c1',
           id: 'usage-3',
           groupId: 'group-1',
           usageYearMonth: DateTime(2026, 1),

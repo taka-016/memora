@@ -20,7 +20,7 @@ void main() {
       expect(
         entity,
         DvcPointUsage(
-        contractId: 'c1',
+          contractId: 'c1',
           id: 'usage001',
           groupId: 'group001',
           usageYearMonth: DateTime(2025, 10),

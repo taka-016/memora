@@ -56,7 +56,7 @@ void main() {
     annualPoint: 100,
   );
   final limitedPoint = DvcLimitedPointDto(
-        contractId: 'contract-1',
+    contractId: 'contract-1',
     id: 'limited-1',
     groupId: groupId,
     startYearMonth: currentMonth,
@@ -64,7 +64,7 @@ void main() {
     point: 30,
   );
   final pointUsage = DvcPointUsageDto(
-        contractId: 'contract-1',
+    contractId: 'contract-1',
     id: 'usage-1',
     groupId: groupId,
     usageYearMonth: currentMonth,

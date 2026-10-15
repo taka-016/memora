@@ -69,7 +69,7 @@ class CalculateDvcPointTableUsecase {
     final results = contracts
         .map(
           (contract) => _executeContract(
-            contracts: [contract],
+            contract: contract,
             limitedPoints: limitedPoints
                 .where((v) => v.contractId == contract.id)
                 .toList(),
@@ -82,14 +82,14 @@ class CalculateDvcPointTableUsecase {
         )
         .toList();
     final summaries = <DvcMonthlyPointSummary>[];
+    var monthIndex = 0;
     for (
       var month = _monthStart(startYearMonth);
       !month.isAfter(_monthStart(endYearMonth));
-      month = _addMonths(month, 1)
+      month = _addMonths(month, 1), monthIndex++
     ) {
       final parts = results
-          .expand((r) => r.monthlySummaries)
-          .where((v) => v.yearMonth == month)
+          .map((result) => result.monthlySummaries[monthIndex])
           .toList();
       summaries.add(
         DvcMonthlyPointSummary(
@@ -98,9 +98,7 @@ class CalculateDvcPointTableUsecase {
           usedPoint: parts.fold(0, (sum, v) => sum + v.usedPoint),
           availablePointsByContract: {
             for (var index = 0; index < contracts.length; index++)
-              contracts[index].id: results[index].monthlySummaries
-                  .firstWhere((v) => v.yearMonth == month)
-                  .availablePoint,
+              contracts[index].id: parts[index].availablePoint,
           },
           availableBreakdowns: parts
               .expand((v) => v.availableBreakdowns)
@@ -113,7 +111,7 @@ class CalculateDvcPointTableUsecase {
   }
 
   DvcPointTableCalculationResult _executeContract({
-    required List<DvcPointContractDto> contracts,
+    required DvcPointContractDto contract,
     required List<DvcLimitedPointDto> limitedPoints,
     required List<DvcPointUsageDto> pointUsages,
     required DateTime startYearMonth,
@@ -126,7 +124,7 @@ class CalculateDvcPointTableUsecase {
     }
 
     final buckets = <_PointBucket>[
-      ...contracts.expand(_buildContractBuckets),
+      ..._buildContractBuckets(contract),
       ...limitedPoints.map(_buildLimitedBucket),
     ];
 
@@ -180,7 +178,7 @@ class CalculateDvcPointTableUsecase {
                 sourceId: bucket.sourceId,
                 contractId: bucket.contractId,
                 sourceName: bucket.sourceName,
-                contractName: contracts.single.contractName,
+                contractName: contract.contractName,
                 remainingPoint: bucket.remainingPoint,
                 availableFrom: bucket.availableFrom,
                 expireAt: _addMonths(bucket.expireExclusive, -1),

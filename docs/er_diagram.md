@@ -98,7 +98,8 @@ erDiagram
     }
     dvc_limited_points {
         string id PK
-        string groupId FK "NOT NULL"
+        string groupId "NOT NULL・集計用"
+        string contractId FK "NOT NULL"
         timestamp startYearMonth "NOT NULL"
         timestamp endYearMonth "NOT NULL"
         number point "NOT NULL"
@@ -106,7 +107,8 @@ erDiagram
     }
     dvc_point_usages {
         string id PK
-        string groupId FK "NOT NULL"
+        string groupId "NOT NULL・集計用"
+        string contractId FK "NOT NULL"
         timestamp usageYearMonth "NOT NULL"
         number usedPoint "NOT NULL"
         string memo
@@ -167,8 +169,8 @@ erDiagram
     members ||--o{ member_invitations : "id → inviteeId"
     members ||--o{ member_invitations : "id → inviterId"
     groups ||--o{ dvc_point_contracts : "id → groupId"
-    groups ||--o{ dvc_limited_points : "id → groupId"
-    groups ||--o{ dvc_point_usages : "id → groupId"
+    dvc_point_contracts ||--o{ dvc_limited_points : "id → contractId"
+    dvc_point_contracts ||--o{ dvc_point_usages : "id → contractId"
     groups ||--o{ calendar_events : "id → groupId"
     groups ||--o{ calendar_labels : "id → groupId"
     calendar_labels ||--o{ calendar_events : "id → labelId"
@@ -186,3 +188,5 @@ erDiagram
 - Firestoreでは個別回の変更・取消しを独立した`calendar_event_overrides`コレクションへ保存する。`eventId`・`groupId`・`originalStartDateTime`・`isCancelled`と変更内容を持ち、ドキュメントIDは親予定IDと正規化した元の開始日時（マイクロ秒）の組で一意にする。終日の元日時・変更後の期間はUTCの年月日として保存する。
 - Firestoreの親予定は`overrideIds`（個別回のドキュメントID一覧）と`referencedLabelIds`（親と個別回が参照する色ラベルID一覧）を持つ。系列の分割・変更・削除は、親予定・対象の個別回・色ラベルの参照数を同じトランザクションで保存し、競合照合では個別回もトランザクション内で読み取る。グループ削除も予定ごとの削除処理を経由して個別回を削除する。一覧取得ではグループの親予定を通常のクエリで取得し、対応する個別回を通常のドキュメント取得で読み込む。読み込みにトランザクションは使用しない。
 - 既存のFirestoreの埋め込み形式（`overrides`・`cancelledOccurrences`）は`overrideIds`を持たない親予定から読み取る。次回の系列更新・分割時に個別回を独立コレクションへ移し、親の埋め込みフィールドを同じトランザクションで削除する。
+
+- DVCポイント利用・期間限定ポイントはそれぞれ1つの契約に属し、`contractId`をFirestore・SQLite・バックアップで保持する。`groupId`は親契約と同じ値を保存し、グループの一覧・年表集計に使う。利用履歴または期間限定ポイントがある契約は削除できない。SQLiteでは子から契約への参照を`ON DELETE RESTRICT`とし、DVCの`group_id`は通常グループ削除による連鎖削除を持たせず、退避後もIDと関連データを保持する。

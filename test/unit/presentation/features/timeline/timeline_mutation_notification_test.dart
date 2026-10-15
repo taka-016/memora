@@ -76,7 +76,7 @@ void main() {
       dvcPointUsageMutationCoordinatorProvider,
     );
     final usage = DvcPointUsageDto(
-        contractId: 'c1',
+      contractId: 'c1',
       id: 'usage-1',
       groupId: 'group-1',
       usageYearMonth: DateTime(2026, 4),

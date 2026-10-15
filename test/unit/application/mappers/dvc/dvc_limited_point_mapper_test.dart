@@ -21,7 +21,7 @@ void main() {
       expect(
         entity,
         DvcLimitedPoint(
-        contractId: 'c1',
+          contractId: 'c1',
           id: 'limited001',
           groupId: 'group001',
           startYearMonth: DateTime(2025, 7),

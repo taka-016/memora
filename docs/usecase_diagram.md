@@ -21,6 +21,9 @@ graph LR
             Timeline([年表で記録を管理する])
             Trip([旅行を管理する])
             Dvc([DVCポイントを管理する])
+            DvcContract([契約を管理する])
+            DvcUsage([契約を選択してポイントを利用する])
+            DvcLimited([契約へ期間限定ポイントを登録する])
             Widget([ウィジェットで旅程を確認する])
         end
 
@@ -37,6 +40,9 @@ graph LR
     User --> Timeline
     User --> Trip
     User --> Dvc
+    Dvc --> DvcContract
+    Dvc --> DvcUsage
+    Dvc --> DvcLimited
     User --> Widget
     User --> Backup
 ```
