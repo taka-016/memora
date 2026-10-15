@@ -29,6 +29,7 @@ function parseArgs(argv) {
     const arg = argv[index];
     if (arg === '--apply') options.apply = true;
     else if (arg === '--project') options.projectId = argv[++index];
+    else if (arg === '--backup') options.backupPath = argv[++index];
     else if (arg === '--group') options.groupId = argv[++index];
     else if (arg === '--help') options.help = true;
     else throw new Error(`不明な引数です: ${arg}`);
@@ -37,7 +38,7 @@ function parseArgs(argv) {
   return options;
 }
 
-async function migrate(db, { groupId, apply }) {
+async function migrate(db, { groupId, apply, backupPath }) {
   const snapshots = new Map();
   for (const name of ['dvc_point_contracts', 'dvc_point_usages', 'dvc_limited_points']) {
     const snapshot = await db.collection(name).where('groupId', '==', groupId).get();
@@ -55,6 +56,12 @@ async function migrate(db, { groupId, apply }) {
   }));
   if (!apply || plan.length === 0) return;
   if (plan.length > 500) throw new Error('一括更新の上限500件を超えています。書き込みは行っていません');
+  if (!backupPath) throw new Error('適用前バックアップの保存先を--backupで指定してください');
+  require('node:fs').writeFileSync(backupPath, JSON.stringify({
+    groupId,
+    tables: Object.fromEntries([...snapshots].map(([name]) => [name, records(name)])),
+    plan,
+  }, null, 2), { mode: 0o600, flag: 'wx' });
   const batch = db.batch();
   for (const item of plan) {
     const doc = snapshots.get(item.collection).find((value) => value.id === item.id);
@@ -67,7 +74,7 @@ async function migrate(db, { groupId, apply }) {
 async function main() {
   const options = parseArgs(process.argv.slice(2));
   if (options.help) {
-    console.log('使用方法: node tools/migrations/link_dvc_contracts.js --group GROUP_ID [--project PROJECT_ID] [--apply]\n既定は確認のみ。認証にはGOOGLE_APPLICATION_CREDENTIALSを使用します。');
+    console.log('使用方法: node tools/migrations/link_dvc_contracts.js --group GROUP_ID [--project PROJECT_ID] [--apply --backup BACKUP_PATH]\n既定は確認のみ。認証にはGOOGLE_APPLICATION_CREDENTIALSを使用します。');
     return;
   }
   const { initializeApp, applicationDefault } = require('firebase-admin/app');
