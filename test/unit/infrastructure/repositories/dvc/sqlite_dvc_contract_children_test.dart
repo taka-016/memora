@@ -120,6 +120,15 @@ void main() {
     );
   });
 
+  test('通常グループの削除後も契約と利用データを保持する', () async {
+    await addUsage('a');
+    await addLimited('a');
+    await db.deleteRows('groups', 'id', 'g1');
+    expect(await db.rows('dvc_point_contracts'), hasLength(2));
+    expect((await db.rows('dvc_point_usages')).single['contract_id'], 'a');
+    expect((await db.rows('dvc_limited_points')).single['contract_id'], 'a');
+  });
+
   test('子のない契約を削除し初回作成と空一覧の保存ができる', () async {
     await repository.saveDvcPointContracts('g1', []);
     expect(await db.rows('dvc_point_contracts'), isEmpty);

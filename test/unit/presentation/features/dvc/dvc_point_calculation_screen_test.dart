@@ -1,3 +1,5 @@
+import '../../../../helpers/test_exception.dart';
+
 import 'package:memora/infrastructure/time/fixed_app_clock.dart';
 import 'package:memora/composition_root/providers/app_providers.dart';
 
@@ -314,6 +316,91 @@ void main() {
         isNull,
       );
       expect(find.text('利用履歴・期間限定ポイントがある契約は削除できません'), findsOneWidget);
+    });
+
+    testWidgets('契約未作成時は利用と期間限定ポイントを登録できない', (tester) async {
+      contractQueryService = _FakeDvcPointContractQueryService([]);
+      await tester.pumpWidget(createWidget());
+      await tester.pumpAndSettle();
+      await tester.tap(_findAddUsageButtons().first);
+      await tester.pumpAndSettle();
+      expect(find.text('先に契約を登録してください'), findsOneWidget);
+      expect(
+        tester
+            .widget<TextButton>(find.widgetWithText(TextButton, '登録'))
+            .onPressed,
+        isNull,
+      );
+      await tester.tap(find.widgetWithText(TextButton, 'キャンセル'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('dvc_action_menu_button')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('期間限定ポイント登録'));
+      await tester.pumpAndSettle();
+      expect(find.text('先に契約を登録してください'), findsOneWidget);
+      expect(
+        tester
+            .widget<TextButton>(find.widgetWithText(TextButton, '登録'))
+            .onPressed,
+        isNull,
+      );
+    });
+
+    testWidgets('期間限定ポイントも選択した契約へ保存する', (tester) async {
+      contractQueryService = _FakeDvcPointContractQueryService([
+        ...contractQueryService.contracts,
+        DvcPointContractDto(
+          id: 'c2',
+          groupId: groupId,
+          contractName: '契約B',
+          contractStartYearMonth: DateTime(2025, 10),
+          contractEndYearMonth: DateTime(2025, 10),
+          useYearStartMonth: 10,
+          annualPoint: 20,
+        ),
+      ]);
+      await tester.pumpWidget(createWidget());
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('dvc_action_menu_button')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('期間限定ポイント登録'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('dvc_limited_contract_field')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('契約B').last);
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('dvc_limited_point_field')),
+        '30',
+      );
+      await tester.tap(find.widgetWithText(TextButton, '登録'));
+      await tester.pumpAndSettle();
+      expect(limitedRepository.savedLimitedPoints.single.contractId, 'c2');
+    });
+
+    testWidgets('利用保存に失敗しても入力を残して再試行できる', (tester) async {
+      usageRepository.onSave = (_) => throw TestException('保存失敗');
+      await tester.pumpWidget(createWidget());
+      await tester.pumpAndSettle();
+      await tester.tap(_findAddUsageButtons().first);
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('dvc_usage_point_field')),
+        '20',
+      );
+      await tester.enterText(
+        find.byKey(const Key('dvc_usage_memo_field')),
+        '入力したメモ',
+      );
+      await tester.tap(find.widgetWithText(TextButton, '登録'));
+      await tester.pumpAndSettle();
+      expect(find.text('ポイント利用登録'), findsOneWidget);
+      expect(find.text('入力したメモ'), findsOneWidget);
+      expect(find.text('保存に失敗しました。入力内容を確認して再度お試しください'), findsOneWidget);
+      usageRepository.onSave = null;
+      await tester.tap(find.widgetWithText(TextButton, '登録'));
+      await tester.pumpAndSettle();
+      expect(find.text('ポイント利用登録'), findsNothing);
     });
 
     testWidgets('利用登録ボタンを連続で押してもダイアログを重複表示しない', (tester) async {
