@@ -1002,7 +1002,7 @@ class _FakeDvcPointUsageRepository implements DvcPointUsageRepository {
   final List<DvcPointUsage> savedUsages = [];
   final List<String> deletedUsageIds = [];
   final List<String> deletedGroupIds = [];
-  final void Function(DvcPointUsage pointUsage)? onSave;
+  void Function(DvcPointUsage pointUsage)? onSave;
   final Future<void> Function(String pointUsageId)? onDelete;
 
   @override
