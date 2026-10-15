@@ -7,6 +7,7 @@ void main() {
   group('DvcPointUsageMapper', () {
     test('Dtoからエンティティへ変換できる', () {
       final dto = DvcPointUsageDto(
+        contractId: 'c1',
         id: 'usage001',
         groupId: 'group001',
         usageYearMonth: DateTime(2025, 10),
@@ -19,6 +20,7 @@ void main() {
       expect(
         entity,
         DvcPointUsage(
+        contractId: 'c1',
           id: 'usage001',
           groupId: 'group001',
           usageYearMonth: DateTime(2025, 10),

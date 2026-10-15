@@ -15,6 +15,7 @@ void main() {
       const groupId = 'group-1';
       final expectedPoints = [
         DvcLimitedPointDto(
+          contractId: 'c1',
           id: 'limited-1',
           groupId: groupId,
           startYearMonth: DateTime(2026, 1),

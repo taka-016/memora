@@ -7,6 +7,7 @@ void main() {
   group('DvcLimitedPointMapper', () {
     test('Dtoからエンティティへ変換できる', () {
       final dto = DvcLimitedPointDto(
+        contractId: 'c1',
         id: 'limited001',
         groupId: 'group001',
         startYearMonth: DateTime(2025, 7),
@@ -20,6 +21,7 @@ void main() {
       expect(
         entity,
         DvcLimitedPoint(
+        contractId: 'c1',
           id: 'limited001',
           groupId: 'group001',
           startYearMonth: DateTime(2025, 7),

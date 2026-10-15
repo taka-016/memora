@@ -14,6 +14,7 @@ void main() {
       final doc = MockDocumentSnapshot<Map<String, dynamic>>();
       when(doc.id).thenReturn('limited001');
       when(doc.data()).thenReturn({
+        'contractId': 'c1',
         'groupId': 'group001',
         'startYearMonth': Timestamp.fromDate(DateTime(2025, 7)),
         'endYearMonth': Timestamp.fromDate(DateTime(2025, 12)),
@@ -25,6 +26,7 @@ void main() {
 
       expect(result.id, 'limited001');
       expect(result.groupId, 'group001');
+      expect(result.contractId, 'c1');
       expect(result.startYearMonth, DateTime(2025, 7));
       expect(result.endYearMonth, DateTime(2025, 12));
       expect(result.point, 30);
@@ -35,6 +37,7 @@ void main() {
       final doc = MockDocumentSnapshot<Map<String, dynamic>>();
       when(doc.id).thenReturn('limited003');
       when(doc.data()).thenReturn({
+        'contractId': 'c1',
         'memo': {'unexpected': 'value'},
       });
 
@@ -46,7 +49,7 @@ void main() {
     test('Firestoreの欠損値をデフォルトで変換できる', () {
       final doc = MockDocumentSnapshot<Map<String, dynamic>>();
       when(doc.id).thenReturn('limited002');
-      when(doc.data()).thenReturn({});
+      when(doc.data()).thenReturn({'contractId': 'c1'});
 
       final result = FirestoreDvcLimitedPointMapper.fromFirestore(doc);
 
@@ -60,6 +63,7 @@ void main() {
 
     test('エンティティをFirestoreマップへ変換できる', () {
       final point = DvcLimitedPoint(
+        contractId: 'c1',
         id: 'limited001',
         groupId: 'group001',
         startYearMonth: DateTime(2025, 7),
@@ -71,6 +75,7 @@ void main() {
       final map = FirestoreDvcLimitedPointMapper.toCreateFirestore(point);
 
       expect(map['groupId'], 'group001');
+      expect(map['contractId'], 'c1');
       expect(map['startYearMonth'], isA<Timestamp>());
       expect(map['endYearMonth'], isA<Timestamp>());
       expect(map['point'], 30);

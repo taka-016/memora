@@ -35,6 +35,7 @@ void main() {
           selectedYear: 2026,
           usages: [
             DvcPointUsageDto(
+              contractId: 'c1',
               id: 'usage-1',
               groupId: 'group-1',
               usageYearMonth: DateTime(2026, 1),
@@ -42,6 +43,7 @@ void main() {
               memo: 'メモ1',
             ),
             DvcPointUsageDto(
+              contractId: 'c1',
               id: 'usage-2',
               groupId: 'group-1',
               usageYearMonth: DateTime(2026, 4),

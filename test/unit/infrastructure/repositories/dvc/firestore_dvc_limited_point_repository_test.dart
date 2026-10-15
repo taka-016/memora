@@ -32,6 +32,7 @@ void main() {
 
     test('saveがdvc_limited_pointsに追加する', () async {
       final point = DvcLimitedPoint(
+        contractId: 'c1',
         id: 'limited001',
         groupId: 'group001',
         startYearMonth: DateTime(2025, 7),

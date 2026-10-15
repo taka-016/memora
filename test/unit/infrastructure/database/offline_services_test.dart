@@ -151,7 +151,7 @@ void main() {
     final usages = SqliteDvcPointUsageRepository(db);
     await contracts.saveDvcPointContract(
       DvcPointContract(
-        id: '',
+        id: 'c1',
         groupId: groupId,
         contractName: '契約',
         contractStartYearMonth: start,
@@ -162,6 +162,7 @@ void main() {
     );
     await limited.saveDvcLimitedPoint(
       DvcLimitedPoint(
+        contractId: 'c1',
         id: '',
         groupId: groupId,
         startYearMonth: start,
@@ -172,6 +173,7 @@ void main() {
     );
     await usages.saveDvcPointUsage(
       DvcPointUsage(
+        contractId: 'c1',
         id: '',
         groupId: groupId,
         usageYearMonth: start,
@@ -194,9 +196,9 @@ void main() {
     expect(usage.usageYearMonth, start);
     expect(usage.usedPoint, 10);
     expect(usage.memo, isNull);
-    await contracts.deleteDvcPointContract(contract.id);
     await limited.deleteDvcLimitedPoint(point.id);
     await usages.deleteDvcPointUsage(usage.id);
+    await contracts.deleteDvcPointContract(contract.id);
     expect(
       await SqliteDvcPointContractQueryService(db)
           .getDvcPointContractsByGroupId(groupId),

@@ -11,13 +11,13 @@ import 'save_dvc_point_contracts_usecase_test.mocks.dart';
 @GenerateMocks([DvcPointContractRepository])
 void main() {
   group('SaveDvcPointContractsUsecase', () {
-    test('既存契約を削除して契約一覧を保存できること', () async {
+    test('既存IDを維持して契約一覧を一括保存する', () async {
       final repository = MockDvcPointContractRepository();
       final usecase = SaveDvcPointContractsUsecase(repository);
       const groupId = 'group-1';
       final contracts = [
         DvcPointContractDto(
-          id: '',
+          id: 'c1',
           groupId: groupId,
           contractName: '契約A',
           contractStartYearMonth: DateTime(2025, 10),
@@ -26,18 +26,18 @@ void main() {
           annualPoint: 200,
         ),
       ];
-      when(repository.deleteDvcPointContractsByGroupId(groupId))
+      when(repository.saveDvcPointContracts(groupId, any))
           .thenAnswer((_) async {});
-      when(repository.saveDvcPointContract(any)).thenAnswer((_) async {});
 
       await usecase.execute(groupId: groupId, contracts: contracts);
 
-      verify(repository.deleteDvcPointContractsByGroupId(groupId)).called(1);
-      final verification = verify(repository.saveDvcPointContract(captureAny))
-        ..called(1);
-      final savedContract = verification.captured.single as DvcPointContract;
-      expect(savedContract.contractName, equals('契約A'));
-      expect(savedContract.groupId, equals(groupId));
+      verifyNever(repository.deleteDvcPointContractsByGroupId(any));
+      final verification = verify(
+        repository.saveDvcPointContracts(groupId, captureAny),
+      )..called(1);
+      final saved = verification.captured.single as List<DvcPointContract>;
+      expect(saved.single.id, 'c1');
+      expect(saved.single.contractName, '契約A');
     });
   });
 }

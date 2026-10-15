@@ -14,6 +14,7 @@ void main() {
       final doc = MockDocumentSnapshot<Map<String, dynamic>>();
       when(doc.id).thenReturn('usage001');
       when(doc.data()).thenReturn({
+        'contractId': 'c1',
         'groupId': 'group001',
         'usageYearMonth': Timestamp.fromDate(DateTime(2025, 10)),
         'usedPoint': 60.4,
@@ -24,6 +25,7 @@ void main() {
 
       expect(result.id, 'usage001');
       expect(result.groupId, 'group001');
+      expect(result.contractId, 'c1');
       expect(result.usageYearMonth, DateTime(2025, 10));
       expect(result.usedPoint, 60);
       expect(result.memo, 'ホテル');
@@ -32,7 +34,7 @@ void main() {
     test('Firestoreの欠損値をデフォルトで変換できる', () {
       final doc = MockDocumentSnapshot<Map<String, dynamic>>();
       when(doc.id).thenReturn('usage002');
-      when(doc.data()).thenReturn({});
+      when(doc.data()).thenReturn({'contractId': 'c1'});
 
       final result = FirestoreDvcPointUsageMapper.fromFirestore(doc);
 
@@ -45,6 +47,7 @@ void main() {
 
     test('エンティティをFirestoreマップへ変換できる', () {
       final usage = DvcPointUsage(
+        contractId: 'c1',
         id: 'usage001',
         groupId: 'group001',
         usageYearMonth: DateTime(2025, 10),
@@ -55,6 +58,7 @@ void main() {
       final map = FirestoreDvcPointUsageMapper.toCreateFirestore(usage);
 
       expect(map['groupId'], 'group001');
+      expect(map['contractId'], 'c1');
       expect(map['usageYearMonth'], isA<Timestamp>());
       expect(map['usedPoint'], 60);
       expect(map['memo'], 'ホテル');

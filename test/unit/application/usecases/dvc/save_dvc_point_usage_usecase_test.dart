@@ -15,6 +15,7 @@ void main() {
       final repository = MockDvcPointUsageRepository();
       final usecase = SaveDvcPointUsageUsecase(repository);
       final usage = DvcPointUsageDto(
+        contractId: 'c1',
         id: '',
         groupId: 'group-1',
         usageYearMonth: DateTime(2026, 1),

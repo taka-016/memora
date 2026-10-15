@@ -44,6 +44,7 @@ void main() {
       when(mockSnapshot.docs).thenReturn([mockDoc]);
       when(mockDoc.id).thenReturn('limited001');
       when(mockDoc.data()).thenReturn({
+        'contractId': 'c1',
         'groupId': groupId,
         'startYearMonth': Timestamp.fromDate(DateTime(2025, 7)),
         'endYearMonth': Timestamp.fromDate(DateTime(2025, 12)),
