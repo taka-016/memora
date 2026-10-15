@@ -3664,7 +3664,7 @@ class DvcPointContracts extends Table
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
-    $customConstraints: 'NOT NULL REFERENCES "groups"(id)ON DELETE CASCADE',
+    $customConstraints: 'NOT NULL',
   );
   static const VerificationMeta _contractNameMeta = const VerificationMeta(
     'contractName',
@@ -4173,7 +4173,7 @@ class DvcLimitedPoints extends Table
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
-    $customConstraints: 'NOT NULL REFERENCES "groups"(id)ON DELETE CASCADE',
+    $customConstraints: 'NOT NULL',
   );
   static const VerificationMeta _contractIdMeta = const VerificationMeta(
     'contractId',
@@ -4653,7 +4653,7 @@ class DvcPointUsages extends Table
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
-    $customConstraints: 'NOT NULL REFERENCES "groups"(id)ON DELETE CASCADE',
+    $customConstraints: 'NOT NULL',
   );
   static const VerificationMeta _contractIdMeta = const VerificationMeta(
     'contractId',
@@ -6858,27 +6858,6 @@ abstract class _$OfflineDatabase extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('group_events', kind: UpdateKind.delete)],
-    ),
-    WritePropagation(
-      on: TableUpdateQuery.onTableName(
-        'groups',
-        limitUpdateKind: UpdateKind.delete,
-      ),
-      result: [TableUpdate('dvc_point_contracts', kind: UpdateKind.delete)],
-    ),
-    WritePropagation(
-      on: TableUpdateQuery.onTableName(
-        'groups',
-        limitUpdateKind: UpdateKind.delete,
-      ),
-      result: [TableUpdate('dvc_limited_points', kind: UpdateKind.delete)],
-    ),
-    WritePropagation(
-      on: TableUpdateQuery.onTableName(
-        'groups',
-        limitUpdateKind: UpdateKind.delete,
-      ),
-      result: [TableUpdate('dvc_point_usages', kind: UpdateKind.delete)],
     ),
     WritePropagation(
       on: TableUpdateQuery.onTableName(

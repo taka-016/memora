@@ -100,7 +100,7 @@ CREATE TABLE group_events (
 
 CREATE TABLE dvc_point_contracts (
   id TEXT NOT NULL PRIMARY KEY,
-  group_id TEXT NOT NULL REFERENCES "groups"(id) ON DELETE CASCADE,
+  group_id TEXT NOT NULL,
   contract_name TEXT NOT NULL,
   contract_start_year_month INTEGER NOT NULL,
   contract_end_year_month INTEGER NOT NULL,
@@ -110,7 +110,7 @@ CREATE TABLE dvc_point_contracts (
 
 CREATE TABLE dvc_limited_points (
   id TEXT NOT NULL PRIMARY KEY,
-  group_id TEXT NOT NULL REFERENCES "groups"(id) ON DELETE CASCADE,
+  group_id TEXT NOT NULL,
   contract_id TEXT NOT NULL REFERENCES dvc_point_contracts(id) ON DELETE RESTRICT,
   start_year_month INTEGER NOT NULL,
   end_year_month INTEGER NOT NULL,
@@ -120,7 +120,7 @@ CREATE TABLE dvc_limited_points (
 
 CREATE TABLE dvc_point_usages (
   id TEXT NOT NULL PRIMARY KEY,
-  group_id TEXT NOT NULL REFERENCES "groups"(id) ON DELETE CASCADE,
+  group_id TEXT NOT NULL,
   contract_id TEXT NOT NULL REFERENCES dvc_point_contracts(id) ON DELETE RESTRICT,
   usage_year_month INTEGER NOT NULL,
   used_point INTEGER NOT NULL,
