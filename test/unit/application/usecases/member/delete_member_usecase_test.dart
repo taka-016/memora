@@ -64,7 +64,7 @@ void main() {
       expect(() => usecase.execute(memberId), returnsNormally);
     });
 
-    test('メンバー削除時にグループメンバーも削除されること', () async {
+    test('メンバー削除時にグループメンバーを保持すること', () async {
       // arrange
       const memberId = 'member123';
 
@@ -81,10 +81,10 @@ void main() {
       await usecase.execute(memberId);
 
       // assert
-      verify(mockGroupRepository.deleteGroupMembersByMemberId(memberId));
+      verifyNever(mockGroupRepository.deleteGroupMembersByMemberId(memberId));
     });
 
-    test('メンバー削除時にメンバーイベントも削除されること', () async {
+    test('メンバー削除時にメンバーイベントを保持すること', () async {
       // arrange
       const memberId = 'member123';
 
@@ -101,7 +101,7 @@ void main() {
       await usecase.execute(memberId);
 
       // assert
-      verify(mockMemberEventRepository.deleteMemberEventsByMemberId(memberId));
+      verifyNever(mockMemberEventRepository.deleteMemberEventsByMemberId(memberId));
     });
   });
 }

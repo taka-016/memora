@@ -60,7 +60,7 @@ void main() {
       expect(() => usecase.execute(groupId), returnsNormally);
     });
 
-    test('グループ削除時に旅行エントリも削除されること', () async {
+    test('グループ削除時に旅行エントリを保持すること', () async {
       // arrange
       const groupId = 'group123';
 
@@ -75,7 +75,7 @@ void main() {
       await usecase.execute(groupId);
 
       // assert
-      verify(mockTripEntryRepository.deleteTripEntriesByGroupId(groupId));
+      verifyNever(mockTripEntryRepository.deleteTripEntriesByGroupId(groupId));
     });
   });
 }
