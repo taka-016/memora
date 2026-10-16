@@ -45,18 +45,21 @@ class FirestoreGroupRepository implements GroupRepository {
         .collection('group_members')
         .where('groupId', isEqualTo: group.id)
         .get();
-    for (final doc in memberSnapshot.docs) {
-      batch.delete(doc.reference);
+    final existing = {for (final doc in memberSnapshot.docs) doc.data()['memberId'] as String: doc.reference};
+    final before = {for (final member in group.originalMembers) member.memberId: member};
+    final after = {for (final member in group.members) member.memberId: member};
+    for (final id in before.keys.where((id) => !after.containsKey(id))) {
+      final reference = existing[id];
+      if (reference != null) batch.delete(reference);
     }
-
-    for (final GroupMember member in group.members) {
-      final memberDocRef = _firestore.collection('group_members').doc();
-      batch.set(
-        memberDocRef,
-        FirestoreGroupMemberMapper.toCreateFirestore(
-          member.copyWith(groupId: group.id),
-        ),
-      );
+    for (final member in group.members) {
+      if (before[member.memberId] == member) continue;
+      final reference = existing[member.memberId];
+      if (reference == null) {
+        batch.set(_firestore.collection('group_members').doc(), FirestoreGroupMemberMapper.toCreateFirestore(member.copyWith(groupId: group.id)));
+      } else {
+        batch.update(reference, {'isAdministrator': member.isAdministrator, 'orderIndex': member.orderIndex});
+      }
     }
 
     await batch.commit();

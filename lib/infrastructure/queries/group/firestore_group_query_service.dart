@@ -10,8 +10,11 @@ import 'package:memora/infrastructure/mappers/group/firestore_group_member_mappe
 class FirestoreGroupQueryService implements GroupQueryService {
   final FirebaseFirestore _firestore;
 
-  FirestoreGroupQueryService({FirebaseFirestore? firestore})
-    : _firestore = firestore ?? FirebaseFirestore.instance;
+  final bool _rethrowOnError;
+
+  FirestoreGroupQueryService({FirebaseFirestore? firestore, bool rethrowOnError = false})
+    : _firestore = firestore ?? FirebaseFirestore.instance,
+      _rethrowOnError = rethrowOnError;
 
   @override
   Future<List<GroupDto>> getGroupsWithMembersByMemberId(
@@ -93,6 +96,7 @@ class FirestoreGroupQueryService implements GroupQueryService {
         error: e,
         stackTrace: stack,
       );
+      if (_rethrowOnError) rethrow;
       return null;
     }
   }
@@ -202,7 +206,7 @@ class FirestoreGroupQueryService implements GroupQueryService {
         group.id,
         orderBy: membersOrderBy,
       );
-      result.add(group.copyWith(members: members));
+      result.add(group.copyWith(members: members, originalMembers: members));
     }
 
     return result;

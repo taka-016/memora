@@ -1,3 +1,4 @@
+import 'package:memora/composition_root/providers/android_widget_providers.dart';
 import 'package:memora/composition_root/providers/group_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
@@ -57,7 +58,15 @@ class GroupManagementNotifier extends AsyncNotifier<GroupManagementState> {
   Future<bool> deleteGroup(String groupId) async {
     return _runMutation(
       operationName: 'deleteGroup',
-      execute: () => ref.read(deleteGroupUsecaseProvider).execute(groupId),
+      execute: () async {
+        await ref.read(deleteGroupUsecaseProvider).execute(groupId);
+        if (!ref.mounted) return;
+        try {
+          await ref.read(refreshSelectedAndroidWidgetCacheProvider)();
+        } catch (error, stackTrace) {
+          logger.w('削除後のウィジェット更新に失敗しました', error: error, stackTrace: stackTrace);
+        }
+      },
     );
   }
 

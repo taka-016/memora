@@ -1,3 +1,5 @@
+import 'package:memora/application/queries/group/group_query_service.dart';
+import 'package:memora/infrastructure/queries/group/firestore_group_query_service.dart';
 import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -28,9 +30,15 @@ final androidWidgetUpdateIntervalStorageProvider =
       throw UnimplementedError('AndroidWidgetUpdateIntervalStorageが注入されていません');
     });
 
+final androidWidgetGroupQueryServiceProvider = Provider<GroupQueryService>((ref) {
+  if (ref.watch(appModeProvider) == AppMode.offline) return ref.watch(groupQueryServiceProvider);
+  return FirestoreGroupQueryService(firestore: ref.watch(firebaseFirestoreProvider), rethrowOnError: true);
+});
+
 final refreshAndroidWidgetItineraryCacheUsecaseProvider =
     Provider<RefreshAndroidWidgetItineraryCacheUsecase>((ref) {
       return RefreshAndroidWidgetItineraryCacheUsecase(
+        groupQueryService: ref.watch(androidWidgetGroupQueryServiceProvider),
         cacheStorage: ref.watch(androidWidgetCacheStorageProvider),
         getCacheUsecase: ref.watch(
           getAndroidWidgetItineraryCacheUsecaseProvider,
