@@ -10,6 +10,11 @@ import 'package:memora/infrastructure/mappers/member/sqlite_member_mapper.dart';
 class SqliteGroupQueryService implements GroupQueryService {
   SqliteGroupQueryService(this.db);
   final OfflineDatabase db;
+
+  @override
+  Future<bool> groupExists(String groupId) async =>
+      (await db.rows('groups', where: 'id = ?', args: [groupId])).isNotEmpty;
+
   Future<GroupDto> _group(
     Map<String, Object?> row,
     List<OrderBy>? orderBy,

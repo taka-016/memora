@@ -19,14 +19,14 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
   const RefreshAndroidWidgetItineraryCacheUsecase({
     required this._cacheStorage,
     required this._getCacheUsecase,
-    this._groupQueryService,
+    required this._groupQueryService,
     this._mode = AppMode.online,
     this._readTransaction,
   });
 
   final AndroidWidgetCacheStorage _cacheStorage;
   final GetAndroidWidgetItineraryCacheUsecase _getCacheUsecase;
-  final GroupQueryService? _groupQueryService;
+  final GroupQueryService _groupQueryService;
   final AppMode _mode;
   final ReadTransaction? _readTransaction;
 
@@ -47,8 +47,9 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
   }) async {
     try {
       Future<AndroidWidgetItineraryCacheDto?> read() async {
-        final groups = _groupQueryService;
-        if (groups != null && await groups.getGroupWithMembersById(groupId) == null) return null;
+        if (!await _groupQueryService.groupExists(groupId)) {
+          return null;
+        }
         return _getCacheUsecase.execute(
           groupId: groupId,
           selectedItineraryDateId: selectedItineraryDateId,

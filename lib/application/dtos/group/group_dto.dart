@@ -16,6 +16,7 @@ class GroupDto extends Equatable {
   final String name;
   final String? memo;
   final List<GroupMemberDto> members;
+  // 編集開始時の通常メンバーから、所属の明示的な除外を判定する。
   final List<GroupMemberDto>? originalMembers;
 
   GroupDto copyWith({

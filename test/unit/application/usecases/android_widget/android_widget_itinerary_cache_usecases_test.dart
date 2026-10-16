@@ -1,3 +1,5 @@
+import '../group/get_group_with_members_by_id_usecase_test.mocks.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/composition_root/providers/android_widget_providers.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
@@ -438,7 +440,10 @@ RefreshAndroidWidgetItineraryCacheUsecase _buildRefreshUsecase(
   ItineraryItemQueryService itineraryItemQueryService, {
   ReadTransaction? readTransaction,
 }) {
+  final groups = MockGroupQueryService();
+  when(groups.groupExists(any)).thenAnswer((_) async => true);
   return RefreshAndroidWidgetItineraryCacheUsecase(
+    groupQueryService: groups,
     cacheStorage: storage,
     readTransaction: readTransaction,
     getCacheUsecase: GetAndroidWidgetItineraryCacheUsecase(

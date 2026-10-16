@@ -157,6 +157,10 @@ class _LoadedGroupSelectionNotifier
 }
 
 class _CountingGroupQueryService implements GroupQueryService {
+  @override
+  Future<bool> groupExists(String groupId) async =>
+      await getGroupWithMembersById(groupId) != null;
+
   _CountingGroupQueryService([this.result = const []]);
 
   final List<GroupDto> result;

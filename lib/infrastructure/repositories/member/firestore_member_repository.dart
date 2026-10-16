@@ -1,3 +1,5 @@
+import 'package:memora/infrastructure/repositories/firestore_write_context.dart';
+import 'package:memora/infrastructure/services/firestore_deleted_parent_store.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/domain/repositories/member/member_repository.dart';
 import 'package:memora/domain/entities/member/member.dart';
@@ -31,11 +33,12 @@ class FirestoreMemberRepository implements MemberRepository {
       final snapshot = await transaction.get(source);
       final data = snapshot.data();
       if (data == null) return;
-      transaction.set(
-        _firestore.collection('deleted_members').doc(memberId),
-        data,
+      final context = FirestoreTransactionWriteContext(
+        firestore: _firestore,
+        transaction: transaction,
       );
-      transaction.delete(source);
+      FirestoreDeletedParentStore(context).saveMember(memberId, data);
+      context.delete(source);
     });
   }
 }

@@ -1,3 +1,5 @@
+import 'package:memora/infrastructure/repositories/firestore_write_context.dart';
+import 'package:memora/infrastructure/services/firestore_deleted_parent_store.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/domain/entities/group/group_member.dart';
 import 'package:memora/domain/repositories/group/group_repository.dart';
@@ -45,8 +47,13 @@ class FirestoreGroupRepository implements GroupRepository {
         .collection('group_members')
         .where('groupId', isEqualTo: group.id)
         .get();
-    final existing = {for (final doc in memberSnapshot.docs) doc.data()['memberId'] as String: doc.reference};
-    final before = {for (final member in group.originalMembers) member.memberId: member};
+    final existing = {
+      for (final doc in memberSnapshot.docs)
+        doc.data()['memberId'] as String: doc.reference,
+    };
+    final before = {
+      for (final member in group.originalMembers) member.memberId: member,
+    };
     final after = {for (final member in group.members) member.memberId: member};
     for (final id in before.keys.where((id) => !after.containsKey(id))) {
       final reference = existing[id];
@@ -56,9 +63,17 @@ class FirestoreGroupRepository implements GroupRepository {
       if (before[member.memberId] == member) continue;
       final reference = existing[member.memberId];
       if (reference == null) {
-        batch.set(_firestore.collection('group_members').doc(), FirestoreGroupMemberMapper.toCreateFirestore(member.copyWith(groupId: group.id)));
+        batch.set(
+          _firestore.collection('group_members').doc(),
+          FirestoreGroupMemberMapper.toCreateFirestore(
+            member.copyWith(groupId: group.id),
+          ),
+        );
       } else {
-        batch.update(reference, {'isAdministrator': member.isAdministrator, 'orderIndex': member.orderIndex});
+        batch.update(reference, {
+          'isAdministrator': member.isAdministrator,
+          'orderIndex': member.orderIndex,
+        });
       }
     }
 
@@ -72,11 +87,12 @@ class FirestoreGroupRepository implements GroupRepository {
       final snapshot = await transaction.get(source);
       final data = snapshot.data();
       if (data == null) return;
-      transaction.set(
-        _firestore.collection('deleted_groups').doc(groupId),
-        data,
+      final context = FirestoreTransactionWriteContext(
+        firestore: _firestore,
+        transaction: transaction,
       );
-      transaction.delete(source);
+      FirestoreDeletedParentStore(context).saveGroup(groupId, data);
+      context.delete(source);
     });
   }
 
