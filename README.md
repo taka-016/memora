@@ -173,26 +173,3 @@ adb uninstall com.example.memora.offline
 
 このプロジェクトはGNU Affero General Public License v3.0（AGPL-3.0）の下で公開されています。  
 詳細は[LICENSE](./LICENSE)を参照してください。
-
-### DVC契約と既存オンライン利用データの紐付け
-
-ポイント利用・期間限定ポイントは`contractId`で1つの契約に所属します。既存データは対象グループの契約が1件であることを確認し、その契約に紐付けます。次の管理処理を新しいアプリの利用開始前に実行してください。契約が複数または未作成なら推測せず停止し、既に紐付いたデータは上書きしません。アプリからの書き込みがない時間に実施します。
-
-`tools/migrations`の既存の管理用依存関係（`firebase-admin`）と、対象プロジェクトの管理認証を使用します。
-
-```bash
-export GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
-node tools/migrations/link_dvc_contracts.js --project PROJECT_ID --group GROUP_ID
-node --test test/unit/tools/dvc_contract_migration_test.js
-```
-
-確認結果の契約ID・利用履歴件数・期間限定ポイント件数を確認してから適用します。バックアップ先は未作成のパスを指定します。移行前の対象3コレクションの内容と更新計画を、所有者だけが読み書きできるJSONへ保存してから、`contractId`の追加だけを同じバッチで実行します。取得後に利用データが更新された場合や500件を超える場合は、更新全体を拒否します。通信エラー時は確認のみで再実行して結果を確認できます。
-
-```bash
-node tools/migrations/link_dvc_contracts.js --project PROJECT_ID --group GROUP_ID --apply --backup /secure/path/dvc-before.json
-node tools/migrations/link_dvc_contracts.js --project PROJECT_ID --group GROUP_ID
-```
-
-適用後に`updates`が0件で、移行前後の件数と契約IDが一致することを確認します。新アプリの契約別取得に必要なインデックスは`firestore.indexes.json`に含まれます。書き込み再開前に復旧が必要になった場合は、バックアップの更新計画に記録された対象から今回追加した`contractId`だけを取り消し、利用データ自体は削除しません。バックアップはリポジトリへコミットせず、安全な場所に保管します。
-
-オフラインDBはスキーマ6を使用し、通常バックアップも契約IDを含めます。旧スキーマ・旧バックアップは拒否し、自動マイグレーションやDBの削除・再作成は行いません。
