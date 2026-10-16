@@ -10,7 +10,9 @@ class Group extends Equatable {
     this.memo,
     List<GroupMember>? originalMembers,
     List<GroupMember>? members,
-  }) : originalMembers = List.unmodifiable(originalMembers ?? const []),
+  }) : originalMembers = List.unmodifiable(
+         originalMembers ?? members ?? const [],
+       ),
        members = List.unmodifiable(members ?? const []) {
     if (members != null) {
       final memberIds = <String>{};
@@ -47,5 +49,12 @@ class Group extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, ownerId, name, memo, members, originalMembers];
+  List<Object?> get props => [
+    id,
+    ownerId,
+    name,
+    memo,
+    members,
+    originalMembers,
+  ];
 }

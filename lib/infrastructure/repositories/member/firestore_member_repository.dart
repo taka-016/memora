@@ -31,7 +31,10 @@ class FirestoreMemberRepository implements MemberRepository {
       final snapshot = await transaction.get(source);
       final data = snapshot.data();
       if (data == null) return;
-      transaction.set(_firestore.collection('deleted_members').doc(memberId), data);
+      transaction.set(
+        _firestore.collection('deleted_members').doc(memberId),
+        data,
+      );
       transaction.delete(source);
     });
   }

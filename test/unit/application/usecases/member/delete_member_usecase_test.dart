@@ -19,11 +19,7 @@ void main() {
     mockMemberRepository = MockMemberRepository();
     mockGroupRepository = MockGroupRepository();
     mockMemberEventRepository = MockMemberEventRepository();
-    usecase = DeleteMemberUsecase(
-      mockMemberRepository,
-      mockGroupRepository,
-      mockMemberEventRepository,
-    );
+    usecase = DeleteMemberUsecase(mockMemberRepository);
   });
 
   group('DeleteMemberUsecase', () {
@@ -101,7 +97,9 @@ void main() {
       await usecase.execute(memberId);
 
       // assert
-      verifyNever(mockMemberEventRepository.deleteMemberEventsByMemberId(memberId));
+      verifyNever(
+        mockMemberEventRepository.deleteMemberEventsByMemberId(memberId),
+      );
     });
   });
 }

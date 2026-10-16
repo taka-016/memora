@@ -69,7 +69,10 @@ class FirestoreGroupRepository implements GroupRepository {
       final snapshot = await transaction.get(source);
       final data = snapshot.data();
       if (data == null) return;
-      transaction.set(_firestore.collection('deleted_groups').doc(groupId), data);
+      transaction.set(
+        _firestore.collection('deleted_groups').doc(groupId),
+        data,
+      );
       transaction.delete(source);
     });
   }

@@ -37,5 +37,12 @@ class GroupDto extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, ownerId, name, memo, members, originalMembers];
+  List<Object?> get props => [
+    id,
+    ownerId,
+    name,
+    memo,
+    members,
+    originalMembers,
+  ];
 }

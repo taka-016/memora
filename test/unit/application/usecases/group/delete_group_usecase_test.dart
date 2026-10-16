@@ -19,11 +19,7 @@ void main() {
     mockGroupRepository = MockGroupRepository();
     mockGroupEventRepository = MockGroupEventRepository();
     mockTripEntryRepository = MockTripEntryRepository();
-    usecase = DeleteGroupUsecase(
-      mockGroupRepository,
-      mockGroupEventRepository,
-      mockTripEntryRepository,
-    );
+    usecase = DeleteGroupUsecase(mockGroupRepository);
   });
 
   group('DeleteGroupUsecase', () {

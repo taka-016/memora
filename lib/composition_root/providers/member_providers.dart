@@ -76,11 +76,7 @@ final createOrUpdateMemberInvitationUsecaseProvider =
     });
 
 final deleteMemberUsecaseProvider = Provider<DeleteMemberUsecase>((ref) {
-  return DeleteMemberUsecase(
-    ref.watch(memberRepositoryProvider),
-    ref.watch(groupRepositoryProvider),
-    ref.watch(memberEventRepositoryProvider),
-  );
+  return DeleteMemberUsecase(ref.watch(memberRepositoryProvider));
 });
 
 final currentMemberResolverProvider = Provider<CurrentMemberResolver>((ref) {

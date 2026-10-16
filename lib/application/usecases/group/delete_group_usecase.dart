@@ -1,17 +1,9 @@
 import 'package:memora/domain/repositories/group/group_repository.dart';
-import 'package:memora/domain/repositories/group/group_event_repository.dart';
-import 'package:memora/domain/repositories/trip/trip_entry_repository.dart';
 
 class DeleteGroupUsecase {
   final GroupRepository _groupRepository;
-  final GroupEventRepository _groupEventRepository;
-  final TripEntryRepository _tripEntryRepository;
 
-  DeleteGroupUsecase(
-    this._groupRepository,
-    this._groupEventRepository,
-    this._tripEntryRepository,
-  );
+  DeleteGroupUsecase(this._groupRepository);
 
   Future<void> execute(String groupId) async {
     await _groupRepository.deleteGroup(groupId);

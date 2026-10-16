@@ -103,18 +103,5 @@ void main() {
         ),
       ).called(1);
     });
-
-    test('deleteMemberがmembers collectionの該当ドキュメントを削除する', () async {
-      const memberId = 'member001';
-      final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
-
-      when(mockCollection.doc(memberId)).thenReturn(mockDocRef);
-      when(mockDocRef.delete()).thenAnswer((_) async {});
-
-      await repository.deleteMember(memberId);
-
-      verify(mockCollection.doc(memberId)).called(1);
-      verify(mockDocRef.delete()).called(1);
-    });
   });
 }

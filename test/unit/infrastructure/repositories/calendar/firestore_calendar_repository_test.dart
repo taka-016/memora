@@ -1,6 +1,5 @@
 import 'package:memora/infrastructure/mappers/calendar/firestore_calendar_event_override_mapper.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
-import 'package:memora/infrastructure/repositories/group/firestore_group_repository.dart';
 import 'package:memora/infrastructure/queries/calendar/firestore_calendar_event_query_service.dart';
 import 'package:memora/application/mappers/calendar/calendar_event_mapper.dart';
 import 'package:memora/domain/entities/calendar/calendar_event_override.dart';
@@ -488,57 +487,6 @@ void main() {
       isNull,
     );
     verifyNever(transaction.update(otherRef, any));
-  });
-
-  test('グループ削除は予定に属する個別回を削除してから色ラベルを削除する', () async {
-    stored(recurring());
-    final event = MockQueryDocumentSnapshot();
-    when(event.id).thenReturn('event');
-    final label = MockQueryDocumentSnapshot();
-    when(label.id).thenReturn('label');
-    var labelCount = 1;
-    when(labelDoc.data())
-        .thenAnswer((_) => {'groupId': 'group', 'eventCount': labelCount});
-    when(transaction.update(labelRef, any)).thenAnswer((call) {
-      labelCount = (call.positionalArguments[1] as Map)['eventCount'] as int;
-      return transaction;
-    });
-    for (final name in [
-      'calendar_events',
-      'calendar_labels',
-      'group_members',
-    ]) {
-      final collection = name == 'group_members'
-          ? MockCollectionReference()
-          : firestore.collection(name);
-      when(firestore.collection(name)).thenReturn(collection);
-      final query = MockQuery();
-      final snapshot = MockQuerySnapshot();
-      when(collection.where('groupId', isEqualTo: 'group')).thenReturn(query);
-      when(query.get()).thenAnswer((_) async => snapshot);
-      when(snapshot.docs).thenReturn(
-        name == 'calendar_events'
-            ? [event]
-            : name == 'calendar_labels'
-            ? [label]
-            : [],
-      );
-    }
-    final groups = MockCollectionReference();
-    final groupRef = MockDocumentReference();
-    final batch = MockWriteBatch();
-    when(firestore.collection('groups')).thenReturn(groups);
-    when(groups.doc('group')).thenReturn(groupRef);
-    when(firestore.batch()).thenReturn(batch);
-    when(batch.commit()).thenAnswer((_) async {});
-    await FirestoreGroupRepository(firestore: firestore).deleteGroup('group');
-    verifyInOrder([
-      transaction.delete(eventRef),
-      transaction.delete(overrideRefs['stored']!),
-      transaction.delete(labelRef),
-      batch.delete(groupRef),
-      batch.commit(),
-    ]);
   });
 
   test('通常の取得で取消しを復元し読取トランザクションを実行しない', () async {

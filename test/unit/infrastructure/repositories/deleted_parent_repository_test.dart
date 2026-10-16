@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/infrastructure/repositories/group/firestore_group_repository.dart';
 import 'package:memora/infrastructure/repositories/member/firestore_member_repository.dart';
+
 import '../../../helpers/test_exception.dart';
 import 'calendar/firestore_calendar_repository_test.mocks.dart';
 
@@ -17,7 +18,11 @@ void main() {
       final collection = MockCollectionReference();
       final archive = MockCollectionReference();
       final doc = MockDocumentSnapshot();
-      final data = {'name': '退避前', 'ownerId': 'owner', 'updatedAt': Timestamp(1, 0)};
+      final data = {
+        'name': '退避前',
+        'ownerId': 'owner',
+        'updatedAt': Timestamp(1, 0),
+      };
       when(firestore.collection(table)).thenReturn(collection);
       when(firestore.collection('deleted_$table')).thenReturn(archive);
       when(collection.doc('id')).thenReturn(source);
@@ -25,12 +30,19 @@ void main() {
       when(transaction.get(source)).thenAnswer((_) async => doc);
       when(doc.data()).thenReturn(data);
       when(firestore.runTransaction<void>(any)).thenAnswer((invocation) async {
-        final action = invocation.positionalArguments.single as TransactionHandler<void>;
+        final action =
+            invocation.positionalArguments.single as TransactionHandler<void>;
         await action(transaction);
       });
-      Future<void> remove() => isGroup ? FirestoreGroupRepository(firestore: firestore).deleteGroup('id') : FirestoreMemberRepository(firestore: firestore).deleteMember('id');
+      Future<void> remove() => isGroup
+          ? FirestoreGroupRepository(firestore: firestore).deleteGroup('id')
+          : FirestoreMemberRepository(firestore: firestore).deleteMember('id');
       await remove();
-      verifyInOrder([transaction.get(source), transaction.set(target, data), transaction.delete(source)]);
+      verifyInOrder([
+        transaction.get(source),
+        transaction.set(target, data),
+        transaction.delete(source),
+      ]);
       verifyNever(firestore.batch());
       final failure = TestException('退避失敗');
       when(transaction.set(target, any)).thenThrow(failure);
