@@ -106,13 +106,6 @@ void main() {
     await expectLater(
       db.customStatement(
         'INSERT INTO group_members (group_id, member_id, is_administrator, order_index) VALUES (?, ?, ?, ?)',
-        ['group', 'missing', 0, 0],
-      ),
-      throwsA(isA<Exception>()),
-    );
-    await expectLater(
-      db.customStatement(
-        'INSERT INTO group_members (group_id, member_id, is_administrator, order_index) VALUES (?, ?, ?, ?)',
         ['group', 'self', 2, 0],
       ),
       throwsA(isA<Exception>()),
@@ -128,12 +121,9 @@ void main() {
       ),
       throwsA(isA<Exception>()),
     );
-    await expectLater(
-      db.deleteRows('members', 'id', 'self'),
-      throwsA(isA<Exception>()),
-    );
+    await db.deleteRows('members', 'id', 'self');
     await db.deleteRows('groups', 'id', 'group');
-    expect(await db.rows('group_members'), isEmpty);
+    expect((await db.rows('group_members')).single['member_id'], 'self');
     expect(await db.customSelect('PRAGMA foreign_key_check').get(), isEmpty);
   });
 

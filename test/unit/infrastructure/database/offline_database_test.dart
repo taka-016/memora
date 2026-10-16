@@ -153,7 +153,21 @@ void main() {
           TripEntry(id: '', groupId: groupId, year: 2026),
         );
         await repository.saveTripEntry(
-          TripEntry(id: '', groupId: 'missing', year: 2026),
+          TripEntry(
+            id: '',
+            groupId: groupId,
+            year: 2026,
+            tasks: [
+              Task(
+                id: 'invalid',
+                tripId: '',
+                orderIndex: 0,
+                name: '不正な親参照',
+                isCompleted: false,
+                parentTaskId: 'missing',
+              ),
+            ],
+          ),
         );
       }),
       throwsA(isA<Exception>()),
