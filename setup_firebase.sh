@@ -56,6 +56,10 @@ echo "プロジェクトを設定しています..."
 echo "エイリアス名を聞かれたらdefaultまたはmemoraを入力してください"
 firebase use --add || { echo "プロジェクト設定に失敗しました"; exit 1; }
 
+# 同一内容ならCLIがアップロードを省略する（確認とリリース参照更新は実行）。
+echo "Firestoreルールを確認・デプロイしています..."
+firebase deploy --only firestore:rules || { echo "ルールデプロイに失敗しました"; exit 1; }
+
 # インデックスデプロイ
 echo "Firestoreインデックスをデプロイしています..."
 firebase deploy --only firestore:indexes || { echo "インデックスデプロイに失敗しました"; exit 1; }
