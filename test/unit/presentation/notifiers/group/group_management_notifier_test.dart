@@ -1,3 +1,4 @@
+import 'package:memora/composition_root/providers/android_widget_providers.dart';
 import 'package:memora/composition_root/providers/group_providers.dart';
 
 import 'dart:async';
@@ -56,14 +57,19 @@ void main() {
   late MockUpdateGroupUsecase updateGroupUsecase;
   late MockDeleteGroupUsecase deleteGroupUsecase;
   late ProviderContainer container;
+  late List<String> widgetUpdates;
 
   setUp(() {
     getGroupsUsecase = MockGetManagedGroupsWithMembersUsecase();
     createGroupUsecase = MockCreateGroupUsecase();
     updateGroupUsecase = MockUpdateGroupUsecase();
     deleteGroupUsecase = MockDeleteGroupUsecase();
+    widgetUpdates = [];
     container = ProviderContainer(
       overrides: [
+        refreshSelectedAndroidWidgetCacheProvider.overrideWithValue(() async {
+          widgetUpdates.add('更新');
+        }),
         getManagedGroupsWithMembersUsecaseProvider.overrideWithValue(
           getGroupsUsecase,
         ),
@@ -285,6 +291,7 @@ void main() {
       await container.read(provider.future);
 
       expect(result, isTrue);
+      expect(widgetUpdates, ['更新']);
       expect(container.read(provider).requireValue.groups, isEmpty);
       verifyInOrder([
         deleteGroupUsecase.execute(managedGroup.id),
