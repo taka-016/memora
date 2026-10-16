@@ -9,6 +9,29 @@
           "order": "ASCENDING"
         },
         {
+          "fieldPath": "contractId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "startYearMonth",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "dvc_limited_points",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "groupId",
+          "order": "ASCENDING"
+        },
+        {
           "fieldPath": "startYearMonth",
           "order": "ASCENDING"
         },
@@ -48,6 +71,29 @@
         },
         {
           "fieldPath": "contractStartYearMonth",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "dvc_point_usages",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "groupId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "contractId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "usageYearMonth",
           "order": "ASCENDING"
         },
         {
@@ -227,52 +273,6 @@
         },
         {
           "fieldPath": "startDate",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "__name__",
-          "order": "ASCENDING"
-        }
-      ],
-      "density": "SPARSE_ALL"
-    },
-    {
-      "collectionGroup": "dvc_point_usages",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "groupId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "contractId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "usageYearMonth",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "__name__",
-          "order": "ASCENDING"
-        }
-      ],
-      "density": "SPARSE_ALL"
-    },
-    {
-      "collectionGroup": "dvc_limited_points",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "groupId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "contractId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "startYearMonth",
           "order": "ASCENDING"
         },
         {
