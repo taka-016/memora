@@ -309,7 +309,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(
         tester
-            .widget<IconButton>(
+            .widget<TextButton>(
               find.byKey(const ValueKey('dvc_contract_delete_button_0')),
             )
             .onPressed,
@@ -522,9 +522,11 @@ void main() {
       await tester.tap(find.text('契約登録'));
       await tester.pumpAndSettle();
 
-      await tester.tap(
-        find.byKey(const ValueKey('dvc_contract_delete_button_0')),
+      final deleteButton = find.byKey(
+        const ValueKey('dvc_contract_delete_button_0'),
       );
+      await tester.ensureVisible(deleteButton);
+      await tester.tap(deleteButton);
       await tester.pumpAndSettle();
 
       await tester.tap(find.widgetWithText(TextButton, '更新'));
