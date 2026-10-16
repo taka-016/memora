@@ -67,31 +67,10 @@ Future<void> showDvcContractManagementModal({
                                       ? '新しい契約'
                                       : contract.contractName,
                                 ),
-                                trailing: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    IconButton(
-                                      key: ValueKey(
-                                        'dvc_contract_delete_button_$index',
-                                      ),
-                                      icon: const Icon(Icons.delete_outline),
-                                      onPressed:
-                                          protectedContractIds.contains(
-                                            contract.id,
-                                          )
-                                          ? null
-                                          : () {
-                                              setState(() {
-                                                editable.removeAt(index);
-                                              });
-                                            },
-                                    ),
-                                    Icon(
-                                      contract.expanded
-                                          ? Icons.expand_less
-                                          : Icons.expand_more,
-                                    ),
-                                  ],
+                                trailing: Icon(
+                                  contract.expanded
+                                      ? Icons.expand_less
+                                      : Icons.expand_more,
                                 ),
                                 onTap: () {
                                   setState(() {
@@ -103,7 +82,7 @@ Future<void> showDvcContractManagementModal({
                               ),
                               if (protectedContractIds.contains(contract.id))
                                 const Text('利用履歴・期間限定ポイントがある契約は削除できません'),
-                              if (contract.expanded)
+                              if (contract.expanded) ...[
                                 _ContractForm(
                                   contract: contract,
                                   onChanged: (updated) {
@@ -112,6 +91,33 @@ Future<void> showDvcContractManagementModal({
                                     });
                                   },
                                 ),
+                                const Divider(),
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: TextButton.icon(
+                                    key: ValueKey(
+                                      'dvc_contract_delete_button_$index',
+                                    ),
+                                    icon: const Icon(Icons.delete_outline),
+                                    label: const Text('この契約を削除'),
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: Theme.of(context)
+                                          .colorScheme
+                                          .error,
+                                    ),
+                                    onPressed:
+                                        protectedContractIds.contains(
+                                          contract.id,
+                                        )
+                                        ? null
+                                        : () {
+                                            setState(() {
+                                              editable.removeAt(index);
+                                            });
+                                          },
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                         ),
