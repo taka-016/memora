@@ -76,15 +76,16 @@ class GroupEditModal extends HookConsumerWidget {
     List<GroupMemberDto> normalizeMembers(
       String ownerId,
       String groupId,
-      List<GroupMemberDto> members,
-    ) {
+      List<GroupMemberDto> members, {
+      bool reorder = false,
+    }) {
       if (ownerId.isEmpty) {
         return members
             .asMap()
             .entries
             .map(
               (entry) =>
-                  entry.value.copyWith(groupId: groupId, orderIndex: entry.key),
+                  entry.value.copyWith(groupId: groupId, orderIndex: reorder ? entry.key : entry.value.orderIndex),
             )
             .toList();
       }
@@ -109,7 +110,7 @@ class GroupEditModal extends HookConsumerWidget {
             fallbackOwner,
             groupId,
             isAdministrator: true,
-          ),
+          ).copyWith(orderIndex: members.fold<int>(-1, (maxIndex, member) => member.orderIndex > maxIndex ? member.orderIndex : maxIndex) + 1),
         );
       }
 
@@ -118,7 +119,7 @@ class GroupEditModal extends HookConsumerWidget {
           .entries
           .map(
             (entry) =>
-                entry.value.copyWith(groupId: groupId, orderIndex: entry.key),
+                entry.value.copyWith(groupId: groupId, orderIndex: reorder ? entry.key : entry.value.orderIndex),
           )
           .toList();
     }
@@ -202,11 +203,12 @@ class GroupEditModal extends HookConsumerWidget {
       return candidates;
     }
 
-    void updateGroupMembers(List<GroupMemberDto> members) {
+    void updateGroupMembers(List<GroupMemberDto> members, {bool reorder = false}) {
       final normalizedMembers = normalizeMembers(
         groupState.value.ownerId,
         groupState.value.id,
         members,
+        reorder: reorder,
       );
       groupState.value = groupState.value.copyWith(members: normalizedMembers);
     }
@@ -302,7 +304,7 @@ class GroupEditModal extends HookConsumerWidget {
             updatedMembers[index] = _createGroupMemberForEdit(
               selectedMember,
               groupState.value.id,
-            );
+            ).copyWith(orderIndex: updatedMembers[index].orderIndex);
             updateGroupMembers(updatedMembers);
           });
           break;
@@ -495,7 +497,7 @@ class GroupEditModal extends HookConsumerWidget {
             );
             final member = updatedMembers.removeAt(oldIndex);
             updatedMembers.insert(newIndex, member);
-            updateGroupMembers(updatedMembers);
+            updateGroupMembers(updatedMembers, reorder: true);
           },
         ),
       );
@@ -540,7 +542,7 @@ class GroupEditModal extends HookConsumerWidget {
                       _createGroupMemberForEdit(
                         selectedMember,
                         groupState.value.id,
-                      ),
+                      ).copyWith(orderIndex: updatedMembers.fold<int>(-1, (maxIndex, member) => member.orderIndex > maxIndex ? member.orderIndex : maxIndex) + 1),
                     );
                     updateGroupMembers(updatedMembers);
                   });

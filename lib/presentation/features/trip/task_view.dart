@@ -176,7 +176,7 @@ class TaskView extends HookConsumerWidget {
         (member) => member.memberId == memberId,
       );
       if (matched.isEmpty) {
-        return memberId;
+        return null;
       }
       return matched.first.displayName;
     }
