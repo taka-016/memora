@@ -52,15 +52,15 @@ void main() {
       findsNothing,
     );
 
-    await tester.tap(find.text('契約A'));
+    await tester.tap(find.widgetWithText(ListTile, '契約A'));
     await tester.pumpAndSettle();
     expect(find.text('この契約を削除'), findsOneWidget);
-    await tester.tap(find.text('契約A'));
+    await tester.tap(find.widgetWithText(ListTile, '契約A'));
     await tester.pumpAndSettle();
     expect(find.text('この契約を削除'), findsNothing);
     expect(find.text('契約A'), findsOneWidget);
 
-    await tester.tap(find.text('契約A'));
+    await tester.tap(find.widgetWithText(ListTile, '契約A'));
     await tester.pumpAndSettle();
     final deleteButton = find.byKey(
       const ValueKey('dvc_contract_delete_button_0'),
