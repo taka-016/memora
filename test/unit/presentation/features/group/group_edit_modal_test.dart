@@ -113,6 +113,87 @@ Widget buildSubject({
 }
 
 void main() {
+  for (final action in ['名前', '管理者', '除外', '追加', '並べ替え']) {
+    testWidgets('退避後に表示順が欠番でも$actionの編集対象だけを変更する', (tester) async {
+      final members = [
+        createGroupMemberDto(
+          groupId: 'g',
+          memberId: 'owner-id',
+          displayName: 'オーナー',
+          isAdministrator: true,
+          orderIndex: 0,
+        ),
+        createGroupMemberDto(
+          groupId: 'g',
+          memberId: 'a',
+          displayName: '通常A',
+          orderIndex: 3,
+        ),
+        createGroupMemberDto(
+          groupId: 'g',
+          memberId: 'c',
+          displayName: '通常C',
+          orderIndex: 7,
+        ),
+      ];
+      final candidate = createGroupMemberDto(
+        groupId: 'g',
+        memberId: 'd',
+        displayName: '追加候補',
+      );
+      GroupDto? saved;
+      await tester.pumpWidget(
+        buildSubject(
+          group: createGroupDto(id: 'g', name: '家族', members: members),
+          onSave: (group) async {
+            saved = group;
+          },
+          availableMembers: [...members, candidate],
+          currentMember: createCurrentMember(),
+        ),
+      );
+      await tester.enterText(find.byType(TextFormField).first, '家族の記録');
+      if (action == '管理者' || action == '除外') {
+        await tester.tap(find.byKey(const Key('member_action_menu_1')));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text(action == '管理者' ? '管理者に設定' : 'メンバーを削除'));
+        await tester.pumpAndSettle();
+      } else if (action == '追加') {
+        await tester.ensureVisible(find.byKey(const Key('add_member_button')));
+        await tester.tap(find.byKey(const Key('add_member_button')));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('追加候補'));
+        await tester.pumpAndSettle();
+      } else if (action == '並べ替え') {
+        tester
+            .widget<ReorderableListView>(find.byType(ReorderableListView))
+            .onReorderItem!(2, 1);
+        await tester.pump();
+      }
+      await tester.ensureVisible(find.text('更新'));
+      await tester.tap(find.text('更新'));
+      await tester.pump();
+      expect(saved, isNotNull);
+      expect(saved!.originalMembers, members);
+      final expected = switch (action) {
+        '管理者' => [
+          members[0],
+          members[1].copyWith(isAdministrator: true),
+          members[2],
+        ],
+        '除外' => [members[0], members[2]],
+        '追加' => [...members, candidate.copyWith(orderIndex: 8)],
+        '並べ替え' => [
+          members[0].copyWith(orderIndex: 0),
+          members[2].copyWith(orderIndex: 1),
+          members[1].copyWith(orderIndex: 2),
+        ],
+        _ => members,
+      };
+      expect(saved!.members, expected);
+    });
+  }
+
   group('GroupEditModal', () {
     testWidgets('新規作成時にタイトルが正しく表示される', (WidgetTester tester) async {
       await tester.pumpWidget(

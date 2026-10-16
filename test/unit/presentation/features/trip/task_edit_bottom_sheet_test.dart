@@ -83,7 +83,7 @@ void main() {
       expect(find.text('担当者'), findsOneWidget);
     });
 
-    testWidgets('担当者と親タスクが存在しない場合は未選択として扱われること', (tester) async {
+    testWidgets('候補外の担当を表示せず未操作の保存では元の担当IDを保持すること', (tester) async {
       TaskDto? saved;
       final task = TaskDto(
         id: 'task-1',
@@ -126,8 +126,36 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(saved, isNotNull);
-      expect(saved!.assignedMemberId, isNull);
+      expect(saved!.assignedMemberId, 'missing-member');
       expect(saved!.parentTaskId, isNull);
+    });
+
+    testWidgets('候補外の担当でも未選択を明示して保存すると担当を解除する', (tester) async {
+      const task = TaskDto(
+        id: 'task',
+        tripId: 'trip',
+        orderIndex: 0,
+        name: '準備',
+        isCompleted: false,
+        assignedMemberId: 'deleted-member',
+      );
+      TaskDto? saved;
+      await _openBottomSheet(
+        tester,
+        task: task,
+        tasks: [task],
+        members: members,
+        onSaved: (value) {
+          saved = value;
+        },
+      );
+      await tester.tap(find.byKey(const Key('assigned_member_dropdown')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('未選択').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('保存'));
+      await tester.pumpAndSettle();
+      expect(saved!.assignedMemberId, isNull);
     });
 
     testWidgets('保存で入力値がコールバックされること', (tester) async {

@@ -1,3 +1,5 @@
+import 'package:memora/infrastructure/queries/group/sqlite_group_query_service.dart';
+import 'package:memora/infrastructure/queries/member/sqlite_member_query_service.dart';
 import 'package:memora/infrastructure/repositories/group/sqlite_group_repository.dart';
 import 'package:memora/infrastructure/repositories/member/sqlite_member_repository.dart';
 import 'package:drift/native.dart';
@@ -147,6 +149,17 @@ void main() {
     await db.deleteRows('members', 'id', 'owner');
     expect(await db.rows('members'), isEmpty);
     expect(await db.rows('groups'), isEmpty);
+    expect(
+      await SqliteGroupQueryService(db)
+          .getGroupsWithMembersByMemberId('member'),
+      isEmpty,
+    );
+    expect(
+      await SqliteGroupQueryService(db)
+          .getManagedGroupsWithMembersByOwnerId('owner'),
+      isEmpty,
+    );
+    expect(await SqliteMemberQueryService(db).getMemberById('member'), isNull);
     for (final table in rows.keys.where(
       (t) => t != 'members' && t != 'groups',
     )) {

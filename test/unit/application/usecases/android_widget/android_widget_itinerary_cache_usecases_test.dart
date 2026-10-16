@@ -1,3 +1,10 @@
+import 'package:drift/native.dart';
+import 'package:memora/application/models/app_mode.dart';
+import 'package:memora/infrastructure/config/resolved_app_mode_provider.dart';
+import 'package:memora/infrastructure/database/offline_database.dart';
+import 'package:memora/infrastructure/queries/group/sqlite_group_query_service.dart';
+import 'package:memora/infrastructure/repositories/group/sqlite_group_repository.dart';
+
 import '../group/get_group_with_members_by_id_usecase_test.mocks.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -90,6 +97,49 @@ void main() {
   });
 
   group('RefreshAndroidWidgetItineraryCacheUsecase', () {
+    test('オフラインでグループを退避した後は残した旅行があってもキャッシュを解除する', () async {
+      final db = OfflineDatabase(NativeDatabase.memory());
+      addTearDown(db.close);
+      await db.insertRow('groups', {
+        'id': 'group-1',
+        'owner_id': 'owner',
+        'name': '家族',
+      });
+      await db.insertRow('trip_entries', {
+        'id': 'trip',
+        'group_id': 'group-1',
+        'year': 2026,
+      });
+      await SqliteGroupRepository(db).deleteGroup('group-1');
+      final storage = _FakeAndroidWidgetCacheStorage(
+        cache: _cacheWithItinerary(),
+      )..targetGroupId = 'group-1';
+      final container = ProviderContainer(
+        overrides: [
+          appModeProvider.overrideWithValue(AppMode.offline),
+          androidWidgetReadTransactionProvider.overrideWithValue(db),
+          groupQueryServiceProvider.overrideWithValue(
+            SqliteGroupQueryService(db),
+          ),
+          androidWidgetCacheStorageProvider.overrideWithValue(storage),
+          getAndroidWidgetItineraryCacheUsecaseProvider.overrideWithValue(
+            GetAndroidWidgetItineraryCacheUsecase(
+              tripEntryQueryService: _FakeTripEntryQueryService(),
+              itineraryItemQueryService: _FakeItineraryItemQueryService(),
+              clock: FixedAppClock(DateTime(2026, 5, 24, 10)),
+            ),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      await container
+          .read(refreshAndroidWidgetItineraryCacheUsecaseProvider)
+          .execute(groupId: 'group-1', preserveExistingCacheOnEmpty: true);
+      expect(storage.cache, isNull);
+      expect(storage.targetGroupId, isNull);
+      expect(await db.rows('trip_entries'), hasLength(1));
+    });
+
     for (final missing in [true, false]) {
       test(
         missing
