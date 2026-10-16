@@ -10,8 +10,10 @@ class DvcAvailablePointBreakdown {
   const DvcAvailablePointBreakdown({
     required this.sourceType,
     required this.sourceId,
+    required this.contractId,
     required this.sourceName,
     required this.remainingPoint,
+    required this.contractName,
     required this.availableFrom,
     required this.expireAt,
     this.useYear,
@@ -20,8 +22,10 @@ class DvcAvailablePointBreakdown {
 
   final DvcPointSourceType sourceType;
   final String sourceId;
+  final String contractId;
   final String sourceName;
   final int remainingPoint;
+  final String contractName;
   final DateTime availableFrom;
   final DateTime expireAt;
   final int? useYear;
@@ -35,6 +39,7 @@ class DvcMonthlyPointSummary {
     required this.usedPoint,
     required this.availableBreakdowns,
     required this.usageDetails,
+    this.availablePointsByContract = const {},
   });
 
   final DateTime yearMonth;
@@ -42,6 +47,7 @@ class DvcMonthlyPointSummary {
   final int usedPoint;
   final List<DvcAvailablePointBreakdown> availableBreakdowns;
   final List<DvcPointUsageDto> usageDetails;
+  final Map<String, int> availablePointsByContract;
 }
 
 class DvcPointTableCalculationResult {
@@ -60,6 +66,57 @@ class CalculateDvcPointTableUsecase {
     required DateTime startYearMonth,
     required DateTime endYearMonth,
   }) {
+    final results = contracts
+        .map(
+          (contract) => _executeContract(
+            contract: contract,
+            limitedPoints: limitedPoints
+                .where((v) => v.contractId == contract.id)
+                .toList(),
+            pointUsages: pointUsages
+                .where((v) => v.contractId == contract.id)
+                .toList(),
+            startYearMonth: startYearMonth,
+            endYearMonth: endYearMonth,
+          ),
+        )
+        .toList();
+    final summaries = <DvcMonthlyPointSummary>[];
+    var monthIndex = 0;
+    for (
+      var month = _monthStart(startYearMonth);
+      !month.isAfter(_monthStart(endYearMonth));
+      month = _addMonths(month, 1), monthIndex++
+    ) {
+      final parts = results
+          .map((result) => result.monthlySummaries[monthIndex])
+          .toList();
+      summaries.add(
+        DvcMonthlyPointSummary(
+          yearMonth: month,
+          availablePoint: parts.fold(0, (sum, v) => sum + v.availablePoint),
+          usedPoint: parts.fold(0, (sum, v) => sum + v.usedPoint),
+          availablePointsByContract: {
+            for (var index = 0; index < contracts.length; index++)
+              contracts[index].id: parts[index].availablePoint,
+          },
+          availableBreakdowns: parts
+              .expand((v) => v.availableBreakdowns)
+              .toList(),
+          usageDetails: parts.expand((v) => v.usageDetails).toList(),
+        ),
+      );
+    }
+    return DvcPointTableCalculationResult(monthlySummaries: summaries);
+  }
+
+  DvcPointTableCalculationResult _executeContract({
+    required DvcPointContractDto contract,
+    required List<DvcLimitedPointDto> limitedPoints,
+    required List<DvcPointUsageDto> pointUsages,
+    required DateTime startYearMonth,
+    required DateTime endYearMonth,
+  }) {
     final normalizedStart = _monthStart(startYearMonth);
     final normalizedEnd = _monthStart(endYearMonth);
     if (normalizedEnd.isBefore(normalizedStart)) {
@@ -67,7 +124,7 @@ class CalculateDvcPointTableUsecase {
     }
 
     final buckets = <_PointBucket>[
-      ...contracts.expand(_buildContractBuckets),
+      ..._buildContractBuckets(contract),
       ...limitedPoints.map(_buildLimitedBucket),
     ];
 
@@ -119,7 +176,9 @@ class CalculateDvcPointTableUsecase {
               (bucket) => DvcAvailablePointBreakdown(
                 sourceType: bucket.sourceType,
                 sourceId: bucket.sourceId,
+                contractId: bucket.contractId,
                 sourceName: bucket.sourceName,
+                contractName: contract.contractName,
                 remainingPoint: bucket.remainingPoint,
                 availableFrom: bucket.availableFrom,
                 expireAt: _addMonths(bucket.expireExclusive, -1),
@@ -181,6 +240,7 @@ class CalculateDvcPointTableUsecase {
         _PointBucket(
           sourceType: DvcPointSourceType.contract,
           sourceId: contract.id,
+          contractId: contract.id,
           sourceName: contract.contractName,
           availableFrom: DateTime(grantMonth.year - 1, grantMonth.month),
           expireExclusive: DateTime(grantMonth.year + 2, grantMonth.month),
@@ -201,6 +261,7 @@ class CalculateDvcPointTableUsecase {
     return _PointBucket(
       sourceType: DvcPointSourceType.limited,
       sourceId: limitedPoint.id,
+      contractId: limitedPoint.contractId,
       sourceName: '期間限定ポイント',
       availableFrom: start,
       expireExclusive: _addMonths(end, 1),
@@ -292,6 +353,7 @@ class _PointBucket {
   _PointBucket({
     required this.sourceType,
     required this.sourceId,
+    required this.contractId,
     required this.sourceName,
     required this.availableFrom,
     required this.expireExclusive,
@@ -303,6 +365,7 @@ class _PointBucket {
 
   final DvcPointSourceType sourceType;
   final String sourceId;
+  final String contractId;
   final String sourceName;
   final DateTime availableFrom;
   final DateTime expireExclusive;
@@ -315,6 +378,7 @@ class _PointBucket {
     return _PointBucket(
       sourceType: sourceType,
       sourceId: sourceId,
+      contractId: contractId,
       sourceName: sourceName,
       availableFrom: availableFrom,
       expireExclusive: expireExclusive,

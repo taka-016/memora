@@ -6,6 +6,7 @@ class SqliteDvcPointUsageMapper {
   static DvcPointUsageDto fromRow(Map<String, Object?> row) => DvcPointUsageDto(
     id: row['id'] as String,
     groupId: row['group_id'] as String,
+    contractId: row['contract_id'] as String,
     usageYearMonth: SqliteValues.date(row['usage_year_month'])!,
     usedPoint: row['used_point'] as int,
     memo: row['memo'] as String?,
@@ -13,6 +14,7 @@ class SqliteDvcPointUsageMapper {
   static Map<String, Object?> toRow(DvcPointUsage value) => {
     'id': value.id,
     'group_id': value.groupId,
+    'contract_id': value.contractId,
     'usage_year_month': value.usageYearMonth.microsecondsSinceEpoch,
     'used_point': value.usedPoint,
     'memo': value.memo,

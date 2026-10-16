@@ -1,3 +1,5 @@
+import '../../../../helpers/test_exception.dart';
+
 import 'package:memora/infrastructure/time/fixed_app_clock.dart';
 import 'package:memora/composition_root/providers/app_providers.dart';
 
@@ -153,7 +155,7 @@ void main() {
       final currentMonth = _monthStart(fixedNow);
       contractQueryService = _FakeDvcPointContractQueryService([
         DvcPointContractDto(
-          id: 'c-current',
+          id: 'c1',
           groupId: 'g1',
           contractName: '契約A',
           contractStartYearMonth: currentMonth,
@@ -164,6 +166,7 @@ void main() {
       ]);
       usageQueryService = _FakeDvcPointUsageQueryService([
         DvcPointUsageDto(
+          contractId: 'c1',
           id: 'u-current',
           groupId: 'g1',
           usageYearMonth: currentMonth,
@@ -237,6 +240,169 @@ void main() {
       expect(find.text('メモ'), findsOneWidget);
     });
 
+    testWidgets('契約Bを選択して保存し契約Aの残高は登録可能数に含めない', (tester) async {
+      contractQueryService = _FakeDvcPointContractQueryService([
+        ...contractQueryService.contracts,
+        DvcPointContractDto(
+          id: 'c2',
+          groupId: groupId,
+          contractName: '契約B',
+          contractStartYearMonth: DateTime(2025, 10),
+          contractEndYearMonth: DateTime(2025, 10),
+          useYearStartMonth: 10,
+          annualPoint: 20,
+        ),
+      ]);
+      await tester.pumpWidget(createWidget());
+      await tester.pumpAndSettle();
+      await tester.tap(_findAddUsageButtons().first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('dvc_usage_contract_field')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('契約B').last);
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('dvc_usage_point_field')),
+        '21',
+      );
+      await tester.tap(find.widgetWithText(TextButton, '登録'));
+      await tester.pumpAndSettle();
+      expect(find.text('利用可能ポイントを超えています'), findsOneWidget);
+      expect(usageRepository.savedUsages, isEmpty);
+      await tester.enterText(
+        find.byKey(const Key('dvc_usage_point_field')),
+        '20',
+      );
+      await tester.tap(find.widgetWithText(TextButton, '登録'));
+      await tester.pumpAndSettle();
+      expect(usageRepository.savedUsages.single.contractId, 'c2');
+      expect(usageRepository.savedUsages.single.usedPoint, 20);
+    });
+
+    testWidgets('既存契約を更新すると元のIDを保存する', (tester) async {
+      await tester.pumpWidget(createWidget());
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('dvc_action_menu_button')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('契約登録'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(TextButton, '更新'));
+      await tester.pumpAndSettle();
+      expect(contractRepository.savedContracts.single.id, 'c1');
+    });
+
+    testWidgets('利用履歴がある契約の削除ボタンは無効になる', (tester) async {
+      usageQueryService = _FakeDvcPointUsageQueryService([
+        DvcPointUsageDto(
+          id: 'u',
+          groupId: groupId,
+          contractId: 'c1',
+          usageYearMonth: fixedNow,
+          usedPoint: 10,
+        ),
+      ]);
+      await tester.pumpWidget(createWidget());
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('dvc_action_menu_button')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('契約登録'));
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<TextButton>(
+              find.byKey(const ValueKey('dvc_contract_delete_button_0')),
+            )
+            .onPressed,
+        isNull,
+      );
+      expect(find.text('利用履歴・期間限定ポイントがある契約は削除できません'), findsOneWidget);
+    });
+
+    testWidgets('契約未作成時は利用と期間限定ポイントを登録できない', (tester) async {
+      contractQueryService = _FakeDvcPointContractQueryService([]);
+      await tester.pumpWidget(createWidget());
+      await tester.pumpAndSettle();
+      await tester.tap(_findAddUsageButtons().first);
+      await tester.pumpAndSettle();
+      expect(find.text('先に契約を登録してください'), findsOneWidget);
+      expect(
+        tester
+            .widget<TextButton>(find.widgetWithText(TextButton, '登録'))
+            .onPressed,
+        isNull,
+      );
+      await tester.tap(find.widgetWithText(TextButton, 'キャンセル'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('dvc_action_menu_button')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('期間限定ポイント登録'));
+      await tester.pumpAndSettle();
+      expect(find.text('先に契約を登録してください'), findsOneWidget);
+      expect(
+        tester
+            .widget<TextButton>(find.widgetWithText(TextButton, '登録'))
+            .onPressed,
+        isNull,
+      );
+    });
+
+    testWidgets('期間限定ポイントも選択した契約へ保存する', (tester) async {
+      contractQueryService = _FakeDvcPointContractQueryService([
+        ...contractQueryService.contracts,
+        DvcPointContractDto(
+          id: 'c2',
+          groupId: groupId,
+          contractName: '契約B',
+          contractStartYearMonth: DateTime(2025, 10),
+          contractEndYearMonth: DateTime(2025, 10),
+          useYearStartMonth: 10,
+          annualPoint: 20,
+        ),
+      ]);
+      await tester.pumpWidget(createWidget());
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('dvc_action_menu_button')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('期間限定ポイント登録'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('dvc_limited_contract_field')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('契約B').last);
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('dvc_limited_point_field')),
+        '30',
+      );
+      await tester.tap(find.widgetWithText(TextButton, '登録'));
+      await tester.pumpAndSettle();
+      expect(limitedRepository.savedLimitedPoints.single.contractId, 'c2');
+    });
+
+    testWidgets('利用保存に失敗しても入力を残して再試行できる', (tester) async {
+      usageRepository.onSave = (_) => throw TestException('保存失敗');
+      await tester.pumpWidget(createWidget());
+      await tester.pumpAndSettle();
+      await tester.tap(_findAddUsageButtons().first);
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('dvc_usage_point_field')),
+        '20',
+      );
+      await tester.enterText(
+        find.byKey(const Key('dvc_usage_memo_field')),
+        '入力したメモ',
+      );
+      await tester.tap(find.widgetWithText(TextButton, '登録'));
+      await tester.pumpAndSettle();
+      expect(find.text('ポイント利用登録'), findsOneWidget);
+      expect(find.text('入力したメモ'), findsOneWidget);
+      expect(find.text('保存に失敗しました。入力内容を確認して再度お試しください'), findsOneWidget);
+      usageRepository.onSave = null;
+      await tester.tap(find.widgetWithText(TextButton, '登録'));
+      await tester.pumpAndSettle();
+      expect(find.text('ポイント利用登録'), findsNothing);
+    });
+
     testWidgets('利用登録ボタンを連続で押してもダイアログを重複表示しない', (tester) async {
       await tester.pumpWidget(createWidget());
       await tester.pumpAndSettle();
@@ -266,6 +432,7 @@ void main() {
         onSave: (pointUsage) {
           usages.add(
             DvcPointUsageDto(
+              contractId: 'c1',
               id: 'u${usages.length + 1}',
               groupId: pointUsage.groupId,
               usageYearMonth: pointUsage.usageYearMonth,
@@ -355,15 +522,18 @@ void main() {
       await tester.tap(find.text('契約登録'));
       await tester.pumpAndSettle();
 
-      await tester.tap(
-        find.byKey(const ValueKey('dvc_contract_delete_button_0')),
+      final deleteButton = find.byKey(
+        const ValueKey('dvc_contract_delete_button_0'),
       );
+      await tester.ensureVisible(deleteButton);
+      await tester.tap(deleteButton);
       await tester.pumpAndSettle();
 
       await tester.tap(find.widgetWithText(TextButton, '更新'));
       await tester.pumpAndSettle();
 
-      expect(contractRepository.deletedGroupIds, contains('g1'));
+      expect(contractRepository.deletedGroupIds, isEmpty);
+      expect(contractRepository.savedContracts, isEmpty);
       expect(contractRepository.savedContracts, isEmpty);
     });
 
@@ -428,7 +598,7 @@ void main() {
       final currentMonth = _monthStart(fixedNow);
       contractQueryService = _FakeDvcPointContractQueryService([
         DvcPointContractDto(
-          id: 'c-current',
+          id: 'c1',
           groupId: 'g1',
           contractName: '契約A',
           contractStartYearMonth: currentMonth,
@@ -439,6 +609,7 @@ void main() {
       ]);
       usageQueryService = _FakeDvcPointUsageQueryService([
         DvcPointUsageDto(
+          contractId: 'c1',
           id: 'u1',
           groupId: 'g1',
           usageYearMonth: DateTime(currentMonth.year, currentMonth.month - 1),
@@ -466,7 +637,7 @@ void main() {
       final currentMonth = _monthStart(fixedNow);
       contractQueryService = _FakeDvcPointContractQueryService([
         DvcPointContractDto(
-          id: 'c-current',
+          id: 'c1',
           groupId: 'g1',
           contractName: '契約A',
           contractStartYearMonth: currentMonth,
@@ -495,9 +666,20 @@ void main() {
 
     testWidgets('利用可能ポイント内訳の期間限定ポイントは削除できる', (tester) async {
       final currentMonth = _monthStart(fixedNow);
-      contractQueryService = _FakeDvcPointContractQueryService(const []);
+      contractQueryService = _FakeDvcPointContractQueryService([
+        DvcPointContractDto(
+          id: 'c1',
+          groupId: groupId,
+          contractName: '契約A',
+          contractStartYearMonth: currentMonth,
+          contractEndYearMonth: currentMonth,
+          useYearStartMonth: currentMonth.month,
+          annualPoint: 0,
+        ),
+      ]);
       limitedQueryService = _FakeDvcLimitedPointQueryService([
         DvcLimitedPointDto(
+          contractId: 'c1',
           id: 'l1',
           groupId: 'g1',
           startYearMonth: currentMonth,
@@ -535,9 +717,20 @@ void main() {
 
     testWidgets('利用可能ポイント内訳の有効期限はfrom〜to形式で表示する', (tester) async {
       final currentMonth = _monthStart(fixedNow);
-      contractQueryService = _FakeDvcPointContractQueryService(const []);
+      contractQueryService = _FakeDvcPointContractQueryService([
+        DvcPointContractDto(
+          id: 'c1',
+          groupId: groupId,
+          contractName: '契約A',
+          contractStartYearMonth: currentMonth,
+          contractEndYearMonth: currentMonth,
+          useYearStartMonth: currentMonth.month,
+          annualPoint: 0,
+        ),
+      ]);
       limitedQueryService = _FakeDvcLimitedPointQueryService([
         DvcLimitedPointDto(
+          contractId: 'c1',
           id: 'l1',
           groupId: 'g1',
           startYearMonth: currentMonth,
@@ -571,9 +764,20 @@ void main() {
 
     testWidgets('期間限定ポイントの内訳はメモを有効期限より先に表示する', (tester) async {
       final currentMonth = _monthStart(fixedNow);
-      contractQueryService = _FakeDvcPointContractQueryService(const []);
+      contractQueryService = _FakeDvcPointContractQueryService([
+        DvcPointContractDto(
+          id: 'c1',
+          groupId: groupId,
+          contractName: '契約A',
+          contractStartYearMonth: currentMonth,
+          contractEndYearMonth: currentMonth,
+          useYearStartMonth: currentMonth.month,
+          annualPoint: 0,
+        ),
+      ]);
       limitedQueryService = _FakeDvcLimitedPointQueryService([
         DvcLimitedPointDto(
+          contractId: 'c1',
           id: 'l1',
           groupId: 'g1',
           startYearMonth: currentMonth,
@@ -610,9 +814,10 @@ void main() {
           .whereType<String>()
           .toList();
 
-      expect(subtitleTexts[0], '期間限定メモ');
+      expect(subtitleTexts, contains('契約A'));
+      expect(subtitleTexts[1], '期間限定メモ');
       expect(
-        subtitleTexts[1],
+        subtitleTexts[2],
         '${_formatYearMonthForTest(currentMonth)}〜${_formatYearMonthForTest(currentMonth)}',
       );
     });
@@ -621,6 +826,7 @@ void main() {
       final currentMonth = _monthStart(fixedNow);
       usageQueryService = _FakeDvcPointUsageQueryService([
         DvcPointUsageDto(
+          contractId: 'c1',
           id: 'u1',
           groupId: 'g1',
           usageYearMonth: currentMonth,
@@ -714,6 +920,7 @@ class _FakeDvcLimitedPointQueryService implements DvcLimitedPointQueryService {
   @override
   Future<List<DvcLimitedPointDto>> getDvcLimitedPointsByGroupId(
     String groupId, {
+    String? contractId,
     List<OrderBy>? orderBy,
   }) async {
     return points.where((point) => point.groupId == groupId).toList();
@@ -730,6 +937,7 @@ class _FakeDvcPointUsageQueryService implements DvcPointUsageQueryService {
   @override
   Future<List<DvcPointUsageDto>> getDvcPointUsagesByGroupId(
     String groupId, {
+    String? contractId,
     List<OrderBy>? orderBy,
   }) async {
     _callCount += 1;
@@ -741,6 +949,14 @@ class _FakeDvcPointUsageQueryService implements DvcPointUsageQueryService {
 }
 
 class _FakeDvcPointContractRepository implements DvcPointContractRepository {
+  @override
+  Future<void> saveDvcPointContracts(
+    String groupId,
+    List<DvcPointContract> contracts,
+  ) async {
+    savedContracts.addAll(contracts);
+  }
+
   final List<DvcPointContract> savedContracts = [];
   final List<String> deletedContractIds = [];
   final List<String> deletedGroupIds = [];
@@ -788,7 +1004,7 @@ class _FakeDvcPointUsageRepository implements DvcPointUsageRepository {
   final List<DvcPointUsage> savedUsages = [];
   final List<String> deletedUsageIds = [];
   final List<String> deletedGroupIds = [];
-  final void Function(DvcPointUsage pointUsage)? onSave;
+  void Function(DvcPointUsage pointUsage)? onSave;
   final Future<void> Function(String pointUsageId)? onDelete;
 
   @override

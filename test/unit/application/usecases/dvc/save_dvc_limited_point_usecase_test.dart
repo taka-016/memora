@@ -15,6 +15,7 @@ void main() {
       final repository = MockDvcLimitedPointRepository();
       final usecase = SaveDvcLimitedPointUsecase(repository);
       final limitedPoint = DvcLimitedPointDto(
+        contractId: 'c1',
         id: '',
         groupId: 'group-1',
         startYearMonth: DateTime(2026, 1),

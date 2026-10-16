@@ -105,6 +105,7 @@ void main() {
       ];
       final limitedPoints = [
         DvcLimitedPointDto(
+          contractId: 'c1',
           id: 'l1',
           groupId: 'g1',
           startYearMonth: DateTime(2025, 7),
@@ -159,6 +160,7 @@ void main() {
       ];
       final usages = [
         DvcPointUsageDto(
+          contractId: 'c1',
           id: 'u1',
           groupId: 'g1',
           usageYearMonth: DateTime(2025, 5),
@@ -203,6 +205,7 @@ void main() {
       ];
       final usages = [
         DvcPointUsageDto(
+          contractId: 'c1',
           id: 'u1',
           groupId: 'g1',
           usageYearMonth: DateTime(2025, 10),
@@ -247,6 +250,7 @@ void main() {
       ];
       final usages = [
         DvcPointUsageDto(
+          contractId: 'c1',
           id: 'u1',
           groupId: 'g1',
           usageYearMonth: DateTime(2025, 10),
@@ -287,6 +291,7 @@ void main() {
       ];
       final usages = [
         DvcPointUsageDto(
+          contractId: 'c1',
           id: 'u1',
           groupId: 'g1',
           usageYearMonth: DateTime(2025, 10),

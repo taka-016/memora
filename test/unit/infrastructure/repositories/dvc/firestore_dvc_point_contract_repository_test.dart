@@ -5,6 +5,7 @@ import 'package:memora/infrastructure/repositories/dvc/firestore_dvc_point_contr
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
+import '../../../../helpers/test_exception.dart';
 import 'firestore_dvc_point_contract_repository_test.mocks.dart';
 
 @GenerateMocks([
@@ -17,87 +18,121 @@ import 'firestore_dvc_point_contract_repository_test.mocks.dart';
   WriteBatch,
 ])
 void main() {
-  group('FirestoreDvcPointContractRepository', () {
-    late MockFirebaseFirestore mockFirestore;
-    late MockCollectionReference<Map<String, dynamic>> mockCollection;
-    late FirestoreDvcPointContractRepository repository;
+  late MockFirebaseFirestore firestore;
+  late MockCollectionReference<Map<String, dynamic>> collection;
+  late MockWriteBatch batch;
+  late FirestoreDvcPointContractRepository repository;
+  final contract = DvcPointContract(
+    id: 'c1',
+    groupId: 'g1',
+    contractName: '契約A',
+    contractStartYearMonth: DateTime(2025, 10),
+    contractEndYearMonth: DateTime(2025, 10),
+    useYearStartMonth: 10,
+    annualPoint: 60,
+  );
+  final references = <String, MockDocumentReference<Map<String, dynamic>>>{};
+  void stubChildren(String name, {bool hasChild = false}) {
+    final childCollection = MockCollectionReference<Map<String, dynamic>>();
+    final query = MockQuery<Map<String, dynamic>>();
+    final snapshot = MockQuerySnapshot<Map<String, dynamic>>();
+    when(firestore.collection(name)).thenReturn(childCollection);
+    when(childCollection.where('contractId', isEqualTo: anyNamed('isEqualTo')))
+        .thenReturn(query);
+    when(query.limit(1)).thenReturn(query);
+    when(query.get()).thenAnswer((_) async => snapshot);
+    when(snapshot.docs).thenReturn(
+      hasChild ? [MockQueryDocumentSnapshot<Map<String, dynamic>>()] : [],
+    );
+  }
 
-    setUp(() {
-      mockFirestore = MockFirebaseFirestore();
-      mockCollection = MockCollectionReference<Map<String, dynamic>>();
-      when(mockFirestore.collection('dvc_point_contracts'))
-          .thenReturn(mockCollection);
-      repository = FirestoreDvcPointContractRepository(
-        firestore: mockFirestore,
+  setUp(() {
+    firestore = MockFirebaseFirestore();
+    collection = MockCollectionReference<Map<String, dynamic>>();
+    batch = MockWriteBatch();
+    references.clear();
+    when(firestore.collection('dvc_point_contracts')).thenReturn(collection);
+    when(collection.doc(any)).thenAnswer(
+      (call) => references.putIfAbsent(
+        call.positionalArguments.first as String? ?? 'new',
+        () => MockDocumentReference<Map<String, dynamic>>(),
+      ),
+    );
+    when(firestore.batch()).thenReturn(batch);
+    when(batch.commit()).thenAnswer((_) async {});
+    final query = MockQuery<Map<String, dynamic>>();
+    final snapshot = MockQuerySnapshot<Map<String, dynamic>>();
+    final doc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
+    when(collection.where('groupId', isEqualTo: 'g1')).thenReturn(query);
+    when(query.get()).thenAnswer((_) async => snapshot);
+    when(snapshot.docs).thenReturn([doc]);
+    when(doc.id).thenReturn('c1');
+    when(doc.reference).thenAnswer((_) => collection.doc('c1'));
+    stubChildren('dvc_point_usages');
+    stubChildren('dvc_limited_points');
+    repository = FirestoreDvcPointContractRepository(firestore: firestore);
+  });
+
+  test('単独保存でも既存IDを指定して保存する', () async {
+    final reference = references.putIfAbsent(
+      'c1',
+      () => MockDocumentReference<Map<String, dynamic>>(),
+    );
+    when(reference.set(any, any)).thenAnswer((_) async {});
+    await repository.saveDvcPointContract(contract);
+    verify(reference.set(argThat(containsPair('contractName', '契約A')), any))
+        .called(1);
+    verifyNever(collection.add(any));
+  });
+
+  test('契約一覧の変更・追加を同じバッチで保存し既存IDを削除しない', () async {
+    await repository.saveDvcPointContracts('g1', [
+      contract,
+      contract.copyWith(id: '', contractName: '追加'),
+    ]);
+    verify(
+      batch.update(
+        references['c1']!,
+        argThat(containsPair('contractName', '契約A')),
+      ),
+    ).called(1);
+    verify(
+      batch.set(
+        references['new']!,
+        argThat(containsPair('contractName', '追加')),
+      ),
+    ).called(1);
+    verifyNever(batch.delete(any));
+    verify(batch.commit()).called(1);
+  });
+
+  for (final kind in ['dvc_point_usages', 'dvc_limited_points']) {
+    test('$kindがある契約の削除は一覧保存・単独削除とも拒否する', () async {
+      stubChildren(kind, hasChild: true);
+      await expectLater(
+        repository.saveDvcPointContracts('g1', []),
+        throwsA(isA<StateError>()),
       );
-    });
-
-    test('saveがdvc_point_contractsに追加する', () async {
-      final contract = DvcPointContract(
-        id: 'contract001',
-        groupId: 'group001',
-        contractName: '契約A',
-        contractStartYearMonth: DateTime(2024, 10),
-        contractEndYearMonth: DateTime(2042, 9),
-        useYearStartMonth: 10,
-        annualPoint: 200,
+      await expectLater(
+        repository.deleteDvcPointContract('c1'),
+        throwsA(isA<StateError>()),
       );
-
-      when(
-        mockCollection.add(any),
-      ).thenAnswer((_) async => MockDocumentReference<Map<String, dynamic>>());
-
-      await repository.saveDvcPointContract(contract);
-
-      verify(
-        mockCollection.add(
-          argThat(
-            allOf([
-              containsPair('groupId', 'group001'),
-              containsPair('contractName', '契約A'),
-              containsPair('useYearStartMonth', 10),
-              containsPair('annualPoint', 200),
-              contains('contractStartYearMonth'),
-              contains('contractEndYearMonth'),
-            ]),
-          ),
-        ),
-      ).called(1);
+      verifyNever(batch.commit());
     });
+  }
 
-    test('deleteが指定IDのドキュメントを削除する', () async {
-      const id = 'contract001';
-      final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
+  test('子がない契約を同一バッチで削除する', () async {
+    await repository.saveDvcPointContracts('g1', []);
+    verify(batch.delete(references['c1']!)).called(1);
+    verify(batch.commit()).called(1);
+  });
 
-      when(mockCollection.doc(id)).thenReturn(mockDocRef);
-      when(mockDocRef.delete()).thenAnswer((_) async {});
-
-      await repository.deleteDvcPointContract(id);
-
-      verify(mockCollection.doc(id)).called(1);
-      verify(mockDocRef.delete()).called(1);
-    });
-
-    test('deleteByGroupIdが指定groupIdのドキュメントを一括削除する', () async {
-      const groupId = 'group001';
-      final mockQuery = MockQuery<Map<String, dynamic>>();
-      final mockSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
-      final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
-      final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
-      final mockBatch = MockWriteBatch();
-
-      when(mockCollection.where('groupId', isEqualTo: groupId))
-          .thenReturn(mockQuery);
-      when(mockQuery.get()).thenAnswer((_) async => mockSnapshot);
-      when(mockSnapshot.docs).thenReturn([mockDoc]);
-      when(mockDoc.reference).thenReturn(mockDocRef);
-      when(mockFirestore.batch()).thenReturn(mockBatch);
-      when(mockBatch.commit()).thenAnswer((_) async {});
-
-      await repository.deleteDvcPointContractsByGroupId(groupId);
-
-      verify(mockBatch.delete(mockDocRef)).called(1);
-      verify(mockBatch.commit()).called(1);
-    });
+  test('保存が失敗すると成功扱いにせず例外を返す', () async {
+    when(batch.commit()).thenThrow(TestException('保存失敗'));
+    await expectLater(
+      repository.saveDvcPointContracts('g1', [contract]),
+      throwsA(isA<TestException>()),
+    );
+    verify(batch.commit()).called(1);
   });
 }

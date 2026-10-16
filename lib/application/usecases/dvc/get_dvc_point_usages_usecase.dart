@@ -7,9 +7,13 @@ class GetDvcPointUsagesUsecase {
 
   GetDvcPointUsagesUsecase(this._dvcPointUsageQueryService);
 
-  Future<List<DvcPointUsageDto>> execute(String groupId) async {
+  Future<List<DvcPointUsageDto>> execute(
+    String groupId, {
+    String? contractId,
+  }) async {
     return await _dvcPointUsageQueryService.getDvcPointUsagesByGroupId(
       groupId,
+      contractId: contractId,
       orderBy: [const OrderBy('usageYearMonth', descending: false)],
     );
   }

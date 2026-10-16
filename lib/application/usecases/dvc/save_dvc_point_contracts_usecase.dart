@@ -11,11 +11,9 @@ class SaveDvcPointContractsUsecase {
     required String groupId,
     required List<DvcPointContractDto> contracts,
   }) async {
-    await _dvcPointContractRepository.deleteDvcPointContractsByGroupId(groupId);
-    for (final contract in contracts) {
-      await _dvcPointContractRepository.saveDvcPointContract(
-        DvcPointContractMapper.toEntity(contract),
-      );
-    }
+    await _dvcPointContractRepository.saveDvcPointContracts(
+      groupId,
+      DvcPointContractMapper.toEntityList(contracts),
+    );
   }
 }

@@ -4,6 +4,7 @@ class DvcPointUsageDto extends Equatable {
   const DvcPointUsageDto({
     required this.id,
     required this.groupId,
+    required this.contractId,
     required this.usageYearMonth,
     required this.usedPoint,
     this.memo,
@@ -11,6 +12,7 @@ class DvcPointUsageDto extends Equatable {
 
   final String id;
   final String groupId;
+  final String contractId;
   final DateTime usageYearMonth;
   final int usedPoint;
   final String? memo;
@@ -18,6 +20,7 @@ class DvcPointUsageDto extends Equatable {
   DvcPointUsageDto copyWith({
     String? id,
     String? groupId,
+    String? contractId,
     DateTime? usageYearMonth,
     int? usedPoint,
     String? memo,
@@ -25,6 +28,7 @@ class DvcPointUsageDto extends Equatable {
     return DvcPointUsageDto(
       id: id ?? this.id,
       groupId: groupId ?? this.groupId,
+      contractId: contractId ?? this.contractId,
       usageYearMonth: usageYearMonth ?? this.usageYearMonth,
       usedPoint: usedPoint ?? this.usedPoint,
       memo: memo ?? this.memo,
@@ -32,5 +36,12 @@ class DvcPointUsageDto extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, groupId, usageYearMonth, usedPoint, memo];
+  List<Object?> get props => [
+    id,
+    groupId,
+    contractId,
+    usageYearMonth,
+    usedPoint,
+    memo,
+  ];
 }

@@ -100,7 +100,7 @@ CREATE TABLE group_events (
 
 CREATE TABLE dvc_point_contracts (
   id TEXT NOT NULL PRIMARY KEY,
-  group_id TEXT NOT NULL REFERENCES "groups"(id) ON DELETE CASCADE,
+  group_id TEXT NOT NULL,
   contract_name TEXT NOT NULL,
   contract_start_year_month INTEGER NOT NULL,
   contract_end_year_month INTEGER NOT NULL,
@@ -110,7 +110,8 @@ CREATE TABLE dvc_point_contracts (
 
 CREATE TABLE dvc_limited_points (
   id TEXT NOT NULL PRIMARY KEY,
-  group_id TEXT NOT NULL REFERENCES "groups"(id) ON DELETE CASCADE,
+  group_id TEXT NOT NULL,
+  contract_id TEXT NOT NULL REFERENCES dvc_point_contracts(id) ON DELETE RESTRICT,
   start_year_month INTEGER NOT NULL,
   end_year_month INTEGER NOT NULL,
   point INTEGER NOT NULL,
@@ -119,7 +120,8 @@ CREATE TABLE dvc_limited_points (
 
 CREATE TABLE dvc_point_usages (
   id TEXT NOT NULL PRIMARY KEY,
-  group_id TEXT NOT NULL REFERENCES "groups"(id) ON DELETE CASCADE,
+  group_id TEXT NOT NULL,
+  contract_id TEXT NOT NULL REFERENCES dvc_point_contracts(id) ON DELETE RESTRICT,
   usage_year_month INTEGER NOT NULL,
   used_point INTEGER NOT NULL,
   memo TEXT
@@ -127,6 +129,8 @@ CREATE TABLE dvc_point_usages (
 
 CREATE INDEX group_events_group_year_idx ON group_events (group_id, year);
 CREATE INDEX dvc_point_contracts_group_start_idx ON dvc_point_contracts (group_id, contract_start_year_month);
+CREATE INDEX dvc_limited_points_contract_idx ON dvc_limited_points (contract_id);
+CREATE INDEX dvc_point_usages_contract_idx ON dvc_point_usages (contract_id);
 CREATE INDEX dvc_limited_points_group_start_idx ON dvc_limited_points (group_id, start_year_month);
 CREATE INDEX dvc_point_usages_group_month_idx ON dvc_point_usages (group_id, usage_year_month);
 

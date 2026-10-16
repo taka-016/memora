@@ -96,6 +96,58 @@ void main() {
     expect(await syncStorage.isPending(), isTrue);
   });
 
+  test('DVCの契約と利用・期間限定ポイントの紐付けを往復復元し不正な参照は拒否する', () async {
+    await db.insertRow('dvc_point_contracts', {
+      'id': 'c1',
+      'group_id': 'group-1',
+      'contract_name': '契約A',
+      'contract_start_year_month': 0,
+      'contract_end_year_month': 0,
+      'use_year_start_month': 1,
+      'annual_point': 100,
+    });
+    await db.insertRow('dvc_point_usages', {
+      'id': 'u1',
+      'group_id': 'group-1',
+      'contract_id': 'c1',
+      'usage_year_month': 0,
+      'used_point': 60,
+    });
+    await db.insertRow('dvc_limited_points', {
+      'id': 'l1',
+      'group_id': 'group-1',
+      'contract_id': 'c1',
+      'start_year_month': 0,
+      'end_year_month': 0,
+      'point': 30,
+    });
+    final snapshot = await dataStore.exportSnapshot();
+    await dataStore.restoreSnapshot(snapshot);
+    expect((await db.rows('dvc_point_usages')).single['contract_id'], 'c1');
+    expect((await db.rows('dvc_limited_points')).single['contract_id'], 'c1');
+    for (final table in ['dvc_point_usages', 'dvc_limited_points']) {
+      final tables = {
+        ...snapshot.tables,
+        table: [
+          {...snapshot.tables[table]!.single, 'contract_id': 'unknown'},
+        ],
+      };
+      expect(
+        () => dataStore.validateSnapshot(
+          OfflineBackupSnapshot(
+            formatVersion: snapshot.formatVersion,
+            databaseSchemaVersion: snapshot.databaseSchemaVersion,
+            currentMember: snapshot.currentMember,
+            settings: snapshot.settings,
+            tables: tables,
+          ),
+        ),
+        throwsFormatException,
+      );
+      expect((await db.rows(table)).single['contract_id'], 'c1');
+    }
+  });
+
   test('個別回の移動・取消しと分割した系列を復元して同じ予定を再現する', () async {
     await db.insertRow('calendar_labels', {
       'id': 'label',

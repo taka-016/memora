@@ -3664,7 +3664,7 @@ class DvcPointContracts extends Table
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
-    $customConstraints: 'NOT NULL REFERENCES "groups"(id)ON DELETE CASCADE',
+    $customConstraints: 'NOT NULL',
   );
   static const VerificationMeta _contractNameMeta = const VerificationMeta(
     'contractName',
@@ -4173,7 +4173,19 @@ class DvcLimitedPoints extends Table
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
-    $customConstraints: 'NOT NULL REFERENCES "groups"(id)ON DELETE CASCADE',
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _contractIdMeta = const VerificationMeta(
+    'contractId',
+  );
+  late final GeneratedColumn<String> contractId = GeneratedColumn<String>(
+    'contract_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints:
+        'NOT NULL REFERENCES dvc_point_contracts(id)ON DELETE RESTRICT',
   );
   static const VerificationMeta _startYearMonthMeta = const VerificationMeta(
     'startYearMonth',
@@ -4219,6 +4231,7 @@ class DvcLimitedPoints extends Table
   List<GeneratedColumn> get $columns => [
     id,
     groupId,
+    contractId,
     startYearMonth,
     endYearMonth,
     point,
@@ -4248,6 +4261,14 @@ class DvcLimitedPoints extends Table
       );
     } else if (isInserting) {
       context.missing(_groupIdMeta);
+    }
+    if (data.containsKey('contract_id')) {
+      context.handle(
+        _contractIdMeta,
+        contractId.isAcceptableOrUnknown(data['contract_id']!, _contractIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_contractIdMeta);
     }
     if (data.containsKey('start_year_month')) {
       context.handle(
@@ -4305,6 +4326,10 @@ class DvcLimitedPoints extends Table
         DriftSqlType.string,
         data['${effectivePrefix}group_id'],
       )!,
+      contractId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}contract_id'],
+      )!,
       startYearMonth: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}start_year_month'],
@@ -4337,6 +4362,7 @@ class SqliteDvcLimitedPointRow extends DataClass
     implements Insertable<SqliteDvcLimitedPointRow> {
   final String id;
   final String groupId;
+  final String contractId;
   final int startYearMonth;
   final int endYearMonth;
   final int point;
@@ -4344,6 +4370,7 @@ class SqliteDvcLimitedPointRow extends DataClass
   const SqliteDvcLimitedPointRow({
     required this.id,
     required this.groupId,
+    required this.contractId,
     required this.startYearMonth,
     required this.endYearMonth,
     required this.point,
@@ -4354,6 +4381,7 @@ class SqliteDvcLimitedPointRow extends DataClass
     final map = <String, Expression>{};
     map['id'] = Variable<String>(id);
     map['group_id'] = Variable<String>(groupId);
+    map['contract_id'] = Variable<String>(contractId);
     map['start_year_month'] = Variable<int>(startYearMonth);
     map['end_year_month'] = Variable<int>(endYearMonth);
     map['point'] = Variable<int>(point);
@@ -4367,6 +4395,7 @@ class SqliteDvcLimitedPointRow extends DataClass
     return DvcLimitedPointsCompanion(
       id: Value(id),
       groupId: Value(groupId),
+      contractId: Value(contractId),
       startYearMonth: Value(startYearMonth),
       endYearMonth: Value(endYearMonth),
       point: Value(point),
@@ -4382,6 +4411,7 @@ class SqliteDvcLimitedPointRow extends DataClass
     return SqliteDvcLimitedPointRow(
       id: serializer.fromJson<String>(json['id']),
       groupId: serializer.fromJson<String>(json['group_id']),
+      contractId: serializer.fromJson<String>(json['contract_id']),
       startYearMonth: serializer.fromJson<int>(json['start_year_month']),
       endYearMonth: serializer.fromJson<int>(json['end_year_month']),
       point: serializer.fromJson<int>(json['point']),
@@ -4394,6 +4424,7 @@ class SqliteDvcLimitedPointRow extends DataClass
     return <String, dynamic>{
       'id': serializer.toJson<String>(id),
       'group_id': serializer.toJson<String>(groupId),
+      'contract_id': serializer.toJson<String>(contractId),
       'start_year_month': serializer.toJson<int>(startYearMonth),
       'end_year_month': serializer.toJson<int>(endYearMonth),
       'point': serializer.toJson<int>(point),
@@ -4404,6 +4435,7 @@ class SqliteDvcLimitedPointRow extends DataClass
   SqliteDvcLimitedPointRow copyWith({
     String? id,
     String? groupId,
+    String? contractId,
     int? startYearMonth,
     int? endYearMonth,
     int? point,
@@ -4411,6 +4443,7 @@ class SqliteDvcLimitedPointRow extends DataClass
   }) => SqliteDvcLimitedPointRow(
     id: id ?? this.id,
     groupId: groupId ?? this.groupId,
+    contractId: contractId ?? this.contractId,
     startYearMonth: startYearMonth ?? this.startYearMonth,
     endYearMonth: endYearMonth ?? this.endYearMonth,
     point: point ?? this.point,
@@ -4420,6 +4453,9 @@ class SqliteDvcLimitedPointRow extends DataClass
     return SqliteDvcLimitedPointRow(
       id: data.id.present ? data.id.value : this.id,
       groupId: data.groupId.present ? data.groupId.value : this.groupId,
+      contractId: data.contractId.present
+          ? data.contractId.value
+          : this.contractId,
       startYearMonth: data.startYearMonth.present
           ? data.startYearMonth.value
           : this.startYearMonth,
@@ -4436,6 +4472,7 @@ class SqliteDvcLimitedPointRow extends DataClass
     return (StringBuffer('SqliteDvcLimitedPointRow(')
           ..write('id: $id, ')
           ..write('groupId: $groupId, ')
+          ..write('contractId: $contractId, ')
           ..write('startYearMonth: $startYearMonth, ')
           ..write('endYearMonth: $endYearMonth, ')
           ..write('point: $point, ')
@@ -4445,14 +4482,22 @@ class SqliteDvcLimitedPointRow extends DataClass
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, groupId, startYearMonth, endYearMonth, point, memo);
+  int get hashCode => Object.hash(
+    id,
+    groupId,
+    contractId,
+    startYearMonth,
+    endYearMonth,
+    point,
+    memo,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is SqliteDvcLimitedPointRow &&
           other.id == this.id &&
           other.groupId == this.groupId &&
+          other.contractId == this.contractId &&
           other.startYearMonth == this.startYearMonth &&
           other.endYearMonth == this.endYearMonth &&
           other.point == this.point &&
@@ -4463,6 +4508,7 @@ class DvcLimitedPointsCompanion
     extends UpdateCompanion<SqliteDvcLimitedPointRow> {
   final Value<String> id;
   final Value<String> groupId;
+  final Value<String> contractId;
   final Value<int> startYearMonth;
   final Value<int> endYearMonth;
   final Value<int> point;
@@ -4471,6 +4517,7 @@ class DvcLimitedPointsCompanion
   const DvcLimitedPointsCompanion({
     this.id = const Value.absent(),
     this.groupId = const Value.absent(),
+    this.contractId = const Value.absent(),
     this.startYearMonth = const Value.absent(),
     this.endYearMonth = const Value.absent(),
     this.point = const Value.absent(),
@@ -4480,6 +4527,7 @@ class DvcLimitedPointsCompanion
   DvcLimitedPointsCompanion.insert({
     required String id,
     required String groupId,
+    required String contractId,
     required int startYearMonth,
     required int endYearMonth,
     required int point,
@@ -4487,12 +4535,14 @@ class DvcLimitedPointsCompanion
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        groupId = Value(groupId),
+       contractId = Value(contractId),
        startYearMonth = Value(startYearMonth),
        endYearMonth = Value(endYearMonth),
        point = Value(point);
   static Insertable<SqliteDvcLimitedPointRow> custom({
     Expression<String>? id,
     Expression<String>? groupId,
+    Expression<String>? contractId,
     Expression<int>? startYearMonth,
     Expression<int>? endYearMonth,
     Expression<int>? point,
@@ -4502,6 +4552,7 @@ class DvcLimitedPointsCompanion
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (groupId != null) 'group_id': groupId,
+      if (contractId != null) 'contract_id': contractId,
       if (startYearMonth != null) 'start_year_month': startYearMonth,
       if (endYearMonth != null) 'end_year_month': endYearMonth,
       if (point != null) 'point': point,
@@ -4513,6 +4564,7 @@ class DvcLimitedPointsCompanion
   DvcLimitedPointsCompanion copyWith({
     Value<String>? id,
     Value<String>? groupId,
+    Value<String>? contractId,
     Value<int>? startYearMonth,
     Value<int>? endYearMonth,
     Value<int>? point,
@@ -4522,6 +4574,7 @@ class DvcLimitedPointsCompanion
     return DvcLimitedPointsCompanion(
       id: id ?? this.id,
       groupId: groupId ?? this.groupId,
+      contractId: contractId ?? this.contractId,
       startYearMonth: startYearMonth ?? this.startYearMonth,
       endYearMonth: endYearMonth ?? this.endYearMonth,
       point: point ?? this.point,
@@ -4538,6 +4591,9 @@ class DvcLimitedPointsCompanion
     }
     if (groupId.present) {
       map['group_id'] = Variable<String>(groupId.value);
+    }
+    if (contractId.present) {
+      map['contract_id'] = Variable<String>(contractId.value);
     }
     if (startYearMonth.present) {
       map['start_year_month'] = Variable<int>(startYearMonth.value);
@@ -4562,6 +4618,7 @@ class DvcLimitedPointsCompanion
     return (StringBuffer('DvcLimitedPointsCompanion(')
           ..write('id: $id, ')
           ..write('groupId: $groupId, ')
+          ..write('contractId: $contractId, ')
           ..write('startYearMonth: $startYearMonth, ')
           ..write('endYearMonth: $endYearMonth, ')
           ..write('point: $point, ')
@@ -4596,7 +4653,19 @@ class DvcPointUsages extends Table
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
-    $customConstraints: 'NOT NULL REFERENCES "groups"(id)ON DELETE CASCADE',
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _contractIdMeta = const VerificationMeta(
+    'contractId',
+  );
+  late final GeneratedColumn<String> contractId = GeneratedColumn<String>(
+    'contract_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints:
+        'NOT NULL REFERENCES dvc_point_contracts(id)ON DELETE RESTRICT',
   );
   static const VerificationMeta _usageYearMonthMeta = const VerificationMeta(
     'usageYearMonth',
@@ -4633,6 +4702,7 @@ class DvcPointUsages extends Table
   List<GeneratedColumn> get $columns => [
     id,
     groupId,
+    contractId,
     usageYearMonth,
     usedPoint,
     memo,
@@ -4661,6 +4731,14 @@ class DvcPointUsages extends Table
       );
     } else if (isInserting) {
       context.missing(_groupIdMeta);
+    }
+    if (data.containsKey('contract_id')) {
+      context.handle(
+        _contractIdMeta,
+        contractId.isAcceptableOrUnknown(data['contract_id']!, _contractIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_contractIdMeta);
     }
     if (data.containsKey('usage_year_month')) {
       context.handle(
@@ -4704,6 +4782,10 @@ class DvcPointUsages extends Table
         DriftSqlType.string,
         data['${effectivePrefix}group_id'],
       )!,
+      contractId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}contract_id'],
+      )!,
       usageYearMonth: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}usage_year_month'],
@@ -4732,12 +4814,14 @@ class SqliteDvcPointUsageRow extends DataClass
     implements Insertable<SqliteDvcPointUsageRow> {
   final String id;
   final String groupId;
+  final String contractId;
   final int usageYearMonth;
   final int usedPoint;
   final String? memo;
   const SqliteDvcPointUsageRow({
     required this.id,
     required this.groupId,
+    required this.contractId,
     required this.usageYearMonth,
     required this.usedPoint,
     this.memo,
@@ -4747,6 +4831,7 @@ class SqliteDvcPointUsageRow extends DataClass
     final map = <String, Expression>{};
     map['id'] = Variable<String>(id);
     map['group_id'] = Variable<String>(groupId);
+    map['contract_id'] = Variable<String>(contractId);
     map['usage_year_month'] = Variable<int>(usageYearMonth);
     map['used_point'] = Variable<int>(usedPoint);
     if (!nullToAbsent || memo != null) {
@@ -4759,6 +4844,7 @@ class SqliteDvcPointUsageRow extends DataClass
     return DvcPointUsagesCompanion(
       id: Value(id),
       groupId: Value(groupId),
+      contractId: Value(contractId),
       usageYearMonth: Value(usageYearMonth),
       usedPoint: Value(usedPoint),
       memo: memo == null && nullToAbsent ? const Value.absent() : Value(memo),
@@ -4773,6 +4859,7 @@ class SqliteDvcPointUsageRow extends DataClass
     return SqliteDvcPointUsageRow(
       id: serializer.fromJson<String>(json['id']),
       groupId: serializer.fromJson<String>(json['group_id']),
+      contractId: serializer.fromJson<String>(json['contract_id']),
       usageYearMonth: serializer.fromJson<int>(json['usage_year_month']),
       usedPoint: serializer.fromJson<int>(json['used_point']),
       memo: serializer.fromJson<String?>(json['memo']),
@@ -4784,6 +4871,7 @@ class SqliteDvcPointUsageRow extends DataClass
     return <String, dynamic>{
       'id': serializer.toJson<String>(id),
       'group_id': serializer.toJson<String>(groupId),
+      'contract_id': serializer.toJson<String>(contractId),
       'usage_year_month': serializer.toJson<int>(usageYearMonth),
       'used_point': serializer.toJson<int>(usedPoint),
       'memo': serializer.toJson<String?>(memo),
@@ -4793,12 +4881,14 @@ class SqliteDvcPointUsageRow extends DataClass
   SqliteDvcPointUsageRow copyWith({
     String? id,
     String? groupId,
+    String? contractId,
     int? usageYearMonth,
     int? usedPoint,
     Value<String?> memo = const Value.absent(),
   }) => SqliteDvcPointUsageRow(
     id: id ?? this.id,
     groupId: groupId ?? this.groupId,
+    contractId: contractId ?? this.contractId,
     usageYearMonth: usageYearMonth ?? this.usageYearMonth,
     usedPoint: usedPoint ?? this.usedPoint,
     memo: memo.present ? memo.value : this.memo,
@@ -4807,6 +4897,9 @@ class SqliteDvcPointUsageRow extends DataClass
     return SqliteDvcPointUsageRow(
       id: data.id.present ? data.id.value : this.id,
       groupId: data.groupId.present ? data.groupId.value : this.groupId,
+      contractId: data.contractId.present
+          ? data.contractId.value
+          : this.contractId,
       usageYearMonth: data.usageYearMonth.present
           ? data.usageYearMonth.value
           : this.usageYearMonth,
@@ -4820,6 +4913,7 @@ class SqliteDvcPointUsageRow extends DataClass
     return (StringBuffer('SqliteDvcPointUsageRow(')
           ..write('id: $id, ')
           ..write('groupId: $groupId, ')
+          ..write('contractId: $contractId, ')
           ..write('usageYearMonth: $usageYearMonth, ')
           ..write('usedPoint: $usedPoint, ')
           ..write('memo: $memo')
@@ -4828,13 +4922,15 @@ class SqliteDvcPointUsageRow extends DataClass
   }
 
   @override
-  int get hashCode => Object.hash(id, groupId, usageYearMonth, usedPoint, memo);
+  int get hashCode =>
+      Object.hash(id, groupId, contractId, usageYearMonth, usedPoint, memo);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is SqliteDvcPointUsageRow &&
           other.id == this.id &&
           other.groupId == this.groupId &&
+          other.contractId == this.contractId &&
           other.usageYearMonth == this.usageYearMonth &&
           other.usedPoint == this.usedPoint &&
           other.memo == this.memo);
@@ -4843,6 +4939,7 @@ class SqliteDvcPointUsageRow extends DataClass
 class DvcPointUsagesCompanion extends UpdateCompanion<SqliteDvcPointUsageRow> {
   final Value<String> id;
   final Value<String> groupId;
+  final Value<String> contractId;
   final Value<int> usageYearMonth;
   final Value<int> usedPoint;
   final Value<String?> memo;
@@ -4850,6 +4947,7 @@ class DvcPointUsagesCompanion extends UpdateCompanion<SqliteDvcPointUsageRow> {
   const DvcPointUsagesCompanion({
     this.id = const Value.absent(),
     this.groupId = const Value.absent(),
+    this.contractId = const Value.absent(),
     this.usageYearMonth = const Value.absent(),
     this.usedPoint = const Value.absent(),
     this.memo = const Value.absent(),
@@ -4858,17 +4956,20 @@ class DvcPointUsagesCompanion extends UpdateCompanion<SqliteDvcPointUsageRow> {
   DvcPointUsagesCompanion.insert({
     required String id,
     required String groupId,
+    required String contractId,
     required int usageYearMonth,
     required int usedPoint,
     this.memo = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        groupId = Value(groupId),
+       contractId = Value(contractId),
        usageYearMonth = Value(usageYearMonth),
        usedPoint = Value(usedPoint);
   static Insertable<SqliteDvcPointUsageRow> custom({
     Expression<String>? id,
     Expression<String>? groupId,
+    Expression<String>? contractId,
     Expression<int>? usageYearMonth,
     Expression<int>? usedPoint,
     Expression<String>? memo,
@@ -4877,6 +4978,7 @@ class DvcPointUsagesCompanion extends UpdateCompanion<SqliteDvcPointUsageRow> {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (groupId != null) 'group_id': groupId,
+      if (contractId != null) 'contract_id': contractId,
       if (usageYearMonth != null) 'usage_year_month': usageYearMonth,
       if (usedPoint != null) 'used_point': usedPoint,
       if (memo != null) 'memo': memo,
@@ -4887,6 +4989,7 @@ class DvcPointUsagesCompanion extends UpdateCompanion<SqliteDvcPointUsageRow> {
   DvcPointUsagesCompanion copyWith({
     Value<String>? id,
     Value<String>? groupId,
+    Value<String>? contractId,
     Value<int>? usageYearMonth,
     Value<int>? usedPoint,
     Value<String?>? memo,
@@ -4895,6 +4998,7 @@ class DvcPointUsagesCompanion extends UpdateCompanion<SqliteDvcPointUsageRow> {
     return DvcPointUsagesCompanion(
       id: id ?? this.id,
       groupId: groupId ?? this.groupId,
+      contractId: contractId ?? this.contractId,
       usageYearMonth: usageYearMonth ?? this.usageYearMonth,
       usedPoint: usedPoint ?? this.usedPoint,
       memo: memo ?? this.memo,
@@ -4910,6 +5014,9 @@ class DvcPointUsagesCompanion extends UpdateCompanion<SqliteDvcPointUsageRow> {
     }
     if (groupId.present) {
       map['group_id'] = Variable<String>(groupId.value);
+    }
+    if (contractId.present) {
+      map['contract_id'] = Variable<String>(contractId.value);
     }
     if (usageYearMonth.present) {
       map['usage_year_month'] = Variable<int>(usageYearMonth.value);
@@ -4931,6 +5038,7 @@ class DvcPointUsagesCompanion extends UpdateCompanion<SqliteDvcPointUsageRow> {
     return (StringBuffer('DvcPointUsagesCompanion(')
           ..write('id: $id, ')
           ..write('groupId: $groupId, ')
+          ..write('contractId: $contractId, ')
           ..write('usageYearMonth: $usageYearMonth, ')
           ..write('usedPoint: $usedPoint, ')
           ..write('memo: $memo, ')
@@ -6613,6 +6721,14 @@ abstract class _$OfflineDatabase extends GeneratedDatabase {
     'dvc_point_contracts_group_start_idx',
     'CREATE INDEX dvc_point_contracts_group_start_idx ON dvc_point_contracts (group_id, contract_start_year_month)',
   );
+  late final Index dvcLimitedPointsContractIdx = Index(
+    'dvc_limited_points_contract_idx',
+    'CREATE INDEX dvc_limited_points_contract_idx ON dvc_limited_points (contract_id)',
+  );
+  late final Index dvcPointUsagesContractIdx = Index(
+    'dvc_point_usages_contract_idx',
+    'CREATE INDEX dvc_point_usages_contract_idx ON dvc_point_usages (contract_id)',
+  );
   late final Index dvcLimitedPointsGroupStartIdx = Index(
     'dvc_limited_points_group_start_idx',
     'CREATE INDEX dvc_limited_points_group_start_idx ON dvc_limited_points (group_id, start_year_month)',
@@ -6672,6 +6788,8 @@ abstract class _$OfflineDatabase extends GeneratedDatabase {
     dvcPointUsages,
     groupEventsGroupYearIdx,
     dvcPointContractsGroupStartIdx,
+    dvcLimitedPointsContractIdx,
+    dvcPointUsagesContractIdx,
     dvcLimitedPointsGroupStartIdx,
     dvcPointUsagesGroupMonthIdx,
     calendarLabels,
@@ -6740,27 +6858,6 @@ abstract class _$OfflineDatabase extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('group_events', kind: UpdateKind.delete)],
-    ),
-    WritePropagation(
-      on: TableUpdateQuery.onTableName(
-        'groups',
-        limitUpdateKind: UpdateKind.delete,
-      ),
-      result: [TableUpdate('dvc_point_contracts', kind: UpdateKind.delete)],
-    ),
-    WritePropagation(
-      on: TableUpdateQuery.onTableName(
-        'groups',
-        limitUpdateKind: UpdateKind.delete,
-      ),
-      result: [TableUpdate('dvc_limited_points', kind: UpdateKind.delete)],
-    ),
-    WritePropagation(
-      on: TableUpdateQuery.onTableName(
-        'groups',
-        limitUpdateKind: UpdateKind.delete,
-      ),
-      result: [TableUpdate('dvc_point_usages', kind: UpdateKind.delete)],
     ),
     WritePropagation(
       on: TableUpdateQuery.onTableName(

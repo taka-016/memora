@@ -27,6 +27,7 @@ void main() {
       final widget = DvcCell(
         usages: [
           DvcPointUsageDto(
+            contractId: 'c1',
             id: '1',
             groupId: 'group1',
             usageYearMonth: DateTime(2024, 8),
@@ -51,6 +52,7 @@ void main() {
       final usages = List.generate(
         10,
         (index) => DvcPointUsageDto(
+          contractId: 'c1',
           id: '$index',
           groupId: 'group1',
           usageYearMonth: DateTime(2024, index + 1),

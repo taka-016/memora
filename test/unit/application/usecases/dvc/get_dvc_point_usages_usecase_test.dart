@@ -16,6 +16,7 @@ void main() {
       const groupId = 'group-1';
       final expectedUsages = [
         DvcPointUsageDto(
+          contractId: 'c1',
           id: 'usage-1',
           groupId: groupId,
           usageYearMonth: DateTime(2025, 4),

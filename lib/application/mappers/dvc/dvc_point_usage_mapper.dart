@@ -6,6 +6,7 @@ class DvcPointUsageMapper {
     return DvcPointUsage(
       id: dto.id,
       groupId: dto.groupId,
+      contractId: dto.contractId,
       usageYearMonth: dto.usageYearMonth,
       usedPoint: dto.usedPoint,
       memo: dto.memo,
@@ -16,6 +17,7 @@ class DvcPointUsageMapper {
     return DvcPointUsageDto(
       id: entity.id,
       groupId: entity.groupId,
+      contractId: entity.contractId,
       usageYearMonth: entity.usageYearMonth,
       usedPoint: entity.usedPoint,
       memo: entity.memo,

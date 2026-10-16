@@ -4,6 +4,7 @@ class DvcLimitedPoint extends Equatable {
   const DvcLimitedPoint({
     required this.id,
     required this.groupId,
+    required this.contractId,
     required this.startYearMonth,
     required this.endYearMonth,
     required this.point,
@@ -12,6 +13,7 @@ class DvcLimitedPoint extends Equatable {
 
   final String id;
   final String groupId;
+  final String contractId;
   final DateTime startYearMonth;
   final DateTime endYearMonth;
   final int point;
@@ -20,6 +22,7 @@ class DvcLimitedPoint extends Equatable {
   DvcLimitedPoint copyWith({
     String? id,
     String? groupId,
+    String? contractId,
     DateTime? startYearMonth,
     DateTime? endYearMonth,
     int? point,
@@ -28,6 +31,7 @@ class DvcLimitedPoint extends Equatable {
     return DvcLimitedPoint(
       id: id ?? this.id,
       groupId: groupId ?? this.groupId,
+      contractId: contractId ?? this.contractId,
       startYearMonth: startYearMonth ?? this.startYearMonth,
       endYearMonth: endYearMonth ?? this.endYearMonth,
       point: point ?? this.point,
@@ -39,6 +43,7 @@ class DvcLimitedPoint extends Equatable {
   List<Object?> get props => [
     id,
     groupId,
+    contractId,
     startYearMonth,
     endYearMonth,
     point,

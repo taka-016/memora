@@ -1,3 +1,4 @@
+import 'package:memora/application/dtos/dvc/dvc_point_contract_dto.dart';
 import 'package:flutter/material.dart';
 import 'package:memora/application/dtos/dvc/dvc_point_usage_dto.dart';
 import 'package:memora/presentation/features/dvc/dvc_point_calculation_date_utils.dart';
@@ -9,6 +10,7 @@ Future<void> showDvcUsageBreakdownModal({
   required BuildContext context,
   required DateTime month,
   required List<DvcPointUsageDto> usages,
+  required List<DvcPointContractDto> contracts,
   required DvcUsageDeleteCallback onDelete,
 }) async {
   await showDialog<void>(
@@ -25,7 +27,9 @@ Future<void> showDvcUsageBreakdownModal({
                   children: usages.map((usage) {
                     final memo = usage.memo?.isEmpty ?? true ? '' : usage.memo!;
                     return ListTile(
-                      title: Text('${usage.usedPoint}pt'),
+                      title: Text(
+                        '${contracts.where((v) => v.id == usage.contractId).firstOrNull?.contractName ?? usage.contractId} / ${usage.usedPoint}pt',
+                      ),
                       subtitle: memo.isEmpty ? null : Text(memo),
                       trailing: IconButton(
                         key: ValueKey('dvc_usage_delete_button_${usage.id}'),

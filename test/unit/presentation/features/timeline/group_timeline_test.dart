@@ -351,6 +351,7 @@ void main() {
         createTestWidget(
           dvcPointUsageService: _FakeDvcPointUsageQueryService([
             DvcPointUsageDto(
+              contractId: 'c1',
               id: 'usage1',
               groupId: '1',
               usageYearMonth: currentMonth,
@@ -358,6 +359,7 @@ void main() {
               memo: 'メモ1',
             ),
             DvcPointUsageDto(
+              contractId: 'c1',
               id: 'usage2',
               groupId: '1',
               usageYearMonth: nextYearMonth,
@@ -617,6 +619,7 @@ void main() {
         createTestWidget(
           dvcPointUsageService: _FakeDvcPointUsageQueryService([
             DvcPointUsageDto(
+              contractId: 'c1',
               id: 'usage-1',
               groupId: '1',
               usageYearMonth: DateTime(currentYear, 4),
@@ -634,6 +637,7 @@ void main() {
         createTestWidget(
           dvcPointUsageService: _FakeDvcPointUsageQueryService([
             DvcPointUsageDto(
+              contractId: 'c1',
               id: 'usage-2',
               groupId: '1',
               usageYearMonth: DateTime(currentYear, 5),
@@ -1058,12 +1062,14 @@ void main() {
         createTestWidget(
           dvcPointUsageService: _FakeDvcPointUsageQueryService([
             DvcPointUsageDto(
+              contractId: 'c1',
               id: 'usage1',
               groupId: '1',
               usageYearMonth: currentMonth,
               usedPoint: 120,
             ),
             DvcPointUsageDto(
+              contractId: 'c1',
               id: 'usage2',
               groupId: '1',
               usageYearMonth: nextYearMonth,
@@ -1111,6 +1117,7 @@ void main() {
         createTestWidget(
           dvcPointUsageService: _FakeDvcPointUsageQueryService([
             DvcPointUsageDto(
+              contractId: 'c1',
               id: 'usage1',
               groupId: '1',
               usageYearMonth: DateTime(currentYear, 1),
@@ -1118,6 +1125,7 @@ void main() {
               memo: 'メモ1',
             ),
             DvcPointUsageDto(
+              contractId: 'c1',
               id: 'usage2',
               groupId: '1',
               usageYearMonth: DateTime(currentYear, 4),
@@ -1125,6 +1133,7 @@ void main() {
               memo: 'メモ2',
             ),
             DvcPointUsageDto(
+              contractId: 'c1',
               id: 'usage3',
               groupId: '1',
               usageYearMonth: DateTime(currentYear, 8),
@@ -1132,6 +1141,7 @@ void main() {
               memo: longMemo,
             ),
             DvcPointUsageDto(
+              contractId: 'c1',
               id: 'usage4',
               groupId: '1',
               usageYearMonth: DateTime(currentYear, 12),
@@ -1736,6 +1746,7 @@ void main() {
       final currentYear = fixedNow.year;
       final dvcService = _RefreshFailingDvcPointUsageQueryService([
         DvcPointUsageDto(
+          contractId: 'c1',
           id: 'usage-1',
           groupId: '1',
           usageYearMonth: DateTime(currentYear, 4),
@@ -2059,6 +2070,7 @@ class _FakeDvcPointUsageQueryService implements DvcPointUsageQueryService {
   @override
   Future<List<DvcPointUsageDto>> getDvcPointUsagesByGroupId(
     String groupId, {
+    String? contractId,
     List<OrderBy>? orderBy,
   }) async {
     return pointUsages.where((usage) => usage.groupId == groupId).toList();
@@ -2069,6 +2081,7 @@ class _ThrowingDvcPointUsageQueryService implements DvcPointUsageQueryService {
   @override
   Future<List<DvcPointUsageDto>> getDvcPointUsagesByGroupId(
     String groupId, {
+    String? contractId,
     List<OrderBy>? orderBy,
   }) async => throw TestException('取得失敗');
 }
@@ -2083,6 +2096,7 @@ class _RefreshFailingDvcPointUsageQueryService
   @override
   Future<List<DvcPointUsageDto>> getDvcPointUsagesByGroupId(
     String groupId, {
+    String? contractId,
     List<OrderBy>? orderBy,
   }) async {
     if (shouldFail) {

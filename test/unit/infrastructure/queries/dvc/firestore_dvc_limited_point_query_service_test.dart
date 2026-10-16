@@ -30,6 +30,17 @@ void main() {
       service = FirestoreDvcLimitedPointQueryService(firestore: mockFirestore);
     });
 
+    test('契約IDで取得範囲を絞り込める', () async {
+      final query = MockQuery<Map<String, dynamic>>();
+      final snapshot = MockQuerySnapshot<Map<String, dynamic>>();
+      when(mockCollection.where('groupId', isEqualTo: 'g1')).thenReturn(query);
+      when(query.where('contractId', isEqualTo: 'c1')).thenReturn(query);
+      when(query.get()).thenAnswer((_) async => snapshot);
+      when(snapshot.docs).thenReturn([]);
+      await service.getDvcLimitedPointsByGroupId('g1', contractId: 'c1');
+      verify(query.where('contractId', isEqualTo: 'c1')).called(1);
+    });
+
     test('groupIdで一覧を取得しorderByを適用できる', () async {
       const groupId = 'group001';
       final mockQuery = MockQuery<Map<String, dynamic>>();
@@ -44,6 +55,7 @@ void main() {
       when(mockSnapshot.docs).thenReturn([mockDoc]);
       when(mockDoc.id).thenReturn('limited001');
       when(mockDoc.data()).thenReturn({
+        'contractId': 'c1',
         'groupId': groupId,
         'startYearMonth': Timestamp.fromDate(DateTime(2025, 7)),
         'endYearMonth': Timestamp.fromDate(DateTime(2025, 12)),

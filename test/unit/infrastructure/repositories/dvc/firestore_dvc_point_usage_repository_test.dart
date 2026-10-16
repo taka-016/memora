@@ -32,6 +32,7 @@ void main() {
 
     test('saveがdvc_point_usagesに追加する', () async {
       final usage = DvcPointUsage(
+        contractId: 'c1',
         id: 'usage001',
         groupId: 'group001',
         usageYearMonth: DateTime(2025, 10),

@@ -30,6 +30,8 @@ Future<void> showDvcAvailableBreakdownModal({
                         '${dvcFormatYearMonth(breakdown.availableFrom)}〜'
                         '${dvcFormatYearMonth(breakdown.expireAt)}';
                     final subtitleChildren = <Widget>[
+                      if (breakdown.sourceType == DvcPointSourceType.limited)
+                        Text(breakdown.contractName),
                       if (breakdown.useYear != null)
                         Text('${breakdown.useYear}ユースイヤー'),
                     ];

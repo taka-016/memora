@@ -14,6 +14,7 @@ class FirestoreDvcPointUsageMapper {
     return DvcPointUsageDto(
       id: doc.id,
       groupId: data['groupId'] as String? ?? '',
+      contractId: data['contractId'] as String,
       usageYearMonth:
           FirestoreMapperValueParser.asDateTime(data['usageYearMonth']) ??
           _defaultDate,
@@ -25,6 +26,7 @@ class FirestoreDvcPointUsageMapper {
   static Map<String, dynamic> toCreateFirestore(DvcPointUsage pointUsage) {
     return {
       'groupId': pointUsage.groupId,
+      'contractId': pointUsage.contractId,
       'usageYearMonth': Timestamp.fromDate(pointUsage.usageYearMonth),
       'usedPoint': pointUsage.usedPoint,
       'memo': pointUsage.memo,
