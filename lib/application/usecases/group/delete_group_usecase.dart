@@ -14,8 +14,6 @@ class DeleteGroupUsecase {
   );
 
   Future<void> execute(String groupId) async {
-    await _tripEntryRepository.deleteTripEntriesByGroupId(groupId);
-    await _groupEventRepository.deleteGroupEventsByGroupId(groupId);
     await _groupRepository.deleteGroup(groupId);
   }
 }

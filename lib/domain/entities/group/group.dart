@@ -8,8 +8,10 @@ class Group extends Equatable {
     required this.ownerId,
     required this.name,
     this.memo,
+    List<GroupMember>? originalMembers,
     List<GroupMember>? members,
-  }) : members = List.unmodifiable(members ?? const []) {
+  }) : originalMembers = List.unmodifiable(originalMembers ?? const []),
+       members = List.unmodifiable(members ?? const []) {
     if (members != null) {
       final memberIds = <String>{};
       for (final member in members) {
@@ -25,6 +27,7 @@ class Group extends Equatable {
   final String name;
   final String? memo;
   final List<GroupMember> members;
+  final List<GroupMember> originalMembers;
 
   Group copyWith({
     String? id,
@@ -39,9 +42,10 @@ class Group extends Equatable {
       name: name ?? this.name,
       memo: memo ?? this.memo,
       members: members ?? this.members,
+      originalMembers: originalMembers,
     );
   }
 
   @override
-  List<Object?> get props => [id, ownerId, name, memo, members];
+  List<Object?> get props => [id, ownerId, name, memo, members, originalMembers];
 }

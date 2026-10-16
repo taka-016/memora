@@ -14,8 +14,6 @@ class DeleteMemberUsecase {
   );
 
   Future<void> execute(String memberId) async {
-    await _groupRepository.deleteGroupMembersByMemberId(memberId);
-    await _memberEventRepository.deleteMemberEventsByMemberId(memberId);
     await _memberRepository.deleteMember(memberId);
   }
 }

@@ -21,8 +21,21 @@ class SqliteGroupRepository implements GroupRepository {
   @override
   Future<void> updateGroup(Group group) async => db.transaction(() async {
     await db.updateRow('groups', group.id, SqliteGroupMapper.toRow(group));
-    await db.deleteRows('group_members', 'group_id', group.id);
-    await _members(group);
+    final before = {for (final member in group.originalMembers) member.memberId: member};
+    final after = {for (final member in group.members) member.memberId: member};
+    for (final id in before.keys.where((id) => !after.containsKey(id))) {
+      await db.customStatement('DELETE FROM group_members WHERE group_id = ? AND member_id = ?', [group.id, id]);
+    }
+    for (final member in group.members) {
+      final previous = before[member.memberId];
+      if (previous == member) continue;
+      final row = SqliteGroupMemberMapper.toRow(member.copyWith(groupId: group.id));
+      if (previous == null) {
+        await db.customStatement('INSERT INTO group_members (group_id, member_id, is_administrator, order_index) VALUES (?, ?, ?, ?) ON CONFLICT(group_id, member_id) DO NOTHING', row.values.toList());
+      } else {
+        await db.customStatement('UPDATE group_members SET is_administrator = ?, order_index = ? WHERE group_id = ? AND member_id = ?', [member.isAdministrator ? 1 : 0, member.orderIndex, group.id, member.memberId]);
+      }
+    }
   });
   Future<void> _members(Group group) async {
     for (final member in group.members) {
@@ -34,8 +47,12 @@ class SqliteGroupRepository implements GroupRepository {
   }
 
   @override
-  Future<void> deleteGroup(String groupId) async =>
-      db.deleteRows('groups', 'id', groupId);
+  Future<void> deleteGroup(String groupId) async => db.transaction(() async {
+    final rows = await db.rows('groups', where: 'id = ?', args: [groupId]);
+    if (rows.isEmpty) return;
+    await db.insertRow('deleted_groups', rows.single);
+    await db.deleteRows('groups', 'id', groupId);
+  });
   @override
   Future<void> deleteGroupMembersByMemberId(String memberId) async =>
       db.deleteRows('group_members', 'member_id', memberId);

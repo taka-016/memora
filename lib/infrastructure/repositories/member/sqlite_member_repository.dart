@@ -16,6 +16,10 @@ class SqliteMemberRepository implements MemberRepository {
   Future<void> updateMember(Member member) async =>
       db.updateRow('members', member.id, SqliteMemberMapper.toRow(member));
   @override
-  Future<void> deleteMember(String memberId) async =>
-      db.deleteRows('members', 'id', memberId);
+  Future<void> deleteMember(String memberId) async => db.transaction(() async {
+    final rows = await db.rows('members', where: 'id = ?', args: [memberId]);
+    if (rows.isEmpty) return;
+    await db.insertRow('deleted_members', rows.single);
+    await db.deleteRows('members', 'id', memberId);
+  });
 }
