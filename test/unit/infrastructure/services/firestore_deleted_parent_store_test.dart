@@ -38,7 +38,9 @@ void main() {
         'version': 5,
         'createdAt': timestamp,
         'updatedAt': timestamp,
-        'additionalField': {'value': ['保持する']},
+        'additionalField': {
+          'value': ['保持する'],
+        },
       };
       when(context.collection(collectionName)).thenReturn(collection);
       when(collection.doc('original')).thenReturn(reference);

@@ -201,11 +201,9 @@ CREATE TABLE deleted_members (
   phone_number TEXT
 ) AS SqliteDeletedMemberRow;
 
-
 CREATE TABLE deleted_groups (
   id TEXT NOT NULL PRIMARY KEY,
   owner_id TEXT NOT NULL,
   name TEXT NOT NULL,
   memo TEXT
 ) AS SqliteDeletedGroupRow;
-
