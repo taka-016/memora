@@ -108,7 +108,7 @@
 
 ## カレンダー
 
-対象は[ユーザーストーリー23〜25](user_stories.md)とし、[ADR-004](adr/adr-004-group-and-external-calendars.md)および[ER図](er_diagram.md)に沿って実装する。
+対象は[ユーザーストーリー23〜25](user_stories.md)とし、[ER図](er_diagram.md)に沿って実装する。
 
 以下の番号順に対応する。各段階で関連するテストを追加・実行し、保存・表示の整合性を確認してから次へ進む。モデルの説明は末尾の補足を参照する。
 
@@ -125,7 +125,7 @@
 
 ### 補足: カレンダー関連モデル（Googleカレンダー連携は実装予定）
 
-[ユーザーストーリー23〜25](user_stories.md)と[ADR-004](adr/adr-004-group-and-external-calendars.md)および繰り返し設定の追加要望に対応する設計を示す。[ER図](er_diagram.md)の`calendar_events`と`calendar_labels`は単発予定の保存基盤をFirestore・SQLiteへ実装済み。`calendar_events.recurrenceRule`・`timeZone`と個別回の上書きは実装済み。繰り返しの入力画面と個別回・系列の編集・削除は実装済み。`google_calendar_connections`・`google_calendar_selections`は実装予定。Firestore・SQLiteともに個別回の変更・取消しを`calendar_event_overrides`に保存する。現在の保存構造は[ER図の補足](er_diagram.md#図の補足)を参照。
+[ユーザーストーリー23〜25](user_stories.md)と繰り返し設定の追加要望に対応する設計を示す。[ER図](er_diagram.md)の`calendar_events`と`calendar_labels`は単発予定の保存基盤をFirestore・SQLiteへ実装済み。`calendar_events.recurrenceRule`・`timeZone`と個別回の上書きは実装済み。繰り返しの入力画面と個別回・系列の編集・削除は実装済み。`google_calendar_connections`・`google_calendar_selections`は実装予定。Firestore・SQLiteともに個別回の変更・取消しを`calendar_event_overrides`に保存する。現在の保存構造は[ER図の補足](er_diagram.md#図の補足)を参照。
 
 | エンティティ | 役割 | 保存・公開範囲 |
 | --- | --- | --- |
