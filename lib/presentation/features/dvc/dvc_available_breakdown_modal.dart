@@ -13,89 +13,119 @@ Future<void> showDvcAvailableBreakdownModal({
   required List<DvcAvailablePointBreakdown> breakdowns,
   DvcLimitedPointDeleteCallback? onDeleteLimitedPoint,
 }) async {
+  var isSaving = false;
   await showDialog<void>(
     context: context,
     builder: (dialogContext) {
-      return AlertDialog(
-        title: Text('${dvcFormatYearMonth(month)}\n利用可能ポイント内訳'),
-        content: SizedBox(
-          width: 520,
-          child: breakdowns.isEmpty
-              ? const Text('内訳がありません')
-              : ListView(
-                  shrinkWrap: true,
-                  children: breakdowns.map((breakdown) {
-                    final memo = breakdown.memo?.trim() ?? '';
-                    final expireLabel =
-                        '${dvcFormatYearMonth(breakdown.availableFrom)}〜'
-                        '${dvcFormatYearMonth(breakdown.expireAt)}';
-                    final subtitleChildren = <Widget>[
-                      if (breakdown.sourceType == DvcPointSourceType.limited)
-                        Text(breakdown.contractName),
-                      if (breakdown.useYear != null)
-                        Text('${breakdown.useYear}ユースイヤー'),
-                    ];
-                    if (breakdown.sourceType == DvcPointSourceType.limited) {
-                      if (memo.isNotEmpty) {
-                        subtitleChildren.add(Text(memo));
-                      }
-                      subtitleChildren.add(Text(expireLabel));
-                    } else {
-                      subtitleChildren.add(Text(expireLabel));
-                      if (memo.isNotEmpty) {
-                        subtitleChildren.add(Text(memo));
-                      }
-                    }
-                    return ListTile(
-                      title: Text(
-                        '${breakdown.sourceName}: ${breakdown.remainingPoint}pt',
+      return StatefulBuilder(
+        builder: (context, setState) => PopScope(
+          canPop: !isSaving,
+          child: AlertDialog(
+            title: Text('${dvcFormatYearMonth(month)}\n利用可能ポイント内訳'),
+            content: AbsorbPointer(
+              absorbing: isSaving,
+              child: SizedBox(
+                width: 520,
+                child: breakdowns.isEmpty
+                    ? const Text('内訳がありません')
+                    : ListView(
+                        shrinkWrap: true,
+                        children: breakdowns.map((breakdown) {
+                          final memo = breakdown.memo?.trim() ?? '';
+                          final expireLabel =
+                              '${dvcFormatYearMonth(breakdown.availableFrom)}〜'
+                              '${dvcFormatYearMonth(breakdown.expireAt)}';
+                          final subtitleChildren = <Widget>[
+                            if (breakdown.sourceType ==
+                                DvcPointSourceType.limited)
+                              Text(breakdown.contractName),
+                            if (breakdown.useYear != null)
+                              Text('${breakdown.useYear}ユースイヤー'),
+                          ];
+                          if (breakdown.sourceType ==
+                              DvcPointSourceType.limited) {
+                            if (memo.isNotEmpty) {
+                              subtitleChildren.add(Text(memo));
+                            }
+                            subtitleChildren.add(Text(expireLabel));
+                          } else {
+                            subtitleChildren.add(Text(expireLabel));
+                            if (memo.isNotEmpty) {
+                              subtitleChildren.add(Text(memo));
+                            }
+                          }
+                          return ListTile(
+                            title: Text(
+                              '${breakdown.sourceName}: ${breakdown.remainingPoint}pt',
+                            ),
+                            subtitle: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: subtitleChildren,
+                            ),
+                            trailing:
+                                breakdown.sourceType ==
+                                        DvcPointSourceType.limited &&
+                                    onDeleteLimitedPoint != null
+                                ? IconButton(
+                                    key: ValueKey(
+                                      'dvc_limited_point_delete_button_${breakdown.sourceId}',
+                                    ),
+                                    icon: const Icon(Icons.delete_outline),
+                                    onPressed: isSaving
+                                        ? null
+                                        : () async {
+                                            if (isSaving) return;
+                                            setState(() {
+                                              isSaving = true;
+                                            });
+                                            try {
+                                              final confirmed =
+                                                  await DeleteConfirmDialog.show(
+                                                    dialogContext,
+                                                    title: '削除確認',
+                                                    content: '期間限定ポイントを削除しますか？',
+                                                    onConfirm: () {},
+                                                  );
+                                              if (confirmed != true) {
+                                                return;
+                                              }
+                                              if (!dialogContext.mounted) {
+                                                return;
+                                              }
+                                              final didDelete =
+                                                  await onDeleteLimitedPoint(
+                                                    breakdown.sourceId,
+                                                  );
+                                              if (didDelete &&
+                                                  dialogContext.mounted) {
+                                                Navigator.of(dialogContext)
+                                                    .pop();
+                                              }
+                                            } finally {
+                                              if (dialogContext.mounted)
+                                                setState(() {
+                                                  isSaving = false;
+                                                });
+                                            }
+                                          },
+                                  )
+                                : null,
+                          );
+                        }).toList(),
                       ),
-                      subtitle: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: subtitleChildren,
-                      ),
-                      trailing:
-                          breakdown.sourceType == DvcPointSourceType.limited &&
-                              onDeleteLimitedPoint != null
-                          ? IconButton(
-                              key: ValueKey(
-                                'dvc_limited_point_delete_button_${breakdown.sourceId}',
-                              ),
-                              icon: const Icon(Icons.delete_outline),
-                              onPressed: () async {
-                                final confirmed =
-                                    await DeleteConfirmDialog.show(
-                                      dialogContext,
-                                      title: '削除確認',
-                                      content: '期間限定ポイントを削除しますか？',
-                                      onConfirm: () {},
-                                    );
-                                if (confirmed != true) {
-                                  return;
-                                }
-                                if (!dialogContext.mounted) {
-                                  return;
-                                }
-                                final didDelete = await onDeleteLimitedPoint(
-                                  breakdown.sourceId,
-                                );
-                                if (didDelete && dialogContext.mounted) {
-                                  Navigator.of(dialogContext).pop();
-                                }
-                              },
-                            )
-                          : null,
-                    );
-                  }).toList(),
-                ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('閉じる'),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: isSaving
+                    ? null
+                    : () => Navigator.of(dialogContext).pop(),
+                child: const Text('閉じる'),
+              ),
+            ],
           ),
-        ],
+        ),
       );
     },
   );

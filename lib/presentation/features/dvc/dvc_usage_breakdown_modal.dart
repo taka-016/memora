@@ -13,56 +13,88 @@ Future<void> showDvcUsageBreakdownModal({
   required List<DvcPointContractDto> contracts,
   required DvcUsageDeleteCallback onDelete,
 }) async {
+  var isSaving = false;
   await showDialog<void>(
     context: context,
     builder: (dialogContext) {
-      return AlertDialog(
-        title: Text('${dvcFormatYearMonth(month)}\n利用ポイント内訳'),
-        content: SizedBox(
-          width: 520,
-          child: usages.isEmpty
-              ? const Text('利用登録がありません')
-              : ListView(
-                  shrinkWrap: true,
-                  children: usages.map((usage) {
-                    final memo = usage.memo?.isEmpty ?? true ? '' : usage.memo!;
-                    return ListTile(
-                      title: Text(
-                        '${contracts.where((v) => v.id == usage.contractId).firstOrNull?.contractName ?? usage.contractId} / ${usage.usedPoint}pt',
-                      ),
-                      subtitle: memo.isEmpty ? null : Text(memo),
-                      trailing: IconButton(
-                        key: ValueKey('dvc_usage_delete_button_${usage.id}'),
-                        icon: const Icon(Icons.delete_outline),
-                        onPressed: () async {
-                          final confirmed = await DeleteConfirmDialog.show(
-                            dialogContext,
-                            title: '削除確認',
-                            content: '利用ポイントを削除しますか？',
-                            onConfirm: () {},
+      return StatefulBuilder(
+        builder: (context, setState) => PopScope(
+          canPop: !isSaving,
+          child: AlertDialog(
+            title: Text('${dvcFormatYearMonth(month)}\n利用ポイント内訳'),
+            content: AbsorbPointer(
+              absorbing: isSaving,
+              child: SizedBox(
+                width: 520,
+                child: usages.isEmpty
+                    ? const Text('利用登録がありません')
+                    : ListView(
+                        shrinkWrap: true,
+                        children: usages.map((usage) {
+                          final memo = usage.memo?.isEmpty ?? true
+                              ? ''
+                              : usage.memo!;
+                          return ListTile(
+                            title: Text(
+                              '${contracts.where((v) => v.id == usage.contractId).firstOrNull?.contractName ?? usage.contractId} / ${usage.usedPoint}pt',
+                            ),
+                            subtitle: memo.isEmpty ? null : Text(memo),
+                            trailing: IconButton(
+                              key: ValueKey(
+                                'dvc_usage_delete_button_${usage.id}',
+                              ),
+                              icon: const Icon(Icons.delete_outline),
+                              onPressed: isSaving
+                                  ? null
+                                  : () async {
+                                      if (isSaving) return;
+                                      setState(() {
+                                        isSaving = true;
+                                      });
+                                      try {
+                                        final confirmed =
+                                            await DeleteConfirmDialog.show(
+                                              dialogContext,
+                                              title: '削除確認',
+                                              content: '利用ポイントを削除しますか？',
+                                              onConfirm: () {},
+                                            );
+                                        if (confirmed != true) {
+                                          return;
+                                        }
+                                        if (!dialogContext.mounted) {
+                                          return;
+                                        }
+                                        final didDelete = await onDelete(
+                                          usage.id,
+                                        );
+                                        if (didDelete &&
+                                            dialogContext.mounted) {
+                                          Navigator.of(dialogContext).pop();
+                                        }
+                                      } finally {
+                                        if (dialogContext.mounted)
+                                          setState(() {
+                                            isSaving = false;
+                                          });
+                                      }
+                                    },
+                            ),
                           );
-                          if (confirmed != true) {
-                            return;
-                          }
-                          if (!dialogContext.mounted) {
-                            return;
-                          }
-                          final didDelete = await onDelete(usage.id);
-                          if (didDelete && dialogContext.mounted) {
-                            Navigator.of(dialogContext).pop();
-                          }
-                        },
+                        }).toList(),
                       ),
-                    );
-                  }).toList(),
-                ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('閉じる'),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: isSaving
+                    ? null
+                    : () => Navigator.of(dialogContext).pop(),
+                child: const Text('閉じる'),
+              ),
+            ],
           ),
-        ],
+        ),
       );
     },
   );

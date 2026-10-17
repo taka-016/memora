@@ -37,149 +37,175 @@ Future<void> showDvcContractManagementModal({
     );
   }
   var validationError = '';
+  var isSaving = false;
 
   await showDialog<void>(
     context: context,
     builder: (dialogContext) {
       return StatefulBuilder(
         builder: (context, setState) {
-          return AlertDialog(
-            title: const Text('契約管理'),
-            content: SizedBox(
-              width: 520,
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    ...editable.asMap().entries.map((entry) {
-                      final index = entry.key;
-                      final contract = entry.value;
-                      return Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(8),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              ListTile(
-                                contentPadding: EdgeInsets.zero,
-                                title: Text(
-                                  contract.contractName.isEmpty
-                                      ? '新しい契約'
-                                      : contract.contractName,
-                                ),
-                                trailing: Icon(
-                                  contract.expanded
-                                      ? Icons.expand_less
-                                      : Icons.expand_more,
-                                ),
-                                onTap: () {
-                                  setState(() {
-                                    editable[index] = contract.copyWith(
-                                      expanded: !contract.expanded,
-                                    );
-                                  });
-                                },
-                              ),
-                              if (protectedContractIds.contains(contract.id))
-                                const Text('利用履歴・期間限定ポイントがある契約は削除できません'),
-                              if (contract.expanded) ...[
-                                _ContractForm(
-                                  contract: contract,
-                                  onChanged: (updated) {
-                                    setState(() {
-                                      editable[index] = updated;
-                                    });
-                                  },
-                                ),
-                                const Divider(),
-                                Align(
-                                  alignment: Alignment.centerRight,
-                                  child: TextButton.icon(
-                                    key: ValueKey(
-                                      'dvc_contract_delete_button_$index',
+          return PopScope(
+            canPop: !isSaving,
+            child: AlertDialog(
+              title: const Text('契約管理'),
+              content: AbsorbPointer(
+                absorbing: isSaving,
+                child: SizedBox(
+                  width: 520,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ...editable.asMap().entries.map((entry) {
+                          final index = entry.key;
+                          final contract = entry.value;
+                          return Card(
+                            child: Padding(
+                              padding: const EdgeInsets.all(8),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  ListTile(
+                                    contentPadding: EdgeInsets.zero,
+                                    title: Text(
+                                      contract.contractName.isEmpty
+                                          ? '新しい契約'
+                                          : contract.contractName,
                                     ),
-                                    icon: const Icon(Icons.delete_outline),
-                                    label: const Text('この契約を削除'),
-                                    style: TextButton.styleFrom(
-                                      foregroundColor: Theme.of(context)
-                                          .colorScheme
-                                          .error,
+                                    trailing: Icon(
+                                      contract.expanded
+                                          ? Icons.expand_less
+                                          : Icons.expand_more,
                                     ),
-                                    onPressed:
-                                        protectedContractIds.contains(
-                                          contract.id,
-                                        )
-                                        ? null
-                                        : () {
-                                            setState(() {
-                                              editable.removeAt(index);
-                                            });
-                                          },
+                                    onTap: () {
+                                      setState(() {
+                                        editable[index] = contract.copyWith(
+                                          expanded: !contract.expanded,
+                                        );
+                                      });
+                                    },
                                   ),
-                                ),
-                              ],
-                            ],
+                                  if (protectedContractIds.contains(
+                                    contract.id,
+                                  ))
+                                    const Text('利用履歴・期間限定ポイントがある契約は削除できません'),
+                                  if (contract.expanded) ...[
+                                    _ContractForm(
+                                      contract: contract,
+                                      onChanged: (updated) {
+                                        setState(() {
+                                          editable[index] = updated;
+                                        });
+                                      },
+                                    ),
+                                    const Divider(),
+                                    Align(
+                                      alignment: Alignment.centerRight,
+                                      child: TextButton.icon(
+                                        key: ValueKey(
+                                          'dvc_contract_delete_button_$index',
+                                        ),
+                                        icon: const Icon(Icons.delete_outline),
+                                        label: const Text('この契約を削除'),
+                                        style: TextButton.styleFrom(
+                                          foregroundColor: Theme.of(context)
+                                              .colorScheme
+                                              .error,
+                                        ),
+                                        onPressed:
+                                            protectedContractIds.contains(
+                                              contract.id,
+                                            )
+                                            ? null
+                                            : () {
+                                                setState(() {
+                                                  editable.removeAt(index);
+                                                });
+                                              },
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          );
+                        }),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: IconButton(
+                            key: const Key('dvc_contract_add_button'),
+                            icon: const Icon(Icons.add_circle_outline),
+                            onPressed: () {
+                              final addNow = clock.now();
+                              setState(() {
+                                editable.add(
+                                  DvcEditableContract(
+                                    contractName: '',
+                                    contractStartYearMonth: dvcMonthStart(
+                                      addNow,
+                                    ),
+                                    contractEndYearMonth: dvcMonthStart(addNow),
+                                    useYearStartMonth: addNow.month,
+                                    annualPointText: '',
+                                    expanded: true,
+                                  ),
+                                );
+                              });
+                            },
                           ),
                         ),
-                      );
-                    }),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: IconButton(
-                        key: const Key('dvc_contract_add_button'),
-                        icon: const Icon(Icons.add_circle_outline),
-                        onPressed: () {
-                          final addNow = clock.now();
-                          setState(() {
-                            editable.add(
-                              DvcEditableContract(
-                                contractName: '',
-                                contractStartYearMonth: dvcMonthStart(addNow),
-                                contractEndYearMonth: dvcMonthStart(addNow),
-                                useYearStartMonth: addNow.month,
-                                annualPointText: '',
-                                expanded: true,
-                              ),
-                            );
-                          });
-                        },
-                      ),
+                        if (validationError.isNotEmpty)
+                          Text(
+                            validationError,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.error,
+                            ),
+                          ),
+                      ],
                     ),
-                    if (validationError.isNotEmpty)
-                      Text(
-                        validationError,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
-                        ),
-                      ),
-                  ],
+                  ),
                 ),
               ),
+              actions: [
+                TextButton(
+                  onPressed: isSaving
+                      ? null
+                      : () => Navigator.of(dialogContext).pop(),
+                  child: const Text('キャンセル'),
+                ),
+                TextButton(
+                  onPressed: isSaving
+                      ? null
+                      : () async {
+                          if (isSaving) return;
+                          final hasInvalid = editable.any(
+                            (contract) => !contract.isValid,
+                          );
+                          if (hasInvalid) {
+                            setState(() {
+                              validationError = '入力内容を確認してください';
+                            });
+                            return;
+                          }
+                          setState(() {
+                            isSaving = true;
+                          });
+                          try {
+                            final didSave = await onSave(editable);
+                            if (didSave && dialogContext.mounted) {
+                              Navigator.of(dialogContext).pop();
+                            }
+                          } finally {
+                            if (dialogContext.mounted)
+                              setState(() {
+                                isSaving = false;
+                              });
+                          }
+                        },
+                  child: const Text('更新'),
+                ),
+              ],
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(dialogContext).pop(),
-                child: const Text('キャンセル'),
-              ),
-              TextButton(
-                onPressed: () async {
-                  final hasInvalid = editable.any(
-                    (contract) => !contract.isValid,
-                  );
-                  if (hasInvalid) {
-                    setState(() {
-                      validationError = '入力内容を確認してください';
-                    });
-                    return;
-                  }
-                  final didSave = await onSave(editable);
-                  if (didSave && dialogContext.mounted) {
-                    Navigator.of(dialogContext).pop();
-                  }
-                },
-                child: const Text('更新'),
-              ),
-            ],
           );
         },
       );

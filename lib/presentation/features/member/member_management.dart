@@ -85,12 +85,12 @@ class MemberManagement extends HookConsumerWidget {
       );
     }
 
-    Future<void> runMutationWithFeedback({
+    Future<bool> runMutationWithFeedback({
       required Future<bool> Function() execute,
       required String successMessage,
       required String failureMessage,
     }) async {
-      await runExclusiveMemberOperation(
+      return runExclusiveMemberOperation(
         blockedResult: false,
         execute: () async {
           try {

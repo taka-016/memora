@@ -11,7 +11,7 @@ import 'package:memora/presentation/shared/dialogs/edit_discard_confirm_dialog.d
 
 class MemberEditModal extends HookConsumerWidget {
   final MemberDto? member;
-  final Future<void> Function(MemberDto) onSave;
+  final Future<bool> Function(MemberDto) onSave;
   final Future<void> Function(MemberDto)? onInvite;
 
   const MemberEditModal({
@@ -364,7 +364,8 @@ class MemberEditModal extends HookConsumerWidget {
       if (formKey.currentState!.validate()) {
         isSaving.value = true;
         try {
-          await onSave(buildUpdatedMember());
+          final succeeded = await onSave(buildUpdatedMember());
+          if (!succeeded) return;
           if (!context.mounted) {
             return;
           }
