@@ -6,13 +6,6 @@
 
 [ADR-004](adr/adr-004-archive-groups-and-members.md)・[ADR-005](adr/adr-005-version-based-concurrency-control.md)・[ADR-006](adr/adr-006-atomic-aggregate-updates.md)・[ADR-007](adr/adr-007-cached-read-consistency.md)に従い、以下の節・各節の番号順に実装・検証する。
 
-#### 1. 保存完了・失敗を画面へ伝える
-
-1. メンバー・招待・年表イベント・旅行・グループ・予定・ラベル・DVCの保存経路で、RepositoryからUseCase・Notifier・画面まで完了待ちと例外伝播が欠けている箇所を修正する。成功表示・画面遷移・後続処理はサーバー保存完了後に実行する。
-2. 監視通知で保存成功を判定している経路は、未確定の書き込みを`hasPendingWrites`等で区別する。
-3. 通信断時の重複操作抑止が欠けている画面を既存の保存中状態で制御する。結果未確認のタイムアウトを保存失敗として再送する経路を修正する。
-4. 保存成功・サーバー拒否・通信断からの復旧・複数書き込みの途中失敗をテストする。
-
 #### 2. バージョンの受け渡しと共通Rulesを実装する
 
 1. 単独データ（`members`・`member_invitations`・`group_events`・`member_events`）、集約の親（`trip_entries`・`groups`・`calendar_events`・`dvc_point_contracts`）、`calendar_labels`のMapper・Entity・DTOへ整数の`version`を追加する。子は親のバージョンで管理する。
