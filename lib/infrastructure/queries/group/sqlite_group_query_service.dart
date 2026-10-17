@@ -10,6 +10,11 @@ import 'package:memora/infrastructure/mappers/member/sqlite_member_mapper.dart';
 class SqliteGroupQueryService implements GroupQueryService {
   SqliteGroupQueryService(this.db);
   final OfflineDatabase db;
+
+  @override
+  Future<bool> groupExists(String groupId) async =>
+      (await db.rows('groups', where: 'id = ?', args: [groupId])).isNotEmpty;
+
   Future<GroupDto> _group(
     Map<String, Object?> row,
     List<OrderBy>? orderBy,
@@ -22,11 +27,13 @@ class SqliteGroupQueryService implements GroupQueryService {
     );
     final members = <GroupMemberDto>[];
     for (final link in links) {
-      final member = (await db.rows(
+      final memberRows = await db.rows(
         'members',
         where: 'id = ?',
         args: [link['member_id']!],
-      )).single;
+      );
+      if (memberRows.isEmpty) continue;
+      final member = memberRows.single;
       members.add(
         SqliteGroupMemberMapper.fromRow(
           link,

@@ -36,7 +36,7 @@ class OfflineDatabase extends _$OfflineDatabase implements ReadTransaction {
   );
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(

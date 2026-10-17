@@ -31,6 +31,7 @@ final androidWidgetUpdateIntervalStorageProvider =
 final refreshAndroidWidgetItineraryCacheUsecaseProvider =
     Provider<RefreshAndroidWidgetItineraryCacheUsecase>((ref) {
       return RefreshAndroidWidgetItineraryCacheUsecase(
+        groupQueryService: ref.watch(groupQueryServiceProvider),
         cacheStorage: ref.watch(androidWidgetCacheStorageProvider),
         getCacheUsecase: ref.watch(
           getAndroidWidgetItineraryCacheUsecaseProvider,

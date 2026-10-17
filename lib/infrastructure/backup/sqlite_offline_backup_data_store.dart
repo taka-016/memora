@@ -41,11 +41,15 @@ class SqliteOfflineBackupDataStore implements OfflineBackupDataStore {
     'group_members',
     'groups',
     'members',
+    'deleted_groups',
+    'deleted_members',
   ];
 
   static const _insertOrder = <String>[
     'members',
     'groups',
+    'deleted_members',
+    'deleted_groups',
     'calendar_labels',
     'calendar_events',
     'calendar_event_overrides',

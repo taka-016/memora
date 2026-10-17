@@ -10,6 +10,9 @@ class GroupMapper {
       name: dto.name,
       memo: dto.memo,
       members: GroupMemberMapper.toEntityList(dto.members),
+      originalMembers: GroupMemberMapper.toEntityList(
+        dto.originalMembers ?? dto.members,
+      ),
     );
   }
 

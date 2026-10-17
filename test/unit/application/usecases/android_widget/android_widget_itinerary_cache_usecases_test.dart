@@ -1,3 +1,19 @@
+import 'package:drift/native.dart';
+import 'package:memora/application/models/app_mode.dart';
+import 'package:memora/infrastructure/config/resolved_app_mode_provider.dart';
+import 'package:memora/infrastructure/database/offline_database.dart';
+import 'package:memora/infrastructure/queries/group/sqlite_group_query_service.dart';
+import 'package:memora/infrastructure/repositories/group/sqlite_group_repository.dart';
+
+import '../group/get_group_with_members_by_id_usecase_test.mocks.dart';
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:memora/composition_root/providers/android_widget_providers.dart';
+import 'package:memora/infrastructure/factories/query_service_factory.dart';
+import 'package:mockito/mockito.dart';
+
+import '../../../infrastructure/repositories/calendar/firestore_calendar_repository_test.mocks.dart';
+
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -81,6 +97,101 @@ void main() {
   });
 
   group('RefreshAndroidWidgetItineraryCacheUsecase', () {
+    test('オフラインでグループを退避した後は残した旅行があってもキャッシュを解除する', () async {
+      final db = OfflineDatabase(NativeDatabase.memory());
+      addTearDown(db.close);
+      await db.insertRow('groups', {
+        'id': 'group-1',
+        'owner_id': 'owner',
+        'name': '家族',
+      });
+      await db.insertRow('trip_entries', {
+        'id': 'trip',
+        'group_id': 'group-1',
+        'year': 2026,
+      });
+      await SqliteGroupRepository(db).deleteGroup('group-1');
+      final storage = _FakeAndroidWidgetCacheStorage(
+        cache: _cacheWithItinerary(),
+      )..targetGroupId = 'group-1';
+      final container = ProviderContainer(
+        overrides: [
+          appModeProvider.overrideWithValue(AppMode.offline),
+          androidWidgetReadTransactionProvider.overrideWithValue(db),
+          groupQueryServiceProvider.overrideWithValue(
+            SqliteGroupQueryService(db),
+          ),
+          androidWidgetCacheStorageProvider.overrideWithValue(storage),
+          getAndroidWidgetItineraryCacheUsecaseProvider.overrideWithValue(
+            GetAndroidWidgetItineraryCacheUsecase(
+              tripEntryQueryService: _FakeTripEntryQueryService(),
+              itineraryItemQueryService: _FakeItineraryItemQueryService(),
+              clock: FixedAppClock(DateTime(2026, 5, 24, 10)),
+            ),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      await container
+          .read(refreshAndroidWidgetItineraryCacheUsecaseProvider)
+          .execute(groupId: 'group-1', preserveExistingCacheOnEmpty: true);
+      expect(storage.cache, isNull);
+      expect(storage.targetGroupId, isNull);
+      expect(await db.rows('trip_entries'), hasLength(1));
+    });
+
+    for (final missing in [true, false]) {
+      test(
+        missing
+            ? '退避済みグループは既存キャッシュ保持指定でも対象設定ごと解除する'
+            : 'グループ取得失敗時は既存キャッシュと対象設定を維持する',
+        () async {
+          final storage = _FakeAndroidWidgetCacheStorage(
+            cache: _cacheWithItinerary(),
+          )..targetGroupId = 'group-1';
+          final firestore = MockFirebaseFirestore();
+          final collection = MockCollectionReference();
+          final reference = MockDocumentReference();
+          final document = MockDocumentSnapshot();
+          when(firestore.collection('groups')).thenReturn(collection);
+          when(collection.doc('group-1')).thenReturn(reference);
+          when(document.exists).thenReturn(false);
+          if (missing) {
+            when(reference.get()).thenAnswer((_) async => document);
+          } else {
+            when(reference.get()).thenThrow(TestException('通信失敗'));
+          }
+          final container = ProviderContainer(
+            overrides: [
+              firebaseFirestoreProvider.overrideWithValue(firestore),
+              androidWidgetCacheStorageProvider.overrideWithValue(storage),
+              getAndroidWidgetItineraryCacheUsecaseProvider.overrideWithValue(
+                GetAndroidWidgetItineraryCacheUsecase(
+                  tripEntryQueryService: _FakeTripEntryQueryService(),
+                  itineraryItemQueryService: _FakeItineraryItemQueryService(),
+                  clock: FixedAppClock(DateTime(2026, 5, 24, 10)),
+                ),
+              ),
+            ],
+          );
+          addTearDown(container.dispose);
+          final future = container
+              .read(refreshAndroidWidgetItineraryCacheUsecaseProvider)
+              .execute(groupId: 'group-1', preserveExistingCacheOnEmpty: true);
+          if (missing) {
+            await future;
+            expect(storage.cache, isNull);
+            expect(storage.targetGroupId, isNull);
+          } else {
+            await expectLater(future, throwsA(isA<TestException>()));
+            expect(storage.cache, isNotNull);
+            expect(storage.targetGroupId, 'group-1');
+          }
+          expect(storage.updateWidgetCount, 1);
+        },
+      );
+    }
+
     test('復元後に公開したキャッシュを先行更新で上書きしない', () async {
       final restoredCache = _cacheWithItinerary();
       final storage = _FakeAndroidWidgetCacheStorage();
@@ -379,7 +490,10 @@ RefreshAndroidWidgetItineraryCacheUsecase _buildRefreshUsecase(
   ItineraryItemQueryService itineraryItemQueryService, {
   ReadTransaction? readTransaction,
 }) {
+  final groups = MockGroupQueryService();
+  when(groups.groupExists(any)).thenAnswer((_) async => true);
   return RefreshAndroidWidgetItineraryCacheUsecase(
+    groupQueryService: groups,
     cacheStorage: storage,
     readTransaction: readTransaction,
     getCacheUsecase: GetAndroidWidgetItineraryCacheUsecase(

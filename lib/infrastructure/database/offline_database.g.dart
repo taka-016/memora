@@ -37,7 +37,7 @@ class Members extends Table with TableInfo<Members, SqliteMemberRow> {
     true,
     type: DriftSqlType.string,
     requiredDuringInsert: false,
-    $customConstraints: 'REFERENCES members(id)ON DELETE RESTRICT',
+    $customConstraints: '',
   );
   static const VerificationMeta _hiraganaFirstNameMeta = const VerificationMeta(
     'hiraganaFirstName',
@@ -930,7 +930,7 @@ class Groups extends Table with TableInfo<Groups, SqliteGroupRow> {
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
-    $customConstraints: 'NOT NULL REFERENCES members(id)ON DELETE RESTRICT',
+    $customConstraints: 'NOT NULL',
   );
   static const VerificationMeta _nameMeta = const VerificationMeta('name');
   late final GeneratedColumn<String> name = GeneratedColumn<String>(
@@ -1229,7 +1229,7 @@ class GroupMembers extends Table
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
-    $customConstraints: 'NOT NULL REFERENCES "groups"(id)ON DELETE CASCADE',
+    $customConstraints: 'NOT NULL',
   );
   static const VerificationMeta _memberIdMeta = const VerificationMeta(
     'memberId',
@@ -1240,7 +1240,7 @@ class GroupMembers extends Table
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
-    $customConstraints: 'NOT NULL REFERENCES members(id)ON DELETE CASCADE',
+    $customConstraints: 'NOT NULL',
   );
   static const VerificationMeta _isAdministratorMeta = const VerificationMeta(
     'isAdministrator',
@@ -1574,7 +1574,7 @@ class TripEntries extends Table
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
-    $customConstraints: 'NOT NULL REFERENCES "groups"(id)ON DELETE CASCADE',
+    $customConstraints: 'NOT NULL',
   );
   static const VerificationMeta _yearMeta = const VerificationMeta('year');
   late final GeneratedColumn<int> year = GeneratedColumn<int>(
@@ -2099,7 +2099,7 @@ class Tasks extends Table with TableInfo<Tasks, SqliteTaskRow> {
     true,
     type: DriftSqlType.string,
     requiredDuringInsert: false,
-    $customConstraints: 'REFERENCES members(id)ON DELETE SET NULL',
+    $customConstraints: '',
   );
   @override
   List<GeneratedColumn> get $columns => [
@@ -3038,7 +3038,7 @@ class MemberEvents extends Table
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
-    $customConstraints: 'NOT NULL REFERENCES members(id)ON DELETE CASCADE',
+    $customConstraints: 'NOT NULL',
   );
   static const VerificationMeta _yearMeta = const VerificationMeta('year');
   late final GeneratedColumn<int> year = GeneratedColumn<int>(
@@ -3354,7 +3354,7 @@ class GroupEvents extends Table
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
-    $customConstraints: 'NOT NULL REFERENCES "groups"(id)ON DELETE CASCADE',
+    $customConstraints: 'NOT NULL',
   );
   static const VerificationMeta _yearMeta = const VerificationMeta('year');
   late final GeneratedColumn<int> year = GeneratedColumn<int>(
@@ -5072,7 +5072,7 @@ class CalendarLabels extends Table
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
-    $customConstraints: 'NOT NULL REFERENCES "groups"(id)ON DELETE CASCADE',
+    $customConstraints: 'NOT NULL',
   );
   static const VerificationMeta _nameMeta = const VerificationMeta('name');
   late final GeneratedColumn<String> name = GeneratedColumn<String>(
@@ -5484,7 +5484,7 @@ class CalendarEvents extends Table
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
-    $customConstraints: 'NOT NULL REFERENCES "groups"(id)ON DELETE CASCADE',
+    $customConstraints: 'NOT NULL',
   );
   static const VerificationMeta _labelIdMeta = const VerificationMeta(
     'labelId',
@@ -6664,6 +6664,1215 @@ class CalendarEventOverridesCompanion
   }
 }
 
+class DeletedMembers extends Table
+    with TableInfo<DeletedMembers, SqliteDeletedMemberRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  DeletedMembers(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL PRIMARY KEY',
+  );
+  static const VerificationMeta _accountIdMeta = const VerificationMeta(
+    'accountId',
+  );
+  late final GeneratedColumn<String> accountId = GeneratedColumn<String>(
+    'account_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  static const VerificationMeta _ownerIdMeta = const VerificationMeta(
+    'ownerId',
+  );
+  late final GeneratedColumn<String> ownerId = GeneratedColumn<String>(
+    'owner_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  static const VerificationMeta _hiraganaFirstNameMeta = const VerificationMeta(
+    'hiraganaFirstName',
+  );
+  late final GeneratedColumn<String> hiraganaFirstName =
+      GeneratedColumn<String>(
+        'hiragana_first_name',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        $customConstraints: '',
+      );
+  static const VerificationMeta _hiraganaLastNameMeta = const VerificationMeta(
+    'hiraganaLastName',
+  );
+  late final GeneratedColumn<String> hiraganaLastName = GeneratedColumn<String>(
+    'hiragana_last_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  static const VerificationMeta _kanjiFirstNameMeta = const VerificationMeta(
+    'kanjiFirstName',
+  );
+  late final GeneratedColumn<String> kanjiFirstName = GeneratedColumn<String>(
+    'kanji_first_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  static const VerificationMeta _kanjiLastNameMeta = const VerificationMeta(
+    'kanjiLastName',
+  );
+  late final GeneratedColumn<String> kanjiLastName = GeneratedColumn<String>(
+    'kanji_last_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  static const VerificationMeta _firstNameMeta = const VerificationMeta(
+    'firstName',
+  );
+  late final GeneratedColumn<String> firstName = GeneratedColumn<String>(
+    'first_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  static const VerificationMeta _lastNameMeta = const VerificationMeta(
+    'lastName',
+  );
+  late final GeneratedColumn<String> lastName = GeneratedColumn<String>(
+    'last_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  static const VerificationMeta _displayNameMeta = const VerificationMeta(
+    'displayName',
+  );
+  late final GeneratedColumn<String> displayName = GeneratedColumn<String>(
+    'display_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _typeMeta = const VerificationMeta('type');
+  late final GeneratedColumn<String> type = GeneratedColumn<String>(
+    'type',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  static const VerificationMeta _birthdayMeta = const VerificationMeta(
+    'birthday',
+  );
+  late final GeneratedColumn<int> birthday = GeneratedColumn<int>(
+    'birthday',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  static const VerificationMeta _genderMeta = const VerificationMeta('gender');
+  late final GeneratedColumn<String> gender = GeneratedColumn<String>(
+    'gender',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  static const VerificationMeta _emailMeta = const VerificationMeta('email');
+  late final GeneratedColumn<String> email = GeneratedColumn<String>(
+    'email',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  static const VerificationMeta _phoneNumberMeta = const VerificationMeta(
+    'phoneNumber',
+  );
+  late final GeneratedColumn<String> phoneNumber = GeneratedColumn<String>(
+    'phone_number',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    accountId,
+    ownerId,
+    hiraganaFirstName,
+    hiraganaLastName,
+    kanjiFirstName,
+    kanjiLastName,
+    firstName,
+    lastName,
+    displayName,
+    type,
+    birthday,
+    gender,
+    email,
+    phoneNumber,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'deleted_members';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SqliteDeletedMemberRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('account_id')) {
+      context.handle(
+        _accountIdMeta,
+        accountId.isAcceptableOrUnknown(data['account_id']!, _accountIdMeta),
+      );
+    }
+    if (data.containsKey('owner_id')) {
+      context.handle(
+        _ownerIdMeta,
+        ownerId.isAcceptableOrUnknown(data['owner_id']!, _ownerIdMeta),
+      );
+    }
+    if (data.containsKey('hiragana_first_name')) {
+      context.handle(
+        _hiraganaFirstNameMeta,
+        hiraganaFirstName.isAcceptableOrUnknown(
+          data['hiragana_first_name']!,
+          _hiraganaFirstNameMeta,
+        ),
+      );
+    }
+    if (data.containsKey('hiragana_last_name')) {
+      context.handle(
+        _hiraganaLastNameMeta,
+        hiraganaLastName.isAcceptableOrUnknown(
+          data['hiragana_last_name']!,
+          _hiraganaLastNameMeta,
+        ),
+      );
+    }
+    if (data.containsKey('kanji_first_name')) {
+      context.handle(
+        _kanjiFirstNameMeta,
+        kanjiFirstName.isAcceptableOrUnknown(
+          data['kanji_first_name']!,
+          _kanjiFirstNameMeta,
+        ),
+      );
+    }
+    if (data.containsKey('kanji_last_name')) {
+      context.handle(
+        _kanjiLastNameMeta,
+        kanjiLastName.isAcceptableOrUnknown(
+          data['kanji_last_name']!,
+          _kanjiLastNameMeta,
+        ),
+      );
+    }
+    if (data.containsKey('first_name')) {
+      context.handle(
+        _firstNameMeta,
+        firstName.isAcceptableOrUnknown(data['first_name']!, _firstNameMeta),
+      );
+    }
+    if (data.containsKey('last_name')) {
+      context.handle(
+        _lastNameMeta,
+        lastName.isAcceptableOrUnknown(data['last_name']!, _lastNameMeta),
+      );
+    }
+    if (data.containsKey('display_name')) {
+      context.handle(
+        _displayNameMeta,
+        displayName.isAcceptableOrUnknown(
+          data['display_name']!,
+          _displayNameMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_displayNameMeta);
+    }
+    if (data.containsKey('type')) {
+      context.handle(
+        _typeMeta,
+        type.isAcceptableOrUnknown(data['type']!, _typeMeta),
+      );
+    }
+    if (data.containsKey('birthday')) {
+      context.handle(
+        _birthdayMeta,
+        birthday.isAcceptableOrUnknown(data['birthday']!, _birthdayMeta),
+      );
+    }
+    if (data.containsKey('gender')) {
+      context.handle(
+        _genderMeta,
+        gender.isAcceptableOrUnknown(data['gender']!, _genderMeta),
+      );
+    }
+    if (data.containsKey('email')) {
+      context.handle(
+        _emailMeta,
+        email.isAcceptableOrUnknown(data['email']!, _emailMeta),
+      );
+    }
+    if (data.containsKey('phone_number')) {
+      context.handle(
+        _phoneNumberMeta,
+        phoneNumber.isAcceptableOrUnknown(
+          data['phone_number']!,
+          _phoneNumberMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  SqliteDeletedMemberRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SqliteDeletedMemberRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      accountId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}account_id'],
+      ),
+      ownerId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}owner_id'],
+      ),
+      hiraganaFirstName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}hiragana_first_name'],
+      ),
+      hiraganaLastName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}hiragana_last_name'],
+      ),
+      kanjiFirstName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}kanji_first_name'],
+      ),
+      kanjiLastName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}kanji_last_name'],
+      ),
+      firstName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}first_name'],
+      ),
+      lastName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}last_name'],
+      ),
+      displayName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}display_name'],
+      )!,
+      type: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}type'],
+      ),
+      birthday: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}birthday'],
+      ),
+      gender: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}gender'],
+      ),
+      email: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}email'],
+      ),
+      phoneNumber: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}phone_number'],
+      ),
+    );
+  }
+
+  @override
+  DeletedMembers createAlias(String alias) {
+    return DeletedMembers(attachedDatabase, alias);
+  }
+
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class SqliteDeletedMemberRow extends DataClass
+    implements Insertable<SqliteDeletedMemberRow> {
+  final String id;
+  final String? accountId;
+  final String? ownerId;
+  final String? hiraganaFirstName;
+  final String? hiraganaLastName;
+  final String? kanjiFirstName;
+  final String? kanjiLastName;
+  final String? firstName;
+  final String? lastName;
+  final String displayName;
+  final String? type;
+  final int? birthday;
+  final String? gender;
+  final String? email;
+  final String? phoneNumber;
+  const SqliteDeletedMemberRow({
+    required this.id,
+    this.accountId,
+    this.ownerId,
+    this.hiraganaFirstName,
+    this.hiraganaLastName,
+    this.kanjiFirstName,
+    this.kanjiLastName,
+    this.firstName,
+    this.lastName,
+    required this.displayName,
+    this.type,
+    this.birthday,
+    this.gender,
+    this.email,
+    this.phoneNumber,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    if (!nullToAbsent || accountId != null) {
+      map['account_id'] = Variable<String>(accountId);
+    }
+    if (!nullToAbsent || ownerId != null) {
+      map['owner_id'] = Variable<String>(ownerId);
+    }
+    if (!nullToAbsent || hiraganaFirstName != null) {
+      map['hiragana_first_name'] = Variable<String>(hiraganaFirstName);
+    }
+    if (!nullToAbsent || hiraganaLastName != null) {
+      map['hiragana_last_name'] = Variable<String>(hiraganaLastName);
+    }
+    if (!nullToAbsent || kanjiFirstName != null) {
+      map['kanji_first_name'] = Variable<String>(kanjiFirstName);
+    }
+    if (!nullToAbsent || kanjiLastName != null) {
+      map['kanji_last_name'] = Variable<String>(kanjiLastName);
+    }
+    if (!nullToAbsent || firstName != null) {
+      map['first_name'] = Variable<String>(firstName);
+    }
+    if (!nullToAbsent || lastName != null) {
+      map['last_name'] = Variable<String>(lastName);
+    }
+    map['display_name'] = Variable<String>(displayName);
+    if (!nullToAbsent || type != null) {
+      map['type'] = Variable<String>(type);
+    }
+    if (!nullToAbsent || birthday != null) {
+      map['birthday'] = Variable<int>(birthday);
+    }
+    if (!nullToAbsent || gender != null) {
+      map['gender'] = Variable<String>(gender);
+    }
+    if (!nullToAbsent || email != null) {
+      map['email'] = Variable<String>(email);
+    }
+    if (!nullToAbsent || phoneNumber != null) {
+      map['phone_number'] = Variable<String>(phoneNumber);
+    }
+    return map;
+  }
+
+  DeletedMembersCompanion toCompanion(bool nullToAbsent) {
+    return DeletedMembersCompanion(
+      id: Value(id),
+      accountId: accountId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(accountId),
+      ownerId: ownerId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(ownerId),
+      hiraganaFirstName: hiraganaFirstName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(hiraganaFirstName),
+      hiraganaLastName: hiraganaLastName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(hiraganaLastName),
+      kanjiFirstName: kanjiFirstName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(kanjiFirstName),
+      kanjiLastName: kanjiLastName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(kanjiLastName),
+      firstName: firstName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(firstName),
+      lastName: lastName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastName),
+      displayName: Value(displayName),
+      type: type == null && nullToAbsent ? const Value.absent() : Value(type),
+      birthday: birthday == null && nullToAbsent
+          ? const Value.absent()
+          : Value(birthday),
+      gender: gender == null && nullToAbsent
+          ? const Value.absent()
+          : Value(gender),
+      email: email == null && nullToAbsent
+          ? const Value.absent()
+          : Value(email),
+      phoneNumber: phoneNumber == null && nullToAbsent
+          ? const Value.absent()
+          : Value(phoneNumber),
+    );
+  }
+
+  factory SqliteDeletedMemberRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SqliteDeletedMemberRow(
+      id: serializer.fromJson<String>(json['id']),
+      accountId: serializer.fromJson<String?>(json['account_id']),
+      ownerId: serializer.fromJson<String?>(json['owner_id']),
+      hiraganaFirstName: serializer.fromJson<String?>(
+        json['hiragana_first_name'],
+      ),
+      hiraganaLastName: serializer.fromJson<String?>(
+        json['hiragana_last_name'],
+      ),
+      kanjiFirstName: serializer.fromJson<String?>(json['kanji_first_name']),
+      kanjiLastName: serializer.fromJson<String?>(json['kanji_last_name']),
+      firstName: serializer.fromJson<String?>(json['first_name']),
+      lastName: serializer.fromJson<String?>(json['last_name']),
+      displayName: serializer.fromJson<String>(json['display_name']),
+      type: serializer.fromJson<String?>(json['type']),
+      birthday: serializer.fromJson<int?>(json['birthday']),
+      gender: serializer.fromJson<String?>(json['gender']),
+      email: serializer.fromJson<String?>(json['email']),
+      phoneNumber: serializer.fromJson<String?>(json['phone_number']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'account_id': serializer.toJson<String?>(accountId),
+      'owner_id': serializer.toJson<String?>(ownerId),
+      'hiragana_first_name': serializer.toJson<String?>(hiraganaFirstName),
+      'hiragana_last_name': serializer.toJson<String?>(hiraganaLastName),
+      'kanji_first_name': serializer.toJson<String?>(kanjiFirstName),
+      'kanji_last_name': serializer.toJson<String?>(kanjiLastName),
+      'first_name': serializer.toJson<String?>(firstName),
+      'last_name': serializer.toJson<String?>(lastName),
+      'display_name': serializer.toJson<String>(displayName),
+      'type': serializer.toJson<String?>(type),
+      'birthday': serializer.toJson<int?>(birthday),
+      'gender': serializer.toJson<String?>(gender),
+      'email': serializer.toJson<String?>(email),
+      'phone_number': serializer.toJson<String?>(phoneNumber),
+    };
+  }
+
+  SqliteDeletedMemberRow copyWith({
+    String? id,
+    Value<String?> accountId = const Value.absent(),
+    Value<String?> ownerId = const Value.absent(),
+    Value<String?> hiraganaFirstName = const Value.absent(),
+    Value<String?> hiraganaLastName = const Value.absent(),
+    Value<String?> kanjiFirstName = const Value.absent(),
+    Value<String?> kanjiLastName = const Value.absent(),
+    Value<String?> firstName = const Value.absent(),
+    Value<String?> lastName = const Value.absent(),
+    String? displayName,
+    Value<String?> type = const Value.absent(),
+    Value<int?> birthday = const Value.absent(),
+    Value<String?> gender = const Value.absent(),
+    Value<String?> email = const Value.absent(),
+    Value<String?> phoneNumber = const Value.absent(),
+  }) => SqliteDeletedMemberRow(
+    id: id ?? this.id,
+    accountId: accountId.present ? accountId.value : this.accountId,
+    ownerId: ownerId.present ? ownerId.value : this.ownerId,
+    hiraganaFirstName: hiraganaFirstName.present
+        ? hiraganaFirstName.value
+        : this.hiraganaFirstName,
+    hiraganaLastName: hiraganaLastName.present
+        ? hiraganaLastName.value
+        : this.hiraganaLastName,
+    kanjiFirstName: kanjiFirstName.present
+        ? kanjiFirstName.value
+        : this.kanjiFirstName,
+    kanjiLastName: kanjiLastName.present
+        ? kanjiLastName.value
+        : this.kanjiLastName,
+    firstName: firstName.present ? firstName.value : this.firstName,
+    lastName: lastName.present ? lastName.value : this.lastName,
+    displayName: displayName ?? this.displayName,
+    type: type.present ? type.value : this.type,
+    birthday: birthday.present ? birthday.value : this.birthday,
+    gender: gender.present ? gender.value : this.gender,
+    email: email.present ? email.value : this.email,
+    phoneNumber: phoneNumber.present ? phoneNumber.value : this.phoneNumber,
+  );
+  SqliteDeletedMemberRow copyWithCompanion(DeletedMembersCompanion data) {
+    return SqliteDeletedMemberRow(
+      id: data.id.present ? data.id.value : this.id,
+      accountId: data.accountId.present ? data.accountId.value : this.accountId,
+      ownerId: data.ownerId.present ? data.ownerId.value : this.ownerId,
+      hiraganaFirstName: data.hiraganaFirstName.present
+          ? data.hiraganaFirstName.value
+          : this.hiraganaFirstName,
+      hiraganaLastName: data.hiraganaLastName.present
+          ? data.hiraganaLastName.value
+          : this.hiraganaLastName,
+      kanjiFirstName: data.kanjiFirstName.present
+          ? data.kanjiFirstName.value
+          : this.kanjiFirstName,
+      kanjiLastName: data.kanjiLastName.present
+          ? data.kanjiLastName.value
+          : this.kanjiLastName,
+      firstName: data.firstName.present ? data.firstName.value : this.firstName,
+      lastName: data.lastName.present ? data.lastName.value : this.lastName,
+      displayName: data.displayName.present
+          ? data.displayName.value
+          : this.displayName,
+      type: data.type.present ? data.type.value : this.type,
+      birthday: data.birthday.present ? data.birthday.value : this.birthday,
+      gender: data.gender.present ? data.gender.value : this.gender,
+      email: data.email.present ? data.email.value : this.email,
+      phoneNumber: data.phoneNumber.present
+          ? data.phoneNumber.value
+          : this.phoneNumber,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SqliteDeletedMemberRow(')
+          ..write('id: $id, ')
+          ..write('accountId: $accountId, ')
+          ..write('ownerId: $ownerId, ')
+          ..write('hiraganaFirstName: $hiraganaFirstName, ')
+          ..write('hiraganaLastName: $hiraganaLastName, ')
+          ..write('kanjiFirstName: $kanjiFirstName, ')
+          ..write('kanjiLastName: $kanjiLastName, ')
+          ..write('firstName: $firstName, ')
+          ..write('lastName: $lastName, ')
+          ..write('displayName: $displayName, ')
+          ..write('type: $type, ')
+          ..write('birthday: $birthday, ')
+          ..write('gender: $gender, ')
+          ..write('email: $email, ')
+          ..write('phoneNumber: $phoneNumber')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    accountId,
+    ownerId,
+    hiraganaFirstName,
+    hiraganaLastName,
+    kanjiFirstName,
+    kanjiLastName,
+    firstName,
+    lastName,
+    displayName,
+    type,
+    birthday,
+    gender,
+    email,
+    phoneNumber,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SqliteDeletedMemberRow &&
+          other.id == this.id &&
+          other.accountId == this.accountId &&
+          other.ownerId == this.ownerId &&
+          other.hiraganaFirstName == this.hiraganaFirstName &&
+          other.hiraganaLastName == this.hiraganaLastName &&
+          other.kanjiFirstName == this.kanjiFirstName &&
+          other.kanjiLastName == this.kanjiLastName &&
+          other.firstName == this.firstName &&
+          other.lastName == this.lastName &&
+          other.displayName == this.displayName &&
+          other.type == this.type &&
+          other.birthday == this.birthday &&
+          other.gender == this.gender &&
+          other.email == this.email &&
+          other.phoneNumber == this.phoneNumber);
+}
+
+class DeletedMembersCompanion extends UpdateCompanion<SqliteDeletedMemberRow> {
+  final Value<String> id;
+  final Value<String?> accountId;
+  final Value<String?> ownerId;
+  final Value<String?> hiraganaFirstName;
+  final Value<String?> hiraganaLastName;
+  final Value<String?> kanjiFirstName;
+  final Value<String?> kanjiLastName;
+  final Value<String?> firstName;
+  final Value<String?> lastName;
+  final Value<String> displayName;
+  final Value<String?> type;
+  final Value<int?> birthday;
+  final Value<String?> gender;
+  final Value<String?> email;
+  final Value<String?> phoneNumber;
+  final Value<int> rowid;
+  const DeletedMembersCompanion({
+    this.id = const Value.absent(),
+    this.accountId = const Value.absent(),
+    this.ownerId = const Value.absent(),
+    this.hiraganaFirstName = const Value.absent(),
+    this.hiraganaLastName = const Value.absent(),
+    this.kanjiFirstName = const Value.absent(),
+    this.kanjiLastName = const Value.absent(),
+    this.firstName = const Value.absent(),
+    this.lastName = const Value.absent(),
+    this.displayName = const Value.absent(),
+    this.type = const Value.absent(),
+    this.birthday = const Value.absent(),
+    this.gender = const Value.absent(),
+    this.email = const Value.absent(),
+    this.phoneNumber = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  DeletedMembersCompanion.insert({
+    required String id,
+    this.accountId = const Value.absent(),
+    this.ownerId = const Value.absent(),
+    this.hiraganaFirstName = const Value.absent(),
+    this.hiraganaLastName = const Value.absent(),
+    this.kanjiFirstName = const Value.absent(),
+    this.kanjiLastName = const Value.absent(),
+    this.firstName = const Value.absent(),
+    this.lastName = const Value.absent(),
+    required String displayName,
+    this.type = const Value.absent(),
+    this.birthday = const Value.absent(),
+    this.gender = const Value.absent(),
+    this.email = const Value.absent(),
+    this.phoneNumber = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       displayName = Value(displayName);
+  static Insertable<SqliteDeletedMemberRow> custom({
+    Expression<String>? id,
+    Expression<String>? accountId,
+    Expression<String>? ownerId,
+    Expression<String>? hiraganaFirstName,
+    Expression<String>? hiraganaLastName,
+    Expression<String>? kanjiFirstName,
+    Expression<String>? kanjiLastName,
+    Expression<String>? firstName,
+    Expression<String>? lastName,
+    Expression<String>? displayName,
+    Expression<String>? type,
+    Expression<int>? birthday,
+    Expression<String>? gender,
+    Expression<String>? email,
+    Expression<String>? phoneNumber,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (accountId != null) 'account_id': accountId,
+      if (ownerId != null) 'owner_id': ownerId,
+      if (hiraganaFirstName != null) 'hiragana_first_name': hiraganaFirstName,
+      if (hiraganaLastName != null) 'hiragana_last_name': hiraganaLastName,
+      if (kanjiFirstName != null) 'kanji_first_name': kanjiFirstName,
+      if (kanjiLastName != null) 'kanji_last_name': kanjiLastName,
+      if (firstName != null) 'first_name': firstName,
+      if (lastName != null) 'last_name': lastName,
+      if (displayName != null) 'display_name': displayName,
+      if (type != null) 'type': type,
+      if (birthday != null) 'birthday': birthday,
+      if (gender != null) 'gender': gender,
+      if (email != null) 'email': email,
+      if (phoneNumber != null) 'phone_number': phoneNumber,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  DeletedMembersCompanion copyWith({
+    Value<String>? id,
+    Value<String?>? accountId,
+    Value<String?>? ownerId,
+    Value<String?>? hiraganaFirstName,
+    Value<String?>? hiraganaLastName,
+    Value<String?>? kanjiFirstName,
+    Value<String?>? kanjiLastName,
+    Value<String?>? firstName,
+    Value<String?>? lastName,
+    Value<String>? displayName,
+    Value<String?>? type,
+    Value<int?>? birthday,
+    Value<String?>? gender,
+    Value<String?>? email,
+    Value<String?>? phoneNumber,
+    Value<int>? rowid,
+  }) {
+    return DeletedMembersCompanion(
+      id: id ?? this.id,
+      accountId: accountId ?? this.accountId,
+      ownerId: ownerId ?? this.ownerId,
+      hiraganaFirstName: hiraganaFirstName ?? this.hiraganaFirstName,
+      hiraganaLastName: hiraganaLastName ?? this.hiraganaLastName,
+      kanjiFirstName: kanjiFirstName ?? this.kanjiFirstName,
+      kanjiLastName: kanjiLastName ?? this.kanjiLastName,
+      firstName: firstName ?? this.firstName,
+      lastName: lastName ?? this.lastName,
+      displayName: displayName ?? this.displayName,
+      type: type ?? this.type,
+      birthday: birthday ?? this.birthday,
+      gender: gender ?? this.gender,
+      email: email ?? this.email,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (accountId.present) {
+      map['account_id'] = Variable<String>(accountId.value);
+    }
+    if (ownerId.present) {
+      map['owner_id'] = Variable<String>(ownerId.value);
+    }
+    if (hiraganaFirstName.present) {
+      map['hiragana_first_name'] = Variable<String>(hiraganaFirstName.value);
+    }
+    if (hiraganaLastName.present) {
+      map['hiragana_last_name'] = Variable<String>(hiraganaLastName.value);
+    }
+    if (kanjiFirstName.present) {
+      map['kanji_first_name'] = Variable<String>(kanjiFirstName.value);
+    }
+    if (kanjiLastName.present) {
+      map['kanji_last_name'] = Variable<String>(kanjiLastName.value);
+    }
+    if (firstName.present) {
+      map['first_name'] = Variable<String>(firstName.value);
+    }
+    if (lastName.present) {
+      map['last_name'] = Variable<String>(lastName.value);
+    }
+    if (displayName.present) {
+      map['display_name'] = Variable<String>(displayName.value);
+    }
+    if (type.present) {
+      map['type'] = Variable<String>(type.value);
+    }
+    if (birthday.present) {
+      map['birthday'] = Variable<int>(birthday.value);
+    }
+    if (gender.present) {
+      map['gender'] = Variable<String>(gender.value);
+    }
+    if (email.present) {
+      map['email'] = Variable<String>(email.value);
+    }
+    if (phoneNumber.present) {
+      map['phone_number'] = Variable<String>(phoneNumber.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DeletedMembersCompanion(')
+          ..write('id: $id, ')
+          ..write('accountId: $accountId, ')
+          ..write('ownerId: $ownerId, ')
+          ..write('hiraganaFirstName: $hiraganaFirstName, ')
+          ..write('hiraganaLastName: $hiraganaLastName, ')
+          ..write('kanjiFirstName: $kanjiFirstName, ')
+          ..write('kanjiLastName: $kanjiLastName, ')
+          ..write('firstName: $firstName, ')
+          ..write('lastName: $lastName, ')
+          ..write('displayName: $displayName, ')
+          ..write('type: $type, ')
+          ..write('birthday: $birthday, ')
+          ..write('gender: $gender, ')
+          ..write('email: $email, ')
+          ..write('phoneNumber: $phoneNumber, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class DeletedGroups extends Table
+    with TableInfo<DeletedGroups, SqliteDeletedGroupRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  DeletedGroups(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL PRIMARY KEY',
+  );
+  static const VerificationMeta _ownerIdMeta = const VerificationMeta(
+    'ownerId',
+  );
+  late final GeneratedColumn<String> ownerId = GeneratedColumn<String>(
+    'owner_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _memoMeta = const VerificationMeta('memo');
+  late final GeneratedColumn<String> memo = GeneratedColumn<String>(
+    'memo',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, ownerId, name, memo];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'deleted_groups';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SqliteDeletedGroupRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('owner_id')) {
+      context.handle(
+        _ownerIdMeta,
+        ownerId.isAcceptableOrUnknown(data['owner_id']!, _ownerIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_ownerIdMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('memo')) {
+      context.handle(
+        _memoMeta,
+        memo.isAcceptableOrUnknown(data['memo']!, _memoMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  SqliteDeletedGroupRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SqliteDeletedGroupRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      ownerId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}owner_id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      memo: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}memo'],
+      ),
+    );
+  }
+
+  @override
+  DeletedGroups createAlias(String alias) {
+    return DeletedGroups(attachedDatabase, alias);
+  }
+
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class SqliteDeletedGroupRow extends DataClass
+    implements Insertable<SqliteDeletedGroupRow> {
+  final String id;
+  final String ownerId;
+  final String name;
+  final String? memo;
+  const SqliteDeletedGroupRow({
+    required this.id,
+    required this.ownerId,
+    required this.name,
+    this.memo,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['owner_id'] = Variable<String>(ownerId);
+    map['name'] = Variable<String>(name);
+    if (!nullToAbsent || memo != null) {
+      map['memo'] = Variable<String>(memo);
+    }
+    return map;
+  }
+
+  DeletedGroupsCompanion toCompanion(bool nullToAbsent) {
+    return DeletedGroupsCompanion(
+      id: Value(id),
+      ownerId: Value(ownerId),
+      name: Value(name),
+      memo: memo == null && nullToAbsent ? const Value.absent() : Value(memo),
+    );
+  }
+
+  factory SqliteDeletedGroupRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SqliteDeletedGroupRow(
+      id: serializer.fromJson<String>(json['id']),
+      ownerId: serializer.fromJson<String>(json['owner_id']),
+      name: serializer.fromJson<String>(json['name']),
+      memo: serializer.fromJson<String?>(json['memo']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'owner_id': serializer.toJson<String>(ownerId),
+      'name': serializer.toJson<String>(name),
+      'memo': serializer.toJson<String?>(memo),
+    };
+  }
+
+  SqliteDeletedGroupRow copyWith({
+    String? id,
+    String? ownerId,
+    String? name,
+    Value<String?> memo = const Value.absent(),
+  }) => SqliteDeletedGroupRow(
+    id: id ?? this.id,
+    ownerId: ownerId ?? this.ownerId,
+    name: name ?? this.name,
+    memo: memo.present ? memo.value : this.memo,
+  );
+  SqliteDeletedGroupRow copyWithCompanion(DeletedGroupsCompanion data) {
+    return SqliteDeletedGroupRow(
+      id: data.id.present ? data.id.value : this.id,
+      ownerId: data.ownerId.present ? data.ownerId.value : this.ownerId,
+      name: data.name.present ? data.name.value : this.name,
+      memo: data.memo.present ? data.memo.value : this.memo,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SqliteDeletedGroupRow(')
+          ..write('id: $id, ')
+          ..write('ownerId: $ownerId, ')
+          ..write('name: $name, ')
+          ..write('memo: $memo')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, ownerId, name, memo);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SqliteDeletedGroupRow &&
+          other.id == this.id &&
+          other.ownerId == this.ownerId &&
+          other.name == this.name &&
+          other.memo == this.memo);
+}
+
+class DeletedGroupsCompanion extends UpdateCompanion<SqliteDeletedGroupRow> {
+  final Value<String> id;
+  final Value<String> ownerId;
+  final Value<String> name;
+  final Value<String?> memo;
+  final Value<int> rowid;
+  const DeletedGroupsCompanion({
+    this.id = const Value.absent(),
+    this.ownerId = const Value.absent(),
+    this.name = const Value.absent(),
+    this.memo = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  DeletedGroupsCompanion.insert({
+    required String id,
+    required String ownerId,
+    required String name,
+    this.memo = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       ownerId = Value(ownerId),
+       name = Value(name);
+  static Insertable<SqliteDeletedGroupRow> custom({
+    Expression<String>? id,
+    Expression<String>? ownerId,
+    Expression<String>? name,
+    Expression<String>? memo,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (ownerId != null) 'owner_id': ownerId,
+      if (name != null) 'name': name,
+      if (memo != null) 'memo': memo,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  DeletedGroupsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? ownerId,
+    Value<String>? name,
+    Value<String?>? memo,
+    Value<int>? rowid,
+  }) {
+    return DeletedGroupsCompanion(
+      id: id ?? this.id,
+      ownerId: ownerId ?? this.ownerId,
+      name: name ?? this.name,
+      memo: memo ?? this.memo,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (ownerId.present) {
+      map['owner_id'] = Variable<String>(ownerId.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (memo.present) {
+      map['memo'] = Variable<String>(memo.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DeletedGroupsCompanion(')
+          ..write('id: $id, ')
+          ..write('ownerId: $ownerId, ')
+          ..write('name: $name, ')
+          ..write('memo: $memo, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$OfflineDatabase extends GeneratedDatabase {
   _$OfflineDatabase(QueryExecutor e) : super(e);
   late final Members members = Members(this);
@@ -6761,6 +7970,8 @@ abstract class _$OfflineDatabase extends GeneratedDatabase {
     'calendar_overrides_group_start_idx',
     'CREATE INDEX calendar_overrides_group_start_idx ON calendar_event_overrides (group_id, start_date_time)',
   );
+  late final DeletedMembers deletedMembers = DeletedMembers(this);
+  late final DeletedGroups deletedGroups = DeletedGroups(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -6800,30 +8011,11 @@ abstract class _$OfflineDatabase extends GeneratedDatabase {
     calendarEventOverrides,
     calendarOverridesLabelIdx,
     calendarOverridesGroupStartIdx,
+    deletedMembers,
+    deletedGroups,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
-    WritePropagation(
-      on: TableUpdateQuery.onTableName(
-        'groups',
-        limitUpdateKind: UpdateKind.delete,
-      ),
-      result: [TableUpdate('group_members', kind: UpdateKind.delete)],
-    ),
-    WritePropagation(
-      on: TableUpdateQuery.onTableName(
-        'members',
-        limitUpdateKind: UpdateKind.delete,
-      ),
-      result: [TableUpdate('group_members', kind: UpdateKind.delete)],
-    ),
-    WritePropagation(
-      on: TableUpdateQuery.onTableName(
-        'groups',
-        limitUpdateKind: UpdateKind.delete,
-      ),
-      result: [TableUpdate('trip_entries', kind: UpdateKind.delete)],
-    ),
     WritePropagation(
       on: TableUpdateQuery.onTableName(
         'trip_entries',
@@ -6833,45 +8025,10 @@ abstract class _$OfflineDatabase extends GeneratedDatabase {
     ),
     WritePropagation(
       on: TableUpdateQuery.onTableName(
-        'members',
-        limitUpdateKind: UpdateKind.delete,
-      ),
-      result: [TableUpdate('tasks', kind: UpdateKind.update)],
-    ),
-    WritePropagation(
-      on: TableUpdateQuery.onTableName(
         'trip_entries',
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('itinerary_items', kind: UpdateKind.delete)],
-    ),
-    WritePropagation(
-      on: TableUpdateQuery.onTableName(
-        'members',
-        limitUpdateKind: UpdateKind.delete,
-      ),
-      result: [TableUpdate('member_events', kind: UpdateKind.delete)],
-    ),
-    WritePropagation(
-      on: TableUpdateQuery.onTableName(
-        'groups',
-        limitUpdateKind: UpdateKind.delete,
-      ),
-      result: [TableUpdate('group_events', kind: UpdateKind.delete)],
-    ),
-    WritePropagation(
-      on: TableUpdateQuery.onTableName(
-        'groups',
-        limitUpdateKind: UpdateKind.delete,
-      ),
-      result: [TableUpdate('calendar_labels', kind: UpdateKind.delete)],
-    ),
-    WritePropagation(
-      on: TableUpdateQuery.onTableName(
-        'groups',
-        limitUpdateKind: UpdateKind.delete,
-      ),
-      result: [TableUpdate('calendar_events', kind: UpdateKind.delete)],
     ),
     WritePropagation(
       on: TableUpdateQuery.onTableName(

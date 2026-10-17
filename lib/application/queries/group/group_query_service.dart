@@ -2,6 +2,8 @@ import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/queries/order_by.dart';
 
 abstract class GroupQueryService {
+  Future<bool> groupExists(String groupId);
+
   Future<List<GroupDto>> getGroupsWithMembersByMemberId(
     String memberId, {
     List<OrderBy>? groupsOrderBy,

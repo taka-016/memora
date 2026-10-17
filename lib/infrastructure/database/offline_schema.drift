@@ -1,7 +1,7 @@
 CREATE TABLE members (
   id TEXT NOT NULL PRIMARY KEY,
   account_id TEXT,
-  owner_id TEXT REFERENCES members(id) ON DELETE RESTRICT,
+  owner_id TEXT,
   hiragana_first_name TEXT,
   hiragana_last_name TEXT,
   kanji_first_name TEXT,
@@ -21,7 +21,7 @@ CREATE INDEX members_owner_id_idx ON members (owner_id);
 
 CREATE TABLE "groups" (
   id TEXT NOT NULL PRIMARY KEY,
-  owner_id TEXT NOT NULL REFERENCES members(id) ON DELETE RESTRICT,
+  owner_id TEXT NOT NULL,
   name TEXT NOT NULL,
   memo TEXT
 ) AS SqliteGroupRow;
@@ -29,8 +29,8 @@ CREATE TABLE "groups" (
 CREATE INDEX groups_owner_id_idx ON "groups" (owner_id);
 
 CREATE TABLE group_members (
-  group_id TEXT NOT NULL REFERENCES "groups"(id) ON DELETE CASCADE,
-  member_id TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+  group_id TEXT NOT NULL,
+  member_id TEXT NOT NULL,
   is_administrator INTEGER NOT NULL CHECK (is_administrator IN (0, 1)),
   order_index INTEGER NOT NULL,
   PRIMARY KEY (group_id, member_id)
@@ -42,7 +42,7 @@ CREATE INDEX group_members_member_id_idx ON group_members (member_id, order_inde
 
 CREATE TABLE trip_entries (
   id TEXT NOT NULL PRIMARY KEY,
-  group_id TEXT NOT NULL REFERENCES "groups"(id) ON DELETE CASCADE,
+  group_id TEXT NOT NULL,
   year INTEGER NOT NULL,
   name TEXT,
   start_date INTEGER,
@@ -61,7 +61,7 @@ CREATE TABLE tasks (
   is_completed INTEGER NOT NULL CHECK (is_completed IN (0, 1)),
   due_date INTEGER,
   memo TEXT,
-  assigned_member_id TEXT REFERENCES members(id) ON DELETE SET NULL,
+  assigned_member_id TEXT,
   UNIQUE (id, trip_id),
   FOREIGN KEY (parent_task_id, trip_id) REFERENCES tasks(id, trip_id) DEFERRABLE INITIALLY DEFERRED
 ) AS SqliteTaskRow;
@@ -85,7 +85,7 @@ CREATE INDEX itinerary_items_trip_id_idx ON itinerary_items (trip_id, start_date
 
 CREATE TABLE member_events (
   id TEXT NOT NULL PRIMARY KEY,
-  member_id TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+  member_id TEXT NOT NULL,
   year INTEGER NOT NULL,
   memo TEXT NOT NULL,
   UNIQUE (member_id, year)
@@ -93,7 +93,7 @@ CREATE TABLE member_events (
 
 CREATE TABLE group_events (
   id TEXT NOT NULL PRIMARY KEY,
-  group_id TEXT NOT NULL REFERENCES "groups"(id) ON DELETE CASCADE,
+  group_id TEXT NOT NULL,
   year INTEGER NOT NULL,
   memo TEXT NOT NULL
 ) AS SqliteGroupEventRow;
@@ -136,7 +136,7 @@ CREATE INDEX dvc_point_usages_group_month_idx ON dvc_point_usages (group_id, usa
 
 CREATE TABLE calendar_labels (
   id TEXT NOT NULL PRIMARY KEY,
-  group_id TEXT NOT NULL REFERENCES "groups"(id) ON DELETE CASCADE,
+  group_id TEXT NOT NULL,
   name TEXT NOT NULL CHECK (length(trim(name)) > 0),
   color TEXT NOT NULL CHECK (length(color) = 7 AND substr(color, 1, 1) = '#' AND substr(color, 2) NOT GLOB '*[^0-9a-fA-F]*'),
   text_color TEXT NOT NULL DEFAULT '#FFFFFF' CHECK (length(text_color) = 7 AND substr(text_color, 1, 1) = '#' AND substr(text_color, 2) NOT GLOB '*[^0-9a-fA-F]*'),
@@ -148,7 +148,7 @@ CREATE INDEX calendar_labels_group_idx ON calendar_labels (group_id);
 
 CREATE TABLE calendar_events (
   id TEXT NOT NULL PRIMARY KEY,
-  group_id TEXT NOT NULL REFERENCES "groups"(id) ON DELETE CASCADE,
+  group_id TEXT NOT NULL,
   label_id TEXT NOT NULL,
   title TEXT NOT NULL CHECK (length(trim(title)) > 0),
   start_date_time INTEGER NOT NULL,
@@ -182,3 +182,28 @@ CREATE TABLE calendar_event_overrides (
 ) AS SqliteCalendarEventOverrideRow;
 CREATE INDEX calendar_overrides_label_idx ON calendar_event_overrides (label_id);
 CREATE INDEX calendar_overrides_group_start_idx ON calendar_event_overrides (group_id, start_date_time);
+
+CREATE TABLE deleted_members (
+  id TEXT NOT NULL PRIMARY KEY,
+  account_id TEXT,
+  owner_id TEXT,
+  hiragana_first_name TEXT,
+  hiragana_last_name TEXT,
+  kanji_first_name TEXT,
+  kanji_last_name TEXT,
+  first_name TEXT,
+  last_name TEXT,
+  display_name TEXT NOT NULL,
+  type TEXT,
+  birthday INTEGER,
+  gender TEXT,
+  email TEXT,
+  phone_number TEXT
+) AS SqliteDeletedMemberRow;
+
+CREATE TABLE deleted_groups (
+  id TEXT NOT NULL PRIMARY KEY,
+  owner_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  memo TEXT
+) AS SqliteDeletedGroupRow;

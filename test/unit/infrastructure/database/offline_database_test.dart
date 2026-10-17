@@ -1,3 +1,4 @@
+import 'package:memora/application/mappers/group/group_mapper.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/queries/order_by.dart';
@@ -51,7 +52,7 @@ void main() {
     expect(group.members.single.isAdministrator, isTrue);
     expect(group.members.single.orderIndex, 2);
     await SqliteGroupRepository(db).updateGroup(
-      Group(id: groupId, ownerId: group.ownerId, name: '変更', members: []),
+      GroupMapper.toEntity(group.copyWith(name: '変更', members: [])),
     );
     expect(
       (await SqliteGroupQueryService(db).getGroupWithMembersById(groupId))!
@@ -153,7 +154,21 @@ void main() {
           TripEntry(id: '', groupId: groupId, year: 2026),
         );
         await repository.saveTripEntry(
-          TripEntry(id: '', groupId: 'missing', year: 2026),
+          TripEntry(
+            id: '',
+            groupId: groupId,
+            year: 2026,
+            tasks: [
+              Task(
+                id: 'invalid',
+                tripId: '',
+                orderIndex: 0,
+                name: '不正な親参照',
+                isCompleted: false,
+                parentTaskId: 'missing',
+              ),
+            ],
+          ),
         );
       }),
       throwsA(isA<Exception>()),

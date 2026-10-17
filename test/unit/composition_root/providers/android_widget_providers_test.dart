@@ -16,6 +16,8 @@ import 'android_widget_providers_test.mocks.dart';
 
 @GenerateNiceMocks([
   MockSpec<FirebaseFirestore>(),
+  MockSpec<DocumentReference<Map<String, dynamic>>>(),
+  MockSpec<DocumentSnapshot<Map<String, dynamic>>>(),
   MockSpec<CollectionReference<Map<String, dynamic>>>(),
   MockSpec<Query<Map<String, dynamic>>>(),
   MockSpec<QuerySnapshot<Map<String, dynamic>>>(),
@@ -34,6 +36,13 @@ void main() {
       final itemsSnapshot = MockQuerySnapshot();
       final storage = MockAndroidWidgetCacheStorage();
       final failure = TestException('取得失敗');
+      final groups = MockCollectionReference();
+      final groupRef = MockDocumentReference();
+      final groupDoc = MockDocumentSnapshot();
+      when(firestore.collection('groups')).thenReturn(groups);
+      when(groups.doc('group')).thenReturn(groupRef);
+      when(groupRef.get()).thenAnswer((_) async => groupDoc);
+      when(groupDoc.exists).thenReturn(true);
       when(firestore.collection('trip_entries')).thenReturn(tripsCollection);
       when(firestore.collection('itinerary_items')).thenReturn(itemsCollection);
       when(tripsCollection.where('groupId', isEqualTo: 'group'))

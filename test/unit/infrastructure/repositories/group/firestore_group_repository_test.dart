@@ -1,6 +1,3 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:memora/infrastructure/factories/query_service_factory.dart';
-import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
@@ -112,59 +109,6 @@ void main() {
           ),
         ),
       ).called(1);
-      verify(mockBatch.commit()).called(1);
-    });
-
-    test('deleteGroupがgroups collectionの該当ドキュメントを削除する', () async {
-      const groupId = 'group001';
-      final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
-      final mockBatch = MockWriteBatch();
-
-      // group_membersコレクション用のモック
-      final mockGroupMembersCollection =
-          MockCollectionReference<Map<String, dynamic>>();
-      final mockGroupMembersQuery = MockQuery<Map<String, dynamic>>();
-      final mockGroupMembersSnapshot =
-          MockQuerySnapshot<Map<String, dynamic>>();
-
-      when(mockFirestore.batch()).thenReturn(mockBatch);
-      when(mockCollection.doc(groupId)).thenReturn(mockDocRef);
-
-      // group_membersの削除処理
-      when(mockFirestore.collection('group_members'))
-          .thenReturn(mockGroupMembersCollection);
-      when(mockGroupMembersCollection.where('groupId', isEqualTo: groupId))
-          .thenReturn(mockGroupMembersQuery);
-      when(mockGroupMembersQuery.get())
-          .thenAnswer((_) async => mockGroupMembersSnapshot);
-      when(mockGroupMembersSnapshot.docs).thenReturn([]);
-
-      when(mockBatch.delete(any)).thenReturn(null);
-      when(mockBatch.commit()).thenAnswer((_) async {});
-
-      final container = ProviderContainer(
-        overrides: [firebaseFirestoreProvider.overrideWithValue(mockFirestore)],
-      );
-      addTearDown(container.dispose);
-      repository =
-          container.read(groupRepositoryProvider) as FirestoreGroupRepository;
-      for (final collectionName in ['calendar_events', 'calendar_labels']) {
-        final collection = MockCollectionReference<Map<String, dynamic>>();
-        final query = MockQuery<Map<String, dynamic>>();
-        final snapshot = MockQuerySnapshot<Map<String, dynamic>>();
-        when(mockFirestore.collection(collectionName)).thenReturn(collection);
-        when(collection.where('groupId', isEqualTo: groupId)).thenReturn(query);
-        when(query.get()).thenAnswer((_) async => snapshot);
-        when(snapshot.docs).thenReturn([]);
-      }
-
-      await repository.deleteGroup(groupId);
-      verifyNever(mockDocRef.update(any));
-      verify(mockFirestore.collection('calendar_events')).called(1);
-      verify(mockFirestore.collection('calendar_labels')).called(1);
-
-      verify(mockFirestore.batch()).called(1);
-      verify(mockBatch.delete(mockDocRef)).called(1);
       verify(mockBatch.commit()).called(1);
     });
   });

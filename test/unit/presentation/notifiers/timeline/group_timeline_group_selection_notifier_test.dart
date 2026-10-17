@@ -38,6 +38,36 @@ void main() {
       container.dispose();
     });
 
+    for (final silent in [false, true]) {
+      test(
+        '削除後のリセットより前に開始した${silent ? 'サイレント更新' : '取得'}が完了しても古い選択状態を戻さない',
+        () async {
+          final pending = Completer<List<GroupDto>>();
+          when(
+            queryService.getGroupsWithMembersByMemberId(
+              member.id,
+              groupsOrderBy: anyNamed('groupsOrderBy'),
+              membersOrderBy: anyNamed('membersOrderBy'),
+            ),
+          ).thenAnswer((_) => pending.future);
+          final notifier = container.read(
+            groupTimelineGroupSelectionNotifierProvider.notifier,
+          )..setLoadedGroups(memberId: member.id, groups: const [group]);
+          final read = silent
+              ? notifier.refreshSilently(member)
+              : notifier.load(member);
+          notifier.reset();
+          pending.complete(const [group]);
+          await read;
+          final state = container.read(
+            groupTimelineGroupSelectionNotifierProvider,
+          );
+          expect(state.groups, isEmpty);
+          expect(state.memberId, isNull);
+          expect(state.status, GroupTimelineGroupSelectionStatus.loading);
+        },
+      );
+    }
     test('取得中から取得成功へ遷移する', () async {
       final completer = Completer<List<GroupDto>>();
       when(

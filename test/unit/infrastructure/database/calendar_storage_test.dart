@@ -60,13 +60,12 @@ void main() {
     });
     expect((await db.rows('calendar_events')).single['label_id'], 'label');
     await db.deleteRows('groups', 'id', 'family');
-    expect(await db.rows('calendar_events'), isEmpty);
-    expect((await db.rows('calendar_labels')).single['id'], 'other');
+    expect((await db.rows('calendar_events')).single['group_id'], 'family');
+    expect(await db.rows('calendar_labels'), hasLength(2));
     expect(await db.customSelect('PRAGMA foreign_key_check').get(), isEmpty);
   });
 
   test('復元でも空タイトル・逆転期間・不正な色と終日区分を拒否する', () async {
-    await expectLater(label('missing', 'missing'), throwsA(isA<Exception>()));
     await label('label', 'family');
     for (final row in [
       event(title: '  '),

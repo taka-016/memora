@@ -6,7 +6,7 @@ import '../../../../helpers/test_exception.dart';
 
 void main() {
   const snapshot = OfflineBackupSnapshot(
-    formatVersion: 1,
+    formatVersion: OfflineBackupSnapshot.currentFormatVersion,
     databaseSchemaVersion: 1,
     currentMember: OfflineBackupCurrentMember(
       id: 'member-1',

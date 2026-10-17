@@ -42,7 +42,7 @@ if [ -f "firebase.json" ] && ! grep -q '"indexes"' firebase.json; then
     echo "Firestoreインデックス設定を追加しています..."
     # 一時ファイルでjsonを更新
     if command -v jq &> /dev/null; then
-        jq '.firestore.indexes = "firestore.indexes.json"' firebase.json > firebase.json.tmp && mv firebase.json.tmp firebase.json
+        jq '.firestore.indexes = "firestore.indexes.json"' firebase.json > firebase.json.tmp && mv firebase.json.tmp firebase.json || { echo "インデックス設定の追加に失敗しました"; exit 1; }
         echo "✓ Firestoreインデックス設定を追加しました"
     else
         echo "エラー: jqがインストールされていません。"
@@ -55,6 +55,10 @@ fi
 echo "プロジェクトを設定しています..."
 echo "エイリアス名を聞かれたらdefaultまたはmemoraを入力してください"
 firebase use --add || { echo "プロジェクト設定に失敗しました"; exit 1; }
+
+# ルールデプロイ
+echo "Firestoreルールをデプロイしています..."
+firebase deploy --only firestore:rules || { echo "ルールデプロイに失敗しました"; exit 1; }
 
 # インデックスデプロイ
 echo "Firestoreインデックスをデプロイしています..."

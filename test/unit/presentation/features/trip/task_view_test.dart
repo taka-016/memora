@@ -638,7 +638,7 @@ void main() {
       expect(find.byKey(const Key('delete_task_parent')), findsNothing);
     });
 
-    testWidgets('担当者が不明な場合はIDを表示すること', (tester) async {
+    testWidgets('通常メンバー一覧にいない担当は元IDも表示せずタスクだけ表示すること', (tester) async {
       final tasks = [
         TaskDto(
           id: 'task-1',
@@ -661,7 +661,8 @@ void main() {
         ),
       );
 
-      expect(find.text('担当: unknown-member'), findsOneWidget);
+      expect(find.text('担当: unknown-member'), findsNothing);
+      expect(find.text('ホテル予約'), findsOneWidget);
     });
 
     testWidgets('孤立した子タスクが親タスクとして表示されること', (tester) async {
