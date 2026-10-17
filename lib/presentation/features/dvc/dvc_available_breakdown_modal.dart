@@ -103,10 +103,11 @@ Future<void> showDvcAvailableBreakdownModal({
                                                     .pop();
                                               }
                                             } finally {
-                                              if (dialogContext.mounted)
+                                              if (dialogContext.mounted) {
                                                 setState(() {
                                                   isSaving = false;
                                                 });
+                                              }
                                             }
                                           },
                                   )

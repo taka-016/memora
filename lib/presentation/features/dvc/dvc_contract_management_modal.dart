@@ -196,10 +196,11 @@ Future<void> showDvcContractManagementModal({
                               Navigator.of(dialogContext).pop();
                             }
                           } finally {
-                            if (dialogContext.mounted)
+                            if (dialogContext.mounted) {
                               setState(() {
                                 isSaving = false;
                               });
+                            }
                           }
                         },
                   child: const Text('更新'),

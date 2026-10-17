@@ -73,10 +73,11 @@ Future<void> showDvcUsageBreakdownModal({
                                           Navigator.of(dialogContext).pop();
                                         }
                                       } finally {
-                                        if (dialogContext.mounted)
+                                        if (dialogContext.mounted) {
                                           setState(() {
                                             isSaving = false;
                                           });
+                                        }
                                       }
                                     },
                             ),

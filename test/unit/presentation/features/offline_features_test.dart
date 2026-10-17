@@ -40,7 +40,7 @@ void main() {
       app(
         MemberEditModal(
           member: const MemberDto(id: 'member', displayName: '家族'),
-          onSave: (_) async {},
+          onSave: (_) async => true,
           onInvite: (_) async {},
         ),
       ),

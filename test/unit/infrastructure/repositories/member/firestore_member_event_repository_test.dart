@@ -48,7 +48,7 @@ void main() {
     }
 
     for (final failureAt in ['なし', '本体', '重複整理']) {
-      test('複数書き込みはサーバー完了まで待機し${failureAt}の結果を伝える', () async {
+      test('複数書き込みはサーバー完了まで待機し$failureAtの結果を伝える', () async {
         const event = MemberEvent(
           id: '',
           memberId: 'member001',
