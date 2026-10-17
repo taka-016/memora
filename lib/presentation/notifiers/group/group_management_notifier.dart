@@ -5,6 +5,7 @@ import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/notifiers/group/group_management_state.dart';
+import 'package:memora/presentation/notifiers/timeline/group_timeline_group_selection_notifier.dart';
 
 export 'group_management_state.dart';
 
@@ -61,6 +62,7 @@ class GroupManagementNotifier extends AsyncNotifier<GroupManagementState> {
       execute: () async {
         await ref.read(deleteGroupUsecaseProvider).execute(groupId);
         if (!ref.mounted) return;
+        ref.read(groupTimelineGroupSelectionNotifierProvider.notifier).reset();
         try {
           await ref.read(refreshSelectedAndroidWidgetCacheProvider)();
         } catch (error, stackTrace) {
