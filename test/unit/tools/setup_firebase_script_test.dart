@@ -64,7 +64,6 @@ case "$command_name $*" in
         ;;
     'dart pub global run flutterfire_cli:flutterfire configure')
         printf '%s' '生成された設定' > lib/firebase_options.dart
-        printf '%s' "$MEMORA_TEST_GENERATED_CONFIG" > firebase.json
         ;;
     'firebase firestore:indexes') printf '%s\n' "$MEMORA_TEST_REMOTE_INDEXES" ;;
 esac
@@ -99,7 +98,6 @@ if [ "$command_name" = mv ]; then exec /bin/mv "$@"; fi
         'MEMORA_TEST_FLUTTERFIRE_INSTALLED': flutterfireInstalled ? '1' : '0',
         'MEMORA_TEST_LOGGED_IN': loggedIn ? '1' : '0',
         'MEMORA_TEST_JQ': jqPath,
-        'MEMORA_TEST_GENERATED_CONFIG': jsonEncode(_unconfiguredProject),
         'MEMORA_TEST_REMOTE_INDEXES': jsonEncode(_remoteIndexes),
       },
     );
@@ -150,7 +148,8 @@ if [ "$command_name" = mv ]; then exec /bin/mv "$@"; fi
 
   test('初回はCLI導入からログイン・設定生成・設定補完・デプロイまで完了する', () async {
     File('${project.path}/lib/firebase_options.dart').deleteSync();
-    File('${project.path}/firebase.json').deleteSync();
+    File('${project.path}/firebase.json')
+        .writeAsStringSync(jsonEncode(_unconfiguredProject));
 
     final result = await runSetup(
       firebaseInstalled: false,
