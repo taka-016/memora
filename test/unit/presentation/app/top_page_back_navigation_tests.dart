@@ -2,6 +2,94 @@ part of 'top_page_test_support.dart';
 
 extension TopPageBackNavigationTests on TopPageTestContext {
   void registerBackNavigationTests() {
+    for (final deleteGroup in [true, false]) {
+      testWidgets(
+        '${deleteGroup ? 'グループ' : 'メンバー'}を退避して管理画面から戻ると年表に退避済みの情報を表示しない',
+        (tester) async {
+          var availableGroups = List<GroupDto>.of(groupsWithMembers);
+          var memberDeleted = false;
+          final widget = createTestWidget(
+            initialLocation: const GroupTimelineRoute(groupId: '1').location,
+          );
+          when(
+            mockGroupQueryService.getGroupsWithMembersByMemberId(
+              any,
+              groupsOrderBy: anyNamed('groupsOrderBy'),
+              membersOrderBy: anyNamed('membersOrderBy'),
+            ),
+          ).thenAnswer((_) async => List<GroupDto>.of(availableGroups));
+          when(
+            mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+              any,
+              groupsOrderBy: anyNamed('groupsOrderBy'),
+              membersOrderBy: anyNamed('membersOrderBy'),
+            ),
+          ).thenAnswer((_) async => List<GroupDto>.of(availableGroups));
+          when(
+            mockMemberQueryService.getMembersByOwnerId(
+              any,
+              orderBy: anyNamed('orderBy'),
+            ),
+          ).thenAnswer(
+            (_) async => memberDeleted
+                ? []
+                : [const MemberDto(id: 'member1', displayName: '太郎')],
+          );
+          if (deleteGroup) {
+            when(mockGroupRepository.deleteGroup('1')).thenAnswer((_) async {
+              availableGroups = availableGroups
+                  .where((group) => group.id != '1')
+                  .toList();
+            });
+          } else {
+            when(mockMemberRepository.deleteMember('member1'))
+                .thenAnswer((_) async {
+                  memberDeleted = true;
+                  availableGroups = availableGroups
+                      .map(
+                        (group) => group.copyWith(
+                          members: group.members
+                              .where((member) => member.memberId != 'member1')
+                              .toList(),
+                        ),
+                      )
+                      .toList();
+                });
+          }
+          await tester.pumpWidget(widget);
+          await tester.pumpAndSettle();
+          expect(find.byKey(const Key('group_timeline')), findsOneWidget);
+          expect(find.text('太郎'), findsOneWidget);
+
+          await tester.tap(find.byIcon(Icons.menu));
+          await tester.pumpAndSettle();
+          await tester.tap(find.text(deleteGroup ? 'グループ管理' : 'メンバー管理'));
+          await tester.pumpAndSettle();
+          await tester.tap(find.byIcon(Icons.delete).first);
+          await tester.pumpAndSettle();
+          await tester.tap(find.text('削除'));
+          await tester.pumpAndSettle();
+          await tester.binding.handlePopRoute();
+          await tester.pumpAndSettle();
+
+          if (deleteGroup) {
+            expect(find.text('グループ1'), findsNothing);
+            expect(find.text('グループ2'), findsWidgets);
+            verifyNever(
+              mockTripEntryRepository.deleteTripEntriesByGroupId(any),
+            );
+          } else {
+            expect(find.byKey(const Key('group_timeline')), findsOneWidget);
+            expect(find.text('太郎'), findsNothing);
+            expect(find.text('花子'), findsOneWidget);
+            verifyNever(
+              mockMemberEventRepository.deleteMemberEventsByMemberId(any),
+            );
+          }
+        },
+      );
+    }
+
     testWidgets('DVCポイント計算画面の戻るボタンを押すとグループ年表に戻る', (WidgetTester tester) async {
       // Arrange
       when(
