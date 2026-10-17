@@ -22,11 +22,7 @@ final deleteGroupEventUsecaseProvider = Provider<DeleteGroupEventUsecase>((
 });
 
 final deleteGroupUsecaseProvider = Provider<DeleteGroupUsecase>((ref) {
-  return DeleteGroupUsecase(
-    ref.watch(groupRepositoryProvider),
-    ref.watch(groupEventRepositoryProvider),
-    ref.watch(tripEntryRepositoryProvider),
-  );
+  return DeleteGroupUsecase(ref.watch(groupRepositoryProvider));
 });
 
 final getGroupEventsUsecaseProvider = Provider<GetGroupEventsUsecase>((ref) {

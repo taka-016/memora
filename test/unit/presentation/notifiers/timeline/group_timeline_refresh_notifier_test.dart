@@ -122,6 +122,10 @@ void main() {
 }
 
 class _CountingGroupQueryService implements GroupQueryService {
+  @override
+  Future<bool> groupExists(String groupId) async =>
+      await getGroupWithMembersById(groupId) != null;
+
   _CountingGroupQueryService(this.result);
 
   final List<GroupDto> result;

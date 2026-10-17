@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/notifiers/member/member_management_state.dart';
+import 'package:memora/presentation/notifiers/timeline/group_timeline_group_selection_notifier.dart';
 
 export 'member_management_state.dart';
 
@@ -55,7 +56,11 @@ class MemberManagementNotifier extends AsyncNotifier<MemberManagementState> {
   Future<bool> deleteMember(String memberId) {
     return _runMutation(
       operationName: 'deleteMember',
-      execute: () => ref.read(deleteMemberUsecaseProvider).execute(memberId),
+      execute: () async {
+        await ref.read(deleteMemberUsecaseProvider).execute(memberId);
+        if (!ref.mounted) return;
+        ref.read(groupTimelineGroupSelectionNotifierProvider.notifier).reset();
+      },
     );
   }
 

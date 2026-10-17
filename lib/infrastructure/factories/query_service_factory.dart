@@ -244,7 +244,9 @@ class QueryServiceFactory {
       ) as T;
     }
     if (T == GroupQueryService) {
-      return FirestoreGroupQueryService() as T;
+      return FirestoreGroupQueryService(
+        firestore: ref.watch(firebaseFirestoreProvider),
+      ) as T;
     }
     if (T == GroupEventQueryService) {
       return FirestoreGroupEventQueryService() as T;

@@ -1,3 +1,4 @@
+import 'package:memora/application/queries/group/group_query_service.dart';
 import 'package:memora/application/dtos/android_widget/android_widget_itinerary_cache_dto.dart';
 import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
@@ -18,12 +19,14 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
   const RefreshAndroidWidgetItineraryCacheUsecase({
     required this._cacheStorage,
     required this._getCacheUsecase,
+    required this._groupQueryService,
     this._mode = AppMode.online,
     this._readTransaction,
   });
 
   final AndroidWidgetCacheStorage _cacheStorage;
   final GetAndroidWidgetItineraryCacheUsecase _getCacheUsecase;
+  final GroupQueryService _groupQueryService;
   final AppMode _mode;
   final ReadTransaction? _readTransaction;
 
@@ -43,16 +46,23 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
     bool updateWidgetAfterRefresh = true,
   }) async {
     try {
-      Future<AndroidWidgetItineraryCacheDto> read() {
+      Future<AndroidWidgetItineraryCacheDto?> read() async {
+        if (!await _groupQueryService.groupExists(groupId)) {
+          return null;
+        }
         return _getCacheUsecase.execute(
           groupId: groupId,
           selectedItineraryDateId: selectedItineraryDateId,
         );
       }
 
-      Future<void> publish(AndroidWidgetItineraryCacheDto cache) async {
+      Future<void> publish(AndroidWidgetItineraryCacheDto? cache) async {
         final currentTargetGroupId = await _cacheStorage.getTargetGroupId();
         if (currentTargetGroupId != null && currentTargetGroupId != groupId) {
+          return;
+        }
+        if (cache == null) {
+          await _cacheStorage.clear();
           return;
         }
         if (preserveExistingCacheOnEmpty && cache.itineraryDates.isEmpty) {

@@ -1,3 +1,7 @@
+import 'package:memora/infrastructure/queries/group/sqlite_group_query_service.dart';
+import 'package:memora/infrastructure/queries/member/sqlite_member_query_service.dart';
+import 'package:memora/infrastructure/repositories/group/sqlite_group_repository.dart';
+import 'package:memora/infrastructure/repositories/member/sqlite_member_repository.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/infrastructure/database/offline_database.dart';
@@ -138,11 +142,24 @@ void main() {
       }
     }
     final before = {for (final table in rows.keys) table: await db.rows(table)};
-    await db.deleteRows('groups', 'id', 'group');
-    await db.deleteRows('members', 'id', 'member');
+    await SqliteGroupRepository(db).deleteGroup('group');
+    expect((await db.rows('deleted_groups')).single, before['groups']!.single);
+    await SqliteMemberRepository(db).deleteMember('member');
+    expect((await db.rows('deleted_members')).single, before['members']!.last);
     await db.deleteRows('members', 'id', 'owner');
     expect(await db.rows('members'), isEmpty);
     expect(await db.rows('groups'), isEmpty);
+    expect(
+      await SqliteGroupQueryService(db)
+          .getGroupsWithMembersByMemberId('member'),
+      isEmpty,
+    );
+    expect(
+      await SqliteGroupQueryService(db)
+          .getManagedGroupsWithMembersByOwnerId('owner'),
+      isEmpty,
+    );
+    expect(await SqliteMemberQueryService(db).getMemberById('member'), isNull);
     for (final table in rows.keys.where(
       (t) => t != 'members' && t != 'groups',
     )) {

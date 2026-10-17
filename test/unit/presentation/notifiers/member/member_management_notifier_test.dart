@@ -1,3 +1,6 @@
+import 'package:memora/application/dtos/group/group_dto.dart';
+import 'package:memora/application/dtos/group/group_member_dto.dart';
+import 'package:memora/presentation/notifiers/timeline/group_timeline_group_selection_notifier.dart';
 import 'package:memora/composition_root/providers/member_providers.dart';
 
 import 'dart:async';
@@ -215,6 +218,26 @@ void main() {
     test('削除成功後に一覧を再取得する', () async {
       final calls = <String>[];
       final notifier = await startNotifier();
+      final selection = container.read(
+        groupTimelineGroupSelectionNotifierProvider.notifier,
+      );
+      selection.setLoadedGroups(
+        memberId: currentMember.id,
+        groups: const [
+          GroupDto(
+            id: 'group',
+            ownerId: 'member-1',
+            name: '家族',
+            members: [
+              GroupMemberDto(
+                groupId: 'group',
+                memberId: 'member-2',
+                displayName: '花子',
+              ),
+            ],
+          ),
+        ],
+      );
       final provider = memberManagementNotifierProvider(currentMember);
       getManagedMembersUsecase
         ..calls = calls
@@ -226,6 +249,12 @@ void main() {
 
       expect(await notifier.deleteMember(managedMember.id), isTrue);
       await container.read(provider.future);
+      final sharedState = container.read(
+        groupTimelineGroupSelectionNotifierProvider,
+      );
+      expect(sharedState.groups, isEmpty);
+      expect(sharedState.memberId, isNull);
+      expect(sharedState.status, GroupTimelineGroupSelectionStatus.loading);
 
       expect(container.read(provider).requireValue.members, const [
         refreshedCurrentMember,
@@ -235,6 +264,29 @@ void main() {
 
     test('削除失敗時は一覧を再取得せず例外を呼び出し元へ伝播する', () async {
       final notifier = await startNotifier();
+      final selection = container.read(
+        groupTimelineGroupSelectionNotifierProvider.notifier,
+      );
+      selection.setLoadedGroups(
+        memberId: currentMember.id,
+        groups: const [
+          GroupDto(
+            id: 'group',
+            ownerId: 'member-1',
+            name: '家族',
+            members: [
+              GroupMemberDto(
+                groupId: 'group',
+                memberId: 'member-2',
+                displayName: '花子',
+              ),
+            ],
+          ),
+        ],
+      );
+      final sharedBefore = container.read(
+        groupTimelineGroupSelectionNotifierProvider,
+      );
       final provider = memberManagementNotifierProvider(currentMember);
       final initialState = container.read(provider).requireValue;
       getManagedMembersUsecase.callCount = 0;
@@ -246,6 +298,10 @@ void main() {
         throwsA(isA<TestException>()),
       );
 
+      expect(
+        container.read(groupTimelineGroupSelectionNotifierProvider),
+        same(sharedBefore),
+      );
       expect(container.read(provider).requireValue, initialState);
       expect(getManagedMembersUsecase.callCount, 0);
       expect(getMemberByIdUseCase.callCount, 0);

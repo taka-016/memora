@@ -1,3 +1,5 @@
+import 'package:memora/presentation/notifiers/timeline/group_timeline_group_selection_notifier.dart';
+import 'package:memora/composition_root/providers/android_widget_providers.dart';
 import 'package:memora/composition_root/providers/group_providers.dart';
 
 import 'dart:async';
@@ -56,14 +58,19 @@ void main() {
   late MockUpdateGroupUsecase updateGroupUsecase;
   late MockDeleteGroupUsecase deleteGroupUsecase;
   late ProviderContainer container;
+  late List<String> widgetUpdates;
 
   setUp(() {
     getGroupsUsecase = MockGetManagedGroupsWithMembersUsecase();
     createGroupUsecase = MockCreateGroupUsecase();
     updateGroupUsecase = MockUpdateGroupUsecase();
     deleteGroupUsecase = MockDeleteGroupUsecase();
+    widgetUpdates = [];
     container = ProviderContainer(
       overrides: [
+        refreshSelectedAndroidWidgetCacheProvider.overrideWithValue(() async {
+          widgetUpdates.add('更新');
+        }),
         getManagedGroupsWithMembersUsecaseProvider.overrideWithValue(
           getGroupsUsecase,
         ),
@@ -275,6 +282,13 @@ void main() {
 
     test('削除成功後にProviderを再構築して一覧を更新する', () async {
       final notifier = await startNotifier();
+      final selection = container.read(
+        groupTimelineGroupSelectionNotifierProvider.notifier,
+      );
+      selection.setLoadedGroups(
+        memberId: currentMember.id,
+        groups: const [managedGroup],
+      );
       final provider = groupManagementNotifierProvider(currentMember);
       when(deleteGroupUsecase.execute(managedGroup.id))
           .thenAnswer((_) async {});
@@ -283,8 +297,15 @@ void main() {
 
       final result = await notifier.deleteGroup(managedGroup.id);
       await container.read(provider.future);
+      final sharedState = container.read(
+        groupTimelineGroupSelectionNotifierProvider,
+      );
+      expect(sharedState.groups, isEmpty);
+      expect(sharedState.memberId, isNull);
+      expect(sharedState.status, GroupTimelineGroupSelectionStatus.loading);
 
       expect(result, isTrue);
+      expect(widgetUpdates, ['更新']);
       expect(container.read(provider).requireValue.groups, isEmpty);
       verifyInOrder([
         deleteGroupUsecase.execute(managedGroup.id),
@@ -356,6 +377,16 @@ void main() {
 
     test('削除失敗時は一覧を再取得せず例外を呼び出し元へ伝播する', () async {
       final notifier = await startNotifier();
+      final selection = container.read(
+        groupTimelineGroupSelectionNotifierProvider.notifier,
+      );
+      selection.setLoadedGroups(
+        memberId: currentMember.id,
+        groups: const [managedGroup],
+      );
+      final sharedBefore = container.read(
+        groupTimelineGroupSelectionNotifierProvider,
+      );
       final provider = groupManagementNotifierProvider(currentMember);
       final initialState = container.read(provider).requireValue;
       clearInteractions(getGroupsUsecase);
@@ -367,6 +398,10 @@ void main() {
         throwsA(isA<TestException>()),
       );
 
+      expect(
+        container.read(groupTimelineGroupSelectionNotifierProvider),
+        same(sharedBefore),
+      );
       expect(container.read(provider).requireValue, initialState);
       verifyNever(getGroupsUsecase.execute(any));
     });

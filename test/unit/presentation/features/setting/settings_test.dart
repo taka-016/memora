@@ -596,6 +596,10 @@ String? _selectedDropdownValue(WidgetTester tester) {
 }
 
 class _FakeGroupQueryService implements GroupQueryService {
+  @override
+  Future<bool> groupExists(String groupId) async =>
+      await getGroupWithMembersById(groupId) != null;
+
   _FakeGroupQueryService(this.groups, {this.loadError});
 
   final List<GroupDto> groups;

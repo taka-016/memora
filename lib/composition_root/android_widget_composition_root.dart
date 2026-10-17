@@ -73,6 +73,7 @@ Future<void> withAndroidWidgetDependencies(
       androidWidgetItineraryItemQueryServiceProvider,
     );
     final refresh = RefreshAndroidWidgetItineraryCacheUsecase(
+      groupQueryService: container.read(groupQueryServiceProvider),
       cacheStorage: storage,
       getCacheUsecase: container.read(
         getAndroidWidgetItineraryCacheUsecaseProvider,

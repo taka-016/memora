@@ -1026,6 +1026,10 @@ class _FakeDvcPointUsageRepository implements DvcPointUsageRepository {
 }
 
 class _FakeGroupQueryService implements GroupQueryService {
+  @override
+  Future<bool> groupExists(String groupId) async =>
+      await getGroupWithMembersById(groupId) != null;
+
   const _FakeGroupQueryService(this.group);
 
   final GroupDto group;

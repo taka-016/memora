@@ -385,10 +385,12 @@ void main() {
 
       // Assert - エラーメッセージが表示されることを確認
       expect(find.text('削除に失敗しました: TestException: 削除エラー'), findsOneWidget);
-      verify(mockTripEntryRepository.deleteTripEntriesByGroupId('group-1'))
-          .called(1);
-      verify(mockGroupEventRepository.deleteGroupEventsByGroupId('group-1'))
-          .called(1);
+      verifyNever(
+        mockTripEntryRepository.deleteTripEntriesByGroupId('group-1'),
+      );
+      verifyNever(
+        mockGroupEventRepository.deleteGroupEventsByGroupId('group-1'),
+      );
       verify(mockGroupRepository.deleteGroup('group-1')).called(1);
     });
   });

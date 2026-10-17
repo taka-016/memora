@@ -97,7 +97,7 @@ class TaskEditBottomSheet extends HookWidget {
         name: trimmedName,
         memo: memoController.text,
         dueDate: dueDateState.value,
-        assignedMemberId: selectedAssignedMemberId,
+        assignedMemberId: assignedMemberState.value,
         parentTaskId: parentTaskId,
       );
       onSaved(updated);

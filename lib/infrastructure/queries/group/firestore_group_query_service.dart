@@ -14,6 +14,10 @@ class FirestoreGroupQueryService implements GroupQueryService {
     : _firestore = firestore ?? FirebaseFirestore.instance;
 
   @override
+  Future<bool> groupExists(String groupId) async =>
+      (await _firestore.collection('groups').doc(groupId).get()).exists;
+
+  @override
   Future<List<GroupDto>> getGroupsWithMembersByMemberId(
     String memberId, {
     List<OrderBy>? groupsOrderBy,
@@ -202,7 +206,7 @@ class FirestoreGroupQueryService implements GroupQueryService {
         group.id,
         orderBy: membersOrderBy,
       );
-      result.add(group.copyWith(members: members));
+      result.add(group.copyWith(members: members, originalMembers: members));
     }
 
     return result;
