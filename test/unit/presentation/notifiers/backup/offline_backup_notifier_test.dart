@@ -17,7 +17,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   const snapshot = OfflineBackupSnapshot(
-    formatVersion: 1,
+    formatVersion: OfflineBackupSnapshot.currentFormatVersion,
     databaseSchemaVersion: 1,
     currentMember: OfflineBackupCurrentMember(
       id: 'member-1',

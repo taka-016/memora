@@ -14,7 +14,7 @@ import '../../../../helpers/test_exception.dart';
 
 void main() {
   const snapshot = OfflineBackupSnapshot(
-    formatVersion: 1,
+    formatVersion: OfflineBackupSnapshot.currentFormatVersion,
     databaseSchemaVersion: 1,
     currentMember: OfflineBackupCurrentMember(
       id: 'member-1',
@@ -153,7 +153,7 @@ void main() {
 
   test('古い復元後同期が実行中なら次の復元は完了まで待つ', () async {
     const nextSnapshot = OfflineBackupSnapshot(
-      formatVersion: 1,
+      formatVersion: OfflineBackupSnapshot.currentFormatVersion,
       databaseSchemaVersion: 1,
       currentMember: OfflineBackupCurrentMember(
         id: 'member-2',

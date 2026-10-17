@@ -1,3 +1,10 @@
+import 'package:memora/infrastructure/repositories/member/sqlite_member_repository.dart';
+import 'package:memora/infrastructure/repositories/group/sqlite_group_repository.dart';
+import 'package:memora/infrastructure/queries/member/sqlite_member_query_service.dart';
+import 'package:memora/infrastructure/queries/group/sqlite_group_query_service.dart';
+
+import 'dart:convert';
+
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/application/mappers/calendar/calendar_event_mapper.dart';
 import 'package:memora/application/services/calendar/calendar_recurrence_expander.dart';
@@ -65,10 +72,248 @@ void main() {
 
   tearDown(() => db.close());
 
+  Future<void> archiveParentsWithRelatedData() async {
+    final rows = <String, List<Map<String, Object?>>>{
+      'members': [
+        {'id': 'member', 'owner_id': originalMember.id, 'display_name': '家族'},
+      ],
+      'group_members': [
+        {
+          'group_id': 'group-1',
+          'member_id': 'member',
+          'is_administrator': 1,
+          'order_index': 3,
+        },
+      ],
+      'trip_entries': [
+        {'id': 'trip', 'group_id': 'group-1', 'year': 2026},
+      ],
+      'tasks': [
+        {
+          'id': 'task',
+          'trip_id': 'trip',
+          'name': '準備',
+          'order_index': 0,
+          'is_completed': 0,
+          'assigned_member_id': 'member',
+        },
+      ],
+      'itinerary_items': [
+        {'id': 'item', 'trip_id': 'trip', 'name': '出発'},
+      ],
+      'member_events': [
+        {'id': 'me', 'member_id': 'member', 'year': 2026, 'memo': '入学'},
+      ],
+      'group_events': [
+        {'id': 'ge', 'group_id': 'group-1', 'year': 2026, 'memo': '記念'},
+      ],
+      'calendar_labels': [
+        {
+          'id': 'label',
+          'group_id': 'group-1',
+          'name': '全員',
+          'color': '#123456',
+        },
+      ],
+      'calendar_events': [
+        {
+          'id': 'event',
+          'group_id': 'group-1',
+          'label_id': 'label',
+          'title': '予定',
+          'start_date_time': 1,
+          'end_date_time': 2,
+          'is_all_day': 1,
+          'recurrence_rule': 'FREQ=DAILY',
+        },
+      ],
+      'calendar_event_overrides': [
+        {
+          'event_id': 'event',
+          'group_id': 'group-1',
+          'original_start_date_time': 1,
+          'is_cancelled': 1,
+        },
+      ],
+      'dvc_point_contracts': [
+        {
+          'id': 'contract',
+          'group_id': 'group-1',
+          'contract_name': '契約',
+          'contract_start_year_month': 1,
+          'contract_end_year_month': 2,
+          'use_year_start_month': 1,
+          'annual_point': 100,
+        },
+      ],
+      'dvc_limited_points': [
+        {
+          'id': 'limited',
+          'group_id': 'group-1',
+          'contract_id': 'contract',
+          'start_year_month': 1,
+          'end_year_month': 2,
+          'point': 10,
+        },
+      ],
+      'dvc_point_usages': [
+        {
+          'id': 'usage',
+          'group_id': 'group-1',
+          'contract_id': 'contract',
+          'usage_year_month': 1,
+          'used_point': 5,
+        },
+      ],
+    };
+    for (final table in rows.entries) {
+      for (final row in table.value) {
+        await db.insertRow(table.key, row);
+      }
+    }
+    await SqliteGroupRepository(db).deleteGroup('group-1');
+    await SqliteMemberRepository(db).deleteMember('member');
+  }
+
+  Future<void> expectDatabaseMatches(OfflineBackupSnapshot snapshot) async {
+    for (final table in db.allTables) {
+      expect(
+        await db.rows(table.actualTableName),
+        snapshot.tables[table.actualTableName],
+        reason: table.actualTableName,
+      );
+    }
+    expect(await db.customSelect('PRAGMA foreign_key_check').get(), isEmpty);
+  }
+
+  test('退避した親と全関連データを同じスナップショットから復元し通常取得から除外する', () async {
+    await archiveParentsWithRelatedData();
+    final snapshot = OfflineBackupSnapshot.fromJson(
+      jsonDecode(jsonEncode((await dataStore.exportSnapshot()).toJson()))
+          as Map<String, dynamic>,
+    );
+    expect(snapshot.tables['deleted_groups']!.single['id'], 'group-1');
+    expect(snapshot.tables['deleted_members']!.single['id'], 'member');
+    await db.updateRow('deleted_groups', 'group-1', {'name': '別時点'});
+    await db.updateRow('deleted_members', 'member', {'display_name': '別時点'});
+    await db.insertRow('deleted_groups', {
+      'id': 'other',
+      'owner_id': originalMember.id,
+      'name': '別の退避',
+    });
+    await db.insertRow('deleted_members', {
+      'id': 'other',
+      'display_name': '別の退避',
+    });
+    await db.updateRow('tasks', 'task', {'name': '別時点'});
+
+    await dataStore.restoreSnapshot(snapshot);
+
+    await expectDatabaseMatches(snapshot);
+    expect(
+      await SqliteGroupQueryService(db)
+          .getGroupsWithMembersByMemberId(originalMember.id),
+      isEmpty,
+    );
+    expect(
+      await SqliteGroupQueryService(db).getGroupWithMembersById('group-1'),
+      isNull,
+    );
+    expect(await SqliteMemberQueryService(db).getMemberById('member'), isNull);
+    expect((await SqliteMemberQueryService(db).getMembers()).map((v) => v.id), [
+      originalMember.id,
+    ]);
+  });
+
+  test('空の退避テーブルを復元すると端末に残っていた退避内容も置換する', () async {
+    final snapshot = await dataStore.exportSnapshot();
+    expect(snapshot.tables['deleted_groups'], isEmpty);
+    expect(snapshot.tables['deleted_members'], isEmpty);
+    await archiveParentsWithRelatedData();
+
+    await dataStore.restoreSnapshot(snapshot);
+
+    await expectDatabaseMatches(snapshot);
+  });
+
+  for (final failure in ['設定保存', 'ジャーナル削除', '同期保留']) {
+    test('$failureの失敗で通常データと退避データと関連データを復元前へ戻す', () async {
+      final target = await dataStore.exportSnapshot();
+      await archiveParentsWithRelatedData();
+      final before = await dataStore.exportSnapshot();
+      final error = TestException('復元失敗');
+      switch (failure) {
+        case '設定保存':
+          settingsStorage.nextSaveError = error;
+        case 'ジャーナル削除':
+          journalStorage.nextClearError = error;
+        case '同期保留':
+          syncStorage.nextMarkError = error;
+      }
+
+      await expectLater(
+        dataStore.restoreSnapshot(target),
+        throwsA(same(error)),
+      );
+
+      await expectDatabaseMatches(before);
+      expect(journalStorage.value, isNull);
+      expect(await syncStorage.isPending(), isFalse);
+    });
+  }
+
+  test('中断後のジャーナルから通常データと退避データと関連データを同時に回復する', () async {
+    await archiveParentsWithRelatedData();
+    final before = await dataStore.exportSnapshot();
+    await journalStorage.save(before);
+    await db.deleteRows('deleted_groups', 'id', 'group-1');
+    await db.updateRow('deleted_members', 'member', {'display_name': '復元途中'});
+    await db.insertRow('groups', {
+      'id': 'group-1',
+      'owner_id': originalMember.id,
+      'name': '復元途中',
+    });
+    await db.updateRow('tasks', 'task', {'name': '復元途中'});
+
+    await dataStore.recoverPendingRestore();
+
+    await expectDatabaseMatches(before);
+    expect(journalStorage.value, isNull);
+  });
+
+  test('更新前のバックアップ形式は読み込み時に拒否する', () async {
+    final json = (await dataStore.exportSnapshot()).toJson();
+    json['formatVersion'] = 1;
+    expect(
+      () => OfflineBackupSnapshot.fromJson(json),
+      throwsA(isA<OfflineBackupUnsupportedVersionException>()),
+    );
+  });
+
+  test('退避テーブルが欠けたバックアップは書き込み前に拒否する', () async {
+    final snapshot = await dataStore.exportSnapshot();
+    for (final table in ['deleted_groups', 'deleted_members']) {
+      final tables = {...snapshot.tables}..remove(table);
+      await expectLater(
+        dataStore.restoreSnapshot(
+          OfflineBackupSnapshot(
+            formatVersion: snapshot.formatVersion,
+            databaseSchemaVersion: snapshot.databaseSchemaVersion,
+            currentMember: snapshot.currentMember,
+            settings: snapshot.settings,
+            tables: tables,
+          ),
+        ),
+        throwsFormatException,
+      );
+    }
+    await expectDatabaseMatches(snapshot);
+  });
+
   test('全業務テーブルと端末内本人と復元対象設定を論理データとして往復復元する', () async {
     final snapshot = await dataStore.exportSnapshot();
 
-    expect(snapshot.formatVersion, 1);
+    expect(snapshot.formatVersion, OfflineBackupSnapshot.currentFormatVersion);
     expect(snapshot.databaseSchemaVersion, db.schemaVersion);
     expect(snapshot.currentMember, originalMember);
     expect(snapshot.settings, originalSettings);
@@ -322,7 +567,7 @@ void main() {
     expect((await db.rows('calendar_labels')).single['text_color'], '#Ab12Cd');
   });
 
-  for (final version in [1, 2]) {
+  for (final version in [1, 2, 7]) {
     test('旧バージョン$versionのバックアップは書き込み前に拒否する', () async {
       final snapshot = await dataStore.exportSnapshot();
       final tables = {...snapshot.tables};

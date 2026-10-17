@@ -17,7 +17,7 @@ void main() {
       directory: () async => directory,
     );
     final snapshot = OfflineBackupSnapshot(
-      formatVersion: 1,
+      formatVersion: OfflineBackupSnapshot.currentFormatVersion,
       databaseSchemaVersion: 1,
       currentMember: OfflineBackupCurrentMember(
         id: 'member-1',
@@ -30,7 +30,15 @@ void main() {
         showGrade: true,
         showYakudoshi: true,
       ),
-      tables: {for (final table in OfflineBackupSnapshot.tableNames) table: []},
+      tables: {
+        for (final table in OfflineBackupSnapshot.tableNames) table: [],
+        'deleted_groups': [
+          {'id': 'group', 'owner_id': 'member-1', 'name': '退避グループ'},
+        ],
+        'deleted_members': [
+          {'id': 'member', 'display_name': '退避メンバー'},
+        ],
+      },
     );
 
     await first.save(snapshot);
