@@ -6,7 +6,7 @@
 
 ### 3. Firestoreの永続キャッシュ・保存完了確認・楽観的排他（オンラインのみ）
 
-サーバーでの保存完了を確認し、古い編集内容による上書きを防ぐ排他制御を導入してから永続キャッシュを有効化する。設計判断は[ADR-009](adr/adr-009-server-confirmed-writes.md)、[ADR-010](adr/adr-010-version-based-concurrency-control.md)、[ADR-011](adr/adr-011-atomic-aggregate-updates.md)、[ADR-012](adr/adr-012-version-checked-deletion.md)、[ADR-013](adr/adr-013-edit-without-refetching.md)に従う。対象はFirestoreを使うオンラインモードとする。
+サーバーでの保存完了を確認し、古い編集内容による上書きを防ぐ排他制御を導入してから永続キャッシュを有効化する。設計判断は[ADR-010](adr/adr-010-version-based-concurrency-control.md)、[ADR-011](adr/adr-011-atomic-aggregate-updates.md)、[ADR-013](adr/adr-013-cached-read-consistency.md)に従う。対象はFirestoreを使うオンラインモードとする。
 
 最小限の改修を大前提とし、既存の取得・全件置換・保存フロー・トランザクションをできるだけ維持する。ただし、グループ所属の編集はオンライン・オフラインとも差分更新へ変更し、退避済みメンバーの既存所属を保持する。バージョン導入と親のバージョンによる更新・削除の排他に必要な変更を中心に、合意済みの保存状態・キャッシュの対応だけを行う。
 
@@ -22,7 +22,7 @@
 | `calendar_labels` | 各ラベル。編集・並べ替えに適用し、内部の参照件数更新と編集の競合を区別する |
 | `dvc_point_contracts`・`dvc_point_usages`・`dvc_limited_points` | 契約を親とし、ポイント利用・期間限定ポイントを契約に紐付ける仕様修正を先に行う。契約自身の`version`で契約と子を排他し、一覧用の専用親と`groups.version`は使用しない |
 
-グループ・メンバーの退避は[ADR-008](adr/adr-008-archive-groups-and-members.md)、それ以外の物理削除は[ADR-012](adr/adr-012-version-checked-deletion.md)、通常取得と再取得の扱いは[ADR-013](adr/adr-013-edit-without-refetching.md)に従う。
+グループ・メンバーの退避は[ADR-008](adr/adr-008-archive-groups-and-members.md)、キャッシュ利用時の取得時点の混在の扱いは[ADR-013](adr/adr-013-cached-read-consistency.md)に従う。
 
 以下の番号順に対応する。各段階で重要な成功・失敗ケースを検証し、未完了の段階を残したままキャッシュを有効化しない。
 
