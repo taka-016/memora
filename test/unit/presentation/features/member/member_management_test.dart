@@ -287,6 +287,60 @@ void main() {
       verify(mockMemberRepository.saveMember(any)).called(1);
     });
 
+    for (final creating in [true, false]) {
+      testWidgets('${creating ? '作成' : '更新'}の保存待ち・拒否・再試行で入力を保持し成功後だけ閉じる', (
+        tester,
+      ) async {
+        when(
+          mockMemberQueryService.getMembersByOwnerId(
+            testMember.id,
+            orderBy: anyNamed('orderBy'),
+          ),
+        ).thenAnswer((_) async => []);
+        var pending = Completer<void>();
+        if (creating) {
+          when(mockMemberRepository.saveMember(any))
+              .thenAnswer((_) => pending.future);
+        } else {
+          when(mockMemberRepository.updateMember(any))
+              .thenAnswer((_) => pending.future);
+        }
+        await tester.pumpWidget(createApp());
+        await tester.pumpAndSettle();
+        await tester.tap(
+          creating ? find.text('メンバー追加') : find.byType(ListTile).first,
+        );
+        await tester.pumpAndSettle();
+        await tester.enterText(
+          find.widgetWithText(TextFormField, '表示名'),
+          '保存する名前',
+        );
+        final save = find.text(creating ? '作成' : '更新');
+        await tester.tap(save);
+        await tester.pump();
+        expect(find.byType(MemberEditModal), findsOneWidget);
+        expect(
+          find.text(creating ? 'メンバーを作成しました' : 'メンバーを更新しました'),
+          findsNothing,
+        );
+        pending.completeError(TestException('サーバー拒否'));
+        await tester.pumpAndSettle();
+        expect(find.byType(MemberEditModal), findsOneWidget);
+        expect(find.widgetWithText(TextFormField, '保存する名前'), findsOneWidget);
+        expect(find.textContaining('失敗しました'), findsOneWidget);
+        pending = Completer<void>();
+        await tester.tap(save);
+        await tester.pump();
+        pending.complete();
+        await tester.pumpAndSettle();
+        expect(find.byType(MemberEditModal), findsNothing);
+        expect(
+          find.text(creating ? 'メンバーを作成しました' : 'メンバーを更新しました'),
+          findsOneWidget,
+        );
+      });
+    }
+
     testWidgets('メンバー情報の更新ができること', (WidgetTester tester) async {
       // Arrange
       final managedMembers = [
