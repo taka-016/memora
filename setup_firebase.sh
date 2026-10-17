@@ -57,9 +57,6 @@ echo "エイリアス名を聞かれたらdefaultまたはmemoraを入力して�
 firebase use --add || { echo "プロジェクト設定に失敗しました"; exit 1; }
 
 # ルールデプロイ
-echo "Firestoreのアクセス制御ルールを適用します。"
-echo "公開済みと同じ内容の場合は、再アップロードと新しいルールセットの作成を省略します。"
-echo "内容の確認と既存ルールセットへの参照更新は毎回行います。"
 echo "Firestoreルールをデプロイしています..."
 firebase deploy --only firestore:rules || { echo "ルールデプロイに失敗しました"; exit 1; }
 
