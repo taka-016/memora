@@ -56,8 +56,11 @@ echo "プロジェクトを設定しています..."
 echo "エイリアス名を聞かれたらdefaultまたはmemoraを入力してください"
 firebase use --add || { echo "プロジェクト設定に失敗しました"; exit 1; }
 
-# 同一内容ならCLIがアップロードを省略する（確認とリリース参照更新は実行）。
-echo "Firestoreルールを確認・デプロイしています..."
+# ルールデプロイ
+echo "Firestoreのアクセス制御ルールを適用します。"
+echo "公開済みと同じ内容の場合は、再アップロードと新しいルールセットの作成を省略します。"
+echo "内容の確認と既存ルールセットへの参照更新は毎回行います。"
+echo "Firestoreルールをデプロイしています..."
 firebase deploy --only firestore:rules || { echo "ルールデプロイに失敗しました"; exit 1; }
 
 # インデックスデプロイ
