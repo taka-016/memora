@@ -328,6 +328,9 @@ void main() {
         expect(find.byType(MemberEditModal), findsOneWidget);
         expect(find.widgetWithText(TextFormField, '保存する名前'), findsOneWidget);
         expect(find.textContaining('失敗しました'), findsOneWidget);
+        ScaffoldMessenger.of(tester.element(find.byType(MemberManagement)))
+            .clearSnackBars();
+        await tester.pump(const Duration(milliseconds: 300));
         pending = Completer<void>();
         await tester.tap(save);
         await tester.pump();

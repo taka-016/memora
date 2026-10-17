@@ -157,6 +157,7 @@ void main() {
       expect(calls, 1);
       pending.complete(false);
       await tester.pump();
+      await tester.pump();
       expect(find.byType(AlertDialog), findsOneWidget);
       pending = Completer<bool>();
       await submit();
