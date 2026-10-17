@@ -6,7 +6,7 @@ import 'package:memora/infrastructure/backup/encrypted_offline_backup_codec.dart
 
 void main() {
   const snapshot = OfflineBackupSnapshot(
-    formatVersion: 1,
+    formatVersion: OfflineBackupSnapshot.currentFormatVersion,
     databaseSchemaVersion: 1,
     currentMember: OfflineBackupCurrentMember(
       id: 'member-1',

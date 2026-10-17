@@ -55,7 +55,7 @@ void main() {
 
     testWidgets('検証済みバックアップの復元前に全件置換の確認を求める', (tester) async {
       const snapshot = OfflineBackupSnapshot(
-        formatVersion: 1,
+        formatVersion: OfflineBackupSnapshot.currentFormatVersion,
         databaseSchemaVersion: 1,
         currentMember: OfflineBackupCurrentMember(
           id: 'member-1',
@@ -103,7 +103,7 @@ void main() {
 
     testWidgets('復元中はウィジェット設定を変更できない', (tester) async {
       const snapshot = OfflineBackupSnapshot(
-        formatVersion: 1,
+        formatVersion: OfflineBackupSnapshot.currentFormatVersion,
         databaseSchemaVersion: 1,
         currentMember: OfflineBackupCurrentMember(
           id: 'member-1',
@@ -170,7 +170,7 @@ void main() {
 
     testWidgets('復元中は画面を離れられず、完了後は戻れる', (tester) async {
       const snapshot = OfflineBackupSnapshot(
-        formatVersion: 1,
+        formatVersion: OfflineBackupSnapshot.currentFormatVersion,
         databaseSchemaVersion: 1,
         currentMember: OfflineBackupCurrentMember(
           id: 'member-1',
