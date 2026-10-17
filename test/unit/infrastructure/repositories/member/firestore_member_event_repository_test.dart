@@ -1,3 +1,7 @@
+import 'dart:async';
+
+import '../../../../helpers/test_exception.dart';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/domain/entities/member/member_event.dart';
@@ -41,6 +45,74 @@ void main() {
           .thenReturn(mockMemberQuery);
       when(mockMemberQuery.where('year', isEqualTo: year))
           .thenReturn(mockMemberYearQuery);
+    }
+
+    for (final failureAt in ['なし', '本体', '重複整理']) {
+      test('複数書き込みはサーバー完了まで待機し$failureAtの結果を伝える', () async {
+        const event = MemberEvent(
+          id: '',
+          memberId: 'member001',
+          year: 2026,
+          memo: '記録',
+        );
+        final ref = MockDocumentReference<Map<String, dynamic>>();
+        final duplicate = MockQueryDocumentSnapshot<Map<String, dynamic>>();
+        final duplicateRef = MockDocumentReference<Map<String, dynamic>>();
+        final batch = MockWriteBatch();
+        final writing = Completer<void>();
+        final written = Completer<void>();
+        final cleaning = Completer<void>();
+        final cleaned = Completer<void>();
+        stubFindByMemberIdAndYear(event.memberId, event.year);
+        when(mockCollection.doc('member001_2026')).thenReturn(ref);
+        when(mockMemberYearQuery.get())
+            .thenAnswer((_) async => mockQuerySnapshot);
+        when(mockQuerySnapshot.docs).thenReturn([duplicate]);
+        when(duplicate.id).thenReturn('重複');
+        when(duplicate.reference).thenReturn(duplicateRef);
+        when(ref.set(any, any)).thenAnswer((_) {
+          writing.complete();
+          return written.future;
+        });
+        when(mockFirestore.batch()).thenReturn(batch);
+        when(batch.commit()).thenAnswer((_) {
+          cleaning.complete();
+          return cleaned.future;
+        });
+        var finished = false;
+        Future<String> save() async {
+          try {
+            return await repository.saveMemberEvent(event);
+          } finally {
+            finished = true;
+          }
+        }
+
+        final failure = TestException('サーバー拒否');
+        final result = expectLater(
+          save(),
+          failureAt == 'なし'
+              ? completion('member001_2026')
+              : throwsA(same(failure)),
+        );
+        await writing.future;
+        expect(finished, isFalse);
+        verifyNever(mockFirestore.batch());
+        if (failureAt == '本体') {
+          written.completeError(failure);
+        } else {
+          written.complete();
+          await cleaning.future;
+          expect(finished, isFalse);
+          if (failureAt == '重複整理') {
+            cleaned.completeError(failure);
+          } else {
+            cleaned.complete();
+          }
+        }
+        await result;
+        if (failureAt == '本体') verifyNever(mockFirestore.batch());
+      });
     }
 
     test('saveMemberEventは同一memberId・yearの正規ドキュメントを更新する', () async {

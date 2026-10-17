@@ -60,6 +60,8 @@ class GroupEditModal extends HookConsumerWidget {
     final memoController = useTextEditingController(text: group.memo ?? '');
     final editStateNotifier = ref.read(editStateNotifierProvider.notifier);
     final editState = ref.watch(editStateNotifierProvider);
+    final isSaving = useState(false);
+    final isSavingRef = useRef(false);
 
     MemberDto? findMemberById(String memberId) {
       if (currentMember.id == memberId) {
@@ -611,54 +613,69 @@ class GroupEditModal extends HookConsumerWidget {
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
           TextButton(
-            onPressed: () async {
-              if (!editState.isDirty) {
-                editStateNotifier.reset();
-                Navigator.of(context).pop();
-                return;
-              }
+            onPressed: isSaving.value
+                ? null
+                : () async {
+                    if (!editState.isDirty) {
+                      editStateNotifier.reset();
+                      Navigator.of(context).pop();
+                      return;
+                    }
 
-              final shouldClose = await EditDiscardConfirmDialog.show(context);
-              if (!context.mounted) {
-                return;
-              }
+                    if (isSaving.value) return;
+                    final shouldClose = await EditDiscardConfirmDialog.show(
+                      context,
+                    );
+                    if (!context.mounted) {
+                      return;
+                    }
 
-              if (shouldClose) {
-                editStateNotifier.reset();
-                Navigator.of(context).pop();
-              }
-            },
+                    if (shouldClose) {
+                      editStateNotifier.reset();
+                      Navigator.of(context).pop();
+                    }
+                  },
             child: const Text('キャンセル'),
           ),
           const SizedBox(width: 8),
           ElevatedButton(
-            onPressed: () async {
-              if (formKey.currentState!.validate()) {
-                try {
-                  final succeeded = await onSave(buildUpdatedGroup());
-                  if (!succeeded) {
-                    return;
-                  }
-                  if (!context.mounted) {
-                    return;
-                  }
-                  editStateNotifier.reset();
-                  Navigator.of(context).pop();
-                } catch (e, stack) {
-                  logger.e(
-                    'GroupEditModal.onSave: ${e.toString()}',
-                    error: e,
-                    stackTrace: stack,
-                  );
-                  if (!context.mounted) {
-                    return;
-                  }
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('保存に失敗しました。もう一度お試しください。')),
-                  );
-                }
-              }
-            },
+            onPressed: isSaving.value
+                ? null
+                : () async {
+                    if (isSavingRef.value) return;
+                    if (formKey.currentState!.validate()) {
+                      isSavingRef.value = true;
+                      isSaving.value = true;
+                      try {
+                        final succeeded = await onSave(buildUpdatedGroup());
+                        if (!succeeded) {
+                          return;
+                        }
+                        if (!context.mounted) {
+                          return;
+                        }
+                        editStateNotifier.reset();
+                        Navigator.of(context).pop();
+                      } catch (e, stack) {
+                        logger.e(
+                          'GroupEditModal.onSave: ${e.toString()}',
+                          error: e,
+                          stackTrace: stack,
+                        );
+                        if (!context.mounted) {
+                          return;
+                        }
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('保存に失敗しました。もう一度お試しください。'),
+                          ),
+                        );
+                      } finally {
+                        isSavingRef.value = false;
+                        if (context.mounted) isSaving.value = false;
+                      }
+                    }
+                  },
             child: Text(isEditing ? '更新' : '作成'),
           ),
         ],
@@ -666,12 +683,13 @@ class GroupEditModal extends HookConsumerWidget {
     }
 
     return PopScope(
-      canPop: !editState.isDirty,
+      canPop: !isSaving.value && !editState.isDirty,
       onPopInvokedWithResult: (didPop, result) async {
         if (didPop) {
           editStateNotifier.reset();
           return;
         }
+        if (isSaving.value) return;
         final shouldClose = await EditDiscardConfirmDialog.show(context);
         if (!context.mounted) {
           return;
@@ -701,7 +719,12 @@ class GroupEditModal extends HookConsumerWidget {
                   children: [
                     buildTitle(),
                     const SizedBox(height: 20),
-                    Expanded(child: buildScrollableContent()),
+                    Expanded(
+                      child: AbsorbPointer(
+                        absorbing: isSaving.value,
+                        child: buildScrollableContent(),
+                      ),
+                    ),
                     const SizedBox(height: 24),
                     buildActionButtons(),
                   ],

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 class DeleteConfirmDialog extends StatelessWidget {
@@ -10,7 +12,7 @@ class DeleteConfirmDialog extends StatelessWidget {
 
   final String title;
   final String content;
-  final VoidCallback onConfirm;
+  final FutureOr<void> Function() onConfirm;
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +42,7 @@ class DeleteConfirmDialog extends StatelessWidget {
     BuildContext context, {
     required String title,
     required String content,
-    required VoidCallback onConfirm,
+    required FutureOr<void> Function() onConfirm,
   }) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -52,7 +54,7 @@ class DeleteConfirmDialog extends StatelessWidget {
     );
 
     if (confirmed == true) {
-      onConfirm();
+      await onConfirm();
     }
 
     return confirmed;
