@@ -8,6 +8,13 @@ import 'delete_member_usecase_test.mocks.dart';
 
 @GenerateMocks([MemberRepository])
 void main() {
+  test('取得時の期待バージョンを退避要求へ引き継ぐ', () async {
+    final repository = MockMemberRepository();
+    when(repository.deleteMember('id', expectedVersion: 7)).thenAnswer((_) async {});
+    await DeleteMemberUsecase(repository).execute('id', expectedVersion: 7);
+    verify(repository.deleteMember('id', expectedVersion: 7)).called(1);
+  });
+
   test('指定したIDの退避をRepositoryへ委譲する', () async {
     final repository = MockMemberRepository();
     when(repository.deleteMember('id')).thenAnswer((_) async {});

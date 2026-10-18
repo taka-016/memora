@@ -22,6 +22,23 @@ Widget _createApp({required Widget child}) {
 
 void main() {
   group('MemberEditModal', () {
+    testWidgets('保存拒否後も入力と編集開始時のバージョンを保持して再試行できる', (tester) async {
+      final requests = <MemberDto>[];
+      await tester.pumpWidget(_createApp(child: MemberEditModal(
+        member: const MemberDto(id: 'member', displayName: '編集前', version: 7),
+        onSave: (value) async { requests.add(value); return false; },
+      )));
+      await tester.enterText(find.widgetWithText(TextFormField, '表示名'), '編集中');
+      for (var attempt = 0; attempt < 2; attempt++) {
+        await tester.tap(find.text('更新'));
+        await tester.pump();
+        expect(find.text('メンバー編集'), findsOneWidget);
+        expect(find.text('編集中'), findsOneWidget);
+      }
+      expect(requests.map((value) => value.version), [7, 7]);
+      expect(requests.map((value) => value.displayName), ['編集中', '編集中']);
+    });
+
     testWidgets('新規作成モードでタイトルが正しく表示されること', (WidgetTester tester) async {
       // Act
       await tester.pumpWidget(

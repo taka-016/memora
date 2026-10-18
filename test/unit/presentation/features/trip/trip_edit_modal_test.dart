@@ -205,12 +205,14 @@ void main() {
         _createDialogApp(
           tripEntry: TripEntryDto(
             id: 'trip-1',
+            version: 7,
             groupId: 'test-group-id',
             year: 2024,
             name: 'テスト旅行',
           ),
           onSave: (tripEntry) async {
             saveCallCount++;
+            expect(tripEntry.version, 7);
             return false;
           },
         ),

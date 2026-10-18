@@ -393,6 +393,7 @@ void main() {
     test('取得から編集と保存要求まで期待値を保持し保存時だけ次の値を送る', () {
       final dynamic dto = FirestoreDvcPointContractMapper.fromFirestore(doc);
       expect(dto.version, 7);
+      expect(FirestoreDvcPointContractMapper.toUpdateFirestore(DvcPointContractMapper.toEntity(dto))['version'], 8);
       final dynamic edited = dto.copyWith();
       final entity = DvcPointContractMapper.toEntity(edited);
       final dynamic restored = DvcPointContractMapper.toDto(entity);
