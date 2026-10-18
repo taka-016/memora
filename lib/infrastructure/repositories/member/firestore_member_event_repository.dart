@@ -35,7 +35,10 @@ class FirestoreMemberEventRepository implements MemberEventRepository {
   }
 
   @override
-  Future<void> deleteMemberEvent(String memberEventId) async {
+  Future<void> deleteMemberEvent(
+    String memberEventId, {
+    int? expectedVersion,
+  }) async {
     await _firestore.collection('member_events').doc(memberEventId).delete();
   }
 

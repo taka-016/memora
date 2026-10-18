@@ -59,6 +59,7 @@ class TripEditModal extends HookConsumerWidget {
     final initialTripForComparison = useMemoized(() {
       final tripYearValue = tripEntry?.year ?? year ?? clock.now().year;
       return TripEntryDto(
+        version: tripEntry?.version,
         id: tripEntry?.id ?? '',
         groupId: groupId,
         year: tripYearValue,

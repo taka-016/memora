@@ -7,18 +7,50 @@ service cloud.firestore {
              && request.auth.token.email_verified == true;
     }
 
-    match /deleted_groups/{document=**} {
-      allow read, write: if isVerifiedUser();
+    function isInitialVersion() {
+      return request.resource.data.version is int
+             && request.resource.data.version == 1;
     }
 
-    match /deleted_members/{document=**} {
-      allow read, write: if isVerifiedUser();
+    function isNextVersion() {
+      return resource.data.version is int
+             && resource.data.version >= 1
+             && request.resource.data.version is int
+             && request.resource.data.version == resource.data.version + 1;
     }
 
-    match /{collection}/{document=**} {
-      allow read, write: if collection != 'deleted_groups'
-                         && collection != 'deleted_members'
-                         && isVerifiedUser();
+    function isVersionedCollection(collection) {
+      return collection in ['members', 'member_invitations', 'group_events',
+                            'member_events', 'trip_entries', 'groups',
+                            'calendar_events', 'dvc_point_contracts',
+                            'calendar_labels'];
+    }
+
+    match /{collection}/{document} {
+      allow read, delete: if isVerifiedUser()
+                            && isVersionedCollection(collection);
+      allow create: if isVerifiedUser()
+                       && isVersionedCollection(collection)
+                       && isInitialVersion();
+      allow update: if isVerifiedUser()
+                       && isVersionedCollection(collection)
+                       && isNextVersion();
+    }
+
+    match /calendar_labels/{document} {
+      allow update: if isVerifiedUser()
+                       && request.resource.data.diff(resource.data)
+                            .affectedKeys().hasOnly(['eventCount'])
+                       && request.resource.data.eventCount is int
+                       && request.resource.data.eventCount >= 0;
+    }
+
+    match /{collection}/{document} {
+      allow read, write: if isVerifiedUser()
+                           && collection in ['deleted_groups', 'deleted_members',
+                                             'locations', 'tasks', 'itinerary_items',
+                                             'group_members', 'calendar_event_overrides',
+                                             'dvc_limited_points', 'dvc_point_usages'];
     }
   }
 }

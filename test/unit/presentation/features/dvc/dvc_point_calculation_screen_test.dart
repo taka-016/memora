@@ -952,8 +952,9 @@ class _FakeDvcPointContractRepository implements DvcPointContractRepository {
   @override
   Future<void> saveDvcPointContracts(
     String groupId,
-    List<DvcPointContract> contracts,
-  ) async {
+    List<DvcPointContract> contracts, {
+    Map<String, int> expectedVersions = const {},
+  }) async {
     savedContracts.addAll(contracts);
   }
 
@@ -962,7 +963,10 @@ class _FakeDvcPointContractRepository implements DvcPointContractRepository {
   final List<String> deletedGroupIds = [];
 
   @override
-  Future<void> deleteDvcPointContract(String contractId) async {
+  Future<void> deleteDvcPointContract(
+    String contractId, {
+    int? expectedVersion,
+  }) async {
     deletedContractIds.add(contractId);
   }
 

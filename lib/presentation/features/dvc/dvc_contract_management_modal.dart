@@ -284,6 +284,7 @@ class _ContractForm extends StatelessWidget {
 
 class DvcEditableContract {
   DvcEditableContract({
+    this.version,
     this.id = '',
     required this.contractName,
     required this.contractStartYearMonth,
@@ -298,6 +299,7 @@ class DvcEditableContract {
     required bool expanded,
   }) {
     return DvcEditableContract(
+      version: dto.version,
       id: dto.id,
       contractName: dto.contractName,
       contractStartYearMonth: dvcMonthStart(dto.contractStartYearMonth),
@@ -308,6 +310,7 @@ class DvcEditableContract {
     );
   }
 
+  final int? version;
   final String id;
   final String contractName;
   final DateTime contractStartYearMonth;
@@ -333,6 +336,7 @@ class DvcEditableContract {
     bool? expanded,
   }) {
     return DvcEditableContract(
+      version: version,
       id: id,
       contractName: contractName ?? this.contractName,
       contractStartYearMonth:

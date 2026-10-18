@@ -27,7 +27,7 @@ class FirestoreMemberRepository implements MemberRepository {
   }
 
   @override
-  Future<void> deleteMember(String memberId) async {
+  Future<void> deleteMember(String memberId, {int? expectedVersion}) async {
     final source = _firestore.collection('members').doc(memberId);
     await _firestore.runTransaction<void>((transaction) async {
       final snapshot = await transaction.get(source);

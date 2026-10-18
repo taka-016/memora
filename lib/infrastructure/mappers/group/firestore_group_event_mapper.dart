@@ -9,6 +9,7 @@ class FirestoreGroupEventMapper {
   ) {
     final data = doc.data() ?? {};
     return GroupEventDto(
+      version: data['version'] as int?,
       id: doc.id,
       groupId: data['groupId'] as String? ?? '',
       year: data['year'] as int? ?? 0,
@@ -21,6 +22,7 @@ class FirestoreGroupEventMapper {
       'groupId': groupEvent.groupId,
       'year': groupEvent.year,
       'memo': groupEvent.memo,
+      'version': 1,
       ...FirestoreWriteMetadata.forCreate(),
     };
   }
@@ -30,6 +32,7 @@ class FirestoreGroupEventMapper {
       'groupId': groupEvent.groupId,
       'year': groupEvent.year,
       'memo': groupEvent.memo,
+      'version': groupEvent.version == null ? null : groupEvent.version! + 1,
       ...FirestoreWriteMetadata.forUpdate(),
     };
   }

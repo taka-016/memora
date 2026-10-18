@@ -6,6 +6,7 @@ import 'package:memora/application/dtos/trip/task_dto.dart';
 
 class TripEntryDto extends Equatable {
   const TripEntryDto({
+    this.version,
     required this.id,
     required this.groupId,
     required this.year,
@@ -18,6 +19,7 @@ class TripEntryDto extends Equatable {
     this.itineraryItems,
   });
 
+  final int? version;
   final String id;
   final String groupId;
   final int year;
@@ -30,6 +32,7 @@ class TripEntryDto extends Equatable {
   final List<ItineraryItemDto>? itineraryItems;
 
   TripEntryDto copyWith({
+    int? version,
     String? id,
     String? groupId,
     int? year,
@@ -42,6 +45,7 @@ class TripEntryDto extends Equatable {
     Object? itineraryItems = copyWithPlaceholder,
   }) {
     return TripEntryDto(
+      version: version ?? this.version,
       id: id ?? this.id,
       groupId: groupId ?? this.groupId,
       year: year ?? this.year,
@@ -69,6 +73,7 @@ class TripEntryDto extends Equatable {
 
   @override
   List<Object?> get props => [
+    version,
     id,
     groupId,
     year,

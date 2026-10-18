@@ -8,6 +8,7 @@ class FirestoreMemberMapper {
   static MemberDto fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? {};
     return MemberDto(
+      version: data['version'] as int?,
       id: doc.id,
       accountId: data['accountId'] as String?,
       ownerId: data['ownerId'] as String?,
@@ -44,6 +45,7 @@ class FirestoreMemberMapper {
       'gender': member.gender,
       'email': member.email,
       'phoneNumber': member.phoneNumber,
+      'version': 1,
       ...FirestoreWriteMetadata.forCreate(),
     };
   }
@@ -66,6 +68,7 @@ class FirestoreMemberMapper {
       'gender': member.gender,
       'email': member.email,
       'phoneNumber': member.phoneNumber,
+      'version': member.version == null ? null : member.version! + 1,
       ...FirestoreWriteMetadata.forUpdate(),
     };
   }

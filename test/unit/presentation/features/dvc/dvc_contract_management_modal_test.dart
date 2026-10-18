@@ -5,6 +5,23 @@ import 'package:memora/infrastructure/time/fixed_app_clock.dart';
 import 'package:memora/presentation/features/dvc/dvc_contract_management_modal.dart';
 
 void main() {
+  test('契約の編集開始時の期待バージョンを入力変更後も保持する', () {
+    final dynamic editable = DvcEditableContract.fromDto(
+      DvcPointContractDto(
+        id: 'contract',
+        groupId: 'group',
+        version: 7,
+        contractName: '契約',
+        contractStartYearMonth: DateTime(2026),
+        contractEndYearMonth: DateTime(2027),
+        useYearStartMonth: 1,
+        annualPoint: 100,
+      ),
+      expanded: true,
+    ).copyWith(contractName: '変更後');
+    expect(editable.version, 7);
+  });
+
   final month = DateTime(2026, 1);
   final contracts = [
     for (final name in ['A', 'B'])

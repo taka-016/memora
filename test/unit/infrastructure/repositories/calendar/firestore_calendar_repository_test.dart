@@ -155,6 +155,7 @@ void main() {
   tearDown(() => container.dispose());
 
   CalendarEvent event({String id = ''}) => CalendarEvent(
+    version: 1,
     id: id,
     groupId: 'group',
     labelId: 'label',
@@ -163,6 +164,26 @@ void main() {
     endDateTime: DateTime.utc(2026, 10, 3),
     isAllDay: false,
   );
+
+  test('トランザクションの再実行でも保存する期待値を最新版へ差し替えない', () async {
+    final edited = event(id: 'event').copyWith(version: 7);
+    when(firestore.runTransaction<void>(any)).thenAnswer((call) async {
+      final callback =
+          call.positionalArguments.single as Future<void> Function(Transaction);
+      for (final version in [7, 8]) {
+        when(eventDoc.data()).thenReturn({
+          'groupId': 'group',
+          'labelId': 'label',
+          'version': version,
+        });
+        await callback(transaction);
+      }
+    });
+    await events.updateCalendarEvent(edited);
+    final writes = verify(transaction.update(eventRef, captureAny)).captured
+        .cast<Map<String, dynamic>>();
+    expect(writes.map((data) => data['version']), [8, 8]);
+  });
 
   for (final replace in [false, true]) {
     for (final changeChildren in [false, true]) {
@@ -619,8 +640,12 @@ void main() {
     );
   });
 
-  test('並び替えは全ラベルのグループを確認して順序だけを一括更新する', () async {
-    await labels.reorderCalendarLabels('group', ['other', 'label']);
+  test('並び替えは全ラベルのグループを確認して取得時の期待値と順序を一括更新する', () async {
+    await labels.reorderCalendarLabels(
+      'group',
+      ['other', 'label'],
+      expectedVersions: {'other': 7, 'label': 4},
+    );
     final first =
         verify(transaction.update(otherRef, captureAny)).captured.single
             as Map<String, dynamic>;
@@ -628,9 +653,11 @@ void main() {
         verify(transaction.update(labelRef, captureAny)).captured.single
             as Map<String, dynamic>;
     expect(first['sortOrder'], 0);
+    expect(first['version'], 8);
+    expect(last['version'], 5);
     expect(last['sortOrder'], 1);
-    expect(first.keys.toSet(), {'sortOrder', 'updatedAt'});
-    expect(last.keys.toSet(), {'sortOrder', 'updatedAt'});
+    expect(first.keys.toSet(), {'sortOrder', 'version', 'updatedAt'});
+    expect(last.keys.toSet(), {'sortOrder', 'version', 'updatedAt'});
   });
   test('並び替えに別グループが混ざると更新を一件も書き込まない', () async {
     final foreign = MockDocumentSnapshot();

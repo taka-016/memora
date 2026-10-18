@@ -466,6 +466,7 @@ class ChangeCalendarRecurrenceUsecase {
     String? rule,
     List<CalendarEventOverride> overrides = const [],
   }) => CalendarEventDto(
+    version: id == '' ? null : value.version,
     id: id ?? value.id,
     groupId: value.groupId,
     labelId: value.labelId,

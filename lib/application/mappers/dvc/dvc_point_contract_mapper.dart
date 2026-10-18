@@ -5,6 +5,7 @@ class DvcPointContractMapper {
   static DvcPointContract toEntity(DvcPointContractDto dto) {
     return DvcPointContract(
       id: dto.id,
+      version: dto.version,
       groupId: dto.groupId,
       contractName: dto.contractName,
       contractStartYearMonth: dto.contractStartYearMonth,
@@ -17,6 +18,7 @@ class DvcPointContractMapper {
   static DvcPointContractDto toDto(DvcPointContract entity) {
     return DvcPointContractDto(
       id: entity.id,
+      version: entity.version,
       groupId: entity.groupId,
       contractName: entity.contractName,
       contractStartYearMonth: entity.contractStartYearMonth,

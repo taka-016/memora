@@ -20,6 +20,7 @@ class FirestoreTripEntryMapper {
     final endDate = FirestoreMapperValueParser.asDateTime(data['endDate']);
     final year = FirestoreMapperValueParser.asNullableInt(data['year']);
     return TripEntryDto(
+      version: data['version'] as int?,
       id: doc.id,
       groupId: data['groupId'] as String? ?? '',
       year: year ?? startDate?.year ?? fallbackTripYear,
@@ -39,6 +40,7 @@ class FirestoreTripEntryMapper {
       'year': tripEntry.year,
       'name': tripEntry.name,
       'memo': tripEntry.memo,
+      'version': 1,
       ...FirestoreWriteMetadata.forCreate(),
     };
 
@@ -58,6 +60,7 @@ class FirestoreTripEntryMapper {
       'year': tripEntry.year,
       'name': tripEntry.name,
       'memo': tripEntry.memo,
+      'version': tripEntry.version == null ? null : tripEntry.version! + 1,
       ...FirestoreWriteMetadata.forUpdate(),
     };
 

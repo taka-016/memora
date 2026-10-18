@@ -89,8 +89,11 @@ class CalendarNotifier extends _$CalendarNotifier {
     CalendarEventDto occurrence,
     CalendarChangeScope scope, {
     CalendarEventDto? changes,
+    CalendarEventDto? expectedSeries,
   }) => _mutate(() async {
-    final source = _series.where((v) => v.id == occurrence.id).firstOrNull;
+    final source =
+        expectedSeries ??
+        _series.where((v) => v.id == occurrence.id).firstOrNull;
     if (source == null ||
         occurrence.groupId != groupId ||
         occurrence.originalStartDateTime == null) {
@@ -123,20 +126,22 @@ class CalendarNotifier extends _$CalendarNotifier {
         .firstOrNull;
   }
 
-  Future<bool> resetRecurringEvent(CalendarEventDto occurrence) =>
-      _mutate(() async {
-        final source = seriesForEvent(occurrence.id);
-        if (source == null ||
-            occurrence.groupId != groupId ||
-            occurrence.originalStartDateTime == null) {
-          throw const ApplicationValidationException(
-            'リセットする予定が見つかりません。再読み込みしてください',
-          );
-        }
-        await ref
-            .read(changeCalendarRecurrenceUsecaseProvider)
-            .resetOverride(source, occurrence.originalStartDateTime!);
-      });
+  Future<bool> resetRecurringEvent(
+    CalendarEventDto occurrence, {
+    CalendarEventDto? expectedSeries,
+  }) => _mutate(() async {
+    final source = expectedSeries ?? seriesForEvent(occurrence.id);
+    if (source == null ||
+        occurrence.groupId != groupId ||
+        occurrence.originalStartDateTime == null) {
+      throw const ApplicationValidationException(
+        'リセットする予定が見つかりません。再読み込みしてください',
+      );
+    }
+    await ref
+        .read(changeCalendarRecurrenceUsecaseProvider)
+        .resetOverride(source, occurrence.originalStartDateTime!);
+  });
 
   ({int reset, int retained}) recurrenceImpact(
     CalendarEventDto occurrence,
@@ -177,17 +182,20 @@ class CalendarNotifier extends _$CalendarNotifier {
     }
   });
 
-  Future<bool> deleteEvent(String id) => _mutate(() async {
-    if (_series.any((v) => v.id == id && v.recurrenceRule != null)) {
-      throw const ApplicationValidationException('繰り返し予定は削除範囲を指定してください');
-    }
-    if (!state.events.any(
-      (event) => event.id == id && event.groupId == groupId,
-    )) {
-      throw const ApplicationValidationException('削除する予定が見つかりません');
-    }
-    await ref.read(deleteCalendarEventUsecaseProvider).execute(id);
-  });
+  Future<bool> deleteEvent(String id, {int? expectedVersion}) =>
+      _mutate(() async {
+        if (_series.any((v) => v.id == id && v.recurrenceRule != null)) {
+          throw const ApplicationValidationException('繰り返し予定は削除範囲を指定してください');
+        }
+        if (!state.events.any(
+          (event) => event.id == id && event.groupId == groupId,
+        )) {
+          throw const ApplicationValidationException('削除する予定が見つかりません');
+        }
+        await ref
+            .read(deleteCalendarEventUsecaseProvider)
+            .execute(id, expectedVersion: expectedVersion);
+      });
 
   Future<bool> saveLabel(CalendarLabelDto label) => _mutate(() async {
     if (label.groupId != groupId) {
@@ -218,25 +226,35 @@ class CalendarNotifier extends _$CalendarNotifier {
     final success = await _mutate(() async {
       await ref
           .read(reorderCalendarLabelsUsecaseProvider)
-          .execute(groupId, ordered.map((label) => label.id).toList());
+          .execute(
+            groupId,
+            ordered.map((label) => label.id).toList(),
+            expectedVersions: {
+              for (final label in previous)
+                if (label.version != null) label.id: label.version!,
+            },
+          );
     });
     if (!success && ref.mounted) state = state.copyWith(labels: previous);
     return success;
   }
 
-  Future<bool> deleteLabel(String id) => _mutate(() async {
-    if (!state.labels.any(
-      (label) => label.id == id && label.groupId == groupId,
-    )) {
-      throw const ApplicationValidationException('削除する色ラベルが見つかりません');
-    }
-    if (_series.any(
-      (event) =>
-          event.labelId == id ||
-          event.overrides.any((v) => !v.isCancelled && v.labelId == id),
-    )) {
-      throw const ApplicationValidationException('予定で使用中の色ラベルは削除できません');
-    }
-    await ref.read(deleteCalendarLabelUsecaseProvider).execute(id);
-  });
+  Future<bool> deleteLabel(String id, {int? expectedVersion}) =>
+      _mutate(() async {
+        if (!state.labels.any(
+          (label) => label.id == id && label.groupId == groupId,
+        )) {
+          throw const ApplicationValidationException('削除する色ラベルが見つかりません');
+        }
+        if (_series.any(
+          (event) =>
+              event.labelId == id ||
+              event.overrides.any((v) => !v.isCancelled && v.labelId == id),
+        )) {
+          throw const ApplicationValidationException('予定で使用中の色ラベルは削除できません');
+        }
+        await ref
+            .read(deleteCalendarLabelUsecaseProvider)
+            .execute(id, expectedVersion: expectedVersion);
+      });
 }

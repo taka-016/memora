@@ -16,7 +16,9 @@ class FirestoreDvcPointContractRepository
         .collection('dvc_point_contracts')
         .doc(contract.id.isEmpty ? null : contract.id)
         .set(
-          FirestoreDvcPointContractMapper.toCreateFirestore(contract),
+          (contract.version == null
+              ? FirestoreDvcPointContractMapper.toCreateFirestore(contract)
+              : FirestoreDvcPointContractMapper.toUpdateFirestore(contract)),
           SetOptions(merge: true),
         );
   }
@@ -24,8 +26,9 @@ class FirestoreDvcPointContractRepository
   @override
   Future<void> saveDvcPointContracts(
     String groupId,
-    List<DvcPointContract> contracts,
-  ) async {
+    List<DvcPointContract> contracts, {
+    Map<String, int> expectedVersions = const {},
+  }) async {
     final collection = _firestore.collection('dvc_point_contracts');
     final existing = await collection
         .where('groupId', isEqualTo: groupId)
@@ -43,14 +46,15 @@ class FirestoreDvcPointContractRepository
       batch.delete(doc.reference);
     }
     for (final contract in contracts) {
-      final data = FirestoreDvcPointContractMapper.toCreateFirestore(contract);
       if (existingIds.contains(contract.id)) {
-        data.remove('createdAt');
+        final data = FirestoreDvcPointContractMapper.toUpdateFirestore(
+          contract,
+        );
         batch.update(collection.doc(contract.id), data);
       } else {
         batch.set(
           collection.doc(contract.id.isEmpty ? null : contract.id),
-          data,
+          FirestoreDvcPointContractMapper.toCreateFirestore(contract),
         );
       }
     }
@@ -71,7 +75,10 @@ class FirestoreDvcPointContractRepository
   }
 
   @override
-  Future<void> deleteDvcPointContract(String contractId) async {
+  Future<void> deleteDvcPointContract(
+    String contractId, {
+    int? expectedVersion,
+  }) async {
     await _ensureDeletable(contractId);
     await _firestore.collection('dvc_point_contracts').doc(contractId).delete();
   }

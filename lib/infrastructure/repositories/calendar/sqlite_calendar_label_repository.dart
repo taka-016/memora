@@ -37,37 +37,41 @@ class SqliteCalendarLabelRepository implements CalendarLabelRepository {
       });
 
   @override
-  Future<void> reorderCalendarLabels(String groupId, List<String> labelIds) =>
-      db.transaction(() async {
-        for (var index = 0; index < labelIds.length; index++) {
-          final rows = await db.rows(
-            'calendar_labels',
-            where: 'id = ?',
-            args: [labelIds[index]],
-          );
-          if (rows.isEmpty || rows.single['group_id'] != groupId) {
-            throw ValidationException('同じグループの色ラベルを指定してください');
-          }
-          await db.updateRow('calendar_labels', labelIds[index], {
-            'sort_order': index,
-          });
-        }
+  Future<void> reorderCalendarLabels(
+    String groupId,
+    List<String> labelIds, {
+    Map<String, int> expectedVersions = const {},
+  }) => db.transaction(() async {
+    for (var index = 0; index < labelIds.length; index++) {
+      final rows = await db.rows(
+        'calendar_labels',
+        where: 'id = ?',
+        args: [labelIds[index]],
+      );
+      if (rows.isEmpty || rows.single['group_id'] != groupId) {
+        throw ValidationException('同じグループの色ラベルを指定してください');
+      }
+      await db.updateRow('calendar_labels', labelIds[index], {
+        'sort_order': index,
       });
+    }
+  });
 
   @override
-  Future<void> deleteCalendarLabel(String labelId) => db.transaction(() async {
-    if ((await db.rows(
-          'calendar_events',
-          where: 'label_id = ?',
-          args: [labelId],
-        )).isNotEmpty ||
-        (await db.rows(
-          'calendar_event_overrides',
-          where: 'label_id = ?',
-          args: [labelId],
-        )).isNotEmpty) {
-      throw ValidationException('使用中の色ラベルは削除できません');
-    }
-    await db.deleteRows('calendar_labels', 'id', labelId);
-  });
+  Future<void> deleteCalendarLabel(String labelId, {int? expectedVersion}) =>
+      db.transaction(() async {
+        if ((await db.rows(
+              'calendar_events',
+              where: 'label_id = ?',
+              args: [labelId],
+            )).isNotEmpty ||
+            (await db.rows(
+              'calendar_event_overrides',
+              where: 'label_id = ?',
+              args: [labelId],
+            )).isNotEmpty) {
+          throw ValidationException('使用中の色ラベルは削除できません');
+        }
+        await db.deleteRows('calendar_labels', 'id', labelId);
+      });
 }

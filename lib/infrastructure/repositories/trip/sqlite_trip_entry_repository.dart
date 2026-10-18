@@ -52,7 +52,7 @@ class SqliteTripEntryRepository implements TripEntryRepository {
   }
 
   @override
-  Future<void> deleteTripEntry(String tripId) async =>
+  Future<void> deleteTripEntry(String tripId, {int? expectedVersion}) async =>
       db.transaction(() async => db.deleteRows('trip_entries', 'id', tripId));
   @override
   Future<void> deleteTripEntriesByGroupId(String groupId) async =>

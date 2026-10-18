@@ -26,8 +26,10 @@ class SqliteGroupEventRepository implements GroupEventRepository {
   }
 
   @override
-  Future<void> deleteGroupEvent(String groupEventId) async =>
-      db.deleteRows('group_events', 'id', groupEventId);
+  Future<void> deleteGroupEvent(
+    String groupEventId, {
+    int? expectedVersion,
+  }) async => db.deleteRows('group_events', 'id', groupEventId);
   @override
   Future<void> deleteGroupEventsByGroupId(String groupId) async =>
       db.deleteRows('group_events', 'group_id', groupId);

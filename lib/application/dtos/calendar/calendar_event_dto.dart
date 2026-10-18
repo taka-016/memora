@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 
 class CalendarEventDto extends Equatable {
   const CalendarEventDto({
+    this.version,
     required this.id,
     required this.groupId,
     required this.labelId,
@@ -16,6 +17,7 @@ class CalendarEventDto extends Equatable {
     this.originalStartDateTime,
   });
 
+  final int? version;
   final String id;
   final String groupId;
   final String labelId;
@@ -37,6 +39,7 @@ class CalendarEventDto extends Equatable {
       );
 
   CalendarEventDto copyWith({
+    int? version,
     String? id,
     String? groupId,
     String? labelId,
@@ -50,6 +53,7 @@ class CalendarEventDto extends Equatable {
     DateTime? originalStartDateTime,
   }) {
     return CalendarEventDto(
+      version: version ?? this.version,
       id: id ?? this.id,
       groupId: groupId ?? this.groupId,
       labelId: labelId ?? this.labelId,
@@ -67,6 +71,7 @@ class CalendarEventDto extends Equatable {
 
   @override
   List<Object?> get props => [
+    version,
     id,
     groupId,
     labelId,

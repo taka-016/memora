@@ -94,6 +94,38 @@ void main() {
     container.listen(provider, (_, _) {});
     addTearDown(container.dispose);
   });
+  test('系列の再取得後も編集開始時の系列と期待値で保存する', () async {
+    final original = event.copyWith(
+      version: 7,
+      recurrenceRule: 'FREQ=DAILY;COUNT=3',
+      timeZone: 'Asia/Tokyo',
+    );
+    when(events.execute('g1')).thenAnswer((_) async => [original]);
+    final notifier = container.read(provider.notifier);
+    await notifier.load();
+    final occurrence = container.read(provider).events.first;
+    when(
+      events.execute('g1'),
+    ).thenAnswer((_) async => [original.copyWith(version: 8, title: '別端末の変更')]);
+    await notifier.load();
+    when(change.execute(any, any, any, changes: anyNamed('changes')))
+        .thenAnswer((_) async {});
+    expect(
+      await notifier.changeRecurringEvent(
+        occurrence,
+        CalendarChangeScope.only,
+        expectedSeries: original,
+      ),
+      isTrue,
+    );
+    verify(
+      change.execute(
+        original,
+        occurrence.originalStartDateTime!,
+        CalendarChangeScope.only,
+      ),
+    ).called(1);
+  });
   test('個別変更のリセット失敗は再試行でき成功後は元の系列を再表示する', () async {
     final original = DateTime(2026, 10, 2, 9);
     final series = event.copyWith(

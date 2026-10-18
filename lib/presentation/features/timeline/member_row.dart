@@ -113,6 +113,7 @@ class _MemberYearCell extends HookConsumerWidget {
                     .read(saveMemberEventUsecaseProvider)
                     .execute(
                       MemberEventDto(
+                        version: eventAtOpen?.version,
                         id: eventAtOpen?.id ?? '',
                         memberId: member.memberId,
                         year: targetYear,
@@ -128,6 +129,7 @@ class _MemberYearCell extends HookConsumerWidget {
                     .read(saveMemberEventUsecaseProvider)
                     .execute(
                       MemberEventDto(
+                        version: eventAtOpen?.version,
                         id: eventAtOpen?.id ?? '',
                         memberId: member.memberId,
                         year: targetYear,

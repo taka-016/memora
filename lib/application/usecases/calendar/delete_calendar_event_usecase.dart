@@ -5,7 +5,7 @@ class DeleteCalendarEventUsecase {
 
   final CalendarEventRepository _repository;
 
-  Future<void> execute(String id) async {
-    await _repository.deleteCalendarEvent(id);
+  Future<void> execute(String id, {int? expectedVersion}) async {
+    await _repository.deleteCalendarEvent(id, expectedVersion: expectedVersion);
   }
 }

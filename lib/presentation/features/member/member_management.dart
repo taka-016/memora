@@ -211,7 +211,10 @@ class MemberManagement extends HookConsumerWidget {
         title: 'メンバー削除',
         content: '${targetMember.displayName}を削除しますか？',
         onConfirm: () => runMutationWithFeedback(
-          execute: () => managementNotifier.deleteMember(targetMember.id),
+          execute: () => managementNotifier.deleteMember(
+            targetMember.id,
+            expectedVersion: targetMember.version,
+          ),
           successMessage: 'メンバーを削除しました',
           failureMessage: '削除に失敗しました',
         ),

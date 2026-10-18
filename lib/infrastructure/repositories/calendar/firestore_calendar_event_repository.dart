@@ -201,7 +201,10 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
   }
 
   @override
-  Future<void> deleteCalendarEvent(String eventId) async {
+  Future<void> deleteCalendarEvent(
+    String eventId, {
+    int? expectedVersion,
+  }) async {
     final ref = _firestore.collection('calendar_events').doc(eventId);
     await _firestore.runTransaction<void>((transaction) async {
       final existing = await transaction.get(ref);

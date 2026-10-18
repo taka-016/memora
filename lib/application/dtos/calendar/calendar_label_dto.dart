@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 
 class CalendarLabelDto extends Equatable {
   const CalendarLabelDto({
+    this.version,
     required this.id,
     required this.groupId,
     required this.name,
@@ -10,6 +11,7 @@ class CalendarLabelDto extends Equatable {
     this.sortOrder = 0,
   });
 
+  final int? version;
   final String id;
   final String groupId;
   final String name;
@@ -18,6 +20,7 @@ class CalendarLabelDto extends Equatable {
   final int sortOrder;
 
   CalendarLabelDto copyWith({
+    int? version,
     String? id,
     String? groupId,
     String? name,
@@ -26,6 +29,7 @@ class CalendarLabelDto extends Equatable {
     int? sortOrder,
   }) {
     return CalendarLabelDto(
+      version: version ?? this.version,
       id: id ?? this.id,
       groupId: groupId ?? this.groupId,
       name: name ?? this.name,
@@ -36,7 +40,15 @@ class CalendarLabelDto extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, groupId, name, color, textColor, sortOrder];
+  List<Object?> get props => [
+    version,
+    id,
+    groupId,
+    name,
+    color,
+    textColor,
+    sortOrder,
+  ];
 }
 
 int compareCalendarLabels(CalendarLabelDto a, CalendarLabelDto b) {

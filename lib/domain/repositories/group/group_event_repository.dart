@@ -2,6 +2,6 @@ import 'package:memora/domain/entities/group/group_event.dart';
 
 abstract class GroupEventRepository {
   Future<String> saveGroupEvent(GroupEvent groupEvent);
-  Future<void> deleteGroupEvent(String groupEventId);
+  Future<void> deleteGroupEvent(String groupEventId, {int? expectedVersion});
   Future<void> deleteGroupEventsByGroupId(String groupId);
 }

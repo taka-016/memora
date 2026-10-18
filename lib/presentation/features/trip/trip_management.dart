@@ -291,6 +291,7 @@ class TripManagement extends HookConsumerWidget {
       try {
         final succeeded = await managementNotifier.deleteTripEntry(
           tripEntry.id,
+          expectedVersion: tripEntry.version,
         );
         if (!context.mounted) {
           return;

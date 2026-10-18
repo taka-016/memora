@@ -23,7 +23,10 @@ class FirestoreGroupEventRepository implements GroupEventRepository {
   }
 
   @override
-  Future<void> deleteGroupEvent(String groupEventId) async {
+  Future<void> deleteGroupEvent(
+    String groupEventId, {
+    int? expectedVersion,
+  }) async {
     await _firestore.collection('group_events').doc(groupEventId).delete();
   }
 

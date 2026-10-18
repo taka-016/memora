@@ -12,6 +12,7 @@ class FirestoreDvcPointContractMapper {
   ) {
     final data = doc.data() ?? {};
     return DvcPointContractDto(
+      version: data['version'] as int?,
       id: doc.id,
       groupId: data['groupId'] as String? ?? '',
       contractName: data['contractName'] as String? ?? '',
@@ -40,7 +41,14 @@ class FirestoreDvcPointContractMapper {
       'contractEndYearMonth': Timestamp.fromDate(contract.contractEndYearMonth),
       'useYearStartMonth': contract.useYearStartMonth,
       'annualPoint': contract.annualPoint,
+      'version': 1,
       ...FirestoreWriteMetadata.forCreate(),
     };
+  }
+
+  static Map<String, dynamic> toUpdateFirestore(DvcPointContract contract) {
+    final data = toCreateFirestore(contract)..remove('createdAt');
+    data['version'] = contract.version == null ? null : contract.version! + 1;
+    return data;
   }
 }

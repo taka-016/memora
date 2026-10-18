@@ -128,7 +128,10 @@ class GroupManagement extends HookConsumerWidget {
         content: '${groupWithMembers.name}を削除しますか？',
         onConfirm: () async {
           await runMutationWithFeedback(
-            execute: () => managementNotifier.deleteGroup(groupWithMembers.id),
+            execute: () => managementNotifier.deleteGroup(
+              groupWithMembers.id,
+              expectedVersion: groupWithMembers.version,
+            ),
             successMessage: 'グループを削除しました',
             failureMessage: '削除に失敗しました',
           );

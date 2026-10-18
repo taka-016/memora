@@ -2269,7 +2269,10 @@ class _FakeGroupEventRepository implements GroupEventRepository {
   final List<String> deletedEventIds = [];
 
   @override
-  Future<void> deleteGroupEvent(String groupEventId) async {
+  Future<void> deleteGroupEvent(
+    String groupEventId, {
+    int? expectedVersion,
+  }) async {
     deletedEventIds.add(groupEventId);
   }
 
@@ -2294,7 +2297,10 @@ class _FakeMemberEventRepository implements MemberEventRepository {
   final List<String> deletedEventIds = [];
 
   @override
-  Future<void> deleteMemberEvent(String memberEventId) async {
+  Future<void> deleteMemberEvent(
+    String memberEventId, {
+    int? expectedVersion,
+  }) async {
     deletedEventIds.add(memberEventId);
   }
 

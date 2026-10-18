@@ -142,6 +142,6 @@ class SqliteCalendarEventRepository implements CalendarEventRepository {
   }
 
   @override
-  Future<void> deleteCalendarEvent(String eventId) =>
+  Future<void> deleteCalendarEvent(String eventId, {int? expectedVersion}) =>
       db.deleteRows('calendar_events', 'id', eventId);
 }

@@ -5,6 +5,7 @@ class MemberInvitationMapper {
   static MemberInvitation toEntity(MemberInvitationDto dto) {
     return MemberInvitation(
       id: dto.id,
+      version: dto.version,
       inviteeId: dto.inviteeId,
       inviterId: dto.inviterId,
       invitationCode: dto.invitationCode,
@@ -14,6 +15,7 @@ class MemberInvitationMapper {
   static MemberInvitationDto toDto(MemberInvitation entity) {
     return MemberInvitationDto(
       id: entity.id,
+      version: entity.version,
       inviteeId: entity.inviteeId,
       inviterId: entity.inviterId,
       invitationCode: entity.invitationCode,

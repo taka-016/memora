@@ -89,6 +89,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
           .where((contract) => contract.isValid)
           .map(
             (contract) => DvcPointContractDto(
+              version: contract.version,
               id: contract.id,
               groupId: groupId,
               contractName: contract.contractName.trim(),
@@ -100,7 +101,15 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
           )
           .toList();
 
-      return runOperationWithFeedback(notifier.saveContracts(contracts));
+      return runOperationWithFeedback(
+        notifier.saveContracts(
+          contracts,
+          expectedVersions: {
+            for (final contract in state.contracts)
+              if (contract.version != null) contract.id: contract.version!,
+          },
+        ),
+      );
     }
 
     Future<bool> saveLimitedPoint({

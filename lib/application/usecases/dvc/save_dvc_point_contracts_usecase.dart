@@ -10,10 +10,12 @@ class SaveDvcPointContractsUsecase {
   Future<void> execute({
     required String groupId,
     required List<DvcPointContractDto> contracts,
+    Map<String, int> expectedVersions = const {},
   }) async {
     await _dvcPointContractRepository.saveDvcPointContracts(
       groupId,
       DvcPointContractMapper.toEntityList(contracts),
+      expectedVersions: Map.unmodifiable(expectedVersions),
     );
   }
 }

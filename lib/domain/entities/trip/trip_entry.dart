@@ -6,6 +6,7 @@ import 'package:memora/domain/exceptions/validation_exception.dart';
 
 class TripEntry extends Equatable {
   TripEntry({
+    this.version,
     required this.id,
     required this.groupId,
     required this.year,
@@ -40,6 +41,7 @@ class TripEntry extends Equatable {
     }
   }
 
+  final int? version;
   final String id;
   final String groupId;
   final int year;
@@ -52,6 +54,7 @@ class TripEntry extends Equatable {
   final List<ItineraryItem> itineraryItems;
 
   TripEntry copyWith({
+    int? version,
     String? id,
     String? groupId,
     int? year,
@@ -64,6 +67,7 @@ class TripEntry extends Equatable {
     List<ItineraryItem>? itineraryItems,
   }) {
     return TripEntry(
+      version: version ?? this.version,
       id: id ?? this.id,
       groupId: groupId ?? this.groupId,
       year: year ?? this.year,
@@ -118,6 +122,7 @@ class TripEntry extends Equatable {
 
   @override
   List<Object?> get props => [
+    version,
     id,
     groupId,
     year,

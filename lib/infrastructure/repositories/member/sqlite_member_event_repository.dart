@@ -23,8 +23,10 @@ class SqliteMemberEventRepository implements MemberEventRepository {
         return id;
       });
   @override
-  Future<void> deleteMemberEvent(String memberEventId) async =>
-      db.deleteRows('member_events', 'id', memberEventId);
+  Future<void> deleteMemberEvent(
+    String memberEventId, {
+    int? expectedVersion,
+  }) async => db.deleteRows('member_events', 'id', memberEventId);
   @override
   Future<void> deleteMemberEventsByMemberId(String memberId) async =>
       db.deleteRows('member_events', 'member_id', memberId);

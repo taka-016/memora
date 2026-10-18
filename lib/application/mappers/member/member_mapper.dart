@@ -5,6 +5,7 @@ class MemberMapper {
   static MemberDto toDto(Member entity) {
     return MemberDto(
       id: entity.id,
+      version: entity.version,
       accountId: entity.accountId,
       ownerId: entity.ownerId,
       hiraganaFirstName: entity.hiraganaFirstName,
@@ -25,6 +26,7 @@ class MemberMapper {
   static Member toEntity(MemberDto dto) {
     return Member(
       id: dto.id,
+      version: dto.version,
       accountId: dto.accountId,
       ownerId: dto.ownerId,
       hiraganaFirstName: dto.hiraganaFirstName,

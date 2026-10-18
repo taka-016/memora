@@ -53,11 +53,13 @@ class MemberManagementNotifier extends AsyncNotifier<MemberManagementState> {
     );
   }
 
-  Future<bool> deleteMember(String memberId) {
+  Future<bool> deleteMember(String memberId, {int? expectedVersion}) {
     return _runMutation(
       operationName: 'deleteMember',
       execute: () async {
-        await ref.read(deleteMemberUsecaseProvider).execute(memberId);
+        await ref
+            .read(deleteMemberUsecaseProvider)
+            .execute(memberId, expectedVersion: expectedVersion);
         if (!ref.mounted) return;
         ref.read(groupTimelineGroupSelectionNotifierProvider.notifier).reset();
       },

@@ -36,8 +36,9 @@ class FirestoreCalendarLabelRepository implements CalendarLabelRepository {
   @override
   Future<void> reorderCalendarLabels(
     String groupId,
-    List<String> labelIds,
-  ) async {
+    List<String> labelIds, {
+    Map<String, int> expectedVersions = const {},
+  }) async {
     final refs = labelIds
         .map((id) => _firestore.collection('calendar_labels').doc(id))
         .toList();
@@ -51,6 +52,9 @@ class FirestoreCalendarLabelRepository implements CalendarLabelRepository {
       for (var index = 0; index < refs.length; index++) {
         transaction.update(refs[index], <String, dynamic>{
           'sortOrder': index,
+          'version': expectedVersions[labelIds[index]] == null
+              ? null
+              : expectedVersions[labelIds[index]]! + 1,
           ...FirestoreWriteMetadata.forUpdate(),
         });
       }
@@ -58,7 +62,10 @@ class FirestoreCalendarLabelRepository implements CalendarLabelRepository {
   }
 
   @override
-  Future<void> deleteCalendarLabel(String labelId) async {
+  Future<void> deleteCalendarLabel(
+    String labelId, {
+    int? expectedVersion,
+  }) async {
     final ref = _firestore.collection('calendar_labels').doc(labelId);
     await _firestore.runTransaction<void>((transaction) async {
       final existing = await transaction.get(ref);

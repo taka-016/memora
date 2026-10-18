@@ -3,6 +3,7 @@ import 'package:memora/application/dtos/group/group_member_dto.dart';
 
 class GroupDto extends Equatable {
   const GroupDto({
+    this.version,
     required this.id,
     required this.ownerId,
     required this.name,
@@ -11,6 +12,7 @@ class GroupDto extends Equatable {
     this.originalMembers,
   });
 
+  final int? version;
   final String id;
   final String ownerId;
   final String name;
@@ -20,6 +22,7 @@ class GroupDto extends Equatable {
   final List<GroupMemberDto>? originalMembers;
 
   GroupDto copyWith({
+    int? version,
     String? id,
     String? ownerId,
     String? name,
@@ -28,6 +31,7 @@ class GroupDto extends Equatable {
     List<GroupMemberDto>? originalMembers,
   }) {
     return GroupDto(
+      version: version ?? this.version,
       id: id ?? this.id,
       ownerId: ownerId ?? this.ownerId,
       name: name ?? this.name,
@@ -39,6 +43,7 @@ class GroupDto extends Equatable {
 
   @override
   List<Object?> get props => [
+    version,
     id,
     ownerId,
     name,

@@ -451,7 +451,7 @@ class _FakeDeleteMemberUsecase implements DeleteMemberUsecase {
   Object? error;
 
   @override
-  Future<void> execute(String memberId) async {
+  Future<void> execute(String memberId, {int? expectedVersion}) async {
     calls?.add('メンバー削除');
     if (error case final error?) {
       throw error;

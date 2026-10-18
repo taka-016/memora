@@ -131,7 +131,10 @@ class CalendarLabelsDialog extends ConsumerWidget {
                                 .read(
                                   calendarNotifierProvider(groupId).notifier,
                                 )
-                                .deleteLabel(label.id);
+                                .deleteLabel(
+                                  label.id,
+                                  expectedVersion: label.version,
+                                );
                             if (!success && context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
@@ -369,6 +372,7 @@ class _LabelEditDialogState extends ConsumerState<_LabelEditDialog> {
                         .read(calendarNotifierProvider(widget.groupId).notifier)
                         .saveLabel(
                           CalendarLabelDto(
+                            version: widget.label?.version,
                             id: widget.label?.id ?? '',
                             groupId: widget.groupId,
                             name: _name.text.trim(),

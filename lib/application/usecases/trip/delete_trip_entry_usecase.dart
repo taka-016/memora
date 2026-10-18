@@ -5,7 +5,10 @@ class DeleteTripEntryUsecase {
 
   DeleteTripEntryUsecase(this._tripEntryRepository);
 
-  Future<void> execute(String tripEntryId) async {
-    await _tripEntryRepository.deleteTripEntry(tripEntryId);
+  Future<void> execute(String tripEntryId, {int? expectedVersion}) async {
+    await _tripEntryRepository.deleteTripEntry(
+      tripEntryId,
+      expectedVersion: expectedVersion,
+    );
   }
 }
