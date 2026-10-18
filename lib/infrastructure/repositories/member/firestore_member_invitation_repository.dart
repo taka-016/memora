@@ -14,19 +14,29 @@ class FirestoreMemberInvitationRepository
     : _firestore = firestore ?? FirebaseFirestore.instance;
 
   @override
-  Future<void> acceptInvitation(Member member, List<MemberInvitation> invitations) async {
+  Future<void> acceptInvitation(
+    Member member,
+    List<MemberInvitation> invitations,
+  ) async {
     final targets = List<MemberInvitation>.unmodifiable(invitations);
     final memberRef = _firestore.collection('members').doc(member.id);
     await _firestore.runTransaction<void>((transaction) async {
       final currentMember = await transaction.get(memberRef);
       FirestoreVersionCheck.requireMatch(currentMember.data(), member.version);
       for (final invitation in targets) {
-        final current = await transaction.get(_firestore.collection('member_invitations').doc(invitation.id));
+        final current = await transaction.get(
+          _firestore.collection('member_invitations').doc(invitation.id),
+        );
         FirestoreVersionCheck.requireMatch(current.data(), invitation.version);
       }
-      transaction.update(memberRef, FirestoreMemberMapper.toUpdateFirestore(member));
+      transaction.update(
+        memberRef,
+        FirestoreMemberMapper.toUpdateFirestore(member),
+      );
       for (final invitation in targets) {
-        transaction.delete(_firestore.collection('member_invitations').doc(invitation.id));
+        transaction.delete(
+          _firestore.collection('member_invitations').doc(invitation.id),
+        );
       }
     });
   }
@@ -52,6 +62,10 @@ class FirestoreMemberInvitationRepository
 
   @override
   Future<void> deleteMemberInvitation(String id, {int? expectedVersion}) async {
-    await FirestoreVersionCheck.delete(_firestore, _firestore.collection('member_invitations').doc(id), expectedVersion);
+    await FirestoreVersionCheck.delete(
+      _firestore,
+      _firestore.collection('member_invitations').doc(id),
+      expectedVersion,
+    );
   }
 }

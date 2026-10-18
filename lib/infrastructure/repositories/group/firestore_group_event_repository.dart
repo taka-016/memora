@@ -28,7 +28,11 @@ class FirestoreGroupEventRepository implements GroupEventRepository {
     String groupEventId, {
     int? expectedVersion,
   }) async {
-    await FirestoreVersionCheck.delete(_firestore, _firestore.collection('group_events').doc(groupEventId), expectedVersion);
+    await FirestoreVersionCheck.delete(
+      _firestore,
+      _firestore.collection('group_events').doc(groupEventId),
+      expectedVersion,
+    );
   }
 
   @override

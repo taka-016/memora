@@ -13,9 +13,13 @@ class FirestoreMemberInvitationQueryService
 
   @override
   Future<List<MemberInvitationDto>> getAllByInviteeId(String inviteeId) async {
-    final snapshot = await _firestore.collection('member_invitations')
-        .where('inviteeId', isEqualTo: inviteeId).get();
-    return snapshot.docs.map(FirestoreMemberInvitationMapper.fromFirestore).toList();
+    final snapshot = await _firestore
+        .collection('member_invitations')
+        .where('inviteeId', isEqualTo: inviteeId)
+        .get();
+    return snapshot.docs
+        .map(FirestoreMemberInvitationMapper.fromFirestore)
+        .toList();
   }
 
   @override

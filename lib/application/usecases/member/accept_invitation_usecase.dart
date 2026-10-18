@@ -47,11 +47,15 @@ class AcceptInvitationUseCase {
         return false;
       }
 
-      final invitations = await _memberInvitationQueryService.getAllByInviteeId(memberInvitation.inviteeId);
-      if (!invitations.any((invitation) =>
-          invitation.id == memberInvitation.id &&
-          invitation.version == memberInvitation.version &&
-          invitation.invitationCode == memberInvitation.invitationCode)) {
+      final invitations = await _memberInvitationQueryService.getAllByInviteeId(
+        memberInvitation.inviteeId,
+      );
+      if (!invitations.any(
+        (invitation) =>
+            invitation.id == memberInvitation.id &&
+            invitation.version == memberInvitation.version &&
+            invitation.invitationCode == memberInvitation.invitationCode,
+      )) {
         return false;
       }
       final updatedMember = MemberMapper.toEntity(

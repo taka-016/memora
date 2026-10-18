@@ -4,10 +4,16 @@ import 'package:memora/infrastructure/repositories/member/firestore_member_repos
 import 'package:memora/infrastructure/repositories/member/firestore_member_invitation_repository.dart';
 import 'package:memora/infrastructure/repositories/member/firestore_member_event_repository.dart';
 import 'package:memora/infrastructure/repositories/group/firestore_group_event_repository.dart';
+
 import '../../../helpers/firestore_transaction_store.dart';
 
 void main() {
-  for (final collection in ['members', 'member_invitations', 'member_events', 'group_events']) {
+  for (final collection in [
+    'members',
+    'member_invitations',
+    'member_events',
+    'group_events',
+  ]) {
     for (final current in [3, 4, null]) {
       test('$collectionの削除・退避は期待値3と現在値$currentを照合する', () async {
         final store = FirestoreTransactionStore();
@@ -21,7 +27,9 @@ void main() {
         } else {
           await action;
           expect(store.rows.containsKey('$collection/id'), isFalse);
-          if (collection == 'members') expect(store.rows['deleted_members/id'], original);
+          if (collection == 'members') {
+            expect(store.rows['deleted_members/id'], original);
+          }
         }
       });
     }
@@ -29,15 +37,28 @@ void main() {
       final store = FirestoreTransactionStore();
       store.rows['$collection/id'] = {'version': 3};
       store.beforeRetry = () => store.rows['$collection/id'] = {'version': 4};
-      await expectLater(remove(store, collection), throwsA(isA<FirebaseException>()));
+      await expectLater(
+        remove(store, collection),
+        throwsA(isA<FirebaseException>()),
+      );
       expect(store.rows['$collection/id']!['version'], 4);
       expect(store.commits, 0);
     });
   }
 }
-Future<void> remove(FirestoreTransactionStore store, String collection) => switch(collection) {
-  'members' => FirestoreMemberRepository(firestore: store.firestore).deleteMember('id', expectedVersion: 3),
-  'member_invitations' => FirestoreMemberInvitationRepository(firestore: store.firestore).deleteMemberInvitation('id', expectedVersion: 3),
-  'member_events' => FirestoreMemberEventRepository(firestore: store.firestore).deleteMemberEvent('id', expectedVersion: 3),
-  _ => FirestoreGroupEventRepository(firestore: store.firestore).deleteGroupEvent('id', expectedVersion: 3),
-};
+
+Future<void> remove(FirestoreTransactionStore store, String collection) =>
+    switch (collection) {
+      'members' => FirestoreMemberRepository(
+        firestore: store.firestore,
+      ).deleteMember('id', expectedVersion: 3),
+      'member_invitations' => FirestoreMemberInvitationRepository(
+        firestore: store.firestore,
+      ).deleteMemberInvitation('id', expectedVersion: 3),
+      'member_events' => FirestoreMemberEventRepository(
+        firestore: store.firestore,
+      ).deleteMemberEvent('id', expectedVersion: 3),
+      _ => FirestoreGroupEventRepository(
+        firestore: store.firestore,
+      ).deleteGroupEvent('id', expectedVersion: 3),
+    };

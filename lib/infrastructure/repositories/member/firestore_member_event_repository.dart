@@ -13,7 +13,8 @@ class FirestoreMemberEventRepository implements MemberEventRepository {
   @override
   Future<String> saveMemberEvent(MemberEvent memberEvent) async {
     final collection = _firestore.collection('member_events');
-    final docId = '${Uri.encodeComponent(memberEvent.memberId)}_${memberEvent.year}';
+    final docId =
+        '${Uri.encodeComponent(memberEvent.memberId)}_${memberEvent.year}';
     final target = collection.doc(docId);
     final snapshot = await collection
         .where('memberId', isEqualTo: memberEvent.memberId)
@@ -30,8 +31,13 @@ class FirestoreMemberEventRepository implements MemberEventRepository {
       } else {
         FirestoreVersionCheck.requireAbsent(current.data());
         if (memberEvent.id.isNotEmpty) {
-          final original = await transaction.get(collection.doc(memberEvent.id));
-          FirestoreVersionCheck.requireMatch(original.data(), memberEvent.version);
+          final original = await transaction.get(
+            collection.doc(memberEvent.id),
+          );
+          FirestoreVersionCheck.requireMatch(
+            original.data(),
+            memberEvent.version,
+          );
         }
       }
       if (memberEvent.memo.isEmpty) {
@@ -47,9 +53,15 @@ class FirestoreMemberEventRepository implements MemberEventRepository {
           transaction.delete(collection.doc(id));
         }
       } else if (memberEvent.id == docId) {
-        transaction.update(target, FirestoreMemberEventMapper.toUpdateFirestore(memberEvent));
+        transaction.update(
+          target,
+          FirestoreMemberEventMapper.toUpdateFirestore(memberEvent),
+        );
       } else {
-        transaction.set(target, FirestoreMemberEventMapper.toCreateFirestore(memberEvent));
+        transaction.set(
+          target,
+          FirestoreMemberEventMapper.toCreateFirestore(memberEvent),
+        );
       }
     });
     if (memberEvent.memo.isEmpty) return '';
@@ -71,18 +83,27 @@ class FirestoreMemberEventRepository implements MemberEventRepository {
   }
 
   @override
-  Future<void> deleteMemberEvent(String memberEventId, {int? expectedVersion}) async {
+  Future<void> deleteMemberEvent(
+    String memberEventId, {
+    int? expectedVersion,
+  }) async {
     await FirestoreVersionCheck.delete(
-      _firestore, _firestore.collection('member_events').doc(memberEventId), expectedVersion,
+      _firestore,
+      _firestore.collection('member_events').doc(memberEventId),
+      expectedVersion,
     );
   }
 
   @override
   Future<void> deleteMemberEventsByMemberId(String memberId) async {
     final batch = _firestore.batch();
-    final snapshot = await _firestore.collection('member_events')
-        .where('memberId', isEqualTo: memberId).get();
-    for (final doc in snapshot.docs) { batch.delete(doc.reference); }
+    final snapshot = await _firestore
+        .collection('member_events')
+        .where('memberId', isEqualTo: memberId)
+        .get();
+    for (final doc in snapshot.docs) {
+      batch.delete(doc.reference);
+    }
     await batch.commit();
   }
 }
