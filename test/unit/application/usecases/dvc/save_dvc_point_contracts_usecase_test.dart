@@ -11,6 +11,13 @@ import 'save_dvc_point_contracts_usecase_test.mocks.dart';
 @GenerateMocks([DvcPointContractRepository])
 void main() {
   group('SaveDvcPointContractsUsecase', () {
+    test('削除対象を含む編集開始時の期待値を保存要求へ渡す', () async {
+      final repository = MockDvcPointContractRepository();
+      when(repository.saveDvcPointContracts('group', [], expectedVersions: {'deleted': 7})).thenAnswer((_) async {});
+      await SaveDvcPointContractsUsecase(repository).execute(groupId: 'group', contracts: [], expectedVersions: {'deleted': 7});
+      verify(repository.saveDvcPointContracts('group', [], expectedVersions: {'deleted': 7})).called(1);
+    });
+
     test('既存IDを維持して契約一覧を一括保存する', () async {
       final repository = MockDvcPointContractRepository();
       final usecase = SaveDvcPointContractsUsecase(repository);

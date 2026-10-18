@@ -57,3 +57,13 @@ for (const collection of collections) {
 }
 assert.equal((await request('/unknown/doc', 'PATCH', verified, { fields: {} })).status, 403, '未知のコレクションの迂回');
 console.log('全対象のバージョン・同時更新・認証・迂回拒否を確認しました');
+
+const labelPath = '/calendar_labels/count-test';
+const seedLabel = { version: version(7), name: { stringValue: '家族' }, color: { stringValue: '#112233' }, sortOrder: version(0), eventCount: version(1) };
+await request(labelPath, 'PATCH', 'owner', { fields: seedLabel });
+assert.equal((await request(labelPath, 'PATCH', verified, { fields: { ...seedLabel, eventCount: version(2) } })).status, 200, '内部件数だけの更新');
+for (const field of ['version', 'name', 'color', 'sortOrder']) {
+  const changed = { ...seedLabel, eventCount: version(3), [field]: field === 'version' || field === 'sortOrder' ? version(7) : { stringValue: '変更' } };
+  if (field === 'version') changed.version = version(6);
+  assert.equal((await request(labelPath, 'PATCH', verified, { fields: changed })).status, 403, `内部件数ルールによる${field}の迂回`);
+}

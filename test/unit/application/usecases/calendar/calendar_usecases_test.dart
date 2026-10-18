@@ -55,6 +55,11 @@ void main() {
     labelQuery = MockCalendarLabelQueryService();
   });
 
+  test('並び替え要求へ取得時の全ラベルの期待値を渡す', () async {
+    when(labels.reorderCalendarLabels('group', ['a', 'b'], expectedVersions: {'a': 7, 'b': 4})).thenAnswer((_) async {});
+    await ReorderCalendarLabelsUsecase(labels).execute('group', ['a', 'b'], expectedVersions: {'a': 7, 'b': 4});
+    verify(labels.reorderCalendarLabels('group', ['a', 'b'], expectedVersions: {'a': 7, 'b': 4})).called(1);
+  });
   test('並び替えで空のグループ・空ID・重複IDを保存前に拒否する', () async {
     final usecase = ReorderCalendarLabelsUsecase(labels);
     for (final ids in [
