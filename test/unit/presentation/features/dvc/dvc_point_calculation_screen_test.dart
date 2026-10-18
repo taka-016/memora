@@ -962,7 +962,7 @@ class _FakeDvcPointContractRepository implements DvcPointContractRepository {
   final List<String> deletedGroupIds = [];
 
   @override
-  Future<void> deleteDvcPointContract(String contractId) async {
+  Future<void> deleteDvcPointContract(String contractId, {int? expectedVersion}) async {
     deletedContractIds.add(contractId);
   }
 

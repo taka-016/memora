@@ -145,7 +145,7 @@ class _FakeTripEntryRepository implements TripEntryRepository {
   Future<void> updateTripEntry(TripEntry tripEntry) async {}
 
   @override
-  Future<void> deleteTripEntry(String tripId) async {}
+  Future<void> deleteTripEntry(String tripId, {int? expectedVersion}) async {}
 
   @override
   Future<void> deleteTripEntriesByGroupId(String groupId) async {}
