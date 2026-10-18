@@ -66,12 +66,12 @@ class TripManagementNotifier extends Notifier<TripManagementState> {
     );
   }
 
-  Future<bool> deleteTripEntry(String tripEntryId) {
+  Future<bool> deleteTripEntry(String tripEntryId, {int? expectedVersion}) {
     return _runMutation(
       operationName: 'deleteTripEntry',
       execute: () => ref
           .read(tripEntryMutationCoordinatorProvider)
-          .deleteTripEntry(tripEntryId),
+          .deleteTripEntry(tripEntryId, expectedVersion: expectedVersion),
     );
   }
 

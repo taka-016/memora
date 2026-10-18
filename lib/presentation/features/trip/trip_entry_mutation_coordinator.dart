@@ -16,8 +16,10 @@ final tripEntryMutationCoordinatorProvider =
         updateTripEntry: (tripEntry) {
           return ref.read(updateTripEntryUsecaseProvider).execute(tripEntry);
         },
-        deleteTripEntry: (tripEntryId) {
-          return ref.read(deleteTripEntryUsecaseProvider).execute(tripEntryId);
+        deleteTripEntry: (tripEntryId, {expectedVersion}) {
+          return ref
+              .read(deleteTripEntryUsecaseProvider)
+              .execute(tripEntryId, expectedVersion: expectedVersion);
         },
         refreshWidget: () =>
             ref.read(refreshSelectedAndroidWidgetCacheProvider)(),
@@ -38,7 +40,7 @@ class TripEntryMutationCoordinator {
 
   final Future<String> Function(TripEntryDto) _createTripEntry;
   final Future<void> Function(TripEntryDto) _updateTripEntry;
-  final Future<void> Function(String) _deleteTripEntry;
+  final Future<void> Function(String, {int? expectedVersion}) _deleteTripEntry;
   final void Function() _onTripEntriesChanged;
   final Future<void> Function() _refreshWidget;
 
@@ -63,8 +65,11 @@ class TripEntryMutationCoordinator {
     unawaited(_refreshWidgetAfterMutation());
   }
 
-  Future<void> deleteTripEntry(String tripEntryId) async {
-    await _deleteTripEntry(tripEntryId);
+  Future<void> deleteTripEntry(
+    String tripEntryId, {
+    int? expectedVersion,
+  }) async {
+    await _deleteTripEntry(tripEntryId, expectedVersion: expectedVersion);
     _onTripEntriesChanged();
     unawaited(_refreshWidgetAfterMutation());
   }

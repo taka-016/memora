@@ -65,12 +65,13 @@ class SqliteGroupRepository implements GroupRepository {
   }
 
   @override
-  Future<void> deleteGroup(String groupId) async => db.transaction(() async {
-    final rows = await db.rows('groups', where: 'id = ?', args: [groupId]);
-    if (rows.isEmpty) return;
-    await db.insertRow('deleted_groups', rows.single);
-    await db.deleteRows('groups', 'id', groupId);
-  });
+  Future<void> deleteGroup(String groupId, {int? expectedVersion}) async =>
+      db.transaction(() async {
+        final rows = await db.rows('groups', where: 'id = ?', args: [groupId]);
+        if (rows.isEmpty) return;
+        await db.insertRow('deleted_groups', rows.single);
+        await db.deleteRows('groups', 'id', groupId);
+      });
   @override
   Future<void> deleteGroupMembersByMemberId(String memberId) async =>
       db.deleteRows('group_members', 'member_id', memberId);

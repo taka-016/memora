@@ -58,7 +58,10 @@ class FirestoreCalendarLabelRepository implements CalendarLabelRepository {
   }
 
   @override
-  Future<void> deleteCalendarLabel(String labelId) async {
+  Future<void> deleteCalendarLabel(
+    String labelId, {
+    int? expectedVersion,
+  }) async {
     final ref = _firestore.collection('calendar_labels').doc(labelId);
     await _firestore.runTransaction<void>((transaction) async {
       final existing = await transaction.get(ref);

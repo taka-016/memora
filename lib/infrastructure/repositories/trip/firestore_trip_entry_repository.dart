@@ -81,7 +81,7 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
   }
 
   @override
-  Future<void> deleteTripEntry(String tripId) async {
+  Future<void> deleteTripEntry(String tripId, {int? expectedVersion}) async {
     await _runWrite((context) async {
       final locationsSnapshot = await context.get(
         context.collection('locations').where('tripId', isEqualTo: tripId),

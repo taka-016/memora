@@ -6,6 +6,9 @@ abstract class DvcPointContractRepository {
     List<DvcPointContract> contracts,
   );
   Future<void> saveDvcPointContract(DvcPointContract contract);
-  Future<void> deleteDvcPointContract(String contractId);
+  Future<void> deleteDvcPointContract(
+    String contractId, {
+    int? expectedVersion,
+  });
   Future<void> deleteDvcPointContractsByGroupId(String groupId);
 }

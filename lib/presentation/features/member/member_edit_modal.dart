@@ -62,6 +62,7 @@ class MemberEditModal extends HookConsumerWidget {
 
     final initialMemberForComparison = useMemoized(() {
       return MemberDto(
+        version: member?.version,
         id: member?.id ?? '',
         accountId: member?.accountId,
         ownerId: member?.ownerId,

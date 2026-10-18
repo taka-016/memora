@@ -177,17 +177,20 @@ class CalendarNotifier extends _$CalendarNotifier {
     }
   });
 
-  Future<bool> deleteEvent(String id) => _mutate(() async {
-    if (_series.any((v) => v.id == id && v.recurrenceRule != null)) {
-      throw const ApplicationValidationException('繰り返し予定は削除範囲を指定してください');
-    }
-    if (!state.events.any(
-      (event) => event.id == id && event.groupId == groupId,
-    )) {
-      throw const ApplicationValidationException('削除する予定が見つかりません');
-    }
-    await ref.read(deleteCalendarEventUsecaseProvider).execute(id);
-  });
+  Future<bool> deleteEvent(String id, {int? expectedVersion}) =>
+      _mutate(() async {
+        if (_series.any((v) => v.id == id && v.recurrenceRule != null)) {
+          throw const ApplicationValidationException('繰り返し予定は削除範囲を指定してください');
+        }
+        if (!state.events.any(
+          (event) => event.id == id && event.groupId == groupId,
+        )) {
+          throw const ApplicationValidationException('削除する予定が見つかりません');
+        }
+        await ref
+            .read(deleteCalendarEventUsecaseProvider)
+            .execute(id, expectedVersion: expectedVersion);
+      });
 
   Future<bool> saveLabel(CalendarLabelDto label) => _mutate(() async {
     if (label.groupId != groupId) {
@@ -224,19 +227,22 @@ class CalendarNotifier extends _$CalendarNotifier {
     return success;
   }
 
-  Future<bool> deleteLabel(String id) => _mutate(() async {
-    if (!state.labels.any(
-      (label) => label.id == id && label.groupId == groupId,
-    )) {
-      throw const ApplicationValidationException('削除する色ラベルが見つかりません');
-    }
-    if (_series.any(
-      (event) =>
-          event.labelId == id ||
-          event.overrides.any((v) => !v.isCancelled && v.labelId == id),
-    )) {
-      throw const ApplicationValidationException('予定で使用中の色ラベルは削除できません');
-    }
-    await ref.read(deleteCalendarLabelUsecaseProvider).execute(id);
-  });
+  Future<bool> deleteLabel(String id, {int? expectedVersion}) =>
+      _mutate(() async {
+        if (!state.labels.any(
+          (label) => label.id == id && label.groupId == groupId,
+        )) {
+          throw const ApplicationValidationException('削除する色ラベルが見つかりません');
+        }
+        if (_series.any(
+          (event) =>
+              event.labelId == id ||
+              event.overrides.any((v) => !v.isCancelled && v.labelId == id),
+        )) {
+          throw const ApplicationValidationException('予定で使用中の色ラベルは削除できません');
+        }
+        await ref
+            .read(deleteCalendarLabelUsecaseProvider)
+            .execute(id, expectedVersion: expectedVersion);
+      });
 }

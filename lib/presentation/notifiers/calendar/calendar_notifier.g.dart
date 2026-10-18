@@ -58,7 +58,7 @@ final class CalendarNotifierProvider
   }
 }
 
-String _$calendarNotifierHash() => r'da1efc319d4c47e05ebdac536f8371cf0601b73b';
+String _$calendarNotifierHash() => r'8130cecdd1cceece6a5f85887049c6c24f9f96bb';
 
 final class CalendarNotifierFamily extends $Family
     with

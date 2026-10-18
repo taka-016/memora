@@ -89,6 +89,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
           .where((contract) => contract.isValid)
           .map(
             (contract) => DvcPointContractDto(
+              version: contract.version,
               id: contract.id,
               groupId: groupId,
               contractName: contract.contractName.trim(),

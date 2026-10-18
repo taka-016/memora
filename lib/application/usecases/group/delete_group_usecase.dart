@@ -5,7 +5,10 @@ class DeleteGroupUsecase {
 
   DeleteGroupUsecase(this._groupRepository);
 
-  Future<void> execute(String groupId) async {
-    await _groupRepository.deleteGroup(groupId);
+  Future<void> execute(String groupId, {int? expectedVersion}) async {
+    await _groupRepository.deleteGroup(
+      groupId,
+      expectedVersion: expectedVersion,
+    );
   }
 }

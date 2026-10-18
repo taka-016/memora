@@ -45,4 +45,10 @@ class FirestoreDvcPointContractMapper {
       ...FirestoreWriteMetadata.forCreate(),
     };
   }
+
+  static Map<String, dynamic> toUpdateFirestore(DvcPointContract contract) {
+    final data = toCreateFirestore(contract)..remove('createdAt');
+    data['version'] = contract.version == null ? null : contract.version! + 1;
+    return data;
+  }
 }

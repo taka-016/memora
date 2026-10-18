@@ -92,7 +92,10 @@ class _GroupEventYearCell extends HookConsumerWidget {
                 if (eventAtOpen != null) {
                   await ref
                       .read(deleteGroupEventUsecaseProvider)
-                      .execute(eventAtOpen.id);
+                      .execute(
+                        eventAtOpen.id,
+                        expectedVersion: eventAtOpen.version,
+                      );
                 }
                 if (!context.mounted) {
                   return;
@@ -103,6 +106,7 @@ class _GroupEventYearCell extends HookConsumerWidget {
                     .read(saveGroupEventUsecaseProvider)
                     .execute(
                       GroupEventDto(
+                        version: eventAtOpen?.version,
                         id: eventAtOpen?.id ?? '',
                         groupId: groupId,
                         year: year,

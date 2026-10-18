@@ -5,7 +5,10 @@ class DeleteMemberUsecase {
 
   DeleteMemberUsecase(this._memberRepository);
 
-  Future<void> execute(String memberId) async {
-    await _memberRepository.deleteMember(memberId);
+  Future<void> execute(String memberId, {int? expectedVersion}) async {
+    await _memberRepository.deleteMember(
+      memberId,
+      expectedVersion: expectedVersion,
+    );
   }
 }

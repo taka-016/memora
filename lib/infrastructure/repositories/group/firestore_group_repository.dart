@@ -81,7 +81,7 @@ class FirestoreGroupRepository implements GroupRepository {
   }
 
   @override
-  Future<void> deleteGroup(String groupId) async {
+  Future<void> deleteGroup(String groupId, {int? expectedVersion}) async {
     final source = _firestore.collection('groups').doc(groupId);
     await _firestore.runTransaction<void>((transaction) async {
       final snapshot = await transaction.get(source);

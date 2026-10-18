@@ -56,11 +56,13 @@ class GroupManagementNotifier extends AsyncNotifier<GroupManagementState> {
     );
   }
 
-  Future<bool> deleteGroup(String groupId) async {
+  Future<bool> deleteGroup(String groupId, {int? expectedVersion}) async {
     return _runMutation(
       operationName: 'deleteGroup',
       execute: () async {
-        await ref.read(deleteGroupUsecaseProvider).execute(groupId);
+        await ref
+            .read(deleteGroupUsecaseProvider)
+            .execute(groupId, expectedVersion: expectedVersion);
         if (!ref.mounted) return;
         ref.read(groupTimelineGroupSelectionNotifierProvider.notifier).reset();
         try {

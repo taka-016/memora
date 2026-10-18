@@ -5,7 +5,7 @@ class DeleteCalendarLabelUsecase {
 
   final CalendarLabelRepository _repository;
 
-  Future<void> execute(String id) async {
-    await _repository.deleteCalendarLabel(id);
+  Future<void> execute(String id, {int? expectedVersion}) async {
+    await _repository.deleteCalendarLabel(id, expectedVersion: expectedVersion);
   }
 }

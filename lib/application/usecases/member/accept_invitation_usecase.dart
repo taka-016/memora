@@ -55,6 +55,7 @@ class AcceptInvitationUseCase {
       await _memberRepository.updateMember(updatedMember);
       await _memberInvitationRepository.deleteMemberInvitation(
         memberInvitation.id,
+        expectedVersion: memberInvitation.version,
       );
 
       return true;

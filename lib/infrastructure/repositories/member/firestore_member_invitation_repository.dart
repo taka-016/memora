@@ -30,7 +30,7 @@ class FirestoreMemberInvitationRepository
   }
 
   @override
-  Future<void> deleteMemberInvitation(String id) async {
+  Future<void> deleteMemberInvitation(String id, {int? expectedVersion}) async {
     await _firestore.collection('member_invitations').doc(id).delete();
   }
 }

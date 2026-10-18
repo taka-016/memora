@@ -54,7 +54,7 @@ class SqliteDvcPointContractRepository implements DvcPointContractRepository {
   }
 
   @override
-  Future<void> deleteDvcPointContract(String id) async {
+  Future<void> deleteDvcPointContract(String id, {int? expectedVersion}) async {
     for (final table in ['dvc_point_usages', 'dvc_limited_points']) {
       if ((await db.rows(
         table,

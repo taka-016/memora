@@ -2,6 +2,6 @@ import 'package:memora/domain/entities/calendar/calendar_label.dart';
 
 abstract class CalendarLabelRepository {
   Future<String> saveCalendarLabel(CalendarLabel label);
-  Future<void> deleteCalendarLabel(String labelId);
+  Future<void> deleteCalendarLabel(String labelId, {int? expectedVersion});
   Future<void> reorderCalendarLabels(String groupId, List<String> labelIds);
 }

@@ -250,6 +250,7 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
         return;
       }
       final input = CalendarEventDto(
+        version: widget.event?.version,
         id: widget.event?.id ?? '',
         groupId: widget.groupId,
         labelId: _labelId!,
@@ -436,7 +437,7 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
     if (confirmed != true || !mounted) return;
     final success = await ref
         .read(calendarNotifierProvider(widget.groupId).notifier)
-        .deleteEvent(widget.event!.id);
+        .deleteEvent(widget.event!.id, expectedVersion: widget.event!.version);
     if (!mounted) return;
     if (success) {
       Navigator.of(context).pop();
