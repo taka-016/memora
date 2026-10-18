@@ -20,15 +20,21 @@ import 'package:memora/infrastructure/mappers/calendar/firestore_calendar_label_
 import 'package:memora/application/mappers/calendar/calendar_label_mapper.dart';
 import 'package:memora/infrastructure/mappers/dvc/firestore_dvc_point_contract_mapper.dart';
 import 'package:memora/application/mappers/dvc/dvc_point_contract_mapper.dart';
+
 import 'firestore_version_mapping_test.mocks.dart';
 
 @GenerateMocks([DocumentSnapshot])
 void main() {
   group('Memberの編集バージョン', () {
     final fields = <String, dynamic>{
-      'version': 7, 'groupId': 'group', 'labelId': 'label',
-      'title': '予定', 'name': '名前', 'displayName': '名前',
-      'color': '#112233', 'isAllDay': true,
+      'version': 7,
+      'groupId': 'group',
+      'labelId': 'label',
+      'title': '予定',
+      'name': '名前',
+      'displayName': '名前',
+      'color': '#112233',
+      'isAllDay': true,
       'startDateTime': Timestamp.fromDate(DateTime.utc(2026, 1, 1)),
       'endDateTime': Timestamp.fromDate(DateTime.utc(2026, 1, 2)),
     };
@@ -59,9 +65,14 @@ void main() {
   });
   group('MemberInvitationの編集バージョン', () {
     final fields = <String, dynamic>{
-      'version': 7, 'groupId': 'group', 'labelId': 'label',
-      'title': '予定', 'name': '名前', 'displayName': '名前',
-      'color': '#112233', 'isAllDay': true,
+      'version': 7,
+      'groupId': 'group',
+      'labelId': 'label',
+      'title': '予定',
+      'name': '名前',
+      'displayName': '名前',
+      'color': '#112233',
+      'isAllDay': true,
       'startDateTime': Timestamp.fromDate(DateTime.utc(2026, 1, 1)),
       'endDateTime': Timestamp.fromDate(DateTime.utc(2026, 1, 2)),
     };
@@ -78,9 +89,18 @@ void main() {
       final entity = MemberInvitationMapper.toEntity(edited);
       final dynamic restored = MemberInvitationMapper.toDto(entity);
       expect(restored.version, 7);
-      expect(FirestoreMemberInvitationMapper.toCreateFirestore(entity)['version'], 1);
-      expect(FirestoreMemberInvitationMapper.toUpdateFirestore(entity)['version'], 8);
-      expect(FirestoreMemberInvitationMapper.toUpdateFirestore(entity)['version'], 8);
+      expect(
+        FirestoreMemberInvitationMapper.toCreateFirestore(entity)['version'],
+        1,
+      );
+      expect(
+        FirestoreMemberInvitationMapper.toUpdateFirestore(entity)['version'],
+        8,
+      );
+      expect(
+        FirestoreMemberInvitationMapper.toUpdateFirestore(entity)['version'],
+        8,
+      );
       expect(dto.version, 7);
     });
     test('未設定のバージョンを取得時に補完しない', () {
@@ -92,9 +112,14 @@ void main() {
   });
   group('MemberEventの編集バージョン', () {
     final fields = <String, dynamic>{
-      'version': 7, 'groupId': 'group', 'labelId': 'label',
-      'title': '予定', 'name': '名前', 'displayName': '名前',
-      'color': '#112233', 'isAllDay': true,
+      'version': 7,
+      'groupId': 'group',
+      'labelId': 'label',
+      'title': '予定',
+      'name': '名前',
+      'displayName': '名前',
+      'color': '#112233',
+      'isAllDay': true,
       'startDateTime': Timestamp.fromDate(DateTime.utc(2026, 1, 1)),
       'endDateTime': Timestamp.fromDate(DateTime.utc(2026, 1, 2)),
     };
@@ -111,9 +136,18 @@ void main() {
       final entity = MemberEventMapper.toEntity(edited);
       final dynamic restored = MemberEventMapper.toDto(entity);
       expect(restored.version, 7);
-      expect(FirestoreMemberEventMapper.toCreateFirestore(entity)['version'], 1);
-      expect(FirestoreMemberEventMapper.toUpdateFirestore(entity)['version'], 8);
-      expect(FirestoreMemberEventMapper.toUpdateFirestore(entity)['version'], 8);
+      expect(
+        FirestoreMemberEventMapper.toCreateFirestore(entity)['version'],
+        1,
+      );
+      expect(
+        FirestoreMemberEventMapper.toUpdateFirestore(entity)['version'],
+        8,
+      );
+      expect(
+        FirestoreMemberEventMapper.toUpdateFirestore(entity)['version'],
+        8,
+      );
       expect(dto.version, 7);
     });
     test('未設定のバージョンを取得時に補完しない', () {
@@ -125,9 +159,14 @@ void main() {
   });
   group('Groupの編集バージョン', () {
     final fields = <String, dynamic>{
-      'version': 7, 'groupId': 'group', 'labelId': 'label',
-      'title': '予定', 'name': '名前', 'displayName': '名前',
-      'color': '#112233', 'isAllDay': true,
+      'version': 7,
+      'groupId': 'group',
+      'labelId': 'label',
+      'title': '予定',
+      'name': '名前',
+      'displayName': '名前',
+      'color': '#112233',
+      'isAllDay': true,
       'startDateTime': Timestamp.fromDate(DateTime.utc(2026, 1, 1)),
       'endDateTime': Timestamp.fromDate(DateTime.utc(2026, 1, 2)),
     };
@@ -158,9 +197,14 @@ void main() {
   });
   group('GroupEventの編集バージョン', () {
     final fields = <String, dynamic>{
-      'version': 7, 'groupId': 'group', 'labelId': 'label',
-      'title': '予定', 'name': '名前', 'displayName': '名前',
-      'color': '#112233', 'isAllDay': true,
+      'version': 7,
+      'groupId': 'group',
+      'labelId': 'label',
+      'title': '予定',
+      'name': '名前',
+      'displayName': '名前',
+      'color': '#112233',
+      'isAllDay': true,
       'startDateTime': Timestamp.fromDate(DateTime.utc(2026, 1, 1)),
       'endDateTime': Timestamp.fromDate(DateTime.utc(2026, 1, 2)),
     };
@@ -191,9 +235,14 @@ void main() {
   });
   group('TripEntryの編集バージョン', () {
     final fields = <String, dynamic>{
-      'version': 7, 'groupId': 'group', 'labelId': 'label',
-      'title': '予定', 'name': '名前', 'displayName': '名前',
-      'color': '#112233', 'isAllDay': true,
+      'version': 7,
+      'groupId': 'group',
+      'labelId': 'label',
+      'title': '予定',
+      'name': '名前',
+      'displayName': '名前',
+      'color': '#112233',
+      'isAllDay': true,
       'startDateTime': Timestamp.fromDate(DateTime.utc(2026, 1, 1)),
       'endDateTime': Timestamp.fromDate(DateTime.utc(2026, 1, 2)),
     };
@@ -204,7 +253,10 @@ void main() {
       when(doc.data()).thenAnswer((_) => fields);
     });
     test('取得から編集と保存要求まで期待値を保持し保存時だけ次の値を送る', () {
-      final dynamic dto = FirestoreTripEntryMapper.fromFirestore(doc, fallbackTripYear: 2026);
+      final dynamic dto = FirestoreTripEntryMapper.fromFirestore(
+        doc,
+        fallbackTripYear: 2026,
+      );
       expect(dto.version, 7);
       final dynamic edited = dto.copyWith();
       final entity = TripEntryMapper.toEntity(edited);
@@ -218,15 +270,23 @@ void main() {
     test('未設定のバージョンを取得時に補完しない', () {
       final saved = fields.remove('version');
       addTearDown(() => fields['version'] = saved);
-      final dynamic dto = FirestoreTripEntryMapper.fromFirestore(doc, fallbackTripYear: 2026);
+      final dynamic dto = FirestoreTripEntryMapper.fromFirestore(
+        doc,
+        fallbackTripYear: 2026,
+      );
       expect(dto.version, isNull);
     });
   });
   group('CalendarEventの編集バージョン', () {
     final fields = <String, dynamic>{
-      'version': 7, 'groupId': 'group', 'labelId': 'label',
-      'title': '予定', 'name': '名前', 'displayName': '名前',
-      'color': '#112233', 'isAllDay': true,
+      'version': 7,
+      'groupId': 'group',
+      'labelId': 'label',
+      'title': '予定',
+      'name': '名前',
+      'displayName': '名前',
+      'color': '#112233',
+      'isAllDay': true,
       'startDateTime': Timestamp.fromDate(DateTime.utc(2026, 1, 1)),
       'endDateTime': Timestamp.fromDate(DateTime.utc(2026, 1, 2)),
     };
@@ -243,9 +303,18 @@ void main() {
       final entity = CalendarEventMapper.toEntity(edited);
       final dynamic restored = CalendarEventMapper.toDto(entity);
       expect(restored.version, 7);
-      expect(FirestoreCalendarEventMapper.toCreateFirestore(entity)['version'], 1);
-      expect(FirestoreCalendarEventMapper.toUpdateFirestore(entity)['version'], 8);
-      expect(FirestoreCalendarEventMapper.toUpdateFirestore(entity)['version'], 8);
+      expect(
+        FirestoreCalendarEventMapper.toCreateFirestore(entity)['version'],
+        1,
+      );
+      expect(
+        FirestoreCalendarEventMapper.toUpdateFirestore(entity)['version'],
+        8,
+      );
+      expect(
+        FirestoreCalendarEventMapper.toUpdateFirestore(entity)['version'],
+        8,
+      );
       expect(dto.version, 7);
     });
     test('未設定のバージョンを取得時に補完しない', () {
@@ -257,9 +326,14 @@ void main() {
   });
   group('CalendarLabelの編集バージョン', () {
     final fields = <String, dynamic>{
-      'version': 7, 'groupId': 'group', 'labelId': 'label',
-      'title': '予定', 'name': '名前', 'displayName': '名前',
-      'color': '#112233', 'isAllDay': true,
+      'version': 7,
+      'groupId': 'group',
+      'labelId': 'label',
+      'title': '予定',
+      'name': '名前',
+      'displayName': '名前',
+      'color': '#112233',
+      'isAllDay': true,
       'startDateTime': Timestamp.fromDate(DateTime.utc(2026, 1, 1)),
       'endDateTime': Timestamp.fromDate(DateTime.utc(2026, 1, 2)),
     };
@@ -276,9 +350,18 @@ void main() {
       final entity = CalendarLabelMapper.toEntity(edited);
       final dynamic restored = CalendarLabelMapper.toDto(entity);
       expect(restored.version, 7);
-      expect(FirestoreCalendarLabelMapper.toCreateFirestore(entity)['version'], 1);
-      expect(FirestoreCalendarLabelMapper.toUpdateFirestore(entity)['version'], 8);
-      expect(FirestoreCalendarLabelMapper.toUpdateFirestore(entity)['version'], 8);
+      expect(
+        FirestoreCalendarLabelMapper.toCreateFirestore(entity)['version'],
+        1,
+      );
+      expect(
+        FirestoreCalendarLabelMapper.toUpdateFirestore(entity)['version'],
+        8,
+      );
+      expect(
+        FirestoreCalendarLabelMapper.toUpdateFirestore(entity)['version'],
+        8,
+      );
       expect(dto.version, 7);
     });
     test('未設定のバージョンを取得時に補完しない', () {
@@ -290,9 +373,14 @@ void main() {
   });
   group('DvcPointContractの編集バージョン', () {
     final fields = <String, dynamic>{
-      'version': 7, 'groupId': 'group', 'labelId': 'label',
-      'title': '予定', 'name': '名前', 'displayName': '名前',
-      'color': '#112233', 'isAllDay': true,
+      'version': 7,
+      'groupId': 'group',
+      'labelId': 'label',
+      'title': '予定',
+      'name': '名前',
+      'displayName': '名前',
+      'color': '#112233',
+      'isAllDay': true,
       'startDateTime': Timestamp.fromDate(DateTime.utc(2026, 1, 1)),
       'endDateTime': Timestamp.fromDate(DateTime.utc(2026, 1, 2)),
     };
@@ -309,7 +397,10 @@ void main() {
       final entity = DvcPointContractMapper.toEntity(edited);
       final dynamic restored = DvcPointContractMapper.toDto(entity);
       expect(restored.version, 7);
-      expect(FirestoreDvcPointContractMapper.toCreateFirestore(entity)['version'], 1);
+      expect(
+        FirestoreDvcPointContractMapper.toCreateFirestore(entity)['version'],
+        1,
+      );
       expect(dto.version, 7);
     });
     test('未設定のバージョンを取得時に補完しない', () {

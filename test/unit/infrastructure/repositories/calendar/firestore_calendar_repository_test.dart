@@ -155,6 +155,7 @@ void main() {
   tearDown(() => container.dispose());
 
   CalendarEvent event({String id = ''}) => CalendarEvent(
+    version: 1,
     id: id,
     groupId: 'group',
     labelId: 'label',
