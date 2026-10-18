@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/domain/repositories/member/member_event_repository.dart';
 import 'package:memora/domain/entities/member/member_event.dart';
 import 'package:memora/infrastructure/mappers/member/firestore_member_event_mapper.dart';
+import 'package:memora/infrastructure/services/firestore_version_check.dart';
 
 class FirestoreMemberEventRepository implements MemberEventRepository {
   final FirebaseFirestore _firestore;
@@ -12,85 +13,80 @@ class FirestoreMemberEventRepository implements MemberEventRepository {
   @override
   Future<String> saveMemberEvent(MemberEvent memberEvent) async {
     final collection = _firestore.collection('member_events');
-    final docId = _memberEventDocId(memberEvent);
-    final docRef = collection.doc(docId);
+    final docId = '${Uri.encodeComponent(memberEvent.memberId)}_${memberEvent.year}';
+    final target = collection.doc(docId);
     final snapshot = await collection
         .where('memberId', isEqualTo: memberEvent.memberId)
         .where('year', isEqualTo: memberEvent.year)
         .get();
-
-    if (memberEvent.memo.isEmpty) {
-      await _deleteMemberEventDocs(snapshot.docs);
-      return '';
+    final duplicates = {
+      for (final doc in snapshot.docs)
+        if (doc.id != docId) doc.id: doc.data()['version'] as int?,
+    };
+    await _firestore.runTransaction<void>((transaction) async {
+      final current = await transaction.get(target);
+      if (memberEvent.id == docId) {
+        FirestoreVersionCheck.requireMatch(current.data(), memberEvent.version);
+      } else {
+        FirestoreVersionCheck.requireAbsent(current.data());
+        if (memberEvent.id.isNotEmpty) {
+          final original = await transaction.get(collection.doc(memberEvent.id));
+          FirestoreVersionCheck.requireMatch(original.data(), memberEvent.version);
+        }
+      }
+      if (memberEvent.memo.isEmpty) {
+        for (final entry in duplicates.entries) {
+          final duplicate = await transaction.get(collection.doc(entry.key));
+          FirestoreVersionCheck.requireMatch(
+            duplicate.data(),
+            entry.key == memberEvent.id ? memberEvent.version : entry.value,
+          );
+        }
+        if (current.exists) transaction.delete(target);
+        for (final id in duplicates.keys) {
+          transaction.delete(collection.doc(id));
+        }
+      } else if (memberEvent.id == docId) {
+        transaction.update(target, FirestoreMemberEventMapper.toUpdateFirestore(memberEvent));
+      } else {
+        transaction.set(target, FirestoreMemberEventMapper.toCreateFirestore(memberEvent));
+      }
+    });
+    if (memberEvent.memo.isEmpty) return '';
+    if (duplicates.isNotEmpty) {
+      await _firestore.runTransaction<void>((transaction) async {
+        for (final entry in duplicates.entries) {
+          final duplicate = await transaction.get(collection.doc(entry.key));
+          FirestoreVersionCheck.requireMatch(
+            duplicate.data(),
+            entry.key == memberEvent.id ? memberEvent.version : entry.value,
+          );
+        }
+        for (final id in duplicates.keys) {
+          transaction.delete(collection.doc(id));
+        }
+      });
     }
-
-    final existingDocIds = snapshot.docs.map((doc) => doc.id).toSet();
-    final firestoreData = existingDocIds.contains(docId)
-        ? FirestoreMemberEventMapper.toUpdateFirestore(memberEvent)
-        : FirestoreMemberEventMapper.toCreateFirestore(memberEvent);
-
-    await docRef.set(firestoreData, SetOptions(merge: true));
-    await _deleteDuplicateDocs(snapshot.docs, docId);
     return docId;
   }
 
   @override
-  Future<void> deleteMemberEvent(
-    String memberEventId, {
-    int? expectedVersion,
-  }) async {
-    await _firestore.collection('member_events').doc(memberEventId).delete();
+  Future<void> deleteMemberEvent(String memberEventId, {int? expectedVersion}) async {
+    await FirestoreVersionCheck.delete(
+      _firestore, _firestore.collection('member_events').doc(memberEventId), expectedVersion,
+    );
   }
 
   @override
   Future<void> deleteMemberEventsByMemberId(String memberId) async {
-    final batch = _firestore.batch();
-    final snapshot = await _firestore
-        .collection('member_events')
-        .where('memberId', isEqualTo: memberId)
-        .get();
-
-    for (final doc in snapshot.docs) {
-      batch.delete(doc.reference);
-    }
-
-    await batch.commit();
-  }
-
-  String _memberEventDocId(MemberEvent memberEvent) {
-    final memberId = Uri.encodeComponent(memberEvent.memberId);
-    return '${memberId}_${memberEvent.year}';
-  }
-
-  Future<void> _deleteDuplicateDocs(
-    List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
-    String docId,
-  ) async {
-    final duplicateDocs = docs.where((doc) => doc.id != docId).toList();
-    if (duplicateDocs.isEmpty) {
-      return;
-    }
-
-    final batch = _firestore.batch();
-    for (final doc in duplicateDocs) {
-      batch.delete(doc.reference);
-    }
-    await batch.commit();
-  }
-
-  Future<void> _deleteMemberEventDocs(
-    List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
-  ) async {
-    if (docs.isEmpty) {
-      return;
-    }
-
-    final batch = _firestore.batch();
-
-    for (final doc in docs) {
-      batch.delete(doc.reference);
-    }
-
-    await batch.commit();
+    final snapshot = await _firestore.collection('member_events').where('memberId', isEqualTo: memberId).get();
+    final expected = {for (final doc in snapshot.docs) doc.id: doc.data()['version'] as int?};
+    await _firestore.runTransaction<void>((transaction) async {
+      for (final entry in expected.entries) {
+        final current = await transaction.get(_firestore.collection('member_events').doc(entry.key));
+        FirestoreVersionCheck.requireMatch(current.data(), entry.value);
+      }
+      for (final id in expected.keys) { transaction.delete(_firestore.collection('member_events').doc(id)); }
+    });
   }
 }

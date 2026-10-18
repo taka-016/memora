@@ -1,3 +1,4 @@
+import 'package:memora/infrastructure/services/firestore_version_check.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/domain/entities/group/group_event.dart';
 import 'package:memora/domain/repositories/group/group_event_repository.dart';
@@ -27,7 +28,7 @@ class FirestoreGroupEventRepository implements GroupEventRepository {
     String groupEventId, {
     int? expectedVersion,
   }) async {
-    await _firestore.collection('group_events').doc(groupEventId).delete();
+    await FirestoreVersionCheck.delete(_firestore, _firestore.collection('group_events').doc(groupEventId), expectedVersion);
   }
 
   @override

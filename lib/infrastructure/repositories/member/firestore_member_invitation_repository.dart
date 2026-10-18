@@ -1,3 +1,4 @@
+import 'package:memora/infrastructure/services/firestore_version_check.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/domain/entities/member/member_invitation.dart';
 import 'package:memora/domain/repositories/member/member_invitation_repository.dart';
@@ -31,6 +32,6 @@ class FirestoreMemberInvitationRepository
 
   @override
   Future<void> deleteMemberInvitation(String id, {int? expectedVersion}) async {
-    await _firestore.collection('member_invitations').doc(id).delete();
+    await FirestoreVersionCheck.delete(_firestore, _firestore.collection('member_invitations').doc(id), expectedVersion);
   }
 }
