@@ -34,8 +34,9 @@ class SqliteDvcPointContractRepository implements DvcPointContractRepository {
   @override
   Future<void> saveDvcPointContracts(
     String groupId,
-    List<DvcPointContract> contracts,
-  ) async {
+    List<DvcPointContract> contracts, {
+    Map<String, int> expectedVersions = const {},
+  }) async {
     await db.transaction(() async {
       final existing = await db.rows(
         'dvc_point_contracts',

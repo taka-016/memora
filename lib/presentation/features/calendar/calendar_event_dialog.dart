@@ -51,6 +51,7 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
   bool _recurrenceEdited = false;
   late final String _zone;
   bool? _seriesAllDay;
+  CalendarEventDto? _seriesAtOpen;
 
   bool get _hasIndividualChanges => widget.event?.hasIndividualChanges ?? false;
 
@@ -58,6 +59,11 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
   void initState() {
     super.initState();
     final event = widget.event;
+    _seriesAtOpen = event == null
+        ? null
+        : ref
+              .read(calendarNotifierProvider(widget.groupId).notifier)
+              .seriesForEvent(event.id);
     _title = TextEditingController(text: event?.title ?? '');
     _allDay = event?.isAllDay ?? true;
     _start = event == null
@@ -214,11 +220,7 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
     try {
       final expander = ref.read(calendarRecurrenceExpanderProvider);
       final original = widget.event?.originalStartDateTime;
-      final series = recurring
-          ? ref
-                .read(calendarNotifierProvider(widget.groupId).notifier)
-                .seriesForEvent(widget.event!.id)
-          : null;
+      final series = recurring ? _seriesAtOpen : null;
       final recurrenceStart = recurring && !_recurrenceEdited
           ? _seriesAllDay == true
                 ? DateTime.utc(original!.year, original.month, original.day)
@@ -269,6 +271,7 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
               widget.event!,
               scope!,
               changes: input,
+              expectedSeries: _seriesAtOpen,
             )
           : await notifier.saveEvent(input);
     } on ApplicationValidationException catch (e) {
@@ -385,7 +388,10 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
       ),
     );
     if (confirmed != true || !mounted) return;
-    final success = await notifier.resetRecurringEvent(widget.event!);
+    final success = await notifier.resetRecurringEvent(
+      widget.event!,
+      expectedSeries: _seriesAtOpen,
+    );
     if (!mounted) return;
     if (success) {
       Navigator.pop(context);
@@ -404,7 +410,11 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
       if (!mounted || scope == null) return;
       final success = await ref
           .read(calendarNotifierProvider(widget.groupId).notifier)
-          .changeRecurringEvent(widget.event!, scope);
+          .changeRecurringEvent(
+            widget.event!,
+            scope,
+            expectedSeries: _seriesAtOpen,
+          );
       if (!mounted) return;
       if (success) {
         Navigator.pop(context);

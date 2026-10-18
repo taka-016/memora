@@ -5,7 +5,11 @@ import 'package:memora/domain/repositories/calendar/calendar_label_repository.da
 class ReorderCalendarLabelsUsecase {
   ReorderCalendarLabelsUsecase(this._repository);
   final CalendarLabelRepository _repository;
-  Future<void> execute(String groupId, List<String> labelIds) async {
+  Future<void> execute(
+    String groupId,
+    List<String> labelIds, {
+    Map<String, int> expectedVersions = const {},
+  }) async {
     if (groupId.trim().isEmpty ||
         labelIds.any((id) => id.trim().isEmpty) ||
         labelIds.toSet().length != labelIds.length) {
@@ -15,6 +19,7 @@ class ReorderCalendarLabelsUsecase {
       await _repository.reorderCalendarLabels(
         groupId,
         List.unmodifiable(labelIds),
+        expectedVersions: Map.unmodifiable(expectedVersions),
       );
     } on ValidationException catch (error, stack) {
       Error.throwWithStackTrace(

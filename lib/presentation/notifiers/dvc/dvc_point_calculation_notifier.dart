@@ -69,12 +69,19 @@ class DvcPointCalculationNotifier extends Notifier<DvcPointCalculationState> {
   Future<bool> retryPointUsages() =>
       _retry(_arePointUsagesLoading, _loadPointUsages);
 
-  Future<bool> saveContracts(List<DvcPointContractDto> contracts) {
+  Future<bool> saveContracts(
+    List<DvcPointContractDto> contracts, {
+    Map<String, int> expectedVersions = const {},
+  }) {
     return _runMutation(
       operationName: 'saveContracts',
       execute: () => ref
           .read(saveDvcPointContractsUsecaseProvider)
-          .execute(groupId: _groupId, contracts: contracts),
+          .execute(
+            groupId: _groupId,
+            contracts: contracts,
+            expectedVersions: expectedVersions,
+          ),
       reload: _loadContracts,
     );
   }

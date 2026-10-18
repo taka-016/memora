@@ -26,8 +26,9 @@ class FirestoreDvcPointContractRepository
   @override
   Future<void> saveDvcPointContracts(
     String groupId,
-    List<DvcPointContract> contracts,
-  ) async {
+    List<DvcPointContract> contracts, {
+    Map<String, int> expectedVersions = const {},
+  }) async {
     final collection = _firestore.collection('dvc_point_contracts');
     final existing = await collection
         .where('groupId', isEqualTo: groupId)

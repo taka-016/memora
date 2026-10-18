@@ -89,8 +89,11 @@ class CalendarNotifier extends _$CalendarNotifier {
     CalendarEventDto occurrence,
     CalendarChangeScope scope, {
     CalendarEventDto? changes,
+    CalendarEventDto? expectedSeries,
   }) => _mutate(() async {
-    final source = _series.where((v) => v.id == occurrence.id).firstOrNull;
+    final source =
+        expectedSeries ??
+        _series.where((v) => v.id == occurrence.id).firstOrNull;
     if (source == null ||
         occurrence.groupId != groupId ||
         occurrence.originalStartDateTime == null) {
@@ -123,20 +126,22 @@ class CalendarNotifier extends _$CalendarNotifier {
         .firstOrNull;
   }
 
-  Future<bool> resetRecurringEvent(CalendarEventDto occurrence) =>
-      _mutate(() async {
-        final source = seriesForEvent(occurrence.id);
-        if (source == null ||
-            occurrence.groupId != groupId ||
-            occurrence.originalStartDateTime == null) {
-          throw const ApplicationValidationException(
-            'リセットする予定が見つかりません。再読み込みしてください',
-          );
-        }
-        await ref
-            .read(changeCalendarRecurrenceUsecaseProvider)
-            .resetOverride(source, occurrence.originalStartDateTime!);
-      });
+  Future<bool> resetRecurringEvent(
+    CalendarEventDto occurrence, {
+    CalendarEventDto? expectedSeries,
+  }) => _mutate(() async {
+    final source = expectedSeries ?? seriesForEvent(occurrence.id);
+    if (source == null ||
+        occurrence.groupId != groupId ||
+        occurrence.originalStartDateTime == null) {
+      throw const ApplicationValidationException(
+        'リセットする予定が見つかりません。再読み込みしてください',
+      );
+    }
+    await ref
+        .read(changeCalendarRecurrenceUsecaseProvider)
+        .resetOverride(source, occurrence.originalStartDateTime!);
+  });
 
   ({int reset, int retained}) recurrenceImpact(
     CalendarEventDto occurrence,
@@ -221,7 +226,14 @@ class CalendarNotifier extends _$CalendarNotifier {
     final success = await _mutate(() async {
       await ref
           .read(reorderCalendarLabelsUsecaseProvider)
-          .execute(groupId, ordered.map((label) => label.id).toList());
+          .execute(
+            groupId,
+            ordered.map((label) => label.id).toList(),
+            expectedVersions: {
+              for (final label in previous)
+                if (label.version != null) label.id: label.version!,
+            },
+          );
     });
     if (!success && ref.mounted) state = state.copyWith(labels: previous);
     return success;
