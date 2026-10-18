@@ -634,8 +634,8 @@ void main() {
     );
   });
 
-  test('並び替えは全ラベルのグループを確認して順序だけを一括更新する', () async {
-    await labels.reorderCalendarLabels('group', ['other', 'label']);
+  test('並び替えは全ラベルのグループを確認して取得時の期待値と順序を一括更新する', () async {
+    await labels.reorderCalendarLabels('group', ['other', 'label'], expectedVersions: {'other': 7, 'label': 4});
     final first =
         verify(transaction.update(otherRef, captureAny)).captured.single
             as Map<String, dynamic>;
@@ -643,9 +643,11 @@ void main() {
         verify(transaction.update(labelRef, captureAny)).captured.single
             as Map<String, dynamic>;
     expect(first['sortOrder'], 0);
+    expect(first['version'], 8);
+    expect(last['version'], 5);
     expect(last['sortOrder'], 1);
-    expect(first.keys.toSet(), {'sortOrder', 'updatedAt'});
-    expect(last.keys.toSet(), {'sortOrder', 'updatedAt'});
+    expect(first.keys.toSet(), {'sortOrder', 'version', 'updatedAt'});
+    expect(last.keys.toSet(), {'sortOrder', 'version', 'updatedAt'});
   });
   test('並び替えに別グループが混ざると更新を一件も書き込まない', () async {
     final foreign = MockDocumentSnapshot();
