@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 
 class MemberInvitationDto extends Equatable {
   const MemberInvitationDto({
+    this.version,
     required this.id,
     required this.inviteeId,
     required this.inviterId,
@@ -10,6 +11,7 @@ class MemberInvitationDto extends Equatable {
     this.updatedAt,
   });
 
+  final int? version;
   final String id;
   final String inviteeId;
   final String inviterId;
@@ -18,6 +20,7 @@ class MemberInvitationDto extends Equatable {
   final DateTime? updatedAt;
 
   MemberInvitationDto copyWith({
+    int? version,
     String? id,
     String? inviteeId,
     String? inviterId,
@@ -26,6 +29,7 @@ class MemberInvitationDto extends Equatable {
     DateTime? updatedAt,
   }) {
     return MemberInvitationDto(
+      version: version ?? this.version,
       id: id ?? this.id,
       inviteeId: inviteeId ?? this.inviteeId,
       inviterId: inviterId ?? this.inviterId,
@@ -37,6 +41,7 @@ class MemberInvitationDto extends Equatable {
 
   @override
   List<Object?> get props => [
+    version,
     id,
     inviteeId,
     inviterId,

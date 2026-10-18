@@ -5,6 +5,7 @@ class GroupEventMapper {
   static GroupEvent toEntity(GroupEventDto dto) {
     return GroupEvent(
       id: dto.id,
+      version: dto.version,
       groupId: dto.groupId,
       year: dto.year,
       memo: dto.memo,
@@ -14,6 +15,7 @@ class GroupEventMapper {
   static GroupEventDto toDto(GroupEvent entity) {
     return GroupEventDto(
       id: entity.id,
+      version: entity.version,
       groupId: entity.groupId,
       year: entity.year,
       memo: entity.memo,

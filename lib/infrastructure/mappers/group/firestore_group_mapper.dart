@@ -11,6 +11,7 @@ class FirestoreGroupMapper {
   }) {
     final groupData = groupDoc.data() ?? {};
     return GroupDto(
+      version: groupData['version'] as int?,
       id: groupDoc.id,
       ownerId: groupData['ownerId'] as String? ?? '',
       name: groupData['name'] as String? ?? '',
@@ -24,6 +25,7 @@ class FirestoreGroupMapper {
       'ownerId': group.ownerId,
       'name': group.name,
       'memo': group.memo,
+      'version': 1,
       ...FirestoreWriteMetadata.forCreate(),
     };
   }
@@ -33,6 +35,7 @@ class FirestoreGroupMapper {
       'ownerId': group.ownerId,
       'name': group.name,
       'memo': group.memo,
+      'version': group.version == null ? null : group.version! + 1,
       ...FirestoreWriteMetadata.forUpdate(),
     };
   }

@@ -4,6 +4,7 @@ import 'package:memora/domain/exceptions/validation_exception.dart';
 
 class Group extends Equatable {
   Group({
+    this.version,
     required this.id,
     required this.ownerId,
     required this.name,
@@ -24,6 +25,7 @@ class Group extends Equatable {
     }
   }
 
+  final int? version;
   final String id;
   final String ownerId;
   final String name;
@@ -32,6 +34,7 @@ class Group extends Equatable {
   final List<GroupMember> originalMembers;
 
   Group copyWith({
+    int? version,
     String? id,
     String? ownerId,
     String? name,
@@ -39,6 +42,7 @@ class Group extends Equatable {
     List<GroupMember>? members,
   }) {
     return Group(
+      version: version ?? this.version,
       id: id ?? this.id,
       ownerId: ownerId ?? this.ownerId,
       name: name ?? this.name,
@@ -50,6 +54,7 @@ class Group extends Equatable {
 
   @override
   List<Object?> get props => [
+    version,
     id,
     ownerId,
     name,

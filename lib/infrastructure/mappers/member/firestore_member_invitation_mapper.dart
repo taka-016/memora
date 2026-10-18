@@ -9,6 +9,7 @@ class FirestoreMemberInvitationMapper {
   ) {
     final data = doc.data() ?? {};
     return MemberInvitationDto(
+      version: data['version'] as int?,
       id: doc.id,
       inviteeId: data['inviteeId'] as String? ?? '',
       inviterId: data['inviterId'] as String? ?? '',
@@ -25,6 +26,7 @@ class FirestoreMemberInvitationMapper {
       'inviteeId': memberInvitation.inviteeId,
       'inviterId': memberInvitation.inviterId,
       'invitationCode': memberInvitation.invitationCode,
+      'version': 1,
       ...FirestoreWriteMetadata.forCreate(),
     };
   }
@@ -36,6 +38,9 @@ class FirestoreMemberInvitationMapper {
       'inviteeId': memberInvitation.inviteeId,
       'inviterId': memberInvitation.inviterId,
       'invitationCode': memberInvitation.invitationCode,
+      'version': memberInvitation.version == null
+          ? null
+          : memberInvitation.version! + 1,
       ...FirestoreWriteMetadata.forUpdate(),
     };
   }

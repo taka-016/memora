@@ -10,6 +10,7 @@ class FirestoreMemberEventMapper {
   ) {
     final data = doc.data() ?? {};
     return MemberEventDto(
+      version: data['version'] as int?,
       id: doc.id,
       memberId: data['memberId'] as String? ?? '',
       year: FirestoreMapperValueParser.asInt(data['year']),
@@ -22,6 +23,7 @@ class FirestoreMemberEventMapper {
       'memberId': memberEvent.memberId,
       'year': memberEvent.year,
       'memo': memberEvent.memo,
+      'version': 1,
       ...FirestoreWriteMetadata.forCreate(),
     };
   }
@@ -31,6 +33,7 @@ class FirestoreMemberEventMapper {
       'memberId': memberEvent.memberId,
       'year': memberEvent.year,
       'memo': memberEvent.memo,
+      'version': memberEvent.version == null ? null : memberEvent.version! + 1,
       ...FirestoreWriteMetadata.forUpdate(),
     };
   }

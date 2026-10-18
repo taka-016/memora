@@ -10,6 +10,7 @@ class FirestoreCalendarLabelMapper {
   ) {
     final data = doc.data()!;
     return CalendarLabelDto(
+      version: data['version'] as int?,
       id: doc.id,
       groupId: data['groupId'] as String,
       name: data['name'] as String,
@@ -30,10 +31,12 @@ class FirestoreCalendarLabelMapper {
   };
   static Map<String, dynamic> toCreateFirestore(CalendarLabel value) => {
     ...toFirestore(value),
+    'version': 1,
     ...FirestoreWriteMetadata.forCreate(),
   };
   static Map<String, dynamic> toUpdateFirestore(CalendarLabel value) => {
     ...toFirestore(value),
+    'version': value.version == null ? null : value.version! + 1,
     ...FirestoreWriteMetadata.forUpdate(),
   };
 }

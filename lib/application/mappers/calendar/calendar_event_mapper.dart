@@ -5,6 +5,7 @@ class CalendarEventMapper {
   static CalendarEvent toEntity(CalendarEventDto value) {
     return CalendarEvent(
       id: value.id,
+      version: value.version,
       groupId: value.groupId,
       labelId: value.labelId,
       title: value.title,
@@ -20,6 +21,7 @@ class CalendarEventMapper {
   static CalendarEventDto toDto(CalendarEvent value) {
     return CalendarEventDto(
       id: value.id,
+      version: value.version,
       groupId: value.groupId,
       labelId: value.labelId,
       title: value.title,

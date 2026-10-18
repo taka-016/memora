@@ -5,6 +5,7 @@ class MemberEventMapper {
   static MemberEvent toEntity(MemberEventDto dto) {
     return MemberEvent(
       id: dto.id,
+      version: dto.version,
       memberId: dto.memberId,
       year: dto.year,
       memo: dto.memo,
@@ -14,6 +15,7 @@ class MemberEventMapper {
   static MemberEventDto toDto(MemberEvent entity) {
     return MemberEventDto(
       id: entity.id,
+      version: entity.version,
       memberId: entity.memberId,
       year: entity.year,
       memo: entity.memo,

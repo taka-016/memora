@@ -5,6 +5,7 @@ class CalendarLabelMapper {
   static CalendarLabel toEntity(CalendarLabelDto value) {
     return CalendarLabel(
       id: value.id,
+      version: value.version,
       groupId: value.groupId,
       name: value.name,
       color: value.color,
@@ -16,6 +17,7 @@ class CalendarLabelMapper {
   static CalendarLabelDto toDto(CalendarLabel value) {
     return CalendarLabelDto(
       id: value.id,
+      version: value.version,
       groupId: value.groupId,
       name: value.name,
       color: value.color,

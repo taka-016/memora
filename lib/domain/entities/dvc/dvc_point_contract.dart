@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 
 class DvcPointContract extends Equatable {
   const DvcPointContract({
+    this.version,
     required this.id,
     required this.groupId,
     required this.contractName,
@@ -11,6 +12,7 @@ class DvcPointContract extends Equatable {
     required this.annualPoint,
   });
 
+  final int? version;
   final String id;
   final String groupId;
   final String contractName;
@@ -20,6 +22,7 @@ class DvcPointContract extends Equatable {
   final int annualPoint;
 
   DvcPointContract copyWith({
+    int? version,
     String? id,
     String? groupId,
     String? contractName,
@@ -29,6 +32,7 @@ class DvcPointContract extends Equatable {
     int? annualPoint,
   }) {
     return DvcPointContract(
+      version: version ?? this.version,
       id: id ?? this.id,
       groupId: groupId ?? this.groupId,
       contractName: contractName ?? this.contractName,
@@ -42,6 +46,7 @@ class DvcPointContract extends Equatable {
 
   @override
   List<Object?> get props => [
+    version,
     id,
     groupId,
     contractName,

@@ -11,6 +11,7 @@ class FirestoreCalendarEventMapper {
   }) {
     final data = doc.data()!;
     return CalendarEventDto(
+      version: data['version'] as int?,
       recurrenceRule: data['recurrenceRule'] as String?,
       timeZone: data['timeZone'] as String?,
       overrides: overrides,
@@ -64,10 +65,12 @@ class FirestoreCalendarEventMapper {
   };
   static Map<String, dynamic> toCreateFirestore(CalendarEvent value) => {
     ...toFirestore(value),
+    'version': 1,
     ...FirestoreWriteMetadata.forCreate(),
   };
   static Map<String, dynamic> toUpdateFirestore(CalendarEvent value) => {
     ...toFirestore(value),
+    'version': value.version == null ? null : value.version! + 1,
     ...FirestoreWriteMetadata.forUpdate(),
   };
 }

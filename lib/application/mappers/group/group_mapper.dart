@@ -6,6 +6,7 @@ class GroupMapper {
   static Group toEntity(GroupDto dto) {
     return Group(
       id: dto.id,
+      version: dto.version,
       ownerId: dto.ownerId,
       name: dto.name,
       memo: dto.memo,

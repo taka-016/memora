@@ -3,6 +3,7 @@ import 'package:memora/domain/exceptions/validation_exception.dart';
 
 class CalendarLabel extends Equatable {
   CalendarLabel({
+    this.version,
     required this.id,
     required this.groupId,
     required this.name,
@@ -27,6 +28,7 @@ class CalendarLabel extends Equatable {
     }
   }
 
+  final int? version;
   final String id;
   final String groupId;
   final String name;
@@ -35,6 +37,7 @@ class CalendarLabel extends Equatable {
   final int sortOrder;
 
   CalendarLabel copyWith({
+    int? version,
     String? id,
     String? groupId,
     String? name,
@@ -43,6 +46,7 @@ class CalendarLabel extends Equatable {
     int? sortOrder,
   }) {
     return CalendarLabel(
+      version: version ?? this.version,
       id: id ?? this.id,
       groupId: groupId ?? this.groupId,
       name: name ?? this.name,
@@ -53,5 +57,13 @@ class CalendarLabel extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, groupId, name, color, textColor, sortOrder];
+  List<Object?> get props => [
+    version,
+    id,
+    groupId,
+    name,
+    color,
+    textColor,
+    sortOrder,
+  ];
 }

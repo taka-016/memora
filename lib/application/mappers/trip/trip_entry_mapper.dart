@@ -14,6 +14,7 @@ class TripEntryMapper {
     final itineraryItemDtos = dto.itineraryItems ?? const <ItineraryItemDto>[];
     return TripEntry(
       id: dto.id,
+      version: dto.version,
       groupId: dto.groupId,
       year: dto.year,
       name: dto.name,
