@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -113,6 +115,40 @@ Widget buildSubject({
 }
 
 void main() {
+  testWidgets('保存が未完了の間は再送・キャンセル・戻る操作を抑止する', (tester) async {
+    final pending = Completer<void>();
+    var calls = 0;
+    await tester.pumpWidget(
+      buildSubject(
+        group: createGroupDto(name: '保存対象'),
+        onSave: (_) {
+          calls++;
+          return pending.future;
+        },
+        availableMembers: [],
+        currentMember: createCurrentMember(),
+      ),
+    );
+    final save = find.widgetWithText(ElevatedButton, '作成');
+    final callback = tester.widget<ElevatedButton>(save).onPressed!;
+    callback();
+    callback();
+    await tester.pump();
+    expect(calls, 1);
+    expect(
+      tester
+          .widget<TextButton>(find.widgetWithText(TextButton, 'キャンセル'))
+          .onPressed,
+      isNull,
+    );
+    expect(tester.widget<ElevatedButton>(save).onPressed, isNull);
+    await tester.binding.handlePopRoute();
+    await tester.pump();
+    expect(find.text('変更内容が保存されていません。破棄しますか？'), findsNothing);
+    pending.complete();
+    await tester.pump();
+  });
+
   for (final action in ['名前', '管理者', '除外', '追加', '並べ替え']) {
     testWidgets('退避後に表示順が欠番でも$actionの編集対象だけを変更する', (tester) async {
       final members = [

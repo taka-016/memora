@@ -26,7 +26,7 @@ void main() {
       // Act
       await tester.pumpWidget(
         _createApp(
-          child: MemberEditModal(member: null, onSave: (member) async {}),
+          child: MemberEditModal(member: null, onSave: (member) async => true),
         ),
       );
 
@@ -60,7 +60,7 @@ void main() {
         _createApp(
           child: MemberEditModal(
             member: existingMember,
-            onSave: (member) async {},
+            onSave: (member) async => true,
           ),
         ),
       );
@@ -95,7 +95,7 @@ void main() {
         _createApp(
           child: MemberEditModal(
             member: existingMember,
-            onSave: (member) async {},
+            onSave: (member) async => true,
           ),
         ),
       );
@@ -117,7 +117,7 @@ void main() {
       // Arrange
       await tester.pumpWidget(
         _createApp(
-          child: MemberEditModal(member: null, onSave: (member) async {}),
+          child: MemberEditModal(member: null, onSave: (member) async => true),
         ),
       );
 
@@ -139,6 +139,7 @@ void main() {
             member: null,
             onSave: (member) async {
               savedMember = member;
+              return true;
             },
           ),
         ),
@@ -177,7 +178,7 @@ void main() {
       // Arrange
       await tester.pumpWidget(
         _createApp(
-          child: MemberEditModal(member: null, onSave: (member) async {}),
+          child: MemberEditModal(member: null, onSave: (member) async => true),
         ),
       );
 
@@ -190,7 +191,7 @@ void main() {
       // Arrange
       await tester.pumpWidget(
         _createApp(
-          child: MemberEditModal(member: null, onSave: (member) async {}),
+          child: MemberEditModal(member: null, onSave: (member) async => true),
         ),
       );
 
@@ -202,7 +203,7 @@ void main() {
     testWidgets('生年月日に未来日付を入力できること', (WidgetTester tester) async {
       await tester.pumpWidget(
         _createApp(
-          child: MemberEditModal(member: null, onSave: (member) async {}),
+          child: MemberEditModal(member: null, onSave: (member) async => true),
         ),
       );
 
@@ -231,7 +232,7 @@ void main() {
       // Arrange
       await tester.pumpWidget(
         _createApp(
-          child: MemberEditModal(member: null, onSave: (member) async {}),
+          child: MemberEditModal(member: null, onSave: (member) async => true),
         ),
       );
 
@@ -249,6 +250,7 @@ void main() {
             member: null,
             onSave: (member) async {
               savedMember = member;
+              return true;
             },
           ),
         ),
@@ -276,7 +278,7 @@ void main() {
       // Arrange
       await tester.pumpWidget(
         _createApp(
-          child: MemberEditModal(member: null, onSave: (member) async {}),
+          child: MemberEditModal(member: null, onSave: (member) async => true),
         ),
       );
 
@@ -295,7 +297,7 @@ void main() {
     testWidgets('変更後にキャンセルすると破棄確認が表示されること', (WidgetTester tester) async {
       await tester.pumpWidget(
         _createApp(
-          child: MemberEditModal(member: null, onSave: (member) async {}),
+          child: MemberEditModal(member: null, onSave: (member) async => true),
         ),
       );
 
@@ -316,7 +318,7 @@ void main() {
     testWidgets('破棄するを選択すると確認ダイアログが閉じること', (WidgetTester tester) async {
       await tester.pumpWidget(
         _createApp(
-          child: MemberEditModal(member: null, onSave: (member) async {}),
+          child: MemberEditModal(member: null, onSave: (member) async => true),
         ),
       );
 
@@ -360,7 +362,7 @@ void main() {
         _createApp(
           child: MemberEditModal(
             member: existingMember,
-            onSave: (member) async {},
+            onSave: (member) async => true,
             onInvite: (member) async {
               invitedMember = member;
             },
@@ -398,7 +400,7 @@ void main() {
         _createApp(
           child: MemberEditModal(
             member: existingMember,
-            onSave: (member) async {},
+            onSave: (member) async => true,
             onInvite: (_) async => throw TestException('招待失敗'),
           ),
         ),
@@ -435,7 +437,7 @@ void main() {
         _createApp(
           child: MemberEditModal(
             member: existingMember,
-            onSave: (member) async {},
+            onSave: (member) async => true,
             onInvite: (_) async {
               inviteCallCount++;
               await inviteCompleter.future;
@@ -481,6 +483,7 @@ void main() {
             onSave: (_) async {
               saveCallCount++;
               await saveCompleter.future;
+              return true;
             },
             onInvite: (_) async {},
           ),

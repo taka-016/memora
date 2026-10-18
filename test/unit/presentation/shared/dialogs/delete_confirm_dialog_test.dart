@@ -1,9 +1,59 @@
+import 'dart:async';
+
+import '../../../../helpers/test_exception.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/presentation/shared/dialogs/delete_confirm_dialog.dart';
 
 void main() {
   group('DeleteConfirmDialog', () {
+    for (final fails in [false, true]) {
+      testWidgets('showが削除完了を待って${fails ? '例外を伝える' : '結果を返す'}', (tester) async {
+        final pending = Completer<void>();
+        var completed = false;
+        Object? error;
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Builder(
+              builder: (context) => Scaffold(
+                body: TextButton(
+                  onPressed: () async {
+                    try {
+                      await DeleteConfirmDialog.show(
+                        context,
+                        title: '確認',
+                        content: '削除しますか',
+                        onConfirm: () => pending.future,
+                      );
+                    } catch (e) {
+                      error = e;
+                    }
+                    completed = true;
+                  },
+                  child: const Text('開く'),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.tap(find.text('開く'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('削除'));
+        await tester.pumpAndSettle();
+        expect(completed, isFalse);
+        final failure = TestException('削除拒否');
+        if (fails) {
+          pending.completeError(failure);
+        } else {
+          pending.complete();
+        }
+        await tester.pump();
+        expect(completed, isTrue);
+        expect(error, fails ? same(failure) : isNull);
+      });
+    }
+
     testWidgets('削除確認ダイアログが表示されること', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
