@@ -168,14 +168,20 @@ void main() {
   test('トランザクションの再実行でも保存する期待値を最新版へ差し替えない', () async {
     final edited = event(id: 'event').copyWith(version: 7);
     when(firestore.runTransaction<void>(any)).thenAnswer((call) async {
-      final callback = call.positionalArguments.single as Future<void> Function(Transaction);
+      final callback =
+          call.positionalArguments.single as Future<void> Function(Transaction);
       for (final version in [7, 8]) {
-        when(eventDoc.data()).thenReturn({'groupId': 'group', 'labelId': 'label', 'version': version});
+        when(eventDoc.data()).thenReturn({
+          'groupId': 'group',
+          'labelId': 'label',
+          'version': version,
+        });
         await callback(transaction);
       }
     });
     await events.updateCalendarEvent(edited);
-    final writes = verify(transaction.update(eventRef, captureAny)).captured.cast<Map<String, dynamic>>();
+    final writes = verify(transaction.update(eventRef, captureAny)).captured
+        .cast<Map<String, dynamic>>();
     expect(writes.map((data) => data['version']), [8, 8]);
   });
 
@@ -635,7 +641,11 @@ void main() {
   });
 
   test('並び替えは全ラベルのグループを確認して取得時の期待値と順序を一括更新する', () async {
-    await labels.reorderCalendarLabels('group', ['other', 'label'], expectedVersions: {'other': 7, 'label': 4});
+    await labels.reorderCalendarLabels(
+      'group',
+      ['other', 'label'],
+      expectedVersions: {'other': 7, 'label': 4},
+    );
     final first =
         verify(transaction.update(otherRef, captureAny)).captured.single
             as Map<String, dynamic>;
