@@ -22,6 +22,7 @@ void main() {
         'name': '退避前',
         'ownerId': 'owner',
         'updatedAt': Timestamp(1, 0),
+        'version': 3,
       };
       when(firestore.collection(table)).thenReturn(collection);
       when(firestore.collection('deleted_$table')).thenReturn(archive);
@@ -36,7 +37,8 @@ void main() {
       });
       Future<void> remove() => isGroup
           ? FirestoreGroupRepository(firestore: firestore).deleteGroup('id')
-          : FirestoreMemberRepository(firestore: firestore).deleteMember('id');
+          : FirestoreMemberRepository(firestore: firestore)
+                .deleteMember('id', expectedVersion: 3);
       await remove();
       verifyInOrder([
         transaction.get(source),

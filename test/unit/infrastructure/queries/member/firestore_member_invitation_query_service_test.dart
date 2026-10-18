@@ -30,6 +30,29 @@ void main() {
       service = FirestoreMemberInvitationQueryService(firestore: mockFirestore);
     });
 
+    test('同じ対象の全招待をIDと期待バージョン付きで返す', () async {
+      final query = MockQuery<Map<String, dynamic>>();
+      final snapshot = MockQuerySnapshot<Map<String, dynamic>>();
+      final docs = [
+        for (var index = 0; index < 2; index++)
+          MockQueryDocumentSnapshot<Map<String, dynamic>>(),
+      ];
+      when(mockInvitationCollection.where('inviteeId', isEqualTo: 'm'))
+          .thenReturn(query);
+      when(query.get()).thenAnswer((_) async => snapshot);
+      when(snapshot.docs).thenReturn(docs);
+      for (var index = 0; index < docs.length; index++) {
+        when(docs[index].id).thenReturn(index == 0 ? 'i' : 'j');
+        when(docs[index].data()).thenReturn({
+          'inviteeId': 'm',
+          'invitationCode': 'code$index',
+          'version': index + 2,
+        });
+      }
+      final result = await service.getAllByInviteeId('m');
+      expect(result.map((i) => '${i.id}:${i.version}'), ['i:2', 'j:3']);
+    });
+
     test('inviteeIdで招待情報を取得する', () async {
       const inviteeId = 'invitee001';
       final mockQuery = MockQuery<Map<String, dynamic>>();

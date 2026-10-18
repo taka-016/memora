@@ -1,301 +1,133 @@
-import 'package:memora/infrastructure/time/fixed_app_clock.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/dtos/member/member_invitation_dto.dart';
 import 'package:memora/application/queries/member/member_invitation_query_service.dart';
 import 'package:memora/application/queries/member/member_query_service.dart';
-import 'package:mockito/annotations.dart';
-import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/member/accept_invitation_usecase.dart';
 import 'package:memora/domain/entities/member/member.dart';
+import 'package:memora/domain/entities/member/member_invitation.dart';
 import 'package:memora/domain/repositories/member/member_invitation_repository.dart';
-import 'package:memora/domain/repositories/member/member_repository.dart';
+import 'package:memora/infrastructure/time/fixed_app_clock.dart';
+import 'package:mockito/annotations.dart';
+import 'package:mockito/mockito.dart';
 
+import '../../../../helpers/test_exception.dart';
 import 'accept_invitation_usecase_test.mocks.dart';
 
 @GenerateMocks([
   MemberInvitationQueryService,
   MemberInvitationRepository,
-  MemberRepository,
   MemberQueryService,
 ])
 void main() {
-  late AcceptInvitationUseCase useCase;
-  late MockMemberInvitationQueryService mockMemberInvitationQueryService;
-  late MockMemberInvitationRepository mockMemberInvitationRepository;
-  late MockMemberRepository mockMemberRepository;
-  late MockMemberQueryService mockMemberQueryService;
-
+  late MockMemberInvitationQueryService query;
+  late MockMemberInvitationRepository repository;
+  late MockMemberQueryService members;
+  late AcceptInvitationUseCase usecase;
+  final now = DateTime.utc(2026, 10, 18, 12);
+  const invitation = MemberInvitationDto(
+    id: 'i',
+    inviteeId: 'm',
+    inviterId: 'owner',
+    invitationCode: 'code',
+    version: 2,
+  );
+  const other = MemberInvitationDto(
+    id: 'j',
+    inviteeId: 'm',
+    inviterId: 'owner',
+    invitationCode: 'other',
+    version: 4,
+  );
   setUp(() {
-    mockMemberInvitationQueryService = MockMemberInvitationQueryService();
-    mockMemberInvitationRepository = MockMemberInvitationRepository();
-    mockMemberRepository = MockMemberRepository();
-    mockMemberQueryService = MockMemberQueryService();
-    useCase = AcceptInvitationUseCase(
-      mockMemberInvitationQueryService,
-      mockMemberInvitationRepository,
-      mockMemberRepository,
-      mockMemberQueryService,
-      FixedAppClock(DateTime.utc(2024, 1, 1, 12)),
+    query = MockMemberInvitationQueryService();
+    repository = MockMemberInvitationRepository();
+    members = MockMemberQueryService();
+    usecase = AcceptInvitationUseCase(
+      query,
+      repository,
+      members,
+      FixedAppClock(now),
+    );
+    when(query.getByInvitationCode('code')).thenAnswer((_) async => invitation);
+    when(query.getByInvitationCode('other')).thenAnswer((_) async => other);
+    when(query.getAllByInviteeId('m'))
+        .thenAnswer((_) async => [invitation, other]);
+    when(members.getMemberById('m')).thenAnswer(
+      (_) async => const MemberDto(
+        id: 'm',
+        displayName: '本人',
+        accountId: 'old',
+        version: 7,
+      ),
     );
   });
-
-  group('AcceptInvitationUseCase', () {
-    test('招待コードが存在し、メンバーのaccountIdを更新成功した場合trueを返す', () async {
-      // Arrange
-      const invitationCode = 'test-invitation-code';
-      const userId = 'user-id';
-      const memberInvitation = MemberInvitationDto(
-        id: 'invitation-id',
-        inviteeId: 'invitee-id',
-        inviterId: 'inviter-id',
-        invitationCode: invitationCode,
+  for (final code in ['code', 'other']) {
+    test('招待$codeから既存アカウントを含め同じ対象の全招待を一括承認する', () async {
+      expect(await usecase.execute(code, 'user'), isTrue);
+      final args = verify(repository.acceptInvitation(captureAny, captureAny))
+          .captured;
+      expect((args[0] as Member).accountId, 'user');
+      expect((args[0] as Member).version, 7);
+      expect(
+        (args[1] as List<MemberInvitation>).map((i) => '${i.id}:${i.version}'),
+        ['i:2', 'j:4'],
       );
-      const member = MemberDto(id: 'invitee-id', displayName: 'Invitee User');
-      final updatedMember = Member(
-        id: 'invitee-id',
-        displayName: 'Invitee User',
-        accountId: userId,
-      );
-
-      when(mockMemberInvitationQueryService.getByInvitationCode(invitationCode))
-          .thenAnswer((_) async => memberInvitation);
-      when(mockMemberQueryService.getMemberById('invitee-id'))
-          .thenAnswer((_) async => member);
-      when(mockMemberRepository.updateMember(updatedMember))
-          .thenAnswer((_) async {});
-      when(
-        mockMemberInvitationRepository.deleteMemberInvitation('invitation-id'),
-      ).thenAnswer((_) async {});
-
-      // Act
-      final result = await useCase.execute(invitationCode, userId);
-
-      // Assert
-      expect(result, isTrue);
-      verify(
-        mockMemberInvitationQueryService.getByInvitationCode(invitationCode),
-      ).called(1);
-      verify(mockMemberQueryService.getMemberById('invitee-id')).called(1);
-      verify(mockMemberRepository.updateMember(updatedMember)).called(1);
-      verify(
-        mockMemberInvitationRepository.deleteMemberInvitation('invitation-id'),
-      ).called(1);
-    });
-
-    test('招待コードが存在しない場合falseを返す', () async {
-      // Arrange
-      const invitationCode = 'invalid-code';
-      const userId = 'user-id';
-      when(mockMemberInvitationQueryService.getByInvitationCode(invitationCode))
-          .thenAnswer((_) async => null);
-
-      // Act
-      final result = await useCase.execute(invitationCode, userId);
-
-      // Assert
-      expect(result, isFalse);
-      verify(
-        mockMemberInvitationQueryService.getByInvitationCode(invitationCode),
-      ).called(1);
-      verifyNever(mockMemberQueryService.getMemberById(any));
-      verifyNever(mockMemberRepository.saveMember(any));
       verifyNever(
-        mockMemberInvitationRepository.deleteMemberInvitation('invitation-id'),
+        repository.deleteMemberInvitation(
+          any,
+          expectedVersion: anyNamed('expectedVersion'),
+        ),
       );
     });
-
-    test('メンバーが見つからない場合falseを返す', () async {
-      // Arrange
-      const invitationCode = 'test-invitation-code';
-      const userId = 'user-id';
-      const memberInvitation = MemberInvitationDto(
-        id: 'invitation-id',
-        inviteeId: 'invitee-id',
-        inviterId: 'inviter-id',
-        invitationCode: invitationCode,
-      );
-
-      when(mockMemberInvitationQueryService.getByInvitationCode(invitationCode))
-          .thenAnswer((_) async => memberInvitation);
-      when(mockMemberQueryService.getMemberById('invitee-id'))
-          .thenAnswer((_) async => null);
-
-      // Act
-      final result = await useCase.execute(invitationCode, userId);
-
-      // Assert
-      expect(result, isFalse);
-      verify(
-        mockMemberInvitationQueryService.getByInvitationCode(invitationCode),
-      ).called(1);
-      verify(mockMemberQueryService.getMemberById('invitee-id')).called(1);
-      verifyNever(mockMemberRepository.saveMember(any));
-      verifyNever(
-        mockMemberInvitationRepository.deleteMemberInvitation('invitation-id'),
-      );
+  }
+  for (final absent in ['コード', 'メンバー', '承認対象', '再発行']) {
+    test('$absentの欠落・変更時は承認しない', () async {
+      switch (absent) {
+        case 'コード':
+          when(query.getByInvitationCode('code')).thenAnswer((_) async => null);
+        case 'メンバー':
+          when(members.getMemberById('m')).thenAnswer((_) async => null);
+        case '承認対象':
+          when(query.getAllByInviteeId('m')).thenAnswer((_) async => [other]);
+        case '再発行':
+          when(
+            query.getAllByInviteeId('m'),
+          ).thenAnswer((_) async => [invitation.copyWith(version: 3), other]);
+      }
+      expect(await usecase.execute('code', 'user'), isFalse);
+      verifyNever(repository.acceptInvitation(any, any));
     });
-
-    test('招待対象メンバーにaccountIdが既に存在する場合でも更新する', () async {
-      // Arrange
-      const invitationCode = 'test-invitation-code';
-      const userId = 'user-id';
-      const memberInvitation = MemberInvitationDto(
-        id: 'invitation-id',
-        inviteeId: 'invitee-id',
-        inviterId: 'inviter-id',
-        invitationCode: invitationCode,
-      );
-      const member = MemberDto(
-        id: 'invitee-id',
-        displayName: 'Invitee User',
-        accountId: 'existing-account-id',
-      );
-      final updatedMember = Member(
-        id: 'invitee-id',
-        displayName: 'Invitee User',
-        accountId: userId,
-      );
-
-      when(mockMemberInvitationQueryService.getByInvitationCode(invitationCode))
-          .thenAnswer((_) async => memberInvitation);
-      when(mockMemberQueryService.getMemberById('invitee-id'))
-          .thenAnswer((_) async => member);
-      when(mockMemberRepository.updateMember(updatedMember))
-          .thenAnswer((_) async {});
-      when(
-        mockMemberInvitationRepository.deleteMemberInvitation('invitation-id'),
-      ).thenAnswer((_) async {});
-
-      // Act
-      final result = await useCase.execute(invitationCode, userId);
-
-      // Assert
-      expect(result, isTrue);
-      verify(
-        mockMemberInvitationQueryService.getByInvitationCode(invitationCode),
-      ).called(1);
-      verify(mockMemberQueryService.getMemberById('invitee-id')).called(1);
-      verify(mockMemberRepository.updateMember(updatedMember)).called(1);
-      verify(
-        mockMemberInvitationRepository.deleteMemberInvitation('invitation-id'),
-      ).called(1);
+  }
+  for (final reissued in [false, true]) {
+    for (final age in [
+      const Duration(hours: 24),
+      const Duration(hours: 24, seconds: 1),
+    ]) {
+      test('有効期限は${reissued ? '再発行' : '発行'}から$ageで判定する', () async {
+        final issued = now.subtract(age);
+        final value = invitation.copyWith(
+          createdAt: reissued
+              ? issued.subtract(const Duration(days: 2))
+              : issued,
+          updatedAt: reissued ? issued : null,
+        );
+        when(query.getByInvitationCode('code')).thenAnswer((_) async => value);
+        expect(
+          await usecase.execute('code', 'user'),
+          age == const Duration(hours: 24),
+        );
+      });
+    }
+  }
+  for (final failAt in ['一覧', '保存']) {
+    test('$failAtの失敗を承認成功にしない', () async {
+      if (failAt == '一覧') {
+        when(query.getAllByInviteeId('m')).thenThrow(TestException());
+      } else {
+        when(repository.acceptInvitation(any, any)).thenThrow(TestException());
+      }
+      expect(await usecase.execute('code', 'user'), isFalse);
     });
-
-    test('招待コード作成から24時間を超えている場合falseを返しメンバーを更新しない', () async {
-      // Arrange
-      const invitationCode = 'expired-invitation-code';
-      const userId = 'user-id';
-      final memberInvitation = MemberInvitationDto(
-        id: 'invitation-id',
-        inviteeId: 'invitee-id',
-        inviterId: 'inviter-id',
-        invitationCode: invitationCode,
-        createdAt: DateTime.utc(2024, 1, 1),
-      );
-
-      when(mockMemberInvitationQueryService.getByInvitationCode(invitationCode))
-          .thenAnswer((_) async => memberInvitation);
-
-      // Act
-      final result = await useCase.execute(
-        invitationCode,
-        userId,
-        now: DateTime.utc(2024, 1, 2, 0, 0, 1),
-      );
-
-      // Assert
-      expect(result, isFalse);
-      verify(
-        mockMemberInvitationQueryService.getByInvitationCode(invitationCode),
-      ).called(1);
-      verifyNever(mockMemberQueryService.getMemberById(any));
-      verifyNever(mockMemberRepository.updateMember(any));
-      verifyNever(
-        mockMemberInvitationRepository.deleteMemberInvitation('invitation-id'),
-      );
-    });
-
-    test('現在時刻未指定時はアプリ共通クロックで有効期限を判定する', () async {
-      // Arrange
-      useCase = AcceptInvitationUseCase(
-        mockMemberInvitationQueryService,
-        mockMemberInvitationRepository,
-        mockMemberRepository,
-        mockMemberQueryService,
-        FixedAppClock(DateTime.utc(2024, 1, 2, 0, 0, 1)),
-      );
-      const invitationCode = 'clock-expired-invitation-code';
-      const userId = 'user-id';
-      final memberInvitation = MemberInvitationDto(
-        id: 'invitation-id',
-        inviteeId: 'invitee-id',
-        inviterId: 'inviter-id',
-        invitationCode: invitationCode,
-        createdAt: DateTime.utc(2024, 1, 1),
-      );
-
-      when(mockMemberInvitationQueryService.getByInvitationCode(invitationCode))
-          .thenAnswer((_) async => memberInvitation);
-
-      // Act
-      final result = await useCase.execute(invitationCode, userId);
-
-      // Assert
-      expect(result, isFalse);
-      verify(
-        mockMemberInvitationQueryService.getByInvitationCode(invitationCode),
-      ).called(1);
-      verifyNever(mockMemberQueryService.getMemberById(any));
-      verifyNever(mockMemberRepository.updateMember(any));
-    });
-
-    test('招待コードが再発行されている場合は再発行日時から24時間以内ならtrueを返す', () async {
-      // Arrange
-      const invitationCode = 'reissued-invitation-code';
-      const userId = 'user-id';
-      final memberInvitation = MemberInvitationDto(
-        id: 'invitation-id',
-        inviteeId: 'invitee-id',
-        inviterId: 'inviter-id',
-        invitationCode: invitationCode,
-        createdAt: DateTime.utc(2024, 1, 1),
-        updatedAt: DateTime.utc(2024, 1, 2),
-      );
-      const member = MemberDto(id: 'invitee-id', displayName: 'Invitee User');
-      final updatedMember = Member(
-        id: 'invitee-id',
-        displayName: 'Invitee User',
-        accountId: userId,
-      );
-
-      when(mockMemberInvitationQueryService.getByInvitationCode(invitationCode))
-          .thenAnswer((_) async => memberInvitation);
-      when(mockMemberQueryService.getMemberById('invitee-id'))
-          .thenAnswer((_) async => member);
-      when(mockMemberRepository.updateMember(updatedMember))
-          .thenAnswer((_) async {});
-      when(
-        mockMemberInvitationRepository.deleteMemberInvitation('invitation-id'),
-      ).thenAnswer((_) async {});
-
-      // Act
-      final result = await useCase.execute(
-        invitationCode,
-        userId,
-        now: DateTime.utc(2024, 1, 2, 23, 59, 59),
-      );
-
-      // Assert
-      expect(result, isTrue);
-      verify(
-        mockMemberInvitationQueryService.getByInvitationCode(invitationCode),
-      ).called(1);
-      verify(mockMemberQueryService.getMemberById('invitee-id')).called(1);
-      verify(mockMemberRepository.updateMember(updatedMember)).called(1);
-      verify(
-        mockMemberInvitationRepository.deleteMemberInvitation('invitation-id'),
-      ).called(1);
-    });
-  });
+  }
 }

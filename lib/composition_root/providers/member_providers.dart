@@ -32,7 +32,6 @@ final acceptInvitationUseCaseProvider = Provider<AcceptInvitationUseCase>((
   return AcceptInvitationUseCase(
     ref.watch(memberInvitationQueryServiceProvider),
     ref.watch(memberInvitationRepositoryProvider),
-    ref.watch(memberRepositoryProvider),
     ref.watch(memberQueryServiceProvider),
     ref.watch(appClockProvider),
   );

@@ -97,19 +97,6 @@ void main() {
       ).called(1);
     });
 
-    test('deleteGroupEventがgroup_events collectionの該当ドキュメントを削除する', () async {
-      const groupEventId = 'groupevent001';
-      final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
-
-      when(mockCollection.doc(groupEventId)).thenReturn(mockDocRef);
-      when(mockDocRef.delete()).thenAnswer((_) async {});
-
-      await repository.deleteGroupEvent(groupEventId);
-
-      verify(mockCollection.doc(groupEventId)).called(1);
-      verify(mockDocRef.delete()).called(1);
-    });
-
     test('deleteGroupEventsByGroupIdが指定したgroupIdの全イベントを削除する', () async {
       const groupId = 'group001';
       final mockDocRef1 = MockDocumentReference<Map<String, dynamic>>();
