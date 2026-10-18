@@ -79,14 +79,10 @@ class FirestoreMemberEventRepository implements MemberEventRepository {
 
   @override
   Future<void> deleteMemberEventsByMemberId(String memberId) async {
-    final snapshot = await _firestore.collection('member_events').where('memberId', isEqualTo: memberId).get();
-    final expected = {for (final doc in snapshot.docs) doc.id: doc.data()['version'] as int?};
-    await _firestore.runTransaction<void>((transaction) async {
-      for (final entry in expected.entries) {
-        final current = await transaction.get(_firestore.collection('member_events').doc(entry.key));
-        FirestoreVersionCheck.requireMatch(current.data(), entry.value);
-      }
-      for (final id in expected.keys) { transaction.delete(_firestore.collection('member_events').doc(id)); }
-    });
+    final batch = _firestore.batch();
+    final snapshot = await _firestore.collection('member_events')
+        .where('memberId', isEqualTo: memberId).get();
+    for (final doc in snapshot.docs) { batch.delete(doc.reference); }
+    await batch.commit();
   }
 }

@@ -4,7 +4,7 @@ import 'package:memora/application/queries/member/member_invitation_query_servic
 import 'package:memora/application/queries/member/member_query_service.dart';
 import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/domain/repositories/member/member_invitation_repository.dart';
-import 'package:memora/domain/repositories/member/member_repository.dart';
+import 'package:memora/application/mappers/member/member_invitation_mapper.dart';
 import 'package:memora/core/app_logger.dart';
 
 class AcceptInvitationUseCase {
@@ -12,14 +12,12 @@ class AcceptInvitationUseCase {
 
   final MemberInvitationQueryService _memberInvitationQueryService;
   final MemberInvitationRepository _memberInvitationRepository;
-  final MemberRepository _memberRepository;
   final MemberQueryService _memberQueryService;
   final AppClock _clock;
 
   AcceptInvitationUseCase(
     this._memberInvitationQueryService,
     this._memberInvitationRepository,
-    this._memberRepository,
     this._memberQueryService,
     this._clock,
   );
@@ -49,13 +47,19 @@ class AcceptInvitationUseCase {
         return false;
       }
 
+      final invitations = await _memberInvitationQueryService.getAllByInviteeId(memberInvitation.inviteeId);
+      if (!invitations.any((invitation) =>
+          invitation.id == memberInvitation.id &&
+          invitation.version == memberInvitation.version &&
+          invitation.invitationCode == memberInvitation.invitationCode)) {
+        return false;
+      }
       final updatedMember = MemberMapper.toEntity(
         member.copyWith(accountId: userId),
       );
-      await _memberRepository.updateMember(updatedMember);
-      await _memberInvitationRepository.deleteMemberInvitation(
-        memberInvitation.id,
-        expectedVersion: memberInvitation.version,
+      await _memberInvitationRepository.acceptInvitation(
+        updatedMember,
+        invitations.map(MemberInvitationMapper.toEntity).toList(),
       );
 
       return true;
