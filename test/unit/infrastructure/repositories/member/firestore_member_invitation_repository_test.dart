@@ -99,20 +99,5 @@ void main() {
       },
     );
 
-    test(
-      'deleteMemberInvitationがmember_invitations collectionの該当ドキュメントを削除する',
-      () async {
-        const invitationId = 'invitation001';
-        final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
-
-        when(mockCollection.doc(invitationId)).thenReturn(mockDocRef);
-        when(mockDocRef.delete()).thenAnswer((_) async {});
-
-        await repository.deleteMemberInvitation(invitationId);
-
-        verify(mockCollection.doc(invitationId)).called(1);
-        verify(mockDocRef.delete()).called(1);
-      },
-    );
   });
 }

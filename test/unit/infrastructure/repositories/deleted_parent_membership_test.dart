@@ -15,7 +15,7 @@ void main() {
     final store = _Store();
     store.rows['groups/g'] = {'ownerId': 'a', 'name': '家族'};
     for (final id in ['a', 'b', 'c', 'd']) {
-      store.rows['members/$id'] = {'displayName': id};
+      store.rows['members/$id'] = {'displayName': id, 'version': 3};
     }
     for (final id in ['a', 'b', 'c']) {
       store.rows['group_members/$id'] = {
@@ -26,8 +26,8 @@ void main() {
       };
     }
     await FirestoreMemberRepository(firestore: store.firestore)
-        .deleteMember('b');
-    expect(store.rows['deleted_members/b'], {'displayName': 'b'});
+        .deleteMember('b', expectedVersion: 3);
+    expect(store.rows['deleted_members/b'], {'displayName': 'b', 'version': 3});
     final hidden = Map.of(store.rows['group_members/b']!);
     final query = FirestoreGroupQueryService(firestore: store.firestore);
     final repo = FirestoreGroupRepository(firestore: store.firestore);
@@ -76,6 +76,7 @@ void main() {
         'name': '削除時の情報',
         'ownerId': 'owner',
         'updatedAt': Timestamp(1, 0),
+        'version': 3,
       };
       for (final collection in [
         'group_members',
@@ -105,7 +106,7 @@ void main() {
           ? FirestoreGroupRepository(firestore: store.firestore)
                 .deleteGroup('id')
           : FirestoreMemberRepository(firestore: store.firestore)
-                .deleteMember('id');
+                .deleteMember('id', expectedVersion: 3);
       store.commitError = TestException('退避書き込み失敗');
       await expectLater(remove(), throwsA(isA<TestException>()));
       expect(store.rows, before);
