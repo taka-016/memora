@@ -2,97 +2,60 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/domain/entities/dvc/dvc_point_usage.dart';
 import 'package:memora/infrastructure/repositories/dvc/firestore_dvc_point_usage_repository.dart';
-import 'package:mockito/annotations.dart';
-import 'package:mockito/mockito.dart';
+import '../../../../helpers/firestore_transaction_store.dart';
+import '../../../../helpers/test_exception.dart';
 
-import 'firestore_dvc_point_usage_repository_test.mocks.dart';
-
-@GenerateMocks([
-  FirebaseFirestore,
-  CollectionReference,
-  DocumentReference,
-  Query,
-  QuerySnapshot,
-  QueryDocumentSnapshot,
-  WriteBatch,
-])
 void main() {
-  group('FirestoreDvcPointUsageRepository', () {
-    late MockFirebaseFirestore mockFirestore;
-    late MockCollectionReference<Map<String, dynamic>> mockCollection;
-    late FirestoreDvcPointUsageRepository repository;
-
-    setUp(() {
-      mockFirestore = MockFirebaseFirestore();
-      mockCollection = MockCollectionReference<Map<String, dynamic>>();
-      when(mockFirestore.collection('dvc_point_usages'))
-          .thenReturn(mockCollection);
-      repository = FirestoreDvcPointUsageRepository(firestore: mockFirestore);
+  late FirestoreTransactionStore store;
+  late FirestoreDvcPointUsageRepository repository;
+  final value = DvcPointUsage(id: 'child', groupId: 'g1', contractId: 'c1', usageYearMonth: DateTime(2025, 10), usedPoint: 60);
+  setUp(() {
+    store = FirestoreTransactionStore();
+    store.rows['dvc_point_contracts/c1'] = {'version': 3, 'groupId': 'g1'};
+    store.rows['groups/g1'] = {'version': 8};
+    repository = FirestoreDvcPointUsageRepository(firestore: store.firestore);
+  });
+  test('追加と変更は契約の期待バージョンと同じバッチで保存する', () async {
+    await repository.saveDvcPointUsage(value, expectedContractVersion: 3);
+    expect(store.rows['dvc_point_contracts/c1']!['version'], 4);
+    expect(store.rows['dvc_point_usages/child']!['contractId'], 'c1');
+    await repository.saveDvcPointUsage(value, expectedContractVersion: 4);
+    expect(store.rows['dvc_point_contracts/c1']!['version'], 5);
+    expect(store.rows.keys.where((key) => key.startsWith('dvc_point_usages/')), hasLength(1));
+    expect(store.rows['groups/g1']!['version'], 8);
+  });
+  test('削除は取得時の契約バージョンを照合し契約を更新する', () async {
+    store.rows['dvc_point_usages/child'] = {'contractId': 'c1', 'groupId': 'g1'};
+    await repository.deleteDvcPointUsage('child', expectedContractVersion: 3);
+    expect(store.rows.keys, isNot(contains('dvc_point_usages/child')));
+    expect(store.rows['dvc_point_contracts/c1']!['version'], 4);
+  });
+  for (final expected in [null, 2]) {
+    test('古い期待値$expectedの削除は親子を保持する', () async {
+      store.rows['dvc_point_usages/child'] = {'contractId': 'c1'};
+      await expectLater(repository.deleteDvcPointUsage('child', expectedContractVersion: expected),
+        throwsA(isA<FirebaseException>().having((e) => e.code, 'code', 'aborted')));
+      expect(store.rows['dvc_point_contracts/c1']!['version'], 3);
+      expect(store.rows.keys, contains('dvc_point_usages/child'));
     });
-
-    test('saveがdvc_point_usagesに追加する', () async {
-      final usage = DvcPointUsage(
-        contractId: 'c1',
-        id: 'usage001',
-        groupId: 'group001',
-        usageYearMonth: DateTime(2025, 10),
-        usedPoint: 60,
-        memo: 'ホテル',
-      );
-
-      when(
-        mockCollection.add(any),
-      ).thenAnswer((_) async => MockDocumentReference<Map<String, dynamic>>());
-
-      await repository.saveDvcPointUsage(usage);
-
-      verify(
-        mockCollection.add(
-          argThat(
-            allOf([
-              containsPair('groupId', 'group001'),
-              containsPair('usedPoint', 60),
-              containsPair('memo', 'ホテル'),
-              contains('usageYearMonth'),
-            ]),
-          ),
-        ),
-      ).called(1);
-    });
-
-    test('deleteが指定IDのドキュメントを削除する', () async {
-      const id = 'usage001';
-      final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
-
-      when(mockCollection.doc(id)).thenReturn(mockDocRef);
-      when(mockDocRef.delete()).thenAnswer((_) async {});
-
-      await repository.deleteDvcPointUsage(id);
-
-      verify(mockCollection.doc(id)).called(1);
-      verify(mockDocRef.delete()).called(1);
-    });
-
-    test('deleteByGroupIdが指定groupIdのドキュメントを一括削除する', () async {
-      const groupId = 'group001';
-      final mockQuery = MockQuery<Map<String, dynamic>>();
-      final mockSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
-      final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
-      final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
-      final mockBatch = MockWriteBatch();
-
-      when(mockCollection.where('groupId', isEqualTo: groupId))
-          .thenReturn(mockQuery);
-      when(mockQuery.get()).thenAnswer((_) async => mockSnapshot);
-      when(mockSnapshot.docs).thenReturn([mockDoc]);
-      when(mockDoc.reference).thenReturn(mockDocRef);
-      when(mockFirestore.batch()).thenReturn(mockBatch);
-      when(mockBatch.commit()).thenAnswer((_) async {});
-
-      await repository.deleteDvcPointUsagesByGroupId(groupId);
-
-      verify(mockBatch.delete(mockDocRef)).called(1);
-      verify(mockBatch.commit()).called(1);
-    });
+  }
+  test('保存失敗では契約も子も変更しない', () async {
+    store.commitError = TestException('保存失敗');
+    await expectLater(repository.saveDvcPointUsage(value, expectedContractVersion: 3), throwsA(isA<TestException>()));
+    expect(store.rows['dvc_point_contracts/c1']!['version'], 3);
+    expect(store.rows.keys, isNot(contains('dvc_point_usages/child')));
+  });
+  test('削除の再試行で期待値を差し替えない', () async {
+    store.rows['dvc_point_usages/child'] = {'contractId': 'c1'};
+    store.beforeRetry = () => store.rows['dvc_point_contracts/c1']!['version'] = 4;
+    await expectLater(repository.deleteDvcPointUsage('child', expectedContractVersion: 3),
+      throwsA(isA<FirebaseException>().having((e) => e.code, 'code', 'aborted')));
+    expect(store.rows.keys, contains('dvc_point_usages/child'));
+  });
+  test('グループ内の一括削除も契約ごとに一度だけ更新する', () async {
+    for (final id in ['a', 'b']) { store.rows['dvc_point_usages/$id'] = {'contractId': 'c1', 'groupId': 'g1'}; }
+    await repository.deleteDvcPointUsagesByGroupId('g1');
+    expect(store.rows['dvc_point_contracts/c1']!['version'], 4);
+    expect(store.rows.keys.where((key) => key.startsWith('dvc_point_usages/')), isEmpty);
   });
 }

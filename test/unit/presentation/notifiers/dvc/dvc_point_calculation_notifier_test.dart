@@ -325,7 +325,7 @@ void main() {
       expect(state.calculationResult, isNotNull);
     });
 
-    test('期間限定ポイント削除後は期間限定ポイントだけを再取得する', () async {
+    test('期間限定ポイント削除後は期間限定ポイントと契約を再取得する', () async {
       final notifier = await startNotifier();
       clearInteractions(getContractsUsecase);
       clearInteractions(getLimitedPointsUsecase);
@@ -347,11 +347,11 @@ void main() {
         deleteLimitedPointUsecase.execute(limitedPoint.id),
         getLimitedPointsUsecase.execute(groupId),
       ]);
-      verifyNever(getContractsUsecase.execute(any));
+      verify(getContractsUsecase.execute(groupId)).called(1);
       verifyNever(getPointUsagesUsecase.execute(any));
     });
 
-    test('利用ポイント保存後は利用ポイントだけを再取得する', () async {
+    test('利用ポイント保存後は利用ポイントと契約を再取得する', () async {
       final notifier = await startNotifier();
       clearInteractions(getContractsUsecase);
       clearInteractions(getLimitedPointsUsecase);
@@ -373,7 +373,7 @@ void main() {
         pointUsageMutationCoordinator.saveDvcPointUsage(pointUsage),
         getPointUsagesUsecase.execute(groupId),
       ]);
-      verifyNever(getContractsUsecase.execute(any));
+      verify(getContractsUsecase.execute(groupId)).called(1);
       verifyNever(getLimitedPointsUsecase.execute(any));
     });
 

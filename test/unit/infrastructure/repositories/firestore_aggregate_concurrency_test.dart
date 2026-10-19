@@ -1,5 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/domain/entities/trip/trip_entry.dart';
+import 'package:memora/domain/entities/trip/task.dart';
+import 'package:memora/domain/repositories/trip/trip_entry_repository.dart';
+import 'package:memora/infrastructure/transactions/firestore_write_transaction.dart';
 import 'package:memora/infrastructure/repositories/trip/firestore_trip_entry_repository.dart';
 import 'package:memora/infrastructure/repositories/group/firestore_group_repository.dart';
 import 'package:memora/infrastructure/repositories/dvc/firestore_dvc_point_contract_repository.dart';
@@ -106,4 +110,34 @@ void main() {
     );
     expect(store.rows.keys, contains('dvc_point_contracts/c1'));
   });
+  test('旅行の子だけの変更も親の期待値から更新する', () async {
+    await FirestoreTripEntryRepository(firestore: store.firestore).updateTripEntry(
+      TripEntry(id: 't1', groupId: 'g1', year: 2025, version: 3,
+        tasks: [Task(id: 'k2', tripId: 't1', name: '準備', orderIndex: 0, isCompleted: false)]),
+    );
+    expect(store.rows['trip_entries/t1']!['version'], 4);
+    expect(store.rows.keys, isNot(contains('tasks/k1')));
+    expect(store.rows['tasks/k2']!['tripId'], 't1');
+    expect(store.commits, 1);
+  });
+
+  test('共有トランザクションでも複数旅行の親照合後に親子を削除する', () async {
+    store.rows['trip_entries/t2'] = {'version': 5, 'groupId': 'g1'};
+    await FirestoreWriteTransaction(firestore: store.firestore).run<void>((scope) async {
+      final repo = scope.repository<TripEntryRepository>();
+      await repo.deleteTripEntry('t1', expectedVersion: 3);
+      await repo.deleteTripEntry('t2', expectedVersion: 5);
+    });
+    expect(store.rows.keys.where((key) => key.startsWith('trip_entries/')), isEmpty);
+    expect(store.commits, 1);
+  });
+
+  test('グループ内の旅行の一括削除も親を照合して同一トランザクションで削除する', () async {
+    store.rows['trip_entries/t2'] = {'version': 5, 'groupId': 'g1'};
+    await FirestoreTripEntryRepository(firestore: store.firestore).deleteTripEntriesByGroupId('g1');
+    expect(store.reads, containsAll(['trip_entries/t1', 'trip_entries/t2']));
+    expect(store.rows.keys.where((key) => key.startsWith('trip_entries/')), isEmpty);
+    expect(store.commits, 1);
+  });
+
 }

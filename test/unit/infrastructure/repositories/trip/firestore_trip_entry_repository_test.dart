@@ -183,54 +183,5 @@ void main() {
       verify(mockBatch.commit()).called(1);
     });
 
-    test('deleteTripEntryが旅行と子要素を削除する', () async {
-      const tripId = 'trip001';
-      final mockTripDocRef = MockDocumentReference<Map<String, dynamic>>();
-      final mockLocationsQuery = MockQuery<Map<String, dynamic>>();
-      final mockLocationsSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
-      final mockLocationDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
-      final mockLocationDocRef = MockDocumentReference<Map<String, dynamic>>();
-      final mockTasksQuery = MockQuery<Map<String, dynamic>>();
-      final mockTasksSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
-      final mockTaskDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
-      final mockTaskDocRef = MockDocumentReference<Map<String, dynamic>>();
-      final mockItineraryItemsQuery = MockQuery<Map<String, dynamic>>();
-      final mockItineraryItemsSnapshot =
-          MockQuerySnapshot<Map<String, dynamic>>();
-      final mockItineraryItemDoc =
-          MockQueryDocumentSnapshot<Map<String, dynamic>>();
-      final mockItineraryItemDocRef =
-          MockDocumentReference<Map<String, dynamic>>();
-      final mockBatch = MockWriteBatch();
-
-      when(mockTripEntries.doc(tripId)).thenReturn(mockTripDocRef);
-      when(mockLocations.where('tripId', isEqualTo: tripId))
-          .thenReturn(mockLocationsQuery);
-      when(mockLocationsQuery.get())
-          .thenAnswer((_) async => mockLocationsSnapshot);
-      when(mockLocationsSnapshot.docs).thenReturn([mockLocationDoc]);
-      when(mockLocationDoc.reference).thenReturn(mockLocationDocRef);
-      when(mockTasks.where('tripId', isEqualTo: tripId))
-          .thenReturn(mockTasksQuery);
-      when(mockTasksQuery.get()).thenAnswer((_) async => mockTasksSnapshot);
-      when(mockTasksSnapshot.docs).thenReturn([mockTaskDoc]);
-      when(mockTaskDoc.reference).thenReturn(mockTaskDocRef);
-      when(mockItineraryItems.where('tripId', isEqualTo: tripId))
-          .thenReturn(mockItineraryItemsQuery);
-      when(mockItineraryItemsQuery.get())
-          .thenAnswer((_) async => mockItineraryItemsSnapshot);
-      when(mockItineraryItemsSnapshot.docs).thenReturn([mockItineraryItemDoc]);
-      when(mockItineraryItemDoc.reference).thenReturn(mockItineraryItemDocRef);
-      when(mockFirestore.batch()).thenReturn(mockBatch);
-      when(mockBatch.commit()).thenAnswer((_) async {});
-
-      await repository.deleteTripEntry(tripId);
-
-      verify(mockBatch.delete(mockLocationDocRef)).called(1);
-      verify(mockBatch.delete(mockTaskDocRef)).called(1);
-      verify(mockBatch.delete(mockItineraryItemDocRef)).called(1);
-      verify(mockBatch.delete(mockTripDocRef)).called(1);
-      verify(mockBatch.commit()).called(1);
-    });
   });
 }
