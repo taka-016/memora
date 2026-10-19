@@ -104,6 +104,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
       return runOperationWithFeedback(
         notifier.saveContracts(
           contracts,
+          originalContracts: state.contracts,
           expectedVersions: {
             for (final contract in state.contracts)
               if (contract.version != null) contract.id: contract.version!,

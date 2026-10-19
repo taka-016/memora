@@ -36,7 +36,11 @@ class FirestoreDvcPointContractRepository
     String groupId,
     List<DvcPointContract> contracts, {
     Map<String, int> expectedVersions = const {},
+    List<DvcPointContract> originalContracts = const [],
   }) async {
+    final originals = {
+      for (final contract in originalContracts) contract.id: contract,
+    };
     final collection = _firestore.collection('dvc_point_contracts');
     final existing = await collection
         .where('groupId', isEqualTo: groupId)
@@ -60,6 +64,7 @@ class FirestoreDvcPointContractRepository
         transaction.delete(doc.reference);
       }
       for (final contract in contracts) {
+        if (originals[contract.id] == contract) continue;
         final reference = collection.doc(
           contract.id.isEmpty ? null : contract.id,
         );

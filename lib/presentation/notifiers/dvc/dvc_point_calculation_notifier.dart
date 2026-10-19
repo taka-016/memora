@@ -72,6 +72,7 @@ class DvcPointCalculationNotifier extends Notifier<DvcPointCalculationState> {
   Future<bool> saveContracts(
     List<DvcPointContractDto> contracts, {
     Map<String, int> expectedVersions = const {},
+    List<DvcPointContractDto> originalContracts = const [],
   }) {
     return _runMutation(
       operationName: 'saveContracts',
@@ -81,6 +82,7 @@ class DvcPointCalculationNotifier extends Notifier<DvcPointCalculationState> {
             groupId: _groupId,
             contracts: contracts,
             expectedVersions: expectedVersions,
+            originalContracts: originalContracts,
           ),
       reload: _loadContracts,
     );

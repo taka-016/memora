@@ -5,6 +5,7 @@ abstract class DvcPointContractRepository {
     String groupId,
     List<DvcPointContract> contracts, {
     Map<String, int> expectedVersions = const {},
+    List<DvcPointContract> originalContracts = const [],
   });
   Future<void> saveDvcPointContract(DvcPointContract contract);
   Future<void> deleteDvcPointContract(

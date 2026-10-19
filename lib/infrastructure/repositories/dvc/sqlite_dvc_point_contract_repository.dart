@@ -36,7 +36,11 @@ class SqliteDvcPointContractRepository implements DvcPointContractRepository {
     String groupId,
     List<DvcPointContract> contracts, {
     Map<String, int> expectedVersions = const {},
+    List<DvcPointContract> originalContracts = const [],
   }) async {
+    final originals = {
+      for (final contract in originalContracts) contract.id: contract,
+    };
     await db.transaction(() async {
       final existing = await db.rows(
         'dvc_point_contracts',
@@ -49,6 +53,7 @@ class SqliteDvcPointContractRepository implements DvcPointContractRepository {
         if (!retainedIds.contains(id)) await deleteDvcPointContract(id);
       }
       for (final contract in contracts) {
+        if (originals[contract.id] == contract) continue;
         await saveDvcPointContract(contract);
       }
     });
