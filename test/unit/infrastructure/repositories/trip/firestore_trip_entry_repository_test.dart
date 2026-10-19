@@ -182,6 +182,5 @@ void main() {
       verify(mockBatch.set(mockItineraryItemDocRef, any)).called(1);
       verify(mockBatch.commit()).called(1);
     });
-
   });
 }

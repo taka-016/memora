@@ -26,9 +26,8 @@ void main() {
     });
   });
 
-  Matcher getConflict() => isA<FirebaseException>().having(
-    (error) => error.code, 'code', 'aborted',
-  );
+  Matcher getConflict() =>
+      isA<FirebaseException>().having((error) => error.code, 'code', 'aborted');
 
   for (final expected in [null, 2]) {
     test('旅行の期待値$expectedでは親子を削除しない', () async {
@@ -98,11 +97,15 @@ void main() {
         .deleteGroup('g1', expectedVersion: 3);
     expect(store.rows['deleted_groups/g1'], {'version': 3, 'name': '家族'});
     expect(store.rows.keys, isNot(contains('groups/g1')));
-    expect(store.rows.keys, containsAll(['group_members/m1', 'dvc_point_contracts/c1']));
+    expect(
+      store.rows.keys,
+      containsAll(['group_members/m1', 'dvc_point_contracts/c1']),
+    );
   });
 
   test('DVC契約削除の再試行でも期待値を維持する', () async {
-    store.beforeRetry = () => store.rows['dvc_point_contracts/c1']!['version'] = 4;
+    store.beforeRetry = () =>
+        store.rows['dvc_point_contracts/c1']!['version'] = 4;
     await expectLater(
       FirestoreDvcPointContractRepository(firestore: store.firestore)
           .deleteDvcPointContract('c1', expectedVersion: 3),
@@ -111,10 +114,24 @@ void main() {
     expect(store.rows.keys, contains('dvc_point_contracts/c1'));
   });
   test('旅行の子だけの変更も親の期待値から更新する', () async {
-    await FirestoreTripEntryRepository(firestore: store.firestore).updateTripEntry(
-      TripEntry(id: 't1', groupId: 'g1', year: 2025, version: 3,
-        tasks: [Task(id: 'k2', tripId: 't1', name: '準備', orderIndex: 0, isCompleted: false)]),
-    );
+    await FirestoreTripEntryRepository(firestore: store.firestore)
+        .updateTripEntry(
+          TripEntry(
+            id: 't1',
+            groupId: 'g1',
+            year: 2025,
+            version: 3,
+            tasks: [
+              Task(
+                id: 'k2',
+                tripId: 't1',
+                name: '準備',
+                orderIndex: 0,
+                isCompleted: false,
+              ),
+            ],
+          ),
+        );
     expect(store.rows['trip_entries/t1']!['version'], 4);
     expect(store.rows.keys, isNot(contains('tasks/k1')));
     expect(store.rows['tasks/k2']!['tripId'], 't1');
@@ -123,21 +140,28 @@ void main() {
 
   test('共有トランザクションでも複数旅行の親照合後に親子を削除する', () async {
     store.rows['trip_entries/t2'] = {'version': 5, 'groupId': 'g1'};
-    await FirestoreWriteTransaction(firestore: store.firestore).run<void>((scope) async {
-      final repo = scope.repository<TripEntryRepository>();
-      await repo.deleteTripEntry('t1', expectedVersion: 3);
-      await repo.deleteTripEntry('t2', expectedVersion: 5);
-    });
-    expect(store.rows.keys.where((key) => key.startsWith('trip_entries/')), isEmpty);
+    await FirestoreWriteTransaction(firestore: store.firestore)
+        .run<void>((scope) async {
+          final repo = scope.repository<TripEntryRepository>();
+          await repo.deleteTripEntry('t1', expectedVersion: 3);
+          await repo.deleteTripEntry('t2', expectedVersion: 5);
+        });
+    expect(
+      store.rows.keys.where((key) => key.startsWith('trip_entries/')),
+      isEmpty,
+    );
     expect(store.commits, 1);
   });
 
   test('グループ内の旅行の一括削除も親を照合して同一トランザクションで削除する', () async {
     store.rows['trip_entries/t2'] = {'version': 5, 'groupId': 'g1'};
-    await FirestoreTripEntryRepository(firestore: store.firestore).deleteTripEntriesByGroupId('g1');
+    await FirestoreTripEntryRepository(firestore: store.firestore)
+        .deleteTripEntriesByGroupId('g1');
     expect(store.reads, containsAll(['trip_entries/t1', 'trip_entries/t2']));
-    expect(store.rows.keys.where((key) => key.startsWith('trip_entries/')), isEmpty);
+    expect(
+      store.rows.keys.where((key) => key.startsWith('trip_entries/')),
+      isEmpty,
+    );
     expect(store.commits, 1);
   });
-
 }

@@ -18,12 +18,16 @@ class FirestoreTransactionStore {
       final pending = <void Function()>[];
       when(batch.set(any, any)).thenAnswer((call) {
         final path = (call.positionalArguments[0] as DocumentReference).path;
-        final data = Map<String, dynamic>.from(call.positionalArguments[1] as Map);
+        final data = Map<String, dynamic>.from(
+          call.positionalArguments[1] as Map,
+        );
         pending.add(() => rows[path] = data);
       });
       when(batch.update(any, any)).thenAnswer((call) {
         final path = (call.positionalArguments[0] as DocumentReference).path;
-        final data = Map<String, dynamic>.from(call.positionalArguments[1] as Map);
+        final data = Map<String, dynamic>.from(
+          call.positionalArguments[1] as Map,
+        );
         pending.add(() => rows[path]!.addAll(data));
       });
       when(batch.delete(any)).thenAnswer((call) {
@@ -33,7 +37,9 @@ class FirestoreTransactionStore {
       when(batch.commit()).thenAnswer((_) async {
         await beforeCommit?.call();
         if (commitError case final error?) throw error;
-        for (final write in pending) { write(); }
+        for (final write in pending) {
+          write();
+        }
         commits++;
       });
       return batch;

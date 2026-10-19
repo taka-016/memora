@@ -153,10 +153,16 @@ class _FakeTripEntryRepository implements TripEntryRepository {
 
 class _FakeDvcPointUsageRepository implements DvcPointUsageRepository {
   @override
-  Future<void> saveDvcPointUsage(DvcPointUsage pointUsage) async {}
+  Future<void> saveDvcPointUsage(
+    DvcPointUsage pointUsage, {
+    int? expectedContractVersion,
+  }) async {}
 
   @override
-  Future<void> deleteDvcPointUsage(String pointUsageId) async {}
+  Future<void> deleteDvcPointUsage(
+    String pointUsageId, {
+    int? expectedContractVersion,
+  }) async {}
 
   @override
   Future<void> deleteDvcPointUsagesByGroupId(String groupId) async {}

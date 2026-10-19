@@ -36,7 +36,8 @@ void main() {
         await action(transaction);
       });
       Future<void> remove() => isGroup
-          ? FirestoreGroupRepository(firestore: firestore).deleteGroup('id', expectedVersion: 3)
+          ? FirestoreGroupRepository(firestore: firestore)
+                .deleteGroup('id', expectedVersion: 3)
           : FirestoreMemberRepository(firestore: firestore)
                 .deleteMember('id', expectedVersion: 3);
       await remove();
