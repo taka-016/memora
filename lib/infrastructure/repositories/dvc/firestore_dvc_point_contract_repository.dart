@@ -1,3 +1,4 @@
+import 'package:memora/infrastructure/services/firestore_version_check.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/domain/entities/dvc/dvc_point_contract.dart';
 import 'package:memora/domain/repositories/dvc/dvc_point_contract_repository.dart';
@@ -80,7 +81,11 @@ class FirestoreDvcPointContractRepository
     int? expectedVersion,
   }) async {
     await _ensureDeletable(contractId);
-    await _firestore.collection('dvc_point_contracts').doc(contractId).delete();
+    await FirestoreVersionCheck.delete(
+      _firestore,
+      _firestore.collection('dvc_point_contracts').doc(contractId),
+      expectedVersion,
+    );
   }
 
   @override

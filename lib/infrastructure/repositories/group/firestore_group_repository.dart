@@ -1,3 +1,4 @@
+import 'package:memora/infrastructure/services/firestore_version_check.dart';
 import 'package:memora/infrastructure/repositories/firestore_write_context.dart';
 import 'package:memora/infrastructure/services/firestore_deleted_parent_store.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -86,12 +87,12 @@ class FirestoreGroupRepository implements GroupRepository {
     await _firestore.runTransaction<void>((transaction) async {
       final snapshot = await transaction.get(source);
       final data = snapshot.data();
-      if (data == null) return;
+      FirestoreVersionCheck.requireMatch(data, expectedVersion);
       final context = FirestoreTransactionWriteContext(
         firestore: _firestore,
         transaction: transaction,
       );
-      FirestoreDeletedParentStore(context).saveGroup(groupId, data);
+      FirestoreDeletedParentStore(context).saveGroup(groupId, data!);
       context.delete(source);
     });
   }

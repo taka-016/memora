@@ -7,6 +7,10 @@ abstract class FirestoreWriteContext {
     Query<Map<String, dynamic>> query,
   );
 
+  Future<DocumentSnapshot<Map<String, dynamic>>> getDocument(
+    DocumentReference<Map<String, dynamic>> reference,
+  );
+
   void set(
     DocumentReference<Map<String, dynamic>> documentReference,
     Map<String, dynamic> data, [
@@ -42,6 +46,11 @@ class FirestoreBatchWriteContext implements FirestoreWriteContext {
   ) {
     return query.get();
   }
+
+  @override
+  Future<DocumentSnapshot<Map<String, dynamic>>> getDocument(
+    DocumentReference<Map<String, dynamic>> reference,
+  ) => reference.get();
 
   @override
   void set(
@@ -95,6 +104,11 @@ class FirestoreTransactionWriteContext implements FirestoreWriteContext {
   ) {
     return query.get();
   }
+
+  @override
+  Future<DocumentSnapshot<Map<String, dynamic>>> getDocument(
+    DocumentReference<Map<String, dynamic>> reference,
+  ) => _transaction.get(reference);
 
   @override
   void set(
