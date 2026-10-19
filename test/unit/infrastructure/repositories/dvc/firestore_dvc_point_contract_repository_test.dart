@@ -45,30 +45,46 @@ void main() {
   });
   test('契約Aだけの編集では別端末が変更した未編集の契約Bを更新しない', () async {
     final beforeA = contract.copyWith(version: 3);
-    final beforeB = contract.copyWith(id: 'c2', version: 5, contractName: '契約B');
+    final beforeB = contract.copyWith(
+      id: 'c2',
+      version: 5,
+      contractName: '契約B',
+    );
     store.rows['dvc_point_contracts/c1'] = {'groupId': 'g1', 'version': 3};
     store.rows['dvc_point_contracts/c2'] = {
-      'groupId': 'g1', 'version': 6, 'contractName': '別端末の契約B',
+      'groupId': 'g1',
+      'version': 6,
+      'contractName': '別端末の契約B',
     };
     await repository.saveDvcPointContracts(
-      'g1', [beforeA.copyWith(annualPoint: 80), beforeB],
-      originalContracts: [beforeA, beforeB], expectedVersions: {'c1': 3, 'c2': 5},
+      'g1',
+      [beforeA.copyWith(annualPoint: 80), beforeB],
+      originalContracts: [beforeA, beforeB],
+      expectedVersions: {'c1': 3, 'c2': 5},
     );
     expect(store.rows['dvc_point_contracts/c1']!['annualPoint'], 80);
     expect(store.rows['dvc_point_contracts/c1']!['version'], 4);
     expect(store.rows['dvc_point_contracts/c2'], {
-      'groupId': 'g1', 'version': 6, 'contractName': '別端末の契約B',
+      'groupId': 'g1',
+      'version': 6,
+      'contractName': '別端末の契約B',
     });
   });
   test('全契約が未変更ならバージョンを上げず新規追加と削除は従来どおり保存する', () async {
     final original = contract.copyWith(version: 3);
     store.rows['dvc_point_contracts/c1'] = {'groupId': 'g1', 'version': 3};
-    await repository.saveDvcPointContracts('g1', [original], originalContracts: [original]);
+    await repository.saveDvcPointContracts(
+      'g1',
+      [original],
+      originalContracts: [original],
+    );
     expect(store.rows['dvc_point_contracts/c1']!['version'], 3);
     store.rows['dvc_point_contracts/deleted'] = {'groupId': 'g1', 'version': 5};
     await repository.saveDvcPointContracts(
-      'g1', [original, contract.copyWith(id: 'new')],
-      originalContracts: [original], expectedVersions: {'c1': 3, 'deleted': 5},
+      'g1',
+      [original, contract.copyWith(id: 'new')],
+      originalContracts: [original],
+      expectedVersions: {'c1': 3, 'deleted': 5},
     );
     expect(store.rows['dvc_point_contracts/c1']!['version'], 3);
     expect(store.rows['dvc_point_contracts/new']!['version'], 1);
@@ -79,7 +95,9 @@ void main() {
     store.rows['dvc_point_contracts/c1'] = {'groupId': 'g1', 'version': 3};
     store.commitError = TestException('保存失敗');
     Future<void> save() => repository.saveDvcPointContracts(
-      'g1', [original.copyWith(annualPoint: 80)], originalContracts: [original],
+      'g1',
+      [original.copyWith(annualPoint: 80)],
+      originalContracts: [original],
     );
     await expectLater(save(), throwsA(isA<TestException>()));
     expect(store.rows['dvc_point_contracts/c1']!['version'], 3);
