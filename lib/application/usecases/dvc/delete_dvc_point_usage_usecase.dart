@@ -5,7 +5,13 @@ class DeleteDvcPointUsageUsecase {
 
   final DvcPointUsageRepository _dvcPointUsageRepository;
 
-  Future<void> execute(String pointUsageId) async {
-    await _dvcPointUsageRepository.deleteDvcPointUsage(pointUsageId);
+  Future<void> execute(
+    String pointUsageId, {
+    int? expectedContractVersion,
+  }) async {
+    await _dvcPointUsageRepository.deleteDvcPointUsage(
+      pointUsageId,
+      expectedContractVersion: expectedContractVersion,
+    );
   }
 }

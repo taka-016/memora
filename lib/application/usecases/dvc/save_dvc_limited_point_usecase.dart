@@ -7,9 +7,13 @@ class SaveDvcLimitedPointUsecase {
 
   final DvcLimitedPointRepository _dvcLimitedPointRepository;
 
-  Future<void> execute(DvcLimitedPointDto limitedPoint) async {
+  Future<void> execute(
+    DvcLimitedPointDto limitedPoint, {
+    int? expectedContractVersion,
+  }) async {
     await _dvcLimitedPointRepository.saveDvcLimitedPoint(
       DvcLimitedPointMapper.toEntity(limitedPoint),
+      expectedContractVersion: expectedContractVersion,
     );
   }
 }

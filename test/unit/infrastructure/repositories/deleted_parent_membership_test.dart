@@ -104,7 +104,7 @@ void main() {
       };
       Future<void> remove() => table == 'groups'
           ? FirestoreGroupRepository(firestore: store.firestore)
-                .deleteGroup('id')
+                .deleteGroup('id', expectedVersion: 3)
           : FirestoreMemberRepository(firestore: store.firestore)
                 .deleteMember('id', expectedVersion: 3);
       store.commitError = TestException('退避書き込み失敗');

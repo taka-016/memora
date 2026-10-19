@@ -5,7 +5,13 @@ class DeleteDvcLimitedPointUsecase {
 
   final DvcLimitedPointRepository _dvcLimitedPointRepository;
 
-  Future<void> execute(String limitedPointId) async {
-    await _dvcLimitedPointRepository.deleteDvcLimitedPoint(limitedPointId);
+  Future<void> execute(
+    String limitedPointId, {
+    int? expectedContractVersion,
+  }) async {
+    await _dvcLimitedPointRepository.deleteDvcLimitedPoint(
+      limitedPointId,
+      expectedContractVersion: expectedContractVersion,
+    );
   }
 }

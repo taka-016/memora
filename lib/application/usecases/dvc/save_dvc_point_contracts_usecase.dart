@@ -11,11 +11,13 @@ class SaveDvcPointContractsUsecase {
     required String groupId,
     required List<DvcPointContractDto> contracts,
     Map<String, int> expectedVersions = const {},
+    List<DvcPointContractDto> originalContracts = const [],
   }) async {
     await _dvcPointContractRepository.saveDvcPointContracts(
       groupId,
       DvcPointContractMapper.toEntityList(contracts),
       expectedVersions: Map.unmodifiable(expectedVersions),
+      originalContracts: DvcPointContractMapper.toEntityList(originalContracts),
     );
   }
 }

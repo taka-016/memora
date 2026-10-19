@@ -2,137 +2,152 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/domain/entities/dvc/dvc_point_contract.dart';
 import 'package:memora/infrastructure/repositories/dvc/firestore_dvc_point_contract_repository.dart';
-import 'package:mockito/annotations.dart';
-import 'package:mockito/mockito.dart';
 
+import '../../../../helpers/firestore_transaction_store.dart';
 import '../../../../helpers/test_exception.dart';
-import 'firestore_dvc_point_contract_repository_test.mocks.dart';
 
-@GenerateMocks([
-  FirebaseFirestore,
-  CollectionReference,
-  DocumentReference,
-  Query,
-  QuerySnapshot,
-  QueryDocumentSnapshot,
-  WriteBatch,
-])
 void main() {
-  late MockFirebaseFirestore firestore;
-  late MockCollectionReference<Map<String, dynamic>> collection;
-  late MockWriteBatch batch;
+  late FirestoreTransactionStore store;
   late FirestoreDvcPointContractRepository repository;
   final contract = DvcPointContract(
     id: 'c1',
     groupId: 'g1',
     contractName: '契約A',
     contractStartYearMonth: DateTime(2025, 10),
-    contractEndYearMonth: DateTime(2025, 10),
+    contractEndYearMonth: DateTime(2026, 10),
     useYearStartMonth: 10,
     annualPoint: 60,
   );
-  final references = <String, MockDocumentReference<Map<String, dynamic>>>{};
-  void stubChildren(String name, {bool hasChild = false}) {
-    final childCollection = MockCollectionReference<Map<String, dynamic>>();
-    final query = MockQuery<Map<String, dynamic>>();
-    final snapshot = MockQuerySnapshot<Map<String, dynamic>>();
-    when(firestore.collection(name)).thenReturn(childCollection);
-    when(childCollection.where('contractId', isEqualTo: anyNamed('isEqualTo')))
-        .thenReturn(query);
-    when(query.limit(1)).thenReturn(query);
-    when(query.get()).thenAnswer((_) async => snapshot);
-    when(snapshot.docs).thenReturn(
-      hasChild ? [MockQueryDocumentSnapshot<Map<String, dynamic>>()] : [],
-    );
-  }
-
   setUp(() {
-    firestore = MockFirebaseFirestore();
-    collection = MockCollectionReference<Map<String, dynamic>>();
-    batch = MockWriteBatch();
-    references.clear();
-    when(firestore.collection('dvc_point_contracts')).thenReturn(collection);
-    when(collection.doc(any)).thenAnswer(
-      (call) => references.putIfAbsent(
-        call.positionalArguments.first as String? ?? 'new',
-        () => MockDocumentReference<Map<String, dynamic>>(),
-      ),
+    store = FirestoreTransactionStore();
+    repository = FirestoreDvcPointContractRepository(
+      firestore: store.firestore,
     );
-    when(firestore.batch()).thenReturn(batch);
-    when(batch.commit()).thenAnswer((_) async {});
-    final query = MockQuery<Map<String, dynamic>>();
-    final snapshot = MockQuerySnapshot<Map<String, dynamic>>();
-    final doc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
-    when(collection.where('groupId', isEqualTo: 'g1')).thenReturn(query);
-    when(query.get()).thenAnswer((_) async => snapshot);
-    when(snapshot.docs).thenReturn([doc]);
-    when(doc.id).thenReturn('c1');
-    when(doc.reference).thenAnswer((_) => collection.doc('c1'));
-    stubChildren('dvc_point_usages');
-    stubChildren('dvc_limited_points');
-    repository = FirestoreDvcPointContractRepository(firestore: firestore);
+    store.rows['groups/g1'] = {'version': 7};
   });
-
-  test('単独保存でも既存IDを指定して保存する', () async {
-    final reference = references.putIfAbsent(
-      'c1',
-      () => MockDocumentReference<Map<String, dynamic>>(),
-    );
-    when(reference.set(any, any)).thenAnswer((_) async {});
+  test('初回契約を作成しグループのバージョンは変更しない', () async {
     await repository.saveDvcPointContract(contract);
-    verify(reference.set(argThat(containsPair('contractName', '契約A')), any))
-        .called(1);
-    verifyNever(collection.add(any));
+    expect(store.rows['dvc_point_contracts/c1']!['version'], 1);
+    expect(store.rows['groups/g1']!['version'], 7);
   });
-
-  test('契約一覧の変更・追加を同じバッチで保存し既存IDを削除しない', () async {
-    await repository.saveDvcPointContracts('g1', [
-      contract,
-      contract.copyWith(id: '', contractName: '追加'),
-    ]);
-    verify(
-      batch.update(
-        references['c1']!,
-        argThat(containsPair('contractName', '契約A')),
-      ),
-    ).called(1);
-    verify(
-      batch.set(
-        references['new']!,
-        argThat(containsPair('contractName', '追加')),
-      ),
-    ).called(1);
-    verifyNever(batch.delete(any));
-    verify(batch.commit()).called(1);
+  test('契約一覧で編集・新規追加・削除を同じ処理へまとめる', () async {
+    store.rows['dvc_point_contracts/c1'] = {'groupId': 'g1', 'version': 3};
+    store.rows['dvc_point_contracts/deleted'] = {'groupId': 'g1', 'version': 5};
+    await repository.saveDvcPointContracts(
+      'g1',
+      [contract.copyWith(version: 3), contract.copyWith(id: 'new')],
+      expectedVersions: {'c1': 3, 'deleted': 5},
+    );
+    expect(store.rows['dvc_point_contracts/c1']!['version'], 4);
+    expect(store.rows['dvc_point_contracts/new']!['version'], 1);
+    expect(store.rows.keys, isNot(contains('dvc_point_contracts/deleted')));
+    expect(store.commits, 1);
   });
-
-  for (final kind in ['dvc_point_usages', 'dvc_limited_points']) {
-    test('$kindがある契約の削除は一覧保存・単独削除とも拒否する', () async {
-      stubChildren(kind, hasChild: true);
+  test('契約Aだけの編集では別端末が変更した未編集の契約Bを更新しない', () async {
+    final beforeA = contract.copyWith(version: 3);
+    final beforeB = contract.copyWith(
+      id: 'c2',
+      version: 5,
+      contractName: '契約B',
+    );
+    store.rows['dvc_point_contracts/c1'] = {'groupId': 'g1', 'version': 3};
+    store.rows['dvc_point_contracts/c2'] = {
+      'groupId': 'g1',
+      'version': 6,
+      'contractName': '別端末の契約B',
+    };
+    await repository.saveDvcPointContracts(
+      'g1',
+      [beforeA.copyWith(annualPoint: 80), beforeB],
+      originalContracts: [beforeA, beforeB],
+      expectedVersions: {'c1': 3, 'c2': 5},
+    );
+    expect(store.rows['dvc_point_contracts/c1']!['annualPoint'], 80);
+    expect(store.rows['dvc_point_contracts/c1']!['version'], 4);
+    expect(store.rows['dvc_point_contracts/c2'], {
+      'groupId': 'g1',
+      'version': 6,
+      'contractName': '別端末の契約B',
+    });
+  });
+  test('全契約が未変更ならバージョンを上げず新規追加と削除は従来どおり保存する', () async {
+    final original = contract.copyWith(version: 3);
+    store.rows['dvc_point_contracts/c1'] = {'groupId': 'g1', 'version': 3};
+    await repository.saveDvcPointContracts(
+      'g1',
+      [original],
+      originalContracts: [original],
+    );
+    expect(store.rows['dvc_point_contracts/c1']!['version'], 3);
+    store.rows['dvc_point_contracts/deleted'] = {'groupId': 'g1', 'version': 5};
+    await repository.saveDvcPointContracts(
+      'g1',
+      [original, contract.copyWith(id: 'new')],
+      originalContracts: [original],
+      expectedVersions: {'c1': 3, 'deleted': 5},
+    );
+    expect(store.rows['dvc_point_contracts/c1']!['version'], 3);
+    expect(store.rows['dvc_point_contracts/new']!['version'], 1);
+    expect(store.rows.keys, isNot(contains('dvc_point_contracts/deleted')));
+  });
+  test('保存失敗後の再試行でも編集開始時の内容から変更対象を選ぶ', () async {
+    final original = contract.copyWith(version: 3);
+    store.rows['dvc_point_contracts/c1'] = {'groupId': 'g1', 'version': 3};
+    store.commitError = TestException('保存失敗');
+    Future<void> save() => repository.saveDvcPointContracts(
+      'g1',
+      [original.copyWith(annualPoint: 80)],
+      originalContracts: [original],
+    );
+    await expectLater(save(), throwsA(isA<TestException>()));
+    expect(store.rows['dvc_point_contracts/c1']!['version'], 3);
+    store.commitError = null;
+    await save();
+    expect(store.rows['dvc_point_contracts/c1']!['version'], 4);
+    expect(store.rows['dvc_point_contracts/c1']!['annualPoint'], 80);
+  });
+  test('削除対象の期待値が古ければ一覧全体を変更しない', () async {
+    store.rows['dvc_point_contracts/deleted'] = {'groupId': 'g1', 'version': 5};
+    await expectLater(
+      repository.saveDvcPointContracts(
+        'g1',
+        [contract],
+        expectedVersions: {'deleted': 4},
+      ),
+      throwsA(
+        isA<FirebaseException>().having((e) => e.code, 'code', 'aborted'),
+      ),
+    );
+    expect(store.rows.keys, isNot(contains('dvc_point_contracts/c1')));
+    expect(store.rows.keys, contains('dvc_point_contracts/deleted'));
+  });
+  for (final collection in ['dvc_point_usages', 'dvc_limited_points']) {
+    test('$collectionがある契約の削除を拒否する', () async {
+      store.rows['dvc_point_contracts/c1'] = {'groupId': 'g1', 'version': 3};
+      store.rows['$collection/child'] = {'contractId': 'c1'};
       await expectLater(
-        repository.saveDvcPointContracts('g1', []),
+        repository.saveDvcPointContracts('g1', [], expectedVersions: {'c1': 3}),
         throwsA(isA<StateError>()),
       );
       await expectLater(
-        repository.deleteDvcPointContract('c1'),
+        repository.deleteDvcPointContract('c1', expectedVersion: 3),
         throwsA(isA<StateError>()),
       );
-      verifyNever(batch.commit());
+      expect(store.rows.keys, contains('dvc_point_contracts/c1'));
     });
   }
-
-  test('子がない契約を同一バッチで削除する', () async {
-    await repository.saveDvcPointContracts('g1', []);
-    verify(batch.delete(references['c1']!)).called(1);
-    verify(batch.commit()).called(1);
-  });
-
-  test('保存が失敗すると成功扱いにせず例外を返す', () async {
-    when(batch.commit()).thenThrow(TestException('保存失敗'));
+  test('一覧保存の途中失敗では作成も削除も反映しない', () async {
+    store.rows['dvc_point_contracts/deleted'] = {'groupId': 'g1', 'version': 5};
+    store.commitError = TestException('保存失敗');
     await expectLater(
-      repository.saveDvcPointContracts('g1', [contract]),
+      repository.saveDvcPointContracts(
+        'g1',
+        [contract],
+        expectedVersions: {'deleted': 5},
+      ),
       throwsA(isA<TestException>()),
     );
-    verify(batch.commit()).called(1);
+    expect(store.rows.keys, isNot(contains('dvc_point_contracts/c1')));
+    expect(store.rows.keys, contains('dvc_point_contracts/deleted'));
   });
 }

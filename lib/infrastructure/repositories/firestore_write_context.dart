@@ -7,6 +7,10 @@ abstract class FirestoreWriteContext {
     Query<Map<String, dynamic>> query,
   );
 
+  Future<DocumentSnapshot<Map<String, dynamic>>> getDocument(
+    DocumentReference<Map<String, dynamic>> reference,
+  );
+
   void set(
     DocumentReference<Map<String, dynamic>> documentReference,
     Map<String, dynamic> data, [
@@ -42,6 +46,11 @@ class FirestoreBatchWriteContext implements FirestoreWriteContext {
   ) {
     return query.get();
   }
+
+  @override
+  Future<DocumentSnapshot<Map<String, dynamic>>> getDocument(
+    DocumentReference<Map<String, dynamic>> reference,
+  ) => reference.get();
 
   @override
   void set(
@@ -83,6 +92,7 @@ class FirestoreTransactionWriteContext implements FirestoreWriteContext {
 
   final FirebaseFirestore _firestore;
   final Transaction _transaction;
+  final _writes = <void Function()>[];
 
   @override
   CollectionReference<Map<String, dynamic>> collection(String path) {
@@ -97,16 +107,21 @@ class FirestoreTransactionWriteContext implements FirestoreWriteContext {
   }
 
   @override
+  Future<DocumentSnapshot<Map<String, dynamic>>> getDocument(
+    DocumentReference<Map<String, dynamic>> reference,
+  ) => _transaction.get(reference);
+
+  @override
   void set(
     DocumentReference<Map<String, dynamic>> documentReference,
     Map<String, dynamic> data, [
     SetOptions? options,
   ]) {
     if (options == null) {
-      _transaction.set(documentReference, data);
+      _writes.add(() => _transaction.set(documentReference, data));
       return;
     }
-    _transaction.set(documentReference, data, options);
+    _writes.add(() => _transaction.set(documentReference, data, options));
   }
 
   @override
@@ -114,14 +129,19 @@ class FirestoreTransactionWriteContext implements FirestoreWriteContext {
     DocumentReference<Map<String, dynamic>> documentReference,
     Map<String, dynamic> data,
   ) {
-    _transaction.update(documentReference, data);
+    _writes.add(() => _transaction.update(documentReference, data));
   }
 
   @override
   void delete(DocumentReference<Map<String, dynamic>> documentReference) {
-    _transaction.delete(documentReference);
+    _writes.add(() => _transaction.delete(documentReference));
   }
 
   @override
-  Future<void> commit() async {}
+  Future<void> commit() async {
+    for (final write in _writes) {
+      write();
+    }
+    _writes.clear();
+  }
 }

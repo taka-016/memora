@@ -279,7 +279,37 @@ void main() {
       expect(usageRepository.savedUsages.single.usedPoint, 20);
     });
 
-    testWidgets('既存契約を更新すると元のIDを保存する', (tester) async {
+    testWidgets('利用登録は再取得後の再試行でもダイアログ開始時の契約バージョンを渡す', (tester) async {
+      contractQueryService.contracts[0] = contractQueryService.contracts[0]
+          .copyWith(version: 3, contractEndYearMonth: DateTime(2030, 10));
+      await tester.pumpWidget(createWidget());
+      await tester.pumpAndSettle();
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(DvcPointCalculationScreen)),
+      );
+      await tester.tap(_findAddUsageButtons().first);
+      await tester.pumpAndSettle();
+      contractQueryService.contracts[0] = contractQueryService.contracts[0]
+          .copyWith(version: 4);
+      await container
+          .read(dvcPointCalculationNotifierProvider(groupId).notifier)
+          .retryContracts();
+      await tester.pumpAndSettle();
+      usageRepository.onSave = (_) => throw TestException('競合');
+      await tester.enterText(
+        find.byKey(const Key('dvc_usage_point_field')),
+        '10',
+      );
+      await tester.tap(find.widgetWithText(TextButton, '登録'));
+      await tester.pumpAndSettle();
+      expect(find.text('ポイント利用登録'), findsOneWidget);
+      usageRepository.onSave = null;
+      await tester.tap(find.widgetWithText(TextButton, '登録'));
+      await tester.pumpAndSettle();
+      expect(usageRepository.expectedContractVersions, [3, 3]);
+    });
+
+    testWidgets('既存契約の更新で元のIDと編集開始時の比較元を保存要求へ渡す', (tester) async {
       await tester.pumpWidget(createWidget());
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('dvc_action_menu_button')));
@@ -289,6 +319,8 @@ void main() {
       await tester.tap(find.widgetWithText(TextButton, '更新'));
       await tester.pumpAndSettle();
       expect(contractRepository.savedContracts.single.id, 'c1');
+      expect(contractRepository.originalContracts.single.id, 'c1');
+      expect(contractRepository.originalContracts.single.annualPoint, 100);
     });
 
     testWidgets('利用履歴がある契約の削除ボタンは無効になる', (tester) async {
@@ -954,11 +986,14 @@ class _FakeDvcPointContractRepository implements DvcPointContractRepository {
     String groupId,
     List<DvcPointContract> contracts, {
     Map<String, int> expectedVersions = const {},
+    List<DvcPointContract> originalContracts = const [],
   }) async {
     savedContracts.addAll(contracts);
+    this.originalContracts.addAll(originalContracts);
   }
 
   final List<DvcPointContract> savedContracts = [];
+  final List<DvcPointContract> originalContracts = [];
   final List<String> deletedContractIds = [];
   final List<String> deletedGroupIds = [];
 
@@ -987,7 +1022,10 @@ class _FakeDvcLimitedPointRepository implements DvcLimitedPointRepository {
   final List<String> deletedGroupIds = [];
 
   @override
-  Future<void> deleteDvcLimitedPoint(String limitedPointId) async {
+  Future<void> deleteDvcLimitedPoint(
+    String limitedPointId, {
+    int? expectedContractVersion,
+  }) async {
     deletedLimitedPointIds.add(limitedPointId);
   }
 
@@ -997,7 +1035,10 @@ class _FakeDvcLimitedPointRepository implements DvcLimitedPointRepository {
   }
 
   @override
-  Future<void> saveDvcLimitedPoint(DvcLimitedPoint limitedPoint) async {
+  Future<void> saveDvcLimitedPoint(
+    DvcLimitedPoint limitedPoint, {
+    int? expectedContractVersion,
+  }) async {
     savedLimitedPoints.add(limitedPoint);
   }
 }
@@ -1006,13 +1047,17 @@ class _FakeDvcPointUsageRepository implements DvcPointUsageRepository {
   _FakeDvcPointUsageRepository({this.onSave, this.onDelete});
 
   final List<DvcPointUsage> savedUsages = [];
+  final List<int?> expectedContractVersions = [];
   final List<String> deletedUsageIds = [];
   final List<String> deletedGroupIds = [];
   void Function(DvcPointUsage pointUsage)? onSave;
   final Future<void> Function(String pointUsageId)? onDelete;
 
   @override
-  Future<void> deleteDvcPointUsage(String pointUsageId) async {
+  Future<void> deleteDvcPointUsage(
+    String pointUsageId, {
+    int? expectedContractVersion,
+  }) async {
     deletedUsageIds.add(pointUsageId);
     await onDelete?.call(pointUsageId);
   }
@@ -1023,8 +1068,12 @@ class _FakeDvcPointUsageRepository implements DvcPointUsageRepository {
   }
 
   @override
-  Future<void> saveDvcPointUsage(DvcPointUsage pointUsage) async {
+  Future<void> saveDvcPointUsage(
+    DvcPointUsage pointUsage, {
+    int? expectedContractVersion,
+  }) async {
     savedUsages.add(pointUsage);
+    expectedContractVersions.add(expectedContractVersion);
     onSave?.call(pointUsage);
   }
 }

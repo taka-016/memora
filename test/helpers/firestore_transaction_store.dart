@@ -13,6 +13,37 @@ class FirestoreTransactionStore {
   final reads = <String>[];
 
   FirestoreTransactionStore() {
+    when(firestore.batch()).thenAnswer((_) {
+      final batch = MockWriteBatch();
+      final pending = <void Function()>[];
+      when(batch.set(any, any)).thenAnswer((call) {
+        final path = (call.positionalArguments[0] as DocumentReference).path;
+        final data = Map<String, dynamic>.from(
+          call.positionalArguments[1] as Map,
+        );
+        pending.add(() => rows[path] = data);
+      });
+      when(batch.update(any, any)).thenAnswer((call) {
+        final path = (call.positionalArguments[0] as DocumentReference).path;
+        final data = Map<String, dynamic>.from(
+          call.positionalArguments[1] as Map,
+        );
+        pending.add(() => rows[path]!.addAll(data));
+      });
+      when(batch.delete(any)).thenAnswer((call) {
+        final path = (call.positionalArguments[0] as DocumentReference).path;
+        pending.add(() => rows.remove(path));
+      });
+      when(batch.commit()).thenAnswer((_) async {
+        await beforeCommit?.call();
+        if (commitError case final error?) throw error;
+        for (final write in pending) {
+          write();
+        }
+        commits++;
+      });
+      return batch;
+    });
     when(firestore.collection(any)).thenAnswer((call) {
       final name = call.positionalArguments.single as String;
       final collection = MockCollectionReference();
@@ -92,6 +123,7 @@ class FirestoreTransactionStore {
 
   MockQuery query(String collection, Map<String, dynamic> filters) {
     final query = MockQuery();
+    when(query.limit(any)).thenReturn(query);
     when(query.where(any, isEqualTo: anyNamed('isEqualTo'))).thenAnswer(
       (call) => this.query(collection, {
         ...filters,

@@ -40,6 +40,7 @@ class FirestoreMemberRepository implements MemberRepository {
       );
       FirestoreDeletedParentStore(context).saveMember(memberId, data!);
       context.delete(source);
+      await context.commit();
     });
   }
 }

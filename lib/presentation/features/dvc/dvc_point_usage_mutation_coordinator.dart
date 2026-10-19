@@ -6,13 +6,21 @@ import 'package:memora/presentation/features/timeline/timeline_dvc_point_usages_
 final dvcPointUsageMutationCoordinatorProvider =
     Provider<DvcPointUsageMutationCoordinator>((ref) {
       return DvcPointUsageMutationCoordinator._(
-        saveDvcPointUsage: (pointUsage) {
-          return ref.read(saveDvcPointUsageUsecaseProvider).execute(pointUsage);
+        saveDvcPointUsage: (pointUsage, {expectedContractVersion}) {
+          return ref
+              .read(saveDvcPointUsageUsecaseProvider)
+              .execute(
+                pointUsage,
+                expectedContractVersion: expectedContractVersion,
+              );
         },
-        deleteDvcPointUsage: (pointUsageId) {
+        deleteDvcPointUsage: (pointUsageId, {expectedContractVersion}) {
           return ref
               .read(deleteDvcPointUsageUsecaseProvider)
-              .execute(pointUsageId);
+              .execute(
+                pointUsageId,
+                expectedContractVersion: expectedContractVersion,
+              );
         },
         onDvcPointUsagesChanged: () {
           ref.invalidate(timelineDvcPointUsagesByYearProvider);
@@ -27,17 +35,31 @@ class DvcPointUsageMutationCoordinator {
     required this._onDvcPointUsagesChanged,
   });
 
-  final Future<void> Function(DvcPointUsageDto) _saveDvcPointUsage;
-  final Future<void> Function(String) _deleteDvcPointUsage;
+  final Future<void> Function(DvcPointUsageDto, {int? expectedContractVersion})
+  _saveDvcPointUsage;
+  final Future<void> Function(String, {int? expectedContractVersion})
+  _deleteDvcPointUsage;
   final void Function() _onDvcPointUsagesChanged;
 
-  Future<void> saveDvcPointUsage(DvcPointUsageDto pointUsage) async {
-    await _saveDvcPointUsage(pointUsage);
+  Future<void> saveDvcPointUsage(
+    DvcPointUsageDto pointUsage, {
+    int? expectedContractVersion,
+  }) async {
+    await _saveDvcPointUsage(
+      pointUsage,
+      expectedContractVersion: expectedContractVersion,
+    );
     _onDvcPointUsagesChanged();
   }
 
-  Future<void> deleteDvcPointUsage(String pointUsageId) async {
-    await _deleteDvcPointUsage(pointUsageId);
+  Future<void> deleteDvcPointUsage(
+    String pointUsageId, {
+    int? expectedContractVersion,
+  }) async {
+    await _deleteDvcPointUsage(
+      pointUsageId,
+      expectedContractVersion: expectedContractVersion,
+    );
     _onDvcPointUsagesChanged();
   }
 }

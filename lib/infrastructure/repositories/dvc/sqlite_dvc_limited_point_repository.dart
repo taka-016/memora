@@ -8,13 +8,18 @@ class SqliteDvcLimitedPointRepository implements DvcLimitedPointRepository {
   SqliteDvcLimitedPointRepository(this.db);
   final OfflineDatabase db;
   @override
-  Future<void> saveDvcLimitedPoint(DvcLimitedPoint value) async => db.insertRow(
+  Future<void> saveDvcLimitedPoint(
+    DvcLimitedPoint value, {
+    int? expectedContractVersion,
+  }) async => db.insertRow(
     'dvc_limited_points',
     SqliteDvcLimitedPointMapper.toRow(value.copyWith(id: const Uuid().v4())),
   );
   @override
-  Future<void> deleteDvcLimitedPoint(String id) async =>
-      db.deleteRows('dvc_limited_points', 'id', id);
+  Future<void> deleteDvcLimitedPoint(
+    String id, {
+    int? expectedContractVersion,
+  }) async => db.deleteRows('dvc_limited_points', 'id', id);
   @override
   Future<void> deleteDvcLimitedPointsByGroupId(String groupId) async =>
       db.deleteRows('dvc_limited_points', 'group_id', groupId);
