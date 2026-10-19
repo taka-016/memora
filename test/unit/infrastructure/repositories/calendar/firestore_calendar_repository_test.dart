@@ -157,8 +157,8 @@ void main() {
   });
   tearDown(() => container.dispose());
 
-  CalendarEvent event({String id = ''}) => CalendarEvent(
-    version: 1,
+  CalendarEvent event({String id = '', int? version = 1}) => CalendarEvent(
+    version: version,
     id: id,
     groupId: 'group',
     labelId: 'label',
@@ -755,7 +755,7 @@ void main() {
       'ラベル削除',
     ]) {
       test('$operation は期待バージョン$version の競合で一切書き込まない', () async {
-        final value = event(id: 'event').copyWith(version: version);
+        final value = event(id: 'event', version: version);
         final action = switch (operation) {
           '更新' => events.updateCalendarEvent(value),
           '個別回' => events.updateCalendarEvent(
