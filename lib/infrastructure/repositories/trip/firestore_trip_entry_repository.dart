@@ -84,7 +84,9 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
   @override
   Future<void> deleteTripEntry(String tripId, {int? expectedVersion}) async {
     await _runDelete((context) async {
-      final parent = await context.getDocument(context.collection('trip_entries').doc(tripId));
+      final parent = await context.getDocument(
+        context.collection('trip_entries').doc(tripId),
+      );
       FirestoreVersionCheck.requireMatch(parent.data(), expectedVersion);
       final locationsSnapshot = await context.get(
         context.collection('locations').where('tripId', isEqualTo: tripId),
@@ -115,10 +117,18 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
 
   @override
   Future<void> deleteTripEntriesByGroupId(String groupId) async {
-    await _runWrite((context) async {
-      final tripEntriesSnapshot = await context.get(
-        context.collection('trip_entries').where('groupId', isEqualTo: groupId),
-      );
+    final tripEntriesSnapshot = await _firestore
+        .collection('trip_entries')
+        .where('groupId', isEqualTo: groupId)
+        .get();
+    await _runDelete((context) async {
+      for (final trip in tripEntriesSnapshot.docs) {
+        final current = await context.getDocument(trip.reference);
+        FirestoreVersionCheck.requireMatch(
+          current.data(),
+          trip.data()['version'] as int?,
+        );
+      }
       for (final tripEntryDoc in tripEntriesSnapshot.docs) {
         final locationsSnapshot = await context.get(
           context
@@ -157,10 +167,12 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
       return;
     }
     await _firestore.runTransaction<void>((transaction) async {
-      await action(FirestoreTransactionWriteContext(
+      final context = FirestoreTransactionWriteContext(
         firestore: _firestore,
         transaction: transaction,
-      ));
+      );
+      await action(context);
+      await context.commit();
     });
   }
 

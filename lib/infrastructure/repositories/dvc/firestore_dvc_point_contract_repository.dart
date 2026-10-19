@@ -13,15 +13,22 @@ class FirestoreDvcPointContractRepository
 
   @override
   Future<void> saveDvcPointContract(DvcPointContract contract) async {
-    await _firestore
+    final reference = _firestore
         .collection('dvc_point_contracts')
-        .doc(contract.id.isEmpty ? null : contract.id)
-        .set(
-          (contract.version == null
-              ? FirestoreDvcPointContractMapper.toCreateFirestore(contract)
-              : FirestoreDvcPointContractMapper.toUpdateFirestore(contract)),
-          SetOptions(merge: true),
-        );
+        .doc(contract.id.isEmpty ? null : contract.id);
+    final batch = _firestore.batch();
+    if (contract.version == null) {
+      batch.set(
+        reference,
+        FirestoreDvcPointContractMapper.toCreateFirestore(contract),
+      );
+    } else {
+      batch.update(
+        reference,
+        FirestoreDvcPointContractMapper.toUpdateFirestore(contract),
+      );
+    }
+    await batch.commit();
   }
 
   @override
@@ -34,7 +41,6 @@ class FirestoreDvcPointContractRepository
     final existing = await collection
         .where('groupId', isEqualTo: groupId)
         .get();
-    final existingIds = existing.docs.map((v) => v.id).toSet();
     final retainedIds = contracts.map((v) => v.id).toSet();
     final deleted = existing.docs
         .where((v) => !retainedIds.contains(v.id))
@@ -42,24 +48,34 @@ class FirestoreDvcPointContractRepository
     for (final doc in deleted) {
       await _ensureDeletable(doc.id);
     }
-    final batch = _firestore.batch();
-    for (final doc in deleted) {
-      batch.delete(doc.reference);
-    }
-    for (final contract in contracts) {
-      if (existingIds.contains(contract.id)) {
-        final data = FirestoreDvcPointContractMapper.toUpdateFirestore(
-          contract,
-        );
-        batch.update(collection.doc(contract.id), data);
-      } else {
-        batch.set(
-          collection.doc(contract.id.isEmpty ? null : contract.id),
-          FirestoreDvcPointContractMapper.toCreateFirestore(contract),
+    await _firestore.runTransaction<void>((transaction) async {
+      for (final doc in deleted) {
+        final current = await transaction.get(doc.reference);
+        FirestoreVersionCheck.requireMatch(
+          current.data(),
+          expectedVersions[doc.id],
         );
       }
-    }
-    await batch.commit();
+      for (final doc in deleted) {
+        transaction.delete(doc.reference);
+      }
+      for (final contract in contracts) {
+        final reference = collection.doc(
+          contract.id.isEmpty ? null : contract.id,
+        );
+        if (contract.version == null) {
+          transaction.set(
+            reference,
+            FirestoreDvcPointContractMapper.toCreateFirestore(contract),
+          );
+        } else {
+          transaction.update(
+            reference,
+            FirestoreDvcPointContractMapper.toUpdateFirestore(contract),
+          );
+        }
+      }
+    });
   }
 
   Future<void> _ensureDeletable(String contractId) async {
@@ -89,6 +105,17 @@ class FirestoreDvcPointContractRepository
   }
 
   @override
-  Future<void> deleteDvcPointContractsByGroupId(String groupId) =>
-      saveDvcPointContracts(groupId, []);
+  Future<void> deleteDvcPointContractsByGroupId(String groupId) async {
+    final snapshot = await _firestore
+        .collection('dvc_point_contracts')
+        .where('groupId', isEqualTo: groupId)
+        .get();
+    await saveDvcPointContracts(
+      groupId,
+      [],
+      expectedVersions: {
+        for (final doc in snapshot.docs) doc.id: doc.data()['version'] as int,
+      },
+    );
+  }
 }

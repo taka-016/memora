@@ -112,6 +112,11 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
       );
     }
 
+    int? contractVersion(String contractId) => state.contracts
+        .where((contract) => contract.id == contractId)
+        .firstOrNull
+        ?.version;
+
     Future<bool> saveLimitedPoint({
       required String contractId,
       required DateTime startYearMonth,
@@ -128,7 +133,12 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
         point: point,
         memo: memo.isEmpty ? null : memo,
       );
-      return runOperationWithFeedback(notifier.saveLimitedPoint(limitedPoint));
+      return runOperationWithFeedback(
+        notifier.saveLimitedPoint(
+          limitedPoint,
+          expectedContractVersion: contractVersion(contractId),
+        ),
+      );
     }
 
     Future<bool> saveUsage({
@@ -145,17 +155,38 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
         usedPoint: usedPoint,
         memo: memo.isEmpty ? null : memo,
       );
-      return runOperationWithFeedback(notifier.savePointUsage(usage));
+      return runOperationWithFeedback(
+        notifier.savePointUsage(
+          usage,
+          expectedContractVersion: contractVersion(contractId),
+        ),
+      );
     }
 
     Future<bool> deleteLimitedPoint(String limitedPointId) {
       return runOperationWithFeedback(
-        notifier.deleteLimitedPoint(limitedPointId),
+        notifier.deleteLimitedPoint(
+          limitedPointId,
+          expectedContractVersion: contractVersion(
+            state.limitedPoints
+                .firstWhere((point) => point.id == limitedPointId)
+                .contractId,
+          ),
+        ),
       );
     }
 
     Future<bool> deleteUsage(String pointUsageId) {
-      return runOperationWithFeedback(notifier.deletePointUsage(pointUsageId));
+      return runOperationWithFeedback(
+        notifier.deletePointUsage(
+          pointUsageId,
+          expectedContractVersion: contractVersion(
+            state.pointUsages
+                .firstWhere((usage) => usage.id == pointUsageId)
+                .contractId,
+          ),
+        ),
+      );
     }
 
     Widget buildHeader() {

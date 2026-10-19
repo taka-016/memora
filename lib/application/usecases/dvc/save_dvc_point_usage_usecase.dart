@@ -7,9 +7,13 @@ class SaveDvcPointUsageUsecase {
 
   final DvcPointUsageRepository _dvcPointUsageRepository;
 
-  Future<void> execute(DvcPointUsageDto usage) async {
+  Future<void> execute(
+    DvcPointUsageDto usage, {
+    int? expectedContractVersion,
+  }) async {
     await _dvcPointUsageRepository.saveDvcPointUsage(
       DvcPointUsageMapper.toEntity(usage),
+      expectedContractVersion: expectedContractVersion,
     );
   }
 }

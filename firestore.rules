@@ -26,6 +26,66 @@ service cloud.firestore {
                             'calendar_labels'];
     }
 
+    function parentAdvanced(parentCollection, parentId) {
+      let path = /databases/$(database)/documents/$(parentCollection)/$(parentId);
+      let after = getAfter(path).data;
+      return after.version is int
+             && ((!exists(path) && after.version == 1)
+                 || (get(path).data.version is int
+                     && get(path).data.version >= 1
+                     && after.version == get(path).data.version + 1));
+    }
+
+    function parentDeleted(parentCollection, parentId) {
+      let path = /databases/$(database)/documents/$(parentCollection)/$(parentId);
+      return exists(path) && !existsAfter(path);
+    }
+
+    function aggregateChild(parentCollection, key) {
+      return isVerifiedUser()
+             && request.resource.data[key] is string
+             && parentAdvanced(parentCollection, request.resource.data[key]);
+    }
+
+    function aggregateChildDelete(parentCollection, key) {
+      return isVerifiedUser()
+             && (parentDeleted(parentCollection, resource.data[key])
+                 || parentAdvanced(parentCollection, resource.data[key]));
+    }
+
+    match /{collection}/{document} {
+      allow read: if isVerifiedUser()
+                     && collection in ['locations', 'tasks', 'itinerary_items',
+                                       'group_members', 'dvc_limited_points', 'dvc_point_usages'];
+    }
+
+    match /{collection}/{document} {
+      allow create: if collection in ['locations', 'tasks', 'itinerary_items']
+                       && aggregateChild('trip_entries', 'tripId');
+      allow update: if collection in ['locations', 'tasks', 'itinerary_items']
+                       && request.resource.data.tripId == resource.data.tripId
+                       && aggregateChild('trip_entries', 'tripId');
+      allow delete: if collection in ['locations', 'tasks', 'itinerary_items']
+                       && aggregateChildDelete('trip_entries', 'tripId');
+    }
+
+    match /group_members/{document} {
+      allow create: if aggregateChild('groups', 'groupId');
+      allow update: if request.resource.data.groupId == resource.data.groupId
+                       && aggregateChild('groups', 'groupId');
+      allow delete: if aggregateChildDelete('groups', 'groupId');
+    }
+
+    match /{collection}/{document} {
+      allow create: if collection in ['dvc_limited_points', 'dvc_point_usages']
+                       && aggregateChild('dvc_point_contracts', 'contractId');
+      allow update: if collection in ['dvc_limited_points', 'dvc_point_usages']
+                       && request.resource.data.contractId == resource.data.contractId
+                       && aggregateChild('dvc_point_contracts', 'contractId');
+      allow delete: if collection in ['dvc_limited_points', 'dvc_point_usages']
+                       && aggregateChildDelete('dvc_point_contracts', 'contractId');
+    }
+
     match /{collection}/{document} {
       allow read, delete: if isVerifiedUser()
                             && isVersionedCollection(collection);
@@ -48,9 +108,7 @@ service cloud.firestore {
     match /{collection}/{document} {
       allow read, write: if isVerifiedUser()
                            && collection in ['deleted_groups', 'deleted_members',
-                                             'locations', 'tasks', 'itinerary_items',
-                                             'group_members', 'calendar_event_overrides',
-                                             'dvc_limited_points', 'dvc_point_usages'];
+                                             'calendar_event_overrides'];
     }
   }
 }

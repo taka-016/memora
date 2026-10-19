@@ -86,42 +86,87 @@ class DvcPointCalculationNotifier extends Notifier<DvcPointCalculationState> {
     );
   }
 
-  Future<bool> saveLimitedPoint(DvcLimitedPointDto limitedPoint) {
+  Future<bool> saveLimitedPoint(
+    DvcLimitedPointDto limitedPoint, {
+    int? expectedContractVersion,
+  }) {
     return _runMutation(
       operationName: 'saveLimitedPoint',
-      execute: () =>
-          ref.read(saveDvcLimitedPointUsecaseProvider).execute(limitedPoint),
-      reload: _loadLimitedPoints,
+      execute: () => ref
+          .read(saveDvcLimitedPointUsecaseProvider)
+          .execute(
+            limitedPoint,
+            expectedContractVersion: expectedContractVersion,
+          ),
+      reload: ({required isInitialLoad}) async {
+        await Future.wait([
+          _loadContracts(isInitialLoad: isInitialLoad),
+          _loadLimitedPoints(isInitialLoad: isInitialLoad),
+        ]);
+      },
     );
   }
 
-  Future<bool> deleteLimitedPoint(String limitedPointId) {
+  Future<bool> deleteLimitedPoint(
+    String limitedPointId, {
+    int? expectedContractVersion,
+  }) {
     return _runMutation(
       operationName: 'deleteLimitedPoint',
       execute: () => ref
           .read(deleteDvcLimitedPointUsecaseProvider)
-          .execute(limitedPointId),
-      reload: _loadLimitedPoints,
+          .execute(
+            limitedPointId,
+            expectedContractVersion: expectedContractVersion,
+          ),
+      reload: ({required isInitialLoad}) async {
+        await Future.wait([
+          _loadContracts(isInitialLoad: isInitialLoad),
+          _loadLimitedPoints(isInitialLoad: isInitialLoad),
+        ]);
+      },
     );
   }
 
-  Future<bool> savePointUsage(DvcPointUsageDto pointUsage) {
+  Future<bool> savePointUsage(
+    DvcPointUsageDto pointUsage, {
+    int? expectedContractVersion,
+  }) {
     return _runMutation(
       operationName: 'savePointUsage',
       execute: () => ref
           .read(dvcPointUsageMutationCoordinatorProvider)
-          .saveDvcPointUsage(pointUsage),
-      reload: _loadPointUsages,
+          .saveDvcPointUsage(
+            pointUsage,
+            expectedContractVersion: expectedContractVersion,
+          ),
+      reload: ({required isInitialLoad}) async {
+        await Future.wait([
+          _loadContracts(isInitialLoad: isInitialLoad),
+          _loadPointUsages(isInitialLoad: isInitialLoad),
+        ]);
+      },
     );
   }
 
-  Future<bool> deletePointUsage(String pointUsageId) {
+  Future<bool> deletePointUsage(
+    String pointUsageId, {
+    int? expectedContractVersion,
+  }) {
     return _runMutation(
       operationName: 'deletePointUsage',
       execute: () => ref
           .read(dvcPointUsageMutationCoordinatorProvider)
-          .deleteDvcPointUsage(pointUsageId),
-      reload: _loadPointUsages,
+          .deleteDvcPointUsage(
+            pointUsageId,
+            expectedContractVersion: expectedContractVersion,
+          ),
+      reload: ({required isInitialLoad}) async {
+        await Future.wait([
+          _loadContracts(isInitialLoad: isInitialLoad),
+          _loadPointUsages(isInitialLoad: isInitialLoad),
+        ]);
+      },
     );
   }
 

@@ -21,7 +21,9 @@ class FirestoreWriteTransaction implements WriteTransaction {
         firestore: _firestore,
         writeContext: writeContext,
       );
-      return action(scope);
+      final result = await action(scope);
+      await writeContext.commit();
+      return result;
     });
   }
 }

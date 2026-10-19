@@ -94,6 +94,7 @@ class FirestoreGroupRepository implements GroupRepository {
       );
       FirestoreDeletedParentStore(context).saveGroup(groupId, data!);
       context.delete(source);
+      await context.commit();
     });
   }
 
