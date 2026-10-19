@@ -30,6 +30,7 @@ const cases = [
   ['trip_entries', 'tasks', 'tripId'],
   ['trip_entries', 'itinerary_items', 'tripId'],
   ['groups', 'group_members', 'groupId'],
+  ['calendar_events', 'calendar_event_overrides', 'eventId'],
   ['dvc_point_contracts', 'dvc_point_usages', 'contractId'],
   ['dvc_point_contracts', 'dvc_limited_points', 'contractId'],
 ];
