@@ -309,7 +309,7 @@ void main() {
       expect(usageRepository.expectedContractVersions, [3, 3]);
     });
 
-    testWidgets('既存契約を更新すると元のIDを保存する', (tester) async {
+    testWidgets('既存契約の更新で元のIDと編集開始時の比較元を保存要求へ渡す', (tester) async {
       await tester.pumpWidget(createWidget());
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('dvc_action_menu_button')));
@@ -319,6 +319,8 @@ void main() {
       await tester.tap(find.widgetWithText(TextButton, '更新'));
       await tester.pumpAndSettle();
       expect(contractRepository.savedContracts.single.id, 'c1');
+      expect(contractRepository.originalContracts.single.id, 'c1');
+      expect(contractRepository.originalContracts.single.annualPoint, 100);
     });
 
     testWidgets('利用履歴がある契約の削除ボタンは無効になる', (tester) async {
@@ -984,11 +986,14 @@ class _FakeDvcPointContractRepository implements DvcPointContractRepository {
     String groupId,
     List<DvcPointContract> contracts, {
     Map<String, int> expectedVersions = const {},
+    List<DvcPointContract> originalContracts = const [],
   }) async {
     savedContracts.addAll(contracts);
+    this.originalContracts.addAll(originalContracts);
   }
 
   final List<DvcPointContract> savedContracts = [];
+  final List<DvcPointContract> originalContracts = [];
   final List<String> deletedContractIds = [];
   final List<String> deletedGroupIds = [];
 
