@@ -1,3 +1,4 @@
+import 'package:memora/infrastructure/services/firestore_version_check.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/domain/entities/calendar/calendar_label.dart';
 import 'package:memora/domain/exceptions/validation_exception.dart';
@@ -25,6 +26,7 @@ class FirestoreCalendarLabelRepository implements CalendarLabelRepository {
       if (!existing.exists || existing.data()!['groupId'] != label.groupId) {
         throw ValidationException('更新する色ラベルのグループは変更できません');
       }
+      FirestoreVersionCheck.requireMatch(existing.data(), label.version);
       transaction.update(
         ref,
         FirestoreCalendarLabelMapper.toUpdateFirestore(label),
@@ -43,11 +45,15 @@ class FirestoreCalendarLabelRepository implements CalendarLabelRepository {
         .map((id) => _firestore.collection('calendar_labels').doc(id))
         .toList();
     await _firestore.runTransaction<void>((transaction) async {
-      for (final ref in refs) {
-        final existing = await transaction.get(ref);
+      for (var index = 0; index < refs.length; index++) {
+        final existing = await transaction.get(refs[index]);
         if (!existing.exists || existing.data()!['groupId'] != groupId) {
           throw ValidationException('同じグループの色ラベルを指定してください');
         }
+        FirestoreVersionCheck.requireMatch(
+          existing.data(),
+          expectedVersions[labelIds[index]],
+        );
       }
       for (var index = 0; index < refs.length; index++) {
         transaction.update(refs[index], <String, dynamic>{
@@ -69,7 +75,7 @@ class FirestoreCalendarLabelRepository implements CalendarLabelRepository {
     final ref = _firestore.collection('calendar_labels').doc(labelId);
     await _firestore.runTransaction<void>((transaction) async {
       final existing = await transaction.get(ref);
-      if (!existing.exists) return;
+      FirestoreVersionCheck.requireMatch(existing.data(), expectedVersion);
       if (existing.data()!['eventCount'] != 0) {
         throw ValidationException('使用中の色ラベルは削除できません');
       }

@@ -56,7 +56,8 @@ service cloud.firestore {
     match /{collection}/{document} {
       allow read: if isVerifiedUser()
                      && collection in ['locations', 'tasks', 'itinerary_items',
-                                       'group_members', 'dvc_limited_points', 'dvc_point_usages'];
+                                       'group_members', 'dvc_limited_points', 'dvc_point_usages',
+                                       'calendar_event_overrides'];
     }
 
     match /{collection}/{document} {
@@ -67,6 +68,13 @@ service cloud.firestore {
                        && aggregateChild('trip_entries', 'tripId');
       allow delete: if collection in ['locations', 'tasks', 'itinerary_items']
                        && aggregateChildDelete('trip_entries', 'tripId');
+    }
+
+    match /calendar_event_overrides/{document} {
+      allow create: if aggregateChild('calendar_events', 'eventId');
+      allow update: if request.resource.data.eventId == resource.data.eventId
+                       && aggregateChild('calendar_events', 'eventId');
+      allow delete: if aggregateChildDelete('calendar_events', 'eventId');
     }
 
     match /group_members/{document} {
@@ -107,8 +115,7 @@ service cloud.firestore {
 
     match /{collection}/{document} {
       allow read, write: if isVerifiedUser()
-                           && collection in ['deleted_groups', 'deleted_members',
-                                             'calendar_event_overrides'];
+                           && collection in ['deleted_groups', 'deleted_members'];
     }
   }
 }
