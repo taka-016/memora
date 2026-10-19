@@ -560,6 +560,7 @@ void main() {
         verify(transaction.update(eventRef, captureAny)).captured.single
             as Map<String, dynamic>;
     expect(data['overrideIds'], isEmpty);
+    expect(data['version'], 2);
     await events.deleteCalendarEvent('event', expectedVersion: 1);
     verify(transaction.delete(overrideRefs['stored']!)).called(1);
     verify(transaction.delete(eventRef)).called(1);
@@ -643,6 +644,7 @@ void main() {
         verify(transaction.set(eventRef, captureAny)).captured.single
             as Map<String, dynamic>;
     expect(data['title'], '旅行');
+    expect(data['version'], 1);
     expect(
       (data['startDateTime'] as Timestamp).toDate().microsecondsSinceEpoch,
       event().startDateTime.microsecondsSinceEpoch,
@@ -650,10 +652,17 @@ void main() {
   });
 
   test('並び替えは全ラベルのグループを確認して取得時の期待値と順序を一括更新する', () async {
+    when(labelDoc.data())
+        .thenReturn({'groupId': 'group', 'eventCount': 1, 'version': 4});
+    final otherDoc = MockDocumentSnapshot();
+    when(otherDoc.exists).thenReturn(true);
+    when(otherDoc.data())
+        .thenReturn({'groupId': 'group', 'eventCount': 1, 'version': 7});
+    when(transaction.get(otherRef)).thenAnswer((_) async => otherDoc);
     await labels.reorderCalendarLabels(
       'group',
       ['other', 'label'],
-      expectedVersions: {'other': 1, 'label': 1},
+      expectedVersions: {'other': 7, 'label': 4},
     );
     final first =
         verify(transaction.update(otherRef, captureAny)).captured.single
@@ -662,8 +671,8 @@ void main() {
         verify(transaction.update(labelRef, captureAny)).captured.single
             as Map<String, dynamic>;
     expect(first['sortOrder'], 0);
-    expect(first['version'], 2);
-    expect(last['version'], 2);
+    expect(first['version'], 8);
+    expect(last['version'], 5);
     expect(last['sortOrder'], 1);
     expect(first.keys.toSet(), {'sortOrder', 'version', 'updatedAt'});
     expect(last.keys.toSet(), {'sortOrder', 'version', 'updatedAt'});
@@ -739,6 +748,7 @@ void main() {
     expect(data['name'], '全員');
     expect(data['color'], '#FFFFFF');
     expect(data.containsKey('eventCount'), isFalse);
+    expect(data['version'], 2);
   });
 
   final conflict = throwsA(
@@ -779,10 +789,7 @@ void main() {
           '並べ替え' => labels.reorderCalendarLabels(
             'group',
             ['label', 'other'],
-            expectedVersions: {
-              'label': 1,
-              if (version != null) 'other': version,
-            },
+            expectedVersions: {'label': 1, 'other': ?version},
           ),
           _ => labels.deleteCalendarLabel('label', expectedVersion: version),
         };
@@ -820,5 +827,41 @@ void main() {
       conflict,
     );
     verifyNever(transaction.delete(any));
+  });
+
+  test('ラベルの作成はバージョン1と参照数0で保存する', () async {
+    final collection =
+        firestore.collection('calendar_labels') as MockCollectionReference;
+    when(collection.add(any)).thenAnswer((_) async => labelRef);
+    when(labelRef.id).thenReturn('label');
+    final id = await labels.saveCalendarLabel(
+      CalendarLabel(id: '', groupId: 'group', name: '新規', color: '#FFFFFF'),
+    );
+    expect(id, 'label');
+    final data =
+        verify(collection.add(captureAny)).captured.single
+            as Map<String, dynamic>;
+    expect(data['version'], 1);
+    expect(data['eventCount'], 0);
+  });
+
+  test('内部の参照数更新はラベルの編集バージョンを変更しない', () async {
+    await events.updateCalendarEvent(
+      event(id: 'event').copyWith(labelId: 'other'),
+    );
+    final writes = verify(transaction.update(any, captureAny)).captured
+        .whereType<Map>();
+    final counts = writes
+        .where((data) => data.containsKey('eventCount'))
+        .toList();
+    expect(counts, hasLength(2));
+    expect(counts.every((data) => data.keys.length == 1), isTrue);
+  });
+
+  test('未使用ラベルの削除は取得した期待値が一致する場合に成功する', () async {
+    when(labelDoc.data())
+        .thenReturn({'groupId': 'group', 'eventCount': 0, 'version': 4});
+    await labels.deleteCalendarLabel('label', expectedVersion: 4);
+    verify(transaction.delete(labelRef)).called(1);
   });
 }
