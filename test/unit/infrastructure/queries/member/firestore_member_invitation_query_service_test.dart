@@ -92,14 +92,15 @@ void main() {
       expect(result, isNull);
     });
 
-    test('inviteeId取得時に例外が発生した場合はnullを返す', () async {
+    test('inviteeId取得時に例外が発生した場合は取得失敗を伝える', () async {
       when(
         mockInvitationCollection.where(any, isEqualTo: anyNamed('isEqualTo')),
       ).thenThrow(TestException('Firestore error'));
 
-      final result = await service.getByInviteeId('invitee001');
-
-      expect(result, isNull);
+      await expectLater(
+        service.getByInviteeId('invitee001'),
+        throwsA(isA<TestException>()),
+      );
     });
 
     test('招待コードで招待情報を取得する', () async {
@@ -148,14 +149,15 @@ void main() {
       expect(result, isNull);
     });
 
-    test('招待コード取得時に例外が発生した場合はnullを返す', () async {
+    test('招待コード取得時に例外が発生した場合は取得失敗を伝える', () async {
       when(
         mockInvitationCollection.where(any, isEqualTo: anyNamed('isEqualTo')),
       ).thenThrow(TestException('Firestore error'));
 
-      final result = await service.getByInvitationCode('CODE123');
-
-      expect(result, isNull);
+      await expectLater(
+        service.getByInvitationCode('CODE123'),
+        throwsA(isA<TestException>()),
+      );
     });
   });
 }

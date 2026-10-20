@@ -54,13 +54,14 @@ void main() {
           .called(1);
     });
 
-    test('メンバー一覧取得で例外が発生した場合は空リストを返す', () async {
+    test('メンバー一覧取得で例外が発生した場合は取得失敗を伝える', () async {
       when(mockMembersCollection.get())
           .thenThrow(TestException('Firestore error'));
 
-      final result = await service.getMembers();
-
-      expect(result, isEmpty);
+      await expectLater(
+        service.getMembers(),
+        throwsA(isA<TestException>()),
+      );
     });
 
     test('メンバーIDでメンバーを取得する', () async {
@@ -95,13 +96,14 @@ void main() {
       expect(result, isNull);
     });
 
-    test('メンバーIDで取得時に例外が発生した場合はnullを返す', () async {
+    test('メンバーIDで取得時に例外が発生した場合は取得失敗を伝える', () async {
       when(mockMembersCollection.doc(any))
           .thenThrow(TestException('Firestore error'));
 
-      final result = await service.getMemberById('member001');
-
-      expect(result, isNull);
+      await expectLater(
+        service.getMemberById('member001'),
+        throwsA(isA<TestException>()),
+      );
     });
 
     test('アカウントIDでメンバーを取得する', () async {
@@ -138,13 +140,14 @@ void main() {
       expect(result, isNull);
     });
 
-    test('アカウントIDで取得時に例外が発生した場合はnullを返す', () async {
+    test('アカウントIDで取得時に例外が発生した場合は取得失敗を伝える', () async {
       when(mockMembersCollection.where(any, isEqualTo: anyNamed('isEqualTo')))
           .thenThrow(TestException('Firestore error'));
 
-      final result = await service.getMemberByAccountId('account001');
-
-      expect(result, isNull);
+      await expectLater(
+        service.getMemberByAccountId('account001'),
+        throwsA(isA<TestException>()),
+      );
     });
 
     test('オーナーIDでメンバー一覧を取得する', () async {
@@ -172,7 +175,7 @@ void main() {
       verify(mockQuery.orderBy('displayName', descending: true)).called(1);
     });
 
-    test('オーナーIDでの取得時に例外が発生した場合は空リストを返す', () async {
+    test('オーナーIDでの取得時に例外が発生した場合は取得失敗を伝える', () async {
       when(
         mockMembersCollection.where(
           'ownerId',
@@ -180,9 +183,10 @@ void main() {
         ),
       ).thenThrow(TestException('Firestore error'));
 
-      final result = await service.getMembersByOwnerId('owner001');
-
-      expect(result, isEmpty);
+      await expectLater(
+        service.getMembersByOwnerId('owner001'),
+        throwsA(isA<TestException>()),
+      );
     });
   });
 }

@@ -176,16 +176,17 @@ void main() {
       expect(result[1].memo, 'メンバーメモ');
     });
 
-    test('例外が発生した場合、空のリストを返す', () async {
+    test('例外が発生した場合、取得失敗を伝える', () async {
       const memberId = 'member123';
 
       when(mockFirestore.collection('groups')).thenReturn(mockGroupsCollection);
       when(mockGroupsCollection.where('ownerId', isEqualTo: memberId))
           .thenThrow(TestException('Firestore error'));
 
-      final result = await service.getGroupsWithMembersByMemberId(memberId);
-
-      expect(result, isEmpty);
+      await expectLater(
+        service.getGroupsWithMembersByMemberId(memberId),
+        throwsA(isA<TestException>()),
+      );
     });
 
     test('指定されたオーナーIDで管理しているグループとメンバー情報を正常に取得する', () async {
@@ -243,18 +244,19 @@ void main() {
       expect(result[0].members[0].displayName, 'テストメンバー');
     });
 
-    test('例外が発生した場合、空のリストを返す', () async {
+    test('例外が発生した場合、取得失敗を伝える', () async {
       const ownerId = 'owner123';
 
       when(mockFirestore.collection('groups')).thenReturn(mockGroupsCollection);
       when(mockGroupsCollection.where('ownerId', isEqualTo: ownerId))
           .thenThrow(TestException('Firestore error'));
 
-      final result = await service.getManagedGroupsWithMembersByOwnerId(
+      await expectLater(
+        service.getManagedGroupsWithMembersByOwnerId(
         ownerId,
+      ),
+        throwsA(isA<TestException>()),
       );
-
-      expect(result, isEmpty);
     });
 
     test('groupsOrderByとmembersOrderByを指定してグループとメンバーをソート順で取得する', () async {
@@ -508,16 +510,17 @@ void main() {
       expect(result, isNull);
     });
 
-    test('getGroupWithMembersByIdで例外が発生した場合、nullを返す', () async {
+    test('getGroupWithMembersByIdで例外が発生した場合、取得失敗を伝える', () async {
       const groupId = 'group123';
 
       when(mockFirestore.collection('groups')).thenReturn(mockGroupsCollection);
       when(mockGroupsCollection.doc(groupId))
           .thenThrow(TestException('Firestore error'));
 
-      final result = await service.getGroupWithMembersById(groupId);
-
-      expect(result, isNull);
+      await expectLater(
+        service.getGroupWithMembersById(groupId),
+        throwsA(isA<TestException>()),
+      );
     });
 
     test('membersOrderByを指定してメンバーをソート順で取得する', () async {
