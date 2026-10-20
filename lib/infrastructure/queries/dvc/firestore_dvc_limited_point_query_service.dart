@@ -43,7 +43,7 @@ class FirestoreDvcLimitedPointQueryService
         error: e,
         stackTrace: stack,
       );
-      return [];
+      rethrow;
     }
   }
 }

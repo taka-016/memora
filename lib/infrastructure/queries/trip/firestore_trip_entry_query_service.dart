@@ -99,7 +99,7 @@ class FirestoreTripEntryQueryService implements TripEntryQueryService {
         error: e,
         stackTrace: stack,
       );
-      return null;
+      rethrow;
     }
   }
 
@@ -134,10 +134,7 @@ class FirestoreTripEntryQueryService implements TripEntryQueryService {
         error: e,
         stackTrace: stack,
       );
-      if (_rethrowOnError) {
-        rethrow;
-      }
-      return [];
+      rethrow;
     }
   }
 

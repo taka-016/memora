@@ -47,10 +47,7 @@ class FirestoreItineraryItemQueryService implements ItineraryItemQueryService {
         error: e,
         stackTrace: stack,
       );
-      if (_rethrowOnError) {
-        rethrow;
-      }
-      return [];
+      rethrow;
     }
   }
 

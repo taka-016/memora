@@ -28,7 +28,7 @@ class OnlineAppServices implements AppServices {
       );
     }
     FirebaseFirestore.instance.settings = const Settings(
-      persistenceEnabled: false,
+      persistenceEnabled: true,
     );
     final crashlytics = FirebaseCrashlytics.instance;
     await crashlytics.setCrashlyticsCollectionEnabled(true);

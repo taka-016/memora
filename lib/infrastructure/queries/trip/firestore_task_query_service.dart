@@ -35,7 +35,7 @@ class FirestoreTaskQueryService implements TaskQueryService {
         error: e,
         stackTrace: stack,
       );
-      return [];
+      rethrow;
     }
   }
 }
