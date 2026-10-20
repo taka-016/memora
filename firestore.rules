@@ -95,8 +95,11 @@ service cloud.firestore {
     }
 
     match /{collection}/{document} {
-      allow read, delete: if isVerifiedUser()
-                            && isVersionedCollection(collection);
+      allow read: if isVerifiedUser() && isVersionedCollection(collection);
+      allow delete: if isVerifiedUser()
+                       && isVersionedCollection(collection)
+                       && resource.data.version is int
+                       && resource.data.version >= 1;
       allow create: if isVerifiedUser()
                        && isVersionedCollection(collection)
                        && isInitialVersion();
@@ -107,6 +110,8 @@ service cloud.firestore {
 
     match /calendar_labels/{document} {
       allow update: if isVerifiedUser()
+                       && resource.data.version is int
+                       && resource.data.version >= 1
                        && request.resource.data.diff(resource.data)
                             .affectedKeys().hasOnly(['eventCount'])
                        && request.resource.data.eventCount is int
