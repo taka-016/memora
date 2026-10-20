@@ -83,3 +83,35 @@ firebase emulators:exec --only firestore --project demo-memora --config "$MEMORA
 ```
 
 既存の`firestore_version_rules_test.mjs`・`firestore_aggregate_rules_test.mjs`・`firestore_deleted_parent_rules_test.mjs`も厳格Rulesで検証する。
+
+## 2026-10-20の切替実施記録
+
+対象は`utopian-bonito-461312-r2`の`(default)`（`asia-northeast1`）。アプリが未リリースであることとユーザーの明示指示により、今回のアプリ配布・バックアップ取得は省略した。永続キャッシュは無効のまま維持した。
+
+書き込み停止Rulesを適用し、デプロイ内容の一致を確認してから初期化した。初回検証は対象44件のうち未設定41件・整数設定済み1件・`version: null`の旅行2件だった。nullの2件も1に設定することについてユーザーの承認を得て補正し、未設定41件を管理処理で初期化した。既に設定済みのバージョンは保持した。
+
+| コレクション | 検証件数 | 初期化・補正件数 |
+| --- | ---: | ---: |
+| members | 8 | 8 |
+| member_invitations | 4 | 4 |
+| group_events | 14 | 14 |
+| member_events | 0 | 0 |
+| trip_entries | 5 | 4 |
+| groups | 1 | 1 |
+| calendar_events | 6 | 6 |
+| dvc_point_contracts | 1 | 1 |
+| calendar_labels | 5 | 5 |
+| 合計 | 44 | 43 |
+
+DVCポイント利用5件・期間限定ポイント0件の契約紐付けも検証した。初期化前後でドキュメントIDとversion以外の全フィールドから算出したハッシュが一致し、バージョン以外のデータが変わっていないことを確認した。
+
+初期化後の全件検証で`missing: 0`・`invalid: 0`・`complete: true`を確認してから厳格Rulesへ切り替えた。切替後にも全44件を再検証し、同じ結果だった。適用済みRulesの内容がリポジトリの`firestore.rules`と一致することも確認した。
+
+- 初期化完了: `2026-10-20T14:43:07.997Z`
+- 書き込み停止Rulesのリリース時刻: `2026-10-20T14:42:16.678204Z`
+- 書き込み停止Ruleset: `projects/utopian-bonito-461312-r2/rulesets/b9afc69f-6a09-439e-9423-3074608a9936`
+- 厳格Rulesのリリース時刻: `2026-10-20T14:43:38.604917Z`
+- 厳格Ruleset: `projects/utopian-bonito-461312-r2/rulesets/b6f23a3b-7fac-4d41-8ab8-1ad4b6731196`
+- 切替後の最終検証: `2026-10-20T14:44:13.963Z`
+- version以外のデータのSHA-256: `dc304c7c10290bea38ed7f4cb368d530c60409c6bec93f506500ef16881e0067`
+- 厳格RulesのSHA-256: `6ac446f8a244d2eb0686deab5bafb6dc02cd8926cc701aded49dee1a905009b5`

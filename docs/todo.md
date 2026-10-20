@@ -6,10 +6,6 @@
 
 [ADR-004](adr/adr-004-archive-groups-and-members.md)・[ADR-005](adr/adr-005-version-based-concurrency-control.md)・[ADR-006](adr/adr-006-atomic-aggregate-updates.md)・[ADR-007](adr/adr-007-cached-read-consistency.md)に従い、以下の節・各節の番号順に実装・検証する。
 
-#### 6. 既存データの初期化と切替を準備・実施する
-
-1. [初期化・切替手順](../tools/migrations/README.md)に従い、対象プロジェクト・DB・バックアップ先・配布方法を確定し、対応アプリをキャッシュ無効で配布する。書き込み停止Rules適用→停止中の最終バックアップ→管理処理の実行→対象全件の検証→厳格なRulesへの切替を実施し、配布情報・件数・検証結果を記録する。未初期化・初期化失敗が残る間は書き込みを再開しない。
-
 #### 7. 永続キャッシュを有効化して検証する
 
 1. 第3〜第6節の実装・検証・切替完了後に、`OnlineAppServices.initialize()`の`persistenceEnabled`を`true`へ変更する。容量と通常の取得処理はSDKの既定動作を維持する（編集開始時・保存前の再取得や親子の取得時点の混在検出は追加しない）。
