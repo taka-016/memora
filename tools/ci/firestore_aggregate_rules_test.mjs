@@ -30,6 +30,7 @@ const cases = [
   ['trip_entries', 'tasks', 'tripId'],
   ['trip_entries', 'itinerary_items', 'tripId'],
   ['groups', 'group_members', 'groupId'],
+  ['calendar_events', 'calendar_event_overrides', 'eventId'],
   ['dvc_point_contracts', 'dvc_point_usages', 'contractId'],
   ['dvc_point_contracts', 'dvc_limited_points', 'contractId'],
 ];
@@ -71,3 +72,44 @@ const independent = await Promise.all([
 ]);
 assert.deepEqual(independent.map(value => value.status), [200, 200], 'グループ編集とDVC契約編集の独立性');
 console.log('旅行・グループ・DVCの親子の原子性・競合・直接更新と付け替え拒否を確認しました');
+
+// 親ごとに最大3参照（getAfter・exists・get）。6親でも保守的に18参照以内。
+// 同じ親を持つ子の参照はキャッシュされ、ラベル更新自体に追加参照はない。
+const mixed = [
+  ['trip_entries', 'tasks', 'tripId'],
+  ['trip_entries', 'itinerary_items', 'tripId'],
+  ['groups', 'group_members', 'groupId'],
+  ['groups', 'group_members', 'groupId'],
+  ['calendar_events', 'calendar_event_overrides', 'eventId'],
+  ['calendar_events', 'calendar_event_overrides', 'eventId'],
+];
+const mixedWrites = version => mixed.flatMap(([parents, children, key], index) => {
+  const id = `mixed-limit-${index}`;
+  return [
+    write(`${parents}/${id}`, { version: integer(version) }),
+    ...Array.from({ length: 3 }, (_, child) => write(`${children}/${id}-${child}`, {
+      [key]: string(id), name: string(`更新${version}`),
+    })),
+  ];
+});
+await commit(mixedWrites(1), 'owner');
+const labelWrites = Array.from({ length: 5 }, (_, index) => write(`calendar_labels/mixed-limit-${index}`, {
+  version: integer(1), eventCount: integer(0), name: string('ラベル'),
+}));
+await commit(labelWrites, 'owner');
+const countWrites = labelWrites.map(value => ({ ...value, update: {
+  ...value.update, fields: { ...value.update.fields, eventCount: integer(1) },
+} }));
+await expectCommit([...mixedWrites(2), ...countWrites], 200, '複数旅行・グループ・予定・ラベルを一括保存しアクセス回数制限内で成功');
+console.log('個別回の親更新条件と複数集約・ラベルのアクセス回数制限内での保存を確認しました');
+const begun = await fetch(`${root}:beginTransaction`, {
+  method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+  body: JSON.stringify({ options: { readWrite: {} } }),
+});
+assert.equal(begun.status, 200, '複数集約を保存するトランザクションの開始');
+const { transaction } = await begun.json();
+const committed = await fetch(`${root}:commit`, {
+  method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+  body: JSON.stringify({ writes: mixedWrites(3), transaction }),
+});
+assert.equal(committed.status, 200, `トランザクションもアクセス回数制限内で成功: ${await committed.text()}`);

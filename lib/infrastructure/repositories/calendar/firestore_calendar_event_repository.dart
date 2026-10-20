@@ -1,3 +1,4 @@
+import 'package:memora/infrastructure/services/firestore_version_check.dart';
 import 'package:memora/infrastructure/services/calendar_event_content.dart';
 import 'package:memora/application/mappers/calendar/calendar_event_mapper.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -86,6 +87,7 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
     ];
     await _firestore.runTransaction<void>((transaction) async {
       final current = await transaction.get(ref);
+      FirestoreVersionCheck.requireMatch(current.data(), expected.version);
       if (!current.exists) {
         throw ValidationException('予定が変更されています。再読み込みしてからやり直してください');
       }
@@ -99,7 +101,11 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
       final before = _references(current.data()!);
       final head = replacement == null
           ? null
-          : _store.data(replacement, ref.id, create: false);
+          : _store.data(
+              replacement.copyWith(version: expected.version),
+              ref.id,
+              create: false,
+            );
       final tail = following == null
           ? null
           : _store.data(following, nextRef!.id, create: true);
@@ -174,6 +180,7 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
     final data = _store.data(event, ref.id, create: false);
     await _firestore.runTransaction<void>((transaction) async {
       final existing = await transaction.get(ref);
+      FirestoreVersionCheck.requireMatch(existing.data(), event.version);
       if (!existing.exists || existing.data()!['groupId'] != event.groupId) {
         throw ValidationException('更新する予定のグループは変更できません');
       }
@@ -208,7 +215,7 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
     final ref = _firestore.collection('calendar_events').doc(eventId);
     await _firestore.runTransaction<void>((transaction) async {
       final existing = await transaction.get(ref);
-      if (!existing.exists) return;
+      FirestoreVersionCheck.requireMatch(existing.data(), expectedVersion);
       await _adjustLabels(
         transaction,
         existing.data()!['groupId'] as String,

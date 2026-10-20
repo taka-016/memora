@@ -65,6 +65,7 @@ void main() {
         '#Ab12Cd',
       );
       final value = CalendarLabel(
+        version: 1,
         id: 'label',
         groupId: 'group',
         name: '全員',
@@ -115,9 +116,11 @@ void main() {
     eventDoc = MockDocumentSnapshot();
     labelDoc = MockDocumentSnapshot();
     when(eventDoc.exists).thenReturn(true);
-    when(eventDoc.data()).thenReturn({'groupId': 'group', 'labelId': 'label'});
+    when(eventDoc.data())
+        .thenReturn({'groupId': 'group', 'labelId': 'label', 'version': 1});
     when(labelDoc.exists).thenReturn(true);
-    when(labelDoc.data()).thenReturn({'groupId': 'group', 'eventCount': 1});
+    when(labelDoc.data())
+        .thenReturn({'groupId': 'group', 'eventCount': 1, 'version': 1});
     when(transaction.get(eventRef)).thenAnswer((_) async => eventDoc);
     when(transaction.get(labelRef)).thenAnswer((_) async => labelDoc);
     when(transaction.get(otherRef)).thenAnswer((_) async => labelDoc);
@@ -154,8 +157,8 @@ void main() {
   });
   tearDown(() => container.dispose());
 
-  CalendarEvent event({String id = ''}) => CalendarEvent(
-    version: 1,
+  CalendarEvent event({String id = '', int? version = 1}) => CalendarEvent(
+    version: version,
     id: id,
     groupId: 'group',
     labelId: 'label',
@@ -179,10 +182,15 @@ void main() {
         await callback(transaction);
       }
     });
-    await events.updateCalendarEvent(edited);
+    await expectLater(
+      events.updateCalendarEvent(edited),
+      throwsA(
+        isA<FirebaseException>().having((e) => e.code, 'code', 'aborted'),
+      ),
+    );
     final writes = verify(transaction.update(eventRef, captureAny)).captured
         .cast<Map<String, dynamic>>();
-    expect(writes.map((data) => data['version']), [8, 8]);
+    expect(writes.map((data) => data['version']), [8]);
   });
 
   for (final replace in [false, true]) {
@@ -552,7 +560,8 @@ void main() {
         verify(transaction.update(eventRef, captureAny)).captured.single
             as Map<String, dynamic>;
     expect(data['overrideIds'], isEmpty);
-    await events.deleteCalendarEvent('event');
+    expect(data['version'], 2);
+    await events.deleteCalendarEvent('event', expectedVersion: 1);
     verify(transaction.delete(overrideRefs['stored']!)).called(1);
     verify(transaction.delete(eventRef)).called(1);
   });
@@ -596,6 +605,7 @@ void main() {
       'groupId': 'group',
       'labelId': 'label',
       'referencedLabelIds': ['label', 'other', 'old'],
+      'version': 1,
     });
     final value = event(id: 'event').copyWith(
       labelId: 'other',
@@ -634,6 +644,7 @@ void main() {
         verify(transaction.set(eventRef, captureAny)).captured.single
             as Map<String, dynamic>;
     expect(data['title'], '旅行');
+    expect(data['version'], 1);
     expect(
       (data['startDateTime'] as Timestamp).toDate().microsecondsSinceEpoch,
       event().startDateTime.microsecondsSinceEpoch,
@@ -641,6 +652,13 @@ void main() {
   });
 
   test('並び替えは全ラベルのグループを確認して取得時の期待値と順序を一括更新する', () async {
+    when(labelDoc.data())
+        .thenReturn({'groupId': 'group', 'eventCount': 1, 'version': 4});
+    final otherDoc = MockDocumentSnapshot();
+    when(otherDoc.exists).thenReturn(true);
+    when(otherDoc.data())
+        .thenReturn({'groupId': 'group', 'eventCount': 1, 'version': 7});
+    when(transaction.get(otherRef)).thenAnswer((_) async => otherDoc);
     await labels.reorderCalendarLabels(
       'group',
       ['other', 'label'],
@@ -665,7 +683,11 @@ void main() {
     when(foreign.data()).thenReturn({'groupId': 'foreign'});
     when(transaction.get(otherRef)).thenAnswer((_) async => foreign);
     await expectLater(
-      labels.reorderCalendarLabels('group', ['label', 'other']),
+      labels.reorderCalendarLabels(
+        'group',
+        ['label', 'other'],
+        expectedVersions: {'label': 1, 'other': 1},
+      ),
       throwsA(isA<ValidationException>()),
     );
     verifyNever(transaction.update(any, any));
@@ -689,7 +711,7 @@ void main() {
         .called(1);
     verify(transaction.update(otherRef, argThat(containsPair('eventCount', 2))))
         .called(1);
-    await events.deleteCalendarEvent('event');
+    await events.deleteCalendarEvent('event', expectedVersion: 1);
     verify(transaction.delete(eventRef)).called(1);
     verify(transaction.update(labelRef, argThat(containsPair('eventCount', 0))))
         .called(1);
@@ -697,7 +719,7 @@ void main() {
 
   test('使用中ラベルの削除とグループ変更を拒否し名前と色だけの変更を許可する', () async {
     await expectLater(
-      labels.deleteCalendarLabel('label'),
+      labels.deleteCalendarLabel('label', expectedVersion: 1),
       throwsA(isA<ValidationException>()),
     );
     await expectLater(
@@ -713,6 +735,7 @@ void main() {
     );
     await labels.saveCalendarLabel(
       CalendarLabel(
+        version: 1,
         id: 'label',
         groupId: 'group',
         name: '全員',
@@ -725,5 +748,120 @@ void main() {
     expect(data['name'], '全員');
     expect(data['color'], '#FFFFFF');
     expect(data.containsKey('eventCount'), isFalse);
+    expect(data['version'], 2);
+  });
+
+  final conflict = throwsA(
+    isA<FirebaseException>().having((e) => e.code, 'code', 'aborted'),
+  );
+  for (final version in <int?>[null, 0, 2]) {
+    for (final operation in [
+      '更新',
+      '個別回',
+      '系列分割',
+      '削除',
+      'ラベル編集',
+      '並べ替え',
+      'ラベル削除',
+    ]) {
+      test('$operation は期待バージョン$version の競合で一切書き込まない', () async {
+        final value = event(id: 'event', version: version);
+        final action = switch (operation) {
+          '更新' => events.updateCalendarEvent(value),
+          '個別回' => events.updateCalendarEvent(
+            value.copyWith(
+              recurrenceRule: 'FREQ=DAILY;COUNT=3',
+              timeZone: 'Asia/Tokyo',
+              overrides: recurring().overrides,
+            ),
+          ),
+          '系列分割' => events.replaceCalendarEvent(value, value, event()),
+          '削除' => events.deleteCalendarEvent('event', expectedVersion: version),
+          'ラベル編集' => labels.saveCalendarLabel(
+            CalendarLabel(
+              id: 'label',
+              groupId: 'group',
+              name: '変更',
+              color: '#FFFFFF',
+              version: version,
+            ),
+          ),
+          '並べ替え' => labels.reorderCalendarLabels(
+            'group',
+            ['label', 'other'],
+            expectedVersions: {'label': 1, 'other': ?version},
+          ),
+          _ => labels.deleteCalendarLabel('label', expectedVersion: version),
+        };
+        await expectLater(action, conflict);
+        verifyNever(transaction.update(any, any));
+        verifyNever(transaction.set(any, any));
+        verifyNever(transaction.delete(any));
+      });
+    }
+  }
+  test('系列置換はreplacementの値ではなく取得時の期待バージョンを使う', () async {
+    final expected = event(id: 'event');
+    when(eventDoc.id).thenReturn('event');
+    when(eventDoc.data())
+        .thenReturn(FirestoreCalendarEventMapper.toCreateFirestore(expected));
+    await events.replaceCalendarEvent(
+      expected,
+      expected.copyWith(version: 99),
+      null,
+    );
+    verify(transaction.update(eventRef, argThat(containsPair('version', 2))))
+        .called(1);
+  });
+  test('削除済みの予定とラベルは競合として通知する', () async {
+    when(eventDoc.data()).thenReturn(null);
+    when(eventDoc.exists).thenReturn(false);
+    when(labelDoc.data()).thenReturn(null);
+    when(labelDoc.exists).thenReturn(false);
+    await expectLater(
+      events.deleteCalendarEvent('event', expectedVersion: 1),
+      conflict,
+    );
+    await expectLater(
+      labels.deleteCalendarLabel('label', expectedVersion: 1),
+      conflict,
+    );
+    verifyNever(transaction.delete(any));
+  });
+
+  test('ラベルの作成はバージョン1と参照数0で保存する', () async {
+    final collection =
+        firestore.collection('calendar_labels') as MockCollectionReference;
+    when(collection.add(any)).thenAnswer((_) async => labelRef);
+    when(labelRef.id).thenReturn('label');
+    final id = await labels.saveCalendarLabel(
+      CalendarLabel(id: '', groupId: 'group', name: '新規', color: '#FFFFFF'),
+    );
+    expect(id, 'label');
+    final data =
+        verify(collection.add(captureAny)).captured.single
+            as Map<String, dynamic>;
+    expect(data['version'], 1);
+    expect(data['eventCount'], 0);
+  });
+
+  test('内部の参照数更新はラベルの編集バージョンを変更しない', () async {
+    await events.updateCalendarEvent(
+      event(id: 'event').copyWith(labelId: 'other'),
+    );
+    final writes = verify(transaction.update(any, captureAny)).captured
+        .whereType<Map>();
+    final counts = writes
+        .where((data) => data.containsKey('eventCount'))
+        .toList();
+    expect(counts, hasLength(2));
+    expect(counts.every((data) => data.keys.length == 1), isTrue);
+  });
+
+  test('未使用ラベルの削除は取得した期待値が一致する場合に成功する', () async {
+    when(labelDoc.data())
+        .thenReturn({'groupId': 'group', 'eventCount': 0, 'version': 4});
+    await labels.deleteCalendarLabel('label', expectedVersion: 4);
+    verify(transaction.delete(labelRef)).called(1);
   });
 }
