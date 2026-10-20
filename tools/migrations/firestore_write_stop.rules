@@ -1,0 +1,19 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{collection}/{document} {
+      allow read: if request.auth != null
+                     && request.auth.token.email_verified == true
+                     && collection in ['members', 'member_invitations', 'group_events',
+                                       'member_events', 'trip_entries', 'groups',
+                                       'calendar_events', 'dvc_point_contracts',
+                                       'calendar_labels', 'locations', 'tasks',
+                                       'itinerary_items', 'group_members',
+                                       'dvc_limited_points', 'dvc_point_usages',
+                                       'calendar_event_overrides',
+                                       'deleted_groups', 'deleted_members'];
+      allow write: if false;
+    }
+  }
+}
