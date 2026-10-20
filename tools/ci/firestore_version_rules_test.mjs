@@ -22,6 +22,8 @@ const collections = ['members', 'member_invitations', 'group_events', 'member_ev
   'trip_entries', 'groups', 'calendar_events', 'dvc_point_contracts', 'calendar_labels'];
 const version = value => ({ integerValue: String(value) });
 const verified = token(true);
+const invalidStoredVersions = [undefined, { nullValue: null }, { stringValue: '1' },
+  { doubleValue: 1.0 }, version(0), version(-1)];
 for (const collection of collections) {
   const path = `/${collection}/version-test`;
   const write = (fields, bearer = verified) => request(path, 'PATCH', bearer, { fields });
@@ -46,6 +48,14 @@ for (const collection of collections) {
     await seed(fields);
     assert.equal((await write(next)).status, 403, `${collection}: 不正な既存値`);
   }
+  for (const invalid of invalidStoredVersions) {
+    const fields = { ...valid, version: invalid };
+    if (invalid === undefined) delete fields.version;
+    await seed(fields);
+    assert.equal((await request(path, 'DELETE', verified)).status, 403, `${collection}: 未初期化・不正バージョンの削除拒否`);
+  }
+  await seed(valid);
+  assert.equal((await request(path, 'DELETE', verified)).status, 200, `${collection}: 初期化済みの削除`);
   for (const bearer of [null, token(false)]) {
     await request(path, 'DELETE', 'owner');
     assert.equal((await write(valid, bearer)).status, 403, `${collection}: 認証なしの作成`);
@@ -66,4 +76,11 @@ for (const field of ['version', 'name', 'color', 'sortOrder']) {
   const changed = { ...seedLabel, eventCount: version(3), [field]: field === 'version' || field === 'sortOrder' ? version(7) : { stringValue: '変更' } };
   if (field === 'version') changed.version = version(6);
   assert.equal((await request(labelPath, 'PATCH', verified, { fields: changed })).status, 403, `内部件数ルールによる${field}の迂回`);
+}
+
+for (const invalid of invalidStoredVersions) {
+  const fields = { ...seedLabel, version: invalid };
+  if (invalid === undefined) delete fields.version;
+  await request(labelPath, 'PATCH', 'owner', { fields });
+  assert.equal((await request(labelPath, 'PATCH', verified, { fields: { ...fields, eventCount: version(2) } })).status, 403, '未初期化・不正バージョンのラベル内部更新拒否');
 }
