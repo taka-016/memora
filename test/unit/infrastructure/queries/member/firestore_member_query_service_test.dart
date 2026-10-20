@@ -58,10 +58,7 @@ void main() {
       when(mockMembersCollection.get())
           .thenThrow(TestException('Firestore error'));
 
-      await expectLater(
-        service.getMembers(),
-        throwsA(isA<TestException>()),
-      );
+      await expectLater(service.getMembers(), throwsA(isA<TestException>()));
     });
 
     test('メンバーIDでメンバーを取得する', () async {

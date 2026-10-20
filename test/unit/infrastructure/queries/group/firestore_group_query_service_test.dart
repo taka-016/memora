@@ -252,9 +252,7 @@ void main() {
           .thenThrow(TestException('Firestore error'));
 
       await expectLater(
-        service.getManagedGroupsWithMembersByOwnerId(
-        ownerId,
-      ),
+        service.getManagedGroupsWithMembersByOwnerId(ownerId),
         throwsA(isA<TestException>()),
       );
     });

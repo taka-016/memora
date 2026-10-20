@@ -223,24 +223,6 @@ void main() {
       );
     });
 
-    test('例外伝播を指定した場合はグループ旅行一覧の取得例外を再送出する', () async {
-      service = FirestoreTripEntryQueryService(
-        firestore: mockFirestore,
-        rethrowOnError: true,
-      );
-      when(
-        mockTripEntriesCollection.where(
-          'groupId',
-          isEqualTo: anyNamed('isEqualTo'),
-        ),
-      ).thenThrow(TestException('取得失敗'));
-
-      expect(
-        () => service.getTripEntriesByGroupId('group001'),
-        throwsA(isA<TestException>()),
-      );
-    });
-
     test('通常の旅行一覧でも取得失敗を空データとして返さない', () async {
       when(mockTripEntriesCollection.where('groupId', isEqualTo: 'group001'))
           .thenThrow(TestException('取得失敗'));

@@ -28,7 +28,7 @@ void main() {
       expect(service, isA<FirestoreItineraryItemQueryService>());
     });
 
-    test('共有のTripEntryQueryServiceは取得失敗時に空リストを返す', () async {
+    test('共有のTripEntryQueryServiceも取得失敗を伝える', () async {
       final firestore = MockFirebaseFirestore();
       when(firestore.collection(any)).thenThrow(TestException('取得失敗'));
       final container = ProviderContainer(
@@ -38,7 +38,10 @@ void main() {
 
       final service = container.read(tripEntryQueryServiceProvider);
 
-      expect(await service.getTripEntriesByGroupId('group1'), isEmpty);
+      await expectLater(
+        service.getTripEntriesByGroupId('group1'),
+        throwsA(isA<TestException>()),
+      );
     });
 
     test('地図用のTripEntryQueryServiceは取得失敗時に例外を再送出する', () async {

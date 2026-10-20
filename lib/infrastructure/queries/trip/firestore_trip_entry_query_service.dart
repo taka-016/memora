@@ -17,11 +17,8 @@ class FirestoreTripEntryQueryService implements TripEntryQueryService {
   FirestoreTripEntryQueryService({
     FirebaseFirestore? firestore,
     AppClock? clock,
-    this._rethrowOnError = false,
   }) : _firestore = firestore ?? FirebaseFirestore.instance,
        _clock = clock ?? NtpSynchronizedAppClock();
-
-  final bool _rethrowOnError;
 
   @override
   Future<TripEntryDto?> getTripEntryById(
