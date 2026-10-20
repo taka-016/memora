@@ -2,16 +2,6 @@
 
 ## DB設計・リポジトリ・ユースケース・DTO・マッパー関連
 
-### 3. Firestoreの永続キャッシュ・保存完了確認・楽観的排他（オンラインのみ）
-
-[ADR-004](adr/adr-004-archive-groups-and-members.md)・[ADR-005](adr/adr-005-version-based-concurrency-control.md)・[ADR-006](adr/adr-006-atomic-aggregate-updates.md)・[ADR-007](adr/adr-007-cached-read-consistency.md)に従い、以下の節・各節の番号順に実装・検証する。
-
-#### 7. 永続キャッシュを有効化して検証する
-
-1. 第3〜第6節の実装・検証・切替完了後に、`OnlineAppServices.initialize()`の`persistenceEnabled`を`true`へ変更する。容量と通常の取得処理はSDKの既定動作を維持する（編集開始時・保存前の再取得や親子の取得時点の混在検出は追加しない）。
-2. 実SDKで再起動後のキャッシュ読取・保留書き込みの復旧・保存完了表示・古いキャッシュからの競合拒否を検証する。キャッシュ未取得データの取得失敗を空データ扱いする経路があれば修正する。
-3. SQLiteのオフラインモードとAndroidウィジェットの既存動作を確認し、`./check.sh online`と`./check.sh offline`を実行する。
-
 ## マップの表示
 
 ## トップ画面
