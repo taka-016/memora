@@ -23,7 +23,7 @@ for (const table of ['groups', 'members']) {
     const id = `${table}-${allowed ? 'verified' : bearer ? 'unverified' : 'anonymous'}`;
     const source = `${root.split('/v1/')[1]}/${table}/${id}`;
     const target = `${root.split('/v1/')[1]}/deleted_${table}/${id}`;
-    const fields = { ownerId: { stringValue: 'tester' }, name: { stringValue: '退避情報' } };
+    const fields = { version: { integerValue: '1' }, ownerId: { stringValue: 'tester' }, name: { stringValue: '退避情報' } };
     assert.equal((await request(`/${table}/${id}`, 'PATCH', 'owner', { fields })).status, 200);
     const response = await request(':commit', 'POST', bearer, { writes: [
       { update: { name: target, fields } }, { delete: source },

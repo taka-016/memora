@@ -7,7 +7,7 @@ const { migrate, createClient } = require('../migrations/initialize_firestore_ve
 const host = process.env.FIRESTORE_EMULATOR_HOST;
 assert.ok(host, 'Firestore Emulator上で実行してください');
 const project = 'demo-memora';
-const client = createClient({ project, database: '(default)', host });
+const client = createClient({ project, database: '(default)', host, pageSize: 1 });
 const root = `http://${host}/v1/projects/${project}/databases/(default)/documents`;
 const integer = value => ({ integerValue: String(value) });
 const string = value => ({ stringValue: value });
@@ -112,8 +112,11 @@ try {
   await rules(strict);
   await seed('members/missed', { name: string('未初期化') });
   assert.equal((await run()).complete, false, '全件検証で初期化漏れを検出');
-  for (const method of ['PATCH', 'DELETE']) {
-    assert.equal((await request('members/missed', method, method === 'PATCH' ? { version: integer(1) } : undefined, token)).status, 403, '切替後も未初期化の編集を拒否');
+  for (const collection of targets) {
+    await seed(`${collection}/missed`, { name: string('未初期化') });
+    for (const method of ['PATCH', 'DELETE']) {
+      assert.equal((await request(`${collection}/missed`, method, method === 'PATCH' ? { version: integer(1) } : undefined, token)).status, 403, `${collection}: 切替後も未初期化の編集を拒否`);
+    }
   }
   await seed('calendar_labels/missed', { eventCount: integer(0) });
   assert.equal((await request('calendar_labels/missed', 'PATCH', { eventCount: integer(1) }, token)).status, 403, '未初期化ラベルの内部更新を拒否');
