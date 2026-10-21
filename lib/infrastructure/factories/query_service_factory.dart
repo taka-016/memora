@@ -64,10 +64,7 @@ final tripEntryQueryServiceProvider = Provider<TripEntryQueryService>((ref) {
 });
 
 final mapTripEntryQueryServiceProvider = Provider<TripEntryQueryService>((ref) {
-  return QueryServiceFactory.createTripEntryQueryService(
-    ref: ref,
-    rethrowOnError: true,
-  );
+  return QueryServiceFactory.createTripEntryQueryService(ref: ref);
 });
 
 final taskQueryServiceProvider = Provider<TaskQueryService>((ref) {
@@ -116,29 +113,18 @@ final dvcPointUsageQueryServiceProvider = Provider<DvcPointUsageQueryService>((
 });
 
 class QueryServiceFactory {
-  static T create<T extends Object>({
-    required Ref ref,
-    bool rethrowOnError = false,
-  }) {
+  static T create<T extends Object>({required Ref ref}) {
     final mode = ref.watch(appModeProvider);
-    return _createQueryServiceByMode<T>(
-      mode,
-      ref: ref,
-      rethrowOnError: rethrowOnError,
-    );
+    return _createQueryServiceByMode<T>(mode, ref: ref);
   }
 
   static T _createQueryServiceByMode<T extends Object>(
     AppMode mode, {
     required Ref ref,
-    required bool rethrowOnError,
   }) {
     switch (mode) {
       case AppMode.online:
-        return _createFirestoreQueryService<T>(
-          ref: ref,
-          rethrowOnError: rethrowOnError,
-        );
+        return _createFirestoreQueryService<T>(ref: ref);
       case AppMode.offline:
         if (T == CalendarLabelQueryService) {
           return SqliteCalendarLabelQueryService(
@@ -212,27 +198,20 @@ class QueryServiceFactory {
     }
   }
 
-  static TripEntryQueryService createTripEntryQueryService({
-    required Ref ref,
-    bool rethrowOnError = false,
-  }) {
+  static TripEntryQueryService createTripEntryQueryService({required Ref ref}) {
     final mode = ref.watch(appModeProvider);
     switch (mode) {
       case AppMode.online:
         return FirestoreTripEntryQueryService(
           firestore: ref.watch(firebaseFirestoreProvider),
           clock: ref.watch(appClockProvider),
-          rethrowOnError: rethrowOnError,
         );
       case AppMode.offline:
         return SqliteTripEntryQueryService(ref.watch(offlineDatabaseProvider));
     }
   }
 
-  static T _createFirestoreQueryService<T>({
-    required Ref ref,
-    required bool rethrowOnError,
-  }) {
+  static T _createFirestoreQueryService<T>({required Ref ref}) {
     if (T == CalendarEventQueryService) {
       return FirestoreCalendarEventQueryService(
         firestore: ref.watch(firebaseFirestoreProvider),
@@ -252,17 +231,13 @@ class QueryServiceFactory {
       return FirestoreGroupEventQueryService() as T;
     }
     if (T == TripEntryQueryService) {
-      return createTripEntryQueryService(
-        ref: ref,
-        rethrowOnError: rethrowOnError,
-      ) as T;
+      return createTripEntryQueryService(ref: ref) as T;
     }
     if (T == TaskQueryService) {
       return FirestoreTaskQueryService() as T;
     }
     if (T == ItineraryItemQueryService) {
       return FirestoreItineraryItemQueryService(
-        rethrowOnError: rethrowOnError,
         firestore: ref.watch(firebaseFirestoreProvider),
       ) as T;
     }
@@ -295,10 +270,7 @@ class QueryServiceFactory {
 
 final androidWidgetItineraryItemQueryServiceProvider =
     Provider<ItineraryItemQueryService>((ref) {
-      return QueryServiceFactory.create<ItineraryItemQueryService>(
-        ref: ref,
-        rethrowOnError: true,
-      );
+      return QueryServiceFactory.create<ItineraryItemQueryService>(ref: ref);
     });
 
 final calendarEventQueryServiceProvider = Provider<CalendarEventQueryService>(

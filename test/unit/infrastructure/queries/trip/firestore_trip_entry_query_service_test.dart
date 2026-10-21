@@ -214,28 +214,21 @@ void main() {
       expect(result!.year, 2027);
     });
 
-    test('例外発生時はnullを返す', () async {
+    test('例外発生時は取得失敗を伝える', () async {
       when(mockTripEntriesCollection.doc(any)).thenThrow(TestException('取得失敗'));
 
-      final result = await service.getTripEntryById('trip1');
-
-      expect(result, isNull);
+      await expectLater(
+        service.getTripEntryById('trip1'),
+        throwsA(isA<TestException>()),
+      );
     });
 
-    test('例外伝播を指定した場合はグループ旅行一覧の取得例外を再送出する', () async {
-      service = FirestoreTripEntryQueryService(
-        firestore: mockFirestore,
-        rethrowOnError: true,
-      );
-      when(
-        mockTripEntriesCollection.where(
-          'groupId',
-          isEqualTo: anyNamed('isEqualTo'),
-        ),
-      ).thenThrow(TestException('取得失敗'));
+    test('通常の旅行一覧でも取得失敗を空データとして返さない', () async {
+      when(mockTripEntriesCollection.where('groupId', isEqualTo: 'group001'))
+          .thenThrow(TestException('取得失敗'));
 
-      expect(
-        () => service.getTripEntriesByGroupId('group001'),
+      await expectLater(
+        service.getTripEntriesByGroupId('group001'),
         throwsA(isA<TestException>()),
       );
     });

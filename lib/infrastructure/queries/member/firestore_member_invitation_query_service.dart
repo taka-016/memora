@@ -43,7 +43,7 @@ class FirestoreMemberInvitationQueryService
         error: e,
         stackTrace: stack,
       );
-      return null;
+      rethrow;
     }
   }
 
@@ -70,7 +70,7 @@ class FirestoreMemberInvitationQueryService
         error: e,
         stackTrace: stack,
       );
-      return null;
+      rethrow;
     }
   }
 }

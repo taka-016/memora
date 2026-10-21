@@ -24,7 +24,7 @@ class FirestoreLocationQueryService implements LocationQueryService {
         error: e,
         stackTrace: stack,
       );
-      return [];
+      rethrow;
     }
   }
 }

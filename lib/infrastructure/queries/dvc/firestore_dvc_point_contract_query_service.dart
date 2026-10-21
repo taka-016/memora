@@ -38,7 +38,7 @@ class FirestoreDvcPointContractQueryService
         error: e,
         stackTrace: stack,
       );
-      return [];
+      rethrow;
     }
   }
 }

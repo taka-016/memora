@@ -60,14 +60,15 @@ void main() {
       verify(mockQuery.orderBy('orderIndex', descending: false)).called(1);
     });
 
-    test('取得時に例外が発生した場合は空リストを返す', () async {
+    test('取得時に例外が発生した場合は取得失敗を伝える', () async {
       when(
         mockTasksCollection.where('tripId', isEqualTo: anyNamed('isEqualTo')),
       ).thenThrow(TestException('firestore error'));
 
-      final result = await service.getTasksByTripId('trip001');
-
-      expect(result, isEmpty);
+      await expectLater(
+        service.getTasksByTripId('trip001'),
+        throwsA(isA<TestException>()),
+      );
     });
   });
 }

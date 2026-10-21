@@ -64,13 +64,14 @@ void main() {
           .called(1);
     });
 
-    test('例外時は空リストを返す', () async {
+    test('例外時は取得失敗を伝える', () async {
       when(mockCollection.where('groupId', isEqualTo: anyNamed('isEqualTo')))
           .thenThrow(TestException('firestore error'));
 
-      final result = await service.getDvcPointContractsByGroupId('group001');
-
-      expect(result, isEmpty);
+      await expectLater(
+        service.getDvcPointContractsByGroupId('group001'),
+        throwsA(isA<TestException>()),
+      );
     });
   });
 }

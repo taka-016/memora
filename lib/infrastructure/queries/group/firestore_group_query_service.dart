@@ -39,7 +39,7 @@ class FirestoreGroupQueryService implements GroupQueryService {
         error: e,
         stackTrace: stack,
       );
-      return [];
+      rethrow;
     }
   }
 
@@ -64,7 +64,7 @@ class FirestoreGroupQueryService implements GroupQueryService {
         error: e,
         stackTrace: stack,
       );
-      return [];
+      rethrow;
     }
   }
 
@@ -97,7 +97,7 @@ class FirestoreGroupQueryService implements GroupQueryService {
         error: e,
         stackTrace: stack,
       );
-      return null;
+      rethrow;
     }
   }
 

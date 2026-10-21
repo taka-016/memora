@@ -116,7 +116,7 @@ void main() {
       expect(result.single.location?.name, 'ホテル');
     });
 
-    test('取得時に例外が発生した場合は空リストを返す', () async {
+    test('取得時に例外が発生した場合は取得失敗を伝える', () async {
       when(
         mockItineraryItemsCollection.where(
           'tripId',
@@ -124,25 +124,8 @@ void main() {
         ),
       ).thenThrow(TestException('firestore error'));
 
-      final result = await service.getItineraryItemsByTripId('trip001');
-
-      expect(result, isEmpty);
-    });
-
-    test('例外伝播を指定した場合は取得例外を再送出する', () async {
-      service = FirestoreItineraryItemQueryService(
-        firestore: mockFirestore,
-        rethrowOnError: true,
-      );
-      when(
-        mockItineraryItemsCollection.where(
-          'tripId',
-          isEqualTo: anyNamed('isEqualTo'),
-        ),
-      ).thenThrow(TestException('取得失敗'));
-
-      expect(
-        () => service.getItineraryItemsByTripId('trip001'),
+      await expectLater(
+        service.getItineraryItemsByTripId('trip001'),
         throwsA(isA<TestException>()),
       );
     });

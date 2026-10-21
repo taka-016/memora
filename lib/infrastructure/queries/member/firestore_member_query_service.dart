@@ -32,7 +32,7 @@ class FirestoreMemberQueryService implements MemberQueryService {
         error: e,
         stackTrace: stack,
       );
-      return [];
+      rethrow;
     }
   }
 
@@ -50,7 +50,7 @@ class FirestoreMemberQueryService implements MemberQueryService {
         error: e,
         stackTrace: stack,
       );
-      return null;
+      rethrow;
     }
   }
 
@@ -72,7 +72,7 @@ class FirestoreMemberQueryService implements MemberQueryService {
         error: e,
         stackTrace: stack,
       );
-      return null;
+      rethrow;
     }
   }
 
@@ -102,7 +102,7 @@ class FirestoreMemberQueryService implements MemberQueryService {
         error: e,
         stackTrace: stack,
       );
-      return [];
+      rethrow;
     }
   }
 }
