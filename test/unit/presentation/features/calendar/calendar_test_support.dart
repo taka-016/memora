@@ -92,6 +92,8 @@ class CalendarTestHarness {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          watchCalendarEventsUsecaseProvider.overrideWithValue(null),
+          watchCalendarLabelsUsecaseProvider.overrideWithValue(null),
           changeCalendarRecurrenceUsecaseProvider.overrideWithValue(
             changeRecurrence,
           ),

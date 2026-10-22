@@ -1,3 +1,9 @@
+import 'package:memora/application/models/app_mode.dart';
+import 'package:memora/infrastructure/config/resolved_app_mode_provider.dart';
+import 'package:memora/application/usecases/calendar/watch_calendar_events_usecase.dart';
+import 'package:memora/infrastructure/queries/calendar/firestore_calendar_event_watch_query_service.dart';
+import 'package:memora/application/usecases/calendar/watch_calendar_labels_usecase.dart';
+import 'package:memora/infrastructure/queries/calendar/firestore_calendar_label_watch_query_service.dart';
 import 'package:memora/application/usecases/calendar/change_calendar_recurrence_usecase.dart';
 import 'package:memora/application/services/calendar/calendar_recurrence_expander.dart';
 import 'package:memora/infrastructure/services/iana_calendar_time_zone.dart';
@@ -72,3 +78,23 @@ final changeCalendarRecurrenceUsecaseProvider =
         ref.watch(calendarRecurrenceExpanderProvider),
       ),
     );
+
+final watchCalendarEventsUsecaseProvider =
+    Provider<WatchCalendarEventsUsecase?>((ref) {
+      if (ref.watch(appModeProvider) == AppMode.offline) return null;
+      return WatchCalendarEventsUsecase(
+        FirestoreCalendarEventWatchQueryService(
+          firestore: ref.watch(firebaseFirestoreProvider),
+        ),
+      );
+    });
+
+final watchCalendarLabelsUsecaseProvider =
+    Provider<WatchCalendarLabelsUsecase?>((ref) {
+      if (ref.watch(appModeProvider) == AppMode.offline) return null;
+      return WatchCalendarLabelsUsecase(
+        FirestoreCalendarLabelWatchQueryService(
+          firestore: ref.watch(firebaseFirestoreProvider),
+        ),
+      );
+    });

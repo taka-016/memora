@@ -36,6 +36,20 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     });
   }
 
+  @override
+  void didUpdateWidget(covariant CalendarScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.groupId != widget.groupId) {
+      Future.microtask(() {
+        if (mounted) {
+          unawaited(
+            ref.read(calendarNotifierProvider(widget.groupId).notifier).load(),
+          );
+        }
+      });
+    }
+  }
+
   void _moveMonth(int offset) {
     final provider = calendarNotifierProvider(widget.groupId);
     final month = ref.read(provider).month;
@@ -120,13 +134,14 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                       ),
-                      IconButton(
-                        tooltip: '再読み込み',
-                        onPressed: state.isLoading || state.isSaving
-                            ? null
-                            : notifier.load,
-                        icon: const Icon(Icons.refresh),
-                      ),
+                      if (!state.isWatching)
+                        IconButton(
+                          tooltip: '再読み込み',
+                          onPressed: state.isLoading || state.isSaving
+                              ? null
+                              : notifier.load,
+                          icon: const Icon(Icons.refresh),
+                        ),
                       IconButton(
                         tooltip: '色ラベルの設定',
                         onPressed: canEdit

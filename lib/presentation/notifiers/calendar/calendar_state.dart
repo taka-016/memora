@@ -9,6 +9,11 @@ class CalendarState {
     this.isLoading = false,
     this.isSaving = false,
     this.loadError = '',
+    this.eventLoadError = '',
+    this.labelLoadError = '',
+    this.hasLoadedEvents = false,
+    this.hasLoadedLabels = false,
+    this.isWatching = false,
     this.mutationError = '',
   }) : events = List.unmodifiable(events),
        labels = List.unmodifiable(labels);
@@ -20,6 +25,11 @@ class CalendarState {
   final bool isLoading;
   final bool isSaving;
   final String loadError;
+  final String eventLoadError;
+  final String labelLoadError;
+  final bool hasLoadedEvents;
+  final bool hasLoadedLabels;
+  final bool isWatching;
   final String mutationError;
 
   List<CalendarEventDto> eventsForDay(DateTime day) {
@@ -55,6 +65,11 @@ class CalendarState {
     bool? isLoading,
     bool? isSaving,
     String? loadError,
+    String? eventLoadError,
+    String? labelLoadError,
+    bool? hasLoadedEvents,
+    bool? hasLoadedLabels,
+    bool? isWatching,
     String? mutationError,
   }) => CalendarState(
     selectedDate: selectedDate ?? this.selectedDate,
@@ -63,6 +78,11 @@ class CalendarState {
     isLoading: isLoading ?? this.isLoading,
     isSaving: isSaving ?? this.isSaving,
     loadError: loadError ?? this.loadError,
+    eventLoadError: eventLoadError ?? this.eventLoadError,
+    labelLoadError: labelLoadError ?? this.labelLoadError,
+    hasLoadedEvents: hasLoadedEvents ?? this.hasLoadedEvents,
+    hasLoadedLabels: hasLoadedLabels ?? this.hasLoadedLabels,
+    isWatching: isWatching ?? this.isWatching,
     mutationError: mutationError ?? this.mutationError,
   );
 }
