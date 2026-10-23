@@ -43,6 +43,7 @@ adb_command forward --remove "tcp:$port"
 
 marker="memora-compose-${RANDOM}"
 adb_command shell "echo '$marker' > /data/local/tmp/memora-compose-test"
+adb_command shell sync
 "${compose[@]}" restart emulator
 "${compose[@]}" up --detach --wait --wait-timeout 300 emulator
 adb disconnect "$serial"
