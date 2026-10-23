@@ -77,6 +77,9 @@ void main() {
     when(labels.execute(any)).thenAnswer((_) async => [label]);
     container = ProviderContainer(
       overrides: [
+        watchCalendarEventsUsecaseProvider.overrideWithValue(null),
+        watchCalendarLabelsUsecaseProvider.overrideWithValue(null),
+
         appClockProvider.overrideWithValue(
           FixedAppClock(DateTime(2026, 10, 1)),
         ),

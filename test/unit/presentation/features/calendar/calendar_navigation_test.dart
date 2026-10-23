@@ -27,6 +27,8 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          watchCalendarEventsUsecaseProvider.overrideWithValue(null),
+          watchCalendarLabelsUsecaseProvider.overrideWithValue(null),
           ...support.createTopPageTestOverrides(
             availableGroupsWithMembers: groups,
             initialLocation: location,

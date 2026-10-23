@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:memora/application/usecases/calendar/change_calendar_recurrence_usecase.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
@@ -12,12 +14,27 @@ part 'calendar_notifier.g.dart';
 @riverpod
 class CalendarNotifier extends _$CalendarNotifier {
   int _loadVersion = 0;
+  StreamSubscription<List<CalendarEventDto>>? _eventsSubscription;
+  StreamSubscription<List<CalendarLabelDto>>? _labelsSubscription;
+  List<CalendarLabelDto>? _receivedLabels;
+  bool _reordering = false;
+  bool _eventsWaiting = false;
+  bool _labelsWaiting = false;
   List<CalendarEventDto> _series = const [];
 
   @override
   CalendarState build(String groupId) {
+    ref.onDispose(() {
+      _loadVersion++;
+      unawaited(_eventsSubscription?.cancel());
+      unawaited(_labelsSubscription?.cancel());
+    });
+    final watching = ref.watch(watchCalendarEventsUsecaseProvider) != null;
     final now = ref.watch(appClockProvider).now();
-    return CalendarState(selectedDate: DateTime(now.year, now.month, now.day));
+    return CalendarState(
+      selectedDate: DateTime(now.year, now.month, now.day),
+      isWatching: watching,
+    );
   }
 
   void selectDate(DateTime day) {
@@ -36,6 +53,10 @@ class CalendarNotifier extends _$CalendarNotifier {
 
   Future<void> load() async {
     final version = ++_loadVersion;
+    if (state.isWatching) {
+      await _watch(version);
+      return;
+    }
     state = state.copyWith(isLoading: true, loadError: '');
     try {
       final results = await Future.wait<Object>([
@@ -50,6 +71,8 @@ class CalendarNotifier extends _$CalendarNotifier {
         events: expanded,
         labels: results[1] as List<CalendarLabelDto>,
         isLoading: false,
+        hasLoadedEvents: true,
+        hasLoadedLabels: true,
       );
     } catch (_) {
       if (!ref.mounted || version != _loadVersion) return;
@@ -58,6 +81,83 @@ class CalendarNotifier extends _$CalendarNotifier {
         loadError: '予定と色ラベルを取得できませんでした。再読み込みしてください',
       );
     }
+  }
+
+  Future<void> _watch(int version) async {
+    await _eventsSubscription?.cancel();
+    await _labelsSubscription?.cancel();
+    if (!ref.mounted || version != _loadVersion) return;
+    _eventsWaiting = true;
+    _labelsWaiting = true;
+    state = state.copyWith(isLoading: true);
+    bool active() => ref.mounted && version == _loadVersion;
+    void failure(bool events) {
+      if (!active()) return;
+      if (events) {
+        _eventsWaiting = false;
+      } else {
+        _labelsWaiting = false;
+      }
+      final target = events ? '予定' : '色ラベル';
+      final hasLoaded = events ? state.hasLoadedEvents : state.hasLoadedLabels;
+      _receiveStatus(
+        events: events,
+        error: hasLoaded
+            ? '$targetを自動更新できませんでした。再試行してください'
+            : '$targetはまだ取得できていません。再試行してください',
+      );
+    }
+
+    try {
+      _eventsSubscription = ref
+          .read(watchCalendarEventsUsecaseProvider)!
+          .execute(groupId)
+          .listen((series) {
+            if (!active()) return;
+            try {
+              final expanded = _expand(series, state.selectedDate);
+              _series = series;
+              _eventsWaiting = false;
+              state = state.copyWith(events: expanded, hasLoadedEvents: true);
+              _receiveStatus(events: true);
+            } catch (_) {
+              failure(true);
+            }
+          }, onError: (Object _) => failure(true));
+    } catch (_) {
+      failure(true);
+    }
+    try {
+      _labelsSubscription = ref
+          .read(watchCalendarLabelsUsecaseProvider)!
+          .execute(groupId)
+          .listen((labels) {
+            if (!active()) return;
+            _labelsWaiting = false;
+            _receivedLabels = labels;
+            state = state.copyWith(
+              labels: _reordering ? null : labels,
+              hasLoadedLabels: true,
+            );
+            _receiveStatus(events: false);
+          }, onError: (Object _) => failure(false));
+    } catch (_) {
+      failure(false);
+    }
+  }
+
+  void _receiveStatus({required bool events, String error = ''}) {
+    final eventError = events ? error : state.eventLoadError;
+    final labelError = events ? state.labelLoadError : error;
+    state = state.copyWith(
+      eventLoadError: eventError,
+      labelLoadError: labelError,
+      loadError: [
+        eventError,
+        labelError,
+      ].where((value) => value.isNotEmpty).join('\n'),
+      isLoading: _eventsWaiting || _labelsWaiting,
+    );
   }
 
   Future<bool> _mutate(Future<void> Function() action) async {
@@ -77,7 +177,7 @@ class CalendarNotifier extends _$CalendarNotifier {
       return false;
     }
     if (!ref.mounted) return true;
-    await load();
+    if (!state.isWatching) await load();
     if (ref.mounted) state = state.copyWith(isSaving: false);
     return true;
   }
@@ -222,6 +322,8 @@ class CalendarNotifier extends _$CalendarNotifier {
       for (var index = 0; index < ordered.length; index++)
         ordered[index].copyWith(sortOrder: index),
     ];
+    _reordering = true;
+    _receivedLabels = null;
     state = state.copyWith(labels: updated);
     final success = await _mutate(() async {
       await ref
@@ -235,7 +337,14 @@ class CalendarNotifier extends _$CalendarNotifier {
             },
           );
     });
-    if (!success && ref.mounted) state = state.copyWith(labels: previous);
+    _reordering = false;
+    if (ref.mounted) {
+      if (_receivedLabels != null) {
+        state = state.copyWith(labels: _receivedLabels);
+      } else if (!success) {
+        state = state.copyWith(labels: previous);
+      }
+    }
     return success;
   }
 
