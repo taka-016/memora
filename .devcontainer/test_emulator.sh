@@ -3,6 +3,10 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 compose=(docker compose -f compose.yaml)
+if "${compose[@]}" config --services | grep -qx emulator; then
+  printf '%s\n' '通常起動にエミュレータが含まれています' >&2
+  exit 1
+fi
 "${compose[@]}" up --build --detach --wait --wait-timeout 300 emulator
 unset ADB_SERVER_SOCKET
 serial=localfilesystem:/root/.android/memora-adb/adbd.sock
