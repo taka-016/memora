@@ -7,9 +7,18 @@ if "${compose[@]}" config --services | grep -qx emulator; then
   printf '%s\n' '通常起動にエミュレータが含まれています' >&2
   exit 1
 fi
-"${compose[@]}" up --build --detach --wait --wait-timeout 300 emulator
 unset ADB_SERVER_SOCKET
 serial=localfilesystem:/root/.android/memora-adb/adbd.sock
+screenshot=''
+cleanup() {
+  if [[ -n "$screenshot" ]]; then
+    rm -f "$screenshot"
+  fi
+  adb disconnect "$serial" >/dev/null 2>&1 || true
+  "${compose[@]}" stop emulator
+}
+trap cleanup EXIT
+"${compose[@]}" up --build --detach --wait --wait-timeout 300 emulator
 adb connect "$serial"
 adb_command() {
   adb -s "$serial" "$@"
@@ -20,7 +29,6 @@ adb_command() {
 [[ -z "$(adb_command shell pm list packages com.google.android.gms)" ]]
 
 screenshot="$(mktemp)"
-trap 'rm -f "$screenshot"' EXIT
 adb_command exec-out screencap -p > "$screenshot"
 [[ "$(od -An -tx1 -N8 "$screenshot" | tr -d ' \n')" == 89504e470d0a1a0a ]]
 

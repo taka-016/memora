@@ -29,28 +29,30 @@ Memoraは、家族や友人などのグループで思い出を記録・整理�
 
 ### ヘッドレスAndroidエミュレータ
 
-Dev ContainerはDocker Composeで開発コンテナとAndroidエミュレータをまとめて起動・停止します。ホストはx86_64のLinux環境を使用し、Dockerから`/dev/kvm`へアクセスできるようにしてください。WSL2を使用する場合も、Docker Engineを動かす環境で`ls -l /dev/kvm`を確認します。
+Dev Containerは通常、開発コンテナだけを起動します。普段のADB・Flutterは実機への接続に使用し、エミュレータはテスト時だけ明示的に起動・接続します。
+
+エミュレータを使用するホストはx86_64のLinux環境を使用し、Dockerから`/dev/kvm`へアクセスできるようにしてください。WSL2を使用する場合も、Docker Engineを動かす環境で`ls -l /dev/kvm`を確認します。
 
 エミュレータはGoogleサービスを含まないAndroid 16（API 36）のAOSPイメージを使用し、画面なし・RAM 2GB・2コア・720×1280で動作します。エミュレータのコンテナはネットワークを持たず、外部通信を遮断します。SDKのダウンロードなど、イメージの初回ビルドにはインターネット接続が必要です。
 
-開発コンテナのADBサーバーから、共有Unixソケット経由でAndroid端末へ接続します。Androidの起動完了後に開発コンテナが起動するため、通常のADB・Flutterコマンドでオフライン版を操作できます。
+テスト用に手動で起動する場合は、リポジトリのルートから以下を実行します。開発コンテナのADBサーバーから、共有Unixソケット経由で接続します。実機も接続している場合に操作対象が曖昧にならないよう、エミュレータには端末IDを明示します。
 
 ```bash
-adb devices
-flutter devices
-./run.sh offline -d localfilesystem:/root/.android/memora-adb/adbd.sock
-adb exec-out screencap -p > /tmp/memora-screen.png
-```
-
-仮想端末のデータは`emulator-data-memora`ボリュームへ保存され、コンテナの再作成後も保持されます。エミュレータだけを停止・再開する場合は、リポジトリのルートから実行します。
-
-```bash
-docker compose -f .devcontainer/compose.yaml stop emulator
 docker compose -f .devcontainer/compose.yaml up -d --wait emulator
-adb connect localfilesystem:/root/.android/memora-adb/adbd.sock
+emulator_serial=localfilesystem:/root/.android/memora-adb/adbd.sock
+adb connect "$emulator_serial"
+./run.sh offline -d "$emulator_serial"
+adb -s "$emulator_serial" exec-out screencap -p > /tmp/memora-screen.png
 ```
 
-起動・ADB操作・画面取得・通信隔離・Flutter用ポート転送・再起動後のデータ保持は、`.devcontainer/test_emulator.sh`で検証できます。
+テストを終えたらエミュレータだけを切断・停止します。仮想端末のデータは`emulator-data-memora`ボリュームへ保存され、コンテナの再作成後も保持されます。
+
+```bash
+adb disconnect "$emulator_serial"
+docker compose -f .devcontainer/compose.yaml stop emulator
+```
+
+起動・ADB操作・画面取得・通信隔離・Flutter用ポート転送・再起動後のデータ保持は、`.devcontainer/test_emulator.sh`で検証できます。このスクリプトはエミュレータを起動・接続し、成功・失敗にかかわらず終了時にエミュレータだけを切断・停止します。
 
 ### Google Cloud Platform API設定
 

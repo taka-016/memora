@@ -23,11 +23,9 @@ services:
       - tmux-config:/root/.config/tmux
     ports:
       - '2222:22'
-    depends_on:
-      emulator:
-        condition: service_healthy
 
   emulator:
+    profiles: [test]
     build:
       context: emulator
     network_mode: none

@@ -21,5 +21,3 @@ else
     echo "sshdの起動に失敗しました"
   fi
 fi
-
-adb connect localfilesystem:/root/.android/memora-adb/adbd.sock

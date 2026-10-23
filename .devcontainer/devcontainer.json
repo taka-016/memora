@@ -38,8 +38,7 @@
     "dockerComposeFile": "compose.yaml",
     "service": "devcontainer",
     "runServices": [
-        "devcontainer",
-        "emulator"
+        "devcontainer"
     ],
     "shutdownAction": "stopCompose"
 }
