@@ -27,6 +27,31 @@ Memoraは、家族や友人などのグループで思い出を記録・整理�
 
 ## 開発環境
 
+### ヘッドレスAndroidエミュレータ
+
+Dev ContainerはDocker Composeで開発コンテナとAndroidエミュレータをまとめて起動・停止します。ホストはx86_64のLinux環境を使用し、Dockerから`/dev/kvm`へアクセスできるようにしてください。WSL2を使用する場合も、Docker Engineを動かす環境で`ls -l /dev/kvm`を確認します。
+
+エミュレータはGoogleサービスを含まないAndroid 16（API 36）のAOSPイメージを使用し、画面なし・RAM 2GB・2コア・720×1280で動作します。エミュレータのコンテナはネットワークを持たず、外部通信を遮断します。SDKのダウンロードなど、イメージの初回ビルドにはインターネット接続が必要です。
+
+開発コンテナのADBサーバーから、共有Unixソケット経由でAndroid端末へ接続します。Androidの起動完了後に開発コンテナが起動するため、通常のADB・Flutterコマンドでオフライン版を操作できます。
+
+```bash
+adb devices
+flutter devices
+./run.sh offline -d localfilesystem:/root/.android/memora-adb/adbd.sock
+adb exec-out screencap -p > /tmp/memora-screen.png
+```
+
+仮想端末のデータは`emulator-data-memora`ボリュームへ保存され、コンテナの再作成後も保持されます。エミュレータだけを停止・再開する場合は、リポジトリのルートから実行します。
+
+```bash
+docker compose -f .devcontainer/compose.yaml stop emulator
+docker compose -f .devcontainer/compose.yaml up -d --wait emulator
+adb connect localfilesystem:/root/.android/memora-adb/adbd.sock
+```
+
+起動・ADB操作・画面取得・通信隔離・Flutter用ポート転送・再起動後のデータ保持は、`.devcontainer/test_emulator.sh`で検証できます。
+
 ### Google Cloud Platform API設定
 
 Google Cloud Consoleで以下のAPIを有効化し、対応するAPIキーを設定してください。

@@ -1,31 +1,6 @@
 {
     "name": "memora",
-    "build": {
-        "dockerfile": "Dockerfile",
-        "args": {
-            "TZ": "${localEnv:TZ:Asia/Tokyo}",
-            "CLAUDE_CODE_VERSION": "latest",
-            "CODEX_VERSION": "latest"
-        }
-    },
-    "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/${localWorkspaceFolderBasename},type=bind,consistency=cached",
-    "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
-    "mounts": [
-        "source=${localEnv:HOME}/.gitconfig,target=/root/.gitconfig,type=bind,consistency=cached",
-        "source=claude-global-memora,target=/root/.claude,type=volume",
-        "source=codex-global-memora,target=/root/.codex,type=volume",
-        "source=android-config-memora,target=/root/.android,type=volume",
-        "source=gradle-memora,target=/root/.gradle,type=volume",
-        "source=bashhistory-memora,target=/commandhistory,type=volume",
-        "source=ssh-host-keys-memora,target=/etc/ssh,type=volume",
-        "source=tmux-config-memora,target=/root/.config/tmux,type=volume"
-    ],
-    "runArgs": [
-        "--env-file",
-        ".devcontainer/.env",
-        "-p",
-        "2222:22"
-    ],
+    "workspaceFolder": "/workspaces/memora",
     "features": {
         "ghcr.io/devcontainers/features/github-cli:1.0": {},
         "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
@@ -59,5 +34,12 @@
     },
     "initializeCommand": "bash .devcontainer/initialize.sh",
     "postCreateCommand": "bash .devcontainer/setup.sh",
-    "postStartCommand": "bash .devcontainer/start.sh"
+    "postStartCommand": "bash .devcontainer/start.sh",
+    "dockerComposeFile": "compose.yaml",
+    "service": "devcontainer",
+    "runServices": [
+        "devcontainer",
+        "emulator"
+    ],
+    "shutdownAction": "stopCompose"
 }

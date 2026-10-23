@@ -1,0 +1,65 @@
+name: memora
+
+services:
+  devcontainer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        TZ: ${TZ:-Asia/Tokyo}
+        CLAUDE_CODE_VERSION: latest
+        CODEX_VERSION: latest
+    command: sleep infinity
+    env_file: .env
+    volumes:
+      - ..:/workspaces/memora:cached
+      - ${HOME}/.gitconfig:/root/.gitconfig:cached
+      - claude-global:/root/.claude
+      - codex-global:/root/.codex
+      - android-config:/root/.android
+      - gradle:/root/.gradle
+      - bashhistory:/commandhistory
+      - ssh-host-keys:/etc/ssh
+      - tmux-config:/root/.config/tmux
+    ports:
+      - '2222:22'
+    depends_on:
+      emulator:
+        condition: service_healthy
+
+  emulator:
+    build:
+      context: emulator
+    network_mode: none
+    devices:
+      - /dev/kvm:/dev/kvm
+    cpus: 2
+    mem_limit: 4g
+    stop_grace_period: 30s
+    volumes:
+      - android-config:/root/.android
+      - emulator-data:/var/lib/memora-emulator
+    healthcheck:
+      test: ['CMD-SHELL', 'test "$$(adb -s 127.0.0.1:5555 shell getprop sys.boot_completed 2>/dev/null | tr -d "\r")" = 1']
+      interval: 5s
+      timeout: 5s
+      start_period: 120s
+      retries: 36
+
+volumes:
+  claude-global:
+    name: claude-global-memora
+  codex-global:
+    name: codex-global-memora
+  android-config:
+    name: android-config-memora
+  gradle:
+    name: gradle-memora
+  bashhistory:
+    name: bashhistory-memora
+  ssh-host-keys:
+    name: ssh-host-keys-memora
+  tmux-config:
+    name: tmux-config-memora
+  emulator-data:
+    name: emulator-data-memora
