@@ -80,6 +80,8 @@
 
 ## 開発環境
 
+- devcontainerをCompose化し、KVMを使うAOSPエミュレータを同時起動する。ADB接続、ヘッドレス起動、外向き通信の遮断、再起動後のデータ保持を検証する。
+
 - KGP未対応の外部プラグイン（home_widget、workmanager_android）がbuilt-in Kotlin対応版に更新されたら対応する
 
 ## 全体
