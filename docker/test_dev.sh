@@ -16,13 +16,21 @@ services:
       - '127.0.0.1::22'
 YAML
 compose+=(-f "$override")
+export COMPOSE_PROJECT_NAME=memora-dev-check
+export COMPOSE_FILE="$PWD/compose.yaml"
+for config in "$@"; do
+  COMPOSE_FILE+=":$config"
+done
+COMPOSE_FILE+=":$override"
 cleanup() {
   "${compose[@]}" down --remove-orphans
   rm -f "$override"
 }
 trap cleanup EXIT
-"${compose[@]}" up --build --detach --wait --wait-timeout 120 dev
-"${compose[@]}" exec -T dev bash docker/setup.sh
+bash dev_up.sh
+setup_timestamp="$("${compose[@]}" exec -T dev stat -c %y /var/lib/memora/setup-complete)"
+bash dev_up.sh
+[[ "$("${compose[@]}" exec -T dev stat -c %y /var/lib/memora/setup-complete)" == "$setup_timestamp" ]]
 "${compose[@]}" exec -T dev bash -s <<'BASH'
 set -euo pipefail
 ssh-keygen -q -t ed25519 -N '' -f /tmp/memora-test-key
@@ -55,6 +63,8 @@ BASH
 fingerprint="$("${compose[@]}" exec -T dev ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub)"
 "${compose[@]}" exec -T dev bash -c 'echo memora-dev-check > /root/.android/memora-dev-check'
 "${compose[@]}" up --detach --force-recreate --wait --wait-timeout 120 dev
+bash dev_up.sh
+"${compose[@]}" exec -T dev test -f /var/lib/memora/setup-complete
 [[ "$("${compose[@]}" exec -T dev ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub)" == "$fingerprint" ]]
 [[ "$("${compose[@]}" exec -T dev cat /root/.android/memora-dev-check)" == memora-dev-check ]]
 "${compose[@]}" exec -T dev rm /root/.android/memora-dev-check
