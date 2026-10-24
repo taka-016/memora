@@ -2,12 +2,6 @@
 #
 # ホストにDocker Engine・Compose・Git・SSHクライアント・just 1.59.0を用意し、
 # ~/.gitconfigを設定する。WSL2でも利用できる。初回の構築にはインターネット接続が必要。
-# justの導入例（PATHの設定はシェルの設定ファイルにも追加する）:
-#   mkdir -p "$HOME/.local/bin"
-#   curl -fsSL https://just.systems/install.sh -o /tmp/install-just.sh
-#   bash /tmp/install-just.sh --tag 1.59.0 --to "$HOME/.local/bin"
-#   rm /tmp/install-just.sh
-#   export PATH="$HOME/.local/bin:$PATH"
 #
 # ホストでjust dev-up → just dev-shellを実行し、以降のアプリ操作は開発コンテナで行う。
 # 開発コンテナにはjustが含まれる。作業ディレクトリは/workspaces/memora。

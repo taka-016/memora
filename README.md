@@ -27,6 +27,18 @@ Memoraは、家族や友人などのグループで思い出を記録・整理�
 
 ## 開発
 
+ホストにjust 1.59.0をインストールしてください。開発コンテナにはjustが含まれます。
+
+```bash
+mkdir -p "$HOME/.local/bin"
+curl -fsSL https://just.systems/install.sh -o /tmp/install-just.sh
+bash /tmp/install-just.sh --tag 1.59.0 --to "$HOME/.local/bin"
+rm /tmp/install-just.sh
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+PATHの設定はシェルの設定ファイルにも追加してください。
+
 環境の準備・設定・操作は[justfile](./justfile)を参照してください。`just`または`just --list`でタスク一覧を表示できます。
 
 ## ライセンス
