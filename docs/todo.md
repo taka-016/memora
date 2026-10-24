@@ -80,6 +80,8 @@
 
 ## 開発環境
 
+- Dev Containersを廃止してCompose＋SSHへ移行する。CLI導入、初期化・セットアップ・起動処理、既存の鍵・設定・ボリューム、テスト時だけ使うエミュレータを引き継ぎ、ビルド・SSH接続・再作成後の保持と全体チェックを検証する。
+
 - KGP未対応の外部プラグイン（home_widget、workmanager_android）がbuilt-in Kotlin対応版に更新されたら対応する
 
 ## 全体
