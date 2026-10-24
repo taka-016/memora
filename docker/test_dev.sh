@@ -10,6 +10,8 @@ override="$(mktemp --suffix=.yaml)"
 cat > "$override" <<'YAML'
 services:
   dev:
+    environment:
+      MEMORA_SSH_ENV_CHECK: 'memora ssh check'
     ports: !override
       - '127.0.0.1::22'
 YAML
@@ -28,6 +30,7 @@ cat /tmp/memora-test-key.pub >> /root/.ssh/authorized_keys
 ssh -i /tmp/memora-test-key -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@127.0.0.1 '
   set -e
   cd /workspaces/memora
+  test "$MEMORA_SSH_ENV_CHECK" = "memora ssh check"
   flutter --version
   sdkmanager --list_installed >/dev/null
   gh --version
@@ -39,6 +42,12 @@ ssh -i /tmp/memora-test-key -o StrictHostKeyChecking=no -o UserKnownHostsFile=/d
   command -v flutterfire
   command -v very_good
 '
+ssh -tt -i /tmp/memora-test-key -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@127.0.0.1 <<'LOGIN'
+set -e
+test "$MEMORA_SSH_ENV_CHECK" = 'memora ssh check'
+command -v flutter
+exit
+LOGIN
 BASH
 fingerprint="$("${compose[@]}" exec -T dev ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub)"
 "${compose[@]}" exec -T dev bash -c 'echo memora-dev-check > /root/.android/memora-dev-check'
