@@ -72,6 +72,15 @@ fi
   };
 
   for (final MapEntry(key: script, value: command) in commands.entries) {
+    test('$scriptは空白やシェルの特殊文字を含む追加引数をそのまま渡す', () {
+      final arguments = ['--device-id', r'端末 $(echo 実行しない) "引用"; *'];
+
+      final result = runScript(script, ['offline', ...arguments]);
+
+      expect(result.exitCode, 0, reason: result.stderr as String);
+      expect(commandLog.readAsLinesSync(), containsAllInOrder(arguments));
+    });
+
     test('$scriptは指定したオフラインモードで対象コマンドを実行する', () {
       final result = runScript(script, ['offline']);
 
