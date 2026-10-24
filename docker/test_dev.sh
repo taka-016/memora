@@ -27,10 +27,11 @@ trap cleanup EXIT
 set -euo pipefail
 ssh-keygen -q -t ed25519 -N '' -f /tmp/memora-test-key
 cat /tmp/memora-test-key.pub >> /root/.ssh/authorized_keys
-ssh -i /tmp/memora-test-key -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@127.0.0.1 '
+ssh -n -i /tmp/memora-test-key -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@127.0.0.1 '
   set -e
   cd /workspaces/memora
   test "$MEMORA_SSH_ENV_CHECK" = "memora ssh check"
+  MEMORA_SSH_ENV_CHECK=override bash -c "test \"\$MEMORA_SSH_ENV_CHECK\" = override"
   flutter --version
   sdkmanager --list_installed >/dev/null
   gh --version
