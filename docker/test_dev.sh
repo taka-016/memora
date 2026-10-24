@@ -35,6 +35,7 @@ ssh -n -i /tmp/memora-test-key -o StrictHostKeyChecking=no -o UserKnownHostsFile
   bash -lc "command -v flutter"
   flutter --version
   sdkmanager --list_installed >/dev/null
+  GIT_CONFIG_GLOBAL=/dev/null git -C /workspaces/memora status --porcelain >/dev/null
   gh --version
   docker version --format "{{.Server.Os}}"
   docker compose version
