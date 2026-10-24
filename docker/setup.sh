@@ -9,3 +9,5 @@ flutter doctor
 flutter --version
 flutter pub get
 dart pub global activate very_good_cli
+mkdir -p /var/lib/memora
+touch /var/lib/memora/setup-complete

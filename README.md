@@ -33,17 +33,15 @@ Memoraは、家族や友人などのグループで思い出を記録・整理�
 
 旧環境から切り替える場合は、ホストの別ターミナルで旧開発コンテナを停止し、2222番ポートを空けます。既存ボリュームを保持したまま切り替えます。旧環境の`.devcontainer/.env`がある場合は、内容を保持して`docker/.env`へ移してから初期化してください。
 
-初回はホストのリポジトリルートで、環境変数ファイルとSSH鍵を準備して起動します。
+ホストのリポジトリルートで、起動用シェルを実行します。初回も通常の起動も同じコマンドです。
 
 ```bash
-bash docker/initialize.sh
-docker compose up -d --build dev
-docker compose exec dev bash docker/setup.sh
+./dev_up.sh
 ```
 
 `initialize.sh`は`docker/.env`がなければ作成し、SSH鍵を準備します。既存の環境変数ファイルや鍵は上書きしません。コンテナへ渡す環境変数は、Git管理対象外の`docker/.env`に設定します。アプリのコード生成用に使うルートの`.env`とは用途が異なります。
 
-`setup.sh`はCLIの初期設定、Flutterの状態確認、依存取得、テスト用CLIの導入を行います。初回と開発コンテナを作り直したときに実行してください。通常の再起動では実行不要です。Flutter・Android SDK・JDK・GitHub CLI・Docker CLI・Compose・BuildxなどはDockerfileで導入します。
+`dev_up.sh`は初期化、イメージのビルド、起動完了待ちを行い、未セットアップのコンテナでは`setup.sh`を実行します。`setup.sh`はCLIの初期設定、Flutterの状態確認、依存取得、テスト用CLIの導入を行います。初回とコンテナを作り直したときに自動実行し、通常の再起動では繰り返しません。セットアップ失敗時は、次の起動で再試行します。必要に応じて`docker compose exec dev bash docker/setup.sh`で手動実行もできます。Flutter・Android SDK・JDK・GitHub CLI・Docker CLI・Compose・BuildxなどはDockerfileで導入します。
 
 コンテナへ入る方法は、Docker経由またはSSHを選べます。
 
@@ -56,7 +54,7 @@ Docker経由の作業ディレクトリは`/workspaces/memora`です。SSH接続
 
 ```bash
 docker compose stop dev
-docker compose up -d dev
+./dev_up.sh
 ```
 
 SSHホスト鍵、Android設定、Gradleキャッシュ、CLI設定、シェル履歴などの既存ボリューム名を維持しています。SSHクライアント鍵も既存の`devcontainer_keys`を引き続き使います。開発コンテナからのDocker操作は、ホストのDockerソケットを利用します。
