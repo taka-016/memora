@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-script_dir="$(cd "$(dirname "$0")" && pwd)"
+script_dir="$(cd "$(dirname "$0")/../.." && pwd)"
 default_key_dir="${script_dir}/ssh_keys"
 key_path="${1:-${default_key_dir}/memora_ed25519}"
 

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-source "$ROOT_DIR/tools/ci/app_mode_arguments.sh"
+source "$ROOT_DIR/scripts/app/app_mode_arguments.sh"
 cd "$ROOT_DIR"
 
 app_mode="$(resolve_memora_app_mode "${1:-}")"

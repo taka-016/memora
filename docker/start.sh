@@ -5,7 +5,7 @@ mkdir -p /run/sshd /root/.ssh /run/memora /etc/ssh/sshd_config.d
 chmod 700 /root/.ssh /run/memora
 key_path=/workspaces/memora/ssh_keys/memora_ed25519.pub
 if [[ ! -f "$key_path" ]]; then
-  printf '%s\n' 'SSH公開鍵がありません。ホストで bash docker/initialize.sh を実行してください。' >&2
+  printf '%s\n' 'SSH公開鍵がありません。ホストで just dev-up を実行してください。' >&2
   exit 1
 fi
 cp "$key_path" /root/.ssh/authorized_keys
