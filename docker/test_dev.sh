@@ -32,6 +32,7 @@ ssh -n -i /tmp/memora-test-key -o StrictHostKeyChecking=no -o UserKnownHostsFile
   cd /workspaces/memora
   test "$MEMORA_SSH_ENV_CHECK" = "memora ssh check"
   MEMORA_SSH_ENV_CHECK=override bash -c "test \"\$MEMORA_SSH_ENV_CHECK\" = override"
+  bash -lc "command -v flutter"
   flutter --version
   sdkmanager --list_installed >/dev/null
   gh --version
