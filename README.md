@@ -31,15 +31,13 @@ Memoraは、家族や友人などのグループで思い出を記録・整理�
 
 開発環境はDocker Composeで起動します。ホストにDocker Engine・Compose・Git・SSHクライアントを用意し、`~/.gitconfig`を設定してください。WSL2でも利用できます。
 
-ホストのリポジトリルートで、起動用シェルを実行します。初回も通常の起動も同じコマンドです。
+ホストのリポジトリルートで起動します。
 
 ```bash
 ./dev_up.sh
 ```
 
-`initialize.sh`は`docker/.env`がなければ作成し、SSH鍵を準備します。既存の環境変数ファイルや鍵は上書きしません。コンテナへ渡す環境変数は、Git管理対象外の`docker/.env`に設定します。アプリのコード生成用に使うルートの`.env`とは用途が異なります。
-
-`dev_up.sh`は初期化、イメージのビルド、起動完了待ちを行い、未セットアップのコンテナでは`setup.sh`を実行します。`setup.sh`はCLIの初期設定、Flutterの状態確認、依存取得、テスト用CLIの導入を行います。初回とコンテナを作り直したときに自動実行し、通常の再起動では繰り返しません。セットアップ失敗時は、次の起動で再試行します。必要に応じて`docker compose exec dev bash docker/setup.sh`で手動実行もできます。Flutter・Android SDK・JDK・GitHub CLI・Docker CLI・Compose・BuildxなどはDockerfileで導入します。
+コンテナへ渡す環境変数は、初回起動時に作成される`docker/.env`に設定します。アプリのコード生成用の`.env`とは別です。初回のビルド・セットアップにはインターネット接続が必要です。
 
 コンテナへ入る方法は、Docker経由またはSSHを選べます。
 
@@ -48,26 +46,24 @@ docker compose exec dev bash
 ssh -i ssh_keys/memora_ed25519 -p 2222 root@localhost
 ```
 
-Docker経由の作業ディレクトリは`/workspaces/memora`です。SSH接続後はこのディレクトリへ移動してください。VS Codeを使う場合もRemote-SSHで接続できます。
+作業ディレクトリは`/workspaces/memora`です。SSH接続後はこのディレクトリへ移動してください。VS CodeではRemote-SSHを使用できます。
+
+停止・再起動はホストで実行します。
 
 ```bash
 docker compose stop dev
 ./dev_up.sh
 ```
 
-SSHホスト鍵、Android設定、Gradleキャッシュ、CLI設定、シェル履歴などの既存ボリューム名を維持しています。SSHクライアント鍵はGit管理対象外の`ssh_keys/memora_ed25519`に保存します。開発コンテナからのDocker操作は、ホストのDockerソケットを利用します。
-
-環境のビルド・セットアップ・SSH接続・各CLI・Docker接続・再作成後の保持は、ホストから`bash docker/test_dev.sh`で検証できます。検証専用の開発コンテナを使い、SSHには空いているローカルポートを割り当てます。
+開発環境の動作確認は、ホストから`bash docker/test_dev.sh`を実行します。
 
 ### ヘッドレスAndroidエミュレータ
 
-通常は開発コンテナだけを起動します。普段のADB・Flutterは実機への接続に使用し、エミュレータはテスト時だけ明示的に起動・接続します。
+必要なときだけ起動します。ホストはx86_64のLinux環境とし、Dockerから`/dev/kvm`へアクセスできるようにしてください。WSL2でもDocker Engineを動かす環境で`ls -l /dev/kvm`を確認します。
 
-エミュレータを使用するホストはx86_64のLinux環境を使用し、Dockerから`/dev/kvm`へアクセスできるようにしてください。WSL2を使用する場合も、Docker Engineを動かす環境で`ls -l /dev/kvm`を確認します。
+外部通信とGoogleサービスは利用できないため、オフライン版の確認に使用します。初回ビルドにはインターネット接続が必要です。
 
-エミュレータはGoogleサービスを含まないAndroid 16（API 36）のAOSPイメージを使用し、画面なし・RAM 2GB・2コア・720×1280で動作します。エミュレータのコンテナはネットワークを持たず、外部通信を遮断します。SDKのダウンロードなど、イメージの初回ビルドにはインターネット接続が必要です。
-
-テスト用に手動で起動する場合は、リポジトリのルートから以下を実行します。開発コンテナのADBサーバーから、共有Unixソケット経由で接続します。実機も接続している場合に操作対象が曖昧にならないよう、エミュレータには端末IDを明示します。
+開発コンテナのリポジトリルートで実行します。実機の誤操作を避けるため、端末IDを指定してください。
 
 ```bash
 docker compose up -d --wait emulator
@@ -77,14 +73,14 @@ adb connect "$emulator_serial"
 adb -s "$emulator_serial" exec-out screencap -p > /tmp/memora-screen.png
 ```
 
-テストを終えたらエミュレータだけを切断・停止します。仮想端末のデータは`emulator-data-memora`ボリュームへ保存され、コンテナの再作成後も保持されます。
+`run.sh`を終了してから、エミュレータを切断・停止します。端末内のデータは次回起動時も残ります。
 
 ```bash
 adb disconnect "$emulator_serial"
 docker compose stop emulator
 ```
 
-起動・ADB操作・画面取得・通信隔離・Flutter用ポート転送・再起動後のデータ保持は、`bash docker/test_emulator.sh`で検証できます。このスクリプトはエミュレータを起動・接続し、成功・失敗にかかわらず終了時にエミュレータだけを切断・停止します。
+エミュレータ環境の動作確認は、`bash docker/test_emulator.sh`を実行します。終了時にエミュレータは停止します。
 
 ### Google Cloud Platform API設定
 
@@ -136,13 +132,9 @@ Google Cloud Consoleで以下のAPIを有効化し、対応するAPIキーを設
 
 ### アプリモード指定
 
-Androidではオンライン版とオフライン版を別アプリとしてビルドします。オンライン版のapplication IDは`com.example.memora`、オフライン版は`com.example.memora.offline`です。Androidのアプリサンドボックスも分かれるため、SQLite、SharedPreferences、認証状態、WorkManager、Androidウィジェットの設定とキャッシュは共有されません。
+実行、debug APKビルド、release APKビルド、テストは、各スクリプトの第1引数に`online`または`offline`を指定します。省略時は`online`です。両方を同じ端末にインストールできますが、データは共有されません。機能の違いは[ユースケース図](./docs/usecase_diagram.md)を参照してください。
 
-- `online`: オンラインモードを強制
-- `offline`: オフラインモードを強制
-- 未指定: `online`として実行
-
-実行、debug APKビルド、release APKビルド、テストは、各スクリプトの第1引数に`online`または`offline`を指定します。省略時は`online`です。テストはフォーマット・コード生成・解析も行う`check.sh`から実行します。
+テストはフォーマット・コード生成・解析も行う`check.sh`から実行します。
 
 ```bash
 ./run.sh
@@ -161,8 +153,6 @@ Androidではオンライン版とオフライン版を別アプリとしてビ�
 ./check.sh offline test/unit/
 ```
 
-各スクリプトはflavorと`MEMORA_APP_MODE`を指定モードから一貫して設定します。`online`と`offline`以外は受け付けません。
-
 成果物は次のパスへ出力されます。
 
 - オンライン版: `build/app/outputs/flutter-apk/memora-<version>-online.apk`
@@ -175,7 +165,7 @@ adb install -r build/app/outputs/flutter-apk/memora-1.0.0-online.apk
 adb install -r build/app/outputs/flutter-apk/memora-1.0.0-offline.apk
 ```
 
-一方だけを初期化またはアンインストールする場合は、対象のapplication IDを指定します。もう一方のデータとAndroidウィジェット更新には影響しません。
+初期化またはアンインストールする場合は、対象のapplication IDを指定します。対象アプリのデータは削除されます。
 
 ```bash
 adb shell pm clear com.example.memora
@@ -183,12 +173,6 @@ adb shell pm clear com.example.memora.offline
 adb uninstall com.example.memora
 adb uninstall com.example.memora.offline
 ```
-
-不明なモードは設定誤りとして起動・テスト・ビルドを失敗させます。オンライン版だけが既存のFirebase設定を使用し、オフライン版のビルドは別application IDのFirebase設定を要求しません。`MAPS_API_KEY`とAndroid Manifestの権限定義は共通ですが、オフラインでは外部SDKを初期化しません。
-
-モード判定は各Factoryと起動処理に接続されています。オフラインでは外部SDKを初期化せず、端末時計を使用します。ログはdebug時だけ端末に出力し、releaseでは保存・送信しません。
-
-オフラインでは端末内の利用者IDと本人情報を保存・復元し、ログインを経由せず通常の画面へ起動します。地図・訪問場所管理・場所検索・現在地・共有・招待とアカウント設定は利用できません。設定画面でモード、保存先、データ消失条件を確認できます。業務データはアプリ内部のSQLiteへ保存し、本人情報の編集内容も再起動後に復元します。場所付きの保存要求は拒否します。設定画面では、パスワードで認証付き暗号化した論理バックアップをシステムファイル選択画面へ保存し、全件置換で復元できます。
 
 ### Firebase設定
 
@@ -220,13 +204,7 @@ adb uninstall com.example.memora.offline
    ./setup_firebase.sh
    ```
 
-   スクリプトが実施する内容:
-   - Firebase CLIとFlutterFire CLIのインストール（未導入時）
-   - Firebaseログイン手順の案内
-   - Flutter向けFirebase設定（`flutterfire configure`）
-   - `firebase.json`へのFirestoreインデックス設定追加
-   - Firebaseプロジェクトエイリアス設定
-   - 必要なFirestoreインデックスのデプロイ
+   画面の案内に従ってログインし、対象のFirebaseプロジェクトを選択してください。この操作でFirestoreインデックスもデプロイされます。
 
 ## ライセンス
 
