@@ -31,8 +31,6 @@ Memoraは、家族や友人などのグループで思い出を記録・整理�
 
 開発環境はDocker Composeで起動します。ホストにDocker Engine・Compose・Git・SSHクライアントを用意し、`~/.gitconfig`を設定してください。WSL2でも利用できます。
 
-旧環境から切り替える場合は、ホストの別ターミナルで旧開発コンテナを停止し、2222番ポートを空けます。既存ボリュームを保持したまま切り替えます。旧環境の`.devcontainer/.env`がある場合は、内容を保持して`docker/.env`へ移してから初期化してください。
-
 ホストのリポジトリルートで、起動用シェルを実行します。初回も通常の起動も同じコマンドです。
 
 ```bash
@@ -47,7 +45,7 @@ Memoraは、家族や友人などのグループで思い出を記録・整理�
 
 ```bash
 docker compose exec dev bash
-ssh -i devcontainer_keys/devcontainer_ed25519 -p 2222 root@localhost
+ssh -i ssh_keys/memora_ed25519 -p 2222 root@localhost
 ```
 
 Docker経由の作業ディレクトリは`/workspaces/memora`です。SSH接続後はこのディレクトリへ移動してください。VS Codeを使う場合もRemote-SSHで接続できます。
@@ -57,7 +55,7 @@ docker compose stop dev
 ./dev_up.sh
 ```
 
-SSHホスト鍵、Android設定、Gradleキャッシュ、CLI設定、シェル履歴などの既存ボリューム名を維持しています。SSHクライアント鍵も既存の`devcontainer_keys`を引き続き使います。開発コンテナからのDocker操作は、ホストのDockerソケットを利用します。
+SSHホスト鍵、Android設定、Gradleキャッシュ、CLI設定、シェル履歴などの既存ボリューム名を維持しています。SSHクライアント鍵はGit管理対象外の`ssh_keys/memora_ed25519`に保存します。開発コンテナからのDocker操作は、ホストのDockerソケットを利用します。
 
 環境のビルド・セットアップ・SSH接続・各CLI・Docker接続・再作成後の保持は、ホストから`bash docker/test_dev.sh`で検証できます。検証専用の開発コンテナを使い、SSHには空いているローカルポートを割り当てます。
 

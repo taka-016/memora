@@ -60,7 +60,7 @@ repomix-output.xml
 mcp.json
 .github/prompts
 *.bk
-devcontainer_keys
+ssh_keys
 test/.test_optimizer.dart
 coverage/
 tools/migrations/*.json
