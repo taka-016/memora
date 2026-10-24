@@ -41,19 +41,19 @@ ADRには維持する設計判断として、採用する方式・保証範囲�
 
 ## 主要コマンド
 
-- `./run.sh [online|offline]` - アプリケーションを実行（デフォルト: online）
-- `./build.sh [online|offline]` - debug APKをビルド（デフォルト: online）
-- `./release.sh [online|offline]` - release APKをビルド（デフォルト: online）
+- `just run [online|offline]` - アプリケーションを実行（デフォルト: online）
+- `just build [online|offline]` - debug APKをビルド（デフォルト: online）
+- `just release [online|offline]` - release APKをビルド（デフォルト: online）
 - `flutter pub get` - 依存関係をインストール
 - `flutter clean` - ビルドキャッシュをクリア
 - `dart run build_runner build` - モックやコード生成を実行
-- `./check.sh [online|offline]` - フォーマット・解析・テストを一括実行（デフォルト: online）
+- `just check [online|offline]` - フォーマット・解析・テストを一括実行（デフォルト: online）
 - `flutter analyze` - 静的コード解析
 - `dart format .` - コードフォーマット
-- `./check.sh online test/unit/` - オンライン版のユニットテストのみ実行
-- `./check.sh offline test/integration/` - オフライン版のインテグレーションテストを実行
+- `just check online test/unit/` - オンライン版のユニットテストのみ実行
+- `just check offline test/integration/` - オフライン版のインテグレーションテストを実行
 - `tree lib test` - アプリケーションとテストのディレクトリ構造を表示
-- `./release.sh [online|offline]` - `memora-<version>-<mode>.apk`を作成（デフォルト: online）
+- `just release [online|offline]` - `memora-<version>-<mode>.apk`を作成（デフォルト: online）
 
 ## 基本ルール
 
@@ -61,7 +61,7 @@ ADRには維持する設計判断として、採用する方式・保証範囲�
 - コメントやテスト名、ドキュメント等は日本語で記載すること
 - データ整合性の水準を引き上げる対応は、AIの判断だけで追加しないこと。対象の不整合の発生条件と影響、および対応による性能・通信・実装の複雑性への影響を説明し、ユーザーの判断を仰いでから実装すること
 - 差分が発生する作業を行う場合、現在がmainブランチなら`AGENTS.md`の「ブランチ名」に従って新しく作業用ブランチを切り、必ずその上で進めること
-- 全体のテストを実行するときは`flutter test`ではなく`./check.sh`を使用すること
+- 全体のテストを実行するときは`flutter test`ではなく`just check`を使用すること
 - `AGENTS.md`の「MCP使用ルール」に従い、必要に応じてMCPを活用すること
 - `docs/todo.md`の項目はチェックボックス形式である必要はない（通常の箇条書きでも可）
 - `todo`を作成・整理する作業自体を表す`todo`項目は作成しないこと

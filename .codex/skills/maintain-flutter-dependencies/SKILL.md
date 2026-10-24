@@ -46,7 +46,7 @@ flutter pub outdated
 - `android/app/build.gradle.kts`
   - Java、Kotlin JVM target、NDK、compileSdk、targetSdk、ネイティブ依存
 
-更新前に `./check.sh` と、オンライン・オフライン両方のdebug APKビルドを実行する。既存の失敗やログがある場合は更新起因と混同せず、結果を記録してから進める。
+更新前に `just check` と、オンライン・オフライン両方のdebug APKビルドを実行する。既存の失敗やログがある場合は更新起因と混同せず、結果を記録してから進める。
 
 ```bash
 flutter build apk --debug --flavor online --dart-define=MEMORA_APP_MODE=online
@@ -116,19 +116,19 @@ Flutter更新後のAndroidテンプレート差分が必要なら、同じFlutte
 ```bash
 flutter pub get
 flutter pub outdated
-./check.sh
+just check
 flutter build apk --debug --flavor online --dart-define=MEMORA_APP_MODE=online
 flutter build apk --debug --flavor offline --dart-define=MEMORA_APP_MODE=offline
 ```
 
 加えて次を確認する。
 
-- `./check.sh` にエラー、予期しないExceptionログ、エラーログがない。
+- `just check` にエラー、予期しないExceptionログ、エラーログがない。
 - Androidビルドが更新後のGradle Wrapper、AGP、Kotlin、JDK、SDK、NDKを実際に使用して成功する。
 - Dockerが利用可能なら検証専用の明示的なタグを付けて `docker/Dockerfile` をビルドし、少なくともFlutterとAndroid SDKの導入が成功する。
 - 検証用Dockerイメージ内の確認がすべて成功したら、結果を記録した直後に `docker image rm <検証専用タグ>` でそのイメージだけを削除する。`docker image prune` や `docker system prune` など、対象を広げる削除コマンドは使わない。
 - Dockerをビルドできない環境では、Dockerfileの指定値とAndroid側の整合を静的に確認し、未実施の検証を明記する。
-- 署名情報が利用できる場合は `./tools/ci/release_android_apk.sh` も実行する。利用できない場合はdebug APK成功をAndroid検証とする。
+- 署名情報が利用できる場合は `just release` も実行する。利用できない場合はdebug APK成功をAndroid検証とする。
 
 Flutterを一時SDKで検証した場合も、最終的なコマンド結果が `docker/Dockerfile` に指定した版と一致することを確認する。検証失敗を残したまま完了しない。
 

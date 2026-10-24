@@ -2,8 +2,8 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
-const _releaseScriptPath = 'tools/ci/release_android_apk.sh';
-const _appModeArgumentsScriptPath = 'tools/ci/app_mode_arguments.sh';
+const _releaseScriptPath = 'scripts/app/release_android_apk.sh';
+const _appModeArgumentsScriptPath = 'scripts/app/app_mode_arguments.sh';
 
 void main() {
   late Directory testProject;
@@ -14,7 +14,7 @@ void main() {
 
     return Process.runSync(
       'bash',
-      ['tools/ci/release_android_apk.sh', ...arguments],
+      ['scripts/app/release_android_apk.sh', ...arguments],
       workingDirectory: testProject.path,
       environment: environment,
     );
@@ -24,12 +24,12 @@ void main() {
     testProject = Directory.systemTemp.createTempSync(
       'memora_release_android_apk_test_',
     );
-    Directory('${testProject.path}/tools/ci').createSync(recursive: true);
+    Directory('${testProject.path}/scripts/app').createSync(recursive: true);
     Directory('${testProject.path}/bin').createSync(recursive: true);
     File(_releaseScriptPath)
-        .copySync('${testProject.path}/tools/ci/release_android_apk.sh');
+        .copySync('${testProject.path}/scripts/app/release_android_apk.sh');
     File(_appModeArgumentsScriptPath)
-        .copySync('${testProject.path}/tools/ci/app_mode_arguments.sh');
+        .copySync('${testProject.path}/scripts/app/app_mode_arguments.sh');
     File('${testProject.path}/pubspec.yaml')
         .writeAsStringSync('version: 1.2.3+4\n');
 

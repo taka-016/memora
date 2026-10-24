@@ -2,8 +2,8 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
-const _checkScriptPath = 'check.sh';
-const _appModeArgumentsScriptPath = 'tools/ci/app_mode_arguments.sh';
+const _checkScriptPath = 'scripts/app/check.sh';
+const _appModeArgumentsScriptPath = 'scripts/app/app_mode_arguments.sh';
 
 void main() {
   late Directory testProject;
@@ -16,8 +16,8 @@ void main() {
     environment['TMPDIR'] = '${testProject.path}/tmp';
 
     return Process.runSync(
-      'bash',
-      ['check.sh', ...arguments],
+      'just',
+      ['check', ...arguments],
       workingDirectory: testProject.path,
       environment: environment,
     );
@@ -27,10 +27,11 @@ void main() {
     testProject = Directory.systemTemp.createTempSync('memora_check_test_');
     Directory('${testProject.path}/bin').createSync(recursive: true);
     Directory('${testProject.path}/tmp').createSync(recursive: true);
-    Directory('${testProject.path}/tools/ci').createSync(recursive: true);
-    File(_checkScriptPath).copySync('${testProject.path}/check.sh');
+    Directory('${testProject.path}/scripts/app').createSync(recursive: true);
+    File('justfile').copySync('${testProject.path}/justfile');
+    File(_checkScriptPath).copySync('${testProject.path}/$_checkScriptPath');
     File(_appModeArgumentsScriptPath)
-        .copySync('${testProject.path}/tools/ci/app_mode_arguments.sh');
+        .copySync('${testProject.path}/scripts/app/app_mode_arguments.sh');
     commandLog = File('${testProject.path}/commands.log');
 
     for (final command in ['dart', 'flutter']) {

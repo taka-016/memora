@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/../.."
 compose=(docker compose -p memora-dev-check -f compose.yaml)
 for config in "$@"; do
   compose+=(-f "$config")
@@ -27,9 +27,9 @@ cleanup() {
   rm -f "$override"
 }
 trap cleanup EXIT
-bash dev_up.sh
+just dev-up
 setup_timestamp="$("${compose[@]}" exec -T dev stat -c %y /var/lib/memora/setup-complete)"
-bash dev_up.sh
+just dev-up
 [[ "$("${compose[@]}" exec -T dev stat -c %y /var/lib/memora/setup-complete)" == "$setup_timestamp" ]]
 "${compose[@]}" exec -T dev bash -s <<'BASH'
 set -euo pipefail
@@ -41,6 +41,8 @@ ssh -n -i /tmp/memora-test-key -o StrictHostKeyChecking=no -o UserKnownHostsFile
   test "$MEMORA_SSH_ENV_CHECK" = "memora ssh check"
   MEMORA_SSH_ENV_CHECK=override bash -c "test \"\$MEMORA_SSH_ENV_CHECK\" = override"
   bash -lc "command -v flutter"
+  just --version
+  just --list
   flutter --version
   sdkmanager --list_installed >/dev/null
   GIT_CONFIG_GLOBAL=/dev/null git -C /workspaces/memora status --porcelain >/dev/null
@@ -63,7 +65,7 @@ BASH
 fingerprint="$("${compose[@]}" exec -T dev ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub)"
 "${compose[@]}" exec -T dev bash -c 'echo memora-dev-check > /root/.android/memora-dev-check'
 "${compose[@]}" up --detach --force-recreate --wait --wait-timeout 120 dev
-bash dev_up.sh
+just dev-up
 "${compose[@]}" exec -T dev test -f /var/lib/memora/setup-complete
 [[ "$("${compose[@]}" exec -T dev ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub)" == "$fingerprint" ]]
 [[ "$("${compose[@]}" exec -T dev cat /root/.android/memora-dev-check)" == memora-dev-check ]]

@@ -29,12 +29,24 @@ Memoraは、家族や友人などのグループで思い出を記録・整理�
 
 ### Docker ComposeとSSH
 
-開発環境はDocker Composeで起動します。ホストにDocker Engine・Compose・Git・SSHクライアントを用意し、`~/.gitconfig`を設定してください。WSL2でも利用できます。
+開発環境はDocker Composeで起動します。ホストにDocker Engine・Compose・Git・SSHクライアント・[just](https://just.systems/man/en/packages.html)を用意し、`~/.gitconfig`を設定してください。WSL2でも利用できます。
+
+justは1.59.0を使用します。ホストへのインストール例です。
+
+```bash
+mkdir -p "$HOME/.local/bin"
+curl -fsSL https://just.systems/install.sh -o /tmp/install-just.sh
+bash /tmp/install-just.sh --tag 1.59.0 --to "$HOME/.local/bin"
+rm /tmp/install-just.sh
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+PATHの設定はシェルの設定ファイルにも追加してください。開発コンテナにはjustが含まれます。`just --list`でタスク一覧を確認できます。
 
 ホストのリポジトリルートで起動します。
 
 ```bash
-./dev_up.sh
+just dev-up
 ```
 
 コンテナへ渡す環境変数は、初回起動時に作成される`docker/.env`に設定します。アプリのコード生成用の`.env`とは別です。初回のビルド・セットアップにはインターネット接続が必要です。
@@ -42,7 +54,7 @@ Memoraは、家族や友人などのグループで思い出を記録・整理�
 コンテナへ入る方法は、Docker経由またはSSHを選べます。
 
 ```bash
-docker compose exec dev bash
+just dev-shell
 ssh -i ssh_keys/memora_ed25519 -p 2222 root@localhost
 ```
 
@@ -51,11 +63,11 @@ ssh -i ssh_keys/memora_ed25519 -p 2222 root@localhost
 停止・再起動はホストで実行します。
 
 ```bash
-docker compose stop dev
-./dev_up.sh
+just dev-stop
+just dev-up
 ```
 
-開発環境の動作確認は、ホストから`bash docker/test_dev.sh`を実行します。
+開発環境の動作確認は、ホストから`just test-dev`を実行します。
 
 ### ヘッドレスAndroidエミュレータ
 
@@ -66,21 +78,21 @@ docker compose stop dev
 開発コンテナのリポジトリルートで実行します。実機の誤操作を避けるため、端末IDを指定してください。
 
 ```bash
-docker compose up -d --wait emulator
+just emulator-up
 emulator_serial=localfilesystem:/root/.android/memora-adb/adbd.sock
 adb connect "$emulator_serial"
-./run.sh offline -d "$emulator_serial"
+just run offline -d "$emulator_serial"
 adb -s "$emulator_serial" exec-out screencap -p > /tmp/memora-screen.png
 ```
 
-`run.sh`を終了してから、エミュレータを切断・停止します。端末内のデータは次回起動時も残ります。
+`just run`を終了してから、エミュレータを切断・停止します。端末内のデータは次回起動時も残ります。
 
 ```bash
 adb disconnect "$emulator_serial"
-docker compose stop emulator
+just emulator-stop
 ```
 
-エミュレータ環境の動作確認は、`bash docker/test_emulator.sh`を実行します。終了時にエミュレータは停止します。
+エミュレータ環境の動作確認は、`just test-emulator`を実行します。終了時にエミュレータは停止します。
 
 ### Google Cloud Platform API設定
 
@@ -132,25 +144,25 @@ Google Cloud Consoleで以下のAPIを有効化し、対応するAPIキーを設
 
 ### アプリモード指定
 
-実行、debug APKビルド、release APKビルド、テストは、各スクリプトの第1引数に`online`または`offline`を指定します。省略時は`online`です。両方を同じ端末にインストールできますが、データは共有されません。機能の違いは[ユースケース図](./docs/usecase_diagram.md)を参照してください。
+実行、debug APKビルド、release APKビルド、テストは、各タスクの第1引数に`online`または`offline`を指定します。省略時は`online`です。両方を同じ端末にインストールできますが、データは共有されません。機能の違いは[ユースケース図](./docs/usecase_diagram.md)を参照してください。
 
-テストはフォーマット・コード生成・解析も行う`check.sh`から実行します。
+テストはフォーマット・コード生成・解析も行う`just check`から実行します。
 
 ```bash
-./run.sh
-./run.sh offline
-./build.sh
-./build.sh offline
-./release.sh
-./release.sh offline
-./check.sh
-./check.sh offline
+just run
+just run offline
+just build
+just build offline
+just release
+just release offline
+just check
+just check offline
 ```
 
-テスト対象や追加オプションを指定する場合は、`check.sh`のモードの後ろへ指定します。
+テスト対象や追加オプションを指定する場合は、`just check`のモードの後ろへ指定します。
 
 ```bash
-./check.sh offline test/unit/
+just check offline test/unit/
 ```
 
 成果物は次のパスへ出力されます。
@@ -201,7 +213,7 @@ adb uninstall com.example.memora.offline
 3. Firebaseセットアップスクリプトを実行
 
    ```bash
-   ./setup_firebase.sh
+   just setup-firebase
    ```
 
    画面の案内に従ってログインし、対象のFirebaseプロジェクトを選択してください。この操作でFirestoreインデックスもデプロイされます。

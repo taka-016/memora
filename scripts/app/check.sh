@@ -4,8 +4,9 @@ set -o pipefail
 
 CHECK_STARTED_AT=$SECONDS
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$ROOT_DIR/tools/ci/app_mode_arguments.sh"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+source "$ROOT_DIR/scripts/app/app_mode_arguments.sh"
+cd "$ROOT_DIR"
 if ! app_mode="$(resolve_memora_app_mode "${1:-}")"; then
     exit 1
 fi

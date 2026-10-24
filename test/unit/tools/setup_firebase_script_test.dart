@@ -30,7 +30,9 @@ void main() {
     project = Directory.systemTemp.createTempSync('memora firebase setup ');
     Directory('${project.path}/bin').createSync();
     Directory('${project.path}/lib').createSync();
-    File('setup_firebase.sh').copySync('${project.path}/setup_firebase.sh');
+    Directory('${project.path}/scripts/firebase').createSync(recursive: true);
+    File('scripts/firebase/setup.sh')
+        .copySync('${project.path}/scripts/firebase/setup.sh');
     File('${project.path}/lib/firebase_options.dart').writeAsStringSync('既存設定');
     File('${project.path}/firebase.json')
         .writeAsStringSync(jsonEncode(_configuredProject));
@@ -87,7 +89,7 @@ if [ "$command_name" = mv ]; then exec /bin/mv "$@"; fi
     if (!jqInstalled) File('${project.path}/bin/jq').deleteSync();
     final process = await Process.start(
       '/bin/bash',
-      ['setup_firebase.sh'],
+      ['scripts/firebase/setup.sh'],
       workingDirectory: project.path,
       environment: {
         ...Platform.environment,

@@ -2,9 +2,8 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
-const _scriptPaths = ['run.sh', 'build.sh', 'release.sh'];
-const _appModeArgumentsScriptPath = 'tools/ci/app_mode_arguments.sh';
-const _releaseScriptPath = 'tools/ci/release_android_apk.sh';
+const _appModeArgumentsScriptPath = 'scripts/app/app_mode_arguments.sh';
+const _releaseScriptPath = 'scripts/app/release_android_apk.sh';
 
 void main() {
   late Directory testProject;
@@ -16,7 +15,7 @@ void main() {
     environment['MEMORA_TEST_COMMAND_LOG'] = commandLog.path;
 
     return Process.runSync(
-      'bash',
+      'just',
       [script, ...arguments],
       workingDirectory: testProject.path,
       environment: environment,
@@ -28,14 +27,12 @@ void main() {
       'memora_app_command_scripts_test_',
     );
     Directory('${testProject.path}/bin').createSync(recursive: true);
-    Directory('${testProject.path}/tools/ci').createSync(recursive: true);
-    for (final scriptPath in _scriptPaths) {
-      File(scriptPath).copySync('${testProject.path}/$scriptPath');
-    }
+    Directory('${testProject.path}/scripts/app').createSync(recursive: true);
+    File('justfile').copySync('${testProject.path}/justfile');
     File(_appModeArgumentsScriptPath)
-        .copySync('${testProject.path}/tools/ci/app_mode_arguments.sh');
+        .copySync('${testProject.path}/scripts/app/app_mode_arguments.sh');
     File(_releaseScriptPath)
-        .copySync('${testProject.path}/tools/ci/release_android_apk.sh');
+        .copySync('${testProject.path}/scripts/app/release_android_apk.sh');
     File('${testProject.path}/pubspec.yaml')
         .writeAsStringSync('version: 1.2.3+4\n');
     commandLog = File('${testProject.path}/commands.log');
@@ -66,9 +63,9 @@ fi
   });
 
   final commands = {
-    'run.sh': ['run'],
-    'build.sh': ['build', 'apk', '--debug'],
-    'release.sh': ['build', 'apk', '--release'],
+    'run': ['run'],
+    'build': ['build', 'apk', '--debug'],
+    'release': ['build', 'apk', '--release'],
   };
 
   for (final MapEntry(key: script, value: command) in commands.entries) {
@@ -139,11 +136,8 @@ fi
     });
   }
 
-  test('build.shは短縮形式によるモードの上書きを拒否する', () {
-    final result = runScript('build.sh', [
-      'offline',
-      '-DMEMORA_APP_MODE=online',
-    ]);
+  test('buildは短縮形式によるモードの上書きを拒否する', () {
+    final result = runScript('build', ['offline', '-DMEMORA_APP_MODE=online']);
 
     expect(result.exitCode, isNot(0));
     expect(result.stderr, contains('MEMORA_APP_MODE'));
@@ -154,8 +148,8 @@ fi
     ['--DartDefines=MEMORA_APP_MODE=online'],
     ['--DartDefines', 'MEMORA_APP_MODE=online'],
   ]) {
-    test('build.shは互換別名によるモードの上書きを拒否する', () {
-      final result = runScript('build.sh', ['offline', ...arguments]);
+    test('buildは互換別名によるモードの上書きを拒否する', () {
+      final result = runScript('build', ['offline', ...arguments]);
 
       expect(result.exitCode, isNot(0));
       expect(result.stderr, contains('MEMORA_APP_MODE'));

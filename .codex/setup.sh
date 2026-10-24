@@ -21,6 +21,11 @@ sudo apt-get install -y --no-install-recommends \
   tzdata && \
   rm -rf /var/lib/apt/lists/*
 
+# タスクランナーのインストール
+curl -fsSL https://just.systems/install.sh -o /tmp/install-just.sh && \
+  sudo bash /tmp/install-just.sh --tag 1.59.0 --to /usr/local/bin && \
+  rm /tmp/install-just.sh
+
 # タイムゾーン設定
 sudo ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && \
   echo $TZ | sudo tee /etc/timezone

@@ -144,6 +144,12 @@ RUN printf '%s\n' 'if [ "${BASH_ENV:-}" = /run/memora/environment.sh ] && [ -r /
   mkdir -p /workspaces/memora && \
   git config --system --add safe.directory /workspaces/memora
 
+# タスクランナーのインストール
+ARG JUST_VERSION=1.59.0
+RUN curl -fsSL https://just.systems/install.sh -o /tmp/install-just.sh && \
+  bash /tmp/install-just.sh --tag "$JUST_VERSION" --to /usr/local/bin && \
+  rm /tmp/install-just.sh
+
 COPY start.sh /usr/local/bin/start-dev
 WORKDIR /workspaces/memora
 ENTRYPOINT ["bash", "/usr/local/bin/start-dev"]
