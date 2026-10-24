@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/.."
 compose=(docker compose -f compose.yaml)
 if "${compose[@]}" config --services | grep -qx emulator; then
   printf '%s\n' '通常起動にエミュレータが含まれています' >&2

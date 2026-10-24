@@ -1,19 +1,20 @@
 name: memora
 
 services:
-  devcontainer:
+  dev:
     build:
-      context: .
+      context: docker
       dockerfile: Dockerfile
       args:
         TZ: ${TZ:-Asia/Tokyo}
-        CLAUDE_CODE_VERSION: latest
-        CODEX_VERSION: latest
-    command: sleep infinity
-    env_file: .env
+    init: true
+    working_dir: /workspaces/memora
+    env_file: docker/.env
     volumes:
-      - ..:/workspaces/memora:cached
+      - .:/workspaces/memora:cached
       - ${HOME}/.gitconfig:/root/.gitconfig:cached
+      - /var/run/docker.sock:/var/run/docker.sock
+      - github-config:/root/.config/gh
       - claude-global:/root/.claude
       - codex-global:/root/.codex
       - android-config:/root/.android
@@ -23,11 +24,16 @@ services:
       - tmux-config:/root/.config/tmux
     ports:
       - '2222:22'
+    healthcheck:
+      test: ['CMD-SHELL', 'test -s /run/sshd.pid && kill -0 "$$(cat /run/sshd.pid)"']
+      interval: 5s
+      timeout: 3s
+      retries: 12
 
   emulator:
     profiles: [test]
     build:
-      context: emulator
+      context: docker/emulator
     network_mode: none
     devices:
       - /dev/kvm:/dev/kvm
@@ -45,6 +51,8 @@ services:
       retries: 36
 
 volumes:
+  github-config:
+    name: github-config-memora
   claude-global:
     name: claude-global-memora
   codex-global:
