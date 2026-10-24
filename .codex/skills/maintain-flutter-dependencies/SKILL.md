@@ -1,6 +1,6 @@
 ---
 name: maintain-flutter-dependencies
-description: memoraのFlutter SDK、Dart/Flutterパッケージ、devcontainer、Android SDK・NDK、Gradle Wrapper、Android Gradle Plugin、Kotlin、JDKなどの開発・ビルド依存をまとめて調査、更新、互換性修正、検証、PR作成まで行う。`packages have newer versions incompatible with dependency constraints`を解消したいとき、依存関係が古くなったとき、FlutterやAndroidビルド環境を一括更新したいときに使う。
+description: memoraのFlutter SDK、Dart/Flutterパッケージ、Docker開発環境、Android SDK・NDK、Gradle Wrapper、Android Gradle Plugin、Kotlin、JDKなどの開発・ビルド依存をまとめて調査、更新、互換性修正、検証、PR作成まで行う。`packages have newer versions incompatible with dependency constraints`を解消したいとき、依存関係が古くなったとき、FlutterやAndroidビルド環境を一括更新したいときに使う。
 ---
 
 # Flutter依存関係メンテナンス
@@ -12,7 +12,7 @@ Flutter、パッケージ、コンテナ、Androidビルドツールを一つの
 - このスキルによる依存保守だけを目的とする作業では、`docs/todo.md` の確認と更新を不要とし、依存保守自体をtodoへ追加しない。
 - 作業開始時に `coding-preparation`、アプリやテストのコード修正時に `coding` と `test-coding`、完了時に `coding-completion` を使用する。
 - 現在が `main` なら `chore/` で始まる作業ブランチを作成する。
-- ユーザーが対象を限定していない限り、Flutter、Dartパッケージ、devcontainer、Androidビルド環境を一括で点検する。
+- ユーザーが対象を限定していない限り、Flutter、Dartパッケージ、Docker開発環境、Androidビルド環境を一括で点検する。
 - バージョン番号だけを根拠なく揃えない。Flutterと各ツールが公式にサポートする組み合わせを採用する。
 - `dependency_overrides`、解決戦略による強制、上限の無条件撤廃で競合を隠さない。必要な場合は理由と除去条件をユーザーに示し、了承を得る。
 - 推移依存の最新版未採用だけを理由に、直接依存を追加しない。
@@ -33,7 +33,7 @@ flutter pub outdated
 
 バージョン指定箇所を `rg` で横断確認する。最低限、次を対象にする。
 
-- `.devcontainer/Dockerfile`
+- `docker/Dockerfile`
   - Ubuntu、Flutter、JDK、Android command-line tools、platform、build-tools、NDK
 - `pubspec.yaml` と `pubspec.lock`
   - Dart/Flutter SDK制約、直接依存、開発依存
@@ -60,7 +60,7 @@ flutter build apk --debug --flavor offline --dart-define=MEMORA_APP_MODE=offline
 - Flutter/Dart: Flutter公式リリースノート、移行ガイド、Dart SDK情報
 - Dart/Flutterパッケージ: `flutter pub outdated`、pub.dev、公式リポジトリのchangelog・migration guide
 - Android: Android DevelopersのAGPリリースノートと互換表、Gradle公式互換情報、Kotlin公式情報
-- Docker/devcontainer: 利用しているベースイメージと各配布元の公式情報
+- Docker開発環境: 利用しているベースイメージと各配布元の公式情報
 
 Flutter/DartパッケージのAPIや移行方法を調べる場合は、AGENTS.mdに従ってContext7でライブラリIDを解決し、公式ドキュメントを取得する。Context7に対象がない場合は公式サイトや公式リポジトリを使う。
 
@@ -71,7 +71,7 @@ Flutter/DartパッケージのAPIや移行方法を調べる場合は、AGENTS.m
 - Android Gradle Plugin ↔ Gradle Wrapper ↔ JDK
 - Android Gradle Plugin ↔ built-in Kotlin ↔ Compose Compiler
 - Flutter/プラグイン ↔ compileSdk・targetSdk・minSdk・NDK
-- `.devcontainer/Dockerfile` のJDK・Android SDK・NDK ↔ Androidプロジェクト設定
+- `docker/Dockerfile` のJDK・Android SDK・NDK ↔ Androidプロジェクト設定
 
 最新版同士が非互換なら、プロジェクト全体で検証できる最も新しい互換構成を選ぶ。保留する更新は、上流の制約と再検討条件を明記する。
 
@@ -79,14 +79,14 @@ Flutter/DartパッケージのAPIや移行方法を調べる場合は、AGENTS.m
 
 影響源に近い順で更新する。
 
-1. `.devcontainer/Dockerfile` のFlutter SDKを更新する。
-2. devcontainerを再ビルドするか更新後のFlutter SDKを一時導入し、現在のシェルが参照するSDKを更新後の版へ切り替える。
-3. `flutter --version` と `dart --version` を実行し、`.devcontainer/Dockerfile` で指定したFlutter版と同梱Dart版に一致することを確認する。一致しない場合は、以降のpub操作へ進まない。
+1. `docker/Dockerfile` のFlutter SDKを更新する。
+2. Docker開発環境を再ビルドするか更新後のFlutter SDKを一時導入し、現在のシェルが参照するSDKを更新後の版へ切り替える。
+3. `flutter --version` と `dart --version` を実行し、`docker/Dockerfile` で指定したFlutter版と同梱Dart版に一致することを確認する。一致しない場合は、以降のpub操作へ進まない。
 4. Dart/Flutter SDK制約を、新しいFlutter同梱SDKと整合させる。
 5. `flutter pub upgrade --major-versions` を使い、直接依存と開発依存の制約およびlockfileを更新する。
 6. `flutter pub outdated` を再実行し、残件を確認する。
 7. 必要なAndroidビルド環境を互換性マトリクスに沿って更新する。
-8. devcontainerとAndroidプロジェクトで重複指定するNDK、JDKなどを一致させる。
+8. Docker開発環境とAndroidプロジェクトで重複指定するNDK、JDKなどを一致させる。
 
 一度に原因を見失わないよう、Flutter/SDK、Dartパッケージ、Androidツールの境界ごとに差分とコマンド結果を確認する。`pubspec.lock` はアプリケーションの再現可能なビルドに必要なため更新対象に含める。
 
@@ -125,12 +125,12 @@ flutter build apk --debug --flavor offline --dart-define=MEMORA_APP_MODE=offline
 
 - `./check.sh` にエラー、予期しないExceptionログ、エラーログがない。
 - Androidビルドが更新後のGradle Wrapper、AGP、Kotlin、JDK、SDK、NDKを実際に使用して成功する。
-- Dockerが利用可能なら検証専用の明示的なタグを付けて `.devcontainer/Dockerfile` をビルドし、少なくともFlutterとAndroid SDKの導入が成功する。
+- Dockerが利用可能なら検証専用の明示的なタグを付けて `docker/Dockerfile` をビルドし、少なくともFlutterとAndroid SDKの導入が成功する。
 - 検証用Dockerイメージ内の確認がすべて成功したら、結果を記録した直後に `docker image rm <検証専用タグ>` でそのイメージだけを削除する。`docker image prune` や `docker system prune` など、対象を広げる削除コマンドは使わない。
 - Dockerをビルドできない環境では、Dockerfileの指定値とAndroid側の整合を静的に確認し、未実施の検証を明記する。
 - 署名情報が利用できる場合は `./tools/ci/release_android_apk.sh` も実行する。利用できない場合はdebug APK成功をAndroid検証とする。
 
-Flutterを一時SDKで検証した場合も、最終的なコマンド結果が `.devcontainer/Dockerfile` に指定した版と一致することを確認する。検証失敗を残したまま完了しない。
+Flutterを一時SDKで検証した場合も、最終的なコマンド結果が `docker/Dockerfile` に指定した版と一致することを確認する。検証失敗を残したまま完了しない。
 
 ## 6. コミット・PR・報告を完了する
 

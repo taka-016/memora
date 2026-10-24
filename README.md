@@ -27,6 +27,65 @@ Memoraは、家族や友人などのグループで思い出を記録・整理�
 
 ## 開発環境
 
+### Docker ComposeとSSH
+
+開発環境はDocker Composeで起動します。ホストにDocker Engine・Compose・Git・SSHクライアントを用意し、`~/.gitconfig`を設定してください。WSL2でも利用できます。
+
+ホストのリポジトリルートで、起動用シェルを実行します。初回も通常の起動も同じコマンドです。
+
+```bash
+./dev_up.sh
+```
+
+`initialize.sh`は`docker/.env`がなければ作成し、SSH鍵を準備します。既存の環境変数ファイルや鍵は上書きしません。コンテナへ渡す環境変数は、Git管理対象外の`docker/.env`に設定します。アプリのコード生成用に使うルートの`.env`とは用途が異なります。
+
+`dev_up.sh`は初期化、イメージのビルド、起動完了待ちを行い、未セットアップのコンテナでは`setup.sh`を実行します。`setup.sh`はCLIの初期設定、Flutterの状態確認、依存取得、テスト用CLIの導入を行います。初回とコンテナを作り直したときに自動実行し、通常の再起動では繰り返しません。セットアップ失敗時は、次の起動で再試行します。必要に応じて`docker compose exec dev bash docker/setup.sh`で手動実行もできます。Flutter・Android SDK・JDK・GitHub CLI・Docker CLI・Compose・BuildxなどはDockerfileで導入します。
+
+コンテナへ入る方法は、Docker経由またはSSHを選べます。
+
+```bash
+docker compose exec dev bash
+ssh -i ssh_keys/memora_ed25519 -p 2222 root@localhost
+```
+
+Docker経由の作業ディレクトリは`/workspaces/memora`です。SSH接続後はこのディレクトリへ移動してください。VS Codeを使う場合もRemote-SSHで接続できます。
+
+```bash
+docker compose stop dev
+./dev_up.sh
+```
+
+SSHホスト鍵、Android設定、Gradleキャッシュ、CLI設定、シェル履歴などの既存ボリューム名を維持しています。SSHクライアント鍵はGit管理対象外の`ssh_keys/memora_ed25519`に保存します。開発コンテナからのDocker操作は、ホストのDockerソケットを利用します。
+
+環境のビルド・セットアップ・SSH接続・各CLI・Docker接続・再作成後の保持は、ホストから`bash docker/test_dev.sh`で検証できます。検証専用の開発コンテナを使い、SSHには空いているローカルポートを割り当てます。
+
+### ヘッドレスAndroidエミュレータ
+
+通常は開発コンテナだけを起動します。普段のADB・Flutterは実機への接続に使用し、エミュレータはテスト時だけ明示的に起動・接続します。
+
+エミュレータを使用するホストはx86_64のLinux環境を使用し、Dockerから`/dev/kvm`へアクセスできるようにしてください。WSL2を使用する場合も、Docker Engineを動かす環境で`ls -l /dev/kvm`を確認します。
+
+エミュレータはGoogleサービスを含まないAndroid 16（API 36）のAOSPイメージを使用し、画面なし・RAM 2GB・2コア・720×1280で動作します。エミュレータのコンテナはネットワークを持たず、外部通信を遮断します。SDKのダウンロードなど、イメージの初回ビルドにはインターネット接続が必要です。
+
+テスト用に手動で起動する場合は、リポジトリのルートから以下を実行します。開発コンテナのADBサーバーから、共有Unixソケット経由で接続します。実機も接続している場合に操作対象が曖昧にならないよう、エミュレータには端末IDを明示します。
+
+```bash
+docker compose up -d --wait emulator
+emulator_serial=localfilesystem:/root/.android/memora-adb/adbd.sock
+adb connect "$emulator_serial"
+./run.sh offline -d "$emulator_serial"
+adb -s "$emulator_serial" exec-out screencap -p > /tmp/memora-screen.png
+```
+
+テストを終えたらエミュレータだけを切断・停止します。仮想端末のデータは`emulator-data-memora`ボリュームへ保存され、コンテナの再作成後も保持されます。
+
+```bash
+adb disconnect "$emulator_serial"
+docker compose stop emulator
+```
+
+起動・ADB操作・画面取得・通信隔離・Flutter用ポート転送・再起動後のデータ保持は、`bash docker/test_emulator.sh`で検証できます。このスクリプトはエミュレータを起動・接続し、成功・失敗にかかわらず終了時にエミュレータだけを切断・停止します。
+
 ### Google Cloud Platform API設定
 
 Google Cloud Consoleで以下のAPIを有効化し、対応するAPIキーを設定してください。

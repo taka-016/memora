@@ -3,8 +3,6 @@ FROM ubuntu:24.04
 
 USER root
 
-ENV DEVCONTAINER=true
-
 ARG DEBIAN_FRONTEND=noninteractive
 ARG TZ
 ENV TZ="$TZ"
@@ -18,7 +16,7 @@ ARG ANDROID_NDK_VERSION=28.2.13676358
 ENV FLUTTER_HOME=/opt/flutter
 ENV ANDROID_HOME=/opt/android-sdk-linux
 ENV ANDROID_SDK_ROOT=/opt/android-sdk-linux
-ENV PATH="${FLUTTER_HOME}/bin:${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools:${ANDROID_HOME}/emulator:/root/.pub-cache/bin:${PATH}"
+ENV PATH="${FLUTTER_HOME}/bin:${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools:${ANDROID_HOME}/emulator:/root/.pub-cache/bin:/root/.codex/packages/standalone/current:${PATH}"
 
 # 基本パッケージのインストール
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -34,6 +32,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   fd-find \
   xclip \
   openssh-server \
+  openssh-client \
   procps \
   python3-yaml \
   gnupg \
@@ -41,6 +40,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   unzip \
   xz-utils \
   openjdk-17-jdk && \
+  apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# ホストのDockerを操作するCLIとGitHub CLIを導入
+RUN install -m 0755 -d /etc/apt/keyrings && \
+  curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc && \
+  curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg -o /etc/apt/keyrings/githubcli.gpg && \
+  chmod a+r /etc/apt/keyrings/docker.asc /etc/apt/keyrings/githubcli.gpg && \
+  printf 'deb [arch=%s signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu noble stable\n' "$(dpkg --print-architecture)" \
+    > /etc/apt/sources.list.d/docker.list && \
+  printf 'deb [arch=%s signed-by=/etc/apt/keyrings/githubcli.gpg] https://cli.github.com/packages stable main\n' "$(dpkg --print-architecture)" \
+    > /etc/apt/sources.list.d/github-cli.list && \
+  apt-get update && apt-get install -y --no-install-recommends \
+    docker-ce-cli docker-buildx-plugin docker-compose-plugin gh && \
   apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Flutter SDKのインストール
@@ -115,16 +127,24 @@ RUN curl -fsSL https://deb.nodesource.com/setup_24.x | bash - && \
   apt-get clean && rm -rf /var/lib/apt/lists/* && \
   npm install -g npm@11
 
-# claude codeのインストール
-# ARG CLAUDE_CODE_VERSION=latest
-# RUN npm install -g @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}
-
-# Codex CLIのインストール
-# ARG CODEX_VERSION=latest
-# RUN npm install -g @openai/codex@${CODEX_VERSION}
-
 # Firebase CLIのインストール
 RUN npm install -g firebase-tools
 
 # FlutterFire CLIのインストール
 RUN dart pub global activate flutterfire_cli
+
+# SSH接続でも起動時の環境変数を利用
+RUN printf '%s\n' 'if [ "${BASH_ENV:-}" = /run/memora/environment.sh ] && [ -r /run/memora/environment.sh ]; then . /run/memora/environment.sh; fi' \
+    > /etc/profile.d/memora.sh && \
+  printf 'export PATH="%s:$PATH"\n' \
+    "$FLUTTER_HOME/bin:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:/root/.pub-cache/bin:/root/.codex/packages/standalone/current" \
+    >> /etc/profile.d/memora.sh && \
+  sed -i '1i if [ "${BASH_ENV:-}" = /run/memora/environment.sh ] && [ -r /run/memora/environment.sh ]; then . /run/memora/environment.sh; fi' /root/.bashrc && \
+  rm -f /etc/ssh/ssh_host_* && \
+  mkdir -p /workspaces/memora && \
+  git config --system --add safe.directory /workspaces/memora
+
+COPY start.sh /usr/local/bin/start-dev
+WORKDIR /workspaces/memora
+ENTRYPOINT ["bash", "/usr/local/bin/start-dev"]
+CMD ["/usr/sbin/sshd", "-D", "-e"]
