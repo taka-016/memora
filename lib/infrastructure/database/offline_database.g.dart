@@ -5848,7 +5848,7 @@ class CalendarEvents extends Table
   @override
   List<String> get customConstraints => const [
     'UNIQUE(id, group_id)',
-    'CHECK(((label_type = \'group\' AND member_id IS NULL AND label_id IS NULL)OR(label_type = \'member\' AND member_id IS NOT NULL AND length(trim(member_id)) > 0 AND label_id IS NULL)OR(label_type = \'custom\' AND member_id IS NULL AND label_type IS NOT NULL AND((label_type = \'group\' AND member_id IS NULL AND label_id IS NULL)OR(label_type = \'member\' AND member_id IS NOT NULL AND length(trim(member_id)) > 0 AND label_id IS NULL)OR(label_type = \'custom\' AND member_id IS NULL AND label_id IS NOT NULL)))))',
+    'CHECK((label_type = \'group\' AND member_id IS NULL AND label_id IS NULL)OR(label_type = \'member\' AND member_id IS NOT NULL AND length(trim(member_id)) > 0 AND label_id IS NULL)OR(label_type = \'custom\' AND member_id IS NULL AND label_id IS NOT NULL))',
     'CHECK(recurrence_rule IS NOT NULL OR time_zone IS NULL)',
     'CHECK(recurrence_rule IS NULL OR is_all_day = 1 OR length(trim(time_zone)) > 0)',
     'FOREIGN KEY(label_id, group_id)REFERENCES calendar_labels(id, group_id)ON DELETE NO ACTION',

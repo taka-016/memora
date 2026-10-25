@@ -396,14 +396,42 @@ void main() {
 
   test('グループ色・所属色・固定ラベル参照をバックアップして復元する', () async {
     await db.updateRow('groups', 'group-1', {'color': '#123456'});
-    await db.insertRow('group_members', {'group_id': 'group-1', 'member_id': originalMember.id, 'is_administrator': 1, 'order_index': 0, 'color': '#ABCDEF'});
+    await db.insertRow('group_members', {
+      'group_id': 'group-1',
+      'member_id': originalMember.id,
+      'is_administrator': 1,
+      'order_index': 0,
+      'color': '#ABCDEF',
+    });
     final repository = SqliteCalendarEventRepository(db);
     final query = SqliteCalendarEventQueryService(db);
-    final usecase = ChangeCalendarRecurrenceUsecase(repository, CalendarRecurrenceExpander(IanaCalendarTimeZone()));
-    final groupEvent = CalendarEventDto(id: '', groupId: 'group-1', labelType: 'group', title: '家族旅行', startDateTime: DateTime.utc(2026, 10, 1), endDateTime: DateTime.utc(2026, 10, 1), isAllDay: true, recurrenceRule: 'FREQ=DAILY;COUNT=4');
-    await repository.saveCalendarEvent(CalendarEventMapper.toEntity(groupEvent));
+    final usecase = ChangeCalendarRecurrenceUsecase(
+      repository,
+      CalendarRecurrenceExpander(IanaCalendarTimeZone()),
+    );
+    final groupEvent = CalendarEventDto(
+      id: '',
+      groupId: 'group-1',
+      labelType: 'group',
+      title: '家族旅行',
+      startDateTime: DateTime.utc(2026, 10, 1),
+      endDateTime: DateTime.utc(2026, 10, 1),
+      isAllDay: true,
+      recurrenceRule: 'FREQ=DAILY;COUNT=4',
+    );
+    await repository.saveCalendarEvent(
+      CalendarEventMapper.toEntity(groupEvent),
+    );
     final source = (await query.getCalendarEventsByGroupId('group-1')).single;
-    await usecase.execute(source, DateTime.utc(2026, 10, 2), CalendarChangeScope.only, changes: source.copyWith(labelType: 'member', memberId: originalMember.id));
+    await usecase.execute(
+      source,
+      DateTime.utc(2026, 10, 2),
+      CalendarChangeScope.only,
+      changes: source.copyWith(
+        labelType: 'member',
+        memberId: originalMember.id,
+      ),
+    );
     final before = await query.getCalendarEventsByGroupId('group-1');
     final backup = await dataStore.exportSnapshot();
     await db.updateRow('groups', 'group-1', {'color': '#FFFFFF'});
@@ -412,7 +440,14 @@ void main() {
     expect(await query.getCalendarEventsByGroupId('group-1'), before);
     expect((await db.rows('groups')).single['color'], '#123456');
     expect((await db.rows('group_members')).single['color'], '#ABCDEF');
-    expect((await query.getCalendarEventsByGroupId('group-1')).single.overrides.single.memberId, originalMember.id);
+    expect(
+      (await query.getCalendarEventsByGroupId('group-1'))
+          .single
+          .overrides
+          .single
+          .memberId,
+      originalMember.id,
+    );
     expect(await db.rows('calendar_labels'), isEmpty);
   });
 

@@ -24,11 +24,29 @@ void main() {
     final snapshot = MockQuerySnapshot<Map<String, dynamic>>();
     var memberCancelled = false;
     var parentCancelled = false;
-    final parentStream = StreamController<DocumentSnapshot<Map<String, dynamic>>>(onCancel: () { parentCancelled = true; });
-    final memberStream = StreamController<DocumentSnapshot<Map<String, dynamic>>>(onCancel: () { memberCancelled = true; });
-    final groupData = <String, dynamic>{'name': '家族', 'ownerId': 'm', 'color': '#123456'};
+    final parentStream =
+        StreamController<DocumentSnapshot<Map<String, dynamic>>>(
+          onCancel: () {
+            parentCancelled = true;
+          },
+        );
+    final memberStream =
+        StreamController<DocumentSnapshot<Map<String, dynamic>>>(
+          onCancel: () {
+            memberCancelled = true;
+          },
+        );
+    final groupData = <String, dynamic>{
+      'name': '家族',
+      'ownerId': 'm',
+      'color': '#123456',
+    };
     final memberData = <String, dynamic>{'displayName': '太郎'};
-    final linkData = <String, dynamic>{'groupId': 'g', 'memberId': 'm', 'color': '#FF0000'};
+    final linkData = <String, dynamic>{
+      'groupId': 'g',
+      'memberId': 'm',
+      'color': '#FF0000',
+    };
     when(firestore.collection('groups')).thenReturn(groups);
     when(firestore.collection('members')).thenReturn(members);
     when(firestore.collection('group_members')).thenReturn(links);
@@ -50,8 +68,14 @@ void main() {
     when(snapshot.docs).thenReturn([linkDoc]);
     final values = <GroupDto?>[];
     final errors = <Object>[];
-    final subscription = FirestoreCalendarGroupWatchQueryService(firestore).watchCalendarGroup('g').listen(values.add, onError: errors.add);
-    addTearDown(() async { await subscription.cancel(); await parentStream.close(); await memberStream.close(); });
+    final subscription = FirestoreCalendarGroupWatchQueryService(firestore)
+        .watchCalendarGroup('g')
+        .listen(values.add, onError: errors.add);
+    addTearDown(() async {
+      await subscription.cancel();
+      await parentStream.close();
+      await memberStream.close();
+    });
     Future<void> flush() => Future<void>(() {});
     parentStream.add(groupDoc);
     await flush();
