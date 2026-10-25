@@ -1,7 +1,6 @@
-import 'package:memora/presentation/shared/inputs/label_color_preview.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:memora/presentation/shared/inputs/color_picker.dart';
+import 'package:memora/presentation/shared/inputs/label_color_settings.dart';
 import 'package:memora/application/dtos/calendar/calendar_label_dto.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_notifier.dart';
 
@@ -51,7 +50,7 @@ class CalendarLabelsDialog extends ConsumerWidget {
             children: [
               if (state.labels.isEmpty)
                 const Text(
-                  '家族の名前や「家族全員」などのラベルを追加してください',
+                  '用途に合わせたラベルを追加できます。',
                   key: Key('calendar_labels_empty'),
                 ),
               for (final (index, label) in state.labels.indexed)
@@ -179,11 +178,9 @@ class _LabelEditDialog extends ConsumerStatefulWidget {
 class _LabelEditDialogState extends ConsumerState<_LabelEditDialog> {
   final _form = GlobalKey<FormState>();
   late final TextEditingController _name;
-  late final TextEditingController _color;
+  late String _color;
   late final int _sortOrder;
   String _error = '';
-  bool _showHex = false;
-  late Color _selectedColor;
   late String _textColor;
   @override
   void initState() {
@@ -197,15 +194,13 @@ class _LabelEditDialogState extends ConsumerState<_LabelEditDialog> {
         ) +
         1;
     _sortOrder = widget.label?.sortOrder ?? nextOrder;
-    _color = TextEditingController(text: widget.label?.color ?? '#2196F3');
-    _selectedColor = calendarLabelColor(_color.text);
+    _color = widget.label?.color ?? '#2196F3';
     _textColor = widget.label?.textColor ?? '#FFFFFF';
   }
 
   @override
   void dispose() {
     _name.dispose();
-    _color.dispose();
     super.dispose();
   }
 
@@ -222,6 +217,10 @@ class _LabelEditDialogState extends ConsumerState<_LabelEditDialog> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                if (widget.label == null) ...[
+                  const Text('グループ・メンバーの色は「グループ管理」で設定できます。'),
+                  const SizedBox(height: 12),
+                ],
                 TextFormField(
                   controller: _name,
                   enabled: !saving,
@@ -232,73 +231,17 @@ class _LabelEditDialogState extends ConsumerState<_LabelEditDialog> {
                       : null,
                 ),
                 const SizedBox(height: 16),
-                ColorPicker(
-                  color: _selectedColor,
-                  onChanged: saving
-                      ? null
-                      : (color) => setState(() {
-                          _selectedColor = color;
-                          _color.text =
-                              '#${color.toARGB32().toRadixString(16).substring(2).toUpperCase()}';
-                        }),
-                ),
-                TextButton(
-                  onPressed: saving
-                      ? null
-                      : () => setState(() {
-                          _showHex = !_showHex;
-                          _color.text =
-                              '#${_selectedColor.toARGB32().toRadixString(16).substring(2).toUpperCase()}';
-                        }),
-                  child: Text(_showHex ? '16進数入力を閉じる' : '16進数で指定'),
-                ),
-                if (_showHex)
-                  TextFormField(
-                    controller: _color,
-                    enabled: !saving,
-                    decoration: const InputDecoration(
-                      labelText: '色（#RRGGBB）',
-                      helperText: '例: #2196F3',
-                    ),
-                    onChanged: (value) {
-                      if (RegExp(r'^#[0-9a-fA-F]{6}$').hasMatch(value.trim())) {
-                        setState(
-                          () =>
-                              _selectedColor = calendarLabelColor(value.trim()),
-                        );
-                      }
-                    },
-                    validator: (value) =>
-                        !RegExp(r'^#[0-9a-fA-F]{6}$')
-                            .hasMatch(value?.trim() ?? '')
-                        ? '#RRGGBB形式で入力してください'
-                        : null,
-                  ),
-                const SizedBox(height: 8),
-                const Text('文字色'),
-                Wrap(
-                  spacing: 12,
-                  children: [
-                    for (final entry in const {
-                      '#FFFFFF': '白',
-                      '#000000': '黒',
-                    }.entries)
-                      ChoiceChip(
-                        label: Text(entry.value),
-                        selected: _textColor.toUpperCase() == entry.key,
-                        onSelected: saving
-                            ? null
-                            : (_) => setState(() => _textColor = entry.key),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                LabelColorPreview(
+                LabelColorSettings(
                   label: _name.text.trim().isEmpty ? 'ラベル名' : _name.text.trim(),
-                  color: _selectedColor,
-                  textColor: calendarLabelColor(_textColor),
-                  allDayKey: const Key('calendar_label_preview'),
-                  timedKey: const Key('calendar_label_timed_preview'),
+                  color: _color,
+                  textColor: _textColor,
+                  enabled: !saving,
+                  allDayPreviewKey: const Key('calendar_label_preview'),
+                  timedPreviewKey: const Key('calendar_label_timed_preview'),
+                  onChanged: (color, textColor) => setState(() {
+                    _color = color;
+                    _textColor = textColor!;
+                  }),
                 ),
                 if (_error.isNotEmpty) Text(_error),
               ],
@@ -323,7 +266,7 @@ class _LabelEditDialogState extends ConsumerState<_LabelEditDialog> {
                             id: widget.label?.id ?? '',
                             groupId: widget.groupId,
                             name: _name.text.trim(),
-                            color: _color.text.trim(),
+                            color: _color.trim(),
                             textColor: _textColor,
                             sortOrder: _sortOrder,
                           ),
