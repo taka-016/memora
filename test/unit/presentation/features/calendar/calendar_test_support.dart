@@ -48,6 +48,7 @@ class CalendarTestHarness {
   Future<void> pump(
     WidgetTester tester, {
     double textScale = 1,
+    Brightness? brightness,
     DateTime? now,
   }) async {
     when(events.execute('g1')).thenAnswer((_) async => List.of(savedEvents));
@@ -117,6 +118,7 @@ class CalendarTestHarness {
           reorderCalendarLabelsUsecaseProvider.overrideWithValue(reorder),
         ],
         child: MaterialApp(
+          theme: brightness == null ? null : ThemeData(brightness: brightness),
           builder: (context, child) => MediaQuery(
             data: MediaQuery.of(context)
                 .copyWith(textScaler: TextScaler.linear(textScale)),

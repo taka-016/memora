@@ -146,7 +146,10 @@ void main() {
         matching: find.byType(Text),
       ),
     );
-    expect(timed.style!.color, const Color(0xFFF44336));
+    final timedPreview = find.byKey(const Key('label_color_timed_preview'));
+    expect(timed.style!.color, Theme.of(tester.element(timedPreview)).colorScheme.onSurface);
+    final decoration = tester.widget<Container>(timedPreview).decoration! as BoxDecoration;
+    expect((decoration.border! as Border).left.color, const Color(0xFFF44336));
     await tester.tap(find.text('決定'));
     await tester.pumpAndSettle();
     await tester.ensureVisible(
