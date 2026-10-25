@@ -75,6 +75,7 @@ class FirestoreGroupRepository implements GroupRepository {
           'isAdministrator': member.isAdministrator,
           'orderIndex': member.orderIndex,
           'color': member.color,
+          'textColor': member.textColor,
         });
       }
     }

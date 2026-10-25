@@ -1,3 +1,4 @@
+import 'package:memora/application/dtos/copy_with_helper.dart';
 import 'package:equatable/equatable.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 
@@ -9,6 +10,7 @@ class GroupDto extends Equatable {
     required this.name,
     this.memo,
     this.color = '#4CAF50',
+    this.textColor,
     required this.members,
     this.originalMembers,
   });
@@ -17,6 +19,7 @@ class GroupDto extends Equatable {
   final String id;
   final String ownerId;
   final String color;
+  final String? textColor;
   final String name;
   final String? memo;
   final List<GroupMemberDto> members;
@@ -26,6 +29,7 @@ class GroupDto extends Equatable {
   GroupDto copyWith({
     int? version,
     String? color,
+    Object? textColor = copyWithPlaceholder,
     String? id,
     String? ownerId,
     String? name,
@@ -38,6 +42,11 @@ class GroupDto extends Equatable {
       id: id ?? this.id,
       ownerId: ownerId ?? this.ownerId,
       color: color ?? this.color,
+      textColor: resolveCopyWithValue<String>(
+        textColor,
+        this.textColor,
+        'textColor',
+      ),
       name: name ?? this.name,
       memo: memo ?? this.memo,
       members: members ?? this.members,
@@ -48,6 +57,7 @@ class GroupDto extends Equatable {
   @override
   List<Object?> get props => [
     color,
+    textColor,
     version,
     id,
     ownerId,

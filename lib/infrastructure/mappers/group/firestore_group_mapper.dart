@@ -14,6 +14,7 @@ class FirestoreGroupMapper {
       version: groupData['version'] as int?,
       id: groupDoc.id,
       ownerId: groupData['ownerId'] as String? ?? '',
+      textColor: groupData['textColor'] as String?,
       color: groupData['color'] as String? ?? '#4CAF50',
       name: groupData['name'] as String? ?? '',
       memo: groupData['memo'] as String?,
@@ -25,6 +26,7 @@ class FirestoreGroupMapper {
     return {
       'ownerId': group.ownerId,
       'color': group.color,
+      'textColor': group.textColor,
       'name': group.name,
       'memo': group.memo,
       'version': 1,
@@ -36,6 +38,7 @@ class FirestoreGroupMapper {
     return {
       'ownerId': group.ownerId,
       'color': group.color,
+      'textColor': group.textColor,
       'name': group.name,
       'memo': group.memo,
       'version': group.version == null ? null : group.version! + 1,

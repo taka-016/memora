@@ -1,3 +1,5 @@
+import 'package:memora/application/services/calendar/calendar_display_labels.dart';
+import 'package:memora/presentation/shared/inputs/label_color_preview.dart';
 import 'package:memora/presentation/shared/inputs/color_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -18,6 +20,7 @@ GroupMemberDto _createGroupMemberForEdit(
   bool isAdministrator = false,
   int orderIndex = 0,
   String? color,
+  String? textColor,
 }) {
   return GroupMemberDto(
     color:
@@ -30,6 +33,7 @@ GroupMemberDto _createGroupMemberForEdit(
           '#9C27B0',
           '#FF9800',
         ][orderIndex % 6],
+    textColor: textColor,
     memberId: member.id,
     groupId: groupId,
     isAdministrator: isAdministrator,
@@ -334,6 +338,7 @@ class GroupEditModal extends HookConsumerWidget {
               selectedMember,
               groupState.value.id,
               color: updatedMembers[index].color,
+              textColor: updatedMembers[index].textColor,
               orderIndex: updatedMembers[index].orderIndex,
             );
             updateGroupMembers(updatedMembers);
@@ -345,23 +350,62 @@ class GroupEditModal extends HookConsumerWidget {
       }
     }
 
+    String colorHex(Color color) =>
+        '#${(color.toARGB32() & 0xFFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}';
+    Color parseColor(String color) =>
+        Color(int.parse(color.substring(1), radix: 16) | 0xFF000000);
+
     Future<void> chooseColor(
       String title,
+      String previewName,
       String value,
-      ValueChanged<String> onChanged,
+      String? textColor,
+      void Function(String, String?) onChanged,
     ) async {
-      var selected = Color(
-        int.parse(value.substring(1), radix: 16) | 0xFF000000,
-      );
-      final color = await showDialog<String>(
+      var selected = parseColor(value);
+      var selectedTextColor = textColor;
+      final colors = await showDialog<({String color, String? textColor})>(
         context: context,
         builder: (context) => StatefulBuilder(
           builder: (context, setState) => AlertDialog(
             title: Text(title),
             content: SingleChildScrollView(
-              child: ColorPicker(
-                color: selected,
-                onChanged: (color) => setState(() => selected = color),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  ColorPicker(
+                    color: selected,
+                    onChanged: (color) => setState(() => selected = color),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text('文字色'),
+                  Wrap(
+                    spacing: 12,
+                    children: [
+                      for (final (name, color) in const [
+                        ('自動', null),
+                        ('白', '#FFFFFF'),
+                        ('黒', '#000000'),
+                      ])
+                        ChoiceChip(
+                          label: Text(name),
+                          selected: selectedTextColor?.toUpperCase() == color,
+                          onSelected: (_) =>
+                              setState(() => selectedTextColor = color),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  LabelColorPreview(
+                    label: previewName,
+                    color: selected,
+                    textColor: parseColor(
+                      selectedTextColor ??
+                          calendarContrastingTextColor(colorHex(selected)),
+                    ),
+                  ),
+                ],
               ),
             ),
             actions: [
@@ -370,32 +414,34 @@ class GroupEditModal extends HookConsumerWidget {
                 child: const Text('キャンセル'),
               ),
               TextButton(
-                onPressed: () => Navigator.pop(
-                  context,
-                  '#${(selected.toARGB32() & 0xFFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}',
-                ),
+                onPressed: () => Navigator.pop(context, (
+                  color: colorHex(selected),
+                  textColor: selectedTextColor,
+                )),
                 child: const Text('決定'),
               ),
             ],
           ),
         ),
       );
-      if (color != null && context.mounted) onChanged(color);
+      if (colors != null && context.mounted) {
+        onChanged(colors.color, colors.textColor);
+      }
     }
 
     Widget colorButton(
       Key key,
       String title,
       String color,
-      ValueChanged<String> onChanged,
-    ) => IconButton(
+      void Function(String, String?) onChanged, {
+      required String previewName,
+      String? textColor,
+    }) => IconButton(
       key: key,
       tooltip: title,
-      icon: Icon(
-        Icons.circle,
-        color: Color(int.parse(color.substring(1), radix: 16) | 0xFF000000),
-      ),
-      onPressed: () => chooseColor(title, color, onChanged),
+      icon: Icon(Icons.circle, color: parseColor(color)),
+      onPressed: () =>
+          chooseColor(title, previewName, color, textColor, onChanged),
     );
 
     Widget buildTitle() {
@@ -549,11 +595,16 @@ class GroupEditModal extends HookConsumerWidget {
               Key('member_color_button_${groupMember.memberId}'),
               '$displayNameの色',
               groupMember.color,
-              (color) {
+              (color, textColor) {
                 final members = groupState.value.members.toList();
-                members[index] = members[index].copyWith(color: color);
+                members[index] = members[index].copyWith(
+                  color: color,
+                  textColor: textColor,
+                );
                 updateGroupMembers(members);
               },
+              previewName: '$displayNameの予定',
+              textColor: groupMember.textColor,
             ),
             buildAdminBadgeSlot(index, groupMember.isAdministrator),
             const SizedBox(width: 8),
@@ -684,9 +735,10 @@ class GroupEditModal extends HookConsumerWidget {
                     const Key('group_color_button'),
                     'グループの色',
                     groupState.value.color,
-                    (color) => groupState.value = groupState.value.copyWith(
-                      color: color,
-                    ),
+                    (color, textColor) => groupState.value = groupState.value
+                        .copyWith(color: color, textColor: textColor),
+                    previewName: 'グループの予定',
+                    textColor: groupState.value.textColor,
                   ),
                 ],
               ),

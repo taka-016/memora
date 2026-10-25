@@ -10,6 +10,7 @@ class Group extends Equatable {
     required this.name,
     this.memo,
     this.color = '#4CAF50',
+    this.textColor,
     List<GroupMember>? originalMembers,
     List<GroupMember>? members,
   }) : originalMembers = List.unmodifiable(
@@ -35,6 +36,7 @@ class Group extends Equatable {
   final String id;
   final String ownerId;
   final String color;
+  final String? textColor;
   final String name;
   final String? memo;
   final List<GroupMember> members;
@@ -43,6 +45,7 @@ class Group extends Equatable {
   Group copyWith({
     int? version,
     String? color,
+    Object? textColor = _copyWithPlaceholder,
     String? id,
     String? ownerId,
     String? name,
@@ -54,6 +57,9 @@ class Group extends Equatable {
       id: id ?? this.id,
       ownerId: ownerId ?? this.ownerId,
       color: color ?? this.color,
+      textColor: identical(textColor, _copyWithPlaceholder)
+          ? this.textColor
+          : textColor as String?,
       name: name ?? this.name,
       memo: memo ?? this.memo,
       members: members ?? this.members,
@@ -64,6 +70,7 @@ class Group extends Equatable {
   @override
   List<Object?> get props => [
     color,
+    textColor,
     version,
     id,
     ownerId,
@@ -73,3 +80,5 @@ class Group extends Equatable {
     originalMembers,
   ];
 }
+
+const Object _copyWithPlaceholder = Object();

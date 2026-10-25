@@ -960,8 +960,26 @@ class Groups extends Table with TableInfo<Groups, SqliteGroupRow> {
     $customConstraints: 'NOT NULL DEFAULT \'#4CAF50\' CHECK (length(color) = 7 AND substr(color, 1, 1) = \'#\' AND substr(color, 2) NOT GLOB \'*[^0-9a-fA-F]*\')',
     defaultValue: const CustomExpression('\'#4CAF50\''),
   );
+  static const VerificationMeta _textColorMeta = const VerificationMeta(
+    'textColor',
+  );
+  late final GeneratedColumn<String> textColor = GeneratedColumn<String>(
+    'text_color',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: 'CHECK (text_color IS NULL OR(length(text_color) = 7 AND substr(text_color, 1, 1) = \'#\' AND substr(text_color, 2) NOT GLOB \'*[^0-9a-fA-F]*\'))',
+  );
   @override
-  List<GeneratedColumn> get $columns => [id, ownerId, name, memo, color];
+  List<GeneratedColumn> get $columns => [
+    id,
+    ownerId,
+    name,
+    memo,
+    color,
+    textColor,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -1007,6 +1025,12 @@ class Groups extends Table with TableInfo<Groups, SqliteGroupRow> {
         color.isAcceptableOrUnknown(data['color']!, _colorMeta),
       );
     }
+    if (data.containsKey('text_color')) {
+      context.handle(
+        _textColorMeta,
+        textColor.isAcceptableOrUnknown(data['text_color']!, _textColorMeta),
+      );
+    }
     return context;
   }
 
@@ -1036,6 +1060,10 @@ class Groups extends Table with TableInfo<Groups, SqliteGroupRow> {
         DriftSqlType.string,
         data['${effectivePrefix}color'],
       )!,
+      textColor: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}text_color'],
+      ),
     );
   }
 
@@ -1054,12 +1082,14 @@ class SqliteGroupRow extends DataClass implements Insertable<SqliteGroupRow> {
   final String name;
   final String? memo;
   final String color;
+  final String? textColor;
   const SqliteGroupRow({
     required this.id,
     required this.ownerId,
     required this.name,
     this.memo,
     required this.color,
+    this.textColor,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1071,6 +1101,9 @@ class SqliteGroupRow extends DataClass implements Insertable<SqliteGroupRow> {
       map['memo'] = Variable<String>(memo);
     }
     map['color'] = Variable<String>(color);
+    if (!nullToAbsent || textColor != null) {
+      map['text_color'] = Variable<String>(textColor);
+    }
     return map;
   }
 
@@ -1081,6 +1114,9 @@ class SqliteGroupRow extends DataClass implements Insertable<SqliteGroupRow> {
       name: Value(name),
       memo: memo == null && nullToAbsent ? const Value.absent() : Value(memo),
       color: Value(color),
+      textColor: textColor == null && nullToAbsent
+          ? const Value.absent()
+          : Value(textColor),
     );
   }
 
@@ -1095,6 +1131,7 @@ class SqliteGroupRow extends DataClass implements Insertable<SqliteGroupRow> {
       name: serializer.fromJson<String>(json['name']),
       memo: serializer.fromJson<String?>(json['memo']),
       color: serializer.fromJson<String>(json['color']),
+      textColor: serializer.fromJson<String?>(json['text_color']),
     );
   }
   @override
@@ -1106,6 +1143,7 @@ class SqliteGroupRow extends DataClass implements Insertable<SqliteGroupRow> {
       'name': serializer.toJson<String>(name),
       'memo': serializer.toJson<String?>(memo),
       'color': serializer.toJson<String>(color),
+      'text_color': serializer.toJson<String?>(textColor),
     };
   }
 
@@ -1115,12 +1153,14 @@ class SqliteGroupRow extends DataClass implements Insertable<SqliteGroupRow> {
     String? name,
     Value<String?> memo = const Value.absent(),
     String? color,
+    Value<String?> textColor = const Value.absent(),
   }) => SqliteGroupRow(
     id: id ?? this.id,
     ownerId: ownerId ?? this.ownerId,
     name: name ?? this.name,
     memo: memo.present ? memo.value : this.memo,
     color: color ?? this.color,
+    textColor: textColor.present ? textColor.value : this.textColor,
   );
   SqliteGroupRow copyWithCompanion(GroupsCompanion data) {
     return SqliteGroupRow(
@@ -1129,6 +1169,7 @@ class SqliteGroupRow extends DataClass implements Insertable<SqliteGroupRow> {
       name: data.name.present ? data.name.value : this.name,
       memo: data.memo.present ? data.memo.value : this.memo,
       color: data.color.present ? data.color.value : this.color,
+      textColor: data.textColor.present ? data.textColor.value : this.textColor,
     );
   }
 
@@ -1139,13 +1180,14 @@ class SqliteGroupRow extends DataClass implements Insertable<SqliteGroupRow> {
           ..write('ownerId: $ownerId, ')
           ..write('name: $name, ')
           ..write('memo: $memo, ')
-          ..write('color: $color')
+          ..write('color: $color, ')
+          ..write('textColor: $textColor')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, ownerId, name, memo, color);
+  int get hashCode => Object.hash(id, ownerId, name, memo, color, textColor);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1154,7 +1196,8 @@ class SqliteGroupRow extends DataClass implements Insertable<SqliteGroupRow> {
           other.ownerId == this.ownerId &&
           other.name == this.name &&
           other.memo == this.memo &&
-          other.color == this.color);
+          other.color == this.color &&
+          other.textColor == this.textColor);
 }
 
 class GroupsCompanion extends UpdateCompanion<SqliteGroupRow> {
@@ -1163,6 +1206,7 @@ class GroupsCompanion extends UpdateCompanion<SqliteGroupRow> {
   final Value<String> name;
   final Value<String?> memo;
   final Value<String> color;
+  final Value<String?> textColor;
   final Value<int> rowid;
   const GroupsCompanion({
     this.id = const Value.absent(),
@@ -1170,6 +1214,7 @@ class GroupsCompanion extends UpdateCompanion<SqliteGroupRow> {
     this.name = const Value.absent(),
     this.memo = const Value.absent(),
     this.color = const Value.absent(),
+    this.textColor = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   GroupsCompanion.insert({
@@ -1178,6 +1223,7 @@ class GroupsCompanion extends UpdateCompanion<SqliteGroupRow> {
     required String name,
     this.memo = const Value.absent(),
     this.color = const Value.absent(),
+    this.textColor = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        ownerId = Value(ownerId),
@@ -1188,6 +1234,7 @@ class GroupsCompanion extends UpdateCompanion<SqliteGroupRow> {
     Expression<String>? name,
     Expression<String>? memo,
     Expression<String>? color,
+    Expression<String>? textColor,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -1196,6 +1243,7 @@ class GroupsCompanion extends UpdateCompanion<SqliteGroupRow> {
       if (name != null) 'name': name,
       if (memo != null) 'memo': memo,
       if (color != null) 'color': color,
+      if (textColor != null) 'text_color': textColor,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1206,6 +1254,7 @@ class GroupsCompanion extends UpdateCompanion<SqliteGroupRow> {
     Value<String>? name,
     Value<String?>? memo,
     Value<String>? color,
+    Value<String?>? textColor,
     Value<int>? rowid,
   }) {
     return GroupsCompanion(
@@ -1214,6 +1263,7 @@ class GroupsCompanion extends UpdateCompanion<SqliteGroupRow> {
       name: name ?? this.name,
       memo: memo ?? this.memo,
       color: color ?? this.color,
+      textColor: textColor ?? this.textColor,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1236,6 +1286,9 @@ class GroupsCompanion extends UpdateCompanion<SqliteGroupRow> {
     if (color.present) {
       map['color'] = Variable<String>(color.value);
     }
+    if (textColor.present) {
+      map['text_color'] = Variable<String>(textColor.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1250,6 +1303,7 @@ class GroupsCompanion extends UpdateCompanion<SqliteGroupRow> {
           ..write('name: $name, ')
           ..write('memo: $memo, ')
           ..write('color: $color, ')
+          ..write('textColor: $textColor, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -1316,6 +1370,17 @@ class GroupMembers extends Table
     $customConstraints: 'NOT NULL DEFAULT \'#2196F3\' CHECK (length(color) = 7 AND substr(color, 1, 1) = \'#\' AND substr(color, 2) NOT GLOB \'*[^0-9a-fA-F]*\')',
     defaultValue: const CustomExpression('\'#2196F3\''),
   );
+  static const VerificationMeta _textColorMeta = const VerificationMeta(
+    'textColor',
+  );
+  late final GeneratedColumn<String> textColor = GeneratedColumn<String>(
+    'text_color',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: 'CHECK (text_color IS NULL OR(length(text_color) = 7 AND substr(text_color, 1, 1) = \'#\' AND substr(text_color, 2) NOT GLOB \'*[^0-9a-fA-F]*\'))',
+  );
   @override
   List<GeneratedColumn> get $columns => [
     groupId,
@@ -1323,6 +1388,7 @@ class GroupMembers extends Table
     isAdministrator,
     orderIndex,
     color,
+    textColor,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1377,6 +1443,12 @@ class GroupMembers extends Table
         color.isAcceptableOrUnknown(data['color']!, _colorMeta),
       );
     }
+    if (data.containsKey('text_color')) {
+      context.handle(
+        _textColorMeta,
+        textColor.isAcceptableOrUnknown(data['text_color']!, _textColorMeta),
+      );
+    }
     return context;
   }
 
@@ -1406,6 +1478,10 @@ class GroupMembers extends Table
         DriftSqlType.string,
         data['${effectivePrefix}color'],
       )!,
+      textColor: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}text_color'],
+      ),
     );
   }
 
@@ -1429,12 +1505,14 @@ class SqliteGroupMemberRow extends DataClass
   final int isAdministrator;
   final int orderIndex;
   final String color;
+  final String? textColor;
   const SqliteGroupMemberRow({
     required this.groupId,
     required this.memberId,
     required this.isAdministrator,
     required this.orderIndex,
     required this.color,
+    this.textColor,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1444,6 +1522,9 @@ class SqliteGroupMemberRow extends DataClass
     map['is_administrator'] = Variable<int>(isAdministrator);
     map['order_index'] = Variable<int>(orderIndex);
     map['color'] = Variable<String>(color);
+    if (!nullToAbsent || textColor != null) {
+      map['text_color'] = Variable<String>(textColor);
+    }
     return map;
   }
 
@@ -1454,6 +1535,9 @@ class SqliteGroupMemberRow extends DataClass
       isAdministrator: Value(isAdministrator),
       orderIndex: Value(orderIndex),
       color: Value(color),
+      textColor: textColor == null && nullToAbsent
+          ? const Value.absent()
+          : Value(textColor),
     );
   }
 
@@ -1468,6 +1552,7 @@ class SqliteGroupMemberRow extends DataClass
       isAdministrator: serializer.fromJson<int>(json['is_administrator']),
       orderIndex: serializer.fromJson<int>(json['order_index']),
       color: serializer.fromJson<String>(json['color']),
+      textColor: serializer.fromJson<String?>(json['text_color']),
     );
   }
   @override
@@ -1479,6 +1564,7 @@ class SqliteGroupMemberRow extends DataClass
       'is_administrator': serializer.toJson<int>(isAdministrator),
       'order_index': serializer.toJson<int>(orderIndex),
       'color': serializer.toJson<String>(color),
+      'text_color': serializer.toJson<String?>(textColor),
     };
   }
 
@@ -1488,12 +1574,14 @@ class SqliteGroupMemberRow extends DataClass
     int? isAdministrator,
     int? orderIndex,
     String? color,
+    Value<String?> textColor = const Value.absent(),
   }) => SqliteGroupMemberRow(
     groupId: groupId ?? this.groupId,
     memberId: memberId ?? this.memberId,
     isAdministrator: isAdministrator ?? this.isAdministrator,
     orderIndex: orderIndex ?? this.orderIndex,
     color: color ?? this.color,
+    textColor: textColor.present ? textColor.value : this.textColor,
   );
   SqliteGroupMemberRow copyWithCompanion(GroupMembersCompanion data) {
     return SqliteGroupMemberRow(
@@ -1506,6 +1594,7 @@ class SqliteGroupMemberRow extends DataClass
           ? data.orderIndex.value
           : this.orderIndex,
       color: data.color.present ? data.color.value : this.color,
+      textColor: data.textColor.present ? data.textColor.value : this.textColor,
     );
   }
 
@@ -1516,14 +1605,21 @@ class SqliteGroupMemberRow extends DataClass
           ..write('memberId: $memberId, ')
           ..write('isAdministrator: $isAdministrator, ')
           ..write('orderIndex: $orderIndex, ')
-          ..write('color: $color')
+          ..write('color: $color, ')
+          ..write('textColor: $textColor')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(groupId, memberId, isAdministrator, orderIndex, color);
+  int get hashCode => Object.hash(
+    groupId,
+    memberId,
+    isAdministrator,
+    orderIndex,
+    color,
+    textColor,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1532,7 +1628,8 @@ class SqliteGroupMemberRow extends DataClass
           other.memberId == this.memberId &&
           other.isAdministrator == this.isAdministrator &&
           other.orderIndex == this.orderIndex &&
-          other.color == this.color);
+          other.color == this.color &&
+          other.textColor == this.textColor);
 }
 
 class GroupMembersCompanion extends UpdateCompanion<SqliteGroupMemberRow> {
@@ -1541,6 +1638,7 @@ class GroupMembersCompanion extends UpdateCompanion<SqliteGroupMemberRow> {
   final Value<int> isAdministrator;
   final Value<int> orderIndex;
   final Value<String> color;
+  final Value<String?> textColor;
   final Value<int> rowid;
   const GroupMembersCompanion({
     this.groupId = const Value.absent(),
@@ -1548,6 +1646,7 @@ class GroupMembersCompanion extends UpdateCompanion<SqliteGroupMemberRow> {
     this.isAdministrator = const Value.absent(),
     this.orderIndex = const Value.absent(),
     this.color = const Value.absent(),
+    this.textColor = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   GroupMembersCompanion.insert({
@@ -1556,6 +1655,7 @@ class GroupMembersCompanion extends UpdateCompanion<SqliteGroupMemberRow> {
     required int isAdministrator,
     required int orderIndex,
     this.color = const Value.absent(),
+    this.textColor = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : groupId = Value(groupId),
        memberId = Value(memberId),
@@ -1567,6 +1667,7 @@ class GroupMembersCompanion extends UpdateCompanion<SqliteGroupMemberRow> {
     Expression<int>? isAdministrator,
     Expression<int>? orderIndex,
     Expression<String>? color,
+    Expression<String>? textColor,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -1575,6 +1676,7 @@ class GroupMembersCompanion extends UpdateCompanion<SqliteGroupMemberRow> {
       if (isAdministrator != null) 'is_administrator': isAdministrator,
       if (orderIndex != null) 'order_index': orderIndex,
       if (color != null) 'color': color,
+      if (textColor != null) 'text_color': textColor,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1585,6 +1687,7 @@ class GroupMembersCompanion extends UpdateCompanion<SqliteGroupMemberRow> {
     Value<int>? isAdministrator,
     Value<int>? orderIndex,
     Value<String>? color,
+    Value<String?>? textColor,
     Value<int>? rowid,
   }) {
     return GroupMembersCompanion(
@@ -1593,6 +1696,7 @@ class GroupMembersCompanion extends UpdateCompanion<SqliteGroupMemberRow> {
       isAdministrator: isAdministrator ?? this.isAdministrator,
       orderIndex: orderIndex ?? this.orderIndex,
       color: color ?? this.color,
+      textColor: textColor ?? this.textColor,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1615,6 +1719,9 @@ class GroupMembersCompanion extends UpdateCompanion<SqliteGroupMemberRow> {
     if (color.present) {
       map['color'] = Variable<String>(color.value);
     }
+    if (textColor.present) {
+      map['text_color'] = Variable<String>(textColor.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1629,6 +1736,7 @@ class GroupMembersCompanion extends UpdateCompanion<SqliteGroupMemberRow> {
           ..write('isAdministrator: $isAdministrator, ')
           ..write('orderIndex: $orderIndex, ')
           ..write('color: $color, ')
+          ..write('textColor: $textColor, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -7900,8 +8008,26 @@ class DeletedGroups extends Table
     $customConstraints: 'NOT NULL DEFAULT \'#4CAF50\'',
     defaultValue: const CustomExpression('\'#4CAF50\''),
   );
+  static const VerificationMeta _textColorMeta = const VerificationMeta(
+    'textColor',
+  );
+  late final GeneratedColumn<String> textColor = GeneratedColumn<String>(
+    'text_color',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: 'CHECK (text_color IS NULL OR(length(text_color) = 7 AND substr(text_color, 1, 1) = \'#\' AND substr(text_color, 2) NOT GLOB \'*[^0-9a-fA-F]*\'))',
+  );
   @override
-  List<GeneratedColumn> get $columns => [id, ownerId, name, memo, color];
+  List<GeneratedColumn> get $columns => [
+    id,
+    ownerId,
+    name,
+    memo,
+    color,
+    textColor,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -7947,6 +8073,12 @@ class DeletedGroups extends Table
         color.isAcceptableOrUnknown(data['color']!, _colorMeta),
       );
     }
+    if (data.containsKey('text_color')) {
+      context.handle(
+        _textColorMeta,
+        textColor.isAcceptableOrUnknown(data['text_color']!, _textColorMeta),
+      );
+    }
     return context;
   }
 
@@ -7976,6 +8108,10 @@ class DeletedGroups extends Table
         DriftSqlType.string,
         data['${effectivePrefix}color'],
       )!,
+      textColor: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}text_color'],
+      ),
     );
   }
 
@@ -7995,12 +8131,14 @@ class SqliteDeletedGroupRow extends DataClass
   final String name;
   final String? memo;
   final String color;
+  final String? textColor;
   const SqliteDeletedGroupRow({
     required this.id,
     required this.ownerId,
     required this.name,
     this.memo,
     required this.color,
+    this.textColor,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -8012,6 +8150,9 @@ class SqliteDeletedGroupRow extends DataClass
       map['memo'] = Variable<String>(memo);
     }
     map['color'] = Variable<String>(color);
+    if (!nullToAbsent || textColor != null) {
+      map['text_color'] = Variable<String>(textColor);
+    }
     return map;
   }
 
@@ -8022,6 +8163,9 @@ class SqliteDeletedGroupRow extends DataClass
       name: Value(name),
       memo: memo == null && nullToAbsent ? const Value.absent() : Value(memo),
       color: Value(color),
+      textColor: textColor == null && nullToAbsent
+          ? const Value.absent()
+          : Value(textColor),
     );
   }
 
@@ -8036,6 +8180,7 @@ class SqliteDeletedGroupRow extends DataClass
       name: serializer.fromJson<String>(json['name']),
       memo: serializer.fromJson<String?>(json['memo']),
       color: serializer.fromJson<String>(json['color']),
+      textColor: serializer.fromJson<String?>(json['text_color']),
     );
   }
   @override
@@ -8047,6 +8192,7 @@ class SqliteDeletedGroupRow extends DataClass
       'name': serializer.toJson<String>(name),
       'memo': serializer.toJson<String?>(memo),
       'color': serializer.toJson<String>(color),
+      'text_color': serializer.toJson<String?>(textColor),
     };
   }
 
@@ -8056,12 +8202,14 @@ class SqliteDeletedGroupRow extends DataClass
     String? name,
     Value<String?> memo = const Value.absent(),
     String? color,
+    Value<String?> textColor = const Value.absent(),
   }) => SqliteDeletedGroupRow(
     id: id ?? this.id,
     ownerId: ownerId ?? this.ownerId,
     name: name ?? this.name,
     memo: memo.present ? memo.value : this.memo,
     color: color ?? this.color,
+    textColor: textColor.present ? textColor.value : this.textColor,
   );
   SqliteDeletedGroupRow copyWithCompanion(DeletedGroupsCompanion data) {
     return SqliteDeletedGroupRow(
@@ -8070,6 +8218,7 @@ class SqliteDeletedGroupRow extends DataClass
       name: data.name.present ? data.name.value : this.name,
       memo: data.memo.present ? data.memo.value : this.memo,
       color: data.color.present ? data.color.value : this.color,
+      textColor: data.textColor.present ? data.textColor.value : this.textColor,
     );
   }
 
@@ -8080,13 +8229,14 @@ class SqliteDeletedGroupRow extends DataClass
           ..write('ownerId: $ownerId, ')
           ..write('name: $name, ')
           ..write('memo: $memo, ')
-          ..write('color: $color')
+          ..write('color: $color, ')
+          ..write('textColor: $textColor')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, ownerId, name, memo, color);
+  int get hashCode => Object.hash(id, ownerId, name, memo, color, textColor);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -8095,7 +8245,8 @@ class SqliteDeletedGroupRow extends DataClass
           other.ownerId == this.ownerId &&
           other.name == this.name &&
           other.memo == this.memo &&
-          other.color == this.color);
+          other.color == this.color &&
+          other.textColor == this.textColor);
 }
 
 class DeletedGroupsCompanion extends UpdateCompanion<SqliteDeletedGroupRow> {
@@ -8104,6 +8255,7 @@ class DeletedGroupsCompanion extends UpdateCompanion<SqliteDeletedGroupRow> {
   final Value<String> name;
   final Value<String?> memo;
   final Value<String> color;
+  final Value<String?> textColor;
   final Value<int> rowid;
   const DeletedGroupsCompanion({
     this.id = const Value.absent(),
@@ -8111,6 +8263,7 @@ class DeletedGroupsCompanion extends UpdateCompanion<SqliteDeletedGroupRow> {
     this.name = const Value.absent(),
     this.memo = const Value.absent(),
     this.color = const Value.absent(),
+    this.textColor = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   DeletedGroupsCompanion.insert({
@@ -8119,6 +8272,7 @@ class DeletedGroupsCompanion extends UpdateCompanion<SqliteDeletedGroupRow> {
     required String name,
     this.memo = const Value.absent(),
     this.color = const Value.absent(),
+    this.textColor = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        ownerId = Value(ownerId),
@@ -8129,6 +8283,7 @@ class DeletedGroupsCompanion extends UpdateCompanion<SqliteDeletedGroupRow> {
     Expression<String>? name,
     Expression<String>? memo,
     Expression<String>? color,
+    Expression<String>? textColor,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -8137,6 +8292,7 @@ class DeletedGroupsCompanion extends UpdateCompanion<SqliteDeletedGroupRow> {
       if (name != null) 'name': name,
       if (memo != null) 'memo': memo,
       if (color != null) 'color': color,
+      if (textColor != null) 'text_color': textColor,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -8147,6 +8303,7 @@ class DeletedGroupsCompanion extends UpdateCompanion<SqliteDeletedGroupRow> {
     Value<String>? name,
     Value<String?>? memo,
     Value<String>? color,
+    Value<String?>? textColor,
     Value<int>? rowid,
   }) {
     return DeletedGroupsCompanion(
@@ -8155,6 +8312,7 @@ class DeletedGroupsCompanion extends UpdateCompanion<SqliteDeletedGroupRow> {
       name: name ?? this.name,
       memo: memo ?? this.memo,
       color: color ?? this.color,
+      textColor: textColor ?? this.textColor,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -8177,6 +8335,9 @@ class DeletedGroupsCompanion extends UpdateCompanion<SqliteDeletedGroupRow> {
     if (color.present) {
       map['color'] = Variable<String>(color.value);
     }
+    if (textColor.present) {
+      map['text_color'] = Variable<String>(textColor.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -8191,6 +8352,7 @@ class DeletedGroupsCompanion extends UpdateCompanion<SqliteDeletedGroupRow> {
           ..write('name: $name, ')
           ..write('memo: $memo, ')
           ..write('color: $color, ')
+          ..write('textColor: $textColor, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();

@@ -7,16 +7,19 @@ class GroupMember extends Equatable {
     this.isAdministrator = false,
     this.orderIndex = 0,
     this.color = '#2196F3',
+    this.textColor,
   });
 
   final String groupId;
   final String color;
+  final String? textColor;
   final String memberId;
   final bool isAdministrator;
   final int orderIndex;
 
   GroupMember copyWith({
     String? color,
+    Object? textColor = _copyWithPlaceholder,
     String? groupId,
     String? memberId,
     bool? isAdministrator,
@@ -25,6 +28,9 @@ class GroupMember extends Equatable {
     return GroupMember(
       groupId: groupId ?? this.groupId,
       color: color ?? this.color,
+      textColor: identical(textColor, _copyWithPlaceholder)
+          ? this.textColor
+          : textColor as String?,
       memberId: memberId ?? this.memberId,
       isAdministrator: isAdministrator ?? this.isAdministrator,
       orderIndex: orderIndex ?? this.orderIndex,
@@ -34,9 +40,12 @@ class GroupMember extends Equatable {
   @override
   List<Object?> get props => [
     color,
+    textColor,
     groupId,
     memberId,
     isAdministrator,
     orderIndex,
   ];
 }
+
+const Object _copyWithPlaceholder = Object();

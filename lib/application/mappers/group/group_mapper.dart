@@ -9,6 +9,7 @@ class GroupMapper {
       version: dto.version,
       ownerId: dto.ownerId,
       color: dto.color,
+      textColor: dto.textColor,
       name: dto.name,
       memo: dto.memo,
       members: GroupMemberMapper.toEntityList(dto.members),

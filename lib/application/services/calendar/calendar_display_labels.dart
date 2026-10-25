@@ -15,13 +15,14 @@ List<CalendarLabelDto> buildCalendarDisplayLabels(
     String color,
     String type, {
     String memberId = '',
+    String? textColor,
     bool selectable = true,
   }) => CalendarLabelDto(
     id: id,
     groupId: group.id,
     name: name,
     color: color,
-    textColor: calendarContrastingTextColor(color),
+    textColor: textColor ?? calendarContrastingTextColor(color),
     labelType: type,
     memberId: memberId,
     isSelectable: selectable,
@@ -29,7 +30,13 @@ List<CalendarLabelDto> buildCalendarDisplayLabels(
   final members = group.members.toList()
     ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
   final result = [
-    fixed('group:', 'グループの予定', group.color, 'group'),
+    fixed(
+      'group:',
+      'グループの予定',
+      group.color,
+      'group',
+      textColor: group.textColor,
+    ),
     for (final member in members)
       fixed(
         'member:${member.memberId}',
@@ -37,6 +44,7 @@ List<CalendarLabelDto> buildCalendarDisplayLabels(
         member.color,
         'member',
         memberId: member.memberId,
+        textColor: member.textColor,
       ),
     ...customLabels,
   ];
