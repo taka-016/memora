@@ -1,3 +1,4 @@
+import 'package:memora/domain/entities/group/group_member.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
@@ -68,6 +69,29 @@ void main() {
         ),
       ).called(1);
       verify(mockBatch.commit()).called(1);
+    });
+
+    test('所属色だけの変更も既存所属を更新する', () async {
+      const before = GroupMember(groupId: 'g', memberId: 'm');
+      final group = Group(id: 'g', ownerId: 'o', name: '家族', originalMembers: const [before], members: [before.copyWith(color: '#FF0000')]);
+      final parent = MockDocumentReference<Map<String, dynamic>>();
+      final membership = MockDocumentReference<Map<String, dynamic>>();
+      final batch = MockWriteBatch();
+      final collection = MockCollectionReference<Map<String, dynamic>>();
+      final query = MockQuery<Map<String, dynamic>>();
+      final snapshot = MockQuerySnapshot<Map<String, dynamic>>();
+      final doc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
+      when(mockFirestore.batch()).thenReturn(batch);
+      when(mockCollection.doc('g')).thenReturn(parent);
+      when(mockFirestore.collection('group_members')).thenReturn(collection);
+      when(collection.where('groupId', isEqualTo: 'g')).thenReturn(query);
+      when(query.get()).thenAnswer((_) async => snapshot);
+      when(snapshot.docs).thenReturn([doc]);
+      when(doc.data()).thenReturn({'memberId': 'm'});
+      when(doc.reference).thenReturn(membership);
+      when(batch.commit()).thenAnswer((_) async {});
+      await repository.updateGroup(group);
+      verify(batch.update(membership, argThat(containsPair('color', '#FF0000')))).called(1);
     });
 
     test('updateGroupがgroups collectionの該当ドキュメントを差分更新する', () async {

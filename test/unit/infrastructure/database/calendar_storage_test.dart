@@ -36,6 +36,7 @@ void main() {
     'id': 'event',
     'group_id': 'family',
     'label_id': labelId,
+    'label_type': 'custom',
     'title': title,
     'start_date_time': 1,
     'end_date_time': end,

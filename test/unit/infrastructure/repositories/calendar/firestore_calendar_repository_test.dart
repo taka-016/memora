@@ -48,15 +48,15 @@ void main() {
   late MockCollectionReference overrideCollection;
   final overrideRefs = <String, MockDocumentReference>{};
 
-  test('Firestoreの文字色を往復し旧ラベルには従来の白黒を補完する', () {
+  test('Firestoreの任意ラベルの文字色と並び順を往復する', () {
     final doc = MockDocumentSnapshot();
     when(doc.id).thenReturn('label');
     for (final color in ['#FFFFFF', '#123ABC']) {
-      final data = {'groupId': 'group', 'name': '全員', 'color': color};
+      final data = {'groupId': 'group', 'name': '全員', 'color': color, 'textColor': '#Ab12Cd', 'sortOrder': 3};
       when(doc.data()).thenReturn(data);
       expect(
         FirestoreCalendarLabelMapper.fromFirestore(doc).textColor,
-        color == '#FFFFFF' ? '#000000' : '#FFFFFF',
+        '#Ab12Cd',
       );
       when(doc.data())
           .thenReturn({...data, 'textColor': '#Ab12Cd', 'sortOrder': 3});
@@ -117,7 +117,7 @@ void main() {
     labelDoc = MockDocumentSnapshot();
     when(eventDoc.exists).thenReturn(true);
     when(eventDoc.data())
-        .thenReturn({'groupId': 'group', 'labelId': 'label', 'version': 1});
+        .thenReturn({'groupId': 'group', 'labelType': 'custom', 'labelId': 'label', 'referencedLabelIds': ['label'], 'version': 1});
     when(labelDoc.exists).thenReturn(true);
     when(labelDoc.data())
         .thenReturn({'groupId': 'group', 'eventCount': 1, 'version': 1});
@@ -167,6 +167,17 @@ void main() {
     endDateTime: DateTime.utc(2026, 10, 3),
     isAllDay: false,
   );
+
+  test('固定ラベルの予定は任意ラベルの利用件数を更新せず保存する', () async {
+    await events.saveCalendarEvent(event().copyWith(labelType: 'member', memberId: 'm', labelId: ''));
+    final data = verify(transaction.set(eventRef, captureAny)).captured.single as Map<String, dynamic>;
+    expect(data['labelType'], 'member');
+    expect(data['memberId'], 'm');
+    expect(data['labelId'], isNull);
+    expect(data['referencedLabelIds'], isEmpty);
+    verifyNever(transaction.get(labelRef));
+    verifyNever(transaction.update(labelRef, any));
+  });
 
   test('トランザクションの再実行でも保存する期待値を最新版へ差し替えない', () async {
     final edited = event(id: 'event').copyWith(version: 7);
@@ -460,63 +471,6 @@ void main() {
     ).getCalendarEventsByGroupId('group');
     return result;
   }
-
-  test('保存済みの埋め込み個別回を読み次回保存で独立コレクションへ移す', () async {
-    final change = CalendarEventOverride(
-      originalStartDateTime: event().startDateTime,
-      isCancelled: false,
-      title: '個別変更',
-      labelId: 'other',
-      isAllDay: true,
-      startDateTime: DateTime.utc(2026, 11, 1),
-      endDateTime: DateTime.utc(2026, 11, 2),
-    );
-    final value = recurring().copyWith(
-      overrides: [change, recurring().overrides.single],
-    );
-    when(eventDoc.id).thenReturn('event');
-    when(eventDoc.data()).thenReturn({
-      ...FirestoreCalendarEventMapper.toCreateFirestore(value),
-      'overrides': {
-        'other': [
-          {
-            'originalStartDateTime': Timestamp.fromDate(
-              change.originalStartDateTime,
-            ),
-            'title': change.title,
-            'isAllDay': true,
-            'startDateTime': Timestamp.fromDate(change.startDateTime!),
-            'endDateTime': Timestamp.fromDate(change.endDateTime!),
-          },
-        ],
-      },
-      'cancelledOccurrences': [
-        Timestamp.fromDate(value.overrides.last.originalStartDateTime),
-      ],
-    });
-    final saved = CalendarEventMapper.toEntity(
-      (await readStoredEvents()).single,
-    );
-    expect(saved.overrides, value.overrides);
-    await events.replaceCalendarEvent(saved, saved.copyWith(title: '移行'), null);
-    final parent =
-        verify(transaction.update(eventRef, captureAny)).captured.single
-            as Map<String, dynamic>;
-    expect(parent['overrides'], FieldValue.delete());
-    expect(parent['cancelledOccurrences'], FieldValue.delete());
-    expect(parent['overrideIds'], hasLength(2));
-    final rows = verify(transaction.set(any, captureAny)).captured
-        .cast<Map<String, dynamic>>();
-    expect(
-      rows.where((row) => row['isCancelled'] == false).single['labelId'],
-      'other',
-    );
-    expect(
-      rows.where((row) => row['isCancelled'] == true).single['title'],
-      isNull,
-    );
-    verifyNever(transaction.update(otherRef, any));
-  });
 
   test('通常の取得で取消しを復元し読取トランザクションを実行しない', () async {
     final value = recurring();

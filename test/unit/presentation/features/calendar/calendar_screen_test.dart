@@ -9,6 +9,19 @@ import 'package:memora/application/dtos/calendar/calendar_label_dto.dart';
 import 'calendar_test_support.dart';
 
 void main() {
+  testWidgets('任意ラベル未登録でもグループ固定ラベルを初期選択して登録できる', (tester) async {
+    final harness = CalendarTestHarness()..savedLabels.clear();
+    await harness.pump(tester);
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+    expect(find.text('グループの予定'), findsOneWidget);
+    await tester.enterText(find.byType(TextFormField).first, '家族旅行');
+    await tester.tap(find.text('保存'));
+    await tester.pumpAndSettle();
+    expect(harness.savedEvents.single.labelType, 'group');
+    expect(harness.savedEvents.single.labelId, isEmpty);
+  });
+
   setUp(() => SharedPreferences.setMockInitialValues({}));
   testWidgets('各日の枠に先頭3件を表示し選択日の再タップで全予定と期間を確認する', (tester) async {
     final harness = CalendarTestHarness()
