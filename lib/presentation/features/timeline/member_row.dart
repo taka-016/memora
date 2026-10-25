@@ -28,6 +28,9 @@ class MemberRow extends TimelineRowDefinition {
           .withValues(alpha: 0.2);
 
   @override
+  Color get fixedColumnBackgroundColor => backgroundColor;
+
+  @override
   Key yearCellKey(int year) =>
       Key('member_event_cell_${member.memberId}_$year');
 

@@ -16,6 +16,10 @@ class Group extends Equatable {
          originalMembers ?? members ?? const [],
        ),
        members = List.unmodifiable(members ?? const []) {
+    final rgb = RegExp(r'^#[0-9a-fA-F]{6}$');
+    if (!rgb.hasMatch(color) || this.members.any((member) => !rgb.hasMatch(member.color))) {
+      throw ValidationException('色は#RRGGBB形式で指定してください');
+    }
     if (members != null) {
       final memberIds = <String>{};
       for (final member in members) {
