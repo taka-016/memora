@@ -40,7 +40,9 @@ class FirestoreCalendarEventMapper {
     'timeZone': value.timeZone,
     'referencedLabelIds': {
       if (value.labelType == 'custom') value.labelId,
-      ...value.overrides.where((v) => !v.isCancelled && v.labelType == 'custom').map((v) => v.labelId!),
+      ...value.overrides
+          .where((v) => !v.isCancelled && v.labelType == 'custom')
+          .map((v) => v.labelId!),
     }.toList(),
     'groupId': value.groupId,
     'labelId': value.labelType == 'custom' ? value.labelId : null,

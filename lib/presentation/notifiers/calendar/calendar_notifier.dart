@@ -1,3 +1,6 @@
+import 'package:memora/application/dtos/group/group_dto.dart';
+import 'package:memora/composition_root/providers/group_providers.dart';
+
 import 'dart:async';
 
 import 'package:memora/application/usecases/calendar/change_calendar_recurrence_usecase.dart';
@@ -14,6 +17,8 @@ part 'calendar_notifier.g.dart';
 @riverpod
 class CalendarNotifier extends _$CalendarNotifier {
   int _loadVersion = 0;
+  StreamSubscription<GroupDto?>? _groupSubscription;
+  bool _groupWaiting = false;
   StreamSubscription<List<CalendarEventDto>>? _eventsSubscription;
   StreamSubscription<List<CalendarLabelDto>>? _labelsSubscription;
   List<CalendarLabelDto>? _receivedLabels;
@@ -26,6 +31,7 @@ class CalendarNotifier extends _$CalendarNotifier {
   CalendarState build(String groupId) {
     ref.onDispose(() {
       _loadVersion++;
+      unawaited(_groupSubscription?.cancel());
       unawaited(_eventsSubscription?.cancel());
       unawaited(_labelsSubscription?.cancel());
     });
@@ -59,15 +65,20 @@ class CalendarNotifier extends _$CalendarNotifier {
     }
     state = state.copyWith(isLoading: true, loadError: '');
     try {
-      final results = await Future.wait<Object>([
+      final results = await Future.wait<Object?>([
         ref.read(getCalendarEventsUsecaseProvider).execute(groupId),
         ref.read(getCalendarLabelsUsecaseProvider).execute(groupId),
+        ref.read(getGroupWithMembersByIdUsecaseProvider).execute(groupId),
       ]);
       if (!ref.mounted || version != _loadVersion) return;
+      if (results[2] == null)
+        throw const ApplicationValidationException('グループが見つかりません');
       final series = results[0] as List<CalendarEventDto>;
       final expanded = _expand(series, state.selectedDate);
       _series = series;
       state = state.copyWith(
+        group: results[2] as GroupDto,
+        groupLoadError: '',
         events: expanded,
         labels: results[1] as List<CalendarLabelDto>,
         isLoading: false,
@@ -84,9 +95,11 @@ class CalendarNotifier extends _$CalendarNotifier {
   }
 
   Future<void> _watch(int version) async {
+    await _groupSubscription?.cancel();
     await _eventsSubscription?.cancel();
     await _labelsSubscription?.cancel();
     if (!ref.mounted || version != _loadVersion) return;
+    _groupWaiting = true;
     _eventsWaiting = true;
     _labelsWaiting = true;
     state = state.copyWith(isLoading: true);
@@ -144,6 +157,40 @@ class CalendarNotifier extends _$CalendarNotifier {
     } catch (_) {
       failure(false);
     }
+    void groupFailure() {
+      if (!active()) return;
+      _groupWaiting = false;
+      state = state.copyWith(groupLoadError: 'グループ情報を取得できませんでした。再試行してください');
+      _receiveStatus(events: true, error: state.eventLoadError);
+    }
+
+    void receiveGroup(GroupDto? group) {
+      if (!active()) return;
+      if (group == null) {
+        groupFailure();
+        return;
+      }
+      _groupWaiting = false;
+      state = state.copyWith(group: group, groupLoadError: '');
+      _receiveStatus(events: true, error: state.eventLoadError);
+    }
+
+    try {
+      final watcher = ref.read(watchCalendarGroupUsecaseProvider);
+      if (watcher == null) {
+        receiveGroup(
+          await ref
+              .read(getGroupWithMembersByIdUsecaseProvider)
+              .execute(groupId),
+        );
+      } else {
+        _groupSubscription = watcher
+            .execute(groupId)
+            .listen(receiveGroup, onError: (Object _) => groupFailure());
+      }
+    } catch (_) {
+      groupFailure();
+    }
   }
 
   void _receiveStatus({required bool events, String error = ''}) {
@@ -155,8 +202,9 @@ class CalendarNotifier extends _$CalendarNotifier {
       loadError: [
         eventError,
         labelError,
+        state.groupLoadError,
       ].where((value) => value.isNotEmpty).join('\n'),
-      isLoading: _eventsWaiting || _labelsWaiting,
+      isLoading: _eventsWaiting || _labelsWaiting || _groupWaiting,
     );
   }
 
@@ -270,8 +318,16 @@ class CalendarNotifier extends _$CalendarNotifier {
       throw const ApplicationValidationException('繰り返し予定は変更範囲を指定してください');
     }
     if (event.groupId != groupId ||
-        !state.labels.any(
-          (label) => label.id == event.labelId && label.groupId == groupId,
+        !state.displayLabels.any(
+          (label) =>
+              label.id == event.labelKey &&
+              label.groupId == groupId &&
+              (label.isSelectable ||
+                  _series.any(
+                    (source) =>
+                        source.id == event.id &&
+                        source.labelKey == event.labelKey,
+                  )),
         )) {
       throw const ApplicationValidationException('同じグループの色ラベルを指定してください');
     }
@@ -348,22 +404,26 @@ class CalendarNotifier extends _$CalendarNotifier {
     return success;
   }
 
-  Future<bool> deleteLabel(String id, {int? expectedVersion}) =>
-      _mutate(() async {
-        if (!state.labels.any(
-          (label) => label.id == id && label.groupId == groupId,
-        )) {
-          throw const ApplicationValidationException('削除する色ラベルが見つかりません');
-        }
-        if (_series.any(
-          (event) =>
-              event.labelId == id ||
-              event.overrides.any((v) => !v.isCancelled && v.labelId == id),
-        )) {
-          throw const ApplicationValidationException('予定で使用中の色ラベルは削除できません');
-        }
-        await ref
-            .read(deleteCalendarLabelUsecaseProvider)
-            .execute(id, expectedVersion: expectedVersion);
-      });
+  Future<bool> deleteLabel(String id, {int? expectedVersion}) => _mutate(
+    () async {
+      if (!state.labels.any(
+        (label) => label.id == id && label.groupId == groupId,
+      )) {
+        throw const ApplicationValidationException('削除する色ラベルが見つかりません');
+      }
+      if (_series.any(
+        (event) =>
+            (event.labelType == 'custom' && event.labelId == id) ||
+            event.overrides.any(
+              (v) =>
+                  !v.isCancelled && v.labelType == 'custom' && v.labelId == id,
+            ),
+      )) {
+        throw const ApplicationValidationException('予定で使用中の色ラベルは削除できません');
+      }
+      await ref
+          .read(deleteCalendarLabelUsecaseProvider)
+          .execute(id, expectedVersion: expectedVersion);
+    },
+  );
 }

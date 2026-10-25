@@ -23,7 +23,9 @@ class MemberRow extends TimelineRowDefinition {
   String get fixedColumnLabel => member.displayName;
 
   @override
-  Color get backgroundColor => Color(int.parse(member.color.substring(1), radix: 16) | 0xFF000000).withValues(alpha: 0.2);
+  Color get backgroundColor =>
+      Color(int.parse(member.color.substring(1), radix: 16) | 0xFF000000)
+          .withValues(alpha: 0.2);
 
   @override
   Key yearCellKey(int year) =>

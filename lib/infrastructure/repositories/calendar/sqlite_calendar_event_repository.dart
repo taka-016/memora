@@ -17,7 +17,9 @@ class SqliteCalendarEventRepository implements CalendarEventRepository {
     validateCalendarRecurrence(event);
     for (final id in {
       if (event.labelType == 'custom') event.labelId,
-      ...event.overrides.where((v) => !v.isCancelled && v.labelType == 'custom').map((v) => v.labelId!),
+      ...event.overrides
+          .where((v) => !v.isCancelled && v.labelType == 'custom')
+          .map((v) => v.labelId!),
     }) {
       final labels = await db.rows(
         'calendar_labels',

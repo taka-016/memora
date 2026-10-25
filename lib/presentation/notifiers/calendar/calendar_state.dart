@@ -1,9 +1,13 @@
+import 'package:memora/application/dtos/group/group_dto.dart';
+import 'package:memora/application/services/calendar/calendar_display_labels.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/application/dtos/calendar/calendar_label_dto.dart';
 
 class CalendarState {
   CalendarState({
     required this.selectedDate,
+    this.group,
+    this.groupLoadError = '',
     List<CalendarEventDto> events = const [],
     List<CalendarLabelDto> labels = const [],
     this.isLoading = false,
@@ -18,6 +22,11 @@ class CalendarState {
   }) : events = List.unmodifiable(events),
        labels = List.unmodifiable(labels);
 
+  final GroupDto? group;
+  final String groupLoadError;
+  List<CalendarLabelDto> get displayLabels => group == null
+      ? const []
+      : buildCalendarDisplayLabels(group!, labels, events: events);
   final DateTime selectedDate;
   DateTime get month => DateTime(selectedDate.year, selectedDate.month);
   final List<CalendarEventDto> events;
@@ -60,6 +69,8 @@ class CalendarState {
 
   CalendarState copyWith({
     DateTime? selectedDate,
+    GroupDto? group,
+    String? groupLoadError,
     List<CalendarEventDto>? events,
     List<CalendarLabelDto>? labels,
     bool? isLoading,
@@ -73,6 +84,8 @@ class CalendarState {
     String? mutationError,
   }) => CalendarState(
     selectedDate: selectedDate ?? this.selectedDate,
+    group: group ?? this.group,
+    groupLoadError: groupLoadError ?? this.groupLoadError,
     events: events ?? this.events,
     labels: labels ?? this.labels,
     isLoading: isLoading ?? this.isLoading,
