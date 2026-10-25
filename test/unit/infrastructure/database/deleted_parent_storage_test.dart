@@ -34,6 +34,7 @@ void main() {
       'owner_id': 'owner',
       'name': '家族',
       'memo': null,
+      'color': '#4CAF50',
     };
     await db.insertRow('deleted_members', member);
     await db.insertRow('deleted_groups', group);
