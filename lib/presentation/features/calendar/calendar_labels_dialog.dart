@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:memora/presentation/features/calendar/calendar_color_picker.dart';
+import 'package:memora/presentation/shared/inputs/color_picker.dart';
 import 'package:memora/application/dtos/calendar/calendar_label_dto.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_notifier.dart';
 
@@ -231,7 +231,7 @@ class _LabelEditDialogState extends ConsumerState<_LabelEditDialog> {
                       : null,
                 ),
                 const SizedBox(height: 16),
-                CalendarColorPicker(
+                ColorPicker(
                   color: _selectedColor,
                   onChanged: saving
                       ? null

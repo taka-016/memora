@@ -1,3 +1,4 @@
+import 'package:memora/presentation/shared/inputs/color_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -16,8 +17,10 @@ GroupMemberDto _createGroupMemberForEdit(
   String groupId, {
   bool isAdministrator = false,
   int orderIndex = 0,
+  String? color,
 }) {
   return GroupMemberDto(
+    color: color ?? const ['#2196F3', '#E91E63', '#00BCD4', '#FFEB3B', '#9C27B0', '#FF9800'][orderIndex % 6],
     memberId: member.id,
     groupId: groupId,
     isAdministrator: isAdministrator,
@@ -321,7 +324,9 @@ class GroupEditModal extends HookConsumerWidget {
             updatedMembers[index] = _createGroupMemberForEdit(
               selectedMember,
               groupState.value.id,
-            ).copyWith(orderIndex: updatedMembers[index].orderIndex);
+              color: updatedMembers[index].color,
+              orderIndex: updatedMembers[index].orderIndex,
+            );
             updateGroupMembers(updatedMembers);
           });
           break;
@@ -330,6 +335,25 @@ class GroupEditModal extends HookConsumerWidget {
           break;
       }
     }
+
+    Future<void> chooseColor(String title, String value, ValueChanged<String> onChanged) async {
+      var selected = Color(int.parse(value.substring(1), radix: 16) | 0xFF000000);
+      final color = await showDialog<String>(context: context, builder: (context) => StatefulBuilder(builder: (context, setState) => AlertDialog(
+        title: Text(title),
+        content: SingleChildScrollView(child: ColorPicker(color: selected, onChanged: (color) => setState(() => selected = color))),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('キャンセル')),
+          TextButton(onPressed: () => Navigator.pop(context, '#${(selected.toARGB32() & 0xFFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}'), child: const Text('決定')),
+        ],
+      )));
+      if (color != null && context.mounted) onChanged(color);
+    }
+
+    Widget colorButton(Key key, String title, String color, ValueChanged<String> onChanged) => IconButton(
+      key: key, tooltip: title,
+      icon: Icon(Icons.circle, color: Color(int.parse(color.substring(1), radix: 16) | 0xFF000000)),
+      onPressed: () => chooseColor(title, color, onChanged),
+    );
 
     Widget buildTitle() {
       return Text(
@@ -478,6 +502,11 @@ class GroupEditModal extends HookConsumerWidget {
               ),
             ),
             const SizedBox(width: 12),
+            colorButton(Key('member_color_button_${groupMember.memberId}'), '$displayNameの色', groupMember.color, (color) {
+              final members = groupState.value.members.toList();
+              members[index] = members[index].copyWith(color: color);
+              updateGroupMembers(members);
+            }),
             buildAdminBadgeSlot(index, groupMember.isAdministrator),
             const SizedBox(width: 8),
             buildMemberActionSlot(
@@ -559,7 +588,8 @@ class GroupEditModal extends HookConsumerWidget {
                       _createGroupMemberForEdit(
                         selectedMember,
                         groupState.value.id,
-                      ).copyWith(orderIndex: nextOrderIndex(updatedMembers)),
+                        orderIndex: nextOrderIndex(updatedMembers),
+                      ),
                     );
                     updateGroupMembers(updatedMembers);
                   });
@@ -598,6 +628,8 @@ class GroupEditModal extends HookConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               buildGroupNameField(),
+              const SizedBox(height: 16),
+              Row(children: [const Text('グループの色'), colorButton(const Key('group_color_button'), 'グループの色', groupState.value.color, (color) => groupState.value = groupState.value.copyWith(color: color))]),
               const SizedBox(height: 16),
               buildMemoField(),
               const SizedBox(height: 16),
