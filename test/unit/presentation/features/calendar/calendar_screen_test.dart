@@ -23,7 +23,13 @@ void main() {
   });
 
   testWidgets('所属解除済みの参照を表示して保持するが再選択は許可しない', (tester) async {
-    final harness = CalendarTestHarness()..savedEvents.add(calendarTestEvent('e', '本人の予定').copyWith(labelType: 'member', memberId: 'removed', labelId: ''));
+    final harness = CalendarTestHarness()
+      ..savedEvents.add(
+        calendarTestEvent(
+          'e',
+          '本人の予定',
+        ).copyWith(labelType: 'member', memberId: 'removed', labelId: ''),
+      );
     await harness.pump(tester);
     await tester.tap(find.byKey(calendarTestDay2));
     await tester.pump();
@@ -32,9 +38,19 @@ void main() {
     expect(find.text('所属解除・削除済みメンバーの予定'), findsOneWidget);
     await tester.tap(find.widgetWithText(ListTile, '本人の予定'));
     await tester.pumpAndSettle();
-    final dropdown = tester.widget<DropdownButton<String>>(find.byType(DropdownButton<String>));
-    expect(dropdown.items!.singleWhere((item) => item.value == 'member:removed').enabled, isFalse);
-    await tester.enterText(find.widgetWithText(TextFormField, 'タイトル'), '予定名だけ変更');
+    final dropdown = tester.widget<DropdownButton<String>>(
+      find.byType(DropdownButton<String>),
+    );
+    expect(
+      dropdown.items!
+          .singleWhere((item) => item.value == 'member:removed')
+          .enabled,
+      isFalse,
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'タイトル'),
+      '予定名だけ変更',
+    );
     await tester.tap(find.text('保存'));
     await tester.pumpAndSettle();
     expect(harness.savedEvents.single.memberId, 'removed');
