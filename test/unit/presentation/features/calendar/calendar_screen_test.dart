@@ -57,6 +57,22 @@ void main() {
     expect(harness.savedEvents.single.title, '予定名だけ変更');
   });
 
+  testWidgets('ラベル追加でグループ管理への案内を示して任意ラベルを保存する', (tester) async {
+    final harness = CalendarTestHarness()..savedLabels.clear();
+    await harness.pump(tester);
+    await tester.tap(find.byTooltip('色ラベルの設定'));
+    await tester.pumpAndSettle();
+    expect(find.text('家族の名前や「家族全員」などのラベルを追加してください'), findsNothing);
+    await tester.tap(find.text('ラベルを追加'));
+    await tester.pumpAndSettle();
+    expect(find.text('グループ・メンバーの色は「グループ管理」で設定できます。'), findsOneWidget);
+    await tester.enterText(find.widgetWithText(TextFormField, '名前'), '仕事');
+    await tester.tap(find.text('保存'));
+    await tester.pumpAndSettle();
+    expect(harness.savedLabels.single.name, '仕事');
+    expect(harness.savedLabels.single.labelType, 'custom');
+  });
+
   setUp(() => SharedPreferences.setMockInitialValues({}));
   testWidgets('各日の枠に先頭3件を表示し選択日の再タップで全予定と期間を確認する', (tester) async {
     final harness = CalendarTestHarness()
