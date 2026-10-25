@@ -56,7 +56,18 @@ void main() {
   });
 
   test('固定ラベルは任意ラベルとして保存しない', () async {
-    await expectLater(SaveCalendarLabelUsecase(labels).execute(const CalendarLabelDto(id: 'group:', groupId: 'group', name: 'グループの予定', color: '#123456', labelType: 'group')), throwsA(isA<ApplicationValidationException>()));
+    await expectLater(
+      SaveCalendarLabelUsecase(labels).execute(
+        const CalendarLabelDto(
+          id: 'group:',
+          groupId: 'group',
+          name: 'グループの予定',
+          color: '#123456',
+          labelType: 'group',
+        ),
+      ),
+      throwsA(isA<ApplicationValidationException>()),
+    );
     verifyZeroInteractions(labels);
   });
 
