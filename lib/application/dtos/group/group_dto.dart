@@ -8,6 +8,7 @@ class GroupDto extends Equatable {
     required this.ownerId,
     required this.name,
     this.memo,
+    this.color = '#4CAF50',
     required this.members,
     this.originalMembers,
   });
@@ -15,6 +16,7 @@ class GroupDto extends Equatable {
   final int? version;
   final String id;
   final String ownerId;
+  final String color;
   final String name;
   final String? memo;
   final List<GroupMemberDto> members;
@@ -23,6 +25,7 @@ class GroupDto extends Equatable {
 
   GroupDto copyWith({
     int? version,
+    String? color,
     String? id,
     String? ownerId,
     String? name,
@@ -34,6 +37,7 @@ class GroupDto extends Equatable {
       version: version ?? this.version,
       id: id ?? this.id,
       ownerId: ownerId ?? this.ownerId,
+      color: color ?? this.color,
       name: name ?? this.name,
       memo: memo ?? this.memo,
       members: members ?? this.members,
@@ -43,6 +47,7 @@ class GroupDto extends Equatable {
 
   @override
   List<Object?> get props => [
+    color,
     version,
     id,
     ownerId,
