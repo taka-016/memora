@@ -116,7 +116,7 @@ void main() {
   testWidgets('ラベルの色を見た目で選択して保存し16進数入力は必要なときだけ開く', (tester) async {
     final harness = CalendarTestHarness()..savedLabels.clear();
     await harness.pump(tester);
-    await tester.tap(find.byTooltip('予定を追加'));
+    await tester.tap(find.byTooltip('色ラベルの設定'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('ラベルを追加'));
     await tester.pumpAndSettle();
@@ -150,6 +150,8 @@ void main() {
     await tester.tap(find.text('保存'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('閉じる'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('予定を追加'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('保存'));
     await tester.pump();
@@ -525,6 +527,7 @@ void main() {
         find.byType(DropdownButton<String>),
       );
       expect(dropdown.items!.map((item) => item.value), [
+        'group:',
         'child',
         'parent',
         'family',
