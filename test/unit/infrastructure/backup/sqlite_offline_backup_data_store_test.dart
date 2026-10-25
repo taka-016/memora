@@ -395,7 +395,10 @@ void main() {
   });
 
   test('グループ色・所属色・固定ラベル参照をバックアップして復元する', () async {
-    await db.updateRow('groups', 'group-1', {'color': '#123456', 'text_color': '#FFFFFF'});
+    await db.updateRow('groups', 'group-1', {
+      'color': '#123456',
+      'text_color': '#FFFFFF',
+    });
     await db.insertRow('group_members', {
       'group_id': 'group-1',
       'member_id': originalMember.id,

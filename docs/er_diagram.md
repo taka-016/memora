@@ -40,6 +40,7 @@ erDiagram
         string locationId FK
     }
     groups {
+        string textColor "#RRGGBB、未指定時は自動判定"
         string color "NOT NULL、#RRGGBB"
         string id PK
         string ownerId FK "NOT NULL"
@@ -47,6 +48,7 @@ erDiagram
         string memo
     }
     deleted_groups {
+        string textColor "#RRGGBB、未指定時は自動判定"
         string color "#RRGGBB"
         string id PK "元のグループID"
         string ownerId "NOT NULL"
@@ -54,6 +56,7 @@ erDiagram
         string memo
     }
     group_members {
+        string textColor "#RRGGBB、未指定時は自動判定"
         string color "NOT NULL、#RRGGBB、所属単位"
         string id PK
         string groupId FK "NOT NULL"
@@ -223,4 +226,4 @@ erDiagram
 
 - DVCポイント利用・期間限定ポイントはそれぞれ1つの契約に属し、`contractId`をFirestore・SQLite・バックアップで保持する。`groupId`は親契約と同じ値を保存し、グループの一覧・年表集計に使う。利用履歴または期間限定ポイントがある契約は削除できない。SQLiteでは子から契約への参照を`ON DELETE RESTRICT`とし、DVCの`group_id`は通常グループ削除による連鎖削除を持たせず、退避後もIDと関連データを保持する。
 
-- `calendar_labels`は任意ラベルのみを保存する。固定ラベルは`groups.color`と所属順の`group_members.color`から組み立てる。グループ固定は予定の`groupId`、メンバー固定は`memberId`で参照する。種別に対応しない参照はNULLとする。所属解除・メンバー削除後も固定参照は保持し、再加入時は現在の所属色を使う。`referencedLabelIds`と任意ラベルの使用件数は任意ラベルの参照だけを集計する。
+- `calendar_labels`は任意ラベルのみを保存する。固定ラベルは`groups.color`と所属順の`group_members.color`から組み立てる。文字色はそれぞれの`textColor`を使用し、未指定時は背景色から読みやすい白・黒を選ぶ。グループ固定は予定の`groupId`、メンバー固定は`memberId`で参照する。種別に対応しない参照はNULLとする。所属解除・メンバー削除後も固定参照は保持し、再加入時は現在の所属色を使う。`referencedLabelIds`と任意ラベルの使用件数は任意ラベルの参照だけを集計する。
