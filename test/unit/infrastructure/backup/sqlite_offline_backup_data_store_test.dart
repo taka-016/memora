@@ -395,13 +395,14 @@ void main() {
   });
 
   test('グループ色・所属色・固定ラベル参照をバックアップして復元する', () async {
-    await db.updateRow('groups', 'group-1', {'color': '#123456'});
+    await db.updateRow('groups', 'group-1', {'color': '#123456', 'text_color': '#FFFFFF'});
     await db.insertRow('group_members', {
       'group_id': 'group-1',
       'member_id': originalMember.id,
       'is_administrator': 1,
       'order_index': 0,
       'color': '#ABCDEF',
+      'text_color': '#000000',
     });
     final repository = SqliteCalendarEventRepository(db);
     final query = SqliteCalendarEventQueryService(db);
@@ -438,6 +439,8 @@ void main() {
     await repository.deleteCalendarEvent(before.single.id);
     await dataStore.restoreSnapshot(backup);
     expect(await query.getCalendarEventsByGroupId('group-1'), before);
+    expect((await db.rows('groups')).single['text_color'], '#FFFFFF');
+    expect((await db.rows('group_members')).single['text_color'], '#000000');
     expect((await db.rows('groups')).single['color'], '#123456');
     expect((await db.rows('group_members')).single['color'], '#ABCDEF');
     expect(

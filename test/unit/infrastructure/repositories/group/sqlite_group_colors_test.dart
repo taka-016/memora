@@ -23,8 +23,9 @@ void main() {
         ownerId: 'a',
         name: '家族',
         color: '#FF0000',
+        textColor: '#FFFFFF',
         members: const [
-          GroupMember(groupId: '', memberId: 'a', color: '#123456'),
+          GroupMember(groupId: '', memberId: 'a', color: '#123456', textColor: '#000000'),
         ],
       ),
     );
@@ -43,7 +44,7 @@ void main() {
       GroupMapper.toEntity(
         original.copyWith(
           members: [
-            original.members.single.copyWith(color: '#654321', orderIndex: 2),
+            original.members.single.copyWith(color: '#654321', textColor: '#FFFFFF', orderIndex: 2),
           ],
         ),
       ),
@@ -57,6 +58,7 @@ void main() {
           groupId: firstId,
           memberId: 'b',
           color: '#FFFF00',
+          textColor: '#000000',
           orderIndex: 0,
         ),
       ],
@@ -75,5 +77,11 @@ void main() {
       '#ABCDEF',
     );
     expect(saved.color, '#FF0000');
+    expect(saved.textColor, '#FFFFFF');
+    expect(saved.members.map((v) => v.textColor), ['#000000', '#FFFFFF']);
+    await repo.updateGroup(GroupMapper.toEntity(saved.copyWith(textColor: null, members: [for (final member in saved.members) member.copyWith(textColor: null)])));
+    final cleared = (await query.getGroupWithMembersById(firstId))!;
+    expect(cleared.textColor, isNull);
+    expect(cleared.members.every((member) => member.textColor == null), isTrue);
   });
 }

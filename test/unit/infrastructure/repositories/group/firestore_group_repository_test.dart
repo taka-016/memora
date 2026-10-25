@@ -78,7 +78,7 @@ void main() {
         ownerId: 'o',
         name: '家族',
         originalMembers: const [before],
-        members: [before.copyWith(color: '#FF0000')],
+        members: [before.copyWith(color: '#FF0000', textColor: '#FFFFFF')],
       );
       final parent = MockDocumentReference<Map<String, dynamic>>();
       final membership = MockDocumentReference<Map<String, dynamic>>();
@@ -98,7 +98,7 @@ void main() {
       when(batch.commit()).thenAnswer((_) async {});
       await repository.updateGroup(group);
       verify(
-        batch.update(membership, argThat(containsPair('color', '#FF0000'))),
+        batch.update(membership, argThat(allOf(containsPair('color', '#FF0000'), containsPair('textColor', '#FFFFFF')))),
       ).called(1);
     });
 
