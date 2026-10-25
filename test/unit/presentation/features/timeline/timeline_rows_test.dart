@@ -19,6 +19,7 @@ void main() {
       ),
       initialHeight: 60,
     );
+    expect(row.fixedColumnBackgroundColor, row.backgroundColor);
     expect(row.backgroundColor, const Color(0xFF123456).withValues(alpha: 0.2));
   });
 
