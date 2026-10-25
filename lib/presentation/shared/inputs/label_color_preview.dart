@@ -41,13 +41,21 @@ class LabelColorPreview extends StatelessWidget {
                             color: color,
                             borderRadius: BorderRadius.circular(4),
                           )
-                        : null,
+                        : BoxDecoration(
+                            border: Border(
+                              left: BorderSide(color: color, width: 3),
+                            ),
+                          ),
                     child: Text(
                       label,
                       maxLines: 1,
                       softWrap: false,
                       overflow: TextOverflow.clip,
-                      style: TextStyle(color: allDay ? textColor : color),
+                      style: TextStyle(
+                        color: allDay
+                            ? textColor
+                            : Theme.of(context).colorScheme.onSurface,
+                      ),
                     ),
                   ),
                 ],
