@@ -120,10 +120,3 @@ just emulator-stop
 
 このプロジェクトはGNU Affero General Public License v3.0（AGPL-3.0）の下で公開されています。  
 詳細は[LICENSE](./LICENSE)を参照してください。
-
-### 固定ラベル形式への切替
-
-切替前に全端末のアプリを停止し、DBの退避を取ってください。予定・個別回・任意ラベルは全消去します。グループ・所属・年表などは保持します。通常起動では消去せず、未対応のDB・バックアップは拒否します。
-
-- オンライン: 対象Firebaseプロジェクトを確認し、`just reset-calendar-online <project-id> --confirm-calendar-delete`を実行してから、新版とFirestore Rulesを適用してください。途中失敗時はアプリを停止したまま同じコマンドを再実行してください。
-- オフライン: Python 3を使用します。停止中のDB（`memora.sqlite`と存在する場合は`-wal`・`-shm`も同じディレクトリにコピー）を退避し、作業用コピーへ`just reset-calendar-offline <DBパス> --confirm-calendar-delete`を実行してください。完了したDBを、停止中の端末の元DBと置き換えてから新版を起動します。置換時は元DBの`-wal`・`-shm`を残さないでください。対象は切替前のスキーマ8または現行スキーマ9です。切替前のバックアップは新版へ復元できません。

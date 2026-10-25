@@ -93,15 +93,3 @@ sync-main:
     --format='%(refname:short) %(upstream:track) %(worktreepath)' refs/heads/ \
     | awk '$2 == "[gone]" && NF == 2 {printf "%s%c", $1, 0}' \
     | xargs -0 -r git branch -d
-
-# 停止中のオフラインDBの予定・個別回・任意ラベルを全消去して新形式へ切り替える
-reset-calendar-offline database *args:
-  python3 scripts/calendar/reset_offline_calendar.py "$@"
-
-# 指定Firebaseプロジェクトの予定・個別回・任意ラベルを全消去する
-reset-calendar-online project *args:
-  bash scripts/calendar/reset_online_calendar.sh "$@"
-
-# カレンダー切替で対象外データが保持されることを検証する
-check-calendar-reset:
-  python3 tools/ci/calendar_reset_test.py
