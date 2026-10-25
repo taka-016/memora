@@ -10,6 +10,9 @@ class SaveCalendarLabelUsecase {
   final CalendarLabelRepository _repository;
 
   Future<CalendarLabelDto> execute(CalendarLabelDto dto) async {
+    if (dto.labelType != 'custom') {
+      throw const ApplicationValidationException('固定ラベルは任意ラベルとして保存できません');
+    }
     try {
       final entity = CalendarLabelMapper.toEntity(dto);
       final savedId = await _repository.saveCalendarLabel(entity);
