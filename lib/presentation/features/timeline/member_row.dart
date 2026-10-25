@@ -25,7 +25,7 @@ class MemberRow extends TimelineRowDefinition {
   @override
   Color get backgroundColor =>
       Color(int.parse(member.color.substring(1), radix: 16) | 0xFF000000)
-          .withValues(alpha: 0.2);
+          .withValues(alpha: 0.1);
 
   @override
   Color get fixedColumnBackgroundColor => backgroundColor;
