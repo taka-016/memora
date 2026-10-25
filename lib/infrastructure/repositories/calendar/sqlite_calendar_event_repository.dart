@@ -16,8 +16,8 @@ class SqliteCalendarEventRepository implements CalendarEventRepository {
   Future<void> _validateLabel(CalendarEvent event) async {
     validateCalendarRecurrence(event);
     for (final id in {
-      event.labelId,
-      ...event.overrides.where((v) => !v.isCancelled).map((v) => v.labelId!),
+      if (event.labelType == 'custom') event.labelId,
+      ...event.overrides.where((v) => !v.isCancelled && v.labelType == 'custom').map((v) => v.labelId!),
     }) {
       final labels = await db.rows(
         'calendar_labels',

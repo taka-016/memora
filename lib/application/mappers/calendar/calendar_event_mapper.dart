@@ -8,6 +8,10 @@ class CalendarEventMapper {
       version: value.version,
       groupId: value.groupId,
       labelId: value.labelId,
+
+      labelType: value.labelType,
+
+      memberId: value.memberId,
       title: value.title,
       startDateTime: value.startDateTime,
       endDateTime: value.endDateTime,
@@ -24,6 +28,10 @@ class CalendarEventMapper {
       version: value.version,
       groupId: value.groupId,
       labelId: value.labelId,
+
+      labelType: value.labelType,
+
+      memberId: value.memberId,
       title: value.title,
       startDateTime: value.startDateTime,
       endDateTime: value.endDateTime,

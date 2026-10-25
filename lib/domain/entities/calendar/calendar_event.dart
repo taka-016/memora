@@ -1,3 +1,4 @@
+import 'package:memora/domain/entities/calendar/calendar_label_reference.dart';
 import 'package:memora/domain/entities/calendar/calendar_recurrence_rule.dart';
 import 'package:memora/domain/entities/calendar/calendar_event_override.dart';
 import 'package:equatable/equatable.dart';
@@ -8,7 +9,9 @@ class CalendarEvent extends Equatable {
     this.version,
     required this.id,
     required this.groupId,
-    required this.labelId,
+    this.labelId = '',
+    this.labelType = 'custom',
+    this.memberId = '',
     required this.title,
     required this.startDateTime,
     required this.endDateTime,
@@ -44,7 +47,7 @@ class CalendarEvent extends Equatable {
     if (groupId.trim().isEmpty) {
       throw ValidationException('グループは必須です');
     }
-    if (labelId.trim().isEmpty) {
+    if (!validCalendarLabelReference(labelType, memberId, labelId)) {
       throw ValidationException('色ラベルは必須です');
     }
     if (title.trim().isEmpty) {
@@ -59,6 +62,14 @@ class CalendarEvent extends Equatable {
   final String id;
   final String groupId;
   final String labelId;
+  final String labelType;
+  final String memberId;
+
+  String get labelKey => switch (labelType) {
+    'group' => 'group:',
+    'member' => 'member:$memberId',
+    _ => labelId,
+  };
   final String title;
   final DateTime startDateTime;
   final DateTime endDateTime;
@@ -72,6 +83,8 @@ class CalendarEvent extends Equatable {
     String? id,
     String? groupId,
     String? labelId,
+    String? labelType,
+    String? memberId,
     String? title,
     DateTime? startDateTime,
     DateTime? endDateTime,
@@ -85,6 +98,8 @@ class CalendarEvent extends Equatable {
       id: id ?? this.id,
       groupId: groupId ?? this.groupId,
       labelId: labelId ?? this.labelId,
+      labelType: labelType ?? this.labelType,
+      memberId: memberId ?? this.memberId,
       title: title ?? this.title,
       startDateTime: startDateTime ?? this.startDateTime,
       endDateTime: endDateTime ?? this.endDateTime,
@@ -101,6 +116,8 @@ class CalendarEvent extends Equatable {
     id,
     groupId,
     labelId,
+    labelType,
+    memberId,
     title,
     startDateTime,
     endDateTime,

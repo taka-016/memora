@@ -950,8 +950,18 @@ class Groups extends Table with TableInfo<Groups, SqliteGroupRow> {
     requiredDuringInsert: false,
     $customConstraints: '',
   );
+  static const VerificationMeta _colorMeta = const VerificationMeta('color');
+  late final GeneratedColumn<String> color = GeneratedColumn<String>(
+    'color',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: 'NOT NULL DEFAULT \'#4CAF50\' CHECK (length(color) = 7 AND substr(color, 1, 1) = \'#\' AND substr(color, 2) NOT GLOB \'*[^0-9a-fA-F]*\')',
+    defaultValue: const CustomExpression('\'#4CAF50\''),
+  );
   @override
-  List<GeneratedColumn> get $columns => [id, ownerId, name, memo];
+  List<GeneratedColumn> get $columns => [id, ownerId, name, memo, color];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -991,6 +1001,12 @@ class Groups extends Table with TableInfo<Groups, SqliteGroupRow> {
         memo.isAcceptableOrUnknown(data['memo']!, _memoMeta),
       );
     }
+    if (data.containsKey('color')) {
+      context.handle(
+        _colorMeta,
+        color.isAcceptableOrUnknown(data['color']!, _colorMeta),
+      );
+    }
     return context;
   }
 
@@ -1016,6 +1032,10 @@ class Groups extends Table with TableInfo<Groups, SqliteGroupRow> {
         DriftSqlType.string,
         data['${effectivePrefix}memo'],
       ),
+      color: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}color'],
+      )!,
     );
   }
 
@@ -1033,11 +1053,13 @@ class SqliteGroupRow extends DataClass implements Insertable<SqliteGroupRow> {
   final String ownerId;
   final String name;
   final String? memo;
+  final String color;
   const SqliteGroupRow({
     required this.id,
     required this.ownerId,
     required this.name,
     this.memo,
+    required this.color,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1048,6 +1070,7 @@ class SqliteGroupRow extends DataClass implements Insertable<SqliteGroupRow> {
     if (!nullToAbsent || memo != null) {
       map['memo'] = Variable<String>(memo);
     }
+    map['color'] = Variable<String>(color);
     return map;
   }
 
@@ -1057,6 +1080,7 @@ class SqliteGroupRow extends DataClass implements Insertable<SqliteGroupRow> {
       ownerId: Value(ownerId),
       name: Value(name),
       memo: memo == null && nullToAbsent ? const Value.absent() : Value(memo),
+      color: Value(color),
     );
   }
 
@@ -1070,6 +1094,7 @@ class SqliteGroupRow extends DataClass implements Insertable<SqliteGroupRow> {
       ownerId: serializer.fromJson<String>(json['owner_id']),
       name: serializer.fromJson<String>(json['name']),
       memo: serializer.fromJson<String?>(json['memo']),
+      color: serializer.fromJson<String>(json['color']),
     );
   }
   @override
@@ -1080,6 +1105,7 @@ class SqliteGroupRow extends DataClass implements Insertable<SqliteGroupRow> {
       'owner_id': serializer.toJson<String>(ownerId),
       'name': serializer.toJson<String>(name),
       'memo': serializer.toJson<String?>(memo),
+      'color': serializer.toJson<String>(color),
     };
   }
 
@@ -1088,11 +1114,13 @@ class SqliteGroupRow extends DataClass implements Insertable<SqliteGroupRow> {
     String? ownerId,
     String? name,
     Value<String?> memo = const Value.absent(),
+    String? color,
   }) => SqliteGroupRow(
     id: id ?? this.id,
     ownerId: ownerId ?? this.ownerId,
     name: name ?? this.name,
     memo: memo.present ? memo.value : this.memo,
+    color: color ?? this.color,
   );
   SqliteGroupRow copyWithCompanion(GroupsCompanion data) {
     return SqliteGroupRow(
@@ -1100,6 +1128,7 @@ class SqliteGroupRow extends DataClass implements Insertable<SqliteGroupRow> {
       ownerId: data.ownerId.present ? data.ownerId.value : this.ownerId,
       name: data.name.present ? data.name.value : this.name,
       memo: data.memo.present ? data.memo.value : this.memo,
+      color: data.color.present ? data.color.value : this.color,
     );
   }
 
@@ -1109,13 +1138,14 @@ class SqliteGroupRow extends DataClass implements Insertable<SqliteGroupRow> {
           ..write('id: $id, ')
           ..write('ownerId: $ownerId, ')
           ..write('name: $name, ')
-          ..write('memo: $memo')
+          ..write('memo: $memo, ')
+          ..write('color: $color')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, ownerId, name, memo);
+  int get hashCode => Object.hash(id, ownerId, name, memo, color);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1123,7 +1153,8 @@ class SqliteGroupRow extends DataClass implements Insertable<SqliteGroupRow> {
           other.id == this.id &&
           other.ownerId == this.ownerId &&
           other.name == this.name &&
-          other.memo == this.memo);
+          other.memo == this.memo &&
+          other.color == this.color);
 }
 
 class GroupsCompanion extends UpdateCompanion<SqliteGroupRow> {
@@ -1131,12 +1162,14 @@ class GroupsCompanion extends UpdateCompanion<SqliteGroupRow> {
   final Value<String> ownerId;
   final Value<String> name;
   final Value<String?> memo;
+  final Value<String> color;
   final Value<int> rowid;
   const GroupsCompanion({
     this.id = const Value.absent(),
     this.ownerId = const Value.absent(),
     this.name = const Value.absent(),
     this.memo = const Value.absent(),
+    this.color = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   GroupsCompanion.insert({
@@ -1144,6 +1177,7 @@ class GroupsCompanion extends UpdateCompanion<SqliteGroupRow> {
     required String ownerId,
     required String name,
     this.memo = const Value.absent(),
+    this.color = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        ownerId = Value(ownerId),
@@ -1153,6 +1187,7 @@ class GroupsCompanion extends UpdateCompanion<SqliteGroupRow> {
     Expression<String>? ownerId,
     Expression<String>? name,
     Expression<String>? memo,
+    Expression<String>? color,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -1160,6 +1195,7 @@ class GroupsCompanion extends UpdateCompanion<SqliteGroupRow> {
       if (ownerId != null) 'owner_id': ownerId,
       if (name != null) 'name': name,
       if (memo != null) 'memo': memo,
+      if (color != null) 'color': color,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1169,6 +1205,7 @@ class GroupsCompanion extends UpdateCompanion<SqliteGroupRow> {
     Value<String>? ownerId,
     Value<String>? name,
     Value<String?>? memo,
+    Value<String>? color,
     Value<int>? rowid,
   }) {
     return GroupsCompanion(
@@ -1176,6 +1213,7 @@ class GroupsCompanion extends UpdateCompanion<SqliteGroupRow> {
       ownerId: ownerId ?? this.ownerId,
       name: name ?? this.name,
       memo: memo ?? this.memo,
+      color: color ?? this.color,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1195,6 +1233,9 @@ class GroupsCompanion extends UpdateCompanion<SqliteGroupRow> {
     if (memo.present) {
       map['memo'] = Variable<String>(memo.value);
     }
+    if (color.present) {
+      map['color'] = Variable<String>(color.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1208,6 +1249,7 @@ class GroupsCompanion extends UpdateCompanion<SqliteGroupRow> {
           ..write('ownerId: $ownerId, ')
           ..write('name: $name, ')
           ..write('memo: $memo, ')
+          ..write('color: $color, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -1264,12 +1306,23 @@ class GroupMembers extends Table
     requiredDuringInsert: true,
     $customConstraints: 'NOT NULL',
   );
+  static const VerificationMeta _colorMeta = const VerificationMeta('color');
+  late final GeneratedColumn<String> color = GeneratedColumn<String>(
+    'color',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: 'NOT NULL DEFAULT \'#2196F3\' CHECK (length(color) = 7 AND substr(color, 1, 1) = \'#\' AND substr(color, 2) NOT GLOB \'*[^0-9a-fA-F]*\')',
+    defaultValue: const CustomExpression('\'#2196F3\''),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     groupId,
     memberId,
     isAdministrator,
     orderIndex,
+    color,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1318,6 +1371,12 @@ class GroupMembers extends Table
     } else if (isInserting) {
       context.missing(_orderIndexMeta);
     }
+    if (data.containsKey('color')) {
+      context.handle(
+        _colorMeta,
+        color.isAcceptableOrUnknown(data['color']!, _colorMeta),
+      );
+    }
     return context;
   }
 
@@ -1343,6 +1402,10 @@ class GroupMembers extends Table
         DriftSqlType.int,
         data['${effectivePrefix}order_index'],
       )!,
+      color: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}color'],
+      )!,
     );
   }
 
@@ -1365,11 +1428,13 @@ class SqliteGroupMemberRow extends DataClass
   final String memberId;
   final int isAdministrator;
   final int orderIndex;
+  final String color;
   const SqliteGroupMemberRow({
     required this.groupId,
     required this.memberId,
     required this.isAdministrator,
     required this.orderIndex,
+    required this.color,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1378,6 +1443,7 @@ class SqliteGroupMemberRow extends DataClass
     map['member_id'] = Variable<String>(memberId);
     map['is_administrator'] = Variable<int>(isAdministrator);
     map['order_index'] = Variable<int>(orderIndex);
+    map['color'] = Variable<String>(color);
     return map;
   }
 
@@ -1387,6 +1453,7 @@ class SqliteGroupMemberRow extends DataClass
       memberId: Value(memberId),
       isAdministrator: Value(isAdministrator),
       orderIndex: Value(orderIndex),
+      color: Value(color),
     );
   }
 
@@ -1400,6 +1467,7 @@ class SqliteGroupMemberRow extends DataClass
       memberId: serializer.fromJson<String>(json['member_id']),
       isAdministrator: serializer.fromJson<int>(json['is_administrator']),
       orderIndex: serializer.fromJson<int>(json['order_index']),
+      color: serializer.fromJson<String>(json['color']),
     );
   }
   @override
@@ -1410,6 +1478,7 @@ class SqliteGroupMemberRow extends DataClass
       'member_id': serializer.toJson<String>(memberId),
       'is_administrator': serializer.toJson<int>(isAdministrator),
       'order_index': serializer.toJson<int>(orderIndex),
+      'color': serializer.toJson<String>(color),
     };
   }
 
@@ -1418,11 +1487,13 @@ class SqliteGroupMemberRow extends DataClass
     String? memberId,
     int? isAdministrator,
     int? orderIndex,
+    String? color,
   }) => SqliteGroupMemberRow(
     groupId: groupId ?? this.groupId,
     memberId: memberId ?? this.memberId,
     isAdministrator: isAdministrator ?? this.isAdministrator,
     orderIndex: orderIndex ?? this.orderIndex,
+    color: color ?? this.color,
   );
   SqliteGroupMemberRow copyWithCompanion(GroupMembersCompanion data) {
     return SqliteGroupMemberRow(
@@ -1434,6 +1505,7 @@ class SqliteGroupMemberRow extends DataClass
       orderIndex: data.orderIndex.present
           ? data.orderIndex.value
           : this.orderIndex,
+      color: data.color.present ? data.color.value : this.color,
     );
   }
 
@@ -1443,14 +1515,15 @@ class SqliteGroupMemberRow extends DataClass
           ..write('groupId: $groupId, ')
           ..write('memberId: $memberId, ')
           ..write('isAdministrator: $isAdministrator, ')
-          ..write('orderIndex: $orderIndex')
+          ..write('orderIndex: $orderIndex, ')
+          ..write('color: $color')
           ..write(')'))
         .toString();
   }
 
   @override
   int get hashCode =>
-      Object.hash(groupId, memberId, isAdministrator, orderIndex);
+      Object.hash(groupId, memberId, isAdministrator, orderIndex, color);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1458,7 +1531,8 @@ class SqliteGroupMemberRow extends DataClass
           other.groupId == this.groupId &&
           other.memberId == this.memberId &&
           other.isAdministrator == this.isAdministrator &&
-          other.orderIndex == this.orderIndex);
+          other.orderIndex == this.orderIndex &&
+          other.color == this.color);
 }
 
 class GroupMembersCompanion extends UpdateCompanion<SqliteGroupMemberRow> {
@@ -1466,12 +1540,14 @@ class GroupMembersCompanion extends UpdateCompanion<SqliteGroupMemberRow> {
   final Value<String> memberId;
   final Value<int> isAdministrator;
   final Value<int> orderIndex;
+  final Value<String> color;
   final Value<int> rowid;
   const GroupMembersCompanion({
     this.groupId = const Value.absent(),
     this.memberId = const Value.absent(),
     this.isAdministrator = const Value.absent(),
     this.orderIndex = const Value.absent(),
+    this.color = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   GroupMembersCompanion.insert({
@@ -1479,6 +1555,7 @@ class GroupMembersCompanion extends UpdateCompanion<SqliteGroupMemberRow> {
     required String memberId,
     required int isAdministrator,
     required int orderIndex,
+    this.color = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : groupId = Value(groupId),
        memberId = Value(memberId),
@@ -1489,6 +1566,7 @@ class GroupMembersCompanion extends UpdateCompanion<SqliteGroupMemberRow> {
     Expression<String>? memberId,
     Expression<int>? isAdministrator,
     Expression<int>? orderIndex,
+    Expression<String>? color,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -1496,6 +1574,7 @@ class GroupMembersCompanion extends UpdateCompanion<SqliteGroupMemberRow> {
       if (memberId != null) 'member_id': memberId,
       if (isAdministrator != null) 'is_administrator': isAdministrator,
       if (orderIndex != null) 'order_index': orderIndex,
+      if (color != null) 'color': color,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1505,6 +1584,7 @@ class GroupMembersCompanion extends UpdateCompanion<SqliteGroupMemberRow> {
     Value<String>? memberId,
     Value<int>? isAdministrator,
     Value<int>? orderIndex,
+    Value<String>? color,
     Value<int>? rowid,
   }) {
     return GroupMembersCompanion(
@@ -1512,6 +1592,7 @@ class GroupMembersCompanion extends UpdateCompanion<SqliteGroupMemberRow> {
       memberId: memberId ?? this.memberId,
       isAdministrator: isAdministrator ?? this.isAdministrator,
       orderIndex: orderIndex ?? this.orderIndex,
+      color: color ?? this.color,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1531,6 +1612,9 @@ class GroupMembersCompanion extends UpdateCompanion<SqliteGroupMemberRow> {
     if (orderIndex.present) {
       map['order_index'] = Variable<int>(orderIndex.value);
     }
+    if (color.present) {
+      map['color'] = Variable<String>(color.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1544,6 +1628,7 @@ class GroupMembersCompanion extends UpdateCompanion<SqliteGroupMemberRow> {
           ..write('memberId: $memberId, ')
           ..write('isAdministrator: $isAdministrator, ')
           ..write('orderIndex: $orderIndex, ')
+          ..write('color: $color, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -5492,10 +5577,32 @@ class CalendarEvents extends Table
   late final GeneratedColumn<String> labelId = GeneratedColumn<String>(
     'label_id',
     aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  static const VerificationMeta _labelTypeMeta = const VerificationMeta(
+    'labelType',
+  );
+  late final GeneratedColumn<String> labelType = GeneratedColumn<String>(
+    'label_type',
+    aliasedName,
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
     $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _memberIdMeta = const VerificationMeta(
+    'memberId',
+  );
+  late final GeneratedColumn<String> memberId = GeneratedColumn<String>(
+    'member_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: '',
   );
   static const VerificationMeta _titleMeta = const VerificationMeta('title');
   late final GeneratedColumn<String> title = GeneratedColumn<String>(
@@ -5566,6 +5673,8 @@ class CalendarEvents extends Table
     id,
     groupId,
     labelId,
+    labelType,
+    memberId,
     title,
     startDateTime,
     endDateTime,
@@ -5603,8 +5712,20 @@ class CalendarEvents extends Table
         _labelIdMeta,
         labelId.isAcceptableOrUnknown(data['label_id']!, _labelIdMeta),
       );
+    }
+    if (data.containsKey('label_type')) {
+      context.handle(
+        _labelTypeMeta,
+        labelType.isAcceptableOrUnknown(data['label_type']!, _labelTypeMeta),
+      );
     } else if (isInserting) {
-      context.missing(_labelIdMeta);
+      context.missing(_labelTypeMeta);
+    }
+    if (data.containsKey('member_id')) {
+      context.handle(
+        _memberIdMeta,
+        memberId.isAcceptableOrUnknown(data['member_id']!, _memberIdMeta),
+      );
     }
     if (data.containsKey('title')) {
       context.handle(
@@ -5683,7 +5804,15 @@ class CalendarEvents extends Table
       labelId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}label_id'],
+      ),
+      labelType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}label_type'],
       )!,
+      memberId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}member_id'],
+      ),
       title: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}title'],
@@ -5719,6 +5848,7 @@ class CalendarEvents extends Table
   @override
   List<String> get customConstraints => const [
     'UNIQUE(id, group_id)',
+    'CHECK(((label_type = \'group\' AND member_id IS NULL AND label_id IS NULL)OR(label_type = \'member\' AND member_id IS NOT NULL AND length(trim(member_id)) > 0 AND label_id IS NULL)OR(label_type = \'custom\' AND member_id IS NULL AND label_type IS NOT NULL AND((label_type = \'group\' AND member_id IS NULL AND label_id IS NULL)OR(label_type = \'member\' AND member_id IS NOT NULL AND length(trim(member_id)) > 0 AND label_id IS NULL)OR(label_type = \'custom\' AND member_id IS NULL AND label_id IS NOT NULL)))))',
     'CHECK(recurrence_rule IS NOT NULL OR time_zone IS NULL)',
     'CHECK(recurrence_rule IS NULL OR is_all_day = 1 OR length(trim(time_zone)) > 0)',
     'FOREIGN KEY(label_id, group_id)REFERENCES calendar_labels(id, group_id)ON DELETE NO ACTION',
@@ -5731,7 +5861,9 @@ class SqliteCalendarEventRow extends DataClass
     implements Insertable<SqliteCalendarEventRow> {
   final String id;
   final String groupId;
-  final String labelId;
+  final String? labelId;
+  final String labelType;
+  final String? memberId;
   final String title;
   final int startDateTime;
   final int endDateTime;
@@ -5741,7 +5873,9 @@ class SqliteCalendarEventRow extends DataClass
   const SqliteCalendarEventRow({
     required this.id,
     required this.groupId,
-    required this.labelId,
+    this.labelId,
+    required this.labelType,
+    this.memberId,
     required this.title,
     required this.startDateTime,
     required this.endDateTime,
@@ -5754,7 +5888,13 @@ class SqliteCalendarEventRow extends DataClass
     final map = <String, Expression>{};
     map['id'] = Variable<String>(id);
     map['group_id'] = Variable<String>(groupId);
-    map['label_id'] = Variable<String>(labelId);
+    if (!nullToAbsent || labelId != null) {
+      map['label_id'] = Variable<String>(labelId);
+    }
+    map['label_type'] = Variable<String>(labelType);
+    if (!nullToAbsent || memberId != null) {
+      map['member_id'] = Variable<String>(memberId);
+    }
     map['title'] = Variable<String>(title);
     map['start_date_time'] = Variable<int>(startDateTime);
     map['end_date_time'] = Variable<int>(endDateTime);
@@ -5772,7 +5912,13 @@ class SqliteCalendarEventRow extends DataClass
     return CalendarEventsCompanion(
       id: Value(id),
       groupId: Value(groupId),
-      labelId: Value(labelId),
+      labelId: labelId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(labelId),
+      labelType: Value(labelType),
+      memberId: memberId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(memberId),
       title: Value(title),
       startDateTime: Value(startDateTime),
       endDateTime: Value(endDateTime),
@@ -5794,7 +5940,9 @@ class SqliteCalendarEventRow extends DataClass
     return SqliteCalendarEventRow(
       id: serializer.fromJson<String>(json['id']),
       groupId: serializer.fromJson<String>(json['group_id']),
-      labelId: serializer.fromJson<String>(json['label_id']),
+      labelId: serializer.fromJson<String?>(json['label_id']),
+      labelType: serializer.fromJson<String>(json['label_type']),
+      memberId: serializer.fromJson<String?>(json['member_id']),
       title: serializer.fromJson<String>(json['title']),
       startDateTime: serializer.fromJson<int>(json['start_date_time']),
       endDateTime: serializer.fromJson<int>(json['end_date_time']),
@@ -5809,7 +5957,9 @@ class SqliteCalendarEventRow extends DataClass
     return <String, dynamic>{
       'id': serializer.toJson<String>(id),
       'group_id': serializer.toJson<String>(groupId),
-      'label_id': serializer.toJson<String>(labelId),
+      'label_id': serializer.toJson<String?>(labelId),
+      'label_type': serializer.toJson<String>(labelType),
+      'member_id': serializer.toJson<String?>(memberId),
       'title': serializer.toJson<String>(title),
       'start_date_time': serializer.toJson<int>(startDateTime),
       'end_date_time': serializer.toJson<int>(endDateTime),
@@ -5822,7 +5972,9 @@ class SqliteCalendarEventRow extends DataClass
   SqliteCalendarEventRow copyWith({
     String? id,
     String? groupId,
-    String? labelId,
+    Value<String?> labelId = const Value.absent(),
+    String? labelType,
+    Value<String?> memberId = const Value.absent(),
     String? title,
     int? startDateTime,
     int? endDateTime,
@@ -5832,7 +5984,9 @@ class SqliteCalendarEventRow extends DataClass
   }) => SqliteCalendarEventRow(
     id: id ?? this.id,
     groupId: groupId ?? this.groupId,
-    labelId: labelId ?? this.labelId,
+    labelId: labelId.present ? labelId.value : this.labelId,
+    labelType: labelType ?? this.labelType,
+    memberId: memberId.present ? memberId.value : this.memberId,
     title: title ?? this.title,
     startDateTime: startDateTime ?? this.startDateTime,
     endDateTime: endDateTime ?? this.endDateTime,
@@ -5847,6 +6001,8 @@ class SqliteCalendarEventRow extends DataClass
       id: data.id.present ? data.id.value : this.id,
       groupId: data.groupId.present ? data.groupId.value : this.groupId,
       labelId: data.labelId.present ? data.labelId.value : this.labelId,
+      labelType: data.labelType.present ? data.labelType.value : this.labelType,
+      memberId: data.memberId.present ? data.memberId.value : this.memberId,
       title: data.title.present ? data.title.value : this.title,
       startDateTime: data.startDateTime.present
           ? data.startDateTime.value
@@ -5868,6 +6024,8 @@ class SqliteCalendarEventRow extends DataClass
           ..write('id: $id, ')
           ..write('groupId: $groupId, ')
           ..write('labelId: $labelId, ')
+          ..write('labelType: $labelType, ')
+          ..write('memberId: $memberId, ')
           ..write('title: $title, ')
           ..write('startDateTime: $startDateTime, ')
           ..write('endDateTime: $endDateTime, ')
@@ -5883,6 +6041,8 @@ class SqliteCalendarEventRow extends DataClass
     id,
     groupId,
     labelId,
+    labelType,
+    memberId,
     title,
     startDateTime,
     endDateTime,
@@ -5897,6 +6057,8 @@ class SqliteCalendarEventRow extends DataClass
           other.id == this.id &&
           other.groupId == this.groupId &&
           other.labelId == this.labelId &&
+          other.labelType == this.labelType &&
+          other.memberId == this.memberId &&
           other.title == this.title &&
           other.startDateTime == this.startDateTime &&
           other.endDateTime == this.endDateTime &&
@@ -5908,7 +6070,9 @@ class SqliteCalendarEventRow extends DataClass
 class CalendarEventsCompanion extends UpdateCompanion<SqliteCalendarEventRow> {
   final Value<String> id;
   final Value<String> groupId;
-  final Value<String> labelId;
+  final Value<String?> labelId;
+  final Value<String> labelType;
+  final Value<String?> memberId;
   final Value<String> title;
   final Value<int> startDateTime;
   final Value<int> endDateTime;
@@ -5920,6 +6084,8 @@ class CalendarEventsCompanion extends UpdateCompanion<SqliteCalendarEventRow> {
     this.id = const Value.absent(),
     this.groupId = const Value.absent(),
     this.labelId = const Value.absent(),
+    this.labelType = const Value.absent(),
+    this.memberId = const Value.absent(),
     this.title = const Value.absent(),
     this.startDateTime = const Value.absent(),
     this.endDateTime = const Value.absent(),
@@ -5931,7 +6097,9 @@ class CalendarEventsCompanion extends UpdateCompanion<SqliteCalendarEventRow> {
   CalendarEventsCompanion.insert({
     required String id,
     required String groupId,
-    required String labelId,
+    this.labelId = const Value.absent(),
+    required String labelType,
+    this.memberId = const Value.absent(),
     required String title,
     required int startDateTime,
     required int endDateTime,
@@ -5941,7 +6109,7 @@ class CalendarEventsCompanion extends UpdateCompanion<SqliteCalendarEventRow> {
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        groupId = Value(groupId),
-       labelId = Value(labelId),
+       labelType = Value(labelType),
        title = Value(title),
        startDateTime = Value(startDateTime),
        endDateTime = Value(endDateTime),
@@ -5950,6 +6118,8 @@ class CalendarEventsCompanion extends UpdateCompanion<SqliteCalendarEventRow> {
     Expression<String>? id,
     Expression<String>? groupId,
     Expression<String>? labelId,
+    Expression<String>? labelType,
+    Expression<String>? memberId,
     Expression<String>? title,
     Expression<int>? startDateTime,
     Expression<int>? endDateTime,
@@ -5962,6 +6132,8 @@ class CalendarEventsCompanion extends UpdateCompanion<SqliteCalendarEventRow> {
       if (id != null) 'id': id,
       if (groupId != null) 'group_id': groupId,
       if (labelId != null) 'label_id': labelId,
+      if (labelType != null) 'label_type': labelType,
+      if (memberId != null) 'member_id': memberId,
       if (title != null) 'title': title,
       if (startDateTime != null) 'start_date_time': startDateTime,
       if (endDateTime != null) 'end_date_time': endDateTime,
@@ -5975,7 +6147,9 @@ class CalendarEventsCompanion extends UpdateCompanion<SqliteCalendarEventRow> {
   CalendarEventsCompanion copyWith({
     Value<String>? id,
     Value<String>? groupId,
-    Value<String>? labelId,
+    Value<String?>? labelId,
+    Value<String>? labelType,
+    Value<String?>? memberId,
     Value<String>? title,
     Value<int>? startDateTime,
     Value<int>? endDateTime,
@@ -5988,6 +6162,8 @@ class CalendarEventsCompanion extends UpdateCompanion<SqliteCalendarEventRow> {
       id: id ?? this.id,
       groupId: groupId ?? this.groupId,
       labelId: labelId ?? this.labelId,
+      labelType: labelType ?? this.labelType,
+      memberId: memberId ?? this.memberId,
       title: title ?? this.title,
       startDateTime: startDateTime ?? this.startDateTime,
       endDateTime: endDateTime ?? this.endDateTime,
@@ -6009,6 +6185,12 @@ class CalendarEventsCompanion extends UpdateCompanion<SqliteCalendarEventRow> {
     }
     if (labelId.present) {
       map['label_id'] = Variable<String>(labelId.value);
+    }
+    if (labelType.present) {
+      map['label_type'] = Variable<String>(labelType.value);
+    }
+    if (memberId.present) {
+      map['member_id'] = Variable<String>(memberId.value);
     }
     if (title.present) {
       map['title'] = Variable<String>(title.value);
@@ -6040,6 +6222,8 @@ class CalendarEventsCompanion extends UpdateCompanion<SqliteCalendarEventRow> {
           ..write('id: $id, ')
           ..write('groupId: $groupId, ')
           ..write('labelId: $labelId, ')
+          ..write('labelType: $labelType, ')
+          ..write('memberId: $memberId, ')
           ..write('title: $title, ')
           ..write('startDateTime: $startDateTime, ')
           ..write('endDateTime: $endDateTime, ')
@@ -6154,6 +6338,28 @@ class CalendarEventOverrides extends Table
     requiredDuringInsert: false,
     $customConstraints: '',
   );
+  static const VerificationMeta _labelTypeMeta = const VerificationMeta(
+    'labelType',
+  );
+  late final GeneratedColumn<String> labelType = GeneratedColumn<String>(
+    'label_type',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  static const VerificationMeta _memberIdMeta = const VerificationMeta(
+    'memberId',
+  );
+  late final GeneratedColumn<String> memberId = GeneratedColumn<String>(
+    'member_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
   @override
   List<GeneratedColumn> get $columns => [
     eventId,
@@ -6165,6 +6371,8 @@ class CalendarEventOverrides extends Table
     endDateTime,
     isAllDay,
     labelId,
+    labelType,
+    memberId,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -6252,6 +6460,18 @@ class CalendarEventOverrides extends Table
         labelId.isAcceptableOrUnknown(data['label_id']!, _labelIdMeta),
       );
     }
+    if (data.containsKey('label_type')) {
+      context.handle(
+        _labelTypeMeta,
+        labelType.isAcceptableOrUnknown(data['label_type']!, _labelTypeMeta),
+      );
+    }
+    if (data.containsKey('member_id')) {
+      context.handle(
+        _memberIdMeta,
+        memberId.isAcceptableOrUnknown(data['member_id']!, _memberIdMeta),
+      );
+    }
     return context;
   }
 
@@ -6300,6 +6520,14 @@ class CalendarEventOverrides extends Table
         DriftSqlType.string,
         data['${effectivePrefix}label_id'],
       ),
+      labelType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}label_type'],
+      ),
+      memberId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}member_id'],
+      ),
     );
   }
 
@@ -6313,7 +6541,7 @@ class CalendarEventOverrides extends Table
     'PRIMARY KEY(event_id, original_start_date_time)',
     'FOREIGN KEY(event_id, group_id)REFERENCES calendar_events(id, group_id)ON DELETE CASCADE',
     'FOREIGN KEY(label_id, group_id)REFERENCES calendar_labels(id, group_id)ON DELETE NO ACTION',
-    'CHECK(is_cancelled = 1 OR(title IS NOT NULL AND length(trim(title)) > 0 AND start_date_time IS NOT NULL AND end_date_time IS NOT NULL AND end_date_time >= start_date_time AND is_all_day IS NOT NULL AND label_id IS NOT NULL))',
+    'CHECK(is_cancelled = 1 OR(title IS NOT NULL AND length(trim(title)) > 0 AND start_date_time IS NOT NULL AND end_date_time IS NOT NULL AND end_date_time >= start_date_time AND is_all_day IS NOT NULL AND label_type IS NOT NULL AND((label_type = \'group\' AND member_id IS NULL AND label_id IS NULL)OR(label_type = \'member\' AND member_id IS NOT NULL AND length(trim(member_id)) > 0 AND label_id IS NULL)OR(label_type = \'custom\' AND member_id IS NULL AND label_id IS NOT NULL))))',
   ];
   @override
   bool get dontWriteConstraints => true;
@@ -6330,6 +6558,8 @@ class SqliteCalendarEventOverrideRow extends DataClass
   final int? endDateTime;
   final int? isAllDay;
   final String? labelId;
+  final String? labelType;
+  final String? memberId;
   const SqliteCalendarEventOverrideRow({
     required this.eventId,
     required this.groupId,
@@ -6340,6 +6570,8 @@ class SqliteCalendarEventOverrideRow extends DataClass
     this.endDateTime,
     this.isAllDay,
     this.labelId,
+    this.labelType,
+    this.memberId,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -6362,6 +6594,12 @@ class SqliteCalendarEventOverrideRow extends DataClass
     }
     if (!nullToAbsent || labelId != null) {
       map['label_id'] = Variable<String>(labelId);
+    }
+    if (!nullToAbsent || labelType != null) {
+      map['label_type'] = Variable<String>(labelType);
+    }
+    if (!nullToAbsent || memberId != null) {
+      map['member_id'] = Variable<String>(memberId);
     }
     return map;
   }
@@ -6387,6 +6625,12 @@ class SqliteCalendarEventOverrideRow extends DataClass
       labelId: labelId == null && nullToAbsent
           ? const Value.absent()
           : Value(labelId),
+      labelType: labelType == null && nullToAbsent
+          ? const Value.absent()
+          : Value(labelType),
+      memberId: memberId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(memberId),
     );
   }
 
@@ -6407,6 +6651,8 @@ class SqliteCalendarEventOverrideRow extends DataClass
       endDateTime: serializer.fromJson<int?>(json['end_date_time']),
       isAllDay: serializer.fromJson<int?>(json['is_all_day']),
       labelId: serializer.fromJson<String?>(json['label_id']),
+      labelType: serializer.fromJson<String?>(json['label_type']),
+      memberId: serializer.fromJson<String?>(json['member_id']),
     );
   }
   @override
@@ -6422,6 +6668,8 @@ class SqliteCalendarEventOverrideRow extends DataClass
       'end_date_time': serializer.toJson<int?>(endDateTime),
       'is_all_day': serializer.toJson<int?>(isAllDay),
       'label_id': serializer.toJson<String?>(labelId),
+      'label_type': serializer.toJson<String?>(labelType),
+      'member_id': serializer.toJson<String?>(memberId),
     };
   }
 
@@ -6435,6 +6683,8 @@ class SqliteCalendarEventOverrideRow extends DataClass
     Value<int?> endDateTime = const Value.absent(),
     Value<int?> isAllDay = const Value.absent(),
     Value<String?> labelId = const Value.absent(),
+    Value<String?> labelType = const Value.absent(),
+    Value<String?> memberId = const Value.absent(),
   }) => SqliteCalendarEventOverrideRow(
     eventId: eventId ?? this.eventId,
     groupId: groupId ?? this.groupId,
@@ -6447,6 +6697,8 @@ class SqliteCalendarEventOverrideRow extends DataClass
     endDateTime: endDateTime.present ? endDateTime.value : this.endDateTime,
     isAllDay: isAllDay.present ? isAllDay.value : this.isAllDay,
     labelId: labelId.present ? labelId.value : this.labelId,
+    labelType: labelType.present ? labelType.value : this.labelType,
+    memberId: memberId.present ? memberId.value : this.memberId,
   );
   SqliteCalendarEventOverrideRow copyWithCompanion(
     CalendarEventOverridesCompanion data,
@@ -6469,6 +6721,8 @@ class SqliteCalendarEventOverrideRow extends DataClass
           : this.endDateTime,
       isAllDay: data.isAllDay.present ? data.isAllDay.value : this.isAllDay,
       labelId: data.labelId.present ? data.labelId.value : this.labelId,
+      labelType: data.labelType.present ? data.labelType.value : this.labelType,
+      memberId: data.memberId.present ? data.memberId.value : this.memberId,
     );
   }
 
@@ -6483,7 +6737,9 @@ class SqliteCalendarEventOverrideRow extends DataClass
           ..write('startDateTime: $startDateTime, ')
           ..write('endDateTime: $endDateTime, ')
           ..write('isAllDay: $isAllDay, ')
-          ..write('labelId: $labelId')
+          ..write('labelId: $labelId, ')
+          ..write('labelType: $labelType, ')
+          ..write('memberId: $memberId')
           ..write(')'))
         .toString();
   }
@@ -6499,6 +6755,8 @@ class SqliteCalendarEventOverrideRow extends DataClass
     endDateTime,
     isAllDay,
     labelId,
+    labelType,
+    memberId,
   );
   @override
   bool operator ==(Object other) =>
@@ -6512,7 +6770,9 @@ class SqliteCalendarEventOverrideRow extends DataClass
           other.startDateTime == this.startDateTime &&
           other.endDateTime == this.endDateTime &&
           other.isAllDay == this.isAllDay &&
-          other.labelId == this.labelId);
+          other.labelId == this.labelId &&
+          other.labelType == this.labelType &&
+          other.memberId == this.memberId);
 }
 
 class CalendarEventOverridesCompanion
@@ -6526,6 +6786,8 @@ class CalendarEventOverridesCompanion
   final Value<int?> endDateTime;
   final Value<int?> isAllDay;
   final Value<String?> labelId;
+  final Value<String?> labelType;
+  final Value<String?> memberId;
   final Value<int> rowid;
   const CalendarEventOverridesCompanion({
     this.eventId = const Value.absent(),
@@ -6537,6 +6799,8 @@ class CalendarEventOverridesCompanion
     this.endDateTime = const Value.absent(),
     this.isAllDay = const Value.absent(),
     this.labelId = const Value.absent(),
+    this.labelType = const Value.absent(),
+    this.memberId = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   CalendarEventOverridesCompanion.insert({
@@ -6549,6 +6813,8 @@ class CalendarEventOverridesCompanion
     this.endDateTime = const Value.absent(),
     this.isAllDay = const Value.absent(),
     this.labelId = const Value.absent(),
+    this.labelType = const Value.absent(),
+    this.memberId = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : eventId = Value(eventId),
        groupId = Value(groupId),
@@ -6564,6 +6830,8 @@ class CalendarEventOverridesCompanion
     Expression<int>? endDateTime,
     Expression<int>? isAllDay,
     Expression<String>? labelId,
+    Expression<String>? labelType,
+    Expression<String>? memberId,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -6577,6 +6845,8 @@ class CalendarEventOverridesCompanion
       if (endDateTime != null) 'end_date_time': endDateTime,
       if (isAllDay != null) 'is_all_day': isAllDay,
       if (labelId != null) 'label_id': labelId,
+      if (labelType != null) 'label_type': labelType,
+      if (memberId != null) 'member_id': memberId,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -6591,6 +6861,8 @@ class CalendarEventOverridesCompanion
     Value<int?>? endDateTime,
     Value<int?>? isAllDay,
     Value<String?>? labelId,
+    Value<String?>? labelType,
+    Value<String?>? memberId,
     Value<int>? rowid,
   }) {
     return CalendarEventOverridesCompanion(
@@ -6604,6 +6876,8 @@ class CalendarEventOverridesCompanion
       endDateTime: endDateTime ?? this.endDateTime,
       isAllDay: isAllDay ?? this.isAllDay,
       labelId: labelId ?? this.labelId,
+      labelType: labelType ?? this.labelType,
+      memberId: memberId ?? this.memberId,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -6640,6 +6914,12 @@ class CalendarEventOverridesCompanion
     if (labelId.present) {
       map['label_id'] = Variable<String>(labelId.value);
     }
+    if (labelType.present) {
+      map['label_type'] = Variable<String>(labelType.value);
+    }
+    if (memberId.present) {
+      map['member_id'] = Variable<String>(memberId.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -6658,6 +6938,8 @@ class CalendarEventOverridesCompanion
           ..write('endDateTime: $endDateTime, ')
           ..write('isAllDay: $isAllDay, ')
           ..write('labelId: $labelId, ')
+          ..write('labelType: $labelType, ')
+          ..write('memberId: $memberId, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -7608,8 +7890,18 @@ class DeletedGroups extends Table
     requiredDuringInsert: false,
     $customConstraints: '',
   );
+  static const VerificationMeta _colorMeta = const VerificationMeta('color');
+  late final GeneratedColumn<String> color = GeneratedColumn<String>(
+    'color',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: 'NOT NULL DEFAULT \'#4CAF50\'',
+    defaultValue: const CustomExpression('\'#4CAF50\''),
+  );
   @override
-  List<GeneratedColumn> get $columns => [id, ownerId, name, memo];
+  List<GeneratedColumn> get $columns => [id, ownerId, name, memo, color];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -7649,6 +7941,12 @@ class DeletedGroups extends Table
         memo.isAcceptableOrUnknown(data['memo']!, _memoMeta),
       );
     }
+    if (data.containsKey('color')) {
+      context.handle(
+        _colorMeta,
+        color.isAcceptableOrUnknown(data['color']!, _colorMeta),
+      );
+    }
     return context;
   }
 
@@ -7674,6 +7972,10 @@ class DeletedGroups extends Table
         DriftSqlType.string,
         data['${effectivePrefix}memo'],
       ),
+      color: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}color'],
+      )!,
     );
   }
 
@@ -7692,11 +7994,13 @@ class SqliteDeletedGroupRow extends DataClass
   final String ownerId;
   final String name;
   final String? memo;
+  final String color;
   const SqliteDeletedGroupRow({
     required this.id,
     required this.ownerId,
     required this.name,
     this.memo,
+    required this.color,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -7707,6 +8011,7 @@ class SqliteDeletedGroupRow extends DataClass
     if (!nullToAbsent || memo != null) {
       map['memo'] = Variable<String>(memo);
     }
+    map['color'] = Variable<String>(color);
     return map;
   }
 
@@ -7716,6 +8021,7 @@ class SqliteDeletedGroupRow extends DataClass
       ownerId: Value(ownerId),
       name: Value(name),
       memo: memo == null && nullToAbsent ? const Value.absent() : Value(memo),
+      color: Value(color),
     );
   }
 
@@ -7729,6 +8035,7 @@ class SqliteDeletedGroupRow extends DataClass
       ownerId: serializer.fromJson<String>(json['owner_id']),
       name: serializer.fromJson<String>(json['name']),
       memo: serializer.fromJson<String?>(json['memo']),
+      color: serializer.fromJson<String>(json['color']),
     );
   }
   @override
@@ -7739,6 +8046,7 @@ class SqliteDeletedGroupRow extends DataClass
       'owner_id': serializer.toJson<String>(ownerId),
       'name': serializer.toJson<String>(name),
       'memo': serializer.toJson<String?>(memo),
+      'color': serializer.toJson<String>(color),
     };
   }
 
@@ -7747,11 +8055,13 @@ class SqliteDeletedGroupRow extends DataClass
     String? ownerId,
     String? name,
     Value<String?> memo = const Value.absent(),
+    String? color,
   }) => SqliteDeletedGroupRow(
     id: id ?? this.id,
     ownerId: ownerId ?? this.ownerId,
     name: name ?? this.name,
     memo: memo.present ? memo.value : this.memo,
+    color: color ?? this.color,
   );
   SqliteDeletedGroupRow copyWithCompanion(DeletedGroupsCompanion data) {
     return SqliteDeletedGroupRow(
@@ -7759,6 +8069,7 @@ class SqliteDeletedGroupRow extends DataClass
       ownerId: data.ownerId.present ? data.ownerId.value : this.ownerId,
       name: data.name.present ? data.name.value : this.name,
       memo: data.memo.present ? data.memo.value : this.memo,
+      color: data.color.present ? data.color.value : this.color,
     );
   }
 
@@ -7768,13 +8079,14 @@ class SqliteDeletedGroupRow extends DataClass
           ..write('id: $id, ')
           ..write('ownerId: $ownerId, ')
           ..write('name: $name, ')
-          ..write('memo: $memo')
+          ..write('memo: $memo, ')
+          ..write('color: $color')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, ownerId, name, memo);
+  int get hashCode => Object.hash(id, ownerId, name, memo, color);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -7782,7 +8094,8 @@ class SqliteDeletedGroupRow extends DataClass
           other.id == this.id &&
           other.ownerId == this.ownerId &&
           other.name == this.name &&
-          other.memo == this.memo);
+          other.memo == this.memo &&
+          other.color == this.color);
 }
 
 class DeletedGroupsCompanion extends UpdateCompanion<SqliteDeletedGroupRow> {
@@ -7790,12 +8103,14 @@ class DeletedGroupsCompanion extends UpdateCompanion<SqliteDeletedGroupRow> {
   final Value<String> ownerId;
   final Value<String> name;
   final Value<String?> memo;
+  final Value<String> color;
   final Value<int> rowid;
   const DeletedGroupsCompanion({
     this.id = const Value.absent(),
     this.ownerId = const Value.absent(),
     this.name = const Value.absent(),
     this.memo = const Value.absent(),
+    this.color = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   DeletedGroupsCompanion.insert({
@@ -7803,6 +8118,7 @@ class DeletedGroupsCompanion extends UpdateCompanion<SqliteDeletedGroupRow> {
     required String ownerId,
     required String name,
     this.memo = const Value.absent(),
+    this.color = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        ownerId = Value(ownerId),
@@ -7812,6 +8128,7 @@ class DeletedGroupsCompanion extends UpdateCompanion<SqliteDeletedGroupRow> {
     Expression<String>? ownerId,
     Expression<String>? name,
     Expression<String>? memo,
+    Expression<String>? color,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -7819,6 +8136,7 @@ class DeletedGroupsCompanion extends UpdateCompanion<SqliteDeletedGroupRow> {
       if (ownerId != null) 'owner_id': ownerId,
       if (name != null) 'name': name,
       if (memo != null) 'memo': memo,
+      if (color != null) 'color': color,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -7828,6 +8146,7 @@ class DeletedGroupsCompanion extends UpdateCompanion<SqliteDeletedGroupRow> {
     Value<String>? ownerId,
     Value<String>? name,
     Value<String?>? memo,
+    Value<String>? color,
     Value<int>? rowid,
   }) {
     return DeletedGroupsCompanion(
@@ -7835,6 +8154,7 @@ class DeletedGroupsCompanion extends UpdateCompanion<SqliteDeletedGroupRow> {
       ownerId: ownerId ?? this.ownerId,
       name: name ?? this.name,
       memo: memo ?? this.memo,
+      color: color ?? this.color,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -7854,6 +8174,9 @@ class DeletedGroupsCompanion extends UpdateCompanion<SqliteDeletedGroupRow> {
     if (memo.present) {
       map['memo'] = Variable<String>(memo.value);
     }
+    if (color.present) {
+      map['color'] = Variable<String>(color.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -7867,6 +8190,7 @@ class DeletedGroupsCompanion extends UpdateCompanion<SqliteDeletedGroupRow> {
           ..write('ownerId: $ownerId, ')
           ..write('name: $name, ')
           ..write('memo: $memo, ')
+          ..write('color: $color, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();

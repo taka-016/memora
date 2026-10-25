@@ -16,6 +16,10 @@ CalendarEvent calendarEventContent(CalendarEvent value) {
               isCancelled: v.isCancelled,
               title: v.title,
               labelId: v.labelId,
+
+              labelType: v.labelType,
+
+              memberId: v.memberId,
               isAllDay: v.isAllDay,
               startDateTime: v.startDateTime == null
                   ? null

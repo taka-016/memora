@@ -12,7 +12,9 @@ class SqliteCalendarEventMapper {
     overrides: overrides,
     id: row['id'] as String,
     groupId: row['group_id'] as String,
-    labelId: row['label_id'] as String,
+    labelId: row['label_id'] as String? ?? '',
+    labelType: row['label_type'] as String,
+    memberId: row['member_id'] as String? ?? '',
     title: row['title'] as String,
     startDateTime: DateTime.fromMicrosecondsSinceEpoch(
       row['start_date_time'] as int,
@@ -29,7 +31,9 @@ class SqliteCalendarEventMapper {
     'time_zone': value.timeZone,
     'id': value.id,
     'group_id': value.groupId,
-    'label_id': value.labelId,
+    'label_id': value.labelType == 'custom' ? value.labelId : null,
+    'label_type': value.labelType,
+    'member_id': value.labelType == 'member' ? value.memberId : null,
     'title': value.title,
     'start_date_time':
         (value.isAllDay

@@ -3,6 +3,9 @@ import 'package:equatable/equatable.dart';
 class CalendarLabelDto extends Equatable {
   const CalendarLabelDto({
     this.version,
+    this.labelType = 'custom',
+    this.memberId = '',
+    this.isSelectable = true,
     required this.id,
     required this.groupId,
     required this.name,
@@ -12,6 +15,9 @@ class CalendarLabelDto extends Equatable {
   });
 
   final int? version;
+  final String labelType;
+  final String memberId;
+  final bool isSelectable;
   final String id;
   final String groupId;
   final String name;
@@ -30,6 +36,9 @@ class CalendarLabelDto extends Equatable {
   }) {
     return CalendarLabelDto(
       version: version ?? this.version,
+      labelType: labelType,
+      memberId: memberId,
+      isSelectable: isSelectable,
       id: id ?? this.id,
       groupId: groupId ?? this.groupId,
       name: name ?? this.name,
@@ -42,6 +51,9 @@ class CalendarLabelDto extends Equatable {
   @override
   List<Object?> get props => [
     version,
+    labelType,
+    memberId,
+    isSelectable,
     id,
     groupId,
     name,
