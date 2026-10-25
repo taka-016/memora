@@ -544,9 +544,7 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                                   .map(
                                     (label) => DropdownMenuItem(
                                       value: label.id,
-                                      enabled:
-                                          label.isSelectable ||
-                                          label.id == widget.event?.labelKey,
+                                      enabled: label.isSelectable,
                                       child: Text(
                                         label.name,
                                         overflow: TextOverflow.clip,
