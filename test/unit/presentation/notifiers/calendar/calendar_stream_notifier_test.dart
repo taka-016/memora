@@ -2,7 +2,9 @@ import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/usecases/calendar/watch_calendar_group_usecase.dart';
 import 'package:memora/composition_root/providers/group_providers.dart';
+
 import '../../../../helpers/calendar_group_test_support.dart';
+
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -57,8 +59,10 @@ void main() {
     getEvents = MockGetCalendarEventsUsecase();
     container = ProviderContainer(
       overrides: [
-          getGroupWithMembersByIdUsecaseProvider.overrideWithValue(calendarTestGroupLoader()),
-          watchCalendarGroupUsecaseProvider.overrideWithValue(null),
+        getGroupWithMembersByIdUsecaseProvider.overrideWithValue(
+          calendarTestGroupLoader(),
+        ),
+        watchCalendarGroupUsecaseProvider.overrideWithValue(null),
         appClockProvider.overrideWithValue(
           FixedAppClock(DateTime(2026, 10, 1)),
         ),
@@ -94,17 +98,47 @@ void main() {
 
   test('グループ色とメンバー名の変更・所属解除・再加入を表示へ反映する', () async {
     final groupSource = GroupSource();
-    final fixedEvent = event.copyWith(labelType: 'member', memberId: 'm', labelId: '');
-    final live = ProviderContainer(overrides: [
-      appClockProvider.overrideWithValue(FixedAppClock(DateTime(2026, 10, 1))),
-      watchCalendarEventsUsecaseProvider.overrideWithValue(WatchCalendarEventsUsecase(events)),
-      watchCalendarLabelsUsecaseProvider.overrideWithValue(WatchCalendarLabelsUsecase(labels)),
-      watchCalendarGroupUsecaseProvider.overrideWithValue(WatchCalendarGroupUsecase(groupSource)),
-    ]);
+    final fixedEvent = event.copyWith(
+      labelType: 'member',
+      memberId: 'm',
+      labelId: '',
+    );
+    final live = ProviderContainer(
+      overrides: [
+        appClockProvider.overrideWithValue(
+          FixedAppClock(DateTime(2026, 10, 1)),
+        ),
+        watchCalendarEventsUsecaseProvider.overrideWithValue(
+          WatchCalendarEventsUsecase(events),
+        ),
+        watchCalendarLabelsUsecaseProvider.overrideWithValue(
+          WatchCalendarLabelsUsecase(labels),
+        ),
+        watchCalendarGroupUsecaseProvider.overrideWithValue(
+          WatchCalendarGroupUsecase(groupSource),
+        ),
+      ],
+    );
     live.listen(provider, (_, _) {});
-    addTearDown(() async { live.dispose(); await groupSource.stream.close(); });
+    addTearDown(() async {
+      live.dispose();
+      await groupSource.stream.close();
+    });
     await live.read(provider.notifier).load();
-    const group = GroupDto(id: 'g', ownerId: 'o', name: '家族', color: '#123456', members: [GroupMemberDto(groupId: 'g', memberId: 'm', displayName: '太郎', color: '#FF0000')]);
+    const group = GroupDto(
+      id: 'g',
+      ownerId: 'o',
+      name: '家族',
+      color: '#123456',
+      members: [
+        GroupMemberDto(
+          groupId: 'g',
+          memberId: 'm',
+          displayName: '太郎',
+          color: '#FF0000',
+        ),
+      ],
+    );
     groupSource.stream.add(group);
     events.streams.last.add([fixedEvent]);
     labels.streams.last.add([]);
@@ -113,7 +147,13 @@ void main() {
     groupSource.stream.add(group.copyWith(members: []));
     await flush();
     expect(live.read(provider).displayLabels.last.isSelectable, isFalse);
-    groupSource.stream.add(group.copyWith(members: [group.members.single.copyWith(displayName: '花子', color: '#00FF00')]));
+    groupSource.stream.add(
+      group.copyWith(
+        members: [
+          group.members.single.copyWith(displayName: '花子', color: '#00FF00'),
+        ],
+      ),
+    );
     await flush();
     expect(live.read(provider).displayLabels.last.name, '花子の予定');
     expect(live.read(provider).displayLabels.last.color, '#00FF00');

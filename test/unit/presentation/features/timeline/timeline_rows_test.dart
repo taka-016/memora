@@ -10,7 +10,15 @@ import 'package:memora/presentation/features/timeline/trip_row.dart';
 
 void main() {
   test('メンバー行は所属色を不透明度20%で共通背景として返す', () {
-    const row = MemberRow(member: GroupMemberDto(groupId: 'g', memberId: 'm', displayName: '太郎', color: '#123456'), initialHeight: 60);
+    const row = MemberRow(
+      member: GroupMemberDto(
+        groupId: 'g',
+        memberId: 'm',
+        displayName: '太郎',
+        color: '#123456',
+      ),
+      initialHeight: 60,
+    );
     expect(row.backgroundColor, const Color(0xFF123456).withValues(alpha: 0.2));
   });
 

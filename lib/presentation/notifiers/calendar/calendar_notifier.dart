@@ -71,8 +71,9 @@ class CalendarNotifier extends _$CalendarNotifier {
         ref.read(getGroupWithMembersByIdUsecaseProvider).execute(groupId),
       ]);
       if (!ref.mounted || version != _loadVersion) return;
-      if (results[2] == null)
+      if (results[2] == null) {
         throw const ApplicationValidationException('グループが見つかりません');
+      }
       final series = results[0] as List<CalendarEventDto>;
       final expanded = _expand(series, state.selectedDate);
       _series = series;

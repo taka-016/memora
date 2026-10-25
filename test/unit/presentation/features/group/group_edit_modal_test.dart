@@ -117,17 +117,24 @@ Widget buildSubject({
 void main() {
   testWidgets('グループ色と所属色を選んで保存する', (tester) async {
     GroupDto? saved;
-    await tester.pumpWidget(buildSubject(
-      group: createGroupDto(id: 'g', name: '家族'),
-      onSave: (value) async { saved = value; },
-      availableMembers: [], currentMember: createCurrentMember(),
-    ));
+    await tester.pumpWidget(
+      buildSubject(
+        group: createGroupDto(id: 'g', name: '家族'),
+        onSave: (value) async {
+          saved = value;
+        },
+        availableMembers: [],
+        currentMember: createCurrentMember(),
+      ),
+    );
     await tester.tap(find.byKey(const Key('group_color_button')));
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('赤'));
     await tester.tap(find.text('決定'));
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.byKey(const Key('member_color_button_owner-id')));
+    await tester.ensureVisible(
+      find.byKey(const Key('member_color_button_owner-id')),
+    );
     await tester.tap(find.byKey(const Key('member_color_button_owner-id')));
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('黄'));
@@ -214,7 +221,9 @@ void main() {
       );
       await tester.enterText(find.byType(TextFormField).first, '家族の記録');
       if (action == '管理者' || action == '除外') {
-        await tester.ensureVisible(find.byKey(const Key('member_action_menu_1')));
+        await tester.ensureVisible(
+          find.byKey(const Key('member_action_menu_1')),
+        );
         await tester.tap(find.byKey(const Key('member_action_menu_1')));
         await tester.pumpAndSettle();
         await tester.tap(find.text(action == '管理者' ? '管理者に設定' : 'メンバーを削除'));
@@ -243,7 +252,10 @@ void main() {
           members[2],
         ],
         '除外' => [members[0], members[2]],
-        '追加' => [...members, candidate.copyWith(orderIndex: 8, color: '#00BCD4')],
+        '追加' => [
+          ...members,
+          candidate.copyWith(orderIndex: 8, color: '#00BCD4'),
+        ],
         '並べ替え' => [
           members[0].copyWith(orderIndex: 0),
           members[2].copyWith(orderIndex: 1),
