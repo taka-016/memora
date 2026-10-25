@@ -7,6 +7,24 @@ service cloud.firestore {
              && request.auth.token.email_verified == true;
     }
 
+    function validCalendarReference(data) {
+      return data.labelType in ['group', 'member', 'custom']
+             && ((data.labelType == 'group' && data.memberId == null && data.labelId == null)
+                 || (data.labelType == 'member' && data.memberId is string
+                     && data.memberId.size() > 0 && data.labelId == null)
+                 || (data.labelType == 'custom' && data.labelId is string
+                     && data.labelId.size() > 0 && data.memberId == null));
+    }
+
+    function validColor(data) {
+      return !('color' in data) || (data.color is string && data.color.matches('^#[0-9a-fA-F]{6}$'));
+    }
+
+    function validVersionedData(collection) {
+      return (collection != 'calendar_events' || validCalendarReference(request.resource.data))
+             && (collection != 'groups' || validColor(request.resource.data));
+    }
+
     function isInitialVersion() {
       return request.resource.data.version is int
              && request.resource.data.version == 1;
@@ -71,16 +89,18 @@ service cloud.firestore {
     }
 
     match /calendar_event_overrides/{document} {
-      allow create: if aggregateChild('calendar_events', 'eventId');
+      allow create: if aggregateChild('calendar_events', 'eventId')
+                       && (request.resource.data.isCancelled == true || validCalendarReference(request.resource.data));
       allow update: if request.resource.data.eventId == resource.data.eventId
-                       && aggregateChild('calendar_events', 'eventId');
+                       && aggregateChild('calendar_events', 'eventId')
+                       && (request.resource.data.isCancelled == true || validCalendarReference(request.resource.data));
       allow delete: if aggregateChildDelete('calendar_events', 'eventId');
     }
 
     match /group_members/{document} {
-      allow create: if aggregateChild('groups', 'groupId');
+      allow create: if aggregateChild('groups', 'groupId') && validColor(request.resource.data);
       allow update: if request.resource.data.groupId == resource.data.groupId
-                       && aggregateChild('groups', 'groupId');
+                       && aggregateChild('groups', 'groupId') && validColor(request.resource.data);
       allow delete: if aggregateChildDelete('groups', 'groupId');
     }
 
@@ -102,10 +122,12 @@ service cloud.firestore {
                        && resource.data.version >= 1;
       allow create: if isVerifiedUser()
                        && isVersionedCollection(collection)
-                       && isInitialVersion();
+                       && isInitialVersion()
+                       && validVersionedData(collection);
       allow update: if isVerifiedUser()
                        && isVersionedCollection(collection)
-                       && isNextVersion();
+                       && isNextVersion()
+                       && validVersionedData(collection);
     }
 
     match /calendar_labels/{document} {
