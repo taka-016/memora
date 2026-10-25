@@ -55,6 +55,11 @@ void main() {
     labelQuery = MockCalendarLabelQueryService();
   });
 
+  test('固定ラベルは任意ラベルとして保存しない', () async {
+    await expectLater(SaveCalendarLabelUsecase(labels).execute(const CalendarLabelDto(id: 'group:', groupId: 'group', name: 'グループの予定', color: '#123456', labelType: 'group')), throwsA(isA<ApplicationValidationException>()));
+    verifyZeroInteractions(labels);
+  });
+
   test('並び替え要求へ取得時の全ラベルの期待値を渡す', () async {
     when(
       labels.reorderCalendarLabels(

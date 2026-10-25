@@ -203,6 +203,8 @@ void main() {
         when(eventDoc.data()).thenReturn({
           'groupId': 'group',
           'labelId': 'label',
+          'labelType': 'custom',
+          'referencedLabelIds': ['label'],
           'version': version,
         });
         await callback(transaction);
