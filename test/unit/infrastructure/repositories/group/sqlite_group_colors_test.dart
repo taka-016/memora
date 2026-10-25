@@ -1,3 +1,4 @@
+import 'package:memora/application/queries/order_by.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/mappers/group/group_mapper.dart';
@@ -25,7 +26,7 @@ void main() {
       GroupMember(groupId: firstId, memberId: 'b', color: '#FFFF00', orderIndex: 0),
     ]);
     await repo.updateGroup(withNew);
-    final saved = (await query.getGroupWithMembersById(firstId))!;
+    final saved = (await query.getGroupWithMembersById(firstId, membersOrderBy: const [OrderBy('orderIndex')]))!;
     expect(saved.members.map((v) => (v.memberId, v.color, v.orderIndex)), [('b', '#FFFF00', 0), ('a', '#654321', 2)]);
     expect((await query.getGroupWithMembersById(secondId))!.members.single.color, '#ABCDEF');
     expect(saved.color, '#FF0000');
