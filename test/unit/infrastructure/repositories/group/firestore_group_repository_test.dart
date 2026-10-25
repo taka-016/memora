@@ -73,7 +73,13 @@ void main() {
 
     test('所属色だけの変更も既存所属を更新する', () async {
       const before = GroupMember(groupId: 'g', memberId: 'm');
-      final group = Group(id: 'g', ownerId: 'o', name: '家族', originalMembers: const [before], members: [before.copyWith(color: '#FF0000')]);
+      final group = Group(
+        id: 'g',
+        ownerId: 'o',
+        name: '家族',
+        originalMembers: const [before],
+        members: [before.copyWith(color: '#FF0000')],
+      );
       final parent = MockDocumentReference<Map<String, dynamic>>();
       final membership = MockDocumentReference<Map<String, dynamic>>();
       final batch = MockWriteBatch();
@@ -91,7 +97,9 @@ void main() {
       when(doc.reference).thenReturn(membership);
       when(batch.commit()).thenAnswer((_) async {});
       await repository.updateGroup(group);
-      verify(batch.update(membership, argThat(containsPair('color', '#FF0000')))).called(1);
+      verify(
+        batch.update(membership, argThat(containsPair('color', '#FF0000'))),
+      ).called(1);
     });
 
     test('updateGroupがgroups collectionの該当ドキュメントを差分更新する', () async {

@@ -52,7 +52,13 @@ void main() {
     final doc = MockDocumentSnapshot();
     when(doc.id).thenReturn('label');
     for (final color in ['#FFFFFF', '#123ABC']) {
-      final data = {'groupId': 'group', 'name': '全員', 'color': color, 'textColor': '#Ab12Cd', 'sortOrder': 3};
+      final data = {
+        'groupId': 'group',
+        'name': '全員',
+        'color': color,
+        'textColor': '#Ab12Cd',
+        'sortOrder': 3,
+      };
       when(doc.data()).thenReturn(data);
       expect(
         FirestoreCalendarLabelMapper.fromFirestore(doc).textColor,
@@ -116,8 +122,13 @@ void main() {
     eventDoc = MockDocumentSnapshot();
     labelDoc = MockDocumentSnapshot();
     when(eventDoc.exists).thenReturn(true);
-    when(eventDoc.data())
-        .thenReturn({'groupId': 'group', 'labelType': 'custom', 'labelId': 'label', 'referencedLabelIds': ['label'], 'version': 1});
+    when(eventDoc.data()).thenReturn({
+      'groupId': 'group',
+      'labelType': 'custom',
+      'labelId': 'label',
+      'referencedLabelIds': ['label'],
+      'version': 1,
+    });
     when(labelDoc.exists).thenReturn(true);
     when(labelDoc.data())
         .thenReturn({'groupId': 'group', 'eventCount': 1, 'version': 1});
@@ -169,8 +180,12 @@ void main() {
   );
 
   test('固定ラベルの予定は任意ラベルの利用件数を更新せず保存する', () async {
-    await events.saveCalendarEvent(event().copyWith(labelType: 'member', memberId: 'm', labelId: ''));
-    final data = verify(transaction.set(eventRef, captureAny)).captured.single as Map<String, dynamic>;
+    await events.saveCalendarEvent(
+      event().copyWith(labelType: 'member', memberId: 'm', labelId: ''),
+    );
+    final data =
+        verify(transaction.set(eventRef, captureAny)).captured.single
+            as Map<String, dynamic>;
     expect(data['labelType'], 'member');
     expect(data['memberId'], 'm');
     expect(data['labelId'], isNull);

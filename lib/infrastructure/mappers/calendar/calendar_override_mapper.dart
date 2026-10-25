@@ -51,7 +51,7 @@ class CalendarOverrideMapper {
             isUtc: row['is_all_day'] == 1,
           ),
     isAllDay: row['is_all_day'] == null ? null : row['is_all_day'] == 1,
-    labelId: row['label_id'] as String? ?? '',
+    labelId: row['is_cancelled'] == 1 ? null : row['label_id'] as String? ?? '',
     labelType: row['is_cancelled'] == 1
         ? 'custom'
         : row['label_type'] as String,

@@ -90,7 +90,7 @@ void main() {
           'id': 'event',
           'group_id': 'group',
           'label_id': 'label',
-    'label_type': 'custom',
+          'label_type': 'custom',
           'title': '予定',
           'start_date_time': 1,
           'end_date_time': 2,
