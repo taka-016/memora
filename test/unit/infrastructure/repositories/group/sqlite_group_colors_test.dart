@@ -14,21 +14,66 @@ void main() {
     addTearDown(db.close);
     final repo = SqliteGroupRepository(db);
     final query = SqliteGroupQueryService(db);
-    for (final id in ['a', 'b', 'c']) { await db.insertRow('members', {'id': id, 'display_name': id}); }
-    final firstId = await repo.saveGroup(Group(id: '', ownerId: 'a', name: '家族', color: '#FF0000', members: const [GroupMember(groupId: '', memberId: 'a', color: '#123456')]));
-    final secondId = await repo.saveGroup(Group(id: '', ownerId: 'a', name: '友人', members: const [GroupMember(groupId: '', memberId: 'a', color: '#ABCDEF')]));
+    for (final id in ['a', 'b', 'c']) {
+      await db.insertRow('members', {'id': id, 'display_name': id});
+    }
+    final firstId = await repo.saveGroup(
+      Group(
+        id: '',
+        ownerId: 'a',
+        name: '家族',
+        color: '#FF0000',
+        members: const [
+          GroupMember(groupId: '', memberId: 'a', color: '#123456'),
+        ],
+      ),
+    );
+    final secondId = await repo.saveGroup(
+      Group(
+        id: '',
+        ownerId: 'a',
+        name: '友人',
+        members: const [
+          GroupMember(groupId: '', memberId: 'a', color: '#ABCDEF'),
+        ],
+      ),
+    );
     final original = (await query.getGroupWithMembersById(firstId))!;
-    await repo.updateGroup(GroupMapper.toEntity(original.copyWith(members: [original.members.single.copyWith(color: '#654321', orderIndex: 2)])));
+    await repo.updateGroup(
+      GroupMapper.toEntity(
+        original.copyWith(
+          members: [
+            original.members.single.copyWith(color: '#654321', orderIndex: 2),
+          ],
+        ),
+      ),
+    );
     final colored = (await query.getGroupWithMembersById(firstId))!;
     expect(colored.members.single.color, '#654321');
-    final withNew = GroupMapper.toEntity(colored).copyWith(members: [
-      ...GroupMapper.toEntity(colored).members,
-      GroupMember(groupId: firstId, memberId: 'b', color: '#FFFF00', orderIndex: 0),
-    ]);
+    final withNew = GroupMapper.toEntity(colored).copyWith(
+      members: [
+        ...GroupMapper.toEntity(colored).members,
+        GroupMember(
+          groupId: firstId,
+          memberId: 'b',
+          color: '#FFFF00',
+          orderIndex: 0,
+        ),
+      ],
+    );
     await repo.updateGroup(withNew);
-    final saved = (await query.getGroupWithMembersById(firstId, membersOrderBy: const [OrderBy('orderIndex')]))!;
-    expect(saved.members.map((v) => (v.memberId, v.color, v.orderIndex)), [('b', '#FFFF00', 0), ('a', '#654321', 2)]);
-    expect((await query.getGroupWithMembersById(secondId))!.members.single.color, '#ABCDEF');
+    final saved = (await query.getGroupWithMembersById(
+      firstId,
+      membersOrderBy: const [OrderBy('orderIndex')],
+    ))!;
+    expect(saved.members.map((v) => (v.memberId, v.color, v.orderIndex)), [
+      ('b', '#FFFF00', 0),
+      ('a', '#654321', 2),
+    ]);
+    expect(
+      (await query.getGroupWithMembersById(secondId))!.members.single.color,
+      '#ABCDEF',
+    );
     expect(saved.color, '#FF0000');
   });
 }

@@ -40,7 +40,13 @@ class SqliteGroupRepository implements GroupRepository {
       if (previous == null) {
         await db.customStatement(
           'INSERT INTO group_members (group_id, member_id, is_administrator, order_index, color) VALUES (?, ?, ?, ?, ?) ON CONFLICT(group_id, member_id) DO NOTHING',
-          [row['group_id'], row['member_id'], row['is_administrator'], row['order_index'], row['color']],
+          [
+            row['group_id'],
+            row['member_id'],
+            row['is_administrator'],
+            row['order_index'],
+            row['color'],
+          ],
         );
       } else {
         await db.customStatement(
