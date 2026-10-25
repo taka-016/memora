@@ -115,6 +115,55 @@ Widget buildSubject({
 }
 
 void main() {
+  for (final memberColor in [false, true]) {
+    testWidgets('${memberColor ? '所属' : 'グループ'}の色を16進数で指定してプレビューと保存へ反映する', (tester) async {
+      GroupDto? saved;
+      await tester.pumpWidget(buildSubject(group: createGroupDto(id: 'g', name: '家族'), onSave: (value) async { saved = value; }, availableMembers: [], currentMember: createCurrentMember()));
+      final button = find.byKey(Key(memberColor ? 'member_color_button_owner-id' : 'group_color_button'));
+      await tester.ensureVisible(button);
+      await tester.tap(button);
+      await tester.pumpAndSettle();
+      expect(find.widgetWithText(TextFormField, '色（#RRGGBB）'), findsNothing);
+      await tester.ensureVisible(find.text('16進数で指定'));
+      await tester.tap(find.text('16進数で指定'));
+      await tester.pump();
+      final field = find.widgetWithText(TextFormField, '色（#RRGGBB）');
+      await tester.enterText(field, ' #12aBcD ');
+      await tester.pump();
+      await tester.ensureVisible(find.byKey(const Key('label_color_preview')));
+      expect((tester.widget<Container>(find.byKey(const Key('label_color_preview'))).decoration as BoxDecoration).color, const Color(0xFF12ABCD));
+      await tester.tap(find.text('決定'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('更新'));
+      await tester.pumpAndSettle();
+      expect(memberColor ? saved!.members.single.color : saved!.color, '#12aBcD');
+    });
+  }
+
+  testWidgets('グループの不正な16進数は決定できずパレットで修正できる', (tester) async {
+    GroupDto? saved;
+    await tester.pumpWidget(buildSubject(group: createGroupDto(id: 'g', name: '家族'), onSave: (value) async { saved = value; }, availableMembers: [], currentMember: createCurrentMember()));
+    await tester.tap(find.byKey(const Key('group_color_button')));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('16進数で指定'));
+    await tester.tap(find.text('16進数で指定'));
+    await tester.pump();
+    await tester.enterText(find.widgetWithText(TextFormField, '色（#RRGGBB）'), '赤');
+    await tester.tap(find.text('決定'));
+    await tester.pump();
+    expect(find.text('#RRGGBB形式で入力してください'), findsOneWidget);
+    await tester.ensureVisible(find.byTooltip('青'));
+    await tester.tap(find.byTooltip('青'));
+    await tester.pump();
+    expect(tester.widget<TextFormField>(find.widgetWithText(TextFormField, '色（#RRGGBB）')).controller!.text, '#2196F3');
+    await tester.tap(find.text('決定'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('更新'));
+    await tester.pumpAndSettle();
+    expect(saved!.color, '#2196F3');
+  });
+
+
   testWidgets('グループと所属の文字色をプレビューで確認して保存する', (tester) async {
     GroupDto? saved;
     await tester.pumpWidget(
