@@ -24,7 +24,8 @@ CREATE TABLE "groups" (
   owner_id TEXT NOT NULL,
   name TEXT NOT NULL,
   memo TEXT,
-  color TEXT NOT NULL DEFAULT '#4CAF50' CHECK (length(color) = 7 AND substr(color, 1, 1) = '#' AND substr(color, 2) NOT GLOB '*[^0-9a-fA-F]*')
+  color TEXT NOT NULL DEFAULT '#4CAF50' CHECK (length(color) = 7 AND substr(color, 1, 1) = '#' AND substr(color, 2) NOT GLOB '*[^0-9a-fA-F]*'),
+  text_color TEXT CHECK (text_color IS NULL OR (length(text_color) = 7 AND substr(text_color, 1, 1) = '#' AND substr(text_color, 2) NOT GLOB '*[^0-9a-fA-F]*'))
 ) AS SqliteGroupRow;
 
 CREATE INDEX groups_owner_id_idx ON "groups" (owner_id);
@@ -35,6 +36,7 @@ CREATE TABLE group_members (
   is_administrator INTEGER NOT NULL CHECK (is_administrator IN (0, 1)),
   order_index INTEGER NOT NULL,
   color TEXT NOT NULL DEFAULT '#2196F3' CHECK (length(color) = 7 AND substr(color, 1, 1) = '#' AND substr(color, 2) NOT GLOB '*[^0-9a-fA-F]*'),
+  text_color TEXT CHECK (text_color IS NULL OR (length(text_color) = 7 AND substr(text_color, 1, 1) = '#' AND substr(text_color, 2) NOT GLOB '*[^0-9a-fA-F]*')),
   PRIMARY KEY (group_id, member_id)
 ) AS SqliteGroupMemberRow;
 
@@ -215,5 +217,6 @@ CREATE TABLE deleted_groups (
   owner_id TEXT NOT NULL,
   name TEXT NOT NULL,
   memo TEXT,
-  color TEXT NOT NULL DEFAULT '#4CAF50'
+  color TEXT NOT NULL DEFAULT '#4CAF50',
+  text_color TEXT CHECK (text_color IS NULL OR (length(text_color) = 7 AND substr(text_color, 1, 1) = '#' AND substr(text_color, 2) NOT GLOB '*[^0-9a-fA-F]*'))
 ) AS SqliteDeletedGroupRow;

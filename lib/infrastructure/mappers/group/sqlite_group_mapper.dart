@@ -9,6 +9,7 @@ class SqliteGroupMapper {
   }) => GroupDto(
     id: row['id'] as String,
     ownerId: row['owner_id'] as String,
+    textColor: row['text_color'] as String?,
     color: row['color'] as String? ?? '#4CAF50',
     name: row['name'] as String,
     memo: row['memo'] as String?,
@@ -18,6 +19,7 @@ class SqliteGroupMapper {
     'id': value.id,
     'owner_id': value.ownerId,
     'color': value.color,
+    'text_color': value.textColor,
     'name': value.name,
     'memo': value.memo,
   };
