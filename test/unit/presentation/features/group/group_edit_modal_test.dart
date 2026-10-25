@@ -115,6 +115,30 @@ Widget buildSubject({
 }
 
 void main() {
+  testWidgets('グループ色と所属色を選んで保存する', (tester) async {
+    GroupDto? saved;
+    await tester.pumpWidget(buildSubject(
+      group: createGroupDto(id: 'g', name: '家族'),
+      onSave: (value) async { saved = value; },
+      availableMembers: [], currentMember: createCurrentMember(),
+    ));
+    await tester.tap(find.byKey(const Key('group_color_button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('赤'));
+    await tester.tap(find.text('決定'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('member_color_button_owner-id')));
+    await tester.tap(find.byKey(const Key('member_color_button_owner-id')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('黄'));
+    await tester.tap(find.text('決定'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('更新'));
+    await tester.pumpAndSettle();
+    expect(saved!.color, '#F44336');
+    expect(saved!.members.single.color, '#FFEB3B');
+  });
+
   testWidgets('保存が未完了の間は再送・キャンセル・戻る操作を抑止する', (tester) async {
     final pending = Completer<void>();
     var calls = 0;
