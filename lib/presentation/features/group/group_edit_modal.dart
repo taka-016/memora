@@ -1,6 +1,4 @@
-import 'package:memora/application/services/calendar/calendar_display_labels.dart';
-import 'package:memora/presentation/shared/inputs/label_color_preview.dart';
-import 'package:memora/presentation/shared/inputs/color_picker.dart';
+import 'package:memora/presentation/shared/inputs/label_color_settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -350,8 +348,6 @@ class GroupEditModal extends HookConsumerWidget {
       }
     }
 
-    String colorHex(Color color) =>
-        '#${(color.toARGB32() & 0xFFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}';
     Color parseColor(String color) =>
         Color(int.parse(color.substring(1), radix: 16) | 0xFF000000);
 
@@ -362,7 +358,8 @@ class GroupEditModal extends HookConsumerWidget {
       String? textColor,
       void Function(String, String?) onChanged,
     ) async {
-      var selected = parseColor(value);
+      var selected = value;
+      final colorForm = GlobalKey<FormState>();
       var selectedTextColor = textColor;
       final colors = await showDialog<({String color, String? textColor})>(
         context: context,
@@ -370,42 +367,18 @@ class GroupEditModal extends HookConsumerWidget {
           builder: (context, setState) => AlertDialog(
             title: Text(title),
             content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  ColorPicker(
-                    color: selected,
-                    onChanged: (color) => setState(() => selected = color),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text('文字色'),
-                  Wrap(
-                    spacing: 12,
-                    children: [
-                      for (final (name, color) in const [
-                        ('自動', null),
-                        ('白', '#FFFFFF'),
-                        ('黒', '#000000'),
-                      ])
-                        ChoiceChip(
-                          label: Text(name),
-                          selected: selectedTextColor?.toUpperCase() == color,
-                          onSelected: (_) =>
-                              setState(() => selectedTextColor = color),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  LabelColorPreview(
-                    label: previewName,
-                    color: selected,
-                    textColor: parseColor(
-                      selectedTextColor ??
-                          calendarContrastingTextColor(colorHex(selected)),
-                    ),
-                  ),
-                ],
+              child: Form(
+                key: colorForm,
+                child: LabelColorSettings(
+                  label: previewName,
+                  color: selected,
+                  textColor: selectedTextColor,
+                  allowAutomaticTextColor: true,
+                  onChanged: (color, textColor) => setState(() {
+                    selected = color;
+                    selectedTextColor = textColor;
+                  }),
+                ),
               ),
             ),
             actions: [
@@ -414,10 +387,13 @@ class GroupEditModal extends HookConsumerWidget {
                 child: const Text('キャンセル'),
               ),
               TextButton(
-                onPressed: () => Navigator.pop(context, (
-                  color: colorHex(selected),
-                  textColor: selectedTextColor,
-                )),
+                onPressed: () {
+                  if (!colorForm.currentState!.validate()) return;
+                  Navigator.pop(context, (
+                    color: selected.trim(),
+                    textColor: selectedTextColor,
+                  ));
+                },
                 child: const Text('決定'),
               ),
             ],
