@@ -214,6 +214,7 @@ void main() {
       );
       await tester.enterText(find.byType(TextFormField).first, '家族の記録');
       if (action == '管理者' || action == '除外') {
+        await tester.ensureVisible(find.byKey(const Key('member_action_menu_1')));
         await tester.tap(find.byKey(const Key('member_action_menu_1')));
         await tester.pumpAndSettle();
         await tester.tap(find.text(action == '管理者' ? '管理者に設定' : 'メンバーを削除'));
@@ -242,7 +243,7 @@ void main() {
           members[2],
         ],
         '除外' => [members[0], members[2]],
-        '追加' => [...members, candidate.copyWith(orderIndex: 8)],
+        '追加' => [...members, candidate.copyWith(orderIndex: 8, color: '#00BCD4')],
         '並べ替え' => [
           members[0].copyWith(orderIndex: 0),
           members[2].copyWith(orderIndex: 1),
@@ -638,6 +639,7 @@ void main() {
       );
 
       await tester.ensureVisible(find.byKey(const Key('member_action_menu_0')));
+      await tester.ensureVisible(find.byKey(const Key('member_action_menu_0')));
       await tester.tap(find.byKey(const Key('member_action_menu_0')));
       await tester.pumpAndSettle();
 
@@ -689,6 +691,7 @@ void main() {
       );
 
       await tester.ensureVisible(find.byKey(const Key('member_action_menu_0')));
+      await tester.ensureVisible(find.byKey(const Key('member_action_menu_0')));
       await tester.tap(find.byKey(const Key('member_action_menu_0')));
       await tester.pumpAndSettle();
 
@@ -736,6 +739,7 @@ void main() {
         ),
       );
 
+      await tester.ensureVisible(find.byKey(const Key('member_action_menu_0')));
       await tester.ensureVisible(find.byKey(const Key('member_action_menu_0')));
       await tester.tap(find.byKey(const Key('member_action_menu_0')));
       await tester.pumpAndSettle();
@@ -1178,6 +1182,7 @@ void main() {
       expect(find.text('管理者'), findsOneWidget);
 
       // 操作メニューから管理者権限を付与
+      await tester.ensureVisible(find.byKey(const Key('member_action_menu_0')));
       await tester.tap(find.byKey(const Key('member_action_menu_0')));
       await tester.pumpAndSettle();
 
