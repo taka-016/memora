@@ -80,6 +80,8 @@ setup-firebase:
 ssh-key *args:
   bash scripts/dev/generate_ssh_public_key.sh "$@"
 
+alias sm := sync-main
+
 # mainを更新し、追跡先が削除されたローカルブランチを整理する
 sync-main:
   #!/usr/bin/env bash
