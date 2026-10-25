@@ -1,3 +1,5 @@
+import 'package:memora/composition_root/providers/group_providers.dart';
+import '../../../../helpers/calendar_group_test_support.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -26,6 +28,8 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          getGroupWithMembersByIdUsecaseProvider.overrideWithValue(calendarTestGroupLoader()),
+          watchCalendarGroupUsecaseProvider.overrideWithValue(null),
           appClockProvider.overrideWithValue(
             FixedAppClock(DateTime(2026, 10, 1)),
           ),

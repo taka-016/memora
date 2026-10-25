@@ -1,3 +1,5 @@
+import 'package:memora/composition_root/providers/group_providers.dart';
+import '../../../../helpers/calendar_group_test_support.dart';
 import 'package:memora/application/usecases/calendar/change_calendar_recurrence_usecase.dart';
 
 import 'dart:async';
@@ -77,6 +79,8 @@ void main() {
     when(labels.execute(any)).thenAnswer((_) async => [label]);
     container = ProviderContainer(
       overrides: [
+          getGroupWithMembersByIdUsecaseProvider.overrideWithValue(calendarTestGroupLoader()),
+          watchCalendarGroupUsecaseProvider.overrideWithValue(null),
         watchCalendarEventsUsecaseProvider.overrideWithValue(null),
         watchCalendarLabelsUsecaseProvider.overrideWithValue(null),
 
