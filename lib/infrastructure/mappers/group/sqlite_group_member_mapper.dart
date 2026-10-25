@@ -6,6 +6,7 @@ class SqliteGroupMemberMapper {
   static GroupMemberDto fromRow(Map<String, Object?> row, MemberDto member) =>
       GroupMemberDto(
         groupId: row['group_id'] as String,
+        color: row['color'] as String? ?? '#2196F3',
         memberId: row['member_id'] as String,
         isAdministrator: row['is_administrator'] == 1,
         orderIndex: row['order_index'] as int,
@@ -26,6 +27,7 @@ class SqliteGroupMemberMapper {
       );
   static Map<String, Object?> toRow(GroupMember value) => {
     'group_id': value.groupId,
+    'color': value.color,
     'member_id': value.memberId,
     'is_administrator': value.isAdministrator ? 1 : 0,
     'order_index': value.orderIndex,

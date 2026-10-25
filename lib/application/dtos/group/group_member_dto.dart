@@ -5,6 +5,7 @@ class GroupMemberDto extends Equatable {
     required this.memberId,
     required this.groupId,
     this.orderIndex = 0,
+    this.color = '#2196F3',
     this.accountId,
     this.ownerId,
     this.hiraganaFirstName,
@@ -22,6 +23,7 @@ class GroupMemberDto extends Equatable {
     this.isAdministrator = false,
   });
 
+  final String color;
   final String memberId;
   final String groupId;
   final int orderIndex;
@@ -42,6 +44,7 @@ class GroupMemberDto extends Equatable {
   final bool isAdministrator;
 
   GroupMemberDto copyWith({
+    String? color,
     String? memberId,
     String? groupId,
     bool? isAdministrator,
@@ -62,6 +65,7 @@ class GroupMemberDto extends Equatable {
     String? phoneNumber,
   }) {
     return GroupMemberDto(
+      color: color ?? this.color,
       memberId: memberId ?? this.memberId,
       groupId: groupId ?? this.groupId,
       orderIndex: orderIndex ?? this.orderIndex,
@@ -85,6 +89,7 @@ class GroupMemberDto extends Equatable {
 
   @override
   List<Object?> get props => [
+    color,
     memberId,
     groupId,
     orderIndex,
