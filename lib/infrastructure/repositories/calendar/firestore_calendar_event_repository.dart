@@ -15,9 +15,7 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
   DocumentReference<Map<String, dynamic>> _label(String id) =>
       _firestore.collection('calendar_labels').doc(id);
   Set<String> _references(Map<String, dynamic> data) =>
-      (data['referencedLabelIds'] as List)
-          .cast<String>()
-          .toSet();
+      (data['referencedLabelIds'] as List).cast<String>().toSet();
 
   Future<void> _adjustLabels(
     Transaction transaction,

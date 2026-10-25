@@ -111,9 +111,9 @@ class _CalendarDayEventsSheetState
                             for (final event in events)
                               Builder(
                                 builder: (context) {
-                                  final label = state.labels
+                                  final label = state.displayLabels
                                       .where(
-                                        (label) => label.id == event.labelId,
+                                        (label) => label.id == event.labelKey,
                                       )
                                       .firstOrNull;
                                   return ListTile(

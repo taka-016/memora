@@ -64,13 +64,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   Future<void> _edit([CalendarEventDto? event]) async {
     final provider = calendarNotifierProvider(widget.groupId);
-    if (ref.read(provider).labels.isEmpty) {
-      await showDialog<void>(
-        context: context,
-        builder: (context) => CalendarLabelsDialog(groupId: widget.groupId),
-      );
-      if (!mounted || ref.read(provider).labels.isEmpty) return;
-    }
     if (!mounted) return;
     await showDialog<void>(
       context: context,
