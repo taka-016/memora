@@ -117,7 +117,16 @@ Widget buildSubject({
 void main() {
   testWidgets('グループと所属の文字色をプレビューで確認して保存する', (tester) async {
     GroupDto? saved;
-    await tester.pumpWidget(buildSubject(group: createGroupDto(id: 'g', name: '家族'), onSave: (value) async { saved = value; }, availableMembers: [], currentMember: createCurrentMember()));
+    await tester.pumpWidget(
+      buildSubject(
+        group: createGroupDto(id: 'g', name: '家族'),
+        onSave: (value) async {
+          saved = value;
+        },
+        availableMembers: [],
+        currentMember: createCurrentMember(),
+      ),
+    );
     await tester.tap(find.byKey(const Key('group_color_button')));
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('赤'));
@@ -126,14 +135,23 @@ void main() {
     await tester.pump();
     final preview = find.byKey(const Key('label_color_preview'));
     await tester.ensureVisible(preview);
-    final groupPreview = tester.widget<Text>(find.descendant(of: preview, matching: find.byType(Text)));
+    final groupPreview = tester.widget<Text>(
+      find.descendant(of: preview, matching: find.byType(Text)),
+    );
     expect(groupPreview.data, 'グループの予定');
     expect(groupPreview.style!.color, Colors.white);
-    final timed = tester.widget<Text>(find.descendant(of: find.byKey(const Key('label_color_timed_preview')), matching: find.byType(Text)));
+    final timed = tester.widget<Text>(
+      find.descendant(
+        of: find.byKey(const Key('label_color_timed_preview')),
+        matching: find.byType(Text),
+      ),
+    );
     expect(timed.style!.color, const Color(0xFFF44336));
     await tester.tap(find.text('決定'));
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.byKey(const Key('member_color_button_owner-id')));
+    await tester.ensureVisible(
+      find.byKey(const Key('member_color_button_owner-id')),
+    );
     await tester.tap(find.byKey(const Key('member_color_button_owner-id')));
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('黄'));
@@ -141,7 +159,9 @@ void main() {
     await tester.tap(find.text('黒'));
     await tester.pump();
     await tester.ensureVisible(preview);
-    final memberPreview = tester.widget<Text>(find.descendant(of: preview, matching: find.byType(Text)));
+    final memberPreview = tester.widget<Text>(
+      find.descendant(of: preview, matching: find.byType(Text)),
+    );
     expect(memberPreview.data, 'オーナーの予定');
     expect(memberPreview.style!.color, Colors.black);
     await tester.tap(find.text('決定'));
@@ -154,8 +174,23 @@ void main() {
 
   testWidgets('色選択のキャンセルで文字色を保持し文字色だけの変更も破棄できる', (tester) async {
     var saved = false;
-    const initial = GroupDto(id: 'g', ownerId: 'owner-id', name: '家族', textColor: '#FFFFFF', members: []);
-    await tester.pumpWidget(buildSubject(group: initial, onSave: (_) async { saved = true; }, availableMembers: [], currentMember: createCurrentMember()));
+    const initial = GroupDto(
+      id: 'g',
+      ownerId: 'owner-id',
+      name: '家族',
+      textColor: '#FFFFFF',
+      members: [],
+    );
+    await tester.pumpWidget(
+      buildSubject(
+        group: initial,
+        onSave: (_) async {
+          saved = true;
+        },
+        availableMembers: [],
+        currentMember: createCurrentMember(),
+      ),
+    );
     await tester.tap(find.byKey(const Key('group_color_button')));
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('黒'));
@@ -165,7 +200,10 @@ void main() {
     await tester.tap(find.byKey(const Key('group_color_button')));
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('白'));
-    expect(tester.widget<ChoiceChip>(find.widgetWithText(ChoiceChip, '白')).selected, isTrue);
+    expect(
+      tester.widget<ChoiceChip>(find.widgetWithText(ChoiceChip, '白')).selected,
+      isTrue,
+    );
     await tester.tap(find.text('黒'));
     await tester.tap(find.text('決定'));
     await tester.pumpAndSettle();

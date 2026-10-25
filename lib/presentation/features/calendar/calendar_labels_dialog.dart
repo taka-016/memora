@@ -1,3 +1,4 @@
+import 'package:memora/presentation/shared/inputs/label_color_preview.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/presentation/shared/inputs/color_picker.dart';
@@ -292,66 +293,12 @@ class _LabelEditDialogState extends ConsumerState<_LabelEditDialog> {
                   ],
                 ),
                 const SizedBox(height: 12),
-                const Text('プレビュー'),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          const Text('終日', textAlign: TextAlign.center),
-                          Container(
-                            key: const Key('calendar_label_preview'),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 8,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _selectedColor,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              _name.text.trim().isEmpty
-                                  ? 'ラベル名'
-                                  : _name.text.trim(),
-                              maxLines: 1,
-                              softWrap: false,
-                              overflow: TextOverflow.clip,
-                              style: TextStyle(
-                                color: calendarLabelColor(_textColor),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          const Text('時間指定', textAlign: TextAlign.center),
-                          Container(
-                            key: const Key('calendar_label_timed_preview'),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 8,
-                            ),
-                            child: Text(
-                              _name.text.trim().isEmpty
-                                  ? 'ラベル名'
-                                  : _name.text.trim(),
-                              maxLines: 1,
-                              softWrap: false,
-                              overflow: TextOverflow.clip,
-                              style: TextStyle(color: _selectedColor),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                LabelColorPreview(
+                  label: _name.text.trim().isEmpty ? 'ラベル名' : _name.text.trim(),
+                  color: _selectedColor,
+                  textColor: calendarLabelColor(_textColor),
+                  allDayKey: const Key('calendar_label_preview'),
+                  timedKey: const Key('calendar_label_timed_preview'),
                 ),
                 if (_error.isNotEmpty) Text(_error),
               ],

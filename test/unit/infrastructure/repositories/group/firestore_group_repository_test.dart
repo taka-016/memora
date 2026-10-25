@@ -98,7 +98,15 @@ void main() {
       when(batch.commit()).thenAnswer((_) async {});
       await repository.updateGroup(group);
       verify(
-        batch.update(membership, argThat(allOf(containsPair('color', '#FF0000'), containsPair('textColor', '#FFFFFF')))),
+        batch.update(
+          membership,
+          argThat(
+            allOf(
+              containsPair('color', '#FF0000'),
+              containsPair('textColor', '#FFFFFF'),
+            ),
+          ),
+        ),
       ).called(1);
     });
 

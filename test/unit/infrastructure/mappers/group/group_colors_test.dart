@@ -41,10 +41,26 @@ void main() {
       '#ABCDEF',
     );
     expect(SqliteGroupMapper.toRow(entity)['text_color'], '#FFFFFF');
-    expect(SqliteGroupMemberMapper.toRow(entity.members.single.copyWith(orderIndex: 2))['text_color'], '#000000');
-    expect(FirestoreGroupMapper.toUpdateFirestore(entity)['textColor'], '#FFFFFF');
-    expect(FirestoreGroupMemberMapper.toCreateFirestore(entity.members.single)['textColor'], '#000000');
-    expect(GroupMapper.toEntity(dto.copyWith(textColor: null)).textColor, isNull);
+    expect(
+      SqliteGroupMemberMapper.toRow(
+        entity.members.single.copyWith(orderIndex: 2),
+      )['text_color'],
+      '#000000',
+    );
+    expect(
+      FirestoreGroupMapper.toUpdateFirestore(entity)['textColor'],
+      '#FFFFFF',
+    );
+    expect(
+      FirestoreGroupMemberMapper.toCreateFirestore(
+        entity.members.single,
+      )['textColor'],
+      '#000000',
+    );
+    expect(
+      GroupMapper.toEntity(dto.copyWith(textColor: null)).textColor,
+      isNull,
+    );
     expect(entity.copyWith(textColor: null).textColor, isNull);
     expect(entity.members.single.copyWith(textColor: null).textColor, isNull);
     expect(dto.copyWith(color: '#FFFFFF'), isNot(dto));
