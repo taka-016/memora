@@ -39,6 +39,20 @@ void main() {
     expect(buildCalendarDisplayLabels(group, const []), hasLength(3));
   });
 
+  test('設定した固定ラベルの文字色を使い自動に戻すと背景色から選ぶ', () {
+    const group = GroupDto(id: 'g', ownerId: 'm', name: '家族', color: '#FFFFFF', textColor: '#FFFFFF', members: [
+      GroupMemberDto(groupId: 'g', memberId: 'm', displayName: '太郎', color: '#000000', textColor: '#000000'),
+    ]);
+    final labels = buildCalendarDisplayLabels(group.copyWith(name: '友人'), const []);
+    expect(labels.first.textColor, '#FFFFFF');
+    expect(labels.last.textColor, '#000000');
+    final automatic = group.copyWith(textColor: null, members: [group.members.single.copyWith(textColor: null)]);
+    final autoLabels = buildCalendarDisplayLabels(automatic, const []);
+    expect(autoLabels.first.textColor, '#000000');
+    expect(autoLabels.last.textColor, '#FFFFFF');
+    expect(automatic, isNot(group));
+  });
+
   test('所属解除後も参照を表示し再加入すると現在の名前と色を使う', () {
     final event = CalendarEventDto(
       id: 'e',

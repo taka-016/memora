@@ -84,10 +84,14 @@ void main() {
     memberStream.add(memberDoc);
     await flush();
     expect(values.last!.members.single.displayName, '花子');
+    linkData['textColor'] = '#000000';
+    groupData['textColor'] = '#FFFFFF';
     linkData['color'] = '#00FF00';
     groupData['color'] = '#654321';
     parentStream.add(groupDoc);
     await flush();
+    expect(values.last!.textColor, '#FFFFFF');
+    expect(values.last!.members.single.textColor, '#000000');
     expect(values.last!.color, '#654321');
     expect(values.last!.members.single.color, '#00FF00');
     memberStream.addError(TestException('監視失敗'));
