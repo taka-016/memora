@@ -24,7 +24,9 @@ class CalendarOverrideMapper {
         ? null
         : date(value.endDateTime!, value.isAllDay!).microsecondsSinceEpoch,
     'is_all_day': value.isAllDay == null ? null : (value.isAllDay! ? 1 : 0),
-    'label_id': value.labelId,
+    'label_id': value.labelType == 'custom' ? value.labelId : null,
+    'label_type': value.isCancelled ? null : value.labelType,
+    'member_id': value.labelType == 'member' ? value.memberId : null,
   };
   static CalendarEventOverride fromRow(
     Map<String, Object?> row,
@@ -49,6 +51,8 @@ class CalendarOverrideMapper {
             isUtc: row['is_all_day'] == 1,
           ),
     isAllDay: row['is_all_day'] == null ? null : row['is_all_day'] == 1,
-    labelId: row['label_id'] as String?,
+    labelId: row['label_id'] as String? ?? '',
+    labelType: row['is_cancelled'] == 1 ? 'custom' : row['label_type'] as String,
+    memberId: row['member_id'] as String? ?? '',
   );
 }

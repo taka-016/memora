@@ -147,6 +147,10 @@ class CalendarRecurrenceExpander {
       final value = event.copyWith(
         title: override.title,
         labelId: override.labelId,
+
+        labelType: override.labelType,
+
+        memberId: override.memberId,
         startDateTime: override.startDateTime,
         endDateTime: override.endDateTime,
         isAllDay: override.isAllDay,

@@ -25,7 +25,9 @@ class FirestoreCalendarEventOverrideMapper {
     ),
     'isCancelled': value.isCancelled,
     'title': value.isCancelled ? null : value.title,
-    'labelId': value.isCancelled ? null : value.labelId,
+    'labelId': value.isCancelled || value.labelType != 'custom' ? null : value.labelId,
+    'labelType': value.isCancelled ? null : value.labelType,
+    'memberId': !value.isCancelled && value.labelType == 'member' ? value.memberId : null,
     'isAllDay': value.isCancelled ? null : value.isAllDay,
     'startDateTime': value.isCancelled
         ? null
@@ -49,7 +51,9 @@ class FirestoreCalendarEventOverrideMapper {
       originalStartDateTime: date('originalStartDateTime', parentAllDay),
       isCancelled: cancelled,
       title: cancelled ? null : data['title'] as String,
-      labelId: cancelled ? null : data['labelId'] as String,
+      labelId: cancelled ? null : data['labelId'] as String? ?? '',
+      labelType: cancelled ? 'custom' : data['labelType'] as String,
+      memberId: data['memberId'] as String? ?? '',
       isAllDay: cancelled ? null : data['isAllDay'] as bool,
       startDateTime: cancelled
           ? null

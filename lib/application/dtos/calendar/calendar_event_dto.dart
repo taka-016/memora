@@ -6,7 +6,9 @@ class CalendarEventDto extends Equatable {
     this.version,
     required this.id,
     required this.groupId,
-    required this.labelId,
+    this.labelId = '',
+    this.labelType = 'custom',
+    this.memberId = '',
     required this.title,
     required this.startDateTime,
     required this.endDateTime,
@@ -21,6 +23,14 @@ class CalendarEventDto extends Equatable {
   final String id;
   final String groupId;
   final String labelId;
+  final String labelType;
+  final String memberId;
+
+  String get labelKey => switch (labelType) {
+    'group' => 'group:',
+    'member' => 'member:$memberId',
+    _ => labelId,
+  };
   final String title;
   final DateTime startDateTime;
   final DateTime endDateTime;
@@ -43,6 +53,8 @@ class CalendarEventDto extends Equatable {
     String? id,
     String? groupId,
     String? labelId,
+    String? labelType,
+    String? memberId,
     String? title,
     DateTime? startDateTime,
     DateTime? endDateTime,
@@ -57,6 +69,8 @@ class CalendarEventDto extends Equatable {
       id: id ?? this.id,
       groupId: groupId ?? this.groupId,
       labelId: labelId ?? this.labelId,
+      labelType: labelType ?? this.labelType,
+      memberId: memberId ?? this.memberId,
       title: title ?? this.title,
       startDateTime: startDateTime ?? this.startDateTime,
       endDateTime: endDateTime ?? this.endDateTime,
@@ -75,6 +89,8 @@ class CalendarEventDto extends Equatable {
     id,
     groupId,
     labelId,
+    labelType,
+    memberId,
     title,
     startDateTime,
     endDateTime,
