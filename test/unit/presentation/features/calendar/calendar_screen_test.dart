@@ -277,7 +277,10 @@ void main() {
     final allDay = tester.widget<Text>(find.text('終日の予定'));
     final timed = tester.widget<Text>(find.text(title));
     expect(allDay.style!.color, Colors.white);
-    expect(timed.style!.color, Theme.of(tester.element(find.text(title))).colorScheme.onSurface);
+    expect(
+      timed.style!.color,
+      Theme.of(tester.element(find.text(title))).colorScheme.onSurface,
+    );
     expect(timed.overflow, TextOverflow.clip);
     expect(timed.softWrap, isFalse);
     Container titleContainer(String title) => tester.widget<Container>(
@@ -306,26 +309,46 @@ void main() {
 
   for (final brightness in Brightness.values) {
     for (final color in ['#FFFFFF', '#FFFF00']) {
-      testWidgets('時間指定の淡いラベル色は左線に使い文字はテーマに合わせる（$brightness・$color）', (tester) async {
+      testWidgets('時間指定の淡いラベル色は左線に使い文字はテーマに合わせる（$brightness・$color）', (
+        tester,
+      ) async {
         final harness = CalendarTestHarness()
-          ..savedLabels[0] = calendarTestFamily.copyWith(color: color, textColor: '#FFFFFF')
+          ..savedLabels[0] = calendarTestFamily.copyWith(
+            color: color,
+            textColor: '#FFFFFF',
+          )
           ..savedEvents.add(calendarTestEvent('timed', '読みやすい予定名'));
         await harness.pump(tester, brightness: brightness);
         void expectReadableTitle(Finder finder) {
           final context = tester.element(finder);
-          expect(tester.widget<Text>(finder).style!.color, Theme.of(context).colorScheme.onSurface);
-          final container = tester.widget<Container>(find.ancestor(of: finder, matching: find.byType(Container)).first);
-          final border = (container.decoration! as BoxDecoration).border! as Border;
-          expect(border.left.color, Color(int.parse(color.substring(1), radix: 16) | 0xFF000000));
+          expect(
+            tester.widget<Text>(finder).style!.color,
+            Theme.of(context).colorScheme.onSurface,
+          );
+          final container = tester.widget<Container>(
+            find.ancestor(of: finder, matching: find.byType(Container)).first,
+          );
+          final border =
+              (container.decoration! as BoxDecoration).border! as Border;
+          expect(
+            border.left.color,
+            Color(int.parse(color.substring(1), radix: 16) | 0xFF000000),
+          );
           expect(border.left.style, BorderStyle.solid);
           expect(border.left.width, greaterThan(0));
         }
+
         expectReadableTitle(find.text('読みやすい予定名'));
         await tester.tap(find.byKey(calendarTestDay2));
         await tester.pump();
         await tester.tap(find.byKey(calendarTestDay2));
         await tester.pumpAndSettle();
-        expectReadableTitle(find.descendant(of: find.byType(BottomSheet), matching: find.text('読みやすい予定名')));
+        expectReadableTitle(
+          find.descendant(
+            of: find.byType(BottomSheet),
+            matching: find.text('読みやすい予定名'),
+          ),
+        );
         expect(tester.takeException(), isNull);
       });
     }
@@ -531,8 +554,19 @@ void main() {
         matching: find.byType(Text),
       ),
     );
-    expect(text.style!.color, Theme.of(tester.element(find.byKey(const Key('calendar_label_timed_preview')))).colorScheme.onSurface);
-    final decoration = tester.widget<Container>(find.byKey(const Key('calendar_label_timed_preview'))).decoration as BoxDecoration;
+    expect(
+      text.style!.color,
+      Theme.of(
+        tester.element(find.byKey(const Key('calendar_label_timed_preview'))),
+      ).colorScheme.onSurface,
+    );
+    final decoration =
+        tester
+                .widget<Container>(
+                  find.byKey(const Key('calendar_label_timed_preview')),
+                )
+                .decoration
+            as BoxDecoration;
     expect((decoration.border! as Border).left.color, const Color(0xFF123ABC));
     await tester.tap(find.text('保存'));
     await tester.pumpAndSettle();

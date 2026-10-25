@@ -111,6 +111,7 @@ class _CalendarDayEventsSheetState
                             for (final event in events)
                               Builder(
                                 builder: (context) {
+                                  final scheme = Theme.of(context).colorScheme;
                                   final label = state.displayLabels
                                       .where(
                                         (label) => label.id == event.labelKey,
@@ -141,9 +142,7 @@ class _CalendarDayEventsSheetState
                                             : Border(
                                                 left: BorderSide(
                                                   color: label == null
-                                                      ? Theme.of(context)
-                                                            .colorScheme
-                                                            .outline
+                                                      ? scheme.outline
                                                       : calendarLabelColor(
                                                           label.color,
                                                         ),
@@ -161,9 +160,7 @@ class _CalendarDayEventsSheetState
                                               ? calendarLabelColor(
                                                   label.textColor,
                                                 )
-                                              : Theme.of(context)
-                                                    .colorScheme
-                                                    .onSurface,
+                                              : scheme.onSurface,
                                         ),
                                       ),
                                     ),
