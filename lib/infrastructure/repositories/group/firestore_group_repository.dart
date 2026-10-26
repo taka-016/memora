@@ -74,6 +74,8 @@ class FirestoreGroupRepository implements GroupRepository {
         batch.update(reference, {
           'isAdministrator': member.isAdministrator,
           'orderIndex': member.orderIndex,
+          'color': member.color,
+          'textColor': member.textColor,
         });
       }
     }

@@ -9,12 +9,19 @@ class Group extends Equatable {
     required this.ownerId,
     required this.name,
     this.memo,
+    this.color = '#4CAF50',
+    this.textColor,
     List<GroupMember>? originalMembers,
     List<GroupMember>? members,
   }) : originalMembers = List.unmodifiable(
          originalMembers ?? members ?? const [],
        ),
        members = List.unmodifiable(members ?? const []) {
+    final rgb = RegExp(r'^#[0-9a-fA-F]{6}$');
+    if (!rgb.hasMatch(color) ||
+        this.members.any((member) => !rgb.hasMatch(member.color))) {
+      throw ValidationException('色は#RRGGBB形式で指定してください');
+    }
     if (members != null) {
       final memberIds = <String>{};
       for (final member in members) {
@@ -28,6 +35,8 @@ class Group extends Equatable {
   final int? version;
   final String id;
   final String ownerId;
+  final String color;
+  final String? textColor;
   final String name;
   final String? memo;
   final List<GroupMember> members;
@@ -35,6 +44,8 @@ class Group extends Equatable {
 
   Group copyWith({
     int? version,
+    String? color,
+    Object? textColor = _copyWithPlaceholder,
     String? id,
     String? ownerId,
     String? name,
@@ -45,6 +56,10 @@ class Group extends Equatable {
       version: version ?? this.version,
       id: id ?? this.id,
       ownerId: ownerId ?? this.ownerId,
+      color: color ?? this.color,
+      textColor: identical(textColor, _copyWithPlaceholder)
+          ? this.textColor
+          : textColor as String?,
       name: name ?? this.name,
       memo: memo ?? this.memo,
       members: members ?? this.members,
@@ -54,6 +69,8 @@ class Group extends Equatable {
 
   @override
   List<Object?> get props => [
+    color,
+    textColor,
     version,
     id,
     ownerId,
@@ -63,3 +80,5 @@ class Group extends Equatable {
     originalMembers,
   ];
 }
+
+const Object _copyWithPlaceholder = Object();

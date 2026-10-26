@@ -5,6 +5,24 @@ import 'package:memora/domain/exceptions/validation_exception.dart';
 
 void main() {
   group('Group', () {
+    test('グループ色と所属色はRGBの16進数形式だけを受け入れる', () {
+      for (final color in ['赤', '#123', '#GGGGGG']) {
+        expect(
+          () => Group(id: 'g', ownerId: 'm', name: '家族', color: color),
+          throwsA(isA<ValidationException>()),
+        );
+        expect(
+          () => Group(
+            id: 'g',
+            ownerId: 'm',
+            name: '家族',
+            members: [GroupMember(groupId: 'g', memberId: 'm', color: color)],
+          ),
+          throwsA(isA<ValidationException>()),
+        );
+      }
+    });
+
     test('メンバーIDが重複している場合にエラーをスローする', () {
       expect(
         () => Group(

@@ -111,25 +111,44 @@ class _CalendarDayEventsSheetState
                             for (final event in events)
                               Builder(
                                 builder: (context) {
-                                  final label = state.labels
+                                  final scheme = Theme.of(context).colorScheme;
+                                  final label = state.displayLabels
                                       .where(
-                                        (label) => label.id == event.labelId,
+                                        (label) => label.id == event.labelKey,
                                       )
                                       .firstOrNull;
                                   return ListTile(
                                     contentPadding: EdgeInsets.zero,
-                                    leading: Icon(
-                                      Icons.circle,
-                                      color: label == null
-                                          ? null
-                                          : calendarLabelColor(label.color),
-                                    ),
+                                    leading: event.isAllDay
+                                        ? Icon(
+                                            Icons.circle,
+                                            color: label == null
+                                                ? null
+                                                : calendarLabelColor(
+                                                    label.color,
+                                                  ),
+                                          )
+                                        : null,
                                     title: Container(
                                       decoration: BoxDecoration(
                                         color: event.isAllDay && label != null
                                             ? calendarLabelColor(label.color)
                                             : Colors.transparent,
-                                        borderRadius: BorderRadius.circular(3),
+                                        borderRadius: event.isAllDay
+                                            ? BorderRadius.circular(3)
+                                            : null,
+                                        border: event.isAllDay
+                                            ? null
+                                            : Border(
+                                                left: BorderSide(
+                                                  color: label == null
+                                                      ? scheme.outline
+                                                      : calendarLabelColor(
+                                                          label.color,
+                                                        ),
+                                                  width: 3,
+                                                ),
+                                              ),
                                       ),
                                       padding: const EdgeInsets.symmetric(
                                         horizontal: 2,
@@ -137,13 +156,11 @@ class _CalendarDayEventsSheetState
                                       child: Text(
                                         event.title,
                                         style: TextStyle(
-                                          color: label == null
-                                              ? null
-                                              : calendarLabelColor(
-                                                  event.isAllDay
-                                                      ? label.textColor
-                                                      : label.color,
-                                                ),
+                                          color: event.isAllDay && label != null
+                                              ? calendarLabelColor(
+                                                  label.textColor,
+                                                )
+                                              : scheme.onSurface,
                                         ),
                                       ),
                                     ),

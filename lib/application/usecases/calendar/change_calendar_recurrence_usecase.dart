@@ -63,6 +63,8 @@ class ChangeCalendarRecurrenceUsecase {
           endDateTime: changes?.endDateTime,
           isAllDay: changes?.isAllDay,
           labelId: changes?.labelId,
+          labelType: changes?.labelType ?? 'custom',
+          memberId: changes?.memberId ?? '',
         );
         replacement = source.copyWith(
           overrides: [
@@ -330,6 +332,10 @@ class ChangeCalendarRecurrenceUsecase {
           id: '',
           groupId: source.groupId,
           labelId: value.labelId!,
+
+          labelType: value.labelType,
+
+          memberId: value.memberId,
           title: value.title!,
           startDateTime: value.startDateTime!,
           endDateTime: value.endDateTime!,
@@ -389,6 +395,10 @@ class ChangeCalendarRecurrenceUsecase {
         isCancelled: value.isCancelled,
         title: value.title,
         labelId: value.labelId,
+
+        labelType: value.labelType,
+
+        memberId: value.memberId,
         isAllDay: value.isAllDay,
         startDateTime: value.startDateTime,
         endDateTime: value.endDateTime,
@@ -470,6 +480,10 @@ class ChangeCalendarRecurrenceUsecase {
     id: id ?? value.id,
     groupId: value.groupId,
     labelId: value.labelId,
+
+    labelType: value.labelType,
+
+    memberId: value.memberId,
     title: value.title,
     startDateTime: start ?? value.startDateTime,
     endDateTime: end ?? value.endDateTime,

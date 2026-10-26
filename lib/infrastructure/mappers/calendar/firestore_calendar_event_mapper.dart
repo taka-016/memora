@@ -17,7 +17,9 @@ class FirestoreCalendarEventMapper {
       overrides: overrides,
       id: doc.id,
       groupId: data['groupId'] as String,
-      labelId: data['labelId'] as String,
+      labelId: data['labelId'] as String? ?? '',
+      labelType: data['labelType'] as String,
+      memberId: data['memberId'] as String? ?? '',
       title: data['title'] as String,
       startDateTime: _date(
         data['startDateTime'] as Timestamp,
@@ -37,11 +39,15 @@ class FirestoreCalendarEventMapper {
     'recurrenceRule': value.recurrenceRule,
     'timeZone': value.timeZone,
     'referencedLabelIds': {
-      value.labelId,
-      ...value.overrides.where((v) => !v.isCancelled).map((v) => v.labelId!),
+      if (value.labelType == 'custom') value.labelId,
+      ...value.overrides
+          .where((v) => !v.isCancelled && v.labelType == 'custom')
+          .map((v) => v.labelId!),
     }.toList(),
     'groupId': value.groupId,
-    'labelId': value.labelId,
+    'labelId': value.labelType == 'custom' ? value.labelId : null,
+    'labelType': value.labelType,
+    'memberId': value.labelType == 'member' ? value.memberId : null,
     'title': value.title,
     'startDateTime': Timestamp.fromDate(
       value.isAllDay

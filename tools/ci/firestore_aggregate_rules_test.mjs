@@ -12,7 +12,7 @@ const token = `${encode({ alg: 'none', typ: 'JWT' })}.${encode({
 })}.`;
 const integer = value => ({ integerValue: String(value) });
 const string = value => ({ stringValue: value });
-const write = (path, fields) => ({ update: { name: `${root.split('/v1/')[1]}/${path}`, fields } });
+const write = (path, fields) => ({ update: { name: `${root.split('/v1/')[1]}/${path}`, fields: { ...(path.startsWith('calendar_events/') ? { labelType: string('group'), memberId: { nullValue: null }, labelId: { nullValue: null } } : path.startsWith('calendar_event_overrides/') ? { isCancelled: { booleanValue: true } } : {}), ...fields } } });
 const remove = path => ({ delete: `${root.split('/v1/')[1]}/${path}` });
 async function commit(writes, bearer = token) {
   return fetch(`${root}:commit`, {

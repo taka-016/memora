@@ -37,6 +37,8 @@ void main() {
       'groupId': 'g',
       'title': title,
       'labelId': 'l',
+      'labelType': 'custom',
+      'textColor': '#FFFFFF',
       'isAllDay': true,
       'startDateTime': Timestamp.fromDate(DateTime.utc(2026, 10, 1)),
       'endDateTime': Timestamp.fromDate(DateTime.utc(2026, 10, 1)),

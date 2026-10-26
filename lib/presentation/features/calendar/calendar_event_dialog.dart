@@ -120,10 +120,10 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
       expander: expander,
     );
     _labelId =
-        event?.labelId ??
+        event?.labelKey ??
         ref
             .read(calendarNotifierProvider(widget.groupId))
-            .labels
+            .displayLabels
             .firstOrNull
             ?.id;
   }
@@ -255,7 +255,16 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
         version: widget.event?.version,
         id: widget.event?.id ?? '',
         groupId: widget.groupId,
-        labelId: _labelId!,
+        labelId:
+            _labelId!.startsWith('group:') || _labelId!.startsWith('member:')
+            ? ''
+            : _labelId!,
+        labelType: _labelId == 'group:'
+            ? 'group'
+            : _labelId!.startsWith('member:')
+            ? 'member'
+            : 'custom',
+        memberId: _labelId!.startsWith('member:') ? _labelId!.substring(7) : '',
         title: _title.text.trim(),
         startDateTime: start,
         endDateTime: end,
@@ -463,7 +472,11 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(calendarNotifierProvider(widget.groupId));
-    final labels = state.labels;
+    final labels = state.displayLabels
+        .where(
+          (label) => label.isSelectable || label.id == widget.event?.labelKey,
+        )
+        .toList();
     final preferences = ref.watch(calendarPreferencesNotifierProvider);
     final dateInputStyle = TextButton.styleFrom(
       alignment: Alignment.centerLeft,
@@ -531,6 +544,7 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                                   .map(
                                     (label) => DropdownMenuItem(
                                       value: label.id,
+                                      enabled: label.isSelectable,
                                       child: Text(
                                         label.name,
                                         overflow: TextOverflow.clip,

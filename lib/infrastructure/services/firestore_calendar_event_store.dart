@@ -19,9 +19,7 @@ class FirestoreCalendarEventStore {
     Transaction? transaction,
   }) async {
     final data = event.data()!;
-    final overrides = data.containsKey('overrideIds')
-        ? <CalendarEventOverride>[]
-        : _embeddedOverrides(data);
+    final overrides = <CalendarEventOverride>[];
     for (final id in overrideIds(data)) {
       final ref = firestore.collection('calendar_event_overrides').doc(id);
       final doc = transaction == null
@@ -46,21 +44,6 @@ class FirestoreCalendarEventStore {
     );
   }
 
-  List<CalendarEventOverride> _embeddedOverrides(Map<String, dynamic> data) => [
-    for (final entry in (data['overrides'] as Map? ?? {}).entries)
-      for (final raw in entry.value as List)
-        FirestoreCalendarEventOverrideMapper.fromFirestore({
-          ...Map<String, dynamic>.from(raw as Map),
-          'labelId': entry.key as String,
-          'isCancelled': false,
-        }, parentAllDay: data['isAllDay'] as bool),
-    for (final raw in data['cancelledOccurrences'] as List? ?? [])
-      FirestoreCalendarEventOverrideMapper.fromFirestore({
-        'originalStartDateTime': raw as Timestamp,
-        'isCancelled': true,
-      }, parentAllDay: data['isAllDay'] as bool),
-  ];
-
   Map<String, dynamic> data(
     CalendarEvent event,
     String id, {
@@ -69,10 +52,6 @@ class FirestoreCalendarEventStore {
     ...create
         ? FirestoreCalendarEventMapper.toCreateFirestore(event)
         : FirestoreCalendarEventMapper.toUpdateFirestore(event),
-    if (!create) ...{
-      'overrides': FieldValue.delete(),
-      'cancelledOccurrences': FieldValue.delete(),
-    },
     'overrideIds': event.overrides
         .map(
           (value) => FirestoreCalendarEventOverrideMapper.documentId(

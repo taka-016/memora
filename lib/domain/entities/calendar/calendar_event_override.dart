@@ -1,3 +1,4 @@
+import 'package:memora/domain/entities/calendar/calendar_label_reference.dart';
 import 'package:equatable/equatable.dart';
 import 'package:memora/domain/exceptions/validation_exception.dart';
 
@@ -10,6 +11,8 @@ class CalendarEventOverride extends Equatable {
     this.endDateTime,
     this.isAllDay,
     this.labelId,
+    this.labelType = 'custom',
+    this.memberId = '',
   }) {
     if (!isCancelled &&
         (title == null ||
@@ -17,8 +20,7 @@ class CalendarEventOverride extends Equatable {
             startDateTime == null ||
             endDateTime == null ||
             isAllDay == null ||
-            labelId == null ||
-            labelId!.trim().isEmpty ||
+            !validCalendarLabelReference(labelType, memberId, labelId ?? '') ||
             endDateTime!.isBefore(startDateTime!))) {
       throw ValidationException('個別回の変更にはタイトル・期間・終日区分・色ラベルが必要です');
     }
@@ -30,6 +32,8 @@ class CalendarEventOverride extends Equatable {
   final DateTime? endDateTime;
   final bool? isAllDay;
   final String? labelId;
+  final String labelType;
+  final String memberId;
   @override
   List<Object?> get props => [
     originalStartDateTime.toUtc(),
@@ -39,5 +43,7 @@ class CalendarEventOverride extends Equatable {
     endDateTime,
     isAllDay,
     labelId,
+    labelType,
+    memberId,
   ];
 }

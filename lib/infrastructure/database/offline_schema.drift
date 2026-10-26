@@ -23,7 +23,9 @@ CREATE TABLE "groups" (
   id TEXT NOT NULL PRIMARY KEY,
   owner_id TEXT NOT NULL,
   name TEXT NOT NULL,
-  memo TEXT
+  memo TEXT,
+  color TEXT NOT NULL DEFAULT '#4CAF50' CHECK (length(color) = 7 AND substr(color, 1, 1) = '#' AND substr(color, 2) NOT GLOB '*[^0-9a-fA-F]*'),
+  text_color TEXT CHECK (text_color IS NULL OR (length(text_color) = 7 AND substr(text_color, 1, 1) = '#' AND substr(text_color, 2) NOT GLOB '*[^0-9a-fA-F]*'))
 ) AS SqliteGroupRow;
 
 CREATE INDEX groups_owner_id_idx ON "groups" (owner_id);
@@ -33,6 +35,8 @@ CREATE TABLE group_members (
   member_id TEXT NOT NULL,
   is_administrator INTEGER NOT NULL CHECK (is_administrator IN (0, 1)),
   order_index INTEGER NOT NULL,
+  color TEXT NOT NULL DEFAULT '#2196F3' CHECK (length(color) = 7 AND substr(color, 1, 1) = '#' AND substr(color, 2) NOT GLOB '*[^0-9a-fA-F]*'),
+  text_color TEXT CHECK (text_color IS NULL OR (length(text_color) = 7 AND substr(text_color, 1, 1) = '#' AND substr(text_color, 2) NOT GLOB '*[^0-9a-fA-F]*')),
   PRIMARY KEY (group_id, member_id)
 ) AS SqliteGroupMemberRow;
 
@@ -149,7 +153,9 @@ CREATE INDEX calendar_labels_group_idx ON calendar_labels (group_id);
 CREATE TABLE calendar_events (
   id TEXT NOT NULL PRIMARY KEY,
   group_id TEXT NOT NULL,
-  label_id TEXT NOT NULL,
+  label_id TEXT,
+  label_type TEXT NOT NULL,
+  member_id TEXT,
   title TEXT NOT NULL CHECK (length(trim(title)) > 0),
   start_date_time INTEGER NOT NULL,
   end_date_time INTEGER NOT NULL CHECK (end_date_time >= start_date_time),
@@ -157,6 +163,9 @@ CREATE TABLE calendar_events (
   recurrence_rule TEXT,
   time_zone TEXT,
   UNIQUE (id, group_id),
+  CHECK ((label_type = 'group' AND member_id IS NULL AND label_id IS NULL)
+      OR (label_type = 'member' AND member_id IS NOT NULL AND length(trim(member_id)) > 0 AND label_id IS NULL)
+      OR (label_type = 'custom' AND member_id IS NULL AND label_id IS NOT NULL)),
   CHECK (recurrence_rule IS NOT NULL OR time_zone IS NULL),
   CHECK (recurrence_rule IS NULL OR is_all_day = 1 OR length(trim(time_zone)) > 0),
   FOREIGN KEY (label_id, group_id) REFERENCES calendar_labels(id, group_id) ON DELETE NO ACTION
@@ -175,10 +184,12 @@ CREATE TABLE calendar_event_overrides (
   end_date_time INTEGER,
   is_all_day INTEGER CHECK (is_all_day IN (0, 1)),
   label_id TEXT,
+  label_type TEXT,
+  member_id TEXT,
   PRIMARY KEY (event_id, original_start_date_time),
   FOREIGN KEY (event_id, group_id) REFERENCES calendar_events(id, group_id) ON DELETE CASCADE,
   FOREIGN KEY (label_id, group_id) REFERENCES calendar_labels(id, group_id) ON DELETE NO ACTION,
-  CHECK (is_cancelled = 1 OR (title IS NOT NULL AND length(trim(title)) > 0 AND start_date_time IS NOT NULL AND end_date_time IS NOT NULL AND end_date_time >= start_date_time AND is_all_day IS NOT NULL AND label_id IS NOT NULL))
+  CHECK (is_cancelled = 1 OR (title IS NOT NULL AND length(trim(title)) > 0 AND start_date_time IS NOT NULL AND end_date_time IS NOT NULL AND end_date_time >= start_date_time AND is_all_day IS NOT NULL AND label_type IS NOT NULL AND ((label_type = 'group' AND member_id IS NULL AND label_id IS NULL) OR (label_type = 'member' AND member_id IS NOT NULL AND length(trim(member_id)) > 0 AND label_id IS NULL) OR (label_type = 'custom' AND member_id IS NULL AND label_id IS NOT NULL))))
 ) AS SqliteCalendarEventOverrideRow;
 CREATE INDEX calendar_overrides_label_idx ON calendar_event_overrides (label_id);
 CREATE INDEX calendar_overrides_group_start_idx ON calendar_event_overrides (group_id, start_date_time);
@@ -205,5 +216,7 @@ CREATE TABLE deleted_groups (
   id TEXT NOT NULL PRIMARY KEY,
   owner_id TEXT NOT NULL,
   name TEXT NOT NULL,
-  memo TEXT
+  memo TEXT,
+  color TEXT NOT NULL DEFAULT '#4CAF50',
+  text_color TEXT CHECK (text_color IS NULL OR (length(text_color) = 7 AND substr(text_color, 1, 1) = '#' AND substr(text_color, 2) NOT GLOB '*[^0-9a-fA-F]*'))
 ) AS SqliteDeletedGroupRow;

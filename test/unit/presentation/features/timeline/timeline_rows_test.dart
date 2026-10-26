@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/material.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/presentation/features/timeline/timeline_rows.dart';
@@ -8,6 +9,20 @@ import 'package:memora/presentation/features/timeline/member_row.dart';
 import 'package:memora/presentation/features/timeline/trip_row.dart';
 
 void main() {
+  test('メンバー行は所属色を不透明度10%で共通背景として返す', () {
+    const row = MemberRow(
+      member: GroupMemberDto(
+        groupId: 'g',
+        memberId: 'm',
+        displayName: '太郎',
+        color: '#123456',
+      ),
+      initialHeight: 60,
+    );
+    expect(row.fixedColumnBackgroundColor, row.backgroundColor);
+    expect(row.backgroundColor, const Color(0xFF123456).withValues(alpha: 0.1));
+  });
+
   group('buildTimelineRows', () {
     late GroupDto testGroupWithMembers;
 

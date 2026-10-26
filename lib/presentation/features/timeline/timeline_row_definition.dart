@@ -22,6 +22,7 @@ abstract class TimelineRowDefinition {
   String get fixedColumnLabel;
   double get initialHeight;
   Color? get backgroundColor;
+  Color? get fixedColumnBackgroundColor => null;
 
   Key? yearCellKey(int year) => null;
 

@@ -96,6 +96,7 @@ Widget buildSubject({
   required Future<void> Function(GroupDto) onSave,
   required List<GroupMemberDto> availableMembers,
   required MemberDto currentMember,
+  double textScale = 1,
 }) {
   Future<bool> save(GroupDto group) async {
     await onSave(group);
@@ -104,6 +105,11 @@ Widget buildSubject({
 
   return ProviderScope(
     child: MaterialApp(
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(context)
+            .copyWith(textScaler: TextScaler.linear(textScale)),
+        child: child!,
+      ),
       home: GroupEditModal(
         group: group,
         onSave: save,
@@ -115,6 +121,276 @@ Widget buildSubject({
 }
 
 void main() {
+  testWidgets('小画面と拡大文字でもグループの16進数入力とプレビューを操作できる', (tester) async {
+    tester.view.physicalSize = const Size(320, 480);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    GroupDto? saved;
+    await tester.pumpWidget(
+      buildSubject(
+        group: createGroupDto(id: 'g', name: '家族'),
+        onSave: (value) async {
+          saved = value;
+        },
+        availableMembers: [],
+        currentMember: createCurrentMember(),
+        textScale: 1.5,
+      ),
+    );
+    await tester.ensureVisible(find.byKey(const Key('group_color_button')));
+    await tester.tap(find.byKey(const Key('group_color_button')));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('16進数で指定'));
+    await tester.tap(find.text('16進数で指定'));
+    await tester.pump();
+    await tester.enterText(
+      find.widgetWithText(TextFormField, '色（#RRGGBB）'),
+      '#123456',
+    );
+    await tester.ensureVisible(find.byKey(const Key('label_color_preview')));
+    await tester.tap(find.text('決定'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('更新'));
+    await tester.pumpAndSettle();
+    expect(saved!.color, '#123456');
+    expect(tester.takeException(), isNull);
+  });
+
+  for (final memberColor in [false, true]) {
+    testWidgets('${memberColor ? '所属' : 'グループ'}の色を16進数で指定してプレビューと保存へ反映する', (
+      tester,
+    ) async {
+      GroupDto? saved;
+      await tester.pumpWidget(
+        buildSubject(
+          group: createGroupDto(id: 'g', name: '家族'),
+          onSave: (value) async {
+            saved = value;
+          },
+          availableMembers: [],
+          currentMember: createCurrentMember(),
+        ),
+      );
+      final button = find.byKey(
+        Key(
+          memberColor ? 'member_color_button_owner-id' : 'group_color_button',
+        ),
+      );
+      await tester.ensureVisible(button);
+      await tester.tap(button);
+      await tester.pumpAndSettle();
+      expect(find.widgetWithText(TextFormField, '色（#RRGGBB）'), findsNothing);
+      await tester.ensureVisible(find.text('16進数で指定'));
+      await tester.tap(find.text('16進数で指定'));
+      await tester.pump();
+      final field = find.widgetWithText(TextFormField, '色（#RRGGBB）');
+      await tester.enterText(field, ' #12aBcD ');
+      await tester.pump();
+      await tester.ensureVisible(find.byKey(const Key('label_color_preview')));
+      expect(
+        (tester
+                    .widget<Container>(
+                      find.byKey(const Key('label_color_preview')),
+                    )
+                    .decoration
+                as BoxDecoration)
+            .color,
+        const Color(0xFF12ABCD),
+      );
+      await tester.tap(find.text('決定'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('更新'));
+      await tester.pumpAndSettle();
+      expect(
+        memberColor ? saved!.members.single.color : saved!.color,
+        '#12aBcD',
+      );
+    });
+  }
+
+  testWidgets('グループの不正な16進数は決定できずパレットで修正できる', (tester) async {
+    GroupDto? saved;
+    await tester.pumpWidget(
+      buildSubject(
+        group: createGroupDto(id: 'g', name: '家族'),
+        onSave: (value) async {
+          saved = value;
+        },
+        availableMembers: [],
+        currentMember: createCurrentMember(),
+      ),
+    );
+    await tester.tap(find.byKey(const Key('group_color_button')));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('16進数で指定'));
+    await tester.tap(find.text('16進数で指定'));
+    await tester.pump();
+    await tester.enterText(
+      find.widgetWithText(TextFormField, '色（#RRGGBB）'),
+      '赤',
+    );
+    await tester.tap(find.text('決定'));
+    await tester.pump();
+    expect(find.text('#RRGGBB形式で入力してください'), findsOneWidget);
+    await tester.ensureVisible(find.byTooltip('青'));
+    await tester.tap(find.byTooltip('青'));
+    await tester.pump();
+    expect(
+      tester
+          .widget<TextFormField>(
+            find.widgetWithText(TextFormField, '色（#RRGGBB）'),
+          )
+          .controller!
+          .text,
+      '#2196F3',
+    );
+    await tester.tap(find.text('決定'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('更新'));
+    await tester.pumpAndSettle();
+    expect(saved!.color, '#2196F3');
+  });
+
+  testWidgets('グループと所属の文字色をプレビューで確認して保存する', (tester) async {
+    GroupDto? saved;
+    await tester.pumpWidget(
+      buildSubject(
+        group: createGroupDto(id: 'g', name: '家族'),
+        onSave: (value) async {
+          saved = value;
+        },
+        availableMembers: [],
+        currentMember: createCurrentMember(),
+      ),
+    );
+    await tester.tap(find.byKey(const Key('group_color_button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('赤'));
+    await tester.ensureVisible(find.text('白'));
+    await tester.tap(find.text('白'));
+    await tester.pump();
+    final preview = find.byKey(const Key('label_color_preview'));
+    await tester.ensureVisible(preview);
+    final groupPreview = tester.widget<Text>(
+      find.descendant(of: preview, matching: find.byType(Text)),
+    );
+    expect(groupPreview.data, 'グループの予定');
+    expect(groupPreview.style!.color, Colors.white);
+    final timed = tester.widget<Text>(
+      find.descendant(
+        of: find.byKey(const Key('label_color_timed_preview')),
+        matching: find.byType(Text),
+      ),
+    );
+    final timedPreview = find.byKey(const Key('label_color_timed_preview'));
+    expect(
+      timed.style!.color,
+      Theme.of(tester.element(timedPreview)).colorScheme.onSurface,
+    );
+    final decoration =
+        tester.widget<Container>(timedPreview).decoration! as BoxDecoration;
+    expect((decoration.border! as Border).left.color, const Color(0xFFF44336));
+    await tester.tap(find.text('決定'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(
+      find.byKey(const Key('member_color_button_owner-id')),
+    );
+    await tester.tap(find.byKey(const Key('member_color_button_owner-id')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('黄'));
+    await tester.ensureVisible(find.text('黒'));
+    await tester.tap(find.text('黒'));
+    await tester.pump();
+    await tester.ensureVisible(preview);
+    final memberPreview = tester.widget<Text>(
+      find.descendant(of: preview, matching: find.byType(Text)),
+    );
+    expect(memberPreview.data, 'オーナーの予定');
+    expect(memberPreview.style!.color, Colors.black);
+    await tester.tap(find.text('決定'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('更新'));
+    await tester.pumpAndSettle();
+    expect(saved!.textColor, '#FFFFFF');
+    expect(saved!.members.single.textColor, '#000000');
+  });
+
+  testWidgets('色選択のキャンセルで文字色を保持し文字色だけの変更も破棄できる', (tester) async {
+    var saved = false;
+    const initial = GroupDto(
+      id: 'g',
+      ownerId: 'owner-id',
+      name: '家族',
+      textColor: '#FFFFFF',
+      members: [],
+    );
+    await tester.pumpWidget(
+      buildSubject(
+        group: initial,
+        onSave: (_) async {
+          saved = true;
+        },
+        availableMembers: [],
+        currentMember: createCurrentMember(),
+      ),
+    );
+    await tester.tap(find.byKey(const Key('group_color_button')));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('黒'));
+    await tester.tap(find.text('黒'));
+    await tester.tap(find.text('キャンセル').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('group_color_button')));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('白'));
+    expect(
+      tester.widget<ChoiceChip>(find.widgetWithText(ChoiceChip, '白')).selected,
+      isTrue,
+    );
+    await tester.tap(find.text('黒'));
+    await tester.tap(find.text('決定'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('キャンセル'));
+    await tester.pumpAndSettle();
+    expect(find.text('変更内容が保存されていません。破棄しますか？'), findsOneWidget);
+    await tester.tap(find.text('破棄する'));
+    await tester.pumpAndSettle();
+    expect(saved, isFalse);
+    expect(initial.textColor, '#FFFFFF');
+  });
+
+  testWidgets('グループ色と所属色を選んで保存する', (tester) async {
+    GroupDto? saved;
+    await tester.pumpWidget(
+      buildSubject(
+        group: createGroupDto(id: 'g', name: '家族'),
+        onSave: (value) async {
+          saved = value;
+        },
+        availableMembers: [],
+        currentMember: createCurrentMember(),
+      ),
+    );
+    await tester.tap(find.byKey(const Key('group_color_button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('赤'));
+    await tester.tap(find.text('決定'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(
+      find.byKey(const Key('member_color_button_owner-id')),
+    );
+    await tester.tap(find.byKey(const Key('member_color_button_owner-id')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('黄'));
+    await tester.tap(find.text('決定'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('更新'));
+    await tester.pumpAndSettle();
+    expect(saved!.color, '#F44336');
+    expect(saved!.members.single.color, '#FFEB3B');
+  });
+
   testWidgets('保存が未完了の間は再送・キャンセル・戻る操作を抑止する', (tester) async {
     final pending = Completer<void>();
     var calls = 0;
@@ -190,6 +466,9 @@ void main() {
       );
       await tester.enterText(find.byType(TextFormField).first, '家族の記録');
       if (action == '管理者' || action == '除外') {
+        await tester.ensureVisible(
+          find.byKey(const Key('member_action_menu_1')),
+        );
         await tester.tap(find.byKey(const Key('member_action_menu_1')));
         await tester.pumpAndSettle();
         await tester.tap(find.text(action == '管理者' ? '管理者に設定' : 'メンバーを削除'));
@@ -218,7 +497,10 @@ void main() {
           members[2],
         ],
         '除外' => [members[0], members[2]],
-        '追加' => [...members, candidate.copyWith(orderIndex: 8)],
+        '追加' => [
+          ...members,
+          candidate.copyWith(orderIndex: 8, color: '#00BCD4'),
+        ],
         '並べ替え' => [
           members[0].copyWith(orderIndex: 0),
           members[2].copyWith(orderIndex: 1),
@@ -614,6 +896,7 @@ void main() {
       );
 
       await tester.ensureVisible(find.byKey(const Key('member_action_menu_0')));
+      await tester.ensureVisible(find.byKey(const Key('member_action_menu_0')));
       await tester.tap(find.byKey(const Key('member_action_menu_0')));
       await tester.pumpAndSettle();
 
@@ -665,6 +948,7 @@ void main() {
       );
 
       await tester.ensureVisible(find.byKey(const Key('member_action_menu_0')));
+      await tester.ensureVisible(find.byKey(const Key('member_action_menu_0')));
       await tester.tap(find.byKey(const Key('member_action_menu_0')));
       await tester.pumpAndSettle();
 
@@ -712,6 +996,7 @@ void main() {
         ),
       );
 
+      await tester.ensureVisible(find.byKey(const Key('member_action_menu_0')));
       await tester.ensureVisible(find.byKey(const Key('member_action_menu_0')));
       await tester.tap(find.byKey(const Key('member_action_menu_0')));
       await tester.pumpAndSettle();
@@ -1154,6 +1439,7 @@ void main() {
       expect(find.text('管理者'), findsOneWidget);
 
       // 操作メニューから管理者権限を付与
+      await tester.ensureVisible(find.byKey(const Key('member_action_menu_0')));
       await tester.tap(find.byKey(const Key('member_action_menu_0')));
       await tester.pumpAndSettle();
 

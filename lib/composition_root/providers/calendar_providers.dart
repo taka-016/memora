@@ -1,3 +1,5 @@
+import 'package:memora/application/usecases/calendar/watch_calendar_group_usecase.dart';
+import 'package:memora/infrastructure/queries/calendar/firestore_calendar_group_watch_query_service.dart';
 import 'package:memora/application/models/app_mode.dart';
 import 'package:memora/infrastructure/config/resolved_app_mode_provider.dart';
 import 'package:memora/application/usecases/calendar/watch_calendar_events_usecase.dart';
@@ -98,3 +100,14 @@ final watchCalendarLabelsUsecaseProvider =
         ),
       );
     });
+
+final watchCalendarGroupUsecaseProvider = Provider<WatchCalendarGroupUsecase?>((
+  ref,
+) {
+  if (ref.watch(appModeProvider) == AppMode.offline) return null;
+  return WatchCalendarGroupUsecase(
+    FirestoreCalendarGroupWatchQueryService(
+      ref.watch(firebaseFirestoreProvider),
+    ),
+  );
+});

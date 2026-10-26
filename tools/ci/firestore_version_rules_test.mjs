@@ -28,7 +28,7 @@ for (const collection of collections) {
   const path = `/${collection}/version-test`;
   const write = (fields, bearer = verified) => request(path, 'PATCH', bearer, { fields });
   const seed = fields => write(fields, 'owner');
-  const valid = { version: version(1), name: { stringValue: '編集前' } };
+  const valid = { ...(collection === 'calendar_events' ? { labelType: { stringValue: 'group' }, memberId: { nullValue: null }, labelId: { nullValue: null } } : {}), version: version(1), name: { stringValue: '編集前' } };
   await request(path, 'DELETE', 'owner');
   assert.equal((await write(valid)).status, 200, `${collection}: 初回作成`);
   const next = { ...valid, version: version(2), name: { stringValue: '編集後' } };

@@ -40,18 +40,24 @@ erDiagram
         string locationId FK
     }
     groups {
+        string textColor "#RRGGBB、未指定時は自動判定"
+        string color "NOT NULL、#RRGGBB"
         string id PK
         string ownerId FK "NOT NULL"
         string name "NOT NULL"
         string memo
     }
     deleted_groups {
+        string textColor "#RRGGBB、未指定時は自動判定"
+        string color "#RRGGBB"
         string id PK "元のグループID"
         string ownerId "NOT NULL"
         string name "NOT NULL"
         string memo
     }
     group_members {
+        string textColor "#RRGGBB、未指定時は自動判定"
+        string color "NOT NULL、#RRGGBB、所属単位"
         string id PK
         string groupId FK "NOT NULL"
         string memberId FK "NOT NULL"
@@ -139,7 +145,9 @@ erDiagram
     calendar_events {
         string id PK
         string groupId FK "NOT NULL"
-        string labelId FK "NOT NULL"
+        string labelType "NOT NULL、group/member/custom"
+        string memberId "member種別のみ、所属解除後も保持"
+        string labelId FK "custom種別のみ"
         string title "NOT NULL"
         timestamp startDateTime "NOT NULL"
         timestamp endDateTime "NOT NULL"
@@ -156,8 +164,9 @@ erDiagram
         timestamp startDateTime
         timestamp endDateTime
         boolean isAllDay
-        string labelId FK
-    }
+        string labelType "変更回はgroup/member/custom"
+        string memberId "member種別のみ、所属解除後も保持"
+        string labelId FK "custom種別のみ"    }
     calendar_labels {
         string id PK
         string groupId FK "NOT NULL"
@@ -213,6 +222,7 @@ erDiagram
 - 繰り返し予定は`calendar_events`の`recurrenceRule`（RRULE形式）で表し、各回は保存しない。`calendar_event_overrides`は個別回の変更・取消しを表し、`eventId`と`originalStartDateTime`で対象の回を識別する。取消しの場合、変更内容の各フィールドは空になる。
 - Firestoreでは個別回の変更・取消しを独立した`calendar_event_overrides`コレクションへ保存する。`eventId`・`groupId`・`originalStartDateTime`・`isCancelled`と変更内容を持ち、ドキュメントIDは親予定IDと正規化した元の開始日時（マイクロ秒）の組で一意にする。終日の元日時・変更後の期間はUTCの年月日として保存する。
 - Firestoreの親予定は`overrideIds`（個別回のドキュメントID一覧）と`referencedLabelIds`（親と個別回が参照する色ラベルID一覧）を持つ。系列の分割・変更・削除は、親予定・対象の個別回・色ラベルの参照数を同じトランザクションで保存し、競合照合では個別回もトランザクション内で読み取る。グループの退避では親予定・個別回・色ラベルを削除せず保持する。一覧取得ではグループの親予定を通常のクエリで取得し、対応する個別回を通常のドキュメント取得で読み込む。読み込みにトランザクションは使用しない。
-- 既存のFirestoreの埋め込み形式（`overrides`・`cancelledOccurrences`）は`overrideIds`を持たない親予定から読み取る。次回の系列更新・分割時に個別回を独立コレクションへ移し、親の埋め込みフィールドを同じトランザクションで削除する。
 
 - DVCポイント利用・期間限定ポイントはそれぞれ1つの契約に属し、`contractId`をFirestore・SQLite・バックアップで保持する。`groupId`は親契約と同じ値を保存し、グループの一覧・年表集計に使う。利用履歴または期間限定ポイントがある契約は削除できない。SQLiteでは子から契約への参照を`ON DELETE RESTRICT`とし、DVCの`group_id`は通常グループ削除による連鎖削除を持たせず、退避後もIDと関連データを保持する。
+
+- `calendar_labels`は任意ラベルのみを保存する。固定ラベルは`groups.color`と所属順の`group_members.color`から組み立てる。文字色はそれぞれの`textColor`を使用し、未指定時は背景色から読みやすい白・黒を選ぶ。グループ固定は予定の`groupId`、メンバー固定は`memberId`で参照する。種別に対応しない参照はNULLとする。所属解除・メンバー削除後も固定参照は保持し、再加入時は現在の所属色を使う。`referencedLabelIds`と任意ラベルの使用件数は任意ラベルの参照だけを集計する。

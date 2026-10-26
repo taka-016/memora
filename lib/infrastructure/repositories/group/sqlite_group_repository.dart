@@ -39,15 +39,24 @@ class SqliteGroupRepository implements GroupRepository {
       );
       if (previous == null) {
         await db.customStatement(
-          'INSERT INTO group_members (group_id, member_id, is_administrator, order_index) VALUES (?, ?, ?, ?) ON CONFLICT(group_id, member_id) DO NOTHING',
-          row.values.toList(),
+          'INSERT INTO group_members (group_id, member_id, is_administrator, order_index, color, text_color) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(group_id, member_id) DO NOTHING',
+          [
+            row['group_id'],
+            row['member_id'],
+            row['is_administrator'],
+            row['order_index'],
+            row['color'],
+            row['text_color'],
+          ],
         );
       } else {
         await db.customStatement(
-          'UPDATE group_members SET is_administrator = ?, order_index = ? WHERE group_id = ? AND member_id = ?',
+          'UPDATE group_members SET is_administrator = ?, order_index = ?, color = ?, text_color = ? WHERE group_id = ? AND member_id = ?',
           [
             member.isAdministrator ? 1 : 0,
             member.orderIndex,
+            member.color,
+            member.textColor,
             group.id,
             member.memberId,
           ],
