@@ -1,3 +1,4 @@
+import 'package:memora/application/services/calendar/calendar_display_labels.dart';
 import 'package:memora/presentation/shared/inputs/label_color_settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -360,7 +361,7 @@ class GroupEditModal extends HookConsumerWidget {
     ) async {
       var selected = value;
       final colorForm = GlobalKey<FormState>();
-      var selectedTextColor = textColor;
+      var selectedTextColor = textColor ?? calendarContrastingTextColor(value);
       final colors = await showDialog<({String color, String? textColor})>(
         context: context,
         builder: (context) => StatefulBuilder(
@@ -373,7 +374,6 @@ class GroupEditModal extends HookConsumerWidget {
                   label: previewName,
                   color: selected,
                   textColor: selectedTextColor,
-                  allowAutomaticTextColor: true,
                   onChanged: (color, textColor) => setState(() {
                     selected = color;
                     selectedTextColor = textColor;

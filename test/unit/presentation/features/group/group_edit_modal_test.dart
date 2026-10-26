@@ -266,6 +266,7 @@ void main() {
     );
     await tester.tap(find.byKey(const Key('group_color_button')));
     await tester.pumpAndSettle();
+    expect(find.text('自動'), findsNothing);
     await tester.tap(find.byTooltip('赤'));
     await tester.ensureVisible(find.text('白'));
     await tester.tap(find.text('白'));
@@ -298,6 +299,7 @@ void main() {
     );
     await tester.tap(find.byKey(const Key('member_color_button_owner-id')));
     await tester.pumpAndSettle();
+    expect(find.text('自動'), findsNothing);
     await tester.tap(find.byTooltip('黄'));
     await tester.ensureVisible(find.text('黒'));
     await tester.tap(find.text('黒'));
@@ -314,6 +316,39 @@ void main() {
     await tester.pumpAndSettle();
     expect(saved!.textColor, '#FFFFFF');
     expect(saved!.members.single.textColor, '#000000');
+  });
+
+  testWidgets('未指定の文字色は現在の表示色を選択し背景色を変えても保持して保存する', (tester) async {
+    GroupDto? saved;
+    await tester.pumpWidget(
+      buildSubject(
+        group: createGroupDto(id: 'g', name: '家族').copyWith(color: '#FFFFFF'),
+        onSave: (value) async {
+          saved = value;
+        },
+        availableMembers: [],
+        currentMember: createCurrentMember(),
+      ),
+    );
+    await tester.tap(find.byKey(const Key('group_color_button')));
+    await tester.pumpAndSettle();
+    expect(find.text('自動'), findsNothing);
+    expect(
+      tester.widget<ChoiceChip>(find.widgetWithText(ChoiceChip, '黒')).selected,
+      isTrue,
+    );
+    await tester.tap(find.byTooltip('赤'));
+    await tester.pump();
+    expect(
+      tester.widget<ChoiceChip>(find.widgetWithText(ChoiceChip, '黒')).selected,
+      isTrue,
+    );
+    await tester.tap(find.text('決定'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('更新'));
+    await tester.pumpAndSettle();
+    expect(saved!.textColor, '#000000');
+    expect(saved!.color, '#F44336');
   });
 
   testWidgets('色選択のキャンセルで文字色を保持し文字色だけの変更も破棄できる', (tester) async {

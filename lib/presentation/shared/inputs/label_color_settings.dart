@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:memora/application/services/calendar/calendar_display_labels.dart';
 import 'package:memora/presentation/shared/inputs/color_picker.dart';
 import 'package:memora/presentation/shared/inputs/label_color_preview.dart';
 
@@ -10,7 +9,6 @@ class LabelColorSettings extends StatefulWidget {
     required this.color,
     required this.textColor,
     required this.onChanged,
-    this.allowAutomaticTextColor = false,
     this.enabled = true,
     this.allDayPreviewKey = const Key('label_color_preview'),
     this.timedPreviewKey = const Key('label_color_timed_preview'),
@@ -18,9 +16,8 @@ class LabelColorSettings extends StatefulWidget {
 
   final String label;
   final String color;
-  final String? textColor;
-  final void Function(String color, String? textColor) onChanged;
-  final bool allowAutomaticTextColor;
+  final String textColor;
+  final void Function(String color, String textColor) onChanged;
   final bool enabled;
   final Key allDayPreviewKey;
   final Key timedPreviewKey;
@@ -115,14 +112,10 @@ class _LabelColorSettingsState extends State<LabelColorSettings> {
       Wrap(
         spacing: 12,
         children: [
-          for (final (name, color) in [
-            if (widget.allowAutomaticTextColor) ('自動', null),
-            ('白', '#FFFFFF'),
-            ('黒', '#000000'),
-          ])
+          for (final (name, color) in [('白', '#FFFFFF'), ('黒', '#000000')])
             ChoiceChip(
               label: Text(name),
-              selected: widget.textColor?.toUpperCase() == color,
+              selected: widget.textColor.toUpperCase() == color,
               onSelected: !widget.enabled
                   ? null
                   : (_) => widget.onChanged(_hex.text, color),
@@ -133,10 +126,7 @@ class _LabelColorSettingsState extends State<LabelColorSettings> {
       LabelColorPreview(
         label: widget.label,
         color: _selectedColor,
-        textColor: _parse(
-          widget.textColor ??
-              calendarContrastingTextColor(_format(_selectedColor)),
-        ),
+        textColor: _parse(widget.textColor),
         allDayKey: widget.allDayPreviewKey,
         timedKey: widget.timedPreviewKey,
       ),
