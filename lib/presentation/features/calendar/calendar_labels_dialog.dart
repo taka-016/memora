@@ -240,7 +240,7 @@ class _LabelEditDialogState extends ConsumerState<_LabelEditDialog> {
                   timedPreviewKey: const Key('calendar_label_timed_preview'),
                   onChanged: (color, textColor) => setState(() {
                     _color = color;
-                    _textColor = textColor!;
+                    _textColor = textColor;
                   }),
                 ),
                 if (_error.isNotEmpty) Text(_error),
