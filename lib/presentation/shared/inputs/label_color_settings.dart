@@ -112,10 +112,7 @@ class _LabelColorSettingsState extends State<LabelColorSettings> {
       Wrap(
         spacing: 12,
         children: [
-          for (final (name, color) in [
-            ('白', '#FFFFFF'),
-            ('黒', '#000000'),
-          ])
+          for (final (name, color) in [('白', '#FFFFFF'), ('黒', '#000000')])
             ChoiceChip(
               label: Text(name),
               selected: widget.textColor.toUpperCase() == color,
