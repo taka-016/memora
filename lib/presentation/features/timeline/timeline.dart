@@ -172,6 +172,7 @@ class Timeline extends HookConsumerWidget {
                     alignment: Alignment.centerLeft,
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     decoration: BoxDecoration(
+                      color: rowDefinition.fixedColumnBackgroundColor,
                       border: Border(
                         left: BorderSide(
                           color: borderColor,

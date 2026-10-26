@@ -50,10 +50,28 @@ class GroupManagementNotifier extends AsyncNotifier<GroupManagementState> {
   }
 
   Future<bool> updateGroup(GroupDto group) async {
-    return _runMutation(
+    final succeeded = await _runMutation(
       operationName: 'updateGroup',
       execute: () => ref.read(updateGroupUsecaseProvider).execute(group),
     );
+    if (!succeeded || !ref.mounted) return succeeded;
+    final refreshed = state.value?.groups
+        .where((value) => value.id == group.id)
+        .firstOrNull;
+    final selection = ref.read(groupTimelineGroupSelectionNotifierProvider);
+    if (refreshed != null &&
+        selection.status == GroupTimelineGroupSelectionStatus.loaded) {
+      ref
+          .read(groupTimelineGroupSelectionNotifierProvider.notifier)
+          .setLoadedGroups(
+            memberId: selection.memberId!,
+            groups: [
+              for (final value in selection.groups)
+                value.id == refreshed.id ? refreshed : value,
+            ],
+          );
+    }
+    return succeeded;
   }
 
   Future<bool> deleteGroup(String groupId, {int? expectedVersion}) async {

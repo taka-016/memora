@@ -316,8 +316,8 @@ class _CalendarEventPreview extends StatelessWidget {
   final bool filled;
   @override
   Widget build(BuildContext context) {
-    final label = state.labels
-        .where((label) => label.id == event.labelId)
+    final label = state.displayLabels
+        .where((label) => label.id == event.labelKey)
         .firstOrNull;
     final scheme = Theme.of(context).colorScheme;
     final color = label == null
@@ -331,7 +331,10 @@ class _CalendarEventPreview extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 2),
           decoration: BoxDecoration(
             color: filled ? color : Colors.transparent,
-            borderRadius: BorderRadius.circular(3),
+            borderRadius: filled ? BorderRadius.circular(3) : null,
+            border: filled
+                ? null
+                : Border(left: BorderSide(color: color, width: 3)),
           ),
           child: Text(
             event.title,
@@ -342,9 +345,9 @@ class _CalendarEventPreview extends StatelessWidget {
             style: TextStyle(
               fontSize: 11,
               height: 1.4,
-              color: label == null
-                  ? scheme.onSurface
-                  : calendarLabelColor(filled ? label.textColor : label.color),
+              color: filled && label != null
+                  ? calendarLabelColor(label.textColor)
+                  : scheme.onSurface,
             ),
           ),
         ),

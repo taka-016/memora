@@ -12,6 +12,8 @@ class FirestoreGroupMemberMapper {
     final groupMemberData = groupMemberDoc.data() ?? {};
     final memberData = memberDoc.data() ?? {};
     return GroupMemberDto(
+      textColor: groupMemberData['textColor'] as String?,
+      color: groupMemberData['color'] as String? ?? '#2196F3',
       memberId: memberDoc.id,
       groupId: groupMemberData['groupId'] as String? ?? '',
       isAdministrator: groupMemberData['isAdministrator'] as bool? ?? false,
@@ -38,6 +40,8 @@ class FirestoreGroupMemberMapper {
   static Map<String, dynamic> toCreateFirestore(GroupMember groupMember) {
     return {
       'groupId': groupMember.groupId,
+      'color': groupMember.color,
+      'textColor': groupMember.textColor,
       'memberId': groupMember.memberId,
       'isAdministrator': groupMember.isAdministrator,
       'orderIndex': groupMember.orderIndex,

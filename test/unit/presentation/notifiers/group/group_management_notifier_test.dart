@@ -98,6 +98,26 @@ void main() {
   }
 
   group('GroupManagementNotifier', () {
+    test('色変更後の再取得結果を表示中の年表グループにも反映する', () async {
+      final notifier = await startNotifier();
+      container
+          .read(groupTimelineGroupSelectionNotifierProvider.notifier)
+          .setLoadedGroups(
+            memberId: currentMember.id,
+            groups: const [managedGroup, secondMemberGroup],
+          );
+      final colored = managedGroup.copyWith(color: '#FF0000');
+      when(updateGroupUsecase.execute(colored)).thenAnswer((_) async {});
+      when(getGroupsUsecase.execute(currentMember))
+          .thenAnswer((_) async => [colored]);
+      expect(await notifier.updateGroup(colored), isTrue);
+      final groups = container
+          .read(groupTimelineGroupSelectionNotifierProvider)
+          .groups;
+      expect(groups.first.color, '#FF0000');
+      expect(groups.last, secondMemberGroup);
+    });
+
     test('初期取得中から取得成功へ遷移する', () async {
       final completer = Completer<List<GroupDto>>();
       when(getGroupsUsecase.execute(currentMember))

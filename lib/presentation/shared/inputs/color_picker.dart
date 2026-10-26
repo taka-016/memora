@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
 
-class CalendarColorPicker extends StatelessWidget {
-  const CalendarColorPicker({
-    super.key,
-    required this.color,
-    required this.onChanged,
-  });
+class ColorPicker extends StatelessWidget {
+  const ColorPicker({super.key, required this.color, required this.onChanged});
 
   final Color color;
   final ValueChanged<Color>? onChanged;

@@ -34,6 +34,8 @@ void main() {
       'owner_id': 'owner',
       'name': '家族',
       'memo': null,
+      'color': '#4CAF50',
+      'text_color': '#FFFFFF',
     };
     await db.insertRow('deleted_members', member);
     await db.insertRow('deleted_groups', group);
@@ -90,6 +92,7 @@ void main() {
           'id': 'event',
           'group_id': 'group',
           'label_id': 'label',
+          'label_type': 'custom',
           'title': '予定',
           'start_date_time': 1,
           'end_date_time': 2,

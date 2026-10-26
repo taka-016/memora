@@ -9,6 +9,70 @@ import 'package:memora/application/dtos/calendar/calendar_label_dto.dart';
 import 'calendar_test_support.dart';
 
 void main() {
+  testWidgets('任意ラベル未登録でもグループ固定ラベルを初期選択して登録できる', (tester) async {
+    final harness = CalendarTestHarness()..savedLabels.clear();
+    await harness.pump(tester);
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+    expect(find.text('グループの予定'), findsOneWidget);
+    await tester.enterText(find.byType(TextFormField).first, '家族旅行');
+    await tester.tap(find.text('保存'));
+    await tester.pumpAndSettle();
+    expect(harness.savedEvents.single.labelType, 'group');
+    expect(harness.savedEvents.single.labelId, isEmpty);
+  });
+
+  testWidgets('所属解除済みの参照を表示して保持するが再選択は許可しない', (tester) async {
+    final harness = CalendarTestHarness()
+      ..savedEvents.add(
+        calendarTestEvent(
+          'e',
+          '本人の予定',
+        ).copyWith(labelType: 'member', memberId: 'removed', labelId: ''),
+      );
+    await harness.pump(tester);
+    await tester.tap(find.byKey(calendarTestDay2));
+    await tester.pump();
+    await tester.tap(find.byKey(calendarTestDay2));
+    await tester.pumpAndSettle();
+    expect(find.text('所属解除・削除済みメンバーの予定'), findsOneWidget);
+    await tester.tap(find.widgetWithText(ListTile, '本人の予定'));
+    await tester.pumpAndSettle();
+    final dropdown = tester.widget<DropdownButton<String>>(
+      find.byType(DropdownButton<String>),
+    );
+    expect(
+      dropdown.items!
+          .singleWhere((item) => item.value == 'member:removed')
+          .enabled,
+      isFalse,
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'タイトル'),
+      '予定名だけ変更',
+    );
+    await tester.tap(find.text('保存'));
+    await tester.pumpAndSettle();
+    expect(harness.savedEvents.single.memberId, 'removed');
+    expect(harness.savedEvents.single.title, '予定名だけ変更');
+  });
+
+  testWidgets('ラベル追加でグループ管理への案内を示して任意ラベルを保存する', (tester) async {
+    final harness = CalendarTestHarness()..savedLabels.clear();
+    await harness.pump(tester);
+    await tester.tap(find.byTooltip('色ラベルの設定'));
+    await tester.pumpAndSettle();
+    expect(find.text('家族の名前や「家族全員」などのラベルを追加してください'), findsNothing);
+    await tester.tap(find.text('ラベルを追加'));
+    await tester.pumpAndSettle();
+    expect(find.text('グループ・メンバーの色は「グループ管理」で設定できます。'), findsOneWidget);
+    await tester.enterText(find.widgetWithText(TextFormField, '名前'), '仕事');
+    await tester.tap(find.text('保存'));
+    await tester.pumpAndSettle();
+    expect(harness.savedLabels.single.name, '仕事');
+    expect(harness.savedLabels.single.labelType, 'custom');
+  });
+
   setUp(() => SharedPreferences.setMockInitialValues({}));
   testWidgets('各日の枠に先頭3件を表示し選択日の再タップで全予定と期間を確認する', (tester) async {
     final harness = CalendarTestHarness()
@@ -103,7 +167,7 @@ void main() {
   testWidgets('ラベルの色を見た目で選択して保存し16進数入力は必要なときだけ開く', (tester) async {
     final harness = CalendarTestHarness()..savedLabels.clear();
     await harness.pump(tester);
-    await tester.tap(find.byTooltip('予定を追加'));
+    await tester.tap(find.byTooltip('色ラベルの設定'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('ラベルを追加'));
     await tester.pumpAndSettle();
@@ -137,6 +201,8 @@ void main() {
     await tester.tap(find.text('保存'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('閉じる'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('予定を追加'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('保存'));
     await tester.pump();
@@ -215,7 +281,7 @@ void main() {
     expect(harness.savedLabels.single.textColor, '#Ab12Cd');
   });
 
-  testWidgets('終日は背景と文字色、時刻付きはラベル色の文字で表示し長いタイトルを切る', (tester) async {
+  testWidgets('終日は背景と文字色、時間指定は左線と通常の文字色で表示し長いタイトルを切る', (tester) async {
     const title = '非常に長いタイトルが日付枠の幅を超えている予定';
     final harness = CalendarTestHarness()
       ..savedLabels[0] = calendarTestFamily.copyWith(textColor: '#FFFFFF')
@@ -227,7 +293,10 @@ void main() {
     final allDay = tester.widget<Text>(find.text('終日の予定'));
     final timed = tester.widget<Text>(find.text(title));
     expect(allDay.style!.color, Colors.white);
-    expect(timed.style!.color, const Color(0xFF123ABC));
+    expect(
+      timed.style!.color,
+      Theme.of(tester.element(find.text(title))).colorScheme.onSurface,
+    );
     expect(timed.overflow, TextOverflow.clip);
     expect(timed.softWrap, isFalse);
     Container titleContainer(String title) => tester.widget<Container>(
@@ -249,10 +318,57 @@ void main() {
     await tester.pumpAndSettle();
     expect(
       tester.widget<Text>(find.text(title).last).style!.color,
-      const Color(0xFF123ABC),
+      Theme.of(tester.element(find.text(title).last)).colorScheme.onSurface,
     );
     expect(tester.takeException(), isNull);
   });
+
+  for (final brightness in Brightness.values) {
+    for (final color in ['#FFFFFF', '#FFFF00']) {
+      testWidgets('時間指定の淡いラベル色は左線に使い文字はテーマに合わせる（$brightness・$color）', (
+        tester,
+      ) async {
+        final harness = CalendarTestHarness()
+          ..savedLabels[0] = calendarTestFamily.copyWith(
+            color: color,
+            textColor: '#FFFFFF',
+          )
+          ..savedEvents.add(calendarTestEvent('timed', '読みやすい予定名'));
+        await harness.pump(tester, brightness: brightness);
+        void expectReadableTitle(Finder finder) {
+          final context = tester.element(finder);
+          expect(
+            tester.widget<Text>(finder).style!.color,
+            Theme.of(context).colorScheme.onSurface,
+          );
+          final container = tester.widget<Container>(
+            find.ancestor(of: finder, matching: find.byType(Container)).first,
+          );
+          final border =
+              (container.decoration! as BoxDecoration).border! as Border;
+          expect(
+            border.left.color,
+            Color(int.parse(color.substring(1), radix: 16) | 0xFF000000),
+          );
+          expect(border.left.style, BorderStyle.solid);
+          expect(border.left.width, greaterThan(0));
+        }
+
+        expectReadableTitle(find.text('読みやすい予定名'));
+        await tester.tap(find.byKey(calendarTestDay2));
+        await tester.pump();
+        await tester.tap(find.byKey(calendarTestDay2));
+        await tester.pumpAndSettle();
+        expectReadableTitle(
+          find.descendant(
+            of: find.byType(BottomSheet),
+            matching: find.text('読みやすい予定名'),
+          ),
+        );
+        expect(tester.takeException(), isNull);
+      });
+    }
+  }
 
   testWidgets('時間指定の複数日予定は各週に一つのタイトルを中央表示し日別一覧から確認できる', (tester) async {
     final harness = CalendarTestHarness()
@@ -454,7 +570,20 @@ void main() {
         matching: find.byType(Text),
       ),
     );
-    expect(text.style!.color, const Color(0xFF123ABC));
+    expect(
+      text.style!.color,
+      Theme.of(
+        tester.element(find.byKey(const Key('calendar_label_timed_preview'))),
+      ).colorScheme.onSurface,
+    );
+    final decoration =
+        tester
+                .widget<Container>(
+                  find.byKey(const Key('calendar_label_timed_preview')),
+                )
+                .decoration
+            as BoxDecoration;
+    expect((decoration.border! as Border).left.color, const Color(0xFF123ABC));
     await tester.tap(find.text('保存'));
     await tester.pumpAndSettle();
     expect(harness.savedLabels.single.sortOrder, calendarTestFamily.sortOrder);
@@ -512,6 +641,7 @@ void main() {
         find.byType(DropdownButton<String>),
       );
       expect(dropdown.items!.map((item) => item.value), [
+        'group:',
         'child',
         'parent',
         'family',

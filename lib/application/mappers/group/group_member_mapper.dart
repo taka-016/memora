@@ -5,6 +5,8 @@ class GroupMemberMapper {
   static GroupMember toEntity(GroupMemberDto dto) {
     return GroupMember(
       groupId: dto.groupId,
+      color: dto.color,
+      textColor: dto.textColor,
       memberId: dto.memberId,
       isAdministrator: dto.isAdministrator,
       orderIndex: dto.orderIndex,
