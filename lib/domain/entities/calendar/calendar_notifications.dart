@@ -1,5 +1,6 @@
 import 'package:memora/domain/exceptions/validation_exception.dart';
 
+// ignore: constant_identifier_names
 const MAX_CALENDAR_NOTIFICATIONS = 5;
 
 void validateCalendarNotifications(List<int> values, bool allDay) {

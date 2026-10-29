@@ -26,8 +26,9 @@ class SharedPreferencesCalendarNotificationStorage
   Future<void> save(CalendarNotificationPreferences value) async {
     validateCalendarNotifications(value.allDay, true);
     validateCalendarNotifications(value.timed, false);
-    if (value.allDayMinuteOfDay < 0 || value.allDayMinuteOfDay >= 1440)
+    if (value.allDayMinuteOfDay < 0 || value.allDayMinuteOfDay >= 1440) {
       throw ArgumentError('基準時刻が不正です');
+    }
     final prefs = await SharedPreferences.getInstance();
     if (!await prefs.setString(
       _key,

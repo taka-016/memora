@@ -16,11 +16,12 @@ class CalendarEventOverride extends Equatable {
     this.memberId = '',
     this.notificationMinutesBefore = const [],
   }) {
-    if (!isCancelled)
+    if (!isCancelled) {
       validateCalendarNotifications(
         notificationMinutesBefore,
         isAllDay ?? false,
       );
+    }
     if (!isCancelled &&
         (title == null ||
             title!.trim().isEmpty ||

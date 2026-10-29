@@ -5659,6 +5659,18 @@ class CalendarEvents extends Table
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
   CalendarEvents(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _notificationMinutesBeforeMeta =
+      const VerificationMeta('notificationMinutesBefore');
+  late final GeneratedColumn<String> notificationMinutesBefore =
+      GeneratedColumn<String>(
+        'notification_minutes_before',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        $customConstraints: 'NOT NULL DEFAULT \'[]\'',
+        defaultValue: const CustomExpression('\'[]\''),
+      );
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   late final GeneratedColumn<String> id = GeneratedColumn<String>(
     'id',
@@ -5778,6 +5790,7 @@ class CalendarEvents extends Table
   );
   @override
   List<GeneratedColumn> get $columns => [
+    notificationMinutesBefore,
     id,
     groupId,
     labelId,
@@ -5802,6 +5815,15 @@ class CalendarEvents extends Table
   }) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
+    if (data.containsKey('notification_minutes_before')) {
+      context.handle(
+        _notificationMinutesBeforeMeta,
+        notificationMinutesBefore.isAcceptableOrUnknown(
+          data['notification_minutes_before']!,
+          _notificationMinutesBeforeMeta,
+        ),
+      );
+    }
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
     } else if (isInserting) {
@@ -5901,6 +5923,10 @@ class CalendarEvents extends Table
   SqliteCalendarEventRow map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return SqliteCalendarEventRow(
+      notificationMinutesBefore: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}notification_minutes_before'],
+      )!,
       id: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}id'],
@@ -5967,6 +5993,7 @@ class CalendarEvents extends Table
 
 class SqliteCalendarEventRow extends DataClass
     implements Insertable<SqliteCalendarEventRow> {
+  final String notificationMinutesBefore;
   final String id;
   final String groupId;
   final String? labelId;
@@ -5979,6 +6006,7 @@ class SqliteCalendarEventRow extends DataClass
   final String? recurrenceRule;
   final String? timeZone;
   const SqliteCalendarEventRow({
+    required this.notificationMinutesBefore,
     required this.id,
     required this.groupId,
     this.labelId,
@@ -5994,6 +6022,9 @@ class SqliteCalendarEventRow extends DataClass
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
+    map['notification_minutes_before'] = Variable<String>(
+      notificationMinutesBefore,
+    );
     map['id'] = Variable<String>(id);
     map['group_id'] = Variable<String>(groupId);
     if (!nullToAbsent || labelId != null) {
@@ -6018,6 +6049,7 @@ class SqliteCalendarEventRow extends DataClass
 
   CalendarEventsCompanion toCompanion(bool nullToAbsent) {
     return CalendarEventsCompanion(
+      notificationMinutesBefore: Value(notificationMinutesBefore),
       id: Value(id),
       groupId: Value(groupId),
       labelId: labelId == null && nullToAbsent
@@ -6046,6 +6078,9 @@ class SqliteCalendarEventRow extends DataClass
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return SqliteCalendarEventRow(
+      notificationMinutesBefore: serializer.fromJson<String>(
+        json['notification_minutes_before'],
+      ),
       id: serializer.fromJson<String>(json['id']),
       groupId: serializer.fromJson<String>(json['group_id']),
       labelId: serializer.fromJson<String?>(json['label_id']),
@@ -6063,6 +6098,9 @@ class SqliteCalendarEventRow extends DataClass
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
+      'notification_minutes_before': serializer.toJson<String>(
+        notificationMinutesBefore,
+      ),
       'id': serializer.toJson<String>(id),
       'group_id': serializer.toJson<String>(groupId),
       'label_id': serializer.toJson<String?>(labelId),
@@ -6078,6 +6116,7 @@ class SqliteCalendarEventRow extends DataClass
   }
 
   SqliteCalendarEventRow copyWith({
+    String? notificationMinutesBefore,
     String? id,
     String? groupId,
     Value<String?> labelId = const Value.absent(),
@@ -6090,6 +6129,8 @@ class SqliteCalendarEventRow extends DataClass
     Value<String?> recurrenceRule = const Value.absent(),
     Value<String?> timeZone = const Value.absent(),
   }) => SqliteCalendarEventRow(
+    notificationMinutesBefore:
+        notificationMinutesBefore ?? this.notificationMinutesBefore,
     id: id ?? this.id,
     groupId: groupId ?? this.groupId,
     labelId: labelId.present ? labelId.value : this.labelId,
@@ -6106,6 +6147,9 @@ class SqliteCalendarEventRow extends DataClass
   );
   SqliteCalendarEventRow copyWithCompanion(CalendarEventsCompanion data) {
     return SqliteCalendarEventRow(
+      notificationMinutesBefore: data.notificationMinutesBefore.present
+          ? data.notificationMinutesBefore.value
+          : this.notificationMinutesBefore,
       id: data.id.present ? data.id.value : this.id,
       groupId: data.groupId.present ? data.groupId.value : this.groupId,
       labelId: data.labelId.present ? data.labelId.value : this.labelId,
@@ -6129,6 +6173,7 @@ class SqliteCalendarEventRow extends DataClass
   @override
   String toString() {
     return (StringBuffer('SqliteCalendarEventRow(')
+          ..write('notificationMinutesBefore: $notificationMinutesBefore, ')
           ..write('id: $id, ')
           ..write('groupId: $groupId, ')
           ..write('labelId: $labelId, ')
@@ -6146,6 +6191,7 @@ class SqliteCalendarEventRow extends DataClass
 
   @override
   int get hashCode => Object.hash(
+    notificationMinutesBefore,
     id,
     groupId,
     labelId,
@@ -6162,6 +6208,7 @@ class SqliteCalendarEventRow extends DataClass
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is SqliteCalendarEventRow &&
+          other.notificationMinutesBefore == this.notificationMinutesBefore &&
           other.id == this.id &&
           other.groupId == this.groupId &&
           other.labelId == this.labelId &&
@@ -6176,6 +6223,7 @@ class SqliteCalendarEventRow extends DataClass
 }
 
 class CalendarEventsCompanion extends UpdateCompanion<SqliteCalendarEventRow> {
+  final Value<String> notificationMinutesBefore;
   final Value<String> id;
   final Value<String> groupId;
   final Value<String?> labelId;
@@ -6189,6 +6237,7 @@ class CalendarEventsCompanion extends UpdateCompanion<SqliteCalendarEventRow> {
   final Value<String?> timeZone;
   final Value<int> rowid;
   const CalendarEventsCompanion({
+    this.notificationMinutesBefore = const Value.absent(),
     this.id = const Value.absent(),
     this.groupId = const Value.absent(),
     this.labelId = const Value.absent(),
@@ -6203,6 +6252,7 @@ class CalendarEventsCompanion extends UpdateCompanion<SqliteCalendarEventRow> {
     this.rowid = const Value.absent(),
   });
   CalendarEventsCompanion.insert({
+    this.notificationMinutesBefore = const Value.absent(),
     required String id,
     required String groupId,
     this.labelId = const Value.absent(),
@@ -6223,6 +6273,7 @@ class CalendarEventsCompanion extends UpdateCompanion<SqliteCalendarEventRow> {
        endDateTime = Value(endDateTime),
        isAllDay = Value(isAllDay);
   static Insertable<SqliteCalendarEventRow> custom({
+    Expression<String>? notificationMinutesBefore,
     Expression<String>? id,
     Expression<String>? groupId,
     Expression<String>? labelId,
@@ -6237,6 +6288,8 @@ class CalendarEventsCompanion extends UpdateCompanion<SqliteCalendarEventRow> {
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
+      if (notificationMinutesBefore != null)
+        'notification_minutes_before': notificationMinutesBefore,
       if (id != null) 'id': id,
       if (groupId != null) 'group_id': groupId,
       if (labelId != null) 'label_id': labelId,
@@ -6253,6 +6306,7 @@ class CalendarEventsCompanion extends UpdateCompanion<SqliteCalendarEventRow> {
   }
 
   CalendarEventsCompanion copyWith({
+    Value<String>? notificationMinutesBefore,
     Value<String>? id,
     Value<String>? groupId,
     Value<String?>? labelId,
@@ -6267,6 +6321,8 @@ class CalendarEventsCompanion extends UpdateCompanion<SqliteCalendarEventRow> {
     Value<int>? rowid,
   }) {
     return CalendarEventsCompanion(
+      notificationMinutesBefore:
+          notificationMinutesBefore ?? this.notificationMinutesBefore,
       id: id ?? this.id,
       groupId: groupId ?? this.groupId,
       labelId: labelId ?? this.labelId,
@@ -6285,6 +6341,11 @@ class CalendarEventsCompanion extends UpdateCompanion<SqliteCalendarEventRow> {
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
+    if (notificationMinutesBefore.present) {
+      map['notification_minutes_before'] = Variable<String>(
+        notificationMinutesBefore.value,
+      );
+    }
     if (id.present) {
       map['id'] = Variable<String>(id.value);
     }
@@ -6327,6 +6388,7 @@ class CalendarEventsCompanion extends UpdateCompanion<SqliteCalendarEventRow> {
   @override
   String toString() {
     return (StringBuffer('CalendarEventsCompanion(')
+          ..write('notificationMinutesBefore: $notificationMinutesBefore, ')
           ..write('id: $id, ')
           ..write('groupId: $groupId, ')
           ..write('labelId: $labelId, ')
@@ -6350,6 +6412,18 @@ class CalendarEventOverrides extends Table
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
   CalendarEventOverrides(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _notificationMinutesBeforeMeta =
+      const VerificationMeta('notificationMinutesBefore');
+  late final GeneratedColumn<String> notificationMinutesBefore =
+      GeneratedColumn<String>(
+        'notification_minutes_before',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        $customConstraints: 'NOT NULL DEFAULT \'[]\'',
+        defaultValue: const CustomExpression('\'[]\''),
+      );
   static const VerificationMeta _eventIdMeta = const VerificationMeta(
     'eventId',
   );
@@ -6470,6 +6544,7 @@ class CalendarEventOverrides extends Table
   );
   @override
   List<GeneratedColumn> get $columns => [
+    notificationMinutesBefore,
     eventId,
     groupId,
     originalStartDateTime,
@@ -6494,6 +6569,15 @@ class CalendarEventOverrides extends Table
   }) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
+    if (data.containsKey('notification_minutes_before')) {
+      context.handle(
+        _notificationMinutesBeforeMeta,
+        notificationMinutesBefore.isAcceptableOrUnknown(
+          data['notification_minutes_before']!,
+          _notificationMinutesBeforeMeta,
+        ),
+      );
+    }
     if (data.containsKey('event_id')) {
       context.handle(
         _eventIdMeta,
@@ -6592,6 +6676,10 @@ class CalendarEventOverrides extends Table
   }) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return SqliteCalendarEventOverrideRow(
+      notificationMinutesBefore: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}notification_minutes_before'],
+      )!,
       eventId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}event_id'],
@@ -6657,6 +6745,7 @@ class CalendarEventOverrides extends Table
 
 class SqliteCalendarEventOverrideRow extends DataClass
     implements Insertable<SqliteCalendarEventOverrideRow> {
+  final String notificationMinutesBefore;
   final String eventId;
   final String groupId;
   final int originalStartDateTime;
@@ -6669,6 +6758,7 @@ class SqliteCalendarEventOverrideRow extends DataClass
   final String? labelType;
   final String? memberId;
   const SqliteCalendarEventOverrideRow({
+    required this.notificationMinutesBefore,
     required this.eventId,
     required this.groupId,
     required this.originalStartDateTime,
@@ -6684,6 +6774,9 @@ class SqliteCalendarEventOverrideRow extends DataClass
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
+    map['notification_minutes_before'] = Variable<String>(
+      notificationMinutesBefore,
+    );
     map['event_id'] = Variable<String>(eventId);
     map['group_id'] = Variable<String>(groupId);
     map['original_start_date_time'] = Variable<int>(originalStartDateTime);
@@ -6714,6 +6807,7 @@ class SqliteCalendarEventOverrideRow extends DataClass
 
   CalendarEventOverridesCompanion toCompanion(bool nullToAbsent) {
     return CalendarEventOverridesCompanion(
+      notificationMinutesBefore: Value(notificationMinutesBefore),
       eventId: Value(eventId),
       groupId: Value(groupId),
       originalStartDateTime: Value(originalStartDateTime),
@@ -6748,6 +6842,9 @@ class SqliteCalendarEventOverrideRow extends DataClass
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return SqliteCalendarEventOverrideRow(
+      notificationMinutesBefore: serializer.fromJson<String>(
+        json['notification_minutes_before'],
+      ),
       eventId: serializer.fromJson<String>(json['event_id']),
       groupId: serializer.fromJson<String>(json['group_id']),
       originalStartDateTime: serializer.fromJson<int>(
@@ -6767,6 +6864,9 @@ class SqliteCalendarEventOverrideRow extends DataClass
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
+      'notification_minutes_before': serializer.toJson<String>(
+        notificationMinutesBefore,
+      ),
       'event_id': serializer.toJson<String>(eventId),
       'group_id': serializer.toJson<String>(groupId),
       'original_start_date_time': serializer.toJson<int>(originalStartDateTime),
@@ -6782,6 +6882,7 @@ class SqliteCalendarEventOverrideRow extends DataClass
   }
 
   SqliteCalendarEventOverrideRow copyWith({
+    String? notificationMinutesBefore,
     String? eventId,
     String? groupId,
     int? originalStartDateTime,
@@ -6794,6 +6895,8 @@ class SqliteCalendarEventOverrideRow extends DataClass
     Value<String?> labelType = const Value.absent(),
     Value<String?> memberId = const Value.absent(),
   }) => SqliteCalendarEventOverrideRow(
+    notificationMinutesBefore:
+        notificationMinutesBefore ?? this.notificationMinutesBefore,
     eventId: eventId ?? this.eventId,
     groupId: groupId ?? this.groupId,
     originalStartDateTime: originalStartDateTime ?? this.originalStartDateTime,
@@ -6812,6 +6915,9 @@ class SqliteCalendarEventOverrideRow extends DataClass
     CalendarEventOverridesCompanion data,
   ) {
     return SqliteCalendarEventOverrideRow(
+      notificationMinutesBefore: data.notificationMinutesBefore.present
+          ? data.notificationMinutesBefore.value
+          : this.notificationMinutesBefore,
       eventId: data.eventId.present ? data.eventId.value : this.eventId,
       groupId: data.groupId.present ? data.groupId.value : this.groupId,
       originalStartDateTime: data.originalStartDateTime.present
@@ -6837,6 +6943,7 @@ class SqliteCalendarEventOverrideRow extends DataClass
   @override
   String toString() {
     return (StringBuffer('SqliteCalendarEventOverrideRow(')
+          ..write('notificationMinutesBefore: $notificationMinutesBefore, ')
           ..write('eventId: $eventId, ')
           ..write('groupId: $groupId, ')
           ..write('originalStartDateTime: $originalStartDateTime, ')
@@ -6854,6 +6961,7 @@ class SqliteCalendarEventOverrideRow extends DataClass
 
   @override
   int get hashCode => Object.hash(
+    notificationMinutesBefore,
     eventId,
     groupId,
     originalStartDateTime,
@@ -6870,6 +6978,7 @@ class SqliteCalendarEventOverrideRow extends DataClass
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is SqliteCalendarEventOverrideRow &&
+          other.notificationMinutesBefore == this.notificationMinutesBefore &&
           other.eventId == this.eventId &&
           other.groupId == this.groupId &&
           other.originalStartDateTime == this.originalStartDateTime &&
@@ -6885,6 +6994,7 @@ class SqliteCalendarEventOverrideRow extends DataClass
 
 class CalendarEventOverridesCompanion
     extends UpdateCompanion<SqliteCalendarEventOverrideRow> {
+  final Value<String> notificationMinutesBefore;
   final Value<String> eventId;
   final Value<String> groupId;
   final Value<int> originalStartDateTime;
@@ -6898,6 +7008,7 @@ class CalendarEventOverridesCompanion
   final Value<String?> memberId;
   final Value<int> rowid;
   const CalendarEventOverridesCompanion({
+    this.notificationMinutesBefore = const Value.absent(),
     this.eventId = const Value.absent(),
     this.groupId = const Value.absent(),
     this.originalStartDateTime = const Value.absent(),
@@ -6912,6 +7023,7 @@ class CalendarEventOverridesCompanion
     this.rowid = const Value.absent(),
   });
   CalendarEventOverridesCompanion.insert({
+    this.notificationMinutesBefore = const Value.absent(),
     required String eventId,
     required String groupId,
     required int originalStartDateTime,
@@ -6929,6 +7041,7 @@ class CalendarEventOverridesCompanion
        originalStartDateTime = Value(originalStartDateTime),
        isCancelled = Value(isCancelled);
   static Insertable<SqliteCalendarEventOverrideRow> custom({
+    Expression<String>? notificationMinutesBefore,
     Expression<String>? eventId,
     Expression<String>? groupId,
     Expression<int>? originalStartDateTime,
@@ -6943,6 +7056,8 @@ class CalendarEventOverridesCompanion
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
+      if (notificationMinutesBefore != null)
+        'notification_minutes_before': notificationMinutesBefore,
       if (eventId != null) 'event_id': eventId,
       if (groupId != null) 'group_id': groupId,
       if (originalStartDateTime != null)
@@ -6960,6 +7075,7 @@ class CalendarEventOverridesCompanion
   }
 
   CalendarEventOverridesCompanion copyWith({
+    Value<String>? notificationMinutesBefore,
     Value<String>? eventId,
     Value<String>? groupId,
     Value<int>? originalStartDateTime,
@@ -6974,6 +7090,8 @@ class CalendarEventOverridesCompanion
     Value<int>? rowid,
   }) {
     return CalendarEventOverridesCompanion(
+      notificationMinutesBefore:
+          notificationMinutesBefore ?? this.notificationMinutesBefore,
       eventId: eventId ?? this.eventId,
       groupId: groupId ?? this.groupId,
       originalStartDateTime:
@@ -6993,6 +7111,11 @@ class CalendarEventOverridesCompanion
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
+    if (notificationMinutesBefore.present) {
+      map['notification_minutes_before'] = Variable<String>(
+        notificationMinutesBefore.value,
+      );
+    }
     if (eventId.present) {
       map['event_id'] = Variable<String>(eventId.value);
     }
@@ -7037,6 +7160,7 @@ class CalendarEventOverridesCompanion
   @override
   String toString() {
     return (StringBuffer('CalendarEventOverridesCompanion(')
+          ..write('notificationMinutesBefore: $notificationMinutesBefore, ')
           ..write('eventId: $eventId, ')
           ..write('groupId: $groupId, ')
           ..write('originalStartDateTime: $originalStartDateTime, ')
