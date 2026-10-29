@@ -1,3 +1,4 @@
+import 'package:memora/application/dtos/member/member_dto.dart';
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,17 +16,21 @@ import '../../../../helpers/test_exception.dart';
 import 'calendar_notifications_notifier_test.mocks.dart';
 
 @GenerateMocks([
+  CalendarNotificationGateway,
   CalendarNotificationSource,
   SynchronizeCalendarNotificationsUsecase,
 ])
 void main() {
   late ProviderContainer container;
   late MockCalendarNotificationSource source;
+  late MockCalendarNotificationGateway gateway;
   late MockSynchronizeCalendarNotificationsUsecase sync;
   late StreamController<void> changes;
   setUp(() {
     changes = StreamController<void>.broadcast();
     source = MockCalendarNotificationSource();
+    gateway = MockCalendarNotificationGateway();
+    when(gateway.replace(any)).thenAnswer((_) async {});
     sync = MockSynchronizeCalendarNotificationsUsecase();
     when(source.changes()).thenAnswer((_) => changes.stream);
     when(sync.execute())
@@ -33,6 +38,7 @@ void main() {
     container = ProviderContainer(
       overrides: [
         calendarNotificationsSupportedProvider.overrideWithValue(true),
+      calendarNotificationGatewayProvider.overrideWithValue(gateway),
         calendarNotificationSourceProvider.overrideWithValue(source),
         synchronizeCalendarNotificationsUsecaseProvider.overrideWithValue(sync),
         currentMemberNotifierProvider.overrideWith(_CurrentMember.new),
@@ -51,8 +57,9 @@ void main() {
     container.read(currentMemberNotifierProvider.notifier).state =
         const CurrentMemberState.loading();
     await container.pump();
-    verify(source.changes()).called(1);
-    verify(sync.execute()).called(1);
+    verifyNever(source.changes());
+    verifyNever(sync.execute());
+    verify(gateway.replace(argThat(isEmpty))).called(1);
   });
   test('監視失敗後の再試行は購読を張り直して以後の変更を受信する', () async {
     final notifier = container.read(
@@ -78,5 +85,5 @@ void main() {
 
 class _CurrentMember extends CurrentMemberNotifier {
   @override
-  CurrentMemberState build() => const CurrentMemberState.loaded(null);
+  CurrentMemberState build() => const CurrentMemberState.loaded(MemberDto(id: 'self', displayName: '本人'));
 }
