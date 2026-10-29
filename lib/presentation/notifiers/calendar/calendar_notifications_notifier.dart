@@ -55,8 +55,9 @@ class CalendarNotificationsNotifier extends _$CalendarNotificationsNotifier {
     unawaited(_subscription?.cancel());
     _subscription = null;
     final member = ref.read(currentMemberNotifierProvider);
-    if (member.status != CurrentMemberStatus.loaded || member.member == null)
+    if (member.status != CurrentMemberStatus.loaded || member.member == null) {
       return;
+    }
     _subscription = ref
         .read(calendarNotificationSourceProvider)
         .changes()

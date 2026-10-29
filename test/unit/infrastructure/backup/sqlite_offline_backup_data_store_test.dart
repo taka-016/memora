@@ -581,6 +581,7 @@ void main() {
     tables['calendar_events'] = [
       {
         'id': 'invalid',
+        'notification_minutes_before': '[]',
         'group_id': 'group-1',
         'label_id': 'label',
         'label_type': 'custom',

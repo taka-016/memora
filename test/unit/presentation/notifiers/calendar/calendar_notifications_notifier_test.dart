@@ -1,4 +1,5 @@
 import 'package:memora/application/dtos/member/member_dto.dart';
+
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -38,7 +39,7 @@ void main() {
     container = ProviderContainer(
       overrides: [
         calendarNotificationsSupportedProvider.overrideWithValue(true),
-      calendarNotificationGatewayProvider.overrideWithValue(gateway),
+        calendarNotificationGatewayProvider.overrideWithValue(gateway),
         calendarNotificationSourceProvider.overrideWithValue(source),
         synchronizeCalendarNotificationsUsecaseProvider.overrideWithValue(sync),
         currentMemberNotifierProvider.overrideWith(_CurrentMember.new),
@@ -85,5 +86,6 @@ void main() {
 
 class _CurrentMember extends CurrentMemberNotifier {
   @override
-  CurrentMemberState build() => const CurrentMemberState.loaded(MemberDto(id: 'self', displayName: '本人'));
+  CurrentMemberState build() =>
+      const CurrentMemberState.loaded(MemberDto(id: 'self', displayName: '本人'));
 }

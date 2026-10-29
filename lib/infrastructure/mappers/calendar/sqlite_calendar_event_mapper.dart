@@ -18,7 +18,7 @@ class SqliteCalendarEventMapper {
     labelType: row['label_type'] as String,
     memberId: row['member_id'] as String? ?? '',
     notificationMinutesBefore: (jsonDecode(
-      row['notification_minutes_before'] as String? ?? '[]',
+      row['notification_minutes_before'] as String,
     ) as List).cast<int>(),
     title: row['title'] as String,
     startDateTime: DateTime.fromMicrosecondsSinceEpoch(

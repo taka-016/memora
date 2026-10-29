@@ -41,7 +41,7 @@ class CalendarOverrideMapper {
     ),
     isCancelled: row['is_cancelled'] == 1,
     notificationMinutesBefore: (jsonDecode(
-      row['notification_minutes_before'] as String? ?? '[]',
+      row['notification_minutes_before'] as String,
     ) as List).cast<int>(),
     title: row['title'] as String?,
     startDateTime: row['start_date_time'] == null
