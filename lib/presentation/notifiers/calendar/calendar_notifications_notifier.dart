@@ -53,6 +53,10 @@ class CalendarNotificationsNotifier extends _$CalendarNotificationsNotifier {
 
   void _watch() {
     unawaited(_subscription?.cancel());
+    _subscription = null;
+    final member = ref.read(currentMemberNotifierProvider);
+    if (member.status != CurrentMemberStatus.loaded || member.member == null)
+      return;
     _subscription = ref
         .read(calendarNotificationSourceProvider)
         .changes()
@@ -91,9 +95,21 @@ class CalendarNotificationsNotifier extends _$CalendarNotificationsNotifier {
           status: state.status,
           isSyncing: true,
         );
-        final result = await ref
-            .read(synchronizeCalendarNotificationsUsecaseProvider)
-            .execute();
+        CalendarNotificationStatus result;
+        try {
+          final member = ref.read(currentMemberNotifierProvider);
+          if (member.status != CurrentMemberStatus.loaded ||
+              member.member == null) {
+            await ref.read(calendarNotificationGatewayProvider).replace([]);
+            result = CalendarNotificationStatus.ready;
+          } else {
+            result = await ref
+                .read(synchronizeCalendarNotificationsUsecaseProvider)
+                .execute();
+          }
+        } catch (_) {
+          result = CalendarNotificationStatus.failed;
+        }
         if (!ref.mounted) return;
         state = CalendarNotificationsState(status: result);
       } while (_again);

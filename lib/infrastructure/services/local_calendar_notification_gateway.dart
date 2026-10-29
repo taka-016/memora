@@ -8,8 +8,13 @@ import 'package:memora/application/services/calendar/calendar_notification_gatew
 import 'package:memora/application/services/calendar/calendar_notification_planner.dart';
 
 class LocalCalendarNotificationGateway implements CalendarNotificationGateway {
-  LocalCalendarNotificationGateway();
-  final _plugin = FlutterLocalNotificationsPlugin();
+  LocalCalendarNotificationGateway({
+    FlutterLocalNotificationsPlugin? plugin,
+    bool? isAndroid,
+  }) : _plugin = plugin ?? FlutterLocalNotificationsPlugin(),
+       _isAndroid = isAndroid ?? Platform.isAndroid;
+  final FlutterLocalNotificationsPlugin _plugin;
+  final bool _isAndroid;
   Future<void>? _initialization;
   Future<void> _initialize() => _initialization ??= _plugin.initialize(
     settings: const InitializationSettings(
@@ -23,14 +28,14 @@ class LocalCalendarNotificationGateway implements CalendarNotificationGateway {
       >();
   @override
   Future<bool> isEnabled() async {
-    if (!Platform.isAndroid) return false;
+    if (!_isAndroid) return false;
     await _initialize();
     return await _android?.areNotificationsEnabled() ?? false;
   }
 
   @override
   Future<bool> requestPermission() async {
-    if (!Platform.isAndroid) return false;
+    if (!_isAndroid) return false;
     await _initialize();
     final allowed = await _android?.requestNotificationsPermission() ?? false;
     if (allowed) await _android?.requestExactAlarmsPermission();
@@ -39,7 +44,7 @@ class LocalCalendarNotificationGateway implements CalendarNotificationGateway {
 
   @override
   Future<void> replace(List<CalendarNotificationRequest> requests) async {
-    if (!Platform.isAndroid) return;
+    if (!_isAndroid) return;
     await _initialize();
     final directory = await getApplicationSupportDirectory();
     await directory.create(recursive: true);
@@ -53,12 +58,12 @@ class LocalCalendarNotificationGateway implements CalendarNotificationGateway {
       final wanted = {
         for (final request in requests) payload(request): request,
       };
-      final retained = <String>{};
+      final retained = <String, int>{};
       final used = pending.map((v) => v.id).toSet();
       for (final old in pending) {
         if (!(old.payload?.startsWith('calendar:') ?? false)) continue;
         if (wanted.containsKey(old.payload)) {
-          retained.add(old.payload!);
+          retained[old.payload!] = old.id;
         } else {
           await _plugin.cancel(id: old.id);
           used.remove(old.id);
@@ -67,12 +72,12 @@ class LocalCalendarNotificationGateway implements CalendarNotificationGateway {
       final exact = await _android?.canScheduleExactNotifications() ?? false;
       var id = 1;
       for (final entry in wanted.entries) {
-        if (retained.contains(entry.key)) continue;
         while (used.contains(id)) {
           id++;
         }
+        final notificationId = retained[entry.key] ?? id;
         await _plugin.zonedSchedule(
-          id: id,
+          id: notificationId,
           title: entry.value.title,
           body: '予定の時間をお知らせします',
           scheduledDate: tz.TZDateTime.from(entry.value.at, tz.UTC),
@@ -90,7 +95,7 @@ class LocalCalendarNotificationGateway implements CalendarNotificationGateway {
               : AndroidScheduleMode.inexactAllowWhileIdle,
           payload: entry.key,
         );
-        used.add(id);
+        used.add(notificationId);
       }
     } finally {
       await lock.unlock();
