@@ -83,11 +83,7 @@ void androidWidgetBackgroundUpdateDispatcher() {
   Workmanager().executeTask((task, inputData) async {
     if (task == calendarNotificationPeriodicTaskName) {
       WidgetsFlutterBinding.ensureInitialized();
-      try {
-        return await refreshCalendarNotificationsInBackground();
-      } catch (_) {
-        return false;
-      }
+      return await refreshCalendarNotificationsInBackground();
     }
     if (task != androidWidgetPeriodicUpdateTaskName) {
       return true;

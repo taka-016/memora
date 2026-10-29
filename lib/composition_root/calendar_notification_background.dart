@@ -32,6 +32,14 @@ Future<void> registerCalendarNotificationBackgroundUpdate() async {
 }
 
 Future<bool> refreshCalendarNotificationsInBackground() async {
+  try {
+    return await _refreshCalendarNotificationsInBackground();
+  } catch (_) {
+    return false;
+  }
+}
+
+Future<bool> _refreshCalendarNotificationsInBackground() async {
   final mode = await const SharedPreferencesAppModeStorage()
       .loadForCurrentBuild();
   if (mode == null) return true;

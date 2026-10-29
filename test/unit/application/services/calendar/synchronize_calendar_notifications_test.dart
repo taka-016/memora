@@ -8,6 +8,7 @@ import 'package:memora/application/services/calendar/calendar_recurrence_expande
 import 'package:memora/application/usecases/calendar/synchronize_calendar_notifications_usecase.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/infrastructure/services/iana_calendar_time_zone.dart';
+
 import '../../../../helpers/test_exception.dart';
 import 'synchronize_calendar_notifications_test.mocks.dart';
 
@@ -21,15 +22,37 @@ void main() {
   setUp(() {
     gateway = MockCalendarNotificationGateway();
     storage = MockCalendarNotificationStorage();
-    when(storage.load()).thenAnswer((_) async => const CalendarNotificationPreferences());
+    when(storage.load())
+        .thenAnswer((_) async => const CalendarNotificationPreferences());
     when(gateway.isEnabled()).thenAnswer((_) async => true);
     when(gateway.replace(any)).thenAnswer((_) async {});
-    events = [CalendarEventDto(id: 'other-author', groupId: 'joined', labelType: 'group', title: '他のメンバーの予定', startDateTime: DateTime(2026, 10, 30), endDateTime: DateTime(2026, 10, 30), isAllDay: true, notificationMinutesBefore: [0])];
-    sync = SynchronizeCalendarNotificationsUsecase(loadEvents: () async => events, storage: storage, gateway: gateway, planner: CalendarNotificationPlanner(CalendarRecurrenceExpander(IanaCalendarTimeZone())), now: () => now);
+    events = [
+      CalendarEventDto(
+        id: 'other-author',
+        groupId: 'joined',
+        labelType: 'group',
+        title: '他のメンバーの予定',
+        startDateTime: DateTime(2026, 10, 30),
+        endDateTime: DateTime(2026, 10, 30),
+        isAllDay: true,
+        notificationMinutesBefore: [0],
+      ),
+    ];
+    sync = SynchronizeCalendarNotificationsUsecase(
+      loadEvents: () async => events,
+      storage: storage,
+      gateway: gateway,
+      planner: CalendarNotificationPlanner(
+        CalendarRecurrenceExpander(IanaCalendarTimeZone()),
+      ),
+      now: () => now,
+    );
   });
   test('登録者によらず取得した全予定を予約し削除後は古い予約を解除する', () async {
     expect(await sync.execute(), CalendarNotificationStatus.ready);
-    final planned = verify(gateway.replace(captureAny)).captured.single as List<CalendarNotificationRequest>;
+    final planned =
+        verify(gateway.replace(captureAny)).captured.single
+            as List<CalendarNotificationRequest>;
     expect(planned.single.title, '他のメンバーの予定');
     events = [];
     await sync.execute();

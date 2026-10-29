@@ -147,6 +147,10 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('復元する'));
       await tester.pump();
+      await tester.scrollUntilVisible(
+        find.byType(DropdownButtonFormField<String>),
+        200,
+      );
 
       expect(
         tester

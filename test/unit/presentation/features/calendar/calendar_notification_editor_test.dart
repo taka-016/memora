@@ -5,7 +5,19 @@ import 'package:memora/presentation/features/calendar/calendar_notification_edit
 void main() {
   testWidgets('通知を追加・解除し、最大5件で追加操作を止める', (tester) async {
     var values = <int>[];
-    await tester.pumpWidget(MaterialApp(home: Scaffold(body: StatefulBuilder(builder: (context, update) => CalendarNotificationEditor(allDay: true, values: values, onChanged: (next) => update(() => values = next))))));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: StatefulBuilder(
+            builder: (context, update) => CalendarNotificationEditor(
+              allDay: true,
+              values: values,
+              onChanged: (next) => update(() => values = next),
+            ),
+          ),
+        ),
+      ),
+    );
     await tester.tap(find.text('通知を追加'));
     await tester.pump();
     await tester.tap(find.text('予定の開始時').last);
@@ -21,6 +33,11 @@ void main() {
       await tester.pump();
     }
     expect(values, hasLength(5));
-    expect(tester.widget<TextButton>(find.widgetWithText(TextButton, '通知を追加')).onPressed, isNull);
+    expect(
+      tester
+          .widget<TextButton>(find.widgetWithText(TextButton, '通知を追加'))
+          .onPressed,
+      isNull,
+    );
   });
 }
