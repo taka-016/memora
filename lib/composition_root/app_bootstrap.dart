@@ -1,3 +1,5 @@
+import 'package:memora/composition_root/calendar_notification_background.dart';
+
 import 'dart:async';
 
 import 'package:flutter/widgets.dart';
@@ -45,6 +47,7 @@ Future<void> launchApp(Widget app) async {
       };
       registerAndroidWidgetInteractivityCallback();
       await initializeAndroidWidgetBackgroundUpdate();
+      await registerCalendarNotificationBackgroundUpdate();
       final container = root.createContainer();
       try {
         if (root.mode == AppMode.offline) {

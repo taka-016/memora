@@ -1,3 +1,4 @@
+import 'package:memora/presentation/features/setting/calendar_notification_setting.dart';
 import 'package:memora/application/models/app_capabilities.dart';
 import 'package:memora/presentation/features/setting/calendar_default_duration_setting.dart';
 import 'package:memora/application/models/offline_backup_snapshot.dart';
@@ -243,6 +244,8 @@ class Settings extends ConsumerWidget {
             const SizedBox(height: 24),
             Text('カレンダー', style: Theme.of(context).textTheme.titleMedium),
             const CalendarDefaultDurationSetting(),
+            const CalendarNotificationSetting(),
+            const CalendarNotificationStatusView(),
             if (isOffline) ...[
               const SizedBox(height: 24),
               _buildOfflineBackupSection(context, ref),

@@ -129,6 +129,7 @@ class OfflineDatabase extends _$OfflineDatabase implements ReadTransaction {
       'INSERT INTO "$table" (${row.keys.map((k) => '"$k"').join(', ')}) VALUES (${List.filled(row.length, '?').join(', ')})',
       row.values.toList(),
     );
+    notifyUpdates({TableUpdate(table)});
   }
 
   Future<void> updateRow(
@@ -141,9 +142,11 @@ class OfflineDatabase extends _$OfflineDatabase implements ReadTransaction {
       variables: [...row.values.map((v) => Variable(v)), Variable(id)],
     );
     if (count == 0) throw StateError('更新対象が存在しません: $table/$id');
+    notifyUpdates({TableUpdate(table)});
   }
 
   Future<void> deleteRows(String table, String field, String value) async {
     await customStatement('DELETE FROM "$table" WHERE "$field" = ?', [value]);
+    notifyUpdates({TableUpdate(table)});
   }
 }

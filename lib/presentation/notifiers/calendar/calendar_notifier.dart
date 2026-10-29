@@ -1,3 +1,4 @@
+import 'package:memora/presentation/notifiers/calendar/calendar_notifications_notifier.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/composition_root/providers/group_providers.dart';
 
@@ -224,6 +225,12 @@ class CalendarNotifier extends _$CalendarNotifier {
         );
       }
       return false;
+    }
+    if (!ref.mounted) return true;
+    if (ref.exists(calendarNotificationsNotifierProvider)) {
+      unawaited(
+        ref.read(calendarNotificationsNotifierProvider.notifier).refresh(),
+      );
     }
     if (!ref.mounted) return true;
     if (!state.isWatching) await load();

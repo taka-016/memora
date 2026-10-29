@@ -1,3 +1,5 @@
+import 'package:memora/presentation/features/calendar/calendar_notification_editor.dart';
+import 'package:memora/presentation/notifiers/calendar/calendar_notification_preferences_notifier.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
 import 'package:memora/application/services/calendar/calendar_recurrence_settings.dart';
 import 'package:memora/application/usecases/calendar/change_calendar_recurrence_usecase.dart';
@@ -47,6 +49,7 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
   late bool _allDay;
   String? _labelId;
   String _error = '';
+  List<int>? _notifications;
   late CalendarRecurrenceSettings _recurrence;
   bool _recurrenceEdited = false;
   late final String _zone;
@@ -64,6 +67,7 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
         : ref
               .read(calendarNotifierProvider(widget.groupId).notifier)
               .seriesForEvent(event.id);
+    _notifications = event?.notificationMinutesBefore;
     _title = TextEditingController(text: event?.title ?? '');
     _allDay = event?.isAllDay ?? true;
     _start = event == null
@@ -269,6 +273,7 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
         startDateTime: start,
         endDateTime: end,
         isAllDay: _allDay,
+        notificationMinutesBefore: _notifications ?? [],
         recurrenceRule: rule,
         timeZone: rule != null && !_allDay ? _zone : null,
       );
@@ -343,7 +348,7 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                     Text(
                       deleting
                           ? '対象範囲の個別変更した予定${impact.reset}件も削除します。移動済みの予定も元の予定日時を基準に削除します。対象範囲外の個別変更は維持します。'
-                          : '個別変更した予定はそのまま維持します。日時・タイトル・色ラベル・終日区分の個別変更と個別の取消しは変更しません。',
+                          : '個別変更した予定はそのまま維持します。日時・タイトル・色ラベル・終日区分・通知の個別変更と個別の取消しは変更しません。',
                     ),
                   if (deleting && scope == CalendarChangeScope.only)
                     const Text('この回の取消しを保存します。'),
@@ -382,7 +387,7 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
         content: Text(
           original == null
               ? '現在の繰り返し条件に対応する回がないため、リセットするとこの個別予定は削除されます。'
-              : '日時・タイトル・色ラベル・終日区分の個別変更をすべて取り消し、現在の繰り返し予定に戻します。\n\n${original.title}\n${calendarPeriodText(original)}',
+              : '日時・タイトル・色ラベル・終日区分・通知の個別変更をすべて取り消し、現在の繰り返し予定に戻します。\n\n${original.title}\n${calendarPeriodText(original)}',
         ),
         actions: [
           TextButton(
@@ -478,6 +483,15 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
         )
         .toList();
     final preferences = ref.watch(calendarPreferencesNotifierProvider);
+    final notificationPreferences = ref.watch(
+      calendarNotificationPreferencesNotifierProvider,
+    );
+    final notificationSettings = notificationPreferences.value?.preferences;
+    if (_notifications == null && notificationSettings != null) {
+      _notifications = List.of(
+        _allDay ? notificationSettings.allDay : notificationSettings.timed,
+      );
+    }
     final dateInputStyle = TextButton.styleFrom(
       alignment: Alignment.centerLeft,
       foregroundColor: Theme.of(context).colorScheme.onSurface,
@@ -563,9 +577,17 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                               contentPadding: EdgeInsets.zero,
                               title: const Text('終日'),
                               value: _allDay,
-                              onChanged: state.isSaving
+                              onChanged:
+                                  state.isSaving || notificationSettings == null
                                   ? null
-                                  : (value) => setState(() => _allDay = value),
+                                  : (value) => setState(() {
+                                      _allDay = value;
+                                      _notifications = List.of(
+                                        value
+                                            ? notificationSettings.allDay
+                                            : notificationSettings.timed,
+                                      );
+                                    }),
                             ),
                             for (final start in [true, false])
                               Row(
@@ -644,6 +666,21 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                                       }
                                     },
                             ),
+                            if (notificationSettings != null)
+                              CalendarNotificationEditor(
+                                allDay: _allDay,
+                                values: _notifications ?? [],
+                                enabled: !state.isSaving,
+                                onChanged: (value) =>
+                                    setState(() => _notifications = value),
+                              ),
+                            if (notificationPreferences.hasError)
+                              TextButton(
+                                onPressed: () => ref.invalidate(
+                                  calendarNotificationPreferencesNotifierProvider,
+                                ),
+                                child: const Text('通知設定を再取得'),
+                              ),
                             if (!_allDay && preferences.hasError)
                               TextButton(
                                 onPressed: () => ref.invalidate(
@@ -688,7 +725,10 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                         child: const Text('キャンセル'),
                       ),
                       ElevatedButton(
-                        onPressed: state.isSaving ? null : _save,
+                        onPressed:
+                            state.isSaving || notificationSettings == null
+                            ? null
+                            : _save,
                         child: Text(state.isSaving ? '保存中' : '保存'),
                       ),
                     ],
