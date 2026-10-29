@@ -27,10 +27,8 @@ class CalendarNotificationsNotifier extends _$CalendarNotificationsNotifier {
       );
     }
     ref.listen(currentMemberNotifierProvider, (_, next) {
-      if (next.status != CurrentMemberStatus.loading) {
-        _watch();
-        unawaited(refresh());
-      }
+      _watch();
+      unawaited(refresh());
     });
     ref.listen(offlineBackupNotifierProvider, (previous, next) {
       if (previous?.isRestoring == true && !next.isWorking) {
@@ -70,6 +68,12 @@ class CalendarNotificationsNotifier extends _$CalendarNotificationsNotifier {
             }
           },
         );
+  }
+
+  Future<void> retry() async {
+    if (!ref.read(calendarNotificationsSupportedProvider)) return;
+    _watch();
+    await refresh();
   }
 
   Future<void> refresh() async {

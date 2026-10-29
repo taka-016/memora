@@ -32,7 +32,7 @@ class CalendarNotificationStatusView extends ConsumerWidget {
                         .requestPermission()
                   : ref
                         .read(calendarNotificationsNotifierProvider.notifier)
-                        .refresh(),
+                        .retry(),
         child: Text(
           state.status == CalendarNotificationStatus.denied ? '通知を許可' : '再試行',
         ),
