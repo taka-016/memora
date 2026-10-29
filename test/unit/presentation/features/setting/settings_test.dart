@@ -106,7 +106,9 @@ void main() {
 
     testWidgets('復元中はウィジェット設定を変更できない', (tester) async {
       tester.view.physicalSize = const Size(1000, 1200);
+      tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
       const snapshot = OfflineBackupSnapshot(
         formatVersion: OfflineBackupSnapshot.currentFormatVersion,
         databaseSchemaVersion: 1,
