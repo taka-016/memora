@@ -61,6 +61,8 @@ class ChangeCalendarRecurrenceUsecase {
           title: changes?.title,
           startDateTime: changes?.startDateTime,
           endDateTime: changes?.endDateTime,
+          notificationMinutesBefore:
+              changes?.notificationMinutesBefore ?? const [],
           isAllDay: changes?.isAllDay,
           labelId: changes?.labelId,
           labelType: changes?.labelType ?? 'custom',
@@ -339,6 +341,7 @@ class ChangeCalendarRecurrenceUsecase {
           title: value.title!,
           startDateTime: value.startDateTime!,
           endDateTime: value.endDateTime!,
+          notificationMinutesBefore: value.notificationMinutesBefore,
           isAllDay: value.isAllDay!,
         ),
       )
@@ -399,6 +402,7 @@ class ChangeCalendarRecurrenceUsecase {
         labelType: value.labelType,
 
         memberId: value.memberId,
+        notificationMinutesBefore: value.notificationMinutesBefore,
         isAllDay: value.isAllDay,
         startDateTime: value.startDateTime,
         endDateTime: value.endDateTime,
@@ -487,6 +491,7 @@ class ChangeCalendarRecurrenceUsecase {
     title: value.title,
     startDateTime: start ?? value.startDateTime,
     endDateTime: end ?? value.endDateTime,
+    notificationMinutesBefore: value.notificationMinutesBefore,
     isAllDay: value.isAllDay,
     recurrenceRule: rule ?? value.recurrenceRule,
     timeZone: (rule ?? value.recurrenceRule) == null || value.isAllDay

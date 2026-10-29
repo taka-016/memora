@@ -1,3 +1,4 @@
+import 'package:memora/domain/entities/calendar/calendar_notifications.dart';
 import 'package:memora/domain/entities/calendar/calendar_label_reference.dart';
 import 'package:equatable/equatable.dart';
 import 'package:memora/domain/exceptions/validation_exception.dart';
@@ -13,7 +14,13 @@ class CalendarEventOverride extends Equatable {
     this.labelId,
     this.labelType = 'custom',
     this.memberId = '',
+    this.notificationMinutesBefore = const [],
   }) {
+    if (!isCancelled)
+      validateCalendarNotifications(
+        notificationMinutesBefore,
+        isAllDay ?? false,
+      );
     if (!isCancelled &&
         (title == null ||
             title!.trim().isEmpty ||
@@ -31,6 +38,7 @@ class CalendarEventOverride extends Equatable {
   final DateTime? startDateTime;
   final DateTime? endDateTime;
   final bool? isAllDay;
+  final List<int> notificationMinutesBefore;
   final String? labelId;
   final String labelType;
   final String memberId;
@@ -42,6 +50,7 @@ class CalendarEventOverride extends Equatable {
     startDateTime,
     endDateTime,
     isAllDay,
+    notificationMinutesBefore,
     labelId,
     labelType,
     memberId,

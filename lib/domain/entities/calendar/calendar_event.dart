@@ -1,3 +1,4 @@
+import 'package:memora/domain/entities/calendar/calendar_notifications.dart';
 import 'package:memora/domain/entities/calendar/calendar_label_reference.dart';
 import 'package:memora/domain/entities/calendar/calendar_recurrence_rule.dart';
 import 'package:memora/domain/entities/calendar/calendar_event_override.dart';
@@ -19,7 +20,9 @@ class CalendarEvent extends Equatable {
     this.recurrenceRule,
     this.timeZone,
     this.overrides = const [],
+    this.notificationMinutesBefore = const [],
   }) {
+    validateCalendarNotifications(notificationMinutesBefore, isAllDay);
     if (recurrenceRule != null) {
       CalendarRecurrenceRule.parse(recurrenceRule!)
           .validateStart(startDateTime, isAllDay, recurrenceRule!);
@@ -74,6 +77,7 @@ class CalendarEvent extends Equatable {
   final DateTime startDateTime;
   final DateTime endDateTime;
   final bool isAllDay;
+  final List<int> notificationMinutesBefore;
   final String? recurrenceRule;
   final String? timeZone;
   final List<CalendarEventOverride> overrides;
@@ -89,6 +93,7 @@ class CalendarEvent extends Equatable {
     DateTime? startDateTime,
     DateTime? endDateTime,
     bool? isAllDay,
+    List<int>? notificationMinutesBefore,
     String? recurrenceRule,
     String? timeZone,
     List<CalendarEventOverride>? overrides,
@@ -104,6 +109,8 @@ class CalendarEvent extends Equatable {
       startDateTime: startDateTime ?? this.startDateTime,
       endDateTime: endDateTime ?? this.endDateTime,
       isAllDay: isAllDay ?? this.isAllDay,
+      notificationMinutesBefore:
+          notificationMinutesBefore ?? this.notificationMinutesBefore,
       recurrenceRule: recurrenceRule ?? this.recurrenceRule,
       timeZone: timeZone ?? this.timeZone,
       overrides: overrides ?? this.overrides,
@@ -122,6 +129,7 @@ class CalendarEvent extends Equatable {
     startDateTime,
     endDateTime,
     isAllDay,
+    notificationMinutesBefore,
     recurrenceRule,
     timeZone,
     overrides,
