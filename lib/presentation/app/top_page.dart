@@ -211,6 +211,11 @@ class TopPage extends HookConsumerWidget {
         },
         appBar: _buildAppBar(),
         drawer: _buildDrawer(context, ref, closeDrawer),
+        bottomNavigationBar: _buildBottomNavigationBar(
+          context,
+          ref,
+          closeDrawer,
+        ),
         body:
             !authenticationAvailable &&
                 currentMemberState.status == CurrentMemberStatus.error
@@ -432,56 +437,72 @@ class TopPage extends HookConsumerWidget {
     );
   }
 
+  Widget _buildBottomNavigationBar(
+    BuildContext context,
+    WidgetRef ref,
+    Future<void> Function() closeDrawer,
+  ) {
+    final destinations = [
+      (
+        item: AppNavigationItem.groupTimeline,
+        icon: Icons.timeline,
+        label: '年表',
+      ),
+      (
+        item: AppNavigationItem.calendar,
+        icon: Icons.calendar_month,
+        label: 'カレンダー',
+      ),
+      if (ref
+          .watch(appCapabilitiesProvider)
+          .availability(AppFeature.maps)
+          .isAvailable)
+        (item: AppNavigationItem.map, icon: Icons.map, label: '地図'),
+      (
+        item: AppNavigationItem.memberManagement,
+        icon: Icons.people,
+        label: 'メンバー',
+      ),
+      (
+        item: AppNavigationItem.groupManagement,
+        icon: Icons.group_work,
+        label: 'グループ',
+      ),
+    ];
+    final selectedIndex = destinations.indexWhere(
+      (destination) => destination.item == selectedItem,
+    );
+    return BottomNavigationBar(
+      type: BottomNavigationBarType.fixed,
+      currentIndex: selectedIndex < 0 ? 0 : selectedIndex,
+      showSelectedLabels: true,
+      showUnselectedLabels: true,
+      items: [
+        for (final destination in destinations)
+          BottomNavigationBarItem(
+            icon: Icon(destination.icon),
+            label: destination.label,
+          ),
+      ],
+      onTap: (index) {
+        unawaited(
+          _onNavigationItemSelected(
+            context,
+            ref,
+            destinations[index].item,
+            closeDrawer,
+          ),
+        );
+      },
+    );
+  }
+
   List<Widget> _buildDrawerItems(
     BuildContext context,
     WidgetRef ref,
     Future<void> Function() closeDrawer,
   ) {
     return [
-      _buildDrawerItem(
-        context,
-        ref,
-        Icons.timeline,
-        'グループ年表',
-        AppNavigationItem.groupTimeline,
-        closeDrawer,
-      ),
-      _buildDrawerItem(
-        context,
-        ref,
-        Icons.calendar_month,
-        'カレンダー',
-        AppNavigationItem.calendar,
-        closeDrawer,
-      ),
-      if (ref
-          .watch(appCapabilitiesProvider)
-          .availability(AppFeature.maps)
-          .isAvailable)
-        _buildDrawerItem(
-          context,
-          ref,
-          Icons.map,
-          '地図表示',
-          AppNavigationItem.map,
-          closeDrawer,
-        ),
-      _buildDrawerItem(
-        context,
-        ref,
-        Icons.people,
-        'メンバー管理',
-        AppNavigationItem.memberManagement,
-        closeDrawer,
-      ),
-      _buildDrawerItem(
-        context,
-        ref,
-        Icons.group_work,
-        'グループ管理',
-        AppNavigationItem.groupManagement,
-        closeDrawer,
-      ),
       _buildDrawerItem(
         context,
         ref,

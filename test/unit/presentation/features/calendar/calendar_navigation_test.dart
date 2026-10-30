@@ -87,14 +87,19 @@ void main() {
     expect(find.byKey(const Key('calendar_group_list')), findsOneWidget);
     verifyZeroInteractions(events);
   });
-  testWidgets('メニューを開き直しても同じ月と選択日を維持する', (tester) async {
+  testWidgets('下部メニューのカレンダーを再タップしても同じ月と選択日を維持する', (tester) async {
     await pump(tester, count: 1);
     await tester.tap(find.byTooltip('次の月'));
     await tester.pumpAndSettle();
     expect(find.text('2026年6月'), findsOneWidget);
-    await tester.tap(find.byIcon(Icons.menu));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('カレンダー'));
+    await tester.tap(
+      find
+          .descendant(
+            of: find.byType(BottomNavigationBar),
+            matching: find.text('カレンダー'),
+          )
+          .hitTestable(),
+    );
     await tester.pumpAndSettle();
     expect(find.text('2026年6月'), findsOneWidget);
   });

@@ -2,19 +2,94 @@ part of 'top_page_test_support.dart';
 
 extension TopPageNavigationTests on TopPageTestContext {
   void registerNavigationTests() {
-    testWidgets('メニューの年表直下にカレンダーがあり選択するとグループ選択を開く', (tester) async {
+    testWidgets('下部メニューは指定順のラベルを常時表示しカレンダーへ移動できる', (tester) async {
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+      final navigation = tester.widget<BottomNavigationBar>(
+        find.byType(BottomNavigationBar),
+      );
+      expect(navigation.items.map((item) => item.label), [
+        '年表',
+        'カレンダー',
+        '地図',
+        'メンバー',
+        'グループ',
+      ]);
+      expect(navigation.showSelectedLabels, isTrue);
+      expect(navigation.showUnselectedLabels, isTrue);
+      await tester.tap(find.text('カレンダー'));
+      await tester.pumpAndSettle();
+      expect(find.text('グループを選択'), findsOneWidget);
+      expect(
+        tester
+            .widget<BottomNavigationBar>(find.byType(BottomNavigationBar))
+            .currentIndex,
+        1,
+      );
+    });
+    for (final route in [
+      const SettingsRoute().location,
+      const AccountSettingsRoute().location,
+    ]) {
+      testWidgets('$routeへ直接開いた場合も下部メニューから年表へ移動できる', (tester) async {
+        await tester.pumpWidget(createTestWidget(initialLocation: route));
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.descendant(
+            of: find.byType(BottomNavigationBar),
+            matching: find.text('年表'),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.byKey(const Key('group_list')), findsOneWidget);
+      });
+    }
+    for (final title in ['設定', 'アカウント設定']) {
+      testWidgets('$titleは戻るボタン付きの追加ヘッダーを表示せず下部メニューから移動できる', (tester) async {
+        await tester.pumpWidget(createTestWidget());
+        await tester.pumpAndSettle();
+        await tester.tap(find.byIcon(Icons.menu));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text(title));
+        await tester.pumpAndSettle();
+        expect(find.text(title), findsOneWidget);
+        expect(find.byType(BackButton), findsNothing);
+        expect(
+          find.ancestor(of: find.text(title), matching: find.byType(AppBar)),
+          findsNothing,
+        );
+        await tester.tap(
+          find.descendant(
+            of: find.byType(BottomNavigationBar),
+            matching: find.text('年表'),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.byKey(const Key('group_list')), findsOneWidget);
+      });
+    }
+    testWidgets('ハンバーガーメニューには設定とアカウント設定を残す', (tester) async {
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
       await tester.tap(find.byIcon(Icons.menu));
       await tester.pumpAndSettle();
-      final tiles = tester.widgetList<ListTile>(find.byType(ListTile)).toList();
-      final names = tiles.map((tile) => (tile.title as Text).data).toList();
-      expect(names.indexOf('カレンダー'), names.indexOf('グループ年表') + 1);
-      await tester.tap(find.text('カレンダー'));
+      final tiles = tester.widgetList<ListTile>(
+        find.descendant(
+          of: find.byType(Drawer),
+          matching: find.byType(ListTile),
+        ),
+      );
+      expect(tiles.map((tile) => (tile.title as Text).data), [
+        '設定',
+        'アカウント設定',
+        'ログアウト',
+      ]);
+      await tester.tap(find.text('設定'));
       await tester.pumpAndSettle();
-      expect(find.text('グループを選択'), findsOneWidget);
+      expect(find.byKey(const Key('settings')), findsOneWidget);
+      expect(find.byType(Drawer), findsNothing);
     });
-    testWidgets('メニューから「グループ年表」を選択すると、グループ一覧画面が表示される', (
+    testWidgets('下部メニューから「年表」を選択すると、グループ一覧画面が表示される', (
       WidgetTester tester,
     ) async {
       // Arrange
@@ -30,12 +105,7 @@ extension TopPageNavigationTests on TopPageTestContext {
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
 
-      // ハンバーガーメニューをタップ
-      await tester.tap(find.byIcon(Icons.menu));
-      await tester.pumpAndSettle();
-
-      // グループ年表メニューをタップ
-      await tester.tap(find.text('グループ年表'));
+      await tester.tap(find.text('年表'));
       await tester.pumpAndSettle();
 
       // Assert
@@ -214,14 +284,9 @@ extension TopPageNavigationTests on TopPageTestContext {
         ),
       ).thenAnswer((_) async => singleGroup);
 
-      // Act
-      await tester.tap(find.byIcon(Icons.menu));
+      await tester.tap(find.text('地図'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('地図表示'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byIcon(Icons.menu));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('グループ年表'));
+      await tester.tap(find.text('年表'));
       await tester.pump();
       await tester.pumpAndSettle();
 
@@ -229,7 +294,7 @@ extension TopPageNavigationTests on TopPageTestContext {
       expect(find.byKey(const Key('group_timeline')), findsOneWidget);
       expect(find.byKey(const Key('group_list')), findsNothing);
     });
-    testWidgets('メニューから地図表示を選択すると、グループ選択後に対象地図を表示する', (
+    testWidgets('下部メニューから地図を選択すると、グループ選択後に対象地図を表示する', (
       WidgetTester tester,
     ) async {
       // Arrange
@@ -245,12 +310,7 @@ extension TopPageNavigationTests on TopPageTestContext {
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
 
-      // ハンバーガーメニューをタップ
-      await tester.tap(find.byIcon(Icons.menu));
-      await tester.pumpAndSettle();
-
-      // 地図表示メニューをタップ
-      await tester.tap(find.text('地図表示'));
+      await tester.tap(find.text('地図'));
       await tester.pumpAndSettle();
 
       expect(find.byKey(const Key('map_group_list')), findsOneWidget);
@@ -295,7 +355,7 @@ extension TopPageNavigationTests on TopPageTestContext {
       );
       expect(find.text('グループ1'), findsOneWidget);
     });
-    testWidgets('メニューから「メンバー管理」を選択すると、メンバー管理画面が表示される', (
+    testWidgets('下部メニューから「メンバー」を選択すると、メンバー管理画面が表示される', (
       WidgetTester tester,
     ) async {
       // Arrange
@@ -311,19 +371,16 @@ extension TopPageNavigationTests on TopPageTestContext {
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
 
-      // ハンバーガーメニューをタップ
-      await tester.tap(find.byIcon(Icons.menu));
-      await tester.pumpAndSettle();
-
-      // メンバー管理メニューをタップ
-      await tester.tap(find.text('メンバー管理'));
+      await tester.tap(find.text('メンバー'));
       await tester.pumpAndSettle();
 
       // Assert
       expect(find.byKey(const Key('member_settings')), findsOneWidget);
+      expect(find.text('メンバー管理'), findsOneWidget);
+      expect(find.text('メンバー追加'), findsOneWidget);
       expect(find.byKey(const Key('group_list')), findsNothing);
     });
-    testWidgets('メニューから「グループ管理」を選択すると、グループ管理画面が表示される', (
+    testWidgets('下部メニューから「グループ」を選択すると、グループ管理画面が表示される', (
       WidgetTester tester,
     ) async {
       // Arrange
@@ -339,16 +396,13 @@ extension TopPageNavigationTests on TopPageTestContext {
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
 
-      // ハンバーガーメニューをタップ
-      await tester.tap(find.byIcon(Icons.menu));
-      await tester.pumpAndSettle();
-
-      // グループ管理メニューをタップ
-      await tester.tap(find.text('グループ管理'));
+      await tester.tap(find.text('グループ'));
       await tester.pumpAndSettle();
 
       // Assert
       expect(find.byKey(const Key('group_settings')), findsOneWidget);
+      expect(find.text('グループ管理'), findsOneWidget);
+      expect(find.text('グループ追加'), findsOneWidget);
       expect(find.byKey(const Key('group_list')), findsNothing);
     });
     testWidgets('メニューから「設定」を選択すると、設定画面が表示される', (WidgetTester tester) async {
@@ -395,8 +449,8 @@ extension TopPageNavigationTests on TopPageTestContext {
       await tester.tap(find.byIcon(Icons.menu));
       await tester.pumpAndSettle();
 
-      // 地図表示メニューをタップ
-      await tester.tap(find.text('地図表示'));
+      // 設定メニューをタップ
+      await tester.tap(find.text('設定'));
       await tester.pumpAndSettle();
 
       // Assert - Drawerが閉じている
@@ -499,18 +553,12 @@ extension TopPageNavigationTests on TopPageTestContext {
         GroupTimelineRoute(groupId: groupsWithMembers.first.id).location,
       );
 
-      // 他画面に遷移（地図表示）
-      await tester.tap(find.byIcon(Icons.menu));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('地図表示'));
+      await tester.tap(find.text('地図'));
       await tester.pumpAndSettle();
 
       expect(router.state.matchedLocation, const MapRoute().location);
 
-      // グループ年表に戻る
-      await tester.tap(find.byIcon(Icons.menu));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('グループ年表'));
+      await tester.tap(find.text('年表'));
       await tester.pumpAndSettle();
 
       expect(router.state.matchedLocation, const GroupListRoute().location);
@@ -534,10 +582,7 @@ extension TopPageNavigationTests on TopPageTestContext {
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('group_timeline')), findsOneWidget);
 
-      // Act
-      await tester.tap(find.byIcon(Icons.menu));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('グループ年表'));
+      await tester.tap(find.text('年表'));
       await tester.pumpAndSettle();
 
       // Assert

@@ -236,10 +236,11 @@ class Settings extends ConsumerWidget {
       canPop: !isRestoring,
       child: Scaffold(
         key: const Key('settings'),
-        appBar: AppBar(title: const Text('設定')),
         body: ListView(
           padding: const EdgeInsets.all(24),
           children: [
+            Text('設定', style: Theme.of(context).textTheme.headlineSmall),
+            const SizedBox(height: 16),
             ..._buildModeInformation(ref),
             const SizedBox(height: 24),
             Text('カレンダー', style: Theme.of(context).textTheme.titleMedium),

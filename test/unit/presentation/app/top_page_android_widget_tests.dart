@@ -328,7 +328,7 @@ extension TopPageAndroidWidgetTests on TopPageTestContext {
 
       await tester.tap(find.byKey(const Key('hamburger_menu')));
       await tester.pump(const Duration(milliseconds: 300));
-      expect(find.text('グループ年表'), findsOneWidget);
+      expect(find.byType(Drawer), findsOneWidget);
 
       tripCompleter.complete(
         TripEntryDto(
