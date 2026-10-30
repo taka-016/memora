@@ -61,9 +61,7 @@ extension TopPageBackNavigationTests on TopPageTestContext {
           expect(find.byKey(const Key('group_timeline')), findsOneWidget);
           expect(find.text('太郎'), findsOneWidget);
 
-          await tester.tap(find.byIcon(Icons.menu));
-          await tester.pumpAndSettle();
-          await tester.tap(find.text(deleteGroup ? 'グループ管理' : 'メンバー管理'));
+          await tester.tap(find.text(deleteGroup ? 'グループ' : 'メンバー'));
           await tester.pumpAndSettle();
           await tester.tap(find.byIcon(Icons.delete).first);
           await tester.pumpAndSettle();
@@ -380,20 +378,22 @@ extension TopPageBackNavigationTests on TopPageTestContext {
       expect(find.byKey(const Key('group_timeline')), findsOneWidget);
 
       final menuTargets = <({String label, Finder finder})>[
-        (label: '地図表示', finder: find.byKey(const Key('map_view'))),
-        (label: 'グループ管理', finder: find.byKey(const Key('group_settings'))),
-        (label: 'メンバー管理', finder: find.byKey(const Key('member_settings'))),
+        (label: '地図', finder: find.byKey(const Key('map_view'))),
+        (label: 'グループ', finder: find.byKey(const Key('group_settings'))),
+        (label: 'メンバー', finder: find.byKey(const Key('member_settings'))),
         (label: '設定', finder: find.byKey(const Key('settings'))),
         (label: 'アカウント設定', finder: find.text('アカウント設定')),
       ];
 
       for (final target in menuTargets) {
-        await tester.tap(find.byIcon(Icons.menu));
-        await tester.pumpAndSettle();
+        if (target.label == '設定' || target.label == 'アカウント設定') {
+          await tester.tap(find.byIcon(Icons.menu));
+          await tester.pumpAndSettle();
+        }
         await tester.tap(find.text(target.label));
         await tester.pumpAndSettle();
 
-        if (target.label == '地図表示') {
+        if (target.label == '地図') {
           expect(find.byKey(const Key('map_group_list')), findsOneWidget);
           await tester.tap(find.text('グループ1'));
           await tester.pumpAndSettle();
@@ -408,7 +408,7 @@ extension TopPageBackNavigationTests on TopPageTestContext {
         expect(target.finder, findsNothing);
       }
     });
-    testWidgets('選択中のDrawer画面を再度選んでも同じルートを重複して積まない', (
+    testWidgets('選択中の下部メニュー画面を再度選んでも同じルートを重複して積まない', (
       WidgetTester tester,
     ) async {
       when(
@@ -423,14 +423,10 @@ extension TopPageBackNavigationTests on TopPageTestContext {
       await tester.pumpAndSettle();
       await tester.tap(find.text('グループ1'));
       await tester.pumpAndSettle();
-      await tester.tap(find.byIcon(Icons.menu));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('地図表示'));
+      await tester.tap(find.text('地図'));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byIcon(Icons.menu));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('地図表示'));
+      await tester.tap(find.text('地図'));
       await tester.pumpAndSettle();
       await tester.binding.handlePopRoute();
       await tester.pumpAndSettle();
@@ -438,9 +434,7 @@ extension TopPageBackNavigationTests on TopPageTestContext {
       expect(find.byKey(const Key('group_timeline')), findsOneWidget);
       expect(find.byKey(const Key('map_view')), findsNothing);
     });
-    testWidgets('Drawerのトップレベル画面を切り替えた後の戻る操作で年表に戻る', (
-      WidgetTester tester,
-    ) async {
+    testWidgets('下部メニューの画面を切り替えた後の戻る操作で年表に戻る', (WidgetTester tester) async {
       when(
         mockGroupQueryService.getGroupsWithMembersByMemberId(
           any,
@@ -453,9 +447,7 @@ extension TopPageBackNavigationTests on TopPageTestContext {
       await tester.pumpAndSettle();
       await tester.tap(find.text('グループ1'));
       await tester.pumpAndSettle();
-      await tester.tap(find.byIcon(Icons.menu));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('地図表示'));
+      await tester.tap(find.text('地図'));
       await tester.pumpAndSettle();
       await tester.tap(find.byIcon(Icons.menu));
       await tester.pumpAndSettle();

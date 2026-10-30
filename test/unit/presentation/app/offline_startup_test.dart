@@ -153,6 +153,15 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
       expect(container.read(appRouterConfigProvider).state.uri.path, '/groups');
       expect(authResolutions, 0);
+      final navigation = tester.widget<BottomNavigationBar>(
+        find.byType(BottomNavigationBar),
+      );
+      expect(navigation.items.map((item) => item.label), [
+        '年表',
+        'カレンダー',
+        'メンバー',
+        'グループ',
+      ]);
       await tester.tap(find.byKey(const Key('hamburger_menu')));
       await tester.pumpAndSettle();
       expect(find.text('ログアウト'), findsNothing);
