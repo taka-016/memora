@@ -170,12 +170,13 @@ class AccountSettings extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      appBar: AppBar(title: const Text('アカウント設定')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Text('アカウント設定', style: Theme.of(context).textTheme.headlineSmall),
+            const SizedBox(height: 16),
             _buildEmailChangeCard(context, ref),
             const SizedBox(height: 16),
             _buildPasswordChangeCard(context, ref),

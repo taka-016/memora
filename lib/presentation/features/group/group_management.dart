@@ -193,13 +193,8 @@ class GroupManagement extends HookConsumerWidget {
       return Container(
         padding: const EdgeInsets.all(16),
         child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            const SizedBox(width: 16),
-            const Text(
-              'グループ管理',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const Spacer(),
             ElevatedButton.icon(
               onPressed: managementState.hasValue ? showAddGroupDialog : null,
               icon: const Icon(Icons.add),
