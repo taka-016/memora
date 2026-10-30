@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:memora/application/dtos/location/location_candidate_dto.dart';
 import 'package:memora/application/dtos/trip/location_dto.dart';
 import 'package:memora/application/usecases/location/get_current_location_usecase.dart';
 import 'package:memora/application/usecases/location/search_locations_usecase.dart';
@@ -35,14 +36,14 @@ MockSearchLocationsUsecase _mockSearchLocationsUsecase() {
   return usecase;
 }
 
-Widget _createApp(Widget child) {
+Widget _createApp(Widget child, {SearchLocationsUsecase? searchUsecase}) {
   return ProviderScope(
     overrides: [
       getCurrentLocationUsecaseProvider.overrideWithValue(
         _mockGetCurrentLocationUsecase(),
       ),
       searchLocationsUsecaseProvider.overrideWithValue(
-        _mockSearchLocationsUsecase(),
+        searchUsecase ?? _mockSearchLocationsUsecase(),
       ),
     ],
     child: MaterialApp(home: Scaffold(body: child)),
@@ -182,6 +183,49 @@ void main() {
         expect(tester.takeException(), isNull);
       });
     }
+
+    testWidgets('狭い地図で検索候補が多くても候補選択と地図ボタンを操作できる', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 280));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final candidates = List.generate(
+        6,
+        (index) => LocationCandidateDto(
+          name: '候補$index',
+          address: '住所$index',
+          coordinate: const Coordinate(latitude: 35, longitude: 139),
+        ),
+      );
+      final searchUsecase = MockSearchLocationsUsecase();
+      when(searchUsecase.execute(any)).thenAnswer((_) async => candidates);
+      LocationCandidateDto? selected;
+      await tester.pumpWidget(
+        _createApp(
+          GoogleMapView(
+            locations: const [],
+            onSearchedLocationSelected: (candidate) => selected = candidate,
+          ),
+          searchUsecase: searchUsecase,
+        ),
+      );
+      tester.widget<GoogleMap>(find.byType(GoogleMap)).onCameraMove!(
+        const CameraPosition(target: LatLng(35, 139), bearing: 90),
+      );
+      await tester.enterText(find.byType(TextField), '駅');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+      expect(find.byTooltip('北向きに戻す').hitTestable(), findsOneWidget);
+      await tester.ensureVisible(find.byIcon(Icons.my_location));
+      await tester.pump();
+      expect(find.byIcon(Icons.my_location).hitTestable(), findsOneWidget);
+      await tester.ensureVisible(find.text('候補0'));
+      await tester.pump();
+      await tester.tap(find.text('候補0'));
+      await tester.pump();
+      expect(selected, candidates.first);
+      expect(tester.takeException(), isNull);
+    });
 
     testWidgets('GoogleMapViewが正しく表示される', (tester) async {
       await tester.pumpWidget(_createApp(const GoogleMapView(locations: [])));
