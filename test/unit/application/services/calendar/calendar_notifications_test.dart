@@ -46,6 +46,12 @@ void main() {
       DateTime(2026, 10, 29, 7),
       DateTime(2026, 10, 30, 7),
     ]);
+    expect(
+      allDay.every(
+        (v) => v.startDateTime == DateTime(2026, 10, 30, 10) && v.isAllDay,
+      ),
+      isTrue,
+    );
     final timed = planner.plan(
       [
         event(allDay: false, reminders: [0, 60]),
@@ -57,6 +63,31 @@ void main() {
       DateTime(2026, 10, 30, 9),
       DateTime(2026, 10, 30, 10),
     ]);
+  });
+  test('通知には系列の初日ではなく個別変更した回の開始日時と終日区分を渡す', () {
+    final start = DateTime(2026, 11, 3, 14);
+    final source = event(
+      rule: 'FREQ=DAILY;COUNT=2',
+      reminders: [],
+      overrides: [
+        CalendarEventOverride(
+          originalStartDateTime: DateTime.utc(2026, 10, 30),
+          isCancelled: false,
+          title: '移動した予定',
+          startDateTime: start,
+          endDateTime: start.add(const Duration(hours: 1)),
+          isAllDay: false,
+          labelType: 'group',
+          notificationMinutesBefore: [60],
+        ),
+      ],
+    );
+    final request = planner
+        .plan([source], now, const CalendarNotificationPreferences())
+        .single;
+    expect(request.startDateTime, start);
+    expect(request.isAllDay, isFalse);
+    expect(request.at, start.subtract(const Duration(hours: 1)));
   });
   test('通知時刻が現在から4週間以内の回だけを予約し、範囲外の開始日の事前通知も含める', () {
     final source = event(rule: 'FREQ=DAILY', reminders: [10080]);

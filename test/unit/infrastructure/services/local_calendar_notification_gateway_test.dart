@@ -27,7 +27,10 @@ void main() {
     PathProviderPlatform.instance = previous;
     await directory.delete(recursive: true);
   });
-  for (final exact in [true, false]) {
+  for (final (exact, isAllDay, expectedBody) in [
+    (true, false, '2026/10/30 14:00'),
+    (false, true, '2026/10/30（終日）'),
+  ]) {
     test('OSが予約を失っても記録済みIDで再予約し、正確なアラーム権限$exactに従う', () async {
       final plugin = MockFlutterLocalNotificationsPlugin();
       final android = MockAndroidFlutterLocalNotificationsPlugin();
@@ -42,7 +45,9 @@ void main() {
       final request = CalendarNotificationRequest(
         key: 'event/0',
         title: '予定',
-        at: DateTime.utc(2026, 10, 30, 7),
+        at: DateTime.utc(2026, 10, 29, 7),
+        startDateTime: DateTime(2026, 10, 30, 14),
+        isAllDay: isAllDay,
       );
       final payload =
           'calendar:${jsonEncode([request.key, request.title, request.at.toUtc().toIso8601String()])}';
@@ -69,7 +74,7 @@ void main() {
               ? AndroidScheduleMode.exactAllowWhileIdle
               : AndroidScheduleMode.inexactAllowWhileIdle,
           title: request.title,
-          body: anyNamed('body'),
+          body: expectedBody,
           payload: payload,
         ),
       ).called(1);
