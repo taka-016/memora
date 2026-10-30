@@ -437,7 +437,7 @@ class TopPage extends HookConsumerWidget {
     );
   }
 
-  Widget? _buildBottomNavigationBar(
+  Widget _buildBottomNavigationBar(
     BuildContext context,
     WidgetRef ref,
     Future<void> Function() closeDrawer,
@@ -472,12 +472,9 @@ class TopPage extends HookConsumerWidget {
     final selectedIndex = destinations.indexWhere(
       (destination) => destination.item == selectedItem,
     );
-    if (selectedIndex < 0) {
-      return null;
-    }
     return BottomNavigationBar(
       type: BottomNavigationBarType.fixed,
-      currentIndex: selectedIndex,
+      currentIndex: selectedIndex < 0 ? 0 : selectedIndex,
       showSelectedLabels: true,
       showUnselectedLabels: true,
       items: [
