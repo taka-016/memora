@@ -299,6 +299,7 @@ class GoogleMapView extends HookConsumerWidget {
                     math.max(0.0, constraints.maxHeight - buttonsHeight),
                   );
                   return SingleChildScrollView(
+                    primary: false,
                     padding: EdgeInsets.only(bottom: bottomPadding),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
@@ -385,8 +386,14 @@ class GoogleMapView extends HookConsumerWidget {
           buildGoogleMap(),
           Positioned.fill(
             child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                buildTopContent(),
+                Flexible(
+                  child: SingleChildScrollView(
+                    primary: false,
+                    child: buildTopContent(),
+                  ),
+                ),
                 Expanded(child: buildMapButtons()),
               ],
             ),
