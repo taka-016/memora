@@ -11,32 +11,40 @@ class CalendarNotificationStatusView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(calendarNotificationsNotifierProvider);
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      title: const Text('予定の端末通知'),
-      subtitle: Text(
-        state.isSyncing
-            ? '通知予約を更新中'
-            : switch (state.status) {
-                CalendarNotificationStatus.ready => '通知予約を更新しました（最大4週間先まで）',
-                CalendarNotificationStatus.denied => '通知権限がありません',
-                _ => '通知予約を更新できませんでした。再試行してください',
-              },
-      ),
-      trailing: TextButton(
-        onPressed: state.isSyncing
-            ? null
-            : () => state.status == CalendarNotificationStatus.denied
-                  ? ref
-                        .read(calendarNotificationsNotifierProvider.notifier)
-                        .requestPermission()
-                  : ref
-                        .read(calendarNotificationsNotifierProvider.notifier)
-                        .retry(),
-        child: Text(
-          state.status == CalendarNotificationStatus.denied ? '通知を許可' : '再試行',
+    final denied = state.status == CalendarNotificationStatus.denied;
+    final failed = state.status == CalendarNotificationStatus.failed;
+    if (!denied && !failed) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          denied ? '予定の通知が許可されていません' : '予定の通知を設定できませんでした',
+          style: Theme.of(context).textTheme.titleSmall,
         ),
-      ),
+        Text(
+          denied
+              ? '通知を許可すると、予定で設定した時刻にお知らせを受け取れます。'
+              : '予定で設定した通知が届かない可能性があります。',
+        ),
+        TextButton(
+          onPressed: state.isSyncing
+              ? null
+              : () => denied
+                    ? ref
+                          .read(calendarNotificationsNotifierProvider.notifier)
+                          .requestPermission()
+                    : ref
+                          .read(calendarNotificationsNotifierProvider.notifier)
+                          .retry(),
+          child: Text(
+            state.isSyncing
+                ? '設定中…'
+                : denied
+                ? '通知を許可'
+                : '通知を設定し直す',
+          ),
+        ),
+      ],
     );
   }
 }
