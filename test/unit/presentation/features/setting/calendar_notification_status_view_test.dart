@@ -1,3 +1,4 @@
+import 'package:memora/composition_root/providers/calendar_notification_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -10,6 +11,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          calendarNotificationsSupportedProvider.overrideWithValue(true),
           calendarNotificationsNotifierProvider.overrideWith(() => notifier),
         ],
         child: const MaterialApp(
@@ -41,7 +43,7 @@ void main() {
     );
   }
 
-  testWidgets('通知が許可されていない理由と許可操作を案内し許可後は案内を閉じる', (tester) async {
+  testWidgets('通知が許可されていない理由とスマートフォンの設定への入口を案内する', (tester) async {
     final notifier = _StatusNotifier(
       const CalendarNotificationsState(
         status: CalendarNotificationStatus.denied,
@@ -49,10 +51,10 @@ void main() {
     );
     await showStatus(tester, notifier);
     expect(find.text('予定の通知が許可されていません'), findsOneWidget);
-    expect(find.text('通知を許可すると、予定で設定した時刻にお知らせを受け取れます。'), findsOneWidget);
-    await tester.tap(find.text('通知を許可'));
+    expect(find.text('スマートフォンの設定で、このアプリの通知をオンにしてください。'), findsOneWidget);
+    await tester.tap(find.text('スマートフォンの設定を開く'));
     await tester.pump();
-    expect(notifier.permissionRequests, 1);
+    expect(notifier.settingsOpens, 1);
     expect(find.byType(TextButton), findsNothing);
   });
 
@@ -91,15 +93,15 @@ void main() {
 class _StatusNotifier extends CalendarNotificationsNotifier {
   _StatusNotifier(this.initial);
   final CalendarNotificationsState initial;
-  int permissionRequests = 0;
+  int settingsOpens = 0;
   int retries = 0;
 
   @override
   CalendarNotificationsState build() => initial;
 
   @override
-  Future<void> requestPermission() async {
-    permissionRequests++;
+  Future<void> openNotificationSettings() async {
+    settingsOpens++;
     state = const CalendarNotificationsState(
       status: CalendarNotificationStatus.ready,
     );

@@ -50,6 +50,28 @@ void main() {
     container.dispose();
     await changes.close();
   });
+  test('スマートフォンの通知設定を開く間は処理中となり重複して開かない', () async {
+    final opening = Completer<bool>();
+    when(gateway.openNotificationSettings()).thenAnswer((_) => opening.future);
+    final notifier = container.read(
+      calendarNotificationsNotifierProvider.notifier,
+    );
+    await container.pump();
+    final first = notifier.openNotificationSettings();
+    expect(
+      container.read(calendarNotificationsNotifierProvider).isSyncing,
+      isTrue,
+    );
+    await notifier.openNotificationSettings();
+    verify(gateway.openNotificationSettings()).called(1);
+    opening.complete(true);
+    await first;
+    expect(
+      container.read(calendarNotificationsNotifierProvider).isSyncing,
+      isFalse,
+    );
+  });
+
   test('ログアウトのloading遷移でも旧アカウントの購読と通知予約を更新する', () async {
     container.read(calendarNotificationsNotifierProvider);
     await container.pump();
