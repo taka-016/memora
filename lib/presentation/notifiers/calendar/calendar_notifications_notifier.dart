@@ -18,6 +18,7 @@ class CalendarNotificationsNotifier extends _$CalendarNotificationsNotifier {
   StreamSubscription<void>? _subscription;
   bool _running = false;
   bool _again = false;
+  bool _openingSettings = false;
 
   @override
   CalendarNotificationsState build() {
@@ -112,10 +113,43 @@ class CalendarNotificationsNotifier extends _$CalendarNotificationsNotifier {
           result = CalendarNotificationStatus.failed;
         }
         if (!ref.mounted) return;
-        state = CalendarNotificationsState(status: result);
+        state = CalendarNotificationsState(
+          status: result,
+          isSyncing: _openingSettings,
+        );
       } while (_again);
     } finally {
       _running = false;
+    }
+  }
+
+  Future<void> openNotificationSettings() async {
+    if (_openingSettings) return;
+    _openingSettings = true;
+    state = CalendarNotificationsState(status: state.status, isSyncing: true);
+    try {
+      final opened = await ref
+          .read(calendarNotificationGatewayProvider)
+          .openNotificationSettings();
+      if (ref.mounted) {
+        state = CalendarNotificationsState(
+          status: opened ? state.status : CalendarNotificationStatus.failed,
+        );
+      }
+    } catch (_) {
+      if (ref.mounted) {
+        state = const CalendarNotificationsState(
+          status: CalendarNotificationStatus.failed,
+        );
+      }
+    } finally {
+      _openingSettings = false;
+      if (ref.mounted) {
+        state = CalendarNotificationsState(
+          status: state.status,
+          isSyncing: _running,
+        );
+      }
     }
   }
 

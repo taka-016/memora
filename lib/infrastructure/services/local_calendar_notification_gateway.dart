@@ -43,6 +43,13 @@ class LocalCalendarNotificationGateway implements CalendarNotificationGateway {
   }
 
   @override
+  Future<bool> openNotificationSettings() async {
+    if (!_isAndroid) return false;
+    await _initialize();
+    return await _plugin.openAppNotificationSettings() ?? false;
+  }
+
+  @override
   Future<void> replace(List<CalendarNotificationRequest> requests) async {
     if (!_isAndroid) return;
     await _initialize();

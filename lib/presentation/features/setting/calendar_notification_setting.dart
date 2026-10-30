@@ -1,3 +1,4 @@
+import 'package:memora/composition_root/providers/calendar_notification_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/services/calendar/calendar_notification_gateway.dart';
@@ -10,6 +11,9 @@ class CalendarNotificationStatusView extends ConsumerWidget {
   const CalendarNotificationStatusView({super.key});
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (!ref.watch(calendarNotificationsSupportedProvider)) {
+      return const SizedBox.shrink();
+    }
     final state = ref.watch(calendarNotificationsNotifierProvider);
     final denied = state.status == CalendarNotificationStatus.denied;
     final failed = state.status == CalendarNotificationStatus.failed;
@@ -23,7 +27,7 @@ class CalendarNotificationStatusView extends ConsumerWidget {
         ),
         Text(
           denied
-              ? '通知を許可すると、予定で設定した時刻にお知らせを受け取れます。'
+              ? 'スマートフォンの設定で、このアプリの通知をオンにしてください。'
               : '予定で設定した通知が届かない可能性があります。',
         ),
         TextButton(
@@ -32,15 +36,15 @@ class CalendarNotificationStatusView extends ConsumerWidget {
               : () => denied
                     ? ref
                           .read(calendarNotificationsNotifierProvider.notifier)
-                          .requestPermission()
+                          .openNotificationSettings()
                     : ref
                           .read(calendarNotificationsNotifierProvider.notifier)
                           .retry(),
           child: Text(
             state.isSyncing
-                ? '設定中…'
+                ? (denied ? '設定を開いています…' : '設定中…')
                 : denied
-                ? '通知を許可'
+                ? 'スマートフォンの設定を開く'
                 : '通知を設定し直す',
           ),
         ),
