@@ -71,7 +71,6 @@ class CalendarNotificationSetting extends ConsumerWidget {
     return ListTile(
       contentPadding: EdgeInsets.zero,
       title: const Text('予定の通知設定'),
-      subtitle: const Text('終日の基準時刻・デフォルト通知'),
       trailing: const Icon(Icons.edit),
       onTap: value.value!.isSaving
           ? null
@@ -124,7 +123,7 @@ class _NotificationSettingsDialogState
           children: [
             ListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('終日の通知基準時刻（この端末）'),
+              title: const Text('終日の通知基準時刻'),
               subtitle: Text(
                 '${(_minute ~/ 60).toString().padLeft(2, '0')}:${(_minute % 60).toString().padLeft(2, '0')}',
               ),
@@ -153,7 +152,6 @@ class _NotificationSettingsDialogState
               values: _timed,
               onChanged: (v) => setState(() => _timed = v),
             ),
-            const Text('デフォルトの変更は新規予定と終日・時間指定の切替時に適用します。'),
           ],
         ),
       ),
