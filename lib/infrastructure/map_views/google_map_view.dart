@@ -279,43 +279,68 @@ class GoogleMapView extends HookConsumerWidget {
     }
 
     Widget buildMapButtons() {
-      return Padding(
-        padding: const EdgeInsets.only(right: 4),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ValueListenableBuilder<double>(
-              valueListenable: compassBearing,
-              builder: (context, bearing, child) {
-                if (bearing % 360 == 0) {
-                  return const SizedBox.shrink();
-                }
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: FloatingActionButton(
-                    heroTag: 'map_compass_fab',
-                    tooltip: '北向きに戻す',
-                    onPressed: resetBearing,
-                    child: Transform.rotate(
-                      key: const Key('map_compass_needle'),
-                      angle: -bearing * math.pi / 180,
-                      child: const CustomPaint(
-                        size: Size(24, 32),
-                        painter: _CompassNeedlePainter(),
-                      ),
+      const buttonSize = 56.0;
+      const buttonSpacing = 12.0;
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          return Align(
+            alignment: Alignment.bottomRight,
+            child: Padding(
+              padding: const EdgeInsets.only(right: 4),
+              child: ValueListenableBuilder<double>(
+                valueListenable: compassBearing,
+                builder: (context, bearing, child) {
+                  final showCompass = bearing % 360 != 0;
+                  final buttonsHeight = showCompass
+                      ? buttonSize * 2 + buttonSpacing
+                      : buttonSize;
+                  final bottomPadding = math.min(
+                    112.0,
+                    math.max(0.0, constraints.maxHeight - buttonsHeight),
+                  );
+                  return SingleChildScrollView(
+                    padding: EdgeInsets.only(bottom: bottomPadding),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (showCompass)
+                          Padding(
+                            padding: const EdgeInsets.only(
+                              bottom: buttonSpacing,
+                            ),
+                            child: SizedBox.square(
+                              dimension: buttonSize,
+                              child: FloatingActionButton(
+                                heroTag: 'map_compass_fab',
+                                tooltip: '北向きに戻す',
+                                onPressed: resetBearing,
+                                child: Transform.rotate(
+                                  key: const Key('map_compass_needle'),
+                                  angle: -bearing * math.pi / 180,
+                                  child: const CustomPaint(
+                                    size: Size(24, 32),
+                                    painter: _CompassNeedlePainter(),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        SizedBox.square(
+                          dimension: buttonSize,
+                          child: FloatingActionButton(
+                            heroTag: 'my_location_fab',
+                            onPressed: moveToCurrentLocation,
+                            child: const Icon(Icons.my_location),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
-            FloatingActionButton(
-              heroTag: 'my_location_fab',
-              onPressed: moveToCurrentLocation,
-              child: const Icon(Icons.my_location),
-            ),
-            const Flexible(child: SizedBox(height: 112)),
-          ],
-        ),
+          );
+        },
       );
     }
 
@@ -362,12 +387,7 @@ class GoogleMapView extends HookConsumerWidget {
             child: Column(
               children: [
                 buildTopContent(),
-                Expanded(
-                  child: Align(
-                    alignment: Alignment.bottomRight,
-                    child: buildMapButtons(),
-                  ),
-                ),
+                Expanded(child: buildMapButtons()),
               ],
             ),
           ),
