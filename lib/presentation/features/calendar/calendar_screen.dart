@@ -110,6 +110,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           key: const Key('calendar_screen'),
           children: [
             Positioned.fill(
+              bottom: 16,
               child: Column(
                 children: [
                   Row(
