@@ -47,7 +47,7 @@ final class CalendarNotificationsNotifierProvider
 }
 
 String _$calendarNotificationsNotifierHash() =>
-    r'22ed6c155bb5fe2bff7b9a8ad561d3d0fd2e8cc0';
+    r'300d86e32abf9d78b9b78ac65462ed94b37b232e';
 
 abstract class _$CalendarNotificationsNotifier
     extends $Notifier<CalendarNotificationsState> {
