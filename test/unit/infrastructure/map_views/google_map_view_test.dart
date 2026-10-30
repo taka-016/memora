@@ -174,6 +174,8 @@ void main() {
           tester.getRect(compass).bottom,
           lessThan(tester.getRect(find.byIcon(Icons.my_location)).top),
         );
+        await tester.ensureVisible(groupSelector);
+        await tester.pump();
         await tester.tap(groupSelector);
         await tester.pump();
         expect(groupSelectorTapped, isTrue);
@@ -219,8 +221,6 @@ void main() {
       await tester.ensureVisible(find.byIcon(Icons.my_location));
       await tester.pump();
       expect(find.byIcon(Icons.my_location).hitTestable(), findsOneWidget);
-      await tester.ensureVisible(find.text('候補0'));
-      await tester.pump();
       await tester.tap(find.text('候補0'));
       await tester.pump();
       expect(selected, candidates.first);
