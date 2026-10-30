@@ -132,6 +132,50 @@ void main() {
       );
     });
 
+    testWidgets('高さが小さい地図でもコンパスと検索欄と上部ツールバーが重ならず操作できる', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 280));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      var groupSelectorTapped = false;
+      final groupSelector = find.byKey(const Key('compact_group_selector'));
+      await tester.pumpWidget(
+        _createApp(
+          GoogleMapView(
+            locations: const [],
+            topLeadingOverlay: TextButton(
+              key: const Key('compact_group_selector'),
+              onPressed: () => groupSelectorTapped = true,
+              child: const Text('グループを選択'),
+            ),
+          ),
+        ),
+      );
+      final googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
+      googleMap.onCameraMove!(
+        const CameraPosition(target: LatLng(35, 139), bearing: 90),
+      );
+      await tester.pump();
+
+      final compass = find.byTooltip('北向きに戻す');
+      expect(
+        tester
+            .getRect(compass)
+            .overlaps(tester.getRect(find.byType(TextField))),
+        isFalse,
+      );
+      expect(
+        tester.getRect(compass).overlaps(tester.getRect(groupSelector)),
+        isFalse,
+      );
+      expect(
+        tester.getRect(compass).bottom,
+        lessThan(tester.getRect(find.byIcon(Icons.my_location)).top),
+      );
+      await tester.tap(groupSelector);
+      await tester.pump();
+      expect(groupSelectorTapped, isTrue);
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('GoogleMapViewが正しく表示される', (tester) async {
       await tester.pumpWidget(_createApp(const GoogleMapView(locations: [])));
 
