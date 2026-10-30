@@ -1,3 +1,4 @@
+import 'package:memora/presentation/shared/dialogs/edit_discard_scope.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:memora/application/services/calendar/calendar_recurrence_settings.dart';
@@ -64,6 +65,18 @@ class _CalendarRecurrenceCustomDialogState
   late String _endMode;
   late DateTime _until;
   String _error = '';
+  late final Object _initialValues;
+  Object get _editValues => (
+    _frequency,
+    _interval.text,
+    _frequency == 'WEEKLY' ? (_weekdays.toList()..sort()).join(',') : null,
+    _frequency == 'MONTHLY' ? _monthlyDay : null,
+    _endMode,
+    _endMode == 'count' ? _count.text : null,
+    _endMode == 'until'
+        ? DateTime(_until.year, _until.month, _until.day)
+        : null,
+  );
   @override
   void initState() {
     super.initState();
@@ -84,6 +97,7 @@ class _CalendarRecurrenceCustomDialogState
         ? 'until'
         : 'never';
     _until = value.until ?? widget.start;
+    _initialValues = _editValues;
   }
 
   @override
@@ -118,123 +132,139 @@ class _CalendarRecurrenceCustomDialogState
   }
 
   @override
-  Widget build(BuildContext context) => AlertDialog(
-    title: const Text('カスタムの繰り返し'),
-    content: SizedBox(
-      width: 420,
-      child: SingleChildScrollView(
-        child: Form(
-          key: _form,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              DropdownButtonFormField<String>(
-                initialValue: _frequency,
-                decoration: const InputDecoration(labelText: '単位'),
-                items: [
-                  for (final entry in {
-                    'DAILY': '日',
-                    'WEEKLY': '週',
-                    'MONTHLY': '月',
-                    'YEARLY': '年',
-                  }.entries)
-                    DropdownMenuItem(
-                      value: entry.key,
-                      child: Text(entry.value),
-                    ),
-                ],
-                onChanged: (value) => setState(() => _frequency = value!),
-              ),
-              TextFormField(
-                controller: _interval,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: '間隔'),
-                validator: _positive,
-              ),
-              if (_frequency == 'WEEKLY')
-                Wrap(
-                  spacing: 4,
-                  children: [
-                    for (var day = 1; day <= 7; day++)
-                      FilterChip(
-                        label: Text(
-                          CalendarRecurrenceSettings.dayNames[day - 1],
-                        ),
-                        selected: _weekdays.contains(day),
-                        onSelected: day == widget.start.weekday
-                            ? null
-                            : (selected) => setState(() {
-                                if (selected) {
-                                  _weekdays.add(day);
-                                } else {
-                                  _weekdays.remove(day);
-                                }
-                              }),
+  Widget build(BuildContext context) => EditDiscardScope(
+    isDirty: _editValues != _initialValues,
+    child: AlertDialog(
+      title: const Text('カスタムの繰り返し'),
+      content: SizedBox(
+        width: 420,
+        child: SingleChildScrollView(
+          child: Form(
+            key: _form,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                DropdownButtonFormField<String>(
+                  initialValue: _frequency,
+                  decoration: const InputDecoration(labelText: '単位'),
+                  items: [
+                    for (final entry in {
+                      'DAILY': '日',
+                      'WEEKLY': '週',
+                      'MONTHLY': '月',
+                      'YEARLY': '年',
+                    }.entries)
+                      DropdownMenuItem(
+                        value: entry.key,
+                        child: Text(entry.value),
                       ),
                   ],
+                  onChanged: (value) => setState(() => _frequency = value!),
                 ),
-              if (_frequency == 'MONTHLY') Text('毎月$_monthlyDay日'),
-              DropdownButtonFormField<String>(
-                initialValue: _endMode,
-                decoration: const InputDecoration(labelText: '終了条件'),
-                items: const [
-                  DropdownMenuItem(value: 'never', child: Text('終了しない')),
-                  DropdownMenuItem(value: 'count', child: Text('回数指定')),
-                  DropdownMenuItem(value: 'until', child: Text('終了日指定')),
-                ],
-                onChanged: (value) => setState(() => _endMode = value!),
-              ),
-              if (_endMode == 'count')
                 TextFormField(
-                  controller: _count,
+                  controller: _interval,
+                  onChanged: (_) => setState(() {}),
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: '回数'),
+                  decoration: const InputDecoration(labelText: '間隔'),
                   validator: _positive,
                 ),
-              if (_endMode == 'until')
-                TextButton(
-                  style: TextButton.styleFrom(alignment: Alignment.centerLeft),
-                  onPressed: () async {
-                    final date = await DatePickerHelper.showCustomDatePicker(
-                      context,
-                      initialDate: DateTime(
-                        (_until.isBefore(widget.start) ? widget.start : _until)
-                            .year,
-                        (_until.isBefore(widget.start) ? widget.start : _until)
-                            .month,
-                        (_until.isBefore(widget.start) ? widget.start : _until)
-                            .day,
-                      ),
-                      firstDate: DateTime(
-                        widget.start.year,
-                        widget.start.month,
-                        widget.start.day,
-                      ),
-                      lastDate: DateTime(9999, 12, 31),
-                    );
-                    if (date != null && mounted) setState(() => _until = date);
-                  },
-                  child: Text(
-                    '終了日: ${_until.year}/${_until.month}/${_until.day}',
+                if (_frequency == 'WEEKLY')
+                  Wrap(
+                    spacing: 4,
+                    children: [
+                      for (var day = 1; day <= 7; day++)
+                        FilterChip(
+                          label: Text(
+                            CalendarRecurrenceSettings.dayNames[day - 1],
+                          ),
+                          selected: _weekdays.contains(day),
+                          onSelected: day == widget.start.weekday
+                              ? null
+                              : (selected) => setState(() {
+                                  if (selected) {
+                                    _weekdays.add(day);
+                                  } else {
+                                    _weekdays.remove(day);
+                                  }
+                                }),
+                        ),
+                    ],
                   ),
+                if (_frequency == 'MONTHLY') Text('毎月$_monthlyDay日'),
+                DropdownButtonFormField<String>(
+                  initialValue: _endMode,
+                  decoration: const InputDecoration(labelText: '終了条件'),
+                  items: const [
+                    DropdownMenuItem(value: 'never', child: Text('終了しない')),
+                    DropdownMenuItem(value: 'count', child: Text('回数指定')),
+                    DropdownMenuItem(value: 'until', child: Text('終了日指定')),
+                  ],
+                  onChanged: (value) => setState(() => _endMode = value!),
                 ),
-              if (_error.isNotEmpty)
-                Text(
-                  _error,
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
-                ),
-            ],
+                if (_endMode == 'count')
+                  TextFormField(
+                    controller: _count,
+                    onChanged: (_) => setState(() {}),
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(labelText: '回数'),
+                    validator: _positive,
+                  ),
+                if (_endMode == 'until')
+                  TextButton(
+                    style: TextButton.styleFrom(
+                      alignment: Alignment.centerLeft,
+                    ),
+                    onPressed: () async {
+                      final date = await DatePickerHelper.showCustomDatePicker(
+                        context,
+                        initialDate: DateTime(
+                          (_until.isBefore(widget.start)
+                                  ? widget.start
+                                  : _until)
+                              .year,
+                          (_until.isBefore(widget.start)
+                                  ? widget.start
+                                  : _until)
+                              .month,
+                          (_until.isBefore(widget.start)
+                                  ? widget.start
+                                  : _until)
+                              .day,
+                        ),
+                        firstDate: DateTime(
+                          widget.start.year,
+                          widget.start.month,
+                          widget.start.day,
+                        ),
+                        lastDate: DateTime(9999, 12, 31),
+                      );
+                      if (date != null && mounted)
+                        setState(() => _until = date);
+                    },
+                    child: Text(
+                      '終了日: ${_until.year}/${_until.month}/${_until.day}',
+                    ),
+                  ),
+                if (_error.isNotEmpty)
+                  Text(
+                    _error,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.maybePop(context),
+          child: const Text('キャンセル'),
+        ),
+        FilledButton(onPressed: _confirm, child: const Text('決定')),
+      ],
     ),
-    actions: [
-      TextButton(
-        onPressed: () => Navigator.pop(context),
-        child: const Text('キャンセル'),
-      ),
-      FilledButton(onPressed: _confirm, child: const Text('決定')),
-    ],
   );
 }

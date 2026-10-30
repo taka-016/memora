@@ -1,3 +1,4 @@
+import 'package:memora/presentation/shared/dialogs/edit_discard_scope.dart';
 import 'package:memora/presentation/features/calendar/calendar_notification_editor.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_notification_preferences_notifier.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
@@ -55,6 +56,29 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
   late final String _zone;
   bool? _seriesAllDay;
   CalendarEventDto? _seriesAtOpen;
+  late final Object _initialValues;
+  List<int>? _initialNotifications;
+
+  Object get _editValues => (
+    _title.text,
+    _start,
+    _end,
+    _allDay,
+    _labelId,
+    _recurrence.frequency,
+    _recurrence.interval,
+    (_recurrence.weekdays.toList()..sort()).join(','),
+    _recurrence.monthDay,
+    _recurrence.ordinal,
+    _recurrence.count,
+    _recurrence.until == null
+        ? null
+        : DateTime(
+            _recurrence.until!.year,
+            _recurrence.until!.month,
+            _recurrence.until!.day,
+          ),
+  );
 
   bool get _hasIndividualChanges => widget.event?.hasIndividualChanges ?? false;
 
@@ -68,6 +92,9 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
               .read(calendarNotifierProvider(widget.groupId).notifier)
               .seriesForEvent(event.id);
     _notifications = event?.notificationMinutesBefore;
+    _initialNotifications = _notifications == null
+        ? null
+        : List.of(_notifications!);
     _title = TextEditingController(text: event?.title ?? '');
     _allDay = event?.isAllDay ?? true;
     _start = event == null
@@ -130,6 +157,7 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
             .displayLabels
             .firstOrNull
             ?.id;
+    _initialValues = _editValues;
   }
 
   @override
@@ -491,6 +519,7 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
       _notifications = List.of(
         _allDay ? notificationSettings.allDay : notificationSettings.timed,
       );
+      _initialNotifications = List.of(_notifications!);
     }
     final dateInputStyle = TextButton.styleFrom(
       alignment: Alignment.centerLeft,
@@ -501,8 +530,12 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
         borderRadius: BorderRadius.circular(4),
       ),
     );
-    return PopScope(
-      canPop: !state.isSaving,
+    return EditDiscardScope(
+      isSaving: state.isSaving,
+      isDirty:
+          _editValues != _initialValues ||
+          (_notifications ?? []).join(',') !=
+              (_initialNotifications ?? []).join(','),
       child: Dialog(
         insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
         child: Material(
@@ -534,6 +567,7 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                           children: [
                             TextFormField(
                               controller: _title,
+                              onChanged: (_) => setState(() {}),
                               enabled: !state.isSaving,
                               decoration: const InputDecoration(
                                 labelText: 'タイトル',
@@ -721,7 +755,7 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                       TextButton(
                         onPressed: state.isSaving
                             ? null
-                            : () => Navigator.pop(context),
+                            : () => Navigator.maybePop(context),
                         child: const Text('キャンセル'),
                       ),
                       ElevatedButton(

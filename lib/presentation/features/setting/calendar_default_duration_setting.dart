@@ -1,3 +1,4 @@
+import 'package:memora/presentation/shared/dialogs/edit_discard_scope.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_preferences_notifier.dart';
@@ -69,38 +70,42 @@ class _DurationDialogState extends State<_DurationDialog> {
   }
 
   @override
-  Widget build(BuildContext context) => AlertDialog(
-    title: const Text('予定の標準時間'),
-    content: Form(
-      key: _form,
-      child: TextFormField(
-        controller: _controller,
-        keyboardType: TextInputType.number,
-        decoration: const InputDecoration(
-          labelText: '分',
-          helperText: '1〜1440分',
+  Widget build(BuildContext context) => EditDiscardScope(
+    isDirty: _controller.text != '${widget.minutes}',
+    child: AlertDialog(
+      title: const Text('予定の標準時間'),
+      content: Form(
+        key: _form,
+        child: TextFormField(
+          controller: _controller,
+          onChanged: (_) => setState(() {}),
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(
+            labelText: '分',
+            helperText: '1〜1440分',
+          ),
+          validator: (text) {
+            final minutes = int.tryParse(text ?? '');
+            return minutes == null || minutes < 1 || minutes > 1440
+                ? '1〜1440分で指定してください'
+                : null;
+          },
         ),
-        validator: (text) {
-          final minutes = int.tryParse(text ?? '');
-          return minutes == null || minutes < 1 || minutes > 1440
-              ? '1〜1440分で指定してください'
-              : null;
-        },
       ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.maybePop(context),
+          child: const Text('キャンセル'),
+        ),
+        FilledButton(
+          onPressed: () {
+            if (_form.currentState!.validate()) {
+              Navigator.pop(context, int.parse(_controller.text));
+            }
+          },
+          child: const Text('保存'),
+        ),
+      ],
     ),
-    actions: [
-      TextButton(
-        onPressed: () => Navigator.pop(context),
-        child: const Text('キャンセル'),
-      ),
-      FilledButton(
-        onPressed: () {
-          if (_form.currentState!.validate()) {
-            Navigator.pop(context, int.parse(_controller.text));
-          }
-        },
-        child: const Text('保存'),
-      ),
-    ],
   );
 }

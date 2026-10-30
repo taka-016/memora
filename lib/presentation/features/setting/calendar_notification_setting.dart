@@ -1,3 +1,4 @@
+import 'package:memora/presentation/shared/dialogs/edit_discard_scope.dart';
 import 'package:memora/composition_root/providers/calendar_notification_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -111,67 +112,74 @@ class _NotificationSettingsDialogState
   late int _minute = widget.initial.allDayMinuteOfDay;
   late List<int> _allDay = widget.initial.allDay;
   late List<int> _timed = widget.initial.timed;
+  bool get _isDirty =>
+      _minute != widget.initial.allDayMinuteOfDay ||
+      _allDay.join(',') != widget.initial.allDay.join(',') ||
+      _timed.join(',') != widget.initial.timed.join(',');
   @override
-  Widget build(BuildContext context) => AlertDialog(
-    title: const Text('予定の通知設定'),
-    content: SizedBox(
-      width: 420,
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('終日の通知基準時刻'),
-              subtitle: Text(
-                '${(_minute ~/ 60).toString().padLeft(2, '0')}:${(_minute % 60).toString().padLeft(2, '0')}',
+  Widget build(BuildContext context) => EditDiscardScope(
+    isDirty: _isDirty,
+    child: AlertDialog(
+      title: const Text('予定の通知設定'),
+      content: SizedBox(
+        width: 420,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('終日の通知基準時刻'),
+                subtitle: Text(
+                  '${(_minute ~/ 60).toString().padLeft(2, '0')}:${(_minute % 60).toString().padLeft(2, '0')}',
+                ),
+                onTap: () async {
+                  final time = await showTimePicker(
+                    context: context,
+                    initialTime: TimeOfDay(
+                      hour: _minute ~/ 60,
+                      minute: _minute % 60,
+                    ),
+                  );
+                  if (time != null && mounted) {
+                    setState(() => _minute = time.hour * 60 + time.minute);
+                  }
+                },
               ),
-              onTap: () async {
-                final time = await showTimePicker(
-                  context: context,
-                  initialTime: TimeOfDay(
-                    hour: _minute ~/ 60,
-                    minute: _minute % 60,
-                  ),
-                );
-                if (time != null && mounted) {
-                  setState(() => _minute = time.hour * 60 + time.minute);
-                }
-              },
-            ),
-            const Text('終日のデフォルト'),
-            CalendarNotificationEditor(
-              allDay: true,
-              values: _allDay,
-              onChanged: (v) => setState(() => _allDay = v),
-            ),
-            const Text('時間指定のデフォルト'),
-            CalendarNotificationEditor(
-              allDay: false,
-              values: _timed,
-              onChanged: (v) => setState(() => _timed = v),
-            ),
-          ],
-        ),
-      ),
-    ),
-    actions: [
-      TextButton(
-        onPressed: () => Navigator.pop(context),
-        child: const Text('キャンセル'),
-      ),
-      FilledButton(
-        onPressed: () => Navigator.pop(
-          context,
-          CalendarNotificationPreferences(
-            allDayMinuteOfDay: _minute,
-            allDay: _allDay,
-            timed: _timed,
+              const Text('終日のデフォルト'),
+              CalendarNotificationEditor(
+                allDay: true,
+                values: _allDay,
+                onChanged: (v) => setState(() => _allDay = v),
+              ),
+              const Text('時間指定のデフォルト'),
+              CalendarNotificationEditor(
+                allDay: false,
+                values: _timed,
+                onChanged: (v) => setState(() => _timed = v),
+              ),
+            ],
           ),
         ),
-        child: const Text('保存'),
       ),
-    ],
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.maybePop(context),
+          child: const Text('キャンセル'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(
+            context,
+            CalendarNotificationPreferences(
+              allDayMinuteOfDay: _minute,
+              allDay: _allDay,
+              timed: _timed,
+            ),
+          ),
+          child: const Text('保存'),
+        ),
+      ],
+    ),
   );
 }
