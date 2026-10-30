@@ -7,10 +7,14 @@ class CalendarNotificationRequest {
     required this.key,
     required this.title,
     required this.at,
+    required this.startDateTime,
+    required this.isAllDay,
   });
   final String key;
   final String title;
   final DateTime at;
+  final DateTime startDateTime;
+  final bool isAllDay;
 }
 
 class CalendarNotificationPlanner {
@@ -55,6 +59,8 @@ class CalendarNotificationPlanner {
                   '${event.groupId}/${event.id}/${(occurrence.originalStartDateTime ?? start).microsecondsSinceEpoch}/$offset',
               title: occurrence.title,
               at: at,
+              startDateTime: occurrence.startDateTime,
+              isAllDay: occurrence.isAllDay,
             ),
           );
         }

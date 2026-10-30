@@ -49,6 +49,17 @@ class LocalCalendarNotificationGateway implements CalendarNotificationGateway {
     return await _plugin.openAppNotificationSettings() ?? false;
   }
 
+  String _startText(CalendarNotificationRequest request) {
+    final start = request.isAllDay
+        ? request.startDateTime
+        : request.startDateTime.toLocal();
+    final date = '${start.year}/${start.month}/${start.day}';
+    if (request.isAllDay) return '$date（終日）';
+    final hour = start.hour.toString().padLeft(2, '0');
+    final minute = start.minute.toString().padLeft(2, '0');
+    return '$date $hour:$minute';
+  }
+
   @override
   Future<void> replace(List<CalendarNotificationRequest> requests) async {
     if (!_isAndroid) return;
@@ -86,7 +97,7 @@ class LocalCalendarNotificationGateway implements CalendarNotificationGateway {
         await _plugin.zonedSchedule(
           id: notificationId,
           title: entry.value.title,
-          body: '予定の時間をお知らせします',
+          body: _startText(entry.value),
           scheduledDate: tz.TZDateTime.from(entry.value.at, tz.UTC),
           notificationDetails: const NotificationDetails(
             android: AndroidNotificationDetails(
