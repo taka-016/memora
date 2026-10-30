@@ -376,7 +376,7 @@ extension TopPageNavigationTests on TopPageTestContext {
 
       // Assert
       expect(find.byKey(const Key('member_settings')), findsOneWidget);
-      expect(find.text('メンバー管理'), findsNothing);
+      expect(find.text('メンバー管理'), findsOneWidget);
       expect(find.text('メンバー追加'), findsOneWidget);
       expect(find.byKey(const Key('group_list')), findsNothing);
     });
@@ -401,7 +401,7 @@ extension TopPageNavigationTests on TopPageTestContext {
 
       // Assert
       expect(find.byKey(const Key('group_settings')), findsOneWidget);
-      expect(find.text('グループ管理'), findsNothing);
+      expect(find.text('グループ管理'), findsOneWidget);
       expect(find.text('グループ追加'), findsOneWidget);
       expect(find.byKey(const Key('group_list')), findsNothing);
     });
