@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
@@ -50,6 +51,8 @@ class GoogleMapView extends HookConsumerWidget {
     const fallbackPosition = LatLng(35.681236, 139.767125); // 東京駅
 
     final mapController = useState<GoogleMapController?>(null);
+    final cameraPosition = useRef<CameraPosition?>(null);
+    final compassBearing = useValueNotifier(0.0);
     final isBottomSheetVisible = useState(false);
     final selectedLocationState = useState<LocationDto?>(null);
     final previousSelectedLocation = useRef<LocationDto?>(null);
@@ -229,6 +232,11 @@ class GoogleMapView extends HookConsumerWidget {
         onLongPress: handleMapLongPress,
         myLocationEnabled: true,
         myLocationButtonEnabled: false,
+        compassEnabled: false,
+        onCameraMove: (position) {
+          cameraPosition.value = position;
+          compassBearing.value = position.bearing;
+        },
       );
     }
 
@@ -256,14 +264,59 @@ class GoogleMapView extends HookConsumerWidget {
       );
     }
 
-    Widget buildLocationButton() {
+    Future<void> resetBearing() async {
+      final position = cameraPosition.value;
+      if (position == null) {
+        return;
+      }
+      await mapController.value?.animateCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(
+            target: position.target,
+            zoom: position.zoom,
+            tilt: position.tilt,
+          ),
+        ),
+      );
+    }
+
+    Widget buildMapButtons() {
       return Positioned(
         bottom: 112,
         right: 4,
-        child: FloatingActionButton(
-          heroTag: 'my_location_fab',
-          onPressed: moveToCurrentLocation,
-          child: const Icon(Icons.my_location),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ValueListenableBuilder<double>(
+              valueListenable: compassBearing,
+              builder: (context, bearing, child) {
+                if (bearing % 360 == 0) {
+                  return const SizedBox.shrink();
+                }
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: FloatingActionButton(
+                    heroTag: 'map_compass_fab',
+                    tooltip: '北向きに戻す',
+                    onPressed: resetBearing,
+                    child: Transform.rotate(
+                      key: const Key('map_compass_needle'),
+                      angle: -bearing * math.pi / 180,
+                      child: const CustomPaint(
+                        size: Size(24, 32),
+                        painter: _CompassNeedlePainter(),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+            FloatingActionButton(
+              heroTag: 'my_location_fab',
+              onPressed: moveToCurrentLocation,
+              child: const Icon(Icons.my_location),
+            ),
+          ],
         ),
       );
     }
@@ -308,7 +361,7 @@ class GoogleMapView extends HookConsumerWidget {
         children: [
           buildGoogleMap(),
           buildTopContent(),
-          buildLocationButton(),
+          buildMapButtons(),
           buildBottomSheet(),
         ],
       ),
@@ -324,6 +377,30 @@ class GoogleMapView extends HookConsumerWidget {
     }
     return grayMarkerIcon ?? grayLocationMarkerIcon;
   }
+}
+
+class _CompassNeedlePainter extends CustomPainter {
+  const _CompassNeedlePainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final north = Path()
+      ..moveTo(center.dx, 0)
+      ..lineTo(size.width, center.dy)
+      ..lineTo(0, center.dy)
+      ..close();
+    final south = Path()
+      ..moveTo(center.dx, size.height)
+      ..lineTo(0, center.dy)
+      ..lineTo(size.width, center.dy)
+      ..close();
+    canvas.drawPath(north, Paint()..color = Colors.red);
+    canvas.drawPath(south, Paint()..color = Colors.grey);
+  }
+
+  @override
+  bool shouldRepaint(_CompassNeedlePainter oldDelegate) => false;
 }
 
 List<LocationDto> _uniqueLocationsByCoordinate(List<LocationDto> locations) {
