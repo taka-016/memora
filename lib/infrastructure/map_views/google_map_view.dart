@@ -242,10 +242,8 @@ class GoogleMapView extends HookConsumerWidget {
 
     Widget buildTopContent() {
       final overlay = topLeadingOverlay;
-      return Positioned(
-        top: 16,
-        left: 16,
-        right: 16,
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -281,9 +279,8 @@ class GoogleMapView extends HookConsumerWidget {
     }
 
     Widget buildMapButtons() {
-      return Positioned(
-        bottom: 112,
-        right: 4,
+      return Padding(
+        padding: const EdgeInsets.only(right: 4),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -316,6 +313,7 @@ class GoogleMapView extends HookConsumerWidget {
               onPressed: moveToCurrentLocation,
               child: const Icon(Icons.my_location),
             ),
+            const Flexible(child: SizedBox(height: 112)),
           ],
         ),
       );
@@ -360,8 +358,19 @@ class GoogleMapView extends HookConsumerWidget {
       child: Stack(
         children: [
           buildGoogleMap(),
-          buildTopContent(),
-          buildMapButtons(),
+          Positioned.fill(
+            child: Column(
+              children: [
+                buildTopContent(),
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.bottomRight,
+                    child: buildMapButtons(),
+                  ),
+                ),
+              ],
+            ),
+          ),
           buildBottomSheet(),
         ],
       ),
