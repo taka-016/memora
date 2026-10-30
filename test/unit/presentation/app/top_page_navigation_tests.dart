@@ -44,6 +44,30 @@ extension TopPageNavigationTests on TopPageTestContext {
         expect(find.byKey(const Key('group_list')), findsOneWidget);
       });
     }
+    for (final title in ['設定', 'アカウント設定']) {
+      testWidgets('$titleは戻るボタン付きの追加ヘッダーを表示せず下部メニューから移動できる', (tester) async {
+        await tester.pumpWidget(createTestWidget());
+        await tester.pumpAndSettle();
+        await tester.tap(find.byIcon(Icons.menu));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text(title));
+        await tester.pumpAndSettle();
+        expect(find.text(title), findsOneWidget);
+        expect(find.byType(BackButton), findsNothing);
+        expect(
+          find.ancestor(of: find.text(title), matching: find.byType(AppBar)),
+          findsNothing,
+        );
+        await tester.tap(
+          find.descendant(
+            of: find.byType(BottomNavigationBar),
+            matching: find.text('年表'),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.byKey(const Key('group_list')), findsOneWidget);
+      });
+    }
     testWidgets('ハンバーガーメニューには設定とアカウント設定を残す', (tester) async {
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
@@ -352,6 +376,8 @@ extension TopPageNavigationTests on TopPageTestContext {
 
       // Assert
       expect(find.byKey(const Key('member_settings')), findsOneWidget);
+      expect(find.text('メンバー管理'), findsNothing);
+      expect(find.text('メンバー追加'), findsOneWidget);
       expect(find.byKey(const Key('group_list')), findsNothing);
     });
     testWidgets('下部メニューから「グループ」を選択すると、グループ管理画面が表示される', (
@@ -375,6 +401,8 @@ extension TopPageNavigationTests on TopPageTestContext {
 
       // Assert
       expect(find.byKey(const Key('group_settings')), findsOneWidget);
+      expect(find.text('グループ管理'), findsNothing);
+      expect(find.text('グループ追加'), findsOneWidget);
       expect(find.byKey(const Key('group_list')), findsNothing);
     });
     testWidgets('メニューから「設定」を選択すると、設定画面が表示される', (WidgetTester tester) async {
