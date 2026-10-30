@@ -114,6 +114,14 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     expect(container.read(appRouterConfigProvider).state.uri.path, '/settings');
     expect(authResolutions, 0);
+    await tester.tap(
+      find.descendant(
+        of: find.byType(BottomNavigationBar),
+        matching: find.text('年表'),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(container.read(appRouterConfigProvider).state.uri.path, '/groups');
     expect(tester.takeException(), isNull);
   });
 

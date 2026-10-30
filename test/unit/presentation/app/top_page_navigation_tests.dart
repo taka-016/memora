@@ -27,6 +27,23 @@ extension TopPageNavigationTests on TopPageTestContext {
         1,
       );
     });
+    for (final route in [
+      const SettingsRoute().location,
+      const AccountSettingsRoute().location,
+    ]) {
+      testWidgets('$routeへ直接開いた場合も下部メニューから年表へ移動できる', (tester) async {
+        await tester.pumpWidget(createTestWidget(initialLocation: route));
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.descendant(
+            of: find.byType(BottomNavigationBar),
+            matching: find.text('年表'),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.byKey(const Key('group_list')), findsOneWidget);
+      });
+    }
     testWidgets('ハンバーガーメニューには設定とアカウント設定を残す', (tester) async {
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
