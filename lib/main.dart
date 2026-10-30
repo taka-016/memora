@@ -1,3 +1,4 @@
+import 'package:memora/presentation/notifiers/calendar/calendar_notifications_notifier.dart';
 import 'package:memora/composition_root/providers/app_providers.dart';
 import 'package:memora/composition_root/app_bootstrap.dart';
 
@@ -43,6 +44,9 @@ class _AppClockLifecycleSyncState extends ConsumerState<AppClockLifecycleSync>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       unawaited(_syncClock());
+      unawaited(
+        ref.read(calendarNotificationsNotifierProvider.notifier).refresh(),
+      );
     }
   }
 
@@ -66,6 +70,7 @@ class MyApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(androidWidgetLaunchNotifierProvider);
+    ref.watch(calendarNotificationsNotifierProvider);
     return MaterialApp.router(
       routerConfig: ref.watch(appRouterConfigProvider),
       title: ref.watch(appDisplayNameProvider),

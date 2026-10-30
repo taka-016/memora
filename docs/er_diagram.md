@@ -152,6 +152,7 @@ erDiagram
         timestamp startDateTime "NOT NULL"
         timestamp endDateTime "NOT NULL"
         boolean isAllDay "NOT NULL"
+        int[] notificationMinutesBefore "開始何分前か、0は開始時"
         string recurrenceRule
         string timeZone
     }
@@ -164,6 +165,7 @@ erDiagram
         timestamp startDateTime
         timestamp endDateTime
         boolean isAllDay
+        int[] notificationMinutesBefore "個別回の通知、空配列で解除"
         string labelType "変更回はgroup/member/custom"
         string memberId "member種別のみ、所属解除後も保持"
         string labelId FK "custom種別のみ"    }

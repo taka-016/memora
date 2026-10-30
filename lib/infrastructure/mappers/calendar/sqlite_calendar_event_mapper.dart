@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:memora/domain/entities/calendar/calendar_event_override.dart';
 import 'package:memora/domain/entities/calendar/calendar_event.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
@@ -15,6 +17,9 @@ class SqliteCalendarEventMapper {
     labelId: row['label_id'] as String? ?? '',
     labelType: row['label_type'] as String,
     memberId: row['member_id'] as String? ?? '',
+    notificationMinutesBefore: (jsonDecode(
+      row['notification_minutes_before'] as String,
+    ) as List).cast<int>(),
     title: row['title'] as String,
     startDateTime: DateTime.fromMicrosecondsSinceEpoch(
       row['start_date_time'] as int,
@@ -35,6 +40,7 @@ class SqliteCalendarEventMapper {
     'label_type': value.labelType,
     'member_id': value.labelType == 'member' ? value.memberId : null,
     'title': value.title,
+    'notification_minutes_before': jsonEncode(value.notificationMinutesBefore),
     'start_date_time':
         (value.isAllDay
                 ? DateTime.utc(

@@ -16,6 +16,7 @@ class CalendarEventDto extends Equatable {
     this.recurrenceRule,
     this.timeZone,
     this.overrides = const [],
+    this.notificationMinutesBefore = const [],
     this.originalStartDateTime,
   });
 
@@ -35,6 +36,7 @@ class CalendarEventDto extends Equatable {
   final DateTime startDateTime;
   final DateTime endDateTime;
   final bool isAllDay;
+  final List<int> notificationMinutesBefore;
   final String? recurrenceRule;
   final String? timeZone;
   final List<CalendarEventOverride> overrides;
@@ -59,6 +61,7 @@ class CalendarEventDto extends Equatable {
     DateTime? startDateTime,
     DateTime? endDateTime,
     bool? isAllDay,
+    List<int>? notificationMinutesBefore,
     String? recurrenceRule,
     String? timeZone,
     List<CalendarEventOverride>? overrides,
@@ -75,6 +78,8 @@ class CalendarEventDto extends Equatable {
       startDateTime: startDateTime ?? this.startDateTime,
       endDateTime: endDateTime ?? this.endDateTime,
       isAllDay: isAllDay ?? this.isAllDay,
+      notificationMinutesBefore:
+          notificationMinutesBefore ?? this.notificationMinutesBefore,
       recurrenceRule: recurrenceRule ?? this.recurrenceRule,
       timeZone: timeZone ?? this.timeZone,
       overrides: overrides ?? this.overrides,
@@ -95,6 +100,7 @@ class CalendarEventDto extends Equatable {
     startDateTime,
     endDateTime,
     isAllDay,
+    notificationMinutesBefore,
     recurrenceRule,
     timeZone,
     overrides,

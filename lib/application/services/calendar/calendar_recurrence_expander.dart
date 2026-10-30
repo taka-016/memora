@@ -154,6 +154,7 @@ class CalendarRecurrenceExpander {
         startDateTime: override.startDateTime,
         endDateTime: override.endDateTime,
         isAllDay: override.isAllDay,
+        notificationMinutesBefore: override.notificationMinutesBefore,
         originalStartDateTime: original,
       );
       if (_overlaps(value, from, to)) result.add(value);

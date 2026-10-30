@@ -477,6 +477,7 @@ void main() {
       endDateTime: DateTime.utc(2026, 10, 3),
       isAllDay: true,
       recurrenceRule: 'FREQ=DAILY;COUNT=6',
+      notificationMinutesBefore: [1440],
       overrides: [
         CalendarEventOverride(
           originalStartDateTime: DateTime.utc(2026, 10, 2),
@@ -492,6 +493,7 @@ void main() {
       CalendarChangeScope.only,
       changes: source.copyWith(
         title: '移動',
+        notificationMinutesBefore: [],
         startDateTime: DateTime.utc(2026, 11, 1),
         endDateTime: DateTime.utc(2026, 11, 2),
       ),
@@ -518,6 +520,16 @@ void main() {
             .toList();
     final before = await expanded();
     expect(before, hasLength(5));
+    expect(
+      before.where((v) => v.title == '移動').single.notificationMinutesBefore,
+      isEmpty,
+    );
+    expect(
+      before
+          .where((v) => v.title != '移動')
+          .every((v) => v.notificationMinutesBefore.single == 1440),
+      isTrue,
+    );
     expect(before.where((v) => v.title == '移動'), hasLength(1));
     final snapshot = await dataStore.exportSnapshot();
     await db.deleteRows('groups', 'id', 'group-1');
@@ -569,6 +581,7 @@ void main() {
     tables['calendar_events'] = [
       {
         'id': 'invalid',
+        'notification_minutes_before': '[]',
         'group_id': 'group-1',
         'label_id': 'label',
         'label_type': 'custom',

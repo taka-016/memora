@@ -20,6 +20,8 @@ class FirestoreCalendarEventMapper {
       labelId: data['labelId'] as String? ?? '',
       labelType: data['labelType'] as String,
       memberId: data['memberId'] as String? ?? '',
+      notificationMinutesBefore:
+          (data['notificationMinutesBefore'] as List? ?? const []).cast<int>(),
       title: data['title'] as String,
       startDateTime: _date(
         data['startDateTime'] as Timestamp,
@@ -67,6 +69,7 @@ class FirestoreCalendarEventMapper {
             )
           : value.endDateTime,
     ),
+    'notificationMinutesBefore': value.notificationMinutesBefore,
     'isAllDay': value.isAllDay,
   };
   static Map<String, dynamic> toCreateFirestore(CalendarEvent value) => {

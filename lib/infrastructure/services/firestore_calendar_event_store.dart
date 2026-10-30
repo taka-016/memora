@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/domain/entities/calendar/calendar_event.dart';
@@ -107,7 +108,14 @@ class FirestoreCalendarEventStore {
       if (previousIdSet.contains(entry.key)) {
         final previous = previousValues[entry.key];
         if (previous != null &&
-            data.entries.every((entry) => previous[entry.key] == entry.value)) {
+            data.entries.every(
+              (entry) => entry.value is List
+                  ? listEquals(
+                      previous[entry.key] as List?,
+                      entry.value as List,
+                    )
+                  : previous[entry.key] == entry.value,
+            )) {
           continue;
         }
         transaction.update(ref, {

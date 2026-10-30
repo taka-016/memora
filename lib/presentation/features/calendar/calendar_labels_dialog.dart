@@ -1,3 +1,4 @@
+import 'package:memora/presentation/shared/dialogs/edit_discard_scope.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/presentation/shared/inputs/label_color_settings.dart';
@@ -182,6 +183,8 @@ class _LabelEditDialogState extends ConsumerState<_LabelEditDialog> {
   late final int _sortOrder;
   String _error = '';
   late String _textColor;
+  late final Object _initialValues;
+  Object get _editValues => (_name.text, _color, _textColor);
   @override
   void initState() {
     super.initState();
@@ -196,6 +199,7 @@ class _LabelEditDialogState extends ConsumerState<_LabelEditDialog> {
     _sortOrder = widget.label?.sortOrder ?? nextOrder;
     _color = widget.label?.color ?? '#2196F3';
     _textColor = widget.label?.textColor ?? '#FFFFFF';
+    _initialValues = _editValues;
   }
 
   @override
@@ -207,8 +211,9 @@ class _LabelEditDialogState extends ConsumerState<_LabelEditDialog> {
   @override
   Widget build(BuildContext context) {
     final saving = ref.watch(calendarNotifierProvider(widget.groupId)).isSaving;
-    return PopScope(
-      canPop: !saving,
+    return EditDiscardScope(
+      isSaving: saving,
+      isDirty: _editValues != _initialValues,
       child: AlertDialog(
         title: Text(widget.label == null ? 'ラベルを追加' : 'ラベルを編集'),
         content: SingleChildScrollView(
@@ -250,7 +255,7 @@ class _LabelEditDialogState extends ConsumerState<_LabelEditDialog> {
         ),
         actions: [
           TextButton(
-            onPressed: saving ? null : () => Navigator.pop(context),
+            onPressed: saving ? null : () => Navigator.maybePop(context),
             child: const Text('キャンセル'),
           ),
           FilledButton(

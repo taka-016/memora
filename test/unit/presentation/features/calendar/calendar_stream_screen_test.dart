@@ -91,6 +91,9 @@ void main() {
     expect(verify(update.execute(captureAny)).captured.single.version, 1);
     await tester.tap(find.text('キャンセル'));
     await tester.pumpAndSettle();
+    expect(find.text('変更内容の確認'), findsOneWidget);
+    await tester.tap(find.text('破棄する'));
+    await tester.pumpAndSettle();
     Navigator.of(tester.element(find.byType(CalendarScreen))).pop();
     await tester.pumpAndSettle();
     final container = ProviderScope.containerOf(

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:memora/domain/entities/calendar/calendar_event_override.dart';
 
 class CalendarOverrideMapper {
@@ -17,6 +19,7 @@ class CalendarOverrideMapper {
     ).microsecondsSinceEpoch,
     'is_cancelled': value.isCancelled ? 1 : 0,
     'title': value.title,
+    'notification_minutes_before': jsonEncode(value.notificationMinutesBefore),
     'start_date_time': value.startDateTime == null
         ? null
         : date(value.startDateTime!, value.isAllDay!).microsecondsSinceEpoch,
@@ -37,6 +40,9 @@ class CalendarOverrideMapper {
       isUtc: parentAllDay,
     ),
     isCancelled: row['is_cancelled'] == 1,
+    notificationMinutesBefore: (jsonDecode(
+      row['notification_minutes_before'] as String,
+    ) as List).cast<int>(),
     title: row['title'] as String?,
     startDateTime: row['start_date_time'] == null
         ? null

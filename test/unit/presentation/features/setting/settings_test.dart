@@ -1,3 +1,5 @@
+import 'package:shared_preferences/shared_preferences.dart';
+
 import 'dart:async';
 import 'dart:typed_data';
 
@@ -35,6 +37,7 @@ import '../../../../helpers/fake_current_member_notifier.dart';
 import '../../../../helpers/test_exception.dart';
 
 void main() {
+  setUp(() => SharedPreferences.setMockInitialValues({}));
   group('Settings', () {
     testWidgets('オフラインモードでは手動バックアップと復元不能条件を案内する', (tester) async {
       await tester.pumpWidget(
@@ -102,6 +105,10 @@ void main() {
     });
 
     testWidgets('復元中はウィジェット設定を変更できない', (tester) async {
+      tester.view.physicalSize = const Size(1000, 1200);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
       const snapshot = OfflineBackupSnapshot(
         formatVersion: OfflineBackupSnapshot.currentFormatVersion,
         databaseSchemaVersion: 1,

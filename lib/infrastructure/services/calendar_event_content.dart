@@ -20,6 +20,7 @@ CalendarEvent calendarEventContent(CalendarEvent value) {
               labelType: v.labelType,
 
               memberId: v.memberId,
+              notificationMinutesBefore: v.notificationMinutesBefore,
               isAllDay: v.isAllDay,
               startDateTime: v.startDateTime == null
                   ? null

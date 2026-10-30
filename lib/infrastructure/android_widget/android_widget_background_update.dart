@@ -1,3 +1,4 @@
+import 'package:memora/composition_root/calendar_notification_background.dart';
 import 'package:memora/infrastructure/services/offline_app_services.dart';
 import 'package:memora/composition_root/android_widget_composition_root.dart';
 import 'package:memora/application/models/app_mode.dart';
@@ -80,6 +81,10 @@ Future<void> registerAndroidWidgetPeriodicUpdateTask(Duration frequency) async {
 @pragma('vm:entry-point')
 void androidWidgetBackgroundUpdateDispatcher() {
   Workmanager().executeTask((task, inputData) async {
+    if (task == calendarNotificationPeriodicTaskName) {
+      WidgetsFlutterBinding.ensureInitialized();
+      return await refreshCalendarNotificationsInBackground();
+    }
     if (task != androidWidgetPeriodicUpdateTaskName) {
       return true;
     }
