@@ -239,8 +239,9 @@ class _CalendarRecurrenceCustomDialogState
                         ),
                         lastDate: DateTime(9999, 12, 31),
                       );
-                      if (date != null && mounted)
+                      if (date != null && mounted) {
                         setState(() => _until = date);
+                      }
                     },
                     child: Text(
                       '終了日: ${_until.year}/${_until.month}/${_until.day}',
