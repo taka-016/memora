@@ -298,43 +298,45 @@ class GoogleMapView extends HookConsumerWidget {
                     112.0,
                     math.max(0.0, constraints.maxHeight - buttonsHeight),
                   );
-                  return SingleChildScrollView(
-                    primary: false,
+                  return Padding(
                     padding: EdgeInsets.only(bottom: bottomPadding),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (showCompass)
-                          Padding(
-                            padding: const EdgeInsets.only(
-                              bottom: buttonSpacing,
-                            ),
-                            child: SizedBox.square(
-                              dimension: buttonSize,
-                              child: FloatingActionButton(
-                                heroTag: 'map_compass_fab',
-                                tooltip: '北向きに戻す',
-                                onPressed: resetBearing,
-                                child: Transform.rotate(
-                                  key: const Key('map_compass_needle'),
-                                  angle: -bearing * math.pi / 180,
-                                  child: const CustomPaint(
-                                    size: Size(24, 32),
-                                    painter: _CompassNeedlePainter(),
+                    child: SingleChildScrollView(
+                      primary: false,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (showCompass)
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                bottom: buttonSpacing,
+                              ),
+                              child: SizedBox.square(
+                                dimension: buttonSize,
+                                child: FloatingActionButton(
+                                  heroTag: 'map_compass_fab',
+                                  tooltip: '北向きに戻す',
+                                  onPressed: resetBearing,
+                                  child: Transform.rotate(
+                                    key: const Key('map_compass_needle'),
+                                    angle: -bearing * math.pi / 180,
+                                    child: const CustomPaint(
+                                      size: Size(24, 32),
+                                      painter: _CompassNeedlePainter(),
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
+                          SizedBox.square(
+                            dimension: buttonSize,
+                            child: FloatingActionButton(
+                              heroTag: 'my_location_fab',
+                              onPressed: moveToCurrentLocation,
+                              child: const Icon(Icons.my_location),
+                            ),
                           ),
-                        SizedBox.square(
-                          dimension: buttonSize,
-                          child: FloatingActionButton(
-                            heroTag: 'my_location_fab',
-                            onPressed: moveToCurrentLocation,
-                            child: const Icon(Icons.my_location),
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   );
                 },
