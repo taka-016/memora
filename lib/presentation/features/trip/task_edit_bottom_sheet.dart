@@ -112,13 +112,16 @@ class TaskEditBottomSheet extends HookWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.red.shade50,
+          color: Theme.of(context).colorScheme.errorContainer,
           borderRadius: BorderRadius.circular(4),
-          border: Border.all(color: Colors.red.shade200),
+          border: Border.all(color: Theme.of(context).colorScheme.error),
         ),
         child: Text(
           errorMessage.value!,
-          style: TextStyle(color: Colors.red.shade700, fontSize: 14),
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onErrorContainer,
+            fontSize: 14,
+          ),
         ),
       );
     }
@@ -135,7 +138,7 @@ class TaskEditBottomSheet extends HookWidget {
               height: 4,
               margin: const EdgeInsets.only(bottom: 12),
               decoration: BoxDecoration(
-                color: Colors.grey.shade400,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -196,13 +199,16 @@ class TaskEditBottomSheet extends HookWidget {
                     },
             ),
             if (hasChildren(task.id))
-              const Padding(
-                padding: EdgeInsets.only(top: 8),
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
                     '子タスクがあるため親タスクは変更できません',
-                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
               ),

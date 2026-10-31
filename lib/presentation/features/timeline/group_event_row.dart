@@ -19,7 +19,7 @@ class GroupEventRow extends TimelineRowDefinition {
   String get fixedColumnLabel => 'イベント';
 
   @override
-  Color get backgroundColor => Colors.lightBlue.shade50;
+  Color get backgroundColor => Colors.lightBlue.withValues(alpha: .1);
 
   @override
   Key yearCellKey(int year) => Key('group_event_cell_$year');

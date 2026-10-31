@@ -283,24 +283,31 @@ class MemberManagement extends HookConsumerWidget {
     }
 
     Widget buildEmptyState() {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.people_outline, size: 100, color: Colors.grey),
+            Icon(
+              Icons.people_outline,
+              size: 100,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
             SizedBox(height: 16),
             Text(
               '管理しているメンバーがいません',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Colors.grey,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
             SizedBox(height: 8),
             Text(
               'メンバーを追加してください',
-              style: TextStyle(fontSize: 16, color: Colors.grey),
+              style: TextStyle(
+                fontSize: 16,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
           ],
         ),
@@ -334,7 +341,10 @@ class MemberManagement extends HookConsumerWidget {
               onTap: () => showEditMemberDialog(targetMember),
               trailing: (!isCurrentUser && targetMember.accountId == null)
                   ? IconButton(
-                      icon: const Icon(Icons.delete, color: Colors.red),
+                      icon: Icon(
+                        Icons.delete,
+                        color: Theme.of(context).colorScheme.error,
+                      ),
                       onPressed: () => showDeleteConfirmDialog(targetMember),
                     )
                   : null,

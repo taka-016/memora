@@ -58,7 +58,11 @@ class TaskList extends StatelessWidget {
               onReorderChildren: (oldIndex, newIndex) =>
                   onReorderChildren(task, oldIndex, newIndex),
               buildChildTile: (childTask, childIndex) {
-                return _buildChildTile(task: childTask, childIndex: childIndex);
+                return _buildChildTile(
+                  context: context,
+                  task: childTask,
+                  childIndex: childIndex,
+                );
               },
             ),
           ),
@@ -67,7 +71,11 @@ class TaskList extends StatelessWidget {
     );
   }
 
-  Widget _buildChildTile({required TaskDto task, required int childIndex}) {
+  Widget _buildChildTile({
+    required BuildContext context,
+    required TaskDto task,
+    required int childIndex,
+  }) {
     final parts = subtitleBuilder(task);
     return Card(
       key: Key('child_item_${task.id}'),
@@ -94,7 +102,10 @@ class TaskList extends StatelessWidget {
           children: [
             IconButton(
               key: Key('delete_task_${task.id}'),
-              icon: const Icon(Icons.delete, color: Colors.red),
+              icon: Icon(
+                Icons.delete,
+                color: Theme.of(context).colorScheme.error,
+              ),
               onPressed: () => onDeleteTask(task),
             ),
             ReorderableDragStartListener(
@@ -243,7 +254,10 @@ class _ParentTaskTile extends StatelessWidget {
           if (!childrenExist && onDelete != null)
             IconButton(
               key: Key('delete_task_${task.id}'),
-              icon: const Icon(Icons.delete, color: Colors.red),
+              icon: Icon(
+                Icons.delete,
+                color: Theme.of(context).colorScheme.error,
+              ),
               onPressed: onDelete,
             ),
           ReorderableDragStartListener(

@@ -23,7 +23,7 @@ class TripRow extends TimelineRowDefinition {
   String get fixedColumnLabel => '旅行';
 
   @override
-  Color get backgroundColor => Colors.lightBlue.shade50;
+  Color get backgroundColor => Colors.lightBlue.withValues(alpha: .1);
 
   @override
   Key yearCellKey(int year) => Key('trip_cell_$year');

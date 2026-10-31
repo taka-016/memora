@@ -272,8 +272,8 @@ class GroupEditModal extends HookConsumerWidget {
         isScrollControlled: true,
         backgroundColor: Colors.transparent,
         builder: (context) => Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(20),
               topRight: Radius.circular(20),
@@ -286,12 +286,12 @@ class GroupEditModal extends HookConsumerWidget {
             expand: false,
             builder: (context, scrollController) => Column(
               children: [
-                _buildMemberSelectionModalHandle(),
+                _buildMemberSelectionModalHandle(context),
                 _buildMemberSelectionModalHeader(context),
                 const Divider(height: 1),
                 Expanded(
                   child: candidates.isEmpty
-                      ? _buildMemberSelectionEmptyState()
+                      ? _buildMemberSelectionEmptyState(context)
                       : _buildMemberSelectionList(candidates, scrollController),
                 ),
                 const SizedBox(height: 16),
@@ -495,12 +495,15 @@ class GroupEditModal extends HookConsumerWidget {
         margin: const EdgeInsets.only(left: 8),
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
         decoration: BoxDecoration(
-          color: Colors.blue,
+          color: Theme.of(context).colorScheme.secondaryContainer,
           borderRadius: BorderRadius.circular(12),
         ),
-        child: const Text(
+        child: Text(
           '管理者',
-          style: TextStyle(color: Colors.white, fontSize: 10),
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSecondaryContainer,
+            fontSize: 10,
+          ),
         ),
       );
     }
@@ -629,12 +632,16 @@ class GroupEditModal extends HookConsumerWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey.shade300),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.outlineVariant,
+          ),
           borderRadius: BorderRadius.circular(8),
         ),
-        child: const Text(
+        child: Text(
           'メンバーが追加されていません',
-          style: TextStyle(color: Colors.grey),
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
       );
     }
@@ -857,13 +864,13 @@ class GroupEditModal extends HookConsumerWidget {
     );
   }
 
-  Widget _buildMemberSelectionModalHandle() {
+  Widget _buildMemberSelectionModalHandle(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(top: 12),
       width: 40,
       height: 4,
       decoration: BoxDecoration(
-        color: Colors.grey[300],
+        color: Theme.of(context).colorScheme.outlineVariant,
         borderRadius: BorderRadius.circular(2),
       ),
     );
@@ -883,8 +890,10 @@ class GroupEditModal extends HookConsumerWidget {
             onPressed: () => Navigator.of(context).pop(),
             icon: const Icon(Icons.close),
             style: IconButton.styleFrom(
-              backgroundColor: Colors.grey[100],
-              foregroundColor: Colors.grey[600],
+              backgroundColor: Theme.of(context)
+                  .colorScheme
+                  .surfaceContainerHighest,
+              foregroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
         ],
@@ -892,16 +901,23 @@ class GroupEditModal extends HookConsumerWidget {
     );
   }
 
-  Widget _buildMemberSelectionEmptyState() {
-    return const Center(
+  Widget _buildMemberSelectionEmptyState(BuildContext context) {
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.person_off, size: 48, color: Colors.grey),
+          Icon(
+            Icons.person_off,
+            size: 48,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
           SizedBox(height: 12),
           Text(
             '選択可能なメンバーがいません',
-            style: TextStyle(color: Colors.grey, fontSize: 16),
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontSize: 16,
+            ),
           ),
         ],
       ),
@@ -942,7 +958,7 @@ class GroupEditModal extends HookConsumerWidget {
                 ),
               ),
               onTap: () => Navigator.of(context).pop(member.id),
-              hoverColor: Colors.grey[50],
+              hoverColor: Theme.of(context).hoverColor,
             ),
           ),
         );

@@ -11,24 +11,31 @@ class PlaceholderMapView extends StatelessWidget {
       key: const Key('map_view'),
       child: Stack(
         children: [
-          const Center(
+          Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.map, size: 100, color: Colors.grey),
+                Icon(
+                  Icons.map,
+                  size: 100,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
                 SizedBox(height: 16),
                 Text(
                   'マップ表示',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: Colors.grey,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
                 SizedBox(height: 8),
                 Text(
                   'Google Mapウィジェット実装済み',
-                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                   textAlign: TextAlign.center,
                 ),
               ],

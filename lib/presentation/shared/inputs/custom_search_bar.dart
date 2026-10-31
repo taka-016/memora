@@ -76,15 +76,24 @@ class CustomSearchBar extends HookConsumerWidget {
             fillColor: Theme.of(context).colorScheme.surfaceContainerHigh,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8.0),
-              borderSide: BorderSide(width: 1, color: Theme.of(context).colorScheme.outline),
+              borderSide: BorderSide(
+                width: 1,
+                color: Theme.of(context).colorScheme.outline,
+              ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8.0),
-              borderSide: BorderSide(width: 1, color: Theme.of(context).colorScheme.outline),
+              borderSide: BorderSide(
+                width: 1,
+                color: Theme.of(context).colorScheme.outline,
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8.0),
-              borderSide: BorderSide(width: 2, color: Theme.of(context).colorScheme.primary),
+              borderSide: BorderSide(
+                width: 2,
+                color: Theme.of(context).colorScheme.primary,
+              ),
             ),
             suffixIcon: buildClearButton(),
             isDense: true,

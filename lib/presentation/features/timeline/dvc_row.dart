@@ -25,7 +25,7 @@ class DvcRow extends TimelineRowDefinition {
   String get fixedColumnLabel => 'DVC';
 
   @override
-  Color get backgroundColor => Colors.lightBlue.shade50;
+  Color get backgroundColor => Colors.lightBlue.withValues(alpha: .1);
 
   @override
   Key yearCellKey(int year) => Key('dvc_point_usage_cell_$year');

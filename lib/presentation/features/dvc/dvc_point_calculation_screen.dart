@@ -398,8 +398,8 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
               keyPrefix: 'dvc_available_cell_',
               text: '$availablePoint',
               textStyle: availablePoint < 0
-                  ? const TextStyle(
-                      color: Colors.red,
+                  ? TextStyle(
+                      color: Theme.of(context).colorScheme.error,
                       fontWeight: FontWeight.bold,
                     )
                   : null,

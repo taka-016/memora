@@ -47,31 +47,34 @@ class SignupPage extends HookConsumerWidget {
 
     Widget buildMessageContainer(AuthViewState authState) {
       final isInfo = authState.isInfoMessage;
-      final color = isInfo ? Colors.green : Colors.red;
+      final scheme = Theme.of(context).colorScheme;
+      final background = isInfo
+          ? scheme.tertiaryContainer
+          : scheme.errorContainer;
+      final foreground = isInfo
+          ? scheme.onTertiaryContainer
+          : scheme.onErrorContainer;
 
       return Container(
         padding: const EdgeInsets.all(12),
         margin: const EdgeInsets.only(bottom: 16),
         decoration: BoxDecoration(
-          color: color.shade100,
+          color: background,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: color.shade300),
+          border: Border.all(color: foreground),
         ),
         child: Row(
           children: [
-            Icon(
-              isInfo ? Icons.check_circle : Icons.error,
-              color: color.shade700,
-            ),
+            Icon(isInfo ? Icons.check_circle : Icons.error, color: foreground),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
                 authState.message,
-                style: TextStyle(color: color.shade700),
+                style: TextStyle(color: foreground),
               ),
             ),
             IconButton(
-              icon: Icon(Icons.close, color: color.shade700),
+              icon: Icon(Icons.close, color: foreground),
               onPressed: () {
                 ref.read(authNotifierProvider.notifier).clearError();
               },
