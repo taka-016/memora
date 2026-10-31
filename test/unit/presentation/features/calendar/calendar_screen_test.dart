@@ -24,6 +24,10 @@ void main() {
   });
 
   testWidgets('長いメンバー名は省略して末尾の「の予定」を表示し選択して保存できる', (tester) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
     final harness = CalendarTestHarness()
       ..savedLabels.add(
         const CalendarLabelDto(
@@ -529,6 +533,8 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     await CalendarTestHarness().pump(tester, textScale: 1.5);
     await tester.tap(find.byTooltip('予定を追加'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.widgetWithText(SwitchListTile, '終日'));
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(SwitchListTile, '終日'));
     await tester.pump();
