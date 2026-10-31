@@ -103,10 +103,15 @@ ThemeData _buildTheme(Brightness brightness) {
   );
   return ThemeData(
     colorScheme: scheme,
-    appBarTheme: AppBarTheme(
-      backgroundColor: scheme.primaryContainer,
-      foregroundColor: scheme.onPrimaryContainer,
-    ),
+    appBarTheme: brightness == Brightness.light
+        ? const AppBarTheme(
+            backgroundColor: Colors.lightBlue,
+            foregroundColor: Colors.white,
+          )
+        : AppBarTheme(
+            backgroundColor: scheme.primaryContainer,
+            foregroundColor: scheme.onPrimaryContainer,
+          ),
     buttonTheme: const ButtonThemeData(alignedDropdown: true),
   );
 }
