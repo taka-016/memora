@@ -249,7 +249,7 @@ class _ContractForm extends StatelessWidget {
         const SizedBox(height: 8),
         Row(
           children: [
-            const Text('ユースイヤー開始月'),
+            const Expanded(child: Text('ユースイヤー開始月')),
             const SizedBox(width: 16),
             DropdownButton<int>(
               value: contract.useYearStartMonth,
