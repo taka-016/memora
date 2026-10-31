@@ -128,7 +128,10 @@ void main() {
       await tester.pumpWidget(createTestApp());
       await tester.pumpAndSettle();
       BuildContext pageContext() => tester.element(find.byType(TopPage));
-      expect(Theme.of(pageContext()).brightness, Brightness.light);
+      final lightTheme = Theme.of(pageContext());
+      expect(lightTheme.brightness, Brightness.light);
+      expect(lightTheme.appBarTheme.backgroundColor, Colors.lightBlue);
+      expect(lightTheme.appBarTheme.foregroundColor, Colors.white);
 
       platform.platformBrightnessTestValue = Brightness.dark;
       await tester.pumpAndSettle();
