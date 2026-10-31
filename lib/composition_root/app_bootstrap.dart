@@ -2,6 +2,7 @@ import 'package:memora/composition_root/calendar_notification_background.dart';
 
 import 'dart:async';
 
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/models/app_mode.dart';
@@ -13,6 +14,13 @@ import 'package:memora/infrastructure/android_widget/android_widget_background_u
 import 'package:memora/infrastructure/android_widget/android_widget_interactivity_callback.dart';
 import 'package:memora/infrastructure/services/home_widget_android_widget_cache_storage.dart';
 import 'package:memora/infrastructure/services/shared_preferences_app_mode_storage.dart';
+
+Future<void> initializeAppDisplay() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await SystemChrome.setPreferredOrientations(const [
+    DeviceOrientation.portraitUp,
+  ]);
+}
 
 Future<void> synchronizeAppModeAndAndroidWidgetCache(
   AppMode mode, {
@@ -37,7 +45,7 @@ Future<void> launchApp(Widget app) async {
   final root = AppCompositionRoot.fromBuildConfiguration();
   await runZonedGuarded<Future<void>>(
     () async {
-      WidgetsFlutterBinding.ensureInitialized();
+      await initializeAppDisplay();
       await synchronizeAppModeAndAndroidWidgetCache(root.mode);
       await root.initialize();
       FlutterError.onError = (details) {
