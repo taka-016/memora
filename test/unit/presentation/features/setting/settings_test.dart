@@ -57,7 +57,9 @@ void main() {
       expect(find.textContaining('クラウド'), findsNothing);
       for (final entry in {
         'カレンダー': find.text('予定の通知設定'),
-        'Androidウィジェット': find.text('更新間隔'),
+        'Androidウィジェット': find.byType(
+          DropdownButtonFormField<AndroidWidgetUpdateInterval>,
+        ),
         '表示': find.byKey(const Key('theme_mode_setting')),
       }.entries) {
         expect(entry.value.hitTestable(), findsOneWidget);
@@ -80,6 +82,7 @@ void main() {
       await tester.scrollUntilVisible(
         find.byKey(const Key('theme_mode_setting')),
         300,
+        scrollable: find.byType(Scrollable).first,
       );
       expect(find.text('端末設定に従う'), findsOneWidget);
       for (final label in ['ダーク', 'ライト', '端末設定に従う', 'ダーク']) {
@@ -95,6 +98,7 @@ void main() {
       await tester.scrollUntilVisible(
         find.byKey(const Key('theme_mode_setting')),
         300,
+        scrollable: find.byType(Scrollable).first,
       );
       expect(find.text('ダーク'), findsOneWidget);
     });
