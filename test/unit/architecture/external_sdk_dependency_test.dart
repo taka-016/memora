@@ -28,8 +28,17 @@ void main() {
     expect(violations, isEmpty, reason: violations.join('\n'));
   });
 
-  test('起動前のFirebase自動初期化とCrashlytics自動収集を無効化する', () {
+  test('オンライン版はプロセス起動時のFirebase初期化を妨げない', () {
     final manifest = File('android/app/src/main/AndroidManifest.xml')
+        .readAsStringSync();
+    expect(
+      manifest,
+      isNot(contains('com.google.firebase.provider.FirebaseInitProvider')),
+    );
+  });
+
+  test('オフライン版はFirebaseを自動初期化しない', () {
+    final manifest = File('android/app/src/offline/AndroidManifest.xml')
         .readAsStringSync();
     expect(
       manifest,
@@ -39,6 +48,11 @@ void main() {
         ),
       ),
     );
+  });
+
+  test('起動前のCrashlytics自動収集を無効化する', () {
+    final manifest = File('android/app/src/main/AndroidManifest.xml')
+        .readAsStringSync();
     expect(
       manifest,
       matches(
