@@ -39,7 +39,7 @@ class AccountDeleteModal extends HookWidget {
         height: 20,
         child: CircularProgressIndicator(
           strokeWidth: 2,
-          color: Theme.of(context).colorScheme.onError,
+          color: Theme.of(context).colorScheme.primary,
         ),
       );
     }

@@ -359,14 +359,15 @@ class TripManagement extends HookConsumerWidget {
             Row(
               children: [
                 const SizedBox(width: 16),
-                Text(
-                  '$year年の旅行管理',
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
+                Expanded(
+                  child: Text(
+                    '$year年の旅行管理',
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
-                const Spacer(),
                 ElevatedButton.icon(
                   onPressed:
                       managementState.groupMembersStatus ==
