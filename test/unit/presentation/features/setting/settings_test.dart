@@ -84,6 +84,7 @@ void main() {
         300,
         scrollable: find.byType(Scrollable).first,
       );
+      await tester.pumpAndSettle();
       expect(find.text('端末設定に従う'), findsOneWidget);
       for (final label in ['ダーク', 'ライト', '端末設定に従う', 'ダーク']) {
         await tester.tap(find.byKey(const Key('theme_mode_setting')));
@@ -100,6 +101,7 @@ void main() {
         300,
         scrollable: find.byType(Scrollable).first,
       );
+      await tester.pumpAndSettle();
       expect(find.text('ダーク'), findsOneWidget);
     });
 
