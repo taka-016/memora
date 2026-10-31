@@ -153,6 +153,10 @@ void main() {
     expectFloatingLabelVisible(tester, 'グループ名');
     final heading = tester.getRect(find.text('メンバー一覧'));
     final button = tester.getRect(find.byKey(const Key('add_member_button')));
+    expect(
+      button.right,
+      tester.getRect(find.widgetWithText(TextFormField, 'グループ名')).right,
+    );
     expect(button.left, greaterThan(heading.right));
     expect(button.top, lessThan(heading.bottom));
     expect(button.bottom, greaterThan(heading.top));
