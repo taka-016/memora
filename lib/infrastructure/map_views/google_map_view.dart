@@ -223,6 +223,9 @@ class GoogleMapView extends HookConsumerWidget {
 
     Widget buildGoogleMap() {
       return GoogleMap(
+        style: Theme.of(context).brightness == Brightness.dark
+            ? _darkMapStyle
+            : null,
         onMapCreated: handleMapCreated,
         initialCameraPosition: CameraPosition(
           target: getCurrentOrFallbackPosition(),
@@ -495,3 +498,13 @@ Future<BitmapDescriptor> createGrayMarkerIcon() async {
     height: 32,
   );
 }
+
+const _darkMapStyle = '''[
+  {"elementType":"geometry","stylers":[{"color":"#202124"}]},
+  {"elementType":"labels.text.fill","stylers":[{"color":"#e8eaed"}]},
+  {"elementType":"labels.text.stroke","stylers":[{"color":"#202124"}]},
+  {"featureType":"road","elementType":"geometry","stylers":[{"color":"#3c4043"}]},
+  {"featureType":"road.highway","elementType":"geometry","stylers":[{"color":"#5f6368"}]},
+  {"featureType":"water","elementType":"geometry","stylers":[{"color":"#172f43"}]},
+  {"featureType":"poi.park","elementType":"geometry","stylers":[{"color":"#263c32"}]}
+]''';

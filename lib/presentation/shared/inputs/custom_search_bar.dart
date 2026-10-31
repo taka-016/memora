@@ -73,18 +73,27 @@ class CustomSearchBar extends HookConsumerWidget {
           decoration: InputDecoration(
             hintText: hintText,
             filled: true,
-            fillColor: Colors.white,
+            fillColor: Theme.of(context).colorScheme.surfaceContainerHigh,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8.0),
-              borderSide: const BorderSide(width: 1, color: Colors.grey),
+              borderSide: BorderSide(
+                width: 1,
+                color: Theme.of(context).colorScheme.outline,
+              ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8.0),
-              borderSide: const BorderSide(width: 1, color: Colors.grey),
+              borderSide: BorderSide(
+                width: 1,
+                color: Theme.of(context).colorScheme.outline,
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8.0),
-              borderSide: const BorderSide(width: 2, color: Colors.blue),
+              borderSide: BorderSide(
+                width: 2,
+                color: Theme.of(context).colorScheme.primary,
+              ),
             ),
             suffixIcon: buildClearButton(),
             isDense: true,
@@ -128,7 +137,7 @@ class CustomSearchBar extends HookConsumerWidget {
 
       return Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(8.0),
           boxShadow: const [
             BoxShadow(

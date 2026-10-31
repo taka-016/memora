@@ -44,6 +44,7 @@ class _LoadedGroups extends GroupTimelineGroupSelectionNotifier {
 
 @GenerateMocks([GetCurrentMemberUseCase, GetGroupsWithMembersUsecase])
 void main() {
+  setUp(() => SharedPreferences.setMockInitialValues({}));
   testWidgets('本人取得を再試行して年表を初期取得し認証を解決しない', (tester) async {
     final current = MockGetCurrentMemberUseCase();
     final groups = MockGetGroupsWithMembersUsecase();

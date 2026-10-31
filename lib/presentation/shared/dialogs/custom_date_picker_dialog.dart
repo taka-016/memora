@@ -168,7 +168,7 @@ class CustomDatePickerDialog extends HookWidget {
       return Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: Theme.of(context).primaryColor,
+          color: Theme.of(context).colorScheme.primaryContainer,
           borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(4),
             topRight: Radius.circular(4),
@@ -180,8 +180,8 @@ class CustomDatePickerDialog extends HookWidget {
             child: Text(
               key: const Key('date_header'),
               _formatDateWithWeekday(selectedDate.value),
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onPrimaryContainer,
                 fontSize: 20,
                 fontWeight: FontWeight.w500,
               ),

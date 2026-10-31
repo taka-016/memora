@@ -409,8 +409,8 @@ class MemberEditModal extends HookConsumerWidget {
                   icon: const Icon(Icons.person_add),
                   label: const Text('招待'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    foregroundColor: Colors.white,
+                    backgroundColor: Theme.of(context).colorScheme.tertiary,
+                    foregroundColor: Theme.of(context).colorScheme.onTertiary,
                   ),
                 ),
               ],

@@ -338,13 +338,16 @@ class ItineraryItemEditBottomSheet extends HookConsumerWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.red.shade50,
+          color: Theme.of(context).colorScheme.errorContainer,
           borderRadius: BorderRadius.circular(4),
-          border: Border.all(color: Colors.red.shade200),
+          border: Border.all(color: Theme.of(context).colorScheme.error),
         ),
         child: Text(
           errorMessage.value!,
-          style: TextStyle(color: Colors.red.shade700, fontSize: 14),
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onErrorContainer,
+            fontSize: 14,
+          ),
         ),
       );
     }
@@ -553,7 +556,7 @@ class ItineraryItemEditBottomSheet extends HookConsumerWidget {
               height: 4,
               margin: const EdgeInsets.only(bottom: 12),
               decoration: BoxDecoration(
-                color: Colors.grey.shade400,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -569,6 +572,7 @@ class ItineraryItemEditBottomSheet extends HookConsumerWidget {
             ),
             const SizedBox(height: 12),
             buildDateTimeSection(
+              context: context,
               label: '開始日時',
               dateValue: formatDate(startDate.value),
               timeValue: formatTime(startTime.value),
@@ -586,6 +590,7 @@ class ItineraryItemEditBottomSheet extends HookConsumerWidget {
             ),
             const SizedBox(height: 12),
             buildDateTimeSection(
+              context: context,
               label: '終了日時',
               dateValue: formatDate(endDate.value),
               timeValue: formatTime(endTime.value),
@@ -690,6 +695,7 @@ LocationDto? findLocationById(List<LocationDto> locations, String? locationId) {
 }
 
 Widget buildDateTimeSection({
+  required BuildContext context,
   required String label,
   required String dateValue,
   required String timeValue,
@@ -708,6 +714,7 @@ Widget buildDateTimeSection({
         Align(alignment: Alignment.centerLeft, child: Text(label)),
         const SizedBox(height: 8),
         buildDateTimeField(
+          context: context,
           key: dateFieldKey,
           value: dateValue,
           icon: Icons.calendar_today,
@@ -718,6 +725,7 @@ Widget buildDateTimeSection({
         ),
         const SizedBox(height: 8),
         buildDateTimeField(
+          context: context,
           key: timeFieldKey,
           value: timeValue,
           icon: Icons.access_time,
@@ -729,6 +737,7 @@ Widget buildDateTimeSection({
 }
 
 Widget buildDateTimeField({
+  required BuildContext context,
   required Key key,
   required String value,
   required IconData icon,
@@ -744,7 +753,9 @@ Widget buildDateTimeField({
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.black54),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Row(
@@ -752,7 +763,10 @@ Widget buildDateTimeField({
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(color: Colors.black, fontSize: 16),
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface,
+                fontSize: 16,
+              ),
             ),
           ),
           Row(
@@ -764,14 +778,17 @@ Widget buildDateTimeField({
                   child: GestureDetector(
                     key: clearKey,
                     onTap: onClear,
-                    child: const SizedBox(
+                    child: SizedBox(
                       width: 24,
                       height: 24,
-                      child: Icon(Icons.clear, color: Colors.black54),
+                      child: Icon(
+                        Icons.clear,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ),
                 ),
-              Icon(icon, color: Colors.black54),
+              Icon(icon, color: Theme.of(context).colorScheme.onSurfaceVariant),
             ],
           ),
         ],

@@ -9,6 +9,37 @@ import 'package:memora/presentation/features/timeline/member_row.dart';
 import 'package:memora/presentation/features/timeline/trip_row.dart';
 
 void main() {
+  test('旅行・グループ・DVCの行背景は明暗どちらでも本文を読める', () {
+    final rows = buildTimelineRows(
+      groupWithMembers: const GroupDto(
+        id: 'g',
+        ownerId: 'o',
+        name: '家族',
+        members: [],
+      ),
+      onTripSelected: null,
+      onDvcSelected: null,
+    );
+    for (final brightness in Brightness.values) {
+      final scheme = ColorScheme.fromSeed(
+        seedColor: Colors.lightBlue,
+        brightness: brightness,
+      );
+      for (final row in rows) {
+        final background = Color.alphaBlend(
+          row.backgroundColor ?? Colors.transparent,
+          scheme.surface,
+        );
+        final a = scheme.onSurface.computeLuminance();
+        final b = background.computeLuminance();
+        expect(
+          a > b ? (a + .05) / (b + .05) : (b + .05) / (a + .05),
+          greaterThanOrEqualTo(4.5),
+        );
+      }
+    }
+  });
+
   test('メンバー行は所属色を不透明度10%で共通背景として返す', () {
     const row = MemberRow(
       member: GroupMemberDto(

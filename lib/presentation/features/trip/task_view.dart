@@ -260,13 +260,16 @@ class TaskView extends HookConsumerWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.red.shade50,
+          color: Theme.of(context).colorScheme.errorContainer,
           borderRadius: BorderRadius.circular(4),
-          border: Border.all(color: Colors.red.shade200),
+          border: Border.all(color: Theme.of(context).colorScheme.error),
         ),
         child: Text(
           errorMessage.value!,
-          style: TextStyle(color: Colors.red.shade700, fontSize: 14),
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onErrorContainer,
+            fontSize: 14,
+          ),
         ),
       );
     }

@@ -34,10 +34,13 @@ class AccountDeleteModal extends HookWidget {
     }
 
     Widget buildLoadingIndicator() {
-      return const SizedBox(
+      return SizedBox(
         width: 20,
         height: 20,
-        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          color: Theme.of(context).colorScheme.primary,
+        ),
       );
     }
 
@@ -56,8 +59,8 @@ class AccountDeleteModal extends HookWidget {
         ElevatedButton(
           onPressed: isLoading.value ? null : deleteAccount,
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.red,
-            foregroundColor: Colors.white,
+            backgroundColor: Theme.of(context).colorScheme.error,
+            foregroundColor: Theme.of(context).colorScheme.onError,
           ),
           child: isLoading.value ? buildLoadingIndicator() : const Text('削除'),
         ),

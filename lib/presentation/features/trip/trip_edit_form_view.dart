@@ -411,7 +411,9 @@ class TripEditFormView extends HookConsumerWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
           decoration: BoxDecoration(
-            border: Border.all(color: Colors.black54),
+            border: Border.all(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
             borderRadius: BorderRadius.circular(4),
           ),
           child: Row(
@@ -421,7 +423,10 @@ class TripEditFormView extends HookConsumerWidget {
                   selectedDate != null
                       ? '${selectedDate.year}/${selectedDate.month.toString().padLeft(2, '0')}/${selectedDate.day.toString().padLeft(2, '0')}'
                       : labelText,
-                  style: const TextStyle(color: Colors.black, fontSize: 16),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                    fontSize: 16,
+                  ),
                 ),
               ),
               Row(
@@ -431,7 +436,10 @@ class TripEditFormView extends HookConsumerWidget {
                     Tooltip(
                       message: clearTooltip ?? '日付をクリア',
                       child: IconButton(
-                        icon: const Icon(Icons.clear, color: Colors.black54),
+                        icon: Icon(
+                          Icons.clear,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
                         padding: EdgeInsets.zero,
                         visualDensity: VisualDensity.compact,
                         constraints: const BoxConstraints(),
@@ -439,7 +447,10 @@ class TripEditFormView extends HookConsumerWidget {
                         onPressed: onClear,
                       ),
                     ),
-                  const Icon(Icons.calendar_today, color: Colors.black54),
+                  Icon(
+                    Icons.calendar_today,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ],
               ),
             ],

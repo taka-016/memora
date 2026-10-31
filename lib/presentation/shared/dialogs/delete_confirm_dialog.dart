@@ -29,8 +29,8 @@ class DeleteConfirmDialog extends StatelessWidget {
             Navigator.of(context).pop(true);
           },
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.red,
-            foregroundColor: Colors.white,
+            backgroundColor: Theme.of(context).colorScheme.error,
+            foregroundColor: Theme.of(context).colorScheme.onError,
           ),
           child: const Text('削除'),
         ),

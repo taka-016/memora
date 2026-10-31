@@ -215,8 +215,14 @@ class AccountSettings extends ConsumerWidget {
   Widget _buildAccountDeleteCard(BuildContext context, WidgetRef ref) {
     return Card(
       child: ListTile(
-        leading: const Icon(Icons.delete_forever, color: Colors.red),
-        title: const Text('アカウント削除', style: TextStyle(color: Colors.red)),
+        leading: Icon(
+          Icons.delete_forever,
+          color: Theme.of(context).colorScheme.error,
+        ),
+        title: Text(
+          'アカウント削除',
+          style: TextStyle(color: Theme.of(context).colorScheme.error),
+        ),
         subtitle: const Text('アカウントを完全に削除'),
         trailing: const Icon(Icons.arrow_forward_ios),
         onTap: () => _showAccountDeleteModal(context, ref),

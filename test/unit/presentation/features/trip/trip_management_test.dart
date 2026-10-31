@@ -131,6 +131,38 @@ void main() {
   }
 
   group('TripManagement', () {
+    testWidgets('狭い画面でも見出しがはみ出さず旅行を追加できる', (tester) async {
+      tester.view.physicalSize = const Size(360, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      when(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
+          testGroupId,
+          testYear,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) async => []);
+      await tester.pumpWidget(
+        createApp(
+          home: Scaffold(
+            body: TripManagement(
+              groupId: testGroupId,
+              year: testYear,
+              onBackPressed: null,
+              mapViewBuilder: const PlaceholderMapViewBuilder(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      await tester.tap(find.text('旅行追加'));
+      await tester.pumpAndSettle();
+      expect(find.text('旅行新規作成'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('旅行がない場合でも画面が表示されること', (WidgetTester tester) async {
       // Arrange
       when(

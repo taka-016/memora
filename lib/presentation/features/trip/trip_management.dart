@@ -359,14 +359,15 @@ class TripManagement extends HookConsumerWidget {
             Row(
               children: [
                 const SizedBox(width: 16),
-                Text(
-                  '$year年の旅行管理',
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
+                Expanded(
+                  child: Text(
+                    '$year年の旅行管理',
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
-                const Spacer(),
                 ElevatedButton.icon(
                   onPressed:
                       managementState.groupMembersStatus ==
@@ -384,24 +385,31 @@ class TripManagement extends HookConsumerWidget {
     }
 
     Widget buildEmptyState() {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.flight_takeoff, size: 100, color: Colors.grey),
+            Icon(
+              Icons.flight_takeoff,
+              size: 100,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
             SizedBox(height: 16),
             Text(
               'この年の旅行はまだありません',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Colors.grey,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
             SizedBox(height: 8),
             Text(
               '旅行を追加してください',
-              style: TextStyle(fontSize: 16, color: Colors.grey),
+              style: TextStyle(
+                fontSize: 16,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
           ],
         ),
@@ -433,7 +441,10 @@ class TripManagement extends HookConsumerWidget {
               title: Text(tripEntry.name ?? '旅行名未設定'),
               subtitle: buildTripSubtitle(tripEntry),
               trailing: IconButton(
-                icon: const Icon(Icons.delete, color: Colors.red),
+                icon: Icon(
+                  Icons.delete,
+                  color: Theme.of(context).colorScheme.error,
+                ),
                 onPressed: () => showDeleteConfirmDialog(tripEntry),
               ),
               onTap: () => showEditTripDialog(tripEntry.id),
