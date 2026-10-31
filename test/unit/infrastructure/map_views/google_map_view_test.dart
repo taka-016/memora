@@ -52,6 +52,32 @@ Widget _createApp(Widget child, {SearchLocationsUsecase? searchUsecase}) {
 
 void main() {
   group('GoogleMapView', () {
+    testWidgets('地図ボタン下の余白では背後の地図へタッチが届く', (tester) async {
+      await tester.pumpWidget(_createApp(const GoogleMapView(locations: [])));
+      final googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
+      final mapRenderBox = tester.renderObject<RenderBox>(
+        find.byType(GoogleMap),
+      );
+
+      for (final bearing in [0.0, 90.0]) {
+        googleMap.onCameraMove!(
+          CameraPosition(target: const LatLng(35, 139), bearing: bearing),
+        );
+        await tester.pump();
+        final point = Offset(
+          tester.getCenter(find.byIcon(Icons.my_location)).dx,
+          tester.getBottomRight(find.byKey(const Key('map_view'))).dy - 32,
+        );
+        final hit = tester.hitTestOnBinding(point);
+
+        expect(
+          hit.path.map((entry) => entry.target),
+          contains(mapRenderBox),
+          reason: '標準ズームボタンが表示される右下領域への入力を遮らない',
+        );
+      }
+    });
+
     testWidgets('回転中は北を指すコンパスが検索バーに重ならず現在地ボタンの上に表示される', (tester) async {
       await tester.pumpWidget(_createApp(const GoogleMapView(locations: [])));
 
