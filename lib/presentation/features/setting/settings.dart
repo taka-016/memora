@@ -242,67 +242,63 @@ class Settings extends ConsumerWidget {
           children: [
             Text('設定', style: Theme.of(context).textTheme.headlineSmall),
             const SizedBox(height: 16),
-            ..._buildModeInformation(ref),
-            const SizedBox(height: 24),
-            Text('カレンダー', style: Theme.of(context).textTheme.titleMedium),
-            const CalendarDefaultDurationSetting(),
-            const CalendarNotificationSetting(),
-            const CalendarNotificationStatusView(),
-            if (isOffline) ...[
-              const SizedBox(height: 24),
-              _buildOfflineBackupSection(context, ref),
-            ],
-            const SizedBox(height: 24),
-            Text(
-              'Androidウィジェット',
-              style: Theme.of(context).textTheme.titleMedium,
+            _buildCategory(
+              title: 'カレンダー',
+              children: const [
+                CalendarDefaultDurationSetting(),
+                CalendarNotificationSetting(),
+                CalendarNotificationStatusView(),
+              ],
             ),
-            const SizedBox(height: 8),
-            _buildAndroidWidgetGroupSetting(context, ref, currentMemberState),
-            const SizedBox(height: 16),
-            _buildAndroidWidgetUpdateIntervalSetting(context, ref),
-            const SizedBox(height: 24),
-            Text('表示', style: Theme.of(context).textTheme.titleMedium),
-            const ThemeModeSetting(),
+            if (isOffline)
+              _buildCategory(
+                title: 'オフラインデータのバックアップ',
+                children: [
+                  ..._buildOfflineModeInformation(),
+                  const SizedBox(height: 16),
+                  _buildOfflineBackupSection(context, ref),
+                ],
+              ),
+            _buildCategory(
+              title: 'Androidウィジェット',
+              children: [
+                _buildAndroidWidgetGroupSetting(
+                  context,
+                  ref,
+                  currentMemberState,
+                ),
+                const SizedBox(height: 16),
+                _buildAndroidWidgetUpdateIntervalSetting(context, ref),
+              ],
+            ),
+            _buildCategory(title: '表示', children: const [ThemeModeSetting()]),
           ],
         ),
       ),
     );
   }
 
-  List<Widget> _buildModeInformation(WidgetRef ref) {
-    final capabilities = ref.watch(appCapabilitiesProvider);
-    final online = capabilities
-        .availability(AppFeature.authentication)
-        .isAvailable;
-    final storage = capabilities.availability(AppFeature.localData);
-    return [
-      Text(online ? 'オンラインモード' : 'オフラインモード'),
-      const SizedBox(height: 8),
-      Text(online ? '保存先: クラウド（Firestore）' : '保存先: この端末のアプリ内部ストレージ'),
-      const SizedBox(height: 8),
-      Text(
-        online
-            ? '利用可能機能: 年表・メンバー・グループ・旅行・タスク・旅程・DVCポイント・地図・場所検索・現在地・共有・招待'
-            : '本人情報を端末内で復元できます。地図・場所検索・現在地・共有・招待は利用できません。',
-      ),
-      if (!storage.isAvailable) Text(storage.reason!),
-      const SizedBox(height: 8),
-      Text(
-        online
-            ? 'アプリを削除してもクラウドのデータは保持されます。'
-            : 'バックアップ未作成時は、アプリ削除・データ消去・端末故障によりデータを復元できなくなります。',
-      ),
-    ];
-  }
+  Widget _buildCategory({
+    required String title,
+    required List<Widget> children,
+  }) =>
+      _SettingsCategory(key: ValueKey(title), title: title, children: children);
+
+  List<Widget> _buildOfflineModeInformation() => const [
+    Text('オフラインモード'),
+    SizedBox(height: 8),
+    Text('保存先: この端末のアプリ内部ストレージ'),
+    SizedBox(height: 8),
+    Text('本人情報を端末内で復元できます。地図・場所検索・現在地・共有・招待は利用できません。'),
+    SizedBox(height: 8),
+    Text('バックアップ未作成時は、アプリ削除・データ消去・端末故障によりデータを復元できなくなります。'),
+  ];
 
   Widget _buildOfflineBackupSection(BuildContext context, WidgetRef ref) {
     final state = ref.watch(offlineBackupNotifierProvider);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('オフラインデータのバックアップ', style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: 8),
         const Text('バックアップのパスワードを忘れた場合は復元できません。パスワードは端末に保存されません。'),
         const SizedBox(height: 12),
         Wrap(
@@ -690,5 +686,94 @@ class Settings extends ConsumerWidget {
       );
     }
     return const Center(child: CircularProgressIndicator());
+  }
+}
+
+class _SettingsCategory extends StatefulWidget {
+  const _SettingsCategory({
+    super.key,
+    required this.title,
+    required this.children,
+  });
+
+  final String title;
+  final List<Widget> children;
+
+  @override
+  State<_SettingsCategory> createState() => _SettingsCategoryState();
+}
+
+class _SettingsCategoryState extends State<_SettingsCategory> {
+  bool _isExpanded = true;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final border = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: BorderSide(color: theme.colorScheme.outlineVariant),
+    );
+    return Stack(
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 24, bottom: 12),
+          child: InputDecorator(
+            decoration: InputDecoration(
+              label: ExcludeSemantics(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 8,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Flexible(child: Text(widget.title)),
+                      const SizedBox(width: 8),
+                      Icon(_isExpanded ? Icons.expand_less : Icons.expand_more),
+                    ],
+                  ),
+                ),
+              ),
+              floatingLabelBehavior: FloatingLabelBehavior.always,
+              floatingLabelStyle: theme.textTheme.titleLarge?.copyWith(
+                color: theme.colorScheme.onSurface,
+              ),
+              border: border,
+              enabledBorder: border,
+              focusedBorder: border,
+              contentPadding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
+            ),
+            child: AnimatedSize(
+              duration: const Duration(milliseconds: 200),
+              alignment: Alignment.topCenter,
+              child: Visibility(
+                visible: _isExpanded,
+                maintainState: true,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: widget.children,
+                ),
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          top: 0,
+          left: 8,
+          right: 8,
+          height: 48,
+          child: Semantics(
+            label: widget.title,
+            button: true,
+            expanded: _isExpanded,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(8),
+              onTap: () => setState(() => _isExpanded = !_isExpanded),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
