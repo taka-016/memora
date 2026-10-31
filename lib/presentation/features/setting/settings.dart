@@ -1,4 +1,5 @@
 import 'package:memora/presentation/features/setting/calendar_notification_setting.dart';
+import 'package:memora/presentation/features/setting/theme_mode_setting.dart';
 import 'package:memora/application/models/app_capabilities.dart';
 import 'package:memora/presentation/features/setting/calendar_default_duration_setting.dart';
 import 'package:memora/application/models/offline_backup_snapshot.dart';
@@ -260,6 +261,9 @@ class Settings extends ConsumerWidget {
             _buildAndroidWidgetGroupSetting(context, ref, currentMemberState),
             const SizedBox(height: 16),
             _buildAndroidWidgetUpdateIntervalSetting(context, ref),
+            const SizedBox(height: 24),
+            Text('表示', style: Theme.of(context).textTheme.titleMedium),
+            const ThemeModeSetting(),
           ],
         ),
       ),

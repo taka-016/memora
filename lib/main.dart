@@ -5,6 +5,8 @@ import 'package:memora/composition_root/app_bootstrap.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:memora/application/models/app_theme_mode.dart';
+import 'package:memora/presentation/notifiers/setting/theme_settings_notifier.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/app/app_router.dart';
@@ -76,7 +78,13 @@ class MyApp extends ConsumerWidget {
       title: ref.watch(appDisplayNameProvider),
       theme: _buildTheme(Brightness.light),
       darkTheme: _buildTheme(Brightness.dark),
-      themeMode: ThemeMode.system,
+      themeMode: switch (ref.watch(
+        themeSettingsNotifierProvider.select((value) => value.value?.mode),
+      )) {
+        AppThemeMode.light => ThemeMode.light,
+        AppThemeMode.dark => ThemeMode.dark,
+        _ => ThemeMode.system,
+      },
       locale: const Locale('ja'),
       supportedLocales: const [Locale('ja'), Locale('en')],
       localizationsDelegates: const [
