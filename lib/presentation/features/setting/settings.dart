@@ -281,17 +281,8 @@ class Settings extends ConsumerWidget {
   Widget _buildCategory({
     required String title,
     required List<Widget> children,
-  }) => Card(
-    clipBehavior: Clip.antiAlias,
-    child: ExpansionTile(
-      key: PageStorageKey(title),
-      title: Text(title),
-      initiallyExpanded: true,
-      maintainState: true,
-      childrenPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-      children: children,
-    ),
-  );
+  }) =>
+      _SettingsCategory(key: ValueKey(title), title: title, children: children);
 
   List<Widget> _buildOfflineModeInformation() => const [
     Text('オフラインモード'),
@@ -695,5 +686,94 @@ class Settings extends ConsumerWidget {
       );
     }
     return const Center(child: CircularProgressIndicator());
+  }
+}
+
+class _SettingsCategory extends StatefulWidget {
+  const _SettingsCategory({
+    super.key,
+    required this.title,
+    required this.children,
+  });
+
+  final String title;
+  final List<Widget> children;
+
+  @override
+  State<_SettingsCategory> createState() => _SettingsCategoryState();
+}
+
+class _SettingsCategoryState extends State<_SettingsCategory> {
+  bool _isExpanded = true;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final border = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: BorderSide(color: theme.colorScheme.outlineVariant),
+    );
+    return Stack(
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 24, bottom: 12),
+          child: InputDecorator(
+            decoration: InputDecoration(
+              label: ExcludeSemantics(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 8,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Flexible(child: Text(widget.title)),
+                      const SizedBox(width: 8),
+                      Icon(_isExpanded ? Icons.expand_less : Icons.expand_more),
+                    ],
+                  ),
+                ),
+              ),
+              floatingLabelBehavior: FloatingLabelBehavior.always,
+              floatingLabelStyle: theme.textTheme.titleLarge?.copyWith(
+                color: theme.colorScheme.onSurface,
+              ),
+              border: border,
+              enabledBorder: border,
+              focusedBorder: border,
+              contentPadding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
+            ),
+            child: AnimatedSize(
+              duration: const Duration(milliseconds: 200),
+              alignment: Alignment.topCenter,
+              child: Visibility(
+                visible: _isExpanded,
+                maintainState: true,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: widget.children,
+                ),
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          top: 0,
+          left: 8,
+          right: 8,
+          height: 48,
+          child: Semantics(
+            label: widget.title,
+            button: true,
+            expanded: _isExpanded,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(8),
+              onTap: () => setState(() => _isExpanded = !_isExpanded),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }

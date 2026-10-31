@@ -71,8 +71,14 @@ class CalendarNotificationSetting extends ConsumerWidget {
     }
     return ListTile(
       contentPadding: EdgeInsets.zero,
-      title: const Text('予定の通知設定'),
-      trailing: const Icon(Icons.edit),
+      title: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Flexible(child: Text('予定の通知設定')),
+          SizedBox(width: 8),
+          Icon(Icons.edit, size: 20),
+        ],
+      ),
       onTap: value.value!.isSaving
           ? null
           : () async {

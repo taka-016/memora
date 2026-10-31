@@ -17,75 +17,149 @@ class CalendarDefaultDurationSetting extends ConsumerWidget {
       }
       return const LinearProgressIndicator();
     }
-    return _DurationForm(minutes: value.minutes, isSaving: value.isSaving);
+    return _DurationInput(minutes: value.minutes);
   }
 }
 
-class _DurationForm extends ConsumerStatefulWidget {
-  const _DurationForm({required this.minutes, required this.isSaving});
+class _DurationInput extends ConsumerStatefulWidget {
+  const _DurationInput({required this.minutes});
 
   final int minutes;
-  final bool isSaving;
 
   @override
-  ConsumerState<_DurationForm> createState() => _DurationFormState();
+  ConsumerState<_DurationInput> createState() => _DurationInputState();
 }
 
-class _DurationFormState extends ConsumerState<_DurationForm> {
-  final _form = GlobalKey<FormState>();
-  final _field = GlobalKey<FormFieldState<String>>();
+class _DurationInputState extends ConsumerState<_DurationInput>
+    with WidgetsBindingObserver {
+  late final TextEditingController _controller;
+  final _focusNode = FocusNode();
+  bool _isInvalid = false;
+  late bool _isCustom;
+  bool _keyboardWasVisible = false;
+  static const _presetMinutes = [5, 15, 30, 45, 60];
+
+  bool _isPreset(int minutes) => _presetMinutes.contains(minutes);
 
   @override
-  void didUpdateWidget(_DurationForm oldWidget) {
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _controller = TextEditingController(text: '${widget.minutes}');
+    _isCustom = !_isPreset(widget.minutes);
+  }
+
+  @override
+  void didUpdateWidget(_DurationInput oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.minutes != widget.minutes) {
-      _field.currentState?.didChange('${widget.minutes}');
+    if (oldWidget.minutes != widget.minutes && !_focusNode.hasFocus) {
+      _controller.text = '${widget.minutes}';
+      _isInvalid = false;
     }
   }
 
   @override
-  Widget build(BuildContext context) => Form(
-    key: _form,
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        TextFormField(
-          key: _field,
-          initialValue: '${widget.minutes}',
-          enabled: !widget.isSaving,
-          keyboardType: TextInputType.number,
-          decoration: const InputDecoration(
-            labelText: '予定の標準時間',
-            suffixText: '分',
-            helperText: '1〜1440分',
-            border: OutlineInputBorder(),
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _keyboardWasVisible = View.of(context).viewInsets.bottom > 0;
+  }
+
+  @override
+  void reassemble() {
+    super.reassemble();
+    WidgetsBinding.instance.removeObserver(this);
+    WidgetsBinding.instance.addObserver(this);
+    _keyboardWasVisible = View.of(context).viewInsets.bottom > 0;
+  }
+
+  @override
+  void didChangeMetrics() {
+    final keyboardIsVisible = View.of(context).viewInsets.bottom > 0;
+    final keyboardWasDismissed = _keyboardWasVisible && !keyboardIsVisible;
+    _keyboardWasVisible = keyboardIsVisible;
+    if (!keyboardWasDismissed) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && View.of(context).viewInsets.bottom == 0) {
+        _focusNode.unfocus();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _controller.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      ListTile(
+        contentPadding: EdgeInsets.zero,
+        title: const Text('予定の標準時間'),
+        trailing: DropdownButton<int>(
+          value: _isCustom || !_isPreset(widget.minutes) ? 0 : widget.minutes,
+          items: [
+            for (final minutes in _presetMinutes)
+              DropdownMenuItem(value: minutes, child: Text('$minutes分')),
+            const DropdownMenuItem(value: 0, child: Text('その他')),
+          ],
+          onChanged: _select,
+        ),
+      ),
+      if (_isCustom || !_isPreset(widget.minutes))
+        Align(
+          alignment: Alignment.centerRight,
+          child: SizedBox(
+            width: 80,
+            child: TextField(
+              controller: _controller,
+              focusNode: _focusNode,
+              keyboardType: TextInputType.number,
+              textInputAction: TextInputAction.done,
+              textAlign: TextAlign.end,
+              decoration: InputDecoration(
+                suffixText: '分',
+                isDense: true,
+                errorText: _isInvalid ? '1〜1440分' : null,
+              ),
+              onChanged: _save,
+              onSubmitted: (_) => _focusNode.unfocus(),
+              onTapOutside: (_) => _focusNode.unfocus(),
+            ),
           ),
-          validator: (text) {
-            final minutes = int.tryParse(text ?? '');
-            return minutes == null || minutes < 1 || minutes > 1440
-                ? '1〜1440分で指定してください'
-                : null;
-          },
         ),
-        const SizedBox(height: 8),
-        FilledButton(
-          onPressed: widget.isSaving ? null : _save,
-          child: const Text('保存'),
-        ),
-      ],
-    ),
+    ],
   );
 
-  Future<void> _save() async {
-    if (!_form.currentState!.validate()) return;
+  Future<void> _select(int? minutes) async {
+    if (minutes == null) return;
+    _focusNode.unfocus();
+    setState(() {
+      _isCustom = minutes == 0;
+      _isInvalid = false;
+    });
+    if (minutes == 0) return;
+    await _persist(minutes);
+  }
+
+  Future<void> _save(String text) async {
+    final minutes = int.tryParse(text);
+    final isInvalid = minutes == null || minutes < 1 || minutes > 1440;
+    setState(() => _isInvalid = isInvalid);
+    if (isInvalid) return;
+    await _persist(minutes);
+  }
+
+  Future<void> _persist(int minutes) async {
     final success = await ref
         .read(calendarPreferencesNotifierProvider.notifier)
-        .save(int.parse(_field.currentState!.value!));
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(success ? '予定の標準時間を保存しました' : '予定の標準時間を保存できませんでした'),
-      ),
-    );
+        .save(minutes);
+    if (!mounted || success) return;
+    ScaffoldMessenger.of(context)
+        .showSnackBar(const SnackBar(content: Text('予定の標準時間を保存できませんでした')));
   }
 }
