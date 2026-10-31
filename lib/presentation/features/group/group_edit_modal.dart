@@ -686,7 +686,7 @@ class GroupEditModal extends HookConsumerWidget {
         children: [
           Row(
             children: [
-              const Flexible(
+              const Expanded(
                 child: Text(
                   'メンバー一覧',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
