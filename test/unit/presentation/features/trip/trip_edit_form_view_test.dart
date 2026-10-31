@@ -1,3 +1,5 @@
+import '../../../../helpers/floating_label_visibility.dart';
+
 import 'package:memora/infrastructure/time/fixed_app_clock.dart';
 import 'package:memora/infrastructure/map_views/google_map_view_builder.dart';
 import 'package:memora/presentation/shared/map_views/placeholder_map_view_builder.dart';
@@ -38,6 +40,27 @@ Widget _createMapApp({required Widget child}) {
 }
 
 void main() {
+  testWidgets('入力済みの旅行名ラベルがスクロール領域の上端で切れない', (tester) async {
+    await tester.pumpWidget(
+      _createApp(
+        child: TripEditFormView(
+          value: const TripEntryDto(
+            id: 't',
+            groupId: 'g',
+            name: '家族旅行',
+            year: 2026,
+          ),
+          onChanged: (_) {},
+          onItineraryManagementRequested: () {},
+          onTaskManagementRequested: () {},
+          mapViewBuilder: const PlaceholderMapViewBuilder(),
+          clock: FixedAppClock(DateTime(2026, 1, 1)),
+        ),
+      ),
+    );
+    expectFloatingLabelVisible(tester, '旅行名');
+  });
+
   group('TripEditFormView', () {
     testWidgets('ダークテーマで旅行の日付が読めてクリア操作ができる', (tester) async {
       TripEntryDto? changed;
