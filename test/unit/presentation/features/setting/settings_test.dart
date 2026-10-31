@@ -39,7 +39,7 @@ import '../../../../helpers/test_exception.dart';
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
   group('Settings', () {
-    testWidgets('テーマを端末に従う・ダーク・ライトから選択し再起動後も保持する', (tester) async {
+    testWidgets('テーマを端末設定に従う・ダーク・ライトから選択し再起動後も保持する', (tester) async {
       Widget app() => _buildTestApp(
         storage: _FakeAndroidWidgetCacheStorage(),
         groups: const [],
@@ -50,8 +50,8 @@ void main() {
         find.byKey(const Key('theme_mode_setting')),
         300,
       );
-      expect(find.text('端末に従う'), findsOneWidget);
-      for (final label in ['ダーク', 'ライト', '端末に従う', 'ダーク']) {
+      expect(find.text('端末設定に従う'), findsOneWidget);
+      for (final label in ['ダーク', 'ライト', '端末設定に従う', 'ダーク']) {
         await tester.tap(find.byKey(const Key('theme_mode_setting')));
         await tester.pumpAndSettle();
         await tester.tap(find.text(label).last);
