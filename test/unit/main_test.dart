@@ -2,6 +2,7 @@ import 'package:memora/composition_root/providers/location_providers.dart';
 import 'package:memora/presentation/shared/map_views/placeholder_map_view_builder.dart';
 import 'package:memora/composition_root/providers/app_providers.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
@@ -40,6 +41,7 @@ void main() {
   late MockAuthService mockAuthService;
 
   setUp(() {
+    SharedPreferences.setMockInitialValues({});
     mockGroupQueryService = MockGroupQueryService();
     mockMemberQueryService = MockMemberQueryService();
     mockAuthService = MockAuthService();
@@ -92,6 +94,33 @@ void main() {
   }
 
   group('MyApp', () {
+    for (final mode in ['light', 'dark']) {
+      testWidgets('保存した$mode設定を起動時に反映し端末の変更より優先する', (tester) async {
+        final expected = mode == 'dark' ? Brightness.dark : Brightness.light;
+        final opposite = expected == Brightness.dark
+            ? Brightness.light
+            : Brightness.dark;
+        final platform = tester.binding.platformDispatcher;
+        addTearDown(platform.clearPlatformBrightnessTestValue);
+        SharedPreferences.setMockInitialValues({'app_theme_mode': mode});
+        platform.platformBrightnessTestValue = opposite;
+        await tester.pumpWidget(createTestApp());
+        await tester.pumpAndSettle();
+        expect(
+          Theme.of(tester.element(find.byType(TopPage))).brightness,
+          expected,
+        );
+        platform.platformBrightnessTestValue = expected;
+        await tester.pumpAndSettle();
+        platform.platformBrightnessTestValue = opposite;
+        await tester.pumpAndSettle();
+        expect(
+          Theme.of(tester.element(find.byType(TopPage))).brightness,
+          expected,
+        );
+      });
+    }
+
     testWidgets('端末の明るさ変更に追従して全画面のテーマを切り替える', (tester) async {
       final platform = tester.binding.platformDispatcher;
       addTearDown(platform.clearPlatformBrightnessTestValue);
