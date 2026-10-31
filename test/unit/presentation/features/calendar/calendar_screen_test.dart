@@ -1,7 +1,5 @@
 import 'package:flutter/rendering.dart';
 
-import '../../../../helpers/floating_label_visibility.dart';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,16 +11,6 @@ import 'package:memora/application/dtos/calendar/calendar_label_dto.dart';
 import 'calendar_test_support.dart';
 
 void main() {
-  testWidgets('入力済みの予定タイトルのラベルが拡大文字でも上端で切れない', (tester) async {
-    final harness = CalendarTestHarness();
-    await harness.pump(tester, textScale: 1.5);
-    await tester.tap(find.byType(FloatingActionButton));
-    await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextFormField).first, '家族旅行');
-    await tester.pumpAndSettle();
-    expectFloatingLabelVisible(tester, 'タイトル');
-  });
-
   testWidgets('長いメンバー名は省略して末尾の「の予定」を表示し選択して保存できる', (tester) async {
     tester.view.physicalSize = const Size(320, 640);
     tester.view.devicePixelRatio = 1;

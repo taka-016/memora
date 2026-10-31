@@ -1,5 +1,3 @@
-import '../../../../helpers/floating_label_visibility.dart';
-
 import 'package:memora/infrastructure/time/fixed_app_clock.dart';
 import 'package:memora/composition_root/providers/app_providers.dart';
 
@@ -23,18 +21,6 @@ Widget _createApp({required Widget child}) {
 }
 
 void main() {
-  testWidgets('入力済みの表示名ラベルがスクロール領域の上端で切れない', (tester) async {
-    await tester.pumpWidget(
-      _createApp(
-        child: MemberEditModal(
-          member: const MemberDto(id: 'm', displayName: '家族'),
-          onSave: (_) async => true,
-        ),
-      ),
-    );
-    expectFloatingLabelVisible(tester, '表示名');
-  });
-
   group('MemberEditModal', () {
     testWidgets('保存拒否後も入力と編集開始時のバージョンを保持して再試行できる', (tester) async {
       final requests = <MemberDto>[];

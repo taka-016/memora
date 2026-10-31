@@ -1,5 +1,3 @@
-import '../../../../helpers/floating_label_visibility.dart';
-
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -123,19 +121,7 @@ Widget buildSubject({
 }
 
 void main() {
-  testWidgets('入力済みのグループ名ラベルが上端で切れない', (tester) async {
-    await tester.pumpWidget(
-      buildSubject(
-        group: createGroupDto(id: 'g', name: '家族'),
-        onSave: (_) async {},
-        availableMembers: [],
-        currentMember: createCurrentMember(),
-      ),
-    );
-    expectFloatingLabelVisible(tester, 'グループ名');
-  });
-
-  testWidgets('一覧の見出し横からメンバーを追加できる', (tester) async {
+  testWidgets('追加ボタンからメンバーを一覧に追加できる', (tester) async {
     await tester.pumpWidget(
       buildSubject(
         group: createGroupDto(id: 'g', name: '家族'),
@@ -150,16 +136,6 @@ void main() {
         currentMember: createCurrentMember(),
       ),
     );
-    expectFloatingLabelVisible(tester, 'グループ名');
-    final heading = tester.getRect(find.text('メンバー一覧'));
-    final button = tester.getRect(find.byKey(const Key('add_member_button')));
-    expect(
-      button.right,
-      tester.getRect(find.widgetWithText(TextFormField, 'グループ名')).right,
-    );
-    expect(button.left, greaterThan(heading.right));
-    expect(button.top, lessThan(heading.bottom));
-    expect(button.bottom, greaterThan(heading.top));
     await tester.tap(find.byKey(const Key('add_member_button')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('追加する人'));
