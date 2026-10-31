@@ -68,6 +68,7 @@ final mockCandidatesDefault = [
 Widget buildTestApp({
   required Widget child,
   SearchLocationsUsecase? searchLocationsUsecase,
+  ThemeData? theme,
 }) {
   return ProviderScope(
     overrides: [
@@ -75,12 +76,56 @@ Widget buildTestApp({
         searchLocationsUsecase ?? _mockSearchLocationsUsecase(const []),
       ),
     ],
-    child: MaterialApp(home: Scaffold(body: child)),
+    child: MaterialApp(
+      theme: theme,
+      home: Scaffold(body: child),
+    ),
   );
 }
 
 void main() {
   group('CustomSearchBar', () {
+    testWidgets('ダークテーマでも検索文字と候補の背景に十分なコントラストがある', (tester) async {
+      LocationCandidateDto? selected;
+      await tester.pumpWidget(
+        buildTestApp(
+          theme: ThemeData(brightness: Brightness.dark),
+          searchLocationsUsecase: _mockSearchLocationsUsecase(
+            mockCandidatesDefault,
+          ),
+          child: CustomSearchBar(
+            hintText: '場所を検索',
+            onCandidateSelected: (value) => selected = value,
+          ),
+        ),
+      );
+      await tester.enterText(find.byType(TextField), '東京');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+      void expectReadable(Color foreground, Color background) {
+        final a = foreground.computeLuminance();
+        final b = background.computeLuminance();
+        expect(
+          a > b ? (a + .05) / (b + .05) : (b + .05) / (a + .05),
+          greaterThanOrEqualTo(4.5),
+        );
+      }
+
+      final field = tester.widget<TextField>(find.byType(TextField));
+      final editable = tester.widget<EditableText>(find.byType(EditableText));
+      expectReadable(editable.style.color!, field.decoration!.fillColor!);
+      final title = tester.element(find.text('東京タワー'));
+      final background =
+          title.findAncestorWidgetOfExactType<Container>()!.decoration!
+              as BoxDecoration;
+      expectReadable(
+        DefaultTextStyle.of(title).style.color!,
+        background.color!,
+      );
+      await tester.tap(find.text('東京タワー'));
+      await tester.pump();
+      expect(selected?.name, '東京タワー');
+    });
     testWidgets('検索バーが表示される', (WidgetTester tester) async {
       await tester.pumpWidget(
         buildTestApp(child: const CustomSearchBar(hintText: '場所を検索')),

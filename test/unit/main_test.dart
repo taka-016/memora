@@ -92,6 +92,42 @@ void main() {
   }
 
   group('MyApp', () {
+    testWidgets('端末の明るさ変更に追従して全画面のテーマを切り替える', (tester) async {
+      final platform = tester.binding.platformDispatcher;
+      addTearDown(platform.clearPlatformBrightnessTestValue);
+      platform.platformBrightnessTestValue = Brightness.light;
+      await tester.pumpWidget(createTestApp());
+      await tester.pumpAndSettle();
+      BuildContext pageContext() => tester.element(find.byType(TopPage));
+      expect(Theme.of(pageContext()).brightness, Brightness.light);
+
+      platform.platformBrightnessTestValue = Brightness.dark;
+      await tester.pumpAndSettle();
+      final theme = Theme.of(pageContext());
+      expect(theme.brightness, Brightness.dark);
+      double contrast(Color foreground, Color background) {
+        final a = foreground.computeLuminance();
+        final b = background.computeLuminance();
+        return a > b ? (a + .05) / (b + .05) : (b + .05) / (a + .05);
+      }
+
+      expect(
+        contrast(theme.colorScheme.onSurface, theme.colorScheme.surface),
+        greaterThanOrEqualTo(4.5),
+      );
+      expect(
+        contrast(
+          theme.appBarTheme.foregroundColor!,
+          theme.appBarTheme.backgroundColor!,
+        ),
+        greaterThanOrEqualTo(4.5),
+      );
+
+      platform.platformBrightnessTestValue = Brightness.light;
+      await tester.pumpAndSettle();
+      expect(Theme.of(pageContext()).brightness, Brightness.light);
+    });
+
     testWidgets('アプリ起動時にTopPageが表示される', (WidgetTester tester) async {
       // Act
       await tester.pumpWidget(createTestApp());
