@@ -661,8 +661,11 @@ void main() {
           ),
         );
         await tester.pumpAndSettle();
-        await tester.enterText(find.byType(TextFormField), '$minutes');
-        await tester.tap(find.text('保存'));
+        await tester.tap(find.byType(DropdownButton<int>));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('その他').last);
+        await tester.pumpAndSettle();
+        await tester.enterText(find.byType(TextField), '$minutes');
         await tester.pumpAndSettle();
       }
       await tester.pumpWidget(const SizedBox.shrink());
