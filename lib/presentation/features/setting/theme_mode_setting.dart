@@ -26,7 +26,7 @@ class ThemeModeSetting extends ConsumerWidget {
         key: const Key('theme_mode_setting'),
         value: value.mode,
         items: const [
-          DropdownMenuItem(value: AppThemeMode.system, child: Text('端末に従う')),
+          DropdownMenuItem(value: AppThemeMode.system, child: Text('端末設定に従う')),
           DropdownMenuItem(value: AppThemeMode.light, child: Text('ライト')),
           DropdownMenuItem(value: AppThemeMode.dark, child: Text('ダーク')),
         ],
