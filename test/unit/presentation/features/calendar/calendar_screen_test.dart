@@ -1,3 +1,5 @@
+import 'package:flutter/rendering.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,6 +11,46 @@ import 'package:memora/application/dtos/calendar/calendar_label_dto.dart';
 import 'calendar_test_support.dart';
 
 void main() {
+  testWidgets('長いメンバー名は省略して末尾の「の予定」を表示し選択して保存できる', (tester) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final harness = CalendarTestHarness()
+      ..savedLabels.add(
+        const CalendarLabelDto(
+          id: 'member:long',
+          groupId: 'g1',
+          labelType: 'member',
+          memberId: 'long',
+          name: 'とても長い名前のメンバーとても長い名前のメンバーとても長い名前のメンバーの予定',
+          color: '#123ABC',
+        ),
+      );
+    await harness.pump(tester);
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(DropdownButtonFormField<String>));
+    await tester.pumpAndSettle();
+    final suffix = find.text('の予定').last;
+    expect(suffix, findsOneWidget);
+    final memberName = find.text('とても長い名前のメンバーとても長い名前のメンバーとても長い名前のメンバー').last;
+    final nameParagraph = tester.renderObject<RenderParagraph>(memberName);
+    expect(nameParagraph.didExceedMaxLines, isTrue);
+    expect(
+      tester.getRect(suffix).left,
+      lessThan(tester.getRect(find.byType(Dialog).last).right),
+    );
+    await tester.tap(suffix);
+    await tester.pumpAndSettle();
+    expect(find.text('の予定'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.enterText(find.byType(TextFormField).first, '個人の予定');
+    await tester.tap(find.text('保存'));
+    await tester.pumpAndSettle();
+    expect(harness.savedEvents.single.memberId, 'long');
+  });
+
   testWidgets('任意ラベル未登録でもグループ固定ラベルを初期選択して登録できる', (tester) async {
     final harness = CalendarTestHarness()..savedLabels.clear();
     await harness.pump(tester);
@@ -479,6 +521,8 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     await CalendarTestHarness().pump(tester, textScale: 1.5);
     await tester.tap(find.byTooltip('予定を追加'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.widgetWithText(SwitchListTile, '終日'));
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(SwitchListTile, '終日'));
     await tester.pump();

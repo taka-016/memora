@@ -307,6 +307,9 @@ class MemberEditModal extends HookConsumerWidget {
     Widget buildForm() {
       return Expanded(
         child: SingleChildScrollView(
+          padding: EdgeInsets.only(
+            top: MediaQuery.textScalerOf(context).scale(8),
+          ),
           child: Form(
             key: formKey,
             child: Column(

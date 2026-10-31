@@ -121,6 +121,34 @@ Widget buildSubject({
 }
 
 void main() {
+  testWidgets('追加ボタンからメンバーを一覧に追加できる', (tester) async {
+    await tester.pumpWidget(
+      buildSubject(
+        group: createGroupDto(id: 'g', name: '家族'),
+        onSave: (_) async {},
+        availableMembers: [
+          createGroupMemberDto(
+            memberId: 'm',
+            groupId: '',
+            displayName: '追加する人',
+          ),
+        ],
+        currentMember: createCurrentMember(),
+      ),
+    );
+    await tester.tap(find.byKey(const Key('add_member_button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('追加する人'));
+    await tester.pumpAndSettle();
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('selected_member_list')),
+        matching: find.text('追加する人'),
+      ),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('小画面と拡大文字でもグループの16進数入力とプレビューを操作できる', (tester) async {
     tester.view.physicalSize = const Size(320, 480);
     tester.view.devicePixelRatio = 1;
