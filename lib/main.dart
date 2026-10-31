@@ -74,14 +74,9 @@ class MyApp extends ConsumerWidget {
     return MaterialApp.router(
       routerConfig: ref.watch(appRouterConfigProvider),
       title: ref.watch(appDisplayNameProvider),
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.lightBlue),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.lightBlue,
-          foregroundColor: Colors.white,
-        ),
-        buttonTheme: const ButtonThemeData(alignedDropdown: true),
-      ),
+      theme: _buildTheme(Brightness.light),
+      darkTheme: _buildTheme(Brightness.dark),
+      themeMode: ThemeMode.system,
       locale: const Locale('ja'),
       supportedLocales: const [Locale('ja'), Locale('en')],
       localizationsDelegates: const [
@@ -91,4 +86,19 @@ class MyApp extends ConsumerWidget {
       ],
     );
   }
+}
+
+ThemeData _buildTheme(Brightness brightness) {
+  final scheme = ColorScheme.fromSeed(
+    seedColor: Colors.lightBlue,
+    brightness: brightness,
+  );
+  return ThemeData(
+    colorScheme: scheme,
+    appBarTheme: AppBarTheme(
+      backgroundColor: scheme.primaryContainer,
+      foregroundColor: scheme.onPrimaryContainer,
+    ),
+    buttonTheme: const ButtonThemeData(alignedDropdown: true),
+  );
 }
