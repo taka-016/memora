@@ -63,10 +63,10 @@ void main() {
         '表示': find.byKey(const Key('theme_mode_setting')),
       }.entries) {
         expect(entry.value.hitTestable(), findsOneWidget);
-        await tester.tap(find.text(entry.key));
+        await tester.tap(find.bySemanticsLabel(entry.key));
         await tester.pumpAndSettle();
         expect(entry.value.hitTestable(), findsNothing);
-        await tester.tap(find.text(entry.key));
+        await tester.tap(find.bySemanticsLabel(entry.key));
         await tester.pumpAndSettle();
         expect(entry.value.hitTestable(), findsOneWidget);
       }

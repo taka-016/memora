@@ -46,7 +46,6 @@ class CalendarPreferencesNotifier extends _$CalendarPreferencesNotifier {
         minutes > 1440) {
       return false;
     }
-    final link = ref.keepAlive();
     state = AsyncData(
       CalendarPreferencesState(minutes: previous.minutes, isSaving: true),
     );
@@ -59,8 +58,6 @@ class CalendarPreferencesNotifier extends _$CalendarPreferencesNotifier {
     } catch (_) {
       if (ref.mounted) state = AsyncData(previous);
       return false;
-    } finally {
-      link.close();
     }
   }
 }
