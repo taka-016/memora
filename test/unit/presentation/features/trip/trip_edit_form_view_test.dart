@@ -39,6 +39,45 @@ Widget _createMapApp({required Widget child}) {
 
 void main() {
   group('TripEditFormView', () {
+    testWidgets('ダークテーマで旅行の日付が読めてクリア操作ができる', (tester) async {
+      TripEntryDto? changed;
+      final theme = ThemeData(brightness: Brightness.dark);
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            theme: theme,
+            home: Scaffold(
+              body: TripEditFormView(
+                mapViewBuilder: const PlaceholderMapViewBuilder(),
+                clock: FixedAppClock(DateTime(2026, 1, 1)),
+                value: TripEntryDto(
+                  id: 't',
+                  groupId: 'g',
+                  year: 2026,
+                  startDate: DateTime(2026, 1, 1),
+                ),
+                onChanged: (value) => changed = value,
+                onItineraryManagementRequested: () {},
+                onTaskManagementRequested: () {},
+              ),
+            ),
+          ),
+        ),
+      );
+      final date = tester.element(find.text('2026/01/01'));
+      final text = tester.widget<Text>(find.text('2026/01/01'));
+      final color = text.style?.color ?? DefaultTextStyle.of(date).style.color!;
+      final a = color.computeLuminance();
+      final b = theme.scaffoldBackgroundColor.computeLuminance();
+      expect(
+        a > b ? (a + .05) / (b + .05) : (b + .05) / (a + .05),
+        greaterThanOrEqualTo(4.5),
+      );
+      await tester.tap(find.byTooltip('旅行開始日をクリア'));
+      await tester.pump();
+      expect(changed, isNotNull);
+      expect(changed!.startDate, isNull);
+    });
     testWidgets('入力変更の結果をonChangedへ返すこと', (WidgetTester tester) async {
       TripEntryDto? latestValue;
       const initialValue = TripEntryDto(
