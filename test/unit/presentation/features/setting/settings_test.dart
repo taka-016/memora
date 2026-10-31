@@ -39,6 +39,37 @@ import '../../../../helpers/test_exception.dart';
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
   group('Settings', () {
+    testWidgets('オンラインのモード説明を表示せずカテゴリを開閉できる', (tester) async {
+      tester.view.physicalSize = const Size(1000, 1600);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(
+        _buildTestApp(
+          storage: _FakeAndroidWidgetCacheStorage(),
+          groups: const [],
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('オンラインモード'), findsNothing);
+      expect(find.textContaining('保存先:'), findsNothing);
+      expect(find.textContaining('利用可能機能:'), findsNothing);
+      expect(find.textContaining('クラウド'), findsNothing);
+      for (final entry in {
+        'カレンダー': find.text('予定の通知設定'),
+        'Androidウィジェット': find.text('更新間隔'),
+        '表示': find.byKey(const Key('theme_mode_setting')),
+      }.entries) {
+        expect(entry.value.hitTestable(), findsOneWidget);
+        await tester.tap(find.text(entry.key));
+        await tester.pumpAndSettle();
+        expect(entry.value.hitTestable(), findsNothing);
+        await tester.tap(find.text(entry.key));
+        await tester.pumpAndSettle();
+        expect(entry.value.hitTestable(), findsOneWidget);
+      }
+    });
+
     testWidgets('テーマを端末設定に従う・ダーク・ライトから選択し再起動後も保持する', (tester) async {
       Widget app() => _buildTestApp(
         storage: _FakeAndroidWidgetCacheStorage(),

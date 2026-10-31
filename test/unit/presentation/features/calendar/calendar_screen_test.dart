@@ -661,12 +661,7 @@ void main() {
           ),
         );
         await tester.pumpAndSettle();
-        await tester.tap(find.text('予定の標準時間'));
-        await tester.pumpAndSettle();
-        await tester.enterText(
-          find.widgetWithText(TextFormField, '分'),
-          '$minutes',
-        );
+        await tester.enterText(find.byType(TextFormField), '$minutes');
         await tester.tap(find.text('保存'));
         await tester.pumpAndSettle();
       }
