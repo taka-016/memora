@@ -80,7 +80,7 @@ void main() {
       expect(find.byType(AccountDeleteModal), findsNothing);
     });
 
-    testWidgets('削除ボタンは赤色で表示される', (WidgetTester tester) async {
+    testWidgets('削除ボタンはテーマの警告色と対応する文字色で表示される', (WidgetTester tester) async {
       await tester.pumpWidget(
         createTestWidget(onAccountDelete: () async => true),
       );
@@ -91,8 +91,9 @@ void main() {
       expect(deleteButton, findsOneWidget);
 
       final button = tester.widget<ElevatedButton>(deleteButton);
-      expect(button.style?.backgroundColor?.resolve({}), Colors.red);
-      expect(button.style?.foregroundColor?.resolve({}), Colors.white);
+      final scheme = Theme.of(tester.element(deleteButton)).colorScheme;
+      expect(button.style?.backgroundColor?.resolve({}), scheme.error);
+      expect(button.style?.foregroundColor?.resolve({}), scheme.onError);
     });
 
     testWidgets('エラー発生時はダイアログが閉じない', (WidgetTester tester) async {

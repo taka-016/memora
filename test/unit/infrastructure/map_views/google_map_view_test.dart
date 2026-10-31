@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:convert';
 
 import 'package:memora/composition_root/providers/location_providers.dart';
 import 'package:flutter/material.dart';
@@ -36,7 +37,11 @@ MockSearchLocationsUsecase _mockSearchLocationsUsecase() {
   return usecase;
 }
 
-Widget _createApp(Widget child, {SearchLocationsUsecase? searchUsecase}) {
+Widget _createApp(
+  Widget child, {
+  SearchLocationsUsecase? searchUsecase,
+  ThemeData? theme,
+}) {
   return ProviderScope(
     overrides: [
       getCurrentLocationUsecaseProvider.overrideWithValue(
@@ -46,12 +51,38 @@ Widget _createApp(Widget child, {SearchLocationsUsecase? searchUsecase}) {
         searchUsecase ?? _mockSearchLocationsUsecase(),
       ),
     ],
-    child: MaterialApp(home: Scaffold(body: child)),
+    child: MaterialApp(
+      theme: theme,
+      home: Scaffold(body: child),
+    ),
   );
 }
 
 void main() {
   group('GoogleMapView', () {
+    testWidgets('地図本体の配色もテーマの明暗変更に追従する', (tester) async {
+      for (final brightness in [
+        Brightness.light,
+        Brightness.dark,
+        Brightness.light,
+      ]) {
+        await tester.pumpWidget(
+          _createApp(
+            const GoogleMapView(locations: []),
+            theme: ThemeData(brightness: brightness),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 300));
+        final map = tester.widget<GoogleMap>(find.byType(GoogleMap));
+        if (brightness == Brightness.dark) {
+          expect(map.style, isNotNull);
+          final rules = jsonDecode(map.style!) as List<dynamic>;
+          expect(rules, isNotEmpty);
+        } else {
+          expect(map.style, isNull);
+        }
+      }
+    });
     testWidgets('地図ボタン下の余白では背後の地図へタッチが届く', (tester) async {
       await tester.pumpWidget(_createApp(const GoogleMapView(locations: [])));
       final googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));

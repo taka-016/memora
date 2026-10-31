@@ -192,7 +192,12 @@ void main() {
       final negativeAvailablePointText = tester.widget<Text>(
         negativeAvailablePointTextFinder,
       );
-      expect(negativeAvailablePointText.style?.color, Colors.red);
+      expect(
+        negativeAvailablePointText.style?.color,
+        Theme.of(tester.element(negativeAvailablePointTextFinder))
+            .colorScheme
+            .error,
+      );
       expect(negativeAvailablePointText.style?.fontWeight, FontWeight.bold);
     });
 
