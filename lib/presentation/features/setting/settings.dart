@@ -254,7 +254,7 @@ class Settings extends ConsumerWidget {
               _buildCategory(
                 title: 'オフラインデータのバックアップ',
                 children: [
-                  ..._buildModeInformation(ref),
+                  ..._buildOfflineModeInformation(),
                   const SizedBox(height: 16),
                   _buildOfflineBackupSection(context, ref),
                 ],
@@ -293,7 +293,7 @@ class Settings extends ConsumerWidget {
     ),
   );
 
-  List<Widget> _buildModeInformation(WidgetRef ref) => const [
+  List<Widget> _buildOfflineModeInformation() => const [
     Text('オフラインモード'),
     SizedBox(height: 8),
     Text('保存先: この端末のアプリ内部ストレージ'),
