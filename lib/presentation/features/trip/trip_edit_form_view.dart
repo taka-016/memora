@@ -460,6 +460,7 @@ class TripEditFormView extends HookConsumerWidget {
     }
 
     return SingleChildScrollView(
+      padding: EdgeInsets.only(top: MediaQuery.textScalerOf(context).scale(8)),
       controller: scrollController,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

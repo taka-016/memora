@@ -558,6 +558,9 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                   const SizedBox(height: 16),
                   Expanded(
                     child: SingleChildScrollView(
+                      padding: EdgeInsets.only(
+                        top: MediaQuery.textScalerOf(context).scale(8),
+                      ),
                       child: Form(
                         key: _form,
                         child: Column(
@@ -593,11 +596,35 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                                     (label) => DropdownMenuItem(
                                       value: label.id,
                                       enabled: label.isSelectable,
-                                      child: Text(
-                                        label.name,
-                                        overflow: TextOverflow.clip,
-                                        softWrap: false,
-                                      ),
+                                      child:
+                                          label.labelType == 'member' &&
+                                              label.isSelectable
+                                          ? Semantics(
+                                              label: label.name,
+                                              excludeSemantics: true,
+                                              child: Row(
+                                                children: [
+                                                  Flexible(
+                                                    child: Text(
+                                                      label.name.substring(
+                                                        0,
+                                                        label.name.length -
+                                                            'の予定'.length,
+                                                      ),
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                      maxLines: 1,
+                                                    ),
+                                                  ),
+                                                  const Text('の予定'),
+                                                ],
+                                              ),
+                                            )
+                                          : Text(
+                                              label.name,
+                                              overflow: TextOverflow.ellipsis,
+                                              maxLines: 1,
+                                            ),
                                     ),
                                   )
                                   .toList(),

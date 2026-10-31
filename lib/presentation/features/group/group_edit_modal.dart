@@ -684,26 +684,32 @@ class GroupEditModal extends HookConsumerWidget {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              'メンバー一覧',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-            ),
+          Row(
+            children: [
+              const Flexible(
+                child: Text(
+                  'メンバー一覧',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                ),
+              ),
+              const SizedBox(width: 12),
+              buildAddMemberButton(),
+            ],
           ),
           const SizedBox(height: 8),
           if (groupState.value.members.isEmpty)
             buildEmptyMemberState()
           else
             buildSelectedMemberList(),
-          const SizedBox(height: 12),
-          buildAddMemberButton(),
         ],
       );
     }
 
     Widget buildScrollableContent() {
       return SingleChildScrollView(
+        padding: EdgeInsets.only(
+          top: MediaQuery.textScalerOf(context).scale(8),
+        ),
         child: Form(
           key: formKey,
           child: Column(
