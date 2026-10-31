@@ -5,6 +5,45 @@ import 'package:memora/infrastructure/time/fixed_app_clock.dart';
 import 'package:memora/presentation/features/dvc/dvc_contract_management_modal.dart';
 
 void main() {
+  testWidgets('狭い画面でも契約の開始月をはみ出さず選択できる', (tester) async {
+    tester.view.physicalSize = const Size(360, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: TextButton(
+              onPressed: () => showDvcContractManagementModal(
+                context: context,
+                contracts: const [],
+                clock: FixedAppClock(DateTime(2026, 10)),
+                onSave: (_) async => true,
+              ),
+              child: const Text('契約管理を開く'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('契約管理を開く'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    await tester.ensureVisible(find.byType(DropdownButton<int>));
+    await tester.tap(find.byType(DropdownButton<int>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('12月').last);
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<DropdownButton<int>>(find.byType(DropdownButton<int>))
+          .value,
+      12,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   test('契約の編集開始時の期待バージョンを入力変更後も保持する', () {
     final dynamic editable = DvcEditableContract.fromDto(
       DvcPointContractDto(
