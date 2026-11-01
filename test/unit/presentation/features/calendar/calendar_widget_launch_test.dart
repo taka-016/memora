@@ -68,7 +68,7 @@ void main() {
         await tester.pump();
         expect(find.byType(CalendarEventDialog), findsNothing);
         when(loader.execute('g1')).thenAnswer((_) async => loadedGroup);
-        await tester.tap(find.text('再読み込み'));
+        await tester.tap(find.text('再試行'));
       } else {
         group.complete(loadedGroup);
       }
