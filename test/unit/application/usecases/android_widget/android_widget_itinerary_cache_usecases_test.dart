@@ -97,6 +97,25 @@ void main() {
   });
 
   group('RefreshAndroidWidgetItineraryCacheUsecase', () {
+    test('旅程がなくても同じ対象グループのカレンダーを更新する', () async {
+      final storage = _FakeAndroidWidgetCacheStorage();
+      final refreshed = <String>[];
+      final groups = MockGroupQueryService();
+      when(groups.groupExists(any)).thenAnswer((_) async => true);
+      final usecase = RefreshAndroidWidgetItineraryCacheUsecase(
+        cacheStorage: storage,
+        groupQueryService: groups,
+        getCacheUsecase: GetAndroidWidgetItineraryCacheUsecase(
+          tripEntryQueryService: _FakeTripEntryQueryService(),
+          itineraryItemQueryService: _FakeItineraryItemQueryService(),
+          clock: FixedAppClock(DateTime(2026, 11, 1)),
+        ),
+        refreshCalendar: (groupId) async { refreshed.add(groupId); },
+      );
+      await usecase.execute(groupId: 'group-1');
+      expect(refreshed, ['group-1']);
+    });
+
     test('オフラインでグループを退避した後は残した旅行があってもキャッシュを解除する', () async {
       final db = OfflineDatabase(NativeDatabase.memory());
       addTearDown(db.close);

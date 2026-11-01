@@ -8,6 +8,26 @@ import '../../../../helpers/test_exception.dart';
 
 void main() {
   group('AndroidWidgetActionHandler', () {
+    test('カレンダーの月移動で指定月を取得し、失敗時には通知する', () async {
+      final storage = _FakeAndroidWidgetCacheStorage(targetGroupId: 'group-1');
+      final toast = _FakeAndroidWidgetToastNotifier();
+      final dates = <DateTime?>[];
+      final handler = AndroidWidgetActionHandler(
+        cacheStorage: storage,
+        refreshCache: ({required String groupId, String? selectedItineraryDateId}) async {},
+        moveDate: (_) async => true,
+        showToast: toast.show,
+        refreshCalendar: (date) async {
+          dates.add(date);
+          if (dates.length == 2) throw TestException('取得失敗');
+        },
+      );
+      await handler.handle(Uri.parse('memoraWidget://calendarRefresh?date=2026-12-01'));
+      expect(dates, [DateTime(2026, 12)]);
+      await handler.handle(Uri.parse('memoraWidget://calendarRefresh'));
+      expect(toast.notifications, [const AndroidWidgetToastNotification.error('更新に失敗しました')]);
+    });
+
     test('公開引数名で依存を注入できる', () {
       final storage = _FakeAndroidWidgetCacheStorage();
       final toastNotifier = _FakeAndroidWidgetToastNotifier();

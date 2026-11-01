@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'dart:convert';
+import 'package:memora/infrastructure/services/home_widget_calendar_cache_storage.dart';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -40,6 +42,21 @@ void main() {
         .setMockMethodCallHandler(channel, null);
     PathProviderPlatform.instance = previousPathProvider;
     await directory.delete(recursive: true);
+  });
+
+  test('カレンダーの月と全予定をファイルで公開し対象解除時に削除する', () async {
+    const calendar = HomeWidgetCalendarCacheStorage();
+    final data = <String, Object?>{
+      'groupId': 'group', 'month': '2026-11-01',
+      'days': [{'date': '2026-11-01', 'events': [{'title': '家族旅行'}]}],
+    };
+    await calendar.save(data);
+    final path = values[HomeWidgetCalendarCacheStorage.cacheKey] as String;
+    expect(jsonDecode(await File(path).readAsString()), data);
+    expect(await calendar.loadMonth(), DateTime(2026, 11));
+    await const HomeWidgetAndroidWidgetCacheStorage().clear();
+    expect(values[HomeWidgetCalendarCacheStorage.cacheKey], isNull);
+    expect(File(path).existsSync(), isFalse);
   });
 
   test('単一キャッシュを消去すると公開済みファイルも削除する', () async {
