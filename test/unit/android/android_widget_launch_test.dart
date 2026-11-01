@@ -9,6 +9,11 @@ const _topPagePath = 'lib/presentation/app/top_page.dart';
 
 void main() {
   group('Androidウィジェットからのアプリ起動', () {
+    test('ウィジェットの起動URIをFlutterの自動リンク処理で重複処理しない', () {
+      final manifest = File('android/app/src/main/AndroidManifest.xml').readAsStringSync();
+      expect(manifest, matches(RegExp(r'android:name="flutter_deeplinking_enabled"\s+android:value="false"')));
+    });
+
     test('表示中の旅行IDを含むURIでMainActivityを起動する', () {
       final source = File(_itineraryWidgetPath).readAsStringSync();
 
