@@ -62,7 +62,7 @@ void main() {
     expect(CalendarEventMapper.toEntity(loaded), event);
     final individual = CalendarEventOverride(
       originalStartDateTime: event.startDateTime, isCancelled: false,
-      title: event.title, labelType: 'group', isAllDay: true,
+      title: event.title, labelId: '', labelType: 'group', isAllDay: true,
       startDateTime: event.startDateTime, endDateTime: event.endDateTime,
       url: '', memo: '個別\nメモ', locationName: '',
     );
