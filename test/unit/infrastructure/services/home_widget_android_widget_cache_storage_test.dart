@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:convert';
+
 import 'package:memora/infrastructure/services/home_widget_calendar_cache_storage.dart';
 
 import 'package:flutter/services.dart';
@@ -47,8 +48,16 @@ void main() {
   test('カレンダーの月と全予定をファイルで公開し対象解除時に削除する', () async {
     const calendar = HomeWidgetCalendarCacheStorage();
     final data = <String, Object?>{
-      'groupId': 'group', 'month': '2026-11-01',
-      'days': [{'date': '2026-11-01', 'events': [{'title': '家族旅行'}]}],
+      'groupId': 'group',
+      'month': '2026-11-01',
+      'days': [
+        {
+          'date': '2026-11-01',
+          'events': [
+            {'title': '家族旅行'},
+          ],
+        },
+      ],
     };
     await calendar.save(data);
     final path = values[HomeWidgetCalendarCacheStorage.cacheKey] as String;

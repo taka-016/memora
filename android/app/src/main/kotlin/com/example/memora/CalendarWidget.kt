@@ -103,7 +103,7 @@ private fun CalendarContent(context: Context, state: HomeWidgetGlanceState) {
                 }
             }
             val rows = days.length() / 7
-            val rowHeight = ((LocalSize.current.height.value - 156f) / rows).coerceAtLeast(44f)
+            val rowHeight = ((LocalSize.current.height.value - 156f) / rows).coerceIn(44f, 64f)
             Column(GlanceModifier.fillMaxWidth().background(Color(0xFFE5E7EB))) {
                 repeat(rows) { row ->
                     Row(GlanceModifier.fillMaxWidth().height(rowHeight.dp)) {
@@ -153,7 +153,7 @@ private fun CalendarContent(context: Context, state: HomeWidgetGlanceState) {
                             Text(event.getString("timeLabel"), modifier = GlanceModifier.width(72.dp),
                                 maxLines = 2, style = TextStyle(fontSize = 10.sp, color = ColorProvider(Color.DarkGray)))
                             Box(GlanceModifier.width(3.dp).height(28.dp).background(parseColor(event.optString("color")))) {}
-                            Text(event.getString("title"), modifier = GlanceModifier.padding(start = 6.dp),
+                            Text(event.getString("title"), modifier = GlanceModifier.defaultWeight().padding(start = 6.dp),
                                 maxLines = 2, style = TextStyle(fontSize = 13.sp, fontWeight = FontWeight.Bold))
                         }
                     }

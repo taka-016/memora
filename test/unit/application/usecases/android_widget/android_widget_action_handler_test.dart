@@ -14,7 +14,10 @@ void main() {
       final dates = <DateTime?>[];
       final handler = AndroidWidgetActionHandler(
         cacheStorage: storage,
-        refreshCache: ({required String groupId, String? selectedItineraryDateId}) async {},
+        refreshCache: ({
+          required String groupId,
+          String? selectedItineraryDateId,
+        }) async {},
         moveDate: (_) async => true,
         showToast: toast.show,
         refreshCalendar: (date) async {
@@ -22,10 +25,14 @@ void main() {
           if (dates.length == 2) throw TestException('取得失敗');
         },
       );
-      await handler.handle(Uri.parse('memoraWidget://calendarRefresh?date=2026-12-01'));
+      await handler.handle(
+        Uri.parse('memoraWidget://calendarRefresh?date=2026-12-01'),
+      );
       expect(dates, [DateTime(2026, 12)]);
       await handler.handle(Uri.parse('memoraWidget://calendarRefresh'));
-      expect(toast.notifications, [const AndroidWidgetToastNotification.error('更新に失敗しました')]);
+      expect(toast.notifications, [
+        const AndroidWidgetToastNotification.error('更新に失敗しました'),
+      ]);
     });
 
     test('公開引数名で依存を注入できる', () {

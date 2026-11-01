@@ -44,7 +44,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     _pendingInitialCreate = false;
     Future.microtask(() {
       if (!mounted || version != _initialRequestVersion) return;
-      final notifier = ref.read(calendarNotifierProvider(widget.groupId).notifier);
+      final notifier = ref.read(
+        calendarNotifierProvider(widget.groupId).notifier,
+      );
       if (widget.initialDate != null) {
         notifier.selectDate(widget.initialDate!);
       }
@@ -115,8 +117,14 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final state = ref.watch(provider);
     final notifier = ref.read(provider.notifier);
     ref.listen(provider, (_, next) {
-      if (!_pendingInitialCreate || next.isLoading || next.isSaving ||
-          next.loadError.isNotEmpty || !next.hasLoadedLabels || next.group == null) return;
+      if (!_pendingInitialCreate ||
+          next.isLoading ||
+          next.isSaving ||
+          next.loadError.isNotEmpty ||
+          !next.hasLoadedLabels ||
+          next.group == null) {
+        return;
+      }
       _pendingInitialCreate = false;
       final version = _initialRequestVersion;
       WidgetsBinding.instance.addPostFrameCallback((_) {

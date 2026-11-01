@@ -30,29 +30,46 @@ void main() {
     groups = MockGroupQueryService();
     when(groups.getGroupWithMembersById('group')).thenAnswer(
       (_) async => const GroupDto(
-        id: 'group', ownerId: 'owner', name: '家族', members: [],
+        id: 'group',
+        ownerId: 'owner',
+        name: '家族',
+        members: [],
       ),
     );
     usecase = GetAndroidWidgetCalendarCacheUsecase(
-      events: events, labels: labels, groups: groups,
+      events: events,
+      labels: labels,
+      groups: groups,
       expander: CalendarRecurrenceExpander(IanaCalendarTimeZone()),
       mode: AppMode.offline,
     );
   });
 
-  CalendarEventDto event(String id, DateTime start, DateTime end, {
-    bool allDay = true, String? rule,
+  CalendarEventDto event(
+    String id,
+    DateTime start,
+    DateTime end, {
+    bool allDay = true,
+    String? rule,
   }) => CalendarEventDto(
-    id: id, groupId: 'group', labelType: 'group', title: id,
-    startDateTime: start, endDateTime: end, isAllDay: allDay,
+    id: id,
+    groupId: 'group',
+    labelType: 'group',
+    title: id,
+    startDateTime: start,
+    endDateTime: end,
+    isAllDay: allDay,
     recurrenceRule: rule,
   );
 
   test('月の前後を含む週を作り、予定名と配色を全件保持する', () async {
-    when(events.getCalendarEventsByGroupId('group')).thenAnswer((_) async => [
-      for (var i = 0; i < 4; i++) event('予定$i', DateTime(2026, 11, 1), DateTime(2026, 11, 1)),
-      event('月またぎ', DateTime(2026, 11, 30), DateTime(2026, 12, 2)),
-    ]);
+    when(events.getCalendarEventsByGroupId('group')).thenAnswer(
+      (_) async => [
+        for (var i = 0; i < 4; i++)
+          event('予定$i', DateTime(2026, 11, 1), DateTime(2026, 11, 1)),
+        event('月またぎ', DateTime(2026, 11, 30), DateTime(2026, 12, 2)),
+      ],
+    );
     final cache = (await usecase.execute('group', DateTime(2026, 11)))!;
     expect(cache['sourceMode'], 'offline');
     expect(cache['groupId'], 'group');
@@ -68,11 +85,24 @@ void main() {
   });
 
   test('繰り返しを展開し、午前0時終了の予定を翌日に表示しない', () async {
-    when(events.getCalendarEventsByGroupId('group')).thenAnswer((_) async => [
-      event('毎週', DateTime(2026, 10, 26), DateTime(2026, 10, 26), rule: 'FREQ=WEEKLY;BYDAY=MO'),
-      event('夜の予定', DateTime(2026, 11, 2, 23), DateTime(2026, 11, 3), allDay: false),
-    ]);
-    final days = (await usecase.execute('group', DateTime(2026, 11)))!['days'] as List;
+    when(events.getCalendarEventsByGroupId('group')).thenAnswer(
+      (_) async => [
+        event(
+          '毎週',
+          DateTime(2026, 10, 26),
+          DateTime(2026, 10, 26),
+          rule: 'FREQ=WEEKLY;BYDAY=MO',
+        ),
+        event(
+          '夜の予定',
+          DateTime(2026, 11, 2, 23),
+          DateTime(2026, 11, 3),
+          allDay: false,
+        ),
+      ],
+    );
+    final days =
+        (await usecase.execute('group', DateTime(2026, 11)))!['days'] as List;
     expect((days[1]['events'] as List).map((e) => e['title']), ['毎週', '夜の予定']);
     expect(days[2]['events'], isEmpty);
     expect(days[8]['events'].single['title'], '毎週');

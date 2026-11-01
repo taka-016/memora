@@ -15,13 +15,13 @@ final refreshCalendarWidgetProvider =
       return (groupId, date) async {
         if (!Platform.isAndroid) return;
         final usecase = GetAndroidWidgetCalendarCacheUsecase(
-        events: ref.read(calendarEventQueryServiceProvider),
-        labels: ref.read(calendarLabelQueryServiceProvider),
-        groups: ref.read(groupQueryServiceProvider),
-        expander: ref.read(calendarRecurrenceExpanderProvider),
-        mode: ref.read(appModeProvider),
-      );
-      final clock = ref.read(appClockProvider);
+          events: ref.read(calendarEventQueryServiceProvider),
+          labels: ref.read(calendarLabelQueryServiceProvider),
+          groups: ref.read(groupQueryServiceProvider),
+          expander: ref.read(calendarRecurrenceExpanderProvider),
+          mode: ref.read(appModeProvider),
+        );
+        final clock = ref.read(appClockProvider);
         const storage = HomeWidgetCalendarCacheStorage();
         final month = date ?? await storage.loadMonth() ?? clock.now();
         final cache = await usecase.execute(groupId, month);

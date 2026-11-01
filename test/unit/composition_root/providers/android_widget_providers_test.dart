@@ -29,7 +29,10 @@ void main() {
   test('Android以外のカレンダー更新はデータ取得の依存を生成しない', () async {
     final container = ProviderContainer();
     addTearDown(container.dispose);
-    await expectLater(container.read(refreshCalendarWidgetProvider)('group', null), completes);
+    await expectLater(
+      container.read(refreshCalendarWidgetProvider)('group', null),
+      completes,
+    );
   });
 
   for (final failTrips in [true, false]) {

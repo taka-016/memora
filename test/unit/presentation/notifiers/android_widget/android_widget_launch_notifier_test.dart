@@ -92,10 +92,16 @@ void main() {
       expect(destination.groupId, 'group-1');
       expect(destination.date, DateTime(2026, 11, 2));
       expect(destination.create, isTrue);
-      source.controller.add(Uri.parse('memoraWidget://openCalendar?groupId=group-1&date=2026-11-02&create=true'));
+      source.controller.add(
+        Uri.parse(
+          'memoraWidget://openCalendar?groupId=group-1&date=2026-11-02&create=true',
+        ),
+      );
       await pumpEventQueue();
       await notifier.resolvePendingLaunch(member);
-      final second = notifier.takeResolution(member.id) as AndroidWidgetCalendarLaunchDestination;
+      final second = notifier.takeResolution(
+        member.id,
+      ) as AndroidWidgetCalendarLaunchDestination;
       expect(second.requestId, greaterThan(destination.requestId));
       verifyNever(getTripUsecase.execute(any));
     });

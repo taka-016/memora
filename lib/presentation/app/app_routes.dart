@@ -222,7 +222,12 @@ class CalendarGroupListRoute extends GoRouteData with $CalendarGroupListRoute {
 }
 
 class CalendarRoute extends GoRouteData with $CalendarRoute {
-  const CalendarRoute({required this.groupId, this.date, this.create = false, this.request = 0});
+  const CalendarRoute({
+    required this.groupId,
+    this.date,
+    this.create = false,
+    this.request = 0,
+  });
   final String groupId;
   final String? date;
   final bool create;

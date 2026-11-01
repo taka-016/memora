@@ -110,7 +110,9 @@ void main() {
           itineraryItemQueryService: _FakeItineraryItemQueryService(),
           clock: FixedAppClock(DateTime(2026, 11, 1)),
         ),
-        refreshCalendar: (groupId) async { refreshed.add(groupId); },
+        refreshCalendar: (groupId) async {
+          refreshed.add(groupId);
+        },
       );
       await usecase.execute(groupId: 'group-1');
       expect(refreshed, ['group-1']);

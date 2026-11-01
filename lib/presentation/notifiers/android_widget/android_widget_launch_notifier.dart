@@ -52,7 +52,14 @@ final class AndroidWidgetCalendarLaunchDestination
   final bool create;
   final List<GroupDto> groups;
   @override
-  List<Object?> get props => [memberId, groupId, requestId, date, create, groups];
+  List<Object?> get props => [
+    memberId,
+    groupId,
+    requestId,
+    date,
+    create,
+    groups,
+  ];
 }
 
 final class AndroidWidgetSettingsLaunchDestination
