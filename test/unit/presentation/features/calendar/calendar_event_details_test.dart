@@ -1,3 +1,4 @@
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/models/app_capabilities.dart';
@@ -25,6 +26,7 @@ Future<void> openEvent(WidgetTester tester) async {
 }
 
 void main() {
+  setUp(() => SharedPreferences.setMockInitialValues({}));
   testWidgets('詳細を入力して保存し再表示・URL起動・解除できる', (tester) async {
     tester.view.physicalSize = const Size(1000, 1800);
     addTearDown(tester.view.resetPhysicalSize);
@@ -41,6 +43,8 @@ void main() {
       await tester.enterText(field(entry.key), entry.value);
     }
     expect(find.byType(CustomSearchBar), findsNothing);
+    await tester.pump();
+    await tester.ensureVisible(find.text('保存'));
     await tester.tap(find.text('保存'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
@@ -56,6 +60,8 @@ void main() {
       await tester.ensureVisible(field(label));
       await tester.enterText(field(label), '');
     }
+    await tester.pump();
+    await tester.ensureVisible(find.text('保存'));
     await tester.tap(find.text('保存'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
@@ -101,6 +107,8 @@ void main() {
     await tester.pump();
     await tester.ensureVisible(field('場所名'));
     await tester.enterText(field('場所名'), '東京タワー入口');
+    await tester.pump();
+    await tester.ensureVisible(find.text('保存'));
     await tester.tap(find.text('保存'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
