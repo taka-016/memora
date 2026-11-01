@@ -8,7 +8,9 @@ import 'package:memora/presentation/notifiers/member/current_member_notifier.dar
 import 'package:memora/presentation/notifiers/timeline/group_timeline_group_selection_notifier.dart';
 
 class CalendarNavigationView extends HookConsumerWidget {
-  const CalendarNavigationView({super.key, this.groupId});
+  const CalendarNavigationView({super.key, this.groupId, this.initialDate, this.createEvent = false});
+  final DateTime? initialDate;
+  final bool createEvent;
   final String? groupId;
 
   @override
@@ -78,6 +80,8 @@ class CalendarNavigationView extends HookConsumerWidget {
         key: ValueKey(group.id),
         groupId: group.id,
         groupName: group.name,
+        initialDate: initialDate,
+        createEvent: createEvent,
         onBack: () {
           if (context.canPop()) {
             context.pop();

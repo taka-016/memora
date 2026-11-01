@@ -222,11 +222,13 @@ class CalendarGroupListRoute extends GoRouteData with $CalendarGroupListRoute {
 }
 
 class CalendarRoute extends GoRouteData with $CalendarRoute {
-  const CalendarRoute({required this.groupId});
+  const CalendarRoute({required this.groupId, this.date, this.create = false});
   final String groupId;
+  final String? date;
+  final bool create;
   @override
   Widget build(BuildContext context, GoRouterState state) =>
-      Material(child: CalendarNavigationView(groupId: groupId));
+      Material(child: CalendarNavigationView(groupId: groupId, initialDate: DateTime.tryParse(date ?? ''), createEvent: create));
 }
 
 class MapRoute extends GoRouteData with $MapRoute {
