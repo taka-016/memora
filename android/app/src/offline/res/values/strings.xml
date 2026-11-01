@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">memora lite</string>
+    <string name="calendar_widget_name">memora lite カレンダー（ライト）</string>
+    <string name="calendar_widget_dark_name">memora lite カレンダー（ダーク）</string>
+    <string name="itinerary_widget_light_name">memora lite 旅程（ライト）</string>
+    <string name="itinerary_widget_dark_name">memora lite 旅程（ダーク）</string>
 </resources>

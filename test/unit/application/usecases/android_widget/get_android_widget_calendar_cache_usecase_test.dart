@@ -81,6 +81,17 @@ void main() {
     expect(items.map((e) => e['title']), ['予定0', '予定1', '予定2', '予定3']);
     expect(items.first['color'], '#4CAF50');
     expect(items.first['timeLabel'], '終日');
+    expect(items.first['isAllDay'], isTrue);
+    expect(cache['months'], isA<Map>());
+    expect((cache['months'] as Map).keys, [
+      '2026-09-01',
+      '2026-10-01',
+      '2026-11-01',
+      '2026-12-01',
+      '2027-01-01',
+    ]);
+    verify(events.getCalendarEventsByGroupId('group')).called(1);
+    verify(labels.getCalendarLabelsByGroupId('group')).called(1);
     expect(days[30]['events'].single['title'], '月またぎ');
   });
 
@@ -106,6 +117,18 @@ void main() {
     expect((days[1]['events'] as List).map((e) => e['title']), ['毎週', '夜の予定']);
     expect(days[2]['events'], isEmpty);
     expect(days[8]['events'].single['title'], '毎週');
+    final firstOccurrence = days[1]['events'][0];
+    final secondOccurrence = days[8]['events'].single;
+    expect(firstOccurrence['id'], secondOccurrence['id']);
+    expect(
+      DateTime.parse(firstOccurrence['occurrence'] as String),
+      DateTime.utc(2026, 11, 2),
+    );
+    expect(
+      DateTime.parse(secondOccurrence['occurrence'] as String),
+      DateTime.utc(2026, 11, 9),
+    );
+    expect(days[1]['events'][1]['isAllDay'], isFalse);
   });
 
   test('削除・アーカイブ済みグループは取得しない', () async {

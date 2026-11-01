@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:background="@drawable/calendar_widget_background_dark" android:padding="8dp">
+    <LinearLayout android:id="@+id/calendar_content" android:layout_width="match_parent"
+        android:layout_height="match_parent" android:orientation="vertical">
+        <LinearLayout android:id="@+id/calendar_header" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="56dp" android:gravity="center_vertical" android:baselineAligned="false">
+            <TextView android:id="@+id/calendar_today" android:layout_width="36dp" android:layout_height="match_parent"
+                android:gravity="center" android:includeFontPadding="false" android:text="今日" android:textSize="14sp" android:textColor="#EEEEEE"/>
+            <TextView android:id="@+id/calendar_header_gap_start" android:layout_width="wrap_content" android:layout_height="1dp"/>
+            <ImageView android:id="@+id/calendar_previous" android:layout_width="wrap_content"
+                android:layout_height="match_parent" android:scaleType="center" android:src="@drawable/calendar_widget_previous_dark"
+                android:contentDescription="前月"/>
+            <TextView android:id="@+id/calendar_month" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:gravity="center" android:includeFontPadding="false" android:textSize="16sp"
+                android:textStyle="bold" android:textColor="#EEEEEE" android:maxLines="1"/>
+            <ImageView android:id="@+id/calendar_next" android:layout_width="wrap_content"
+                android:layout_height="match_parent" android:scaleType="center" android:src="@drawable/calendar_widget_next_dark"
+                android:contentDescription="翌月"/>
+            <TextView android:id="@+id/calendar_header_gap_end" android:layout_width="wrap_content" android:layout_height="1dp"/>
+            <ImageView android:id="@+id/calendar_add" android:layout_width="36dp" android:layout_height="match_parent"
+                android:scaleType="center" android:src="@drawable/calendar_widget_add_dark"
+                android:contentDescription="予定を追加"/>
+        </LinearLayout>
+        <LinearLayout android:id="@+id/calendar_weekdays" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="20dp">
+            <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:gravity="center" android:text="日" android:textSize="11sp" android:textColor="#FF8A80"/>
+            <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:gravity="center" android:text="月" android:textSize="11sp" android:textColor="#BDBDBD"/>
+            <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:gravity="center" android:text="火" android:textSize="11sp" android:textColor="#BDBDBD"/>
+            <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:gravity="center" android:text="水" android:textSize="11sp" android:textColor="#BDBDBD"/>
+            <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:gravity="center" android:text="木" android:textSize="11sp" android:textColor="#BDBDBD"/>
+            <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:gravity="center" android:text="金" android:textSize="11sp" android:textColor="#BDBDBD"/>
+            <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:gravity="center" android:text="土" android:textSize="11sp" android:textColor="#82B1FF"/>
+        </LinearLayout>
+        <LinearLayout android:id="@+id/calendar_week_0" android:layout_width="match_parent" android:layout_height="wrap_content" android:baselineAligned="false">
+            <LinearLayout android:id="@+id/calendar_day_0" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:orientation="vertical" android:padding="1dp"/>
+            <LinearLayout android:id="@+id/calendar_day_1" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:orientation="vertical" android:padding="1dp"/>
+            <LinearLayout android:id="@+id/calendar_day_2" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:orientation="vertical" android:padding="1dp"/>
+            <LinearLayout android:id="@+id/calendar_day_3" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:orientation="vertical" android:padding="1dp"/>
+            <LinearLayout android:id="@+id/calendar_day_4" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:orientation="vertical" android:padding="1dp"/>
+            <LinearLayout android:id="@+id/calendar_day_5" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:orientation="vertical" android:padding="1dp"/>
+            <LinearLayout android:id="@+id/calendar_day_6" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:orientation="vertical" android:padding="1dp"/>
+        </LinearLayout>
+        <LinearLayout android:id="@+id/calendar_week_1" android:layout_width="match_parent" android:layout_height="wrap_content" android:baselineAligned="false">
+            <LinearLayout android:id="@+id/calendar_day_7" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:orientation="vertical" android:padding="1dp"/>
+            <LinearLayout android:id="@+id/calendar_day_8" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:orientation="vertical" android:padding="1dp"/>
+            <LinearLayout android:id="@+id/calendar_day_9" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:orientation="vertical" android:padding="1dp"/>
+            <LinearLayout android:id="@+id/calendar_day_10" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:orientation="vertical" android:padding="1dp"/>
+            <LinearLayout android:id="@+id/calendar_day_11" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:orientation="vertical" android:padding="1dp"/>
+            <LinearLayout android:id="@+id/calendar_day_12" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:orientation="vertical" android:padding="1dp"/>
+            <LinearLayout android:id="@+id/calendar_day_13" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:orientation="vertical" android:padding="1dp"/>
+        </LinearLayout>
+        <LinearLayout android:id="@+id/calendar_week_2" android:layout_width="match_parent" android:layout_height="wrap_content" android:baselineAligned="false">
+            <LinearLayout android:id="@+id/calendar_day_14" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:orientation="vertical" android:padding="1dp"/>
+            <LinearLayout android:id="@+id/calendar_day_15" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:orientation="vertical" android:padding="1dp"/>
+            <LinearLayout android:id="@+id/calendar_day_16" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:orientation="vertical" android:padding="1dp"/>
+            <LinearLayout android:id="@+id/calendar_day_17" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:orientation="vertical" android:padding="1dp"/>
+            <LinearLayout android:id="@+id/calendar_day_18" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:orientation="vertical" android:padding="1dp"/>
+            <LinearLayout android:id="@+id/calendar_day_19" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:orientation="vertical" android:padding="1dp"/>
+            <LinearLayout android:id="@+id/calendar_day_20" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:orientation="vertical" android:padding="1dp"/>
+        </LinearLayout>
+        <LinearLayout android:id="@+id/calendar_week_3" android:layout_width="match_parent" android:layout_height="wrap_content" android:baselineAligned="false">
+            <LinearLayout android:id="@+id/calendar_day_21" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:orientation="vertical" android:padding="1dp"/>
+            <LinearLayout android:id="@+id/calendar_day_22" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:orientation="vertical" android:padding="1dp"/>
+            <LinearLayout android:id="@+id/calendar_day_23" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:orientation="vertical" android:padding="1dp"/>
+            <LinearLayout android:id="@+id/calendar_day_24" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:orientation="vertical" android:padding="1dp"/>
+            <LinearLayout android:id="@+id/calendar_day_25" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:orientation="vertical" android:padding="1dp"/>
+            <LinearLayout android:id="@+id/calendar_day_26" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:orientation="vertical" android:padding="1dp"/>
+            <LinearLayout android:id="@+id/calendar_day_27" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:orientation="vertical" android:padding="1dp"/>
+        </LinearLayout>
+        <LinearLayout android:id="@+id/calendar_week_4" android:layout_width="match_parent" android:layout_height="wrap_content" android:baselineAligned="false">
+            <LinearLayout android:id="@+id/calendar_day_28" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:orientation="vertical" android:padding="1dp"/>
+            <LinearLayout android:id="@+id/calendar_day_29" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:orientation="vertical" android:padding="1dp"/>
+            <LinearLayout android:id="@+id/calendar_day_30" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:orientation="vertical" android:padding="1dp"/>
+            <LinearLayout android:id="@+id/calendar_day_31" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:orientation="vertical" android:padding="1dp"/>
+            <LinearLayout android:id="@+id/calendar_day_32" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:orientation="vertical" android:padding="1dp"/>
+            <LinearLayout android:id="@+id/calendar_day_33" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:orientation="vertical" android:padding="1dp"/>
+            <LinearLayout android:id="@+id/calendar_day_34" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:orientation="vertical" android:padding="1dp"/>
+        </LinearLayout>
+        <LinearLayout android:id="@+id/calendar_week_5" android:layout_width="match_parent" android:layout_height="wrap_content" android:baselineAligned="false">
+            <LinearLayout android:id="@+id/calendar_day_35" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:orientation="vertical" android:padding="1dp"/>
+            <LinearLayout android:id="@+id/calendar_day_36" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:orientation="vertical" android:padding="1dp"/>
+            <LinearLayout android:id="@+id/calendar_day_37" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:orientation="vertical" android:padding="1dp"/>
+            <LinearLayout android:id="@+id/calendar_day_38" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:orientation="vertical" android:padding="1dp"/>
+            <LinearLayout android:id="@+id/calendar_day_39" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:orientation="vertical" android:padding="1dp"/>
+            <LinearLayout android:id="@+id/calendar_day_40" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:orientation="vertical" android:padding="1dp"/>
+            <LinearLayout android:id="@+id/calendar_day_41" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:orientation="vertical" android:padding="1dp"/>
+        </LinearLayout>
+        <LinearLayout android:id="@+id/calendar_day_heading" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="28dp"
+            android:gravity="center_vertical" android:baselineAligned="false">
+            <TextView android:id="@+id/calendar_selected_date" android:layout_width="wrap_content"
+                android:layout_height="match_parent" android:gravity="center_vertical" android:includeFontPadding="false"
+                android:textSize="12sp" android:textStyle="bold" android:textColor="#EEEEEE" android:maxLines="1"/>
+            <TextView android:id="@+id/calendar_last_updated" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent" android:layout_marginStart="4dp"
+                android:gravity="end|center_vertical" android:includeFontPadding="false"
+                android:textSize="10sp" android:textColor="#EEEEEE" android:maxLines="1" android:ellipsize="end"/>
+            <ImageView android:id="@+id/calendar_refresh" android:layout_width="36dp" android:layout_height="match_parent"
+                android:scaleType="center" android:src="@drawable/ic_widget_refresh_dark" android:contentDescription="更新"/>
+        </LinearLayout>
+        <FrameLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1">
+            <ListView android:id="@+id/calendar_events" android:layout_width="match_parent" android:layout_height="match_parent"
+                android:divider="@android:color/transparent" android:dividerHeight="0dp" android:scrollbars="vertical"/>
+            <TextView android:id="@+id/calendar_empty" android:layout_width="match_parent" android:layout_height="match_parent"
+                android:gravity="center" android:textSize="12sp" android:textColor="#BDBDBD"/>
+        </FrameLayout>
+    </LinearLayout>
+    <TextView android:id="@+id/calendar_message" android:layout_width="match_parent" android:layout_height="match_parent"
+        android:gravity="center" android:textSize="13sp" android:textColor="#EEEEEE" android:visibility="gone"/>
+</FrameLayout>

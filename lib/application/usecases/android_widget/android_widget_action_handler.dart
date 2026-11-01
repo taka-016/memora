@@ -32,6 +32,19 @@ class AndroidWidgetActionHandler {
 
   Future<void> handle(Uri? uri) async {
     switch (uri?.host) {
+      case 'itineraryrefresh':
+        final groupId = await _cacheStorage.getTargetGroupId();
+        if (groupId == null) break;
+        try {
+          await _refreshCache(
+            groupId: groupId,
+            selectedItineraryDateId: await _cacheStorage
+                .getSelectedItineraryDateId(),
+          );
+        } catch (_) {
+          await _showMoveFailedToast();
+        }
+        break;
       case 'calendarrefresh':
         try {
           await refreshCalendar?.call(

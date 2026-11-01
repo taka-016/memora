@@ -18,6 +18,8 @@ class CalendarScreen extends ConsumerStatefulWidget {
     this.initialDate,
     this.createEvent = false,
     this.initialRequest = 0,
+    this.initialEventId,
+    this.initialOccurrence,
   });
   final String groupId;
   final String groupName;
@@ -25,12 +27,15 @@ class CalendarScreen extends ConsumerStatefulWidget {
   final DateTime? initialDate;
   final bool createEvent;
   final int initialRequest;
+  final String? initialEventId;
+  final DateTime? initialOccurrence;
   @override
   ConsumerState<CalendarScreen> createState() => _CalendarScreenState();
 }
 
 class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   bool _pendingInitialCreate = false;
+  String? _pendingInitialEventId;
   int _initialRequestVersion = 0;
 
   @override
@@ -42,6 +47,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   void _initializeRequest() {
     final version = ++_initialRequestVersion;
     _pendingInitialCreate = false;
+    _pendingInitialEventId = null;
     Future.microtask(() {
       if (!mounted || version != _initialRequestVersion) return;
       final notifier = ref.read(
@@ -51,6 +57,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         notifier.selectDate(widget.initialDate!);
       }
       _pendingInitialCreate = widget.createEvent;
+      _pendingInitialEventId = widget.initialEventId;
       unawaited(notifier.load());
     });
   }
@@ -61,6 +68,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     if (oldWidget.groupId != widget.groupId ||
         oldWidget.initialDate != widget.initialDate ||
         oldWidget.createEvent != widget.createEvent ||
+        oldWidget.initialEventId != widget.initialEventId ||
+        oldWidget.initialOccurrence != widget.initialOccurrence ||
         oldWidget.initialRequest != widget.initialRequest) {
       _initializeRequest();
     }
@@ -117,7 +126,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final state = ref.watch(provider);
     final notifier = ref.read(provider.notifier);
     ref.listen(provider, (_, next) {
-      if (!_pendingInitialCreate ||
+      if ((!_pendingInitialCreate && _pendingInitialEventId == null) ||
           next.isLoading ||
           next.isSaving ||
           next.loadError.isNotEmpty ||
@@ -126,9 +135,29 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         return;
       }
       _pendingInitialCreate = false;
+      final eventId = _pendingInitialEventId;
+      final occurrence = widget.initialOccurrence;
+      final event = eventId == null
+          ? null
+          : next.events.where((event) {
+              return event.id == eventId &&
+                  (event.originalStartDateTime == null ||
+                      occurrence == null ||
+                      event.originalStartDateTime!.isAtSameMomentAs(
+                        occurrence,
+                      ));
+            }).firstOrNull;
+      _pendingInitialEventId = null;
       final version = _initialRequestVersion;
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && version == _initialRequestVersion) unawaited(_edit());
+        if (!mounted || version != _initialRequestVersion) return;
+        if (eventId != null && event == null) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('指定された予定が見つかりませんでした')));
+          return;
+        }
+        unawaited(_edit(event));
       });
     });
     final month = state.month;

@@ -20,6 +20,7 @@ class GetAndroidWidgetItineraryCacheUsecase {
   Future<AndroidWidgetItineraryCacheDto> execute({
     required String groupId,
     String? selectedItineraryDateId,
+    Set<String> retainedItineraryDateIds = const {},
   }) async {
     final trips = await _tripEntryQueryService.getTripEntriesByGroupId(groupId);
     final sortedTrips = [...trips]..sort(_compareTripsByStartDate);
@@ -41,17 +42,24 @@ class GetAndroidWidgetItineraryCacheUsecase {
       allItineraryDates,
       selectedItineraryDateId,
     );
-    final cachedItineraryDates = _selectCacheRange(
-      allItineraryDates,
-      selectedItineraryDate,
-    );
 
+    final includedIds = {
+      ...retainedItineraryDateIds,
+      ..._selectCacheRange(
+        allItineraryDates,
+        selectedItineraryDate,
+      ).map((date) => date.id),
+    };
     return AndroidWidgetItineraryCacheDto(
       version: 1,
       groupId: groupId,
       selectedItineraryDateId: selectedItineraryDate?.id,
       lastUpdatedAt: _clock.now(),
-      itineraryDates: cachedItineraryDates,
+      itineraryDates: allItineraryDates
+          .where((date) => includedIds.contains(date.id))
+          .toList(),
+      itineraryDateIds: allItineraryDates.map((date) => date.id).toList(),
+      recentItineraryDateId: _selectItineraryDate(allItineraryDates, null)?.id,
     );
   }
 
@@ -80,21 +88,15 @@ class GetAndroidWidgetItineraryCacheUsecase {
     List<AndroidWidgetItineraryDateCacheDto> itineraryDates,
     AndroidWidgetItineraryDateCacheDto? selectedItineraryDate,
   ) {
-    if (selectedItineraryDate == null) {
-      return [];
-    }
-
+    if (selectedItineraryDate == null) return [];
     final selectedIndex = itineraryDates.indexWhere(
-      (itineraryDate) => itineraryDate.id == selectedItineraryDate.id,
+      (date) => date.id == selectedItineraryDate.id,
     );
-    if (selectedIndex < 0) {
-      return [];
-    }
-
-    final startIndex = selectedIndex - 1 < 0 ? 0 : selectedIndex - 1;
-    final endExclusive = selectedIndex + 4 > itineraryDates.length
-        ? itineraryDates.length
-        : selectedIndex + 4;
+    if (selectedIndex < 0) return [];
+    final startIndex = selectedIndex > 0 ? selectedIndex - 1 : 0;
+    final endExclusive = selectedIndex + 4 < itineraryDates.length
+        ? selectedIndex + 4
+        : itineraryDates.length;
     return itineraryDates.sublist(startIndex, endExclusive);
   }
 

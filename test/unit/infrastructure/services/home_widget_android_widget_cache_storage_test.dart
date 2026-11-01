@@ -49,6 +49,10 @@ void main() {
     const calendar = HomeWidgetCalendarCacheStorage();
     final data = <String, Object?>{
       'groupId': 'group',
+      'sourceMode': 'offline',
+      'months': {
+        '2026-11-01': {'month': '2026-11-01', 'days': <Object?>[]},
+      },
       'month': '2026-11-01',
       'days': [
         {
@@ -66,6 +70,32 @@ void main() {
     await const HomeWidgetAndroidWidgetCacheStorage().clear();
     expect(values[HomeWidgetCalendarCacheStorage.cacheKey], isNull);
     expect(File(path).existsSync(), isFalse);
+  });
+
+  test('カレンダーは取得済み月を結合し選択月に近い最大7か月を保持する', () async {
+    const storage = HomeWidgetCalendarCacheStorage();
+    values[HomeWidgetCalendarCacheStorage.selectedDateKey] = '2026-07-01';
+    for (final firstMonth in [2, 5, 8]) {
+      final months = <String, Object?>{};
+      for (var month = firstMonth; month < firstMonth + 3; month++) {
+        final key = '2026-${month.toString().padLeft(2, '0')}-01';
+        months[key] = {'month': key, 'days': <Object?>[]};
+      }
+      await storage.save({
+        'sourceMode': 'offline',
+        'groupId': 'group',
+        'month': months.keys.first,
+        'months': months,
+      });
+    }
+    final path = values[HomeWidgetCalendarCacheStorage.cacheKey] as String;
+    final cache =
+        jsonDecode(await File(path).readAsString()) as Map<String, dynamic>;
+    expect((cache['months'] as Map).keys.toSet(), {
+      for (var month = 4; month <= 10; month++)
+        '2026-${month.toString().padLeft(2, '0')}-01',
+    });
+    expect(await storage.loadSelectedDate(), DateTime(2026, 7, 1));
   });
 
   test('単一キャッシュを消去すると公開済みファイルも削除する', () async {
@@ -89,7 +119,93 @@ void main() {
     expect(File(path).existsSync(), isFalse);
   });
 
-  test('選択日は別キーではなく公開済みキャッシュから取得する', () async {
+  AndroidWidgetItineraryDateCacheDto date(String id, {String name = '旅行'}) =>
+      AndroidWidgetItineraryDateCacheDto(
+        id: id,
+        tripId: 'trip',
+        tripName: name,
+        tripPeriodLabel: '',
+        dateLabel: '',
+        date: DateTime(2026, 11, 2),
+        itineraryItems: const [],
+      );
+
+  AndroidWidgetItineraryCacheDto cache(
+    List<AndroidWidgetItineraryDateCacheDto> dates, {
+    String groupId = 'group',
+    AppMode mode = AppMode.offline,
+    List<String> ids = const ['date-1', 'date-2', 'date-3'],
+  }) => AndroidWidgetItineraryCacheDto(
+    version: 1,
+    sourceMode: mode,
+    groupId: groupId,
+    selectedItineraryDateId: dates.firstOrNull?.id,
+    lastUpdatedAt: DateTime(2026, 11, 2),
+    itineraryDates: dates,
+    itineraryDateIds: ids,
+    recentItineraryDateId: ids.firstOrNull,
+  );
+
+  test('移動時に取得した日付を蓄積し同じ日付は新しい取得結果で更新する', () async {
+    const storage = HomeWidgetAndroidWidgetCacheStorage();
+    await storage.saveItineraryCache(cache([date('date-1'), date('date-2')]));
+    await storage.saveItineraryCache(
+      cache([date('date-2', name: '更新後の旅行'), date('date-3')]),
+    );
+    final loaded = (await storage.loadItineraryCache())!;
+    expect(loaded.itineraryDates.map((date) => date.id), [
+      'date-1',
+      'date-2',
+      'date-3',
+    ]);
+    expect(loaded.itineraryDates[1].tripName, '更新後の旅行');
+  });
+
+  for (final differentGroup in [false, true]) {
+    test('${differentGroup ? 'グループ' : 'モード'}が違う以前のキャッシュは混ぜない', () async {
+      const storage = HomeWidgetAndroidWidgetCacheStorage();
+      await storage.saveItineraryCache(cache([date('date-1')]));
+      await storage.saveItineraryCache(
+        cache(
+          [date('date-2')],
+          groupId: differentGroup ? 'other' : 'group',
+          mode: differentGroup ? AppMode.offline : AppMode.online,
+        ),
+      );
+      expect(
+        (await storage.loadItineraryCache())!.itineraryDates.map(
+          (date) => date.id,
+        ),
+        ['date-2'],
+      );
+    });
+  }
+
+  test('削除済みの日付は以前のキャッシュから引き継がない', () async {
+    const storage = HomeWidgetAndroidWidgetCacheStorage();
+    await storage.saveItineraryCache(cache([date('date-1'), date('date-2')]));
+    await storage.saveItineraryCache(
+      cache([date('date-3')], ids: ['date-2', 'date-3']),
+    );
+    expect(
+      (await storage.loadItineraryCache())!.itineraryDates.map(
+        (date) => date.id,
+      ),
+      ['date-2', 'date-3'],
+    );
+  });
+
+  test('ネイティブで選択した取得済みの日付を次の更新でも優先する', () async {
+    const storage = HomeWidgetAndroidWidgetCacheStorage();
+    await storage.saveItineraryCache(cache([date('date-1'), date('date-2')]));
+    values[HomeWidgetAndroidWidgetCacheStorage.selectedItineraryDateIdKey] =
+        'date-2';
+    expect(await storage.getSelectedItineraryDateId(), 'date-2');
+    await storage.saveItineraryCache(cache([date('date-1')]));
+    expect(await storage.getSelectedItineraryDateId(), 'date-2');
+  });
+
+  test('ナビゲーションに存在しない別キーの選択日は使わない', () async {
     const storage = HomeWidgetAndroidWidgetCacheStorage();
     await storage.saveItineraryCache(
       AndroidWidgetItineraryCacheDto(

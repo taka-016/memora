@@ -352,6 +352,8 @@ mixin $CalendarRoute on GoRouteData {
         false,
     request:
         _$convertMapValue('request', state.uri.queryParameters, int.parse) ?? 0,
+    eventId: state.uri.queryParameters['event-id'],
+    occurrence: state.uri.queryParameters['occurrence'],
   );
 
   CalendarRoute get _self => this as CalendarRoute;
@@ -363,6 +365,8 @@ mixin $CalendarRoute on GoRouteData {
       if (_self.date != null) 'date': _self.date,
       if (_self.create != false) 'create': _self.create.toString(),
       if (_self.request != 0) 'request': _self.request.toString(),
+      if (_self.eventId != null) 'event-id': _self.eventId,
+      if (_self.occurrence != null) 'occurrence': _self.occurrence,
     },
   );
 

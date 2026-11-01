@@ -14,10 +14,14 @@ class CalendarNavigationView extends HookConsumerWidget {
     this.initialDate,
     this.createEvent = false,
     this.initialRequest = 0,
+    this.initialEventId,
+    this.initialOccurrence,
   });
   final DateTime? initialDate;
   final bool createEvent;
   final int initialRequest;
+  final String? initialEventId;
+  final DateTime? initialOccurrence;
   final String? groupId;
 
   @override
@@ -96,6 +100,8 @@ class CalendarNavigationView extends HookConsumerWidget {
         initialDate: initialDate,
         createEvent: createEvent,
         initialRequest: initialRequest,
+        initialEventId: initialEventId,
+        initialOccurrence: initialOccurrence,
         onBack: () {
           if (context.canPop()) {
             context.pop();

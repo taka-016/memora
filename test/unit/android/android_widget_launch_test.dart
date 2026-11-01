@@ -4,6 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 const _itineraryWidgetPath =
     'android/app/src/main/kotlin/com/example/memora/ItineraryWidget.kt';
+const _rendererPath =
+    'android/app/src/main/kotlin/com/example/memora/ItineraryWidgetRenderer.kt';
 const _mainPath = 'lib/main.dart';
 const _topPagePath = 'lib/presentation/app/top_page.dart';
 
@@ -22,42 +24,37 @@ void main() {
       );
     });
 
-    test('表示中の旅行IDを含むURIでMainActivityを起動する', () {
-      final source = File(_itineraryWidgetPath).readAsStringSync();
-
-      expect(source, contains('tripId = itineraryDate.optString("tripId")'));
-      expect(source, contains('actionStartActivity<MainActivity>'));
-      expect(source, contains('memoraWidget://openTrip?tripId='));
-    });
-
-    test('旅程一覧部分のタップでもMainActivityを起動する', () {
-      final source = File(_itineraryWidgetPath).readAsStringSync();
-
-      expect(source, contains('ItineraryList(context, itineraryDate)'));
-      expect(source, contains('LazyColumn('));
+    test('旅行ヘッダーと旅程項目は旅行IDを含む起動URIを使う', () {
+      final source = File(_rendererPath).readAsStringSync();
+      expect(source, contains('HomeWidgetLaunchIntent.getActivity'));
+      expect(source, contains('itineraryTripUri(it.tripId)'));
+      expect(source, contains('.authority("openTrip")'));
+      expect(source, contains('.appendQueryParameter("tripId", tripId)'));
       expect(
         source,
-        contains('Box(modifier = openTripModifier(context, tripId))'),
+        contains('setOnClickFillInIntent(R.id.itinerary_item_row'),
       );
+      expect(source, contains('data = itineraryTripUri(tripId)'));
     });
 
-    test('表示対象グループが未設定の旅程欄タップで設定画面を開くURIを送る', () {
-      final source = File(_itineraryWidgetPath).readAsStringSync();
-
-      expect(source, contains('EmptyMessage(context, "表示対象グループが未設定です")'));
-      expect(source, contains('actionStartActivity<MainActivity>'));
+    test('表示対象グループが未設定の旅程欄は設定画面を開く', () {
+      final source = File(_rendererPath).readAsStringSync();
       expect(source, contains('memoraWidget://openSettings'));
-    });
-
-    test('直近の旅程へ戻るボタンのアクションを送信する', () {
-      final source = File(_itineraryWidgetPath).readAsStringSync();
-
-      expect(source, contains('text = "直近の旅程"'));
       expect(
         source,
-        contains('actionRunCallback<RecentItineraryDateAction>()'),
+        contains('setOnClickPendingIntent(R.id.itinerary_message'),
       );
-      expect(source, contains('sendAction(context, "recent")'));
+    });
+
+    test('直近の旅程へ戻るボタンは操作時点の日付から選択する', () {
+      final source = File(_itineraryWidgetPath).readAsStringSync();
+      final layout = File(
+        'android/app/src/main/res/layout/itinerary_widget.xml',
+      ).readAsStringSync();
+      expect(layout, contains('android:text="直近の旅程"'));
+      expect(source, contains('val today = LocalDate.now()'));
+      expect(source, contains('LocalDate.parse(id.takeLast(10))'));
+      expect(source, contains('ItineraryWidgetData.select(context, target)'));
     });
 
     test('Flutter起動時にウィジェット起動Notifierを初期化する', () {

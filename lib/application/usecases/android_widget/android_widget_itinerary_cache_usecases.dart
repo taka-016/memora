@@ -52,9 +52,14 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
         if (!await _groupQueryService.groupExists(groupId)) {
           return null;
         }
+        final previous = await _cacheStorage.loadItineraryCache();
         return _getCacheUsecase.execute(
           groupId: groupId,
           selectedItineraryDateId: selectedItineraryDateId,
+          retainedItineraryDateIds:
+              previous?.groupId == groupId && previous?.sourceMode == _mode
+              ? previous!.itineraryDates.map((date) => date.id).toSet()
+              : const {},
         );
       }
 
@@ -82,6 +87,8 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
             selectedItineraryDateId: cache.selectedItineraryDateId,
             lastUpdatedAt: cache.lastUpdatedAt,
             itineraryDates: cache.itineraryDates,
+            itineraryDateIds: cache.itineraryDateIds,
+            recentItineraryDateId: cache.recentItineraryDateId,
           ),
         );
       }
@@ -212,6 +219,8 @@ class MoveAndroidWidgetSelectedItineraryDateUsecase {
           selectedItineraryDateId: cachedTarget,
           lastUpdatedAt: cache.lastUpdatedAt,
           itineraryDates: cache.itineraryDates,
+          itineraryDateIds: cache.itineraryDateIds,
+          recentItineraryDateId: cache.recentItineraryDateId,
         ),
       );
       await _cacheStorage.updateWidget();

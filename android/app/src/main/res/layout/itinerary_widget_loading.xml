@@ -3,4 +3,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:gravity="center"
-    android:text="memora" />
+    android:background="#FFFFFF"
+    android:textColor="#212121"
+    android:text="@string/itinerary_widget_light_name" />

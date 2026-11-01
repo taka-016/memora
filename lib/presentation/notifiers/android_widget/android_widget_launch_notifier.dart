@@ -44,12 +44,16 @@ final class AndroidWidgetCalendarLaunchDestination
     required this.requestId,
     required this.date,
     required this.create,
+    this.eventId,
+    this.occurrence,
     required this.groups,
   });
   final String groupId;
   final int requestId;
   final DateTime? date;
   final bool create;
+  final String? eventId;
+  final DateTime? occurrence;
   final List<GroupDto> groups;
   @override
   List<Object?> get props => [
@@ -58,6 +62,8 @@ final class AndroidWidgetCalendarLaunchDestination
     requestId,
     date,
     create,
+    eventId,
+    occurrence,
     groups,
   ];
 }
@@ -296,6 +302,10 @@ class AndroidWidgetLaunchNotifier extends Notifier<AndroidWidgetLaunchState> {
             groups: groups,
             date: DateTime.tryParse(calendarUri.queryParameters['date'] ?? ''),
             create: calendarUri.queryParameters['create'] == 'true',
+            eventId: calendarUri.queryParameters['eventId'],
+            occurrence: DateTime.tryParse(
+              calendarUri.queryParameters['occurrence'] ?? '',
+            ),
           );
         }
       } catch (_) {}

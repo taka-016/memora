@@ -270,6 +270,8 @@ class TopPage extends HookConsumerWidget {
         groupId: resolution.groupId,
         date: resolution.date?.toIso8601String(),
         create: resolution.create,
+        eventId: resolution.eventId,
+        occurrence: resolution.occurrence?.toIso8601String(),
         request: resolution.requestId,
       ).go(context);
       return;

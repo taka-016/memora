@@ -227,11 +227,15 @@ class CalendarRoute extends GoRouteData with $CalendarRoute {
     this.date,
     this.create = false,
     this.request = 0,
+    this.eventId,
+    this.occurrence,
   });
   final String groupId;
   final String? date;
   final bool create;
   final int request;
+  final String? eventId;
+  final String? occurrence;
   @override
   Widget build(BuildContext context, GoRouterState state) => Material(
     child: CalendarNavigationView(
@@ -239,6 +243,8 @@ class CalendarRoute extends GoRouteData with $CalendarRoute {
       initialDate: DateTime.tryParse(date ?? ''),
       createEvent: create,
       initialRequest: request,
+      initialEventId: eventId,
+      initialOccurrence: DateTime.tryParse(occurrence ?? ''),
     ),
   );
 }

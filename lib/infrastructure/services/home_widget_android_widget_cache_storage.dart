@@ -58,12 +58,42 @@ class HomeWidgetAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
       return null;
     }
     final decoded = jsonDecode(content) as Map<String, dynamic>;
-    return AndroidWidgetItineraryCacheDto.fromJson(decoded);
+    final cache = AndroidWidgetItineraryCacheDto.fromJson(decoded);
+    final selected = await HomeWidget.getWidgetData<String>(
+      selectedItineraryDateIdKey,
+    );
+    if (selected == null || !cache.itineraryDateIds.contains(selected)) {
+      return cache;
+    }
+    return AndroidWidgetItineraryCacheDto(
+      version: cache.version,
+      sourceMode: cache.sourceMode,
+      groupId: cache.groupId,
+      selectedItineraryDateId: selected,
+      lastUpdatedAt: cache.lastUpdatedAt,
+      itineraryDates: cache.itineraryDates,
+      itineraryDateIds: cache.itineraryDateIds,
+      recentItineraryDateId: cache.recentItineraryDateId,
+    );
   }
 
   @override
   Future<void> saveItineraryCache(AndroidWidgetItineraryCacheDto cache) async {
-    final json = jsonEncode(cache.toJson());
+    final previous = await loadItineraryCache();
+    final dates = {
+      if (previous?.groupId == cache.groupId &&
+          previous?.sourceMode == cache.sourceMode)
+        for (final date in previous!.itineraryDates) date.id: date,
+      for (final date in cache.itineraryDates) date.id: date,
+    };
+    final publishedCache = {
+      ...cache.toJson(),
+      'itineraryDates': [
+        for (final id in cache.itineraryDateIds)
+          if (dates.containsKey(id)) dates[id]!.toJson(),
+      ],
+    };
+    final json = jsonEncode(publishedCache);
     await _saveCacheFile(Uint8List.fromList(utf8.encode(json)));
     await HomeWidget.saveWidgetData<String>(
       lastUpdatedAtKey,
@@ -116,6 +146,9 @@ class HomeWidgetAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
       return;
     }
     await HomeWidget.updateWidget(qualifiedAndroidName: qualifiedAndroidName);
+    await HomeWidget.updateWidget(
+      qualifiedAndroidName: 'com.example.memora.ItineraryDarkWidgetReceiver',
+    );
     await const HomeWidgetCalendarCacheStorage().update();
   }
 }

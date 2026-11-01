@@ -138,30 +138,28 @@ void main() {
       expect(source, contains('registerPeriodicUpdateTask'));
     });
 
-    test('Glanceウィジェットの状態を同期できるReceiverを使用する', () {
+    test('ライト版とダーク版の両方が標準Receiverの更新処理を使う', () {
       final source = File(_itineraryWidgetPath).readAsStringSync();
-
-      expect(source, contains('HomeWidgetGlanceWidgetReceiver'));
+      final appearance = File(
+        'android/app/src/main/kotlin/com/example/memora/WidgetAppearance.kt',
+      ).readAsStringSync();
+      final manifest = File(_androidManifestPath).readAsStringSync();
+      expect(source, contains('ItineraryWidgetReceiver : AppWidgetProvider()'));
       expect(
-        source,
-        contains(
-          'class ItineraryWidgetReceiver : '
-          'HomeWidgetGlanceWidgetReceiver<ItineraryWidget>()',
-        ),
+        appearance,
+        contains('ItineraryDarkWidgetReceiver : ItineraryWidgetReceiver()'),
       );
+      expect(manifest, contains('.ItineraryDarkWidgetReceiver'));
+      expect(manifest, contains('.CalendarDarkWidgetReceiver'));
     });
 
-    test('現在のモードと対象グループに一致する単一キャッシュだけ描画する', () {
-      final source = File(_itineraryWidgetPath).readAsStringSync();
-
+    test('描画用キャッシュは現在のモードと対象グループに限定する', () {
+      final source = File(
+        'android/app/src/main/kotlin/com/example/memora/ItineraryWidgetCache.kt',
+      ).readAsStringSync();
       expect(source, contains('BuildConfig.RESOLVED_APP_MODE'));
-      expect(
-        source,
-        contains('cache.sourceMode == BuildConfig.RESOLVED_APP_MODE'),
-      );
-      expect(source, contains('cache.groupId == targetGroupId'));
+      expect(source, contains('it.groupId == targetGroup(context)'));
       expect(source, contains('memora_widget_itinerary_cache'));
-      expect(source, isNot(contains('memora_widget_cache_generation')));
     });
 
     test('Android標準のウィジェット定期更新に依存しない', () {

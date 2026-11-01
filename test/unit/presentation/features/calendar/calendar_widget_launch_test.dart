@@ -113,4 +113,142 @@ void main() {
       },
     );
   }
+  for (final missing in [false, true]) {
+    testWidgets(
+      '予定タップ起動は${missing ? '削除済み予定を新規作成として開かない' : '読込後に指定した繰り返し予定の回を編集する'}',
+      (tester) async {
+        final group = Completer<GroupDto?>();
+        final loader = calendarTestGroupLoader();
+        when(loader.execute('g1')).thenAnswer((_) => group.future);
+        final events = MockGetCalendarEventsUsecase();
+        final labels = MockGetCalendarLabelsUsecase();
+        when(events.execute('g1')).thenAnswer(
+          (_) async => [
+            CalendarEventDto(
+              id: 'series',
+              groupId: 'g1',
+              labelType: 'group',
+              title: '毎日の予定',
+              startDateTime: DateTime.utc(2026, 11, 1),
+              endDateTime: DateTime.utc(2026, 11, 1),
+              isAllDay: true,
+              recurrenceRule: 'FREQ=DAILY',
+            ),
+          ],
+        );
+        when(labels.execute('g1')).thenAnswer((_) async => []);
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              appClockProvider.overrideWithValue(
+                FixedAppClock(DateTime(2026, 11, 1)),
+              ),
+              getGroupWithMembersByIdUsecaseProvider.overrideWithValue(loader),
+              getCalendarEventsUsecaseProvider.overrideWithValue(events),
+              getCalendarLabelsUsecaseProvider.overrideWithValue(labels),
+              watchCalendarGroupUsecaseProvider.overrideWithValue(null),
+              watchCalendarEventsUsecaseProvider.overrideWithValue(null),
+              watchCalendarLabelsUsecaseProvider.overrideWithValue(null),
+            ],
+            child: MaterialApp(
+              home: Scaffold(
+                body: CalendarScreen(
+                  groupId: 'g1',
+                  groupName: '家族',
+                  onBack: () {},
+                  initialDate: DateTime(2026, 11, 3),
+                  initialRequest: 1,
+                  initialEventId: missing ? 'deleted' : 'series',
+                  initialOccurrence: DateTime.utc(2026, 11, 3),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+        await tester.pump();
+        expect(find.byType(CalendarEventDialog), findsNothing);
+        group.complete(
+          const GroupDto(id: 'g1', ownerId: 'owner', name: '家族', members: []),
+        );
+        await tester.pump();
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        if (missing) {
+          expect(find.byType(CalendarEventDialog), findsNothing);
+          expect(find.text('指定された予定が見つかりませんでした'), findsOneWidget);
+        } else {
+          final dialog = tester.widget<CalendarEventDialog>(
+            find.byType(CalendarEventDialog),
+          );
+          expect(dialog.event!.id, 'series');
+          expect(
+            dialog.event!.originalStartDateTime,
+            DateTime.utc(2026, 11, 3),
+          );
+          expect(dialog.event!.startDateTime, DateTime.utc(2026, 11, 3));
+        }
+      },
+    );
+  }
+  testWidgets('単発予定はウィジェットの時刻が古くても同じ予定IDの最新内容で編集する', (tester) async {
+    final loader = calendarTestGroupLoader();
+    when(loader.execute('g1')).thenAnswer(
+      (_) async =>
+          const GroupDto(id: 'g1', ownerId: 'owner', name: '家族', members: []),
+    );
+    final events = MockGetCalendarEventsUsecase();
+    final labels = MockGetCalendarLabelsUsecase();
+    when(events.execute('g1')).thenAnswer(
+      (_) async => [
+        CalendarEventDto(
+          id: 'event',
+          groupId: 'g1',
+          labelType: 'group',
+          title: '時刻変更後の予定',
+          startDateTime: DateTime.utc(2026, 11, 3, 11),
+          endDateTime: DateTime.utc(2026, 11, 3, 12),
+          isAllDay: false,
+        ),
+      ],
+    );
+    when(labels.execute('g1')).thenAnswer((_) async => []);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          appClockProvider.overrideWithValue(
+            FixedAppClock(DateTime(2026, 11, 1)),
+          ),
+          getGroupWithMembersByIdUsecaseProvider.overrideWithValue(loader),
+          getCalendarEventsUsecaseProvider.overrideWithValue(events),
+          getCalendarLabelsUsecaseProvider.overrideWithValue(labels),
+          watchCalendarGroupUsecaseProvider.overrideWithValue(null),
+          watchCalendarEventsUsecaseProvider.overrideWithValue(null),
+          watchCalendarLabelsUsecaseProvider.overrideWithValue(null),
+        ],
+        child: MaterialApp(
+          home: Scaffold(
+            body: CalendarScreen(
+              groupId: 'g1',
+              groupName: '家族',
+              onBack: () {},
+              initialDate: DateTime(2026, 11, 3),
+              initialEventId: 'event',
+              initialOccurrence: DateTime.utc(2026, 11, 3, 9),
+              initialRequest: 1,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    final dialog = tester.widget<CalendarEventDialog>(
+      find.byType(CalendarEventDialog),
+    );
+    expect(dialog.event!.title, '時刻変更後の予定');
+    expect(dialog.event!.startDateTime, DateTime.utc(2026, 11, 3, 11));
+  });
 }

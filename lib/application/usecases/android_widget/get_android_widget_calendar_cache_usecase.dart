@@ -24,11 +24,23 @@ class GetAndroidWidgetCalendarCacheUsecase {
   Future<Map<String, Object?>?> execute(String groupId, DateTime month) async {
     final group = await groups.getGroupWithMembersById(groupId);
     if (group == null) return null;
+    DateTime gridStart(DateTime value) {
+      final first = DateTime(value.year, value.month);
+      return DateTime(first.year, first.month, 1 - first.weekday % 7);
+    }
+
+    DateTime gridEnd(DateTime value) {
+      final last = DateTime(value.year, value.month + 1, 0);
+      return DateTime(last.year, last.month, last.day + 7 - last.weekday % 7);
+    }
+
     final first = DateTime(month.year, month.month);
-    final from = DateTime(first.year, first.month, 1 - first.weekday % 7);
-    final last = DateTime(first.year, first.month + 1, 0);
-    final count = ((first.weekday % 7 + last.day) / 7).ceil() * 7;
-    final to = DateTime(from.year, from.month, from.day + count);
+    final months = [
+      for (var offset = -2; offset <= 2; offset++)
+        DateTime(first.year, first.month + offset),
+    ];
+    final from = gridStart(months.first);
+    final to = gridEnd(months.last);
     final source = await events.getCalendarEventsByGroupId(groupId);
     final displayLabels = buildCalendarDisplayLabels(
       group,
@@ -47,7 +59,10 @@ class GetAndroidWidgetCalendarCacheUsecase {
           .firstOrNull;
       return {
         'id': event.id,
+        'occurrence': (event.originalStartDateTime ?? event.startDateTime)
+            .toIso8601String(),
         'title': event.title,
+        'isAllDay': event.isAllDay,
         'color': label?.color ?? '#808080',
         'textColor': label?.textColor ?? '#FFFFFF',
         'timeLabel': event.isAllDay
@@ -56,24 +71,35 @@ class GetAndroidWidgetCalendarCacheUsecase {
       };
     }
 
+    Map<String, Object?> monthData(DateTime value) {
+      final start = gridStart(value);
+      final end = gridEnd(value);
+      final days = <Map<String, Object?>>[];
+      for (
+        var day = start;
+        day.isBefore(end);
+        day = DateTime(day.year, day.month, day.day + 1)
+      ) {
+        days.add({
+          'date': dayFormat(day),
+          'events': occurrences
+              .where((event) => _onDay(event, day))
+              .map(item)
+              .toList(),
+        });
+      }
+      return {'month': dayFormat(value), 'days': days};
+    }
+
+    final cachedMonths = {
+      for (final value in months) dayFormat(value): monthData(value),
+    };
     return {
       'sourceMode': mode.name,
       'groupId': groupId,
       'groupName': group.name,
-      'month': dayFormat(first),
-      'days': [
-        for (var index = 0; index < count; index++)
-          () {
-            final day = DateTime(from.year, from.month, from.day + index);
-            return {
-              'date': dayFormat(day),
-              'events': occurrences
-                  .where((event) => _onDay(event, day))
-                  .map(item)
-                  .toList(),
-            };
-          }(),
-      ],
+      ...cachedMonths[dayFormat(first)]!,
+      'months': cachedMonths,
     };
   }
 
