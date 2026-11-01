@@ -48,6 +48,30 @@ void main() {
   late MockCollectionReference overrideCollection;
   final overrideRefs = <String, MockDocumentReference>{};
 
+  test('Firestoreで予定と個別回の詳細を保存・取得して空文字で解除できる', () {
+    final event = CalendarEvent(
+      id: 'event', groupId: 'group', labelType: 'group', title: '予定',
+      startDateTime: DateTime.utc(2026, 10, 1),
+      endDateTime: DateTime.utc(2026, 10, 1), isAllDay: true,
+      url: 'https://example.com', memo: '一行目\n二行目', locationName: '駅',
+    );
+    final doc = MockDocumentSnapshot();
+    when(doc.id).thenReturn('event');
+    when(doc.data()).thenReturn(FirestoreCalendarEventMapper.toFirestore(event));
+    final loaded = FirestoreCalendarEventMapper.fromFirestore(doc);
+    expect(CalendarEventMapper.toEntity(loaded), event);
+    final individual = CalendarEventOverride(
+      originalStartDateTime: event.startDateTime, isCancelled: false,
+      title: event.title, labelType: 'group', isAllDay: true,
+      startDateTime: event.startDateTime, endDateTime: event.endDateTime,
+      url: '', memo: '個別\nメモ', locationName: '',
+    );
+    expect(FirestoreCalendarEventOverrideMapper.fromFirestore(
+      FirestoreCalendarEventOverrideMapper.toFirestore(individual,
+        eventId: 'event', groupId: 'group', parentAllDay: true),
+      parentAllDay: true), individual);
+    expect(loaded.copyWith(url: '', memo: '', locationName: '').url, '');
+  });
   test('Firestoreの任意ラベルの文字色と並び順を往復する', () {
     final doc = MockDocumentSnapshot();
     when(doc.id).thenReturn('label');
