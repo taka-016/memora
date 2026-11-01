@@ -1,3 +1,4 @@
+import 'package:memora/presentation/features/calendar/calendar_event_dialog.dart';
 import 'package:memora/composition_root/providers/group_providers.dart';
 
 import '../../../../helpers/calendar_group_test_support.dart';
@@ -54,6 +55,21 @@ void main() {
     await tester.pumpAndSettle();
     return events;
   }
+
+  testWidgets('グループが1件でも起動URLの日付と追加要求を自動選択で上書きしない', (tester) async {
+    final route = CalendarRoute(groupId: '1', date: '2027-01-01', create: true, request: 1);
+    await pump(tester, count: 1, location: route.location);
+    expect(find.byType(CalendarEventDialog), findsOneWidget);
+    expect(find.text('開始日: 2027/1/1'), findsOneWidget);
+    final container = ProviderScope.containerOf(tester.element(find.byType(CalendarEventDialog)));
+    final router = container.read(appRouterConfigProvider);
+    expect(router.state.uri.toString(), route.location);
+    await tester.tap(find.text('キャンセル'));
+    await tester.pumpAndSettle();
+    router.go(const CalendarRoute(groupId: '1', date: '2027-01-01', create: true, request: 2).location);
+    await tester.pumpAndSettle();
+    expect(find.byType(CalendarEventDialog), findsOneWidget);
+  });
 
   testWidgets('複数グループは選択後に月表示を開き戻ると別グループに切り替えられる', (tester) async {
     final events = await pump(tester);
