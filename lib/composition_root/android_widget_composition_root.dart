@@ -1,3 +1,4 @@
+import 'package:memora/composition_root/providers/calendar_widget_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/models/app_mode.dart';
 import 'package:memora/application/services/android_widget_cache_storage.dart';
@@ -79,6 +80,7 @@ Future<void> withAndroidWidgetDependencies(
         getAndroidWidgetItineraryCacheUsecaseProvider,
       ),
       mode: mode,
+      refreshCalendar: (groupId) => container!.read(refreshCalendarWidgetProvider)(groupId, null),
       readTransaction: container.read(androidWidgetReadTransactionProvider),
     );
     final move = MoveAndroidWidgetSelectedItineraryDateUsecase(
@@ -93,6 +95,11 @@ Future<void> withAndroidWidgetDependencies(
       refreshCache: refresh.execute,
       moveDate: move.execute,
       showToast: const MethodChannelAndroidWidgetToastNotifier().show,
+      refreshCalendar: (date) async {
+        final groupId = await storage.getTargetGroupId();
+        if (groupId == null) { await storage.updateWidget(); return; }
+        await container!.read(refreshCalendarWidgetProvider)(groupId, date);
+      },
     );
     if (database == null) {
       await action(refresh, handler);

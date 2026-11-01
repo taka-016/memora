@@ -21,6 +21,7 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
     required this._getCacheUsecase,
     required this._groupQueryService,
     this._mode = AppMode.online,
+    this.refreshCalendar,
     this._readTransaction,
   });
 
@@ -28,6 +29,7 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
   final GetAndroidWidgetItineraryCacheUsecase _getCacheUsecase;
   final GroupQueryService _groupQueryService;
   final AppMode _mode;
+  final Future<void> Function(String groupId)? refreshCalendar;
   final ReadTransaction? _readTransaction;
 
   Future<void> executeForSelectedGroup() async {
@@ -92,6 +94,7 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
           await publish(await read());
         });
       }
+      await refreshCalendar?.call(groupId);
     } finally {
       if (updateWidgetAfterRefresh) {
         await _cacheStorage.updateWidget();

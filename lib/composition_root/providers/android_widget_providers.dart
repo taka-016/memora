@@ -1,3 +1,4 @@
+import 'package:memora/composition_root/providers/calendar_widget_providers.dart';
 import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -37,6 +38,7 @@ final refreshAndroidWidgetItineraryCacheUsecaseProvider =
           getAndroidWidgetItineraryCacheUsecaseProvider,
         ),
         mode: ref.watch(appModeProvider),
+        refreshCalendar: (groupId) => ref.read(refreshCalendarWidgetProvider)(groupId, null),
         readTransaction: ref.watch(androidWidgetReadTransactionProvider),
       );
     });

@@ -21,15 +21,24 @@ class AndroidWidgetActionHandler {
     required this._refreshCache,
     required this._moveDate,
     required this._showToast,
+    this.refreshCalendar,
   });
 
   final AndroidWidgetCacheStorage _cacheStorage;
   final RefreshAndroidWidgetCache _refreshCache;
   final MoveAndroidWidgetItineraryDate _moveDate;
   final ShowAndroidWidgetToast _showToast;
+  final Future<void> Function(DateTime? date)? refreshCalendar;
 
   Future<void> handle(Uri? uri) async {
     switch (uri?.host) {
+      case 'calendarrefresh':
+        try {
+          await refreshCalendar?.call(DateTime.tryParse(uri?.queryParameters['date'] ?? ''));
+        } catch (_) {
+          await _showToastSafely(const AndroidWidgetToastNotification.error('更新に失敗しました'));
+        }
+        break;
       case 'previous':
         await _move(AndroidWidgetItineraryDateMoveDirection.previous);
         break;

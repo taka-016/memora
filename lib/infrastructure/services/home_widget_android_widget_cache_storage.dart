@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:memora/infrastructure/services/home_widget_calendar_cache_storage.dart';
 import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
@@ -100,6 +101,7 @@ class HomeWidgetAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
   Future<void> clear() async {
     await Future.wait([
       clearTargetGroupId(),
+      const HomeWidgetCalendarCacheStorage().clear(),
       HomeWidget.saveWidgetData<String>(selectedItineraryDateIdKey, ''),
       HomeWidget.saveWidgetData<String>(lastUpdatedAtKey, ''),
       HomeWidget.saveWidgetData<String>(cacheFileKey, null),
@@ -112,5 +114,6 @@ class HomeWidgetAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
       return;
     }
     await HomeWidget.updateWidget(qualifiedAndroidName: qualifiedAndroidName);
+    await const HomeWidgetCalendarCacheStorage().update();
   }
 }
