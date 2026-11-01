@@ -93,6 +93,7 @@ void main() {
       child: const CustomSearchBar(hintText: '場所を検索'),
     ));
     await tester.enterText(find.byType(TextField), '駅');
+    await tester.tap(find.byType(TextField));
     await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pump();
     expect(find.byType(LinearProgressIndicator), findsOneWidget);
@@ -100,11 +101,13 @@ void main() {
     await tester.pump();
     expect(find.text('検索結果がありません'), findsOneWidget);
     when(usecase.execute(any)).thenThrow(TestException('検索失敗'));
+    await tester.tap(find.byType(TextField));
     await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pump();
     expect(find.text('場所を検索できませんでした。再検索してください'), findsOneWidget);
     expect(find.text('検索結果がありません'), findsNothing);
     when(usecase.execute(any)).thenAnswer((_) async => mockCandidatesDefault);
+    await tester.tap(find.byType(TextField));
     await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pump();
     expect(find.text('東京タワー'), findsOneWidget);

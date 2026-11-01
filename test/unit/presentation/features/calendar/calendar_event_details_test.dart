@@ -15,11 +15,13 @@ Finder field(String label) => find.byWidgetPredicate((widget) =>
   widget is TextField && widget.decoration?.labelText == label);
 
 Future<void> openEvent(WidgetTester tester) async {
+  if (find.widgetWithText(ListTile, '予定').evaluate().isEmpty) {
   await tester.tap(find.byKey(calendarTestDay2));
   await tester.pump();
   await tester.tap(find.byKey(calendarTestDay2));
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 300));
+  }
   await tester.tap(find.widgetWithText(ListTile, '予定'));
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 300));
@@ -34,6 +36,8 @@ void main() {
     Uri? opened;
     await harness.pump(tester, capabilities: AppCapabilities.forMode(AppMode.offline),
       openUrl: (uri) async { opened = uri; return true; });
+    await tester.tap(find.byKey(calendarTestDay2));
+    await tester.pump();
     await tester.tap(find.byType(FloatingActionButton));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
