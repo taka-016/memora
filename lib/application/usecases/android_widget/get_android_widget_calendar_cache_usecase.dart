@@ -1,0 +1,82 @@
+import 'package:intl/intl.dart';
+import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
+import 'package:memora/application/models/app_mode.dart';
+import 'package:memora/application/queries/calendar/calendar_event_query_service.dart';
+import 'package:memora/application/queries/calendar/calendar_label_query_service.dart';
+import 'package:memora/application/queries/group/group_query_service.dart';
+import 'package:memora/application/services/calendar/calendar_display_labels.dart';
+import 'package:memora/application/services/calendar/calendar_recurrence_expander.dart';
+
+class GetAndroidWidgetCalendarCacheUsecase {
+  const GetAndroidWidgetCalendarCacheUsecase({
+    required this.events,
+    required this.labels,
+    required this.groups,
+    required this.expander,
+    required this.mode,
+  });
+
+  final CalendarEventQueryService events;
+  final CalendarLabelQueryService labels;
+  final GroupQueryService groups;
+  final CalendarRecurrenceExpander expander;
+  final AppMode mode;
+
+  Future<Map<String, Object?>?> execute(String groupId, DateTime month) async {
+    final group = await groups.getGroupWithMembersById(groupId);
+    if (group == null) return null;
+    final first = DateTime(month.year, month.month);
+    final from = DateTime(first.year, first.month, 1 - first.weekday % 7);
+    final last = DateTime(first.year, first.month + 1, 0);
+    final count = ((first.weekday % 7 + last.day) / 7).ceil() * 7;
+    final to = DateTime(from.year, from.month, from.day + count);
+    final source = await events.getCalendarEventsByGroupId(groupId);
+    final displayLabels = buildCalendarDisplayLabels(
+      group, await labels.getCalendarLabelsByGroupId(groupId), events: source,
+    );
+    final occurrences = [
+      for (final event in source) ...expander.expand(event, from, to),
+    ]..sort((a, b) => a.startDateTime.compareTo(b.startDateTime));
+    final dayFormat = DateFormat('yyyy-MM-dd');
+    final timeFormat = DateFormat('HH:mm');
+    Map<String, Object?> item(CalendarEventDto event) {
+      final label = displayLabels.where((v) => v.id == event.labelKey).firstOrNull;
+      return {
+        'id': event.id,
+        'title': event.title,
+        'color': label?.color ?? '#808080',
+        'textColor': label?.textColor ?? '#FFFFFF',
+        'timeLabel': event.isAllDay ? '終日' :
+          '${timeFormat.format(event.startDateTime.toLocal())}–${timeFormat.format(event.endDateTime.toLocal())}',
+      };
+    }
+    return {
+      'sourceMode': mode.name,
+      'groupId': groupId,
+      'groupName': group.name,
+      'month': dayFormat.format(first),
+      'days': [
+        for (var index = 0; index < count; index++)
+          () {
+            final day = DateTime(from.year, from.month, from.day + index);
+            return {
+              'date': dayFormat.format(day),
+              'events': occurrences.where((event) => _onDay(event, day)).map(item).toList(),
+            };
+          }(),
+      ],
+    };
+  }
+
+  bool _onDay(CalendarEventDto event, DateTime day) {
+    if (event.isAllDay) {
+      final first = DateTime(event.startDateTime.year, event.startDateTime.month, event.startDateTime.day);
+      final last = DateTime(event.endDateTime.year, event.endDateTime.month, event.endDateTime.day);
+      return !day.isBefore(first) && !day.isAfter(last);
+    }
+    final first = event.startDateTime.toLocal();
+    final last = event.endDateTime.toLocal();
+    final end = DateTime(day.year, day.month, day.day + 1);
+    return first.isBefore(end) && (last.isAfter(day) || (first == last && !first.isBefore(day)));
+  }
+}
