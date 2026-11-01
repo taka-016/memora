@@ -149,6 +149,9 @@ erDiagram
         string memberId "member種別のみ、所属解除後も保持"
         string labelId FK "custom種別のみ"
         string title "NOT NULL"
+        string url "未設定は空文字"
+        string memo "改行を保持、未設定は空文字"
+        string locationName "名称のみ、未設定は空文字"
         timestamp startDateTime "NOT NULL"
         timestamp endDateTime "NOT NULL"
         boolean isAllDay "NOT NULL"
@@ -162,6 +165,9 @@ erDiagram
         timestamp originalStartDateTime "NOT NULL"
         boolean isCancelled "NOT NULL"
         string title
+        string url "空文字で解除"
+        string memo "改行を保持、空文字で解除"
+        string locationName "名称のみ、空文字で解除"
         timestamp startDateTime
         timestamp endDateTime
         boolean isAllDay

@@ -135,11 +135,13 @@ class CustomSearchBar extends HookConsumerWidget {
         child: ListTile(
           title: Text(candidate.name),
           subtitle: Text(candidate.address),
-          onTap: !enabled ? null : () {
-            onCandidateSelected?.call(candidate);
-            candidates.value = [];
-            message.value = null;
-          },
+          onTap: !enabled
+              ? null
+              : () {
+                  onCandidateSelected?.call(candidate);
+                  candidates.value = [];
+                  message.value = null;
+                },
         ),
       );
     }

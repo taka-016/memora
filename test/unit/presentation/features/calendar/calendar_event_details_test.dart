@@ -6,13 +6,18 @@ import 'package:memora/application/models/app_mode.dart';
 import 'package:memora/presentation/features/calendar/calendar_event_dialog.dart';
 import 'package:memora/presentation/shared/inputs/custom_search_bar.dart';
 import 'package:mockito/mockito.dart';
+
 import '../../shared/inputs/custom_search_bar_test.mocks.dart';
-import '../../shared/inputs/custom_search_bar_test.dart' show mockCandidatesDefault;
+
+import 'package:memora/application/dtos/location/location_candidate_dto.dart';
+import 'package:memora/core/models/coordinate.dart';
+
 import '../../../../helpers/test_exception.dart';
 import 'calendar_test_support.dart';
 
-Finder field(String label) => find.byWidgetPredicate((widget) =>
-  widget is TextField && widget.decoration?.labelText == label);
+Finder field(String label) => find.byWidgetPredicate(
+  (widget) => widget is TextField && widget.decoration?.labelText == label,
+);
 
 Future<void> openEvent(WidgetTester tester) async {
   if (find.widgetWithText(ListTile, '予定').evaluate().isEmpty) {
@@ -36,15 +41,25 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     final harness = CalendarTestHarness();
     Uri? opened;
-    await harness.pump(tester, capabilities: AppCapabilities.forMode(AppMode.offline),
-      openUrl: (uri) async { opened = uri; return true; });
+    await harness.pump(
+      tester,
+      capabilities: AppCapabilities.forMode(AppMode.offline),
+      openUrl: (uri) async {
+        opened = uri;
+        return true;
+      },
+    );
     await tester.tap(find.byKey(calendarTestDay2));
     await tester.pump();
     await tester.tap(find.byType(FloatingActionButton));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-    for (final entry in {'タイトル': '予定', 'URL': 'https://example.com',
-      'メモ': '一行目\n二行目', '場所名': '集合場所'}.entries) {
+    for (final entry in {
+      'タイトル': '予定',
+      'URL': 'https://example.com',
+      'メモ': '一行目\n二行目',
+      '場所名': '集合場所',
+    }.entries) {
       await tester.ensureVisible(field(entry.key));
       await tester.enterText(field(entry.key), entry.value);
     }
@@ -80,13 +95,28 @@ void main() {
     tester.view.physicalSize = const Size(1000, 1800);
     addTearDown(tester.view.resetPhysicalSize);
     final search = MockSearchLocationsUsecase();
-    when(search.execute(any)).thenAnswer((_) async => mockCandidatesDefault);
-    final harness = CalendarTestHarness()..savedEvents.add(calendarTestEvent('event', '予定'));
-    await harness.pump(tester, locationSearch: search,
-      capabilities: AppCapabilities.forMode(AppMode.online));
+    when(search.execute(any)).thenAnswer(
+      (_) async => [
+        LocationCandidateDto(
+          name: '東京タワー',
+          address: '東京都港区',
+          coordinate: Coordinate(latitude: 35, longitude: 139),
+        ),
+      ],
+    );
+    final harness = CalendarTestHarness()
+      ..savedEvents.add(calendarTestEvent('event', '予定'));
+    await harness.pump(
+      tester,
+      locationSearch: search,
+      capabilities: AppCapabilities.forMode(AppMode.online),
+    );
     await openEvent(tester);
     await tester.ensureVisible(find.byType(CustomSearchBar));
-    final searchField = find.descendant(of: find.byType(CustomSearchBar), matching: find.byType(TextField));
+    final searchField = find.descendant(
+      of: find.byType(CustomSearchBar),
+      matching: find.byType(TextField),
+    );
     await tester.enterText(searchField, '東京');
     await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pump();
@@ -126,13 +156,19 @@ void main() {
       tester.view.physicalSize = const Size(1000, 1800);
       addTearDown(tester.view.resetPhysicalSize);
       var attempts = 0;
-      final harness = CalendarTestHarness()..savedEvents.add(calendarTestEvent('event', '予定').copyWith(url: 'https://example.com'));
-      await harness.pump(tester, openUrl: (_) async {
-        attempts++;
-        if (attempts > 1) return true;
-        if (throwsError) throw TestException('起動失敗');
-        return false;
-      });
+      final harness = CalendarTestHarness()
+        ..savedEvents.add(
+          calendarTestEvent('event', '予定').copyWith(url: 'https://example.com'),
+        );
+      await harness.pump(
+        tester,
+        openUrl: (_) async {
+          attempts++;
+          if (attempts > 1) return true;
+          if (throwsError) throw TestException('起動失敗');
+          return false;
+        },
+      );
       await openEvent(tester);
       await tester.ensureVisible(find.byTooltip('URLを開く'));
       await tester.tap(find.byTooltip('URLを開く'));
@@ -143,7 +179,10 @@ void main() {
       await tester.tap(find.byTooltip('URLを開く'));
       await tester.pump();
       expect(attempts, 2);
-      expect(tester.widget<TextField>(field('URL')).controller!.text, 'https://example.com');
+      expect(
+        tester.widget<TextField>(field('URL')).controller!.text,
+        'https://example.com',
+      );
     });
   }
 }

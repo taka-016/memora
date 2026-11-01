@@ -88,10 +88,12 @@ void main() {
     final usecase = MockSearchLocationsUsecase();
     final pending = Completer<List<LocationCandidateDto>>();
     when(usecase.execute(any)).thenAnswer((_) => pending.future);
-    await tester.pumpWidget(buildTestApp(
-      searchLocationsUsecase: usecase,
-      child: const CustomSearchBar(hintText: '場所を検索'),
-    ));
+    await tester.pumpWidget(
+      buildTestApp(
+        searchLocationsUsecase: usecase,
+        child: const CustomSearchBar(hintText: '場所を検索'),
+      ),
+    );
     await tester.enterText(find.byType(TextField), '駅');
     await tester.tap(find.byType(TextField));
     await tester.testTextInput.receiveAction(TextInputAction.done);

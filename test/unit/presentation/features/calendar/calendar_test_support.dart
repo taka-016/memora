@@ -104,8 +104,10 @@ class CalendarTestHarness {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          if (capabilities != null) appCapabilitiesProvider.overrideWithValue(capabilities),
-          if (locationSearch != null) searchLocationsUsecaseProvider.overrideWithValue(locationSearch),
+          if (capabilities != null)
+            appCapabilitiesProvider.overrideWithValue(capabilities),
+          if (locationSearch != null)
+            searchLocationsUsecaseProvider.overrideWithValue(locationSearch),
           if (openUrl != null) openUrlProvider.overrideWithValue(openUrl),
           getGroupWithMembersByIdUsecaseProvider.overrideWithValue(
             calendarTestGroupLoader(),

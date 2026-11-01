@@ -250,7 +250,9 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
 
   Future<void> _openUrl() async {
     final uri = Uri.tryParse(_url.text.trim());
-    if (uri == null || !['https', 'http'].contains(uri.scheme) || uri.host.isEmpty) {
+    if (uri == null ||
+        !['https', 'http'].contains(uri.scheme) ||
+        uri.host.isEmpty) {
       setState(() => _error = 'httpまたはhttpsのURLを入力してください');
       return;
     }
@@ -615,48 +617,6 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                                   ? 'タイトルを入力してください'
                                   : null,
                             ),
-                            TextFormField(
-                              controller: _url,
-                              onChanged: (_) => setState(() {}),
-                              enabled: !state.isSaving,
-                              keyboardType: TextInputType.url,
-                              decoration: InputDecoration(
-                                labelText: 'URL',
-                                border: const OutlineInputBorder(),
-                                suffixIcon: IconButton(
-                                  tooltip: 'URLを開く',
-                                  icon: const Icon(Icons.open_in_new),
-                                  onPressed: state.isSaving || _url.text.trim().isEmpty ? null : _openUrl,
-                                ),
-                              ),
-                            ),
-                            TextFormField(
-                              controller: _memo,
-                              onChanged: (_) => setState(() {}),
-                              enabled: !state.isSaving,
-                              minLines: 3,
-                              maxLines: null,
-                              keyboardType: TextInputType.multiline,
-                              decoration: const InputDecoration(
-                                labelText: 'メモ',
-                                border: OutlineInputBorder(),
-                              ),
-                            ),
-                            TextFormField(
-                              controller: _locationName,
-                              onChanged: (_) => setState(() {}),
-                              enabled: !state.isSaving,
-                              decoration: const InputDecoration(
-                                labelText: '場所名',
-                                border: OutlineInputBorder(),
-                              ),
-                            ),
-                            if (ref.watch(appCapabilitiesProvider).availability(AppFeature.locationSearch).isAvailable)
-                              CustomSearchBar(
-                                hintText: '場所を検索',
-                                enabled: !state.isSaving,
-                                onCandidateSelected: (candidate) => setState(() => _locationName.text = candidate.name),
-                              ),
                             DropdownButtonFormField<String>(
                               initialValue:
                                   labels.any((label) => label.id == _labelId)
@@ -831,6 +791,56 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                                     ? null
                                     : _resetOverride,
                                 child: const Text('個別変更をリセット'),
+                              ),
+                            TextFormField(
+                              controller: _url,
+                              onChanged: (_) => setState(() {}),
+                              enabled: !state.isSaving,
+                              keyboardType: TextInputType.url,
+                              decoration: InputDecoration(
+                                labelText: 'URL',
+                                border: const OutlineInputBorder(),
+                                suffixIcon: IconButton(
+                                  tooltip: 'URLを開く',
+                                  icon: const Icon(Icons.open_in_new),
+                                  onPressed:
+                                      state.isSaving || _url.text.trim().isEmpty
+                                      ? null
+                                      : _openUrl,
+                                ),
+                              ),
+                            ),
+                            TextFormField(
+                              controller: _memo,
+                              onChanged: (_) => setState(() {}),
+                              enabled: !state.isSaving,
+                              minLines: 3,
+                              maxLines: null,
+                              keyboardType: TextInputType.multiline,
+                              decoration: const InputDecoration(
+                                labelText: 'メモ',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                            TextFormField(
+                              controller: _locationName,
+                              onChanged: (_) => setState(() {}),
+                              enabled: !state.isSaving,
+                              decoration: const InputDecoration(
+                                labelText: '場所名',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                            if (ref
+                                .watch(appCapabilitiesProvider)
+                                .availability(AppFeature.locationSearch)
+                                .isAvailable)
+                              CustomSearchBar(
+                                hintText: '場所を検索',
+                                enabled: !state.isSaving,
+                                onCandidateSelected: (candidate) => setState(
+                                  () => _locationName.text = candidate.name,
+                                ),
                               ),
                             if (_error.isNotEmpty)
                               Text(
