@@ -16,11 +16,13 @@ Finder field(String label) => find.byWidgetPredicate((widget) =>
 
 Future<void> openEvent(WidgetTester tester) async {
   if (find.widgetWithText(ListTile, '予定').evaluate().isEmpty) {
-  await tester.tap(find.byKey(calendarTestDay2));
-  await tester.pump();
-  await tester.tap(find.byKey(calendarTestDay2));
-  await tester.pump();
-  await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.byKey(calendarTestDay2));
+    await tester.pump();
+    if (find.byType(BottomSheet).evaluate().isEmpty) {
+      await tester.tap(find.byKey(calendarTestDay2));
+      await tester.pump();
+    }
+    await tester.pump(const Duration(milliseconds: 300));
   }
   await tester.tap(find.widgetWithText(ListTile, '予定'));
   await tester.pump();
