@@ -1,5 +1,8 @@
 export 'package:memora/domain/entities/calendar/calendar_notifications.dart'
-    show MAX_CALENDAR_NOTIFICATIONS;
+    show
+        MAX_CALENDAR_NOTIFICATIONS,
+        MAX_TIMED_CALENDAR_NOTIFICATION_MINUTES,
+        MAX_ALL_DAY_CALENDAR_NOTIFICATION_MINUTES;
 
 class CalendarNotificationPreferences {
   const CalendarNotificationPreferences({

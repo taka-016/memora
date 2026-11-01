@@ -1,7 +1,5 @@
-import 'package:memora/application/models/app_capabilities.dart';
-import 'package:memora/composition_root/providers/app_providers.dart';
 import 'package:memora/composition_root/providers/url_launcher_provider.dart';
-import 'package:memora/presentation/shared/inputs/custom_search_bar.dart';
+import 'package:memora/presentation/features/calendar/calendar_location_field.dart';
 import 'package:memora/presentation/shared/dialogs/edit_discard_scope.dart';
 import 'package:memora/presentation/features/calendar/calendar_notification_editor.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_notification_preferences_notifier.dart';
@@ -822,26 +820,11 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                                 border: OutlineInputBorder(),
                               ),
                             ),
-                            TextFormField(
+                            CalendarLocationField(
                               controller: _locationName,
-                              onChanged: (_) => setState(() {}),
                               enabled: !state.isSaving,
-                              decoration: const InputDecoration(
-                                labelText: '場所名',
-                                border: OutlineInputBorder(),
-                              ),
+                              onChanged: (_) => setState(() {}),
                             ),
-                            if (ref
-                                .watch(appCapabilitiesProvider)
-                                .availability(AppFeature.locationSearch)
-                                .isAvailable)
-                              CustomSearchBar(
-                                hintText: '場所を検索',
-                                enabled: !state.isSaving,
-                                onCandidateSelected: (candidate) => setState(
-                                  () => _locationName.text = candidate.name,
-                                ),
-                              ),
                             if (_error.isNotEmpty)
                               Text(
                                 _error,

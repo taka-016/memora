@@ -81,6 +81,7 @@ class CustomSearchBar extends HookConsumerWidget {
         child: TextField(
           controller: textController,
           enabled: enabled,
+          textInputAction: TextInputAction.search,
           decoration: InputDecoration(
             hintText: hintText,
             filled: true,
@@ -106,7 +107,17 @@ class CustomSearchBar extends HookConsumerWidget {
                 color: Theme.of(context).colorScheme.primary,
               ),
             ),
-            suffixIcon: buildClearButton(),
+            suffixIcon: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (textController.text.isNotEmpty) buildClearButton()!,
+                IconButton(
+                  tooltip: '場所を検索',
+                  icon: const Icon(Icons.search),
+                  onPressed: enabled && !isLoading.value ? onSearch : null,
+                ),
+              ],
+            ),
             isDense: true,
             contentPadding: const EdgeInsets.symmetric(
               vertical: 10,
