@@ -17,50 +17,50 @@ class CalendarScreen extends ConsumerStatefulWidget {
     required this.onBack,
     this.initialDate,
     this.createEvent = false,
+    this.initialRequest = 0,
   });
   final String groupId;
   final String groupName;
   final VoidCallback onBack;
   final DateTime? initialDate;
   final bool createEvent;
+  final int initialRequest;
   @override
   ConsumerState<CalendarScreen> createState() => _CalendarScreenState();
 }
 
 class _CalendarScreenState extends ConsumerState<CalendarScreen> {
+  bool _pendingInitialCreate = false;
+  int _initialRequestVersion = 0;
+
   @override
   void initState() {
     super.initState();
+    _initializeRequest();
+  }
+
+  void _initializeRequest() {
+    final version = ++_initialRequestVersion;
+    _pendingInitialCreate = false;
     Future.microtask(() {
-      if (mounted) {
-        final notifier = ref.read(calendarNotifierProvider(widget.groupId).notifier);
-        if (widget.initialDate != null) notifier.selectDate(widget.initialDate!);
-        unawaited(notifier.load());
-        if (widget.createEvent) {
-          WidgetsBinding.instance.addPostFrameCallback((_) { if (mounted) unawaited(_edit()); });
-        }
+      if (!mounted || version != _initialRequestVersion) return;
+      final notifier = ref.read(calendarNotifierProvider(widget.groupId).notifier);
+      if (widget.initialDate != null) {
+        notifier.selectDate(widget.initialDate!);
       }
+      _pendingInitialCreate = widget.createEvent;
+      unawaited(notifier.load());
     });
   }
 
   @override
   void didUpdateWidget(covariant CalendarScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.groupId == widget.groupId && (oldWidget.initialDate != widget.initialDate || oldWidget.createEvent != widget.createEvent)) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        if (widget.initialDate != null) ref.read(calendarNotifierProvider(widget.groupId).notifier).selectDate(widget.initialDate!);
-        if (widget.createEvent) unawaited(_edit());
-      });
-    }
-    if (oldWidget.groupId != widget.groupId) {
-      Future.microtask(() {
-        if (mounted) {
-          unawaited(
-            ref.read(calendarNotifierProvider(widget.groupId).notifier).load(),
-          );
-        }
-      });
+    if (oldWidget.groupId != widget.groupId ||
+        oldWidget.initialDate != widget.initialDate ||
+        oldWidget.createEvent != widget.createEvent ||
+        oldWidget.initialRequest != widget.initialRequest) {
+      _initializeRequest();
     }
   }
 
@@ -114,6 +114,15 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final provider = calendarNotifierProvider(widget.groupId);
     final state = ref.watch(provider);
     final notifier = ref.read(provider.notifier);
+    ref.listen(provider, (_, next) {
+      if (!_pendingInitialCreate || next.isLoading || next.isSaving ||
+          next.loadError.isNotEmpty || !next.hasLoadedLabels || next.group == null) return;
+      _pendingInitialCreate = false;
+      final version = _initialRequestVersion;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && version == _initialRequestVersion) unawaited(_edit());
+      });
+    });
     final month = state.month;
     final canEdit =
         !state.isSaving && !state.isLoading && state.loadError.isEmpty;

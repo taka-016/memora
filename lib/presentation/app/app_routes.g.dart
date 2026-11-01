@@ -350,6 +350,8 @@ mixin $CalendarRoute on GoRouteData {
           _$boolConverter,
         ) ??
         false,
+    request:
+        _$convertMapValue('request', state.uri.queryParameters, int.parse) ?? 0,
   );
 
   CalendarRoute get _self => this as CalendarRoute;
@@ -360,6 +362,7 @@ mixin $CalendarRoute on GoRouteData {
     queryParams: {
       if (_self.date != null) 'date': _self.date,
       if (_self.create != false) 'create': _self.create.toString(),
+      if (_self.request != 0) 'request': _self.request.toString(),
     },
   );
 

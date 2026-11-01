@@ -36,14 +36,23 @@ final class AndroidWidgetLaunchDestination
   List<Object?> get props => [memberId, groupId, year, tripId, groups];
 }
 
-final class AndroidWidgetCalendarLaunchDestination extends AndroidWidgetLaunchResolution {
-  const AndroidWidgetCalendarLaunchDestination({required super.memberId, required this.groupId, required this.date, required this.create, required this.groups});
+final class AndroidWidgetCalendarLaunchDestination
+    extends AndroidWidgetLaunchResolution {
+  const AndroidWidgetCalendarLaunchDestination({
+    required super.memberId,
+    required this.groupId,
+    required this.requestId,
+    required this.date,
+    required this.create,
+    required this.groups,
+  });
   final String groupId;
+  final int requestId;
   final DateTime? date;
   final bool create;
   final List<GroupDto> groups;
   @override
-  List<Object?> get props => [memberId, groupId, date, create, groups];
+  List<Object?> get props => [memberId, groupId, requestId, date, create, groups];
 }
 
 final class AndroidWidgetSettingsLaunchDestination
@@ -101,7 +110,9 @@ class AndroidWidgetLaunchState extends Equatable {
     bool clearResolution = false,
   }) {
     return AndroidWidgetLaunchState(
-      pendingCalendarUri: clearPendingCalendarUri ? null : pendingCalendarUri ?? this.pendingCalendarUri,
+      pendingCalendarUri: clearPendingCalendarUri
+          ? null
+          : pendingCalendarUri ?? this.pendingCalendarUri,
       pendingTripId: clearPendingTripId
           ? null
           : (pendingTripId ?? this.pendingTripId),
@@ -211,15 +222,23 @@ class AndroidWidgetLaunchNotifier extends Notifier<AndroidWidgetLaunchState> {
     _acceptTripId(tripId);
   }
 
-  bool _isCalendarLaunchUri(Uri? uri) => uri?.scheme.toLowerCase() == _launchScheme && uri?.host.toLowerCase() == 'opencalendar' && (uri?.queryParameters['groupId']?.isNotEmpty ?? false);
+  bool _isCalendarLaunchUri(Uri? uri) =>
+      uri?.scheme.toLowerCase() == _launchScheme &&
+      uri?.host.toLowerCase() == 'opencalendar' &&
+      (uri?.queryParameters['groupId']?.isNotEmpty ?? false);
 
   void _acceptCalendarLaunch(Uri uri, {bool? isInitialUriLoading}) {
     _requestVersion++;
     _resolvingRequest = null;
     _resolvedTripId = null;
-    state = state.copyWith(pendingCalendarUri: uri, clearPendingTripId: true,
-      isSettingsLaunchPending: false, isInitialUriLoading: isInitialUriLoading,
-      isResolving: false, clearResolution: true);
+    state = state.copyWith(
+      pendingCalendarUri: uri,
+      clearPendingTripId: true,
+      isSettingsLaunchPending: false,
+      isInitialUriLoading: isInitialUriLoading,
+      isResolving: false,
+      clearResolution: true,
+    );
   }
 
   void _acceptTripId(String tripId, {bool? isInitialUriLoading}) {
@@ -254,13 +273,20 @@ class AndroidWidgetLaunchNotifier extends Notifier<AndroidWidgetLaunchState> {
     if (calendarUri != null) {
       final version = _requestVersion;
       state = state.copyWith(clearPendingCalendarUri: true, isResolving: true);
-      AndroidWidgetLaunchResolution resolution = AndroidWidgetLaunchFailure(memberId: member.id);
+      AndroidWidgetLaunchResolution resolution = AndroidWidgetLaunchFailure(
+        memberId: member.id,
+      );
       try {
-        final groups = await ref.read(getGroupsWithMembersUsecaseProvider).execute(member);
+        final groups = await ref
+            .read(getGroupsWithMembersUsecaseProvider)
+            .execute(member);
         final groupId = calendarUri.queryParameters['groupId']!;
         if (groups.any((group) => group.id == groupId)) {
           resolution = AndroidWidgetCalendarLaunchDestination(
-            memberId: member.id, groupId: groupId, groups: groups,
+            requestId: version,
+            memberId: member.id,
+            groupId: groupId,
+            groups: groups,
             date: DateTime.tryParse(calendarUri.queryParameters['date'] ?? ''),
             create: calendarUri.queryParameters['create'] == 'true',
           );

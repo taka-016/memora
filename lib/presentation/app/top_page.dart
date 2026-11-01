@@ -260,11 +260,18 @@ class TopPage extends HookConsumerWidget {
     }
 
     if (resolution case AndroidWidgetCalendarLaunchDestination()) {
-      ref.read(groupTimelineGroupSelectionNotifierProvider.notifier).setLoadedGroups(
-        memberId: currentMember.id, groups: resolution.groups,
-      );
-      CalendarRoute(groupId: resolution.groupId,
-        date: resolution.date?.toIso8601String(), create: resolution.create).go(context);
+      ref
+          .read(groupTimelineGroupSelectionNotifierProvider.notifier)
+          .setLoadedGroups(
+            memberId: currentMember.id,
+            groups: resolution.groups,
+          );
+      CalendarRoute(
+        groupId: resolution.groupId,
+        date: resolution.date?.toIso8601String(),
+        create: resolution.create,
+        request: resolution.requestId,
+      ).go(context);
       return;
     }
     final destination = resolution as AndroidWidgetLaunchDestination;

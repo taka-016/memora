@@ -1,4 +1,3 @@
-import 'package:intl/intl.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/application/models/app_mode.dart';
 import 'package:memora/application/queries/calendar/calendar_event_query_service.dart';
@@ -32,36 +31,46 @@ class GetAndroidWidgetCalendarCacheUsecase {
     final to = DateTime(from.year, from.month, from.day + count);
     final source = await events.getCalendarEventsByGroupId(groupId);
     final displayLabels = buildCalendarDisplayLabels(
-      group, await labels.getCalendarLabelsByGroupId(groupId), events: source,
+      group,
+      await labels.getCalendarLabelsByGroupId(groupId),
+      events: source,
     );
     final occurrences = [
       for (final event in source) ...expander.expand(event, from, to),
     ]..sort((a, b) => a.startDateTime.compareTo(b.startDateTime));
-    final dayFormat = DateFormat('yyyy-MM-dd');
-    final timeFormat = DateFormat('HH:mm');
+    String dayFormat(DateTime date) => date.toIso8601String().substring(0, 10);
+    String timeFormat(DateTime date) =>
+        '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
     Map<String, Object?> item(CalendarEventDto event) {
-      final label = displayLabels.where((v) => v.id == event.labelKey).firstOrNull;
+      final label = displayLabels
+          .where((v) => v.id == event.labelKey)
+          .firstOrNull;
       return {
         'id': event.id,
         'title': event.title,
         'color': label?.color ?? '#808080',
         'textColor': label?.textColor ?? '#FFFFFF',
-        'timeLabel': event.isAllDay ? '終日' :
-          '${timeFormat.format(event.startDateTime.toLocal())}–${timeFormat.format(event.endDateTime.toLocal())}',
+        'timeLabel': event.isAllDay
+            ? '終日'
+            : '${timeFormat(event.startDateTime.toLocal())}–${timeFormat(event.endDateTime.toLocal())}',
       };
     }
+
     return {
       'sourceMode': mode.name,
       'groupId': groupId,
       'groupName': group.name,
-      'month': dayFormat.format(first),
+      'month': dayFormat(first),
       'days': [
         for (var index = 0; index < count; index++)
           () {
             final day = DateTime(from.year, from.month, from.day + index);
             return {
-              'date': dayFormat.format(day),
-              'events': occurrences.where((event) => _onDay(event, day)).map(item).toList(),
+              'date': dayFormat(day),
+              'events': occurrences
+                  .where((event) => _onDay(event, day))
+                  .map(item)
+                  .toList(),
             };
           }(),
       ],
@@ -70,13 +79,22 @@ class GetAndroidWidgetCalendarCacheUsecase {
 
   bool _onDay(CalendarEventDto event, DateTime day) {
     if (event.isAllDay) {
-      final first = DateTime(event.startDateTime.year, event.startDateTime.month, event.startDateTime.day);
-      final last = DateTime(event.endDateTime.year, event.endDateTime.month, event.endDateTime.day);
+      final first = DateTime(
+        event.startDateTime.year,
+        event.startDateTime.month,
+        event.startDateTime.day,
+      );
+      final last = DateTime(
+        event.endDateTime.year,
+        event.endDateTime.month,
+        event.endDateTime.day,
+      );
       return !day.isBefore(first) && !day.isAfter(last);
     }
     final first = event.startDateTime.toLocal();
     final last = event.endDateTime.toLocal();
     final end = DateTime(day.year, day.month, day.day + 1);
-    return first.isBefore(end) && (last.isAfter(day) || (first == last && !first.isBefore(day)));
+    return first.isBefore(end) &&
+        (last.isAfter(day) || (first == last && !first.isBefore(day)));
   }
 }

@@ -34,9 +34,13 @@ class AndroidWidgetActionHandler {
     switch (uri?.host) {
       case 'calendarrefresh':
         try {
-          await refreshCalendar?.call(DateTime.tryParse(uri?.queryParameters['date'] ?? ''));
+          await refreshCalendar?.call(
+            DateTime.tryParse(uri?.queryParameters['date'] ?? ''),
+          );
         } catch (_) {
-          await _showToastSafely(const AndroidWidgetToastNotification.error('更新に失敗しました'));
+          await _showToastSafely(
+            const AndroidWidgetToastNotification.error('更新に失敗しました'),
+          );
         }
         break;
       case 'previous':
