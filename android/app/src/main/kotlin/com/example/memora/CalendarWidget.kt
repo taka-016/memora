@@ -103,7 +103,9 @@ private fun CalendarContent(context: Context, state: HomeWidgetGlanceState) {
                 }
             }
             val rows = days.length() / 7
-            val rowHeight = ((LocalSize.current.height.value - 156f) / rows).coerceIn(44f, 64f)
+            val rowHeight = ((LocalSize.current.height.value - 156f) / rows).coerceIn(24f, 64f)
+            val compact = rowHeight < 44f
+            val visibleCount = if (rowHeight >= 34f) 2 else 1
             Column(GlanceModifier.fillMaxWidth().background(Color(0xFFE5E7EB))) {
                 repeat(rows) { row ->
                     Row(GlanceModifier.fillMaxWidth().height(rowHeight.dp)) {
@@ -115,18 +117,18 @@ private fun CalendarContent(context: Context, state: HomeWidgetGlanceState) {
                                 .background(if (date == selected) Color(0xFFDCEBFF) else Color.White)
                                 .clickable(actionRunCallback<SelectCalendarDayAction>(
                                     actionParametersOf(DATE_PARAMETER to date.toString())))
-                                .padding(2.dp)) {
-                                Text(text = "${date.dayOfMonth}" + if (events.length() > 2) " +${events.length() - 2}" else "",
-                                    maxLines = 1, modifier = GlanceModifier.fillMaxWidth().height(16.dp),
-                                    style = TextStyle(fontSize = 10.sp, textAlign = TextAlign.Center,
+                                .padding(if (compact) 1.dp else 2.dp)) {
+                                Text(text = "${date.dayOfMonth}" + if (events.length() > visibleCount) " +${events.length() - visibleCount}" else "",
+                                    maxLines = 1, modifier = GlanceModifier.fillMaxWidth().height(if (compact) 12.dp else 16.dp),
+                                    style = TextStyle(fontSize = if (compact) 9.sp else 10.sp, textAlign = TextAlign.Center,
                                         fontWeight = if (date == today) FontWeight.Bold else FontWeight.Normal,
                                         color = ColorProvider(if (date.month != month.month) Color.Gray else dayColor(column))))
-                                repeat(minOf(2, events.length())) { index ->
+                                repeat(minOf(visibleCount, events.length())) { index ->
                                     val event = events.getJSONObject(index)
                                     Text(event.getString("title"), maxLines = 1,
-                                        modifier = GlanceModifier.fillMaxWidth().height(12.dp)
+                                        modifier = GlanceModifier.fillMaxWidth().height(if (compact) 10.dp else 12.dp)
                                             .background(parseColor(event.optString("color"))),
-                                        style = TextStyle(fontSize = 9.sp,
+                                        style = TextStyle(fontSize = if (compact) 8.sp else 9.sp,
                                             color = ColorProvider(parseColor(event.optString("textColor")))))
                                 }
                             }
