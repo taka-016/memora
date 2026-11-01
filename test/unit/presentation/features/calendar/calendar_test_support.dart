@@ -1,3 +1,7 @@
+import 'package:memora/application/models/app_capabilities.dart';
+import 'package:memora/application/usecases/location/search_locations_usecase.dart';
+import 'package:memora/composition_root/providers/location_providers.dart';
+import 'package:memora/composition_root/providers/url_launcher_provider.dart';
 import 'package:memora/composition_root/providers/group_providers.dart';
 
 import '../../../../helpers/calendar_group_test_support.dart';
@@ -47,6 +51,9 @@ class CalendarTestHarness {
 
   Future<void> pump(
     WidgetTester tester, {
+    AppCapabilities? capabilities,
+    SearchLocationsUsecase? locationSearch,
+    Future<bool> Function(Uri)? openUrl,
     double textScale = 1,
     Brightness? brightness,
     DateTime? now,
@@ -97,6 +104,9 @@ class CalendarTestHarness {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          if (capabilities != null) appCapabilitiesProvider.overrideWithValue(capabilities),
+          if (locationSearch != null) searchLocationsUsecaseProvider.overrideWithValue(locationSearch),
+          if (openUrl != null) openUrlProvider.overrideWithValue(openUrl),
           getGroupWithMembersByIdUsecaseProvider.overrideWithValue(
             calendarTestGroupLoader(),
           ),

@@ -84,6 +84,32 @@ Widget buildTestApp({
 }
 
 void main() {
+  testWidgets('検索中・0件・失敗を表示し失敗後に再検索できる', (tester) async {
+    final usecase = MockSearchLocationsUsecase();
+    final pending = Completer<List<LocationCandidateDto>>();
+    when(usecase.execute(any)).thenAnswer((_) => pending.future);
+    await tester.pumpWidget(buildTestApp(
+      searchLocationsUsecase: usecase,
+      child: const CustomSearchBar(hintText: '場所を検索'),
+    ));
+    await tester.enterText(find.byType(TextField), '駅');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pump();
+    expect(find.byType(LinearProgressIndicator), findsOneWidget);
+    pending.complete([]);
+    await tester.pump();
+    expect(find.text('検索結果がありません'), findsOneWidget);
+    when(usecase.execute(any)).thenThrow(TestException('検索失敗'));
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pump();
+    expect(find.text('場所を検索できませんでした。再検索してください'), findsOneWidget);
+    expect(find.text('検索結果がありません'), findsNothing);
+    when(usecase.execute(any)).thenAnswer((_) async => mockCandidatesDefault);
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pump();
+    expect(find.text('東京タワー'), findsOneWidget);
+    expect(find.text('場所を検索できませんでした。再検索してください'), findsNothing);
+  });
   group('CustomSearchBar', () {
     testWidgets('ダークテーマでも検索文字と候補の背景に十分なコントラストがある', (tester) async {
       LocationCandidateDto? selected;
