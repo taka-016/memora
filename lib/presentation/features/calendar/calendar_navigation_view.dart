@@ -34,14 +34,20 @@ class CalendarNavigationView extends HookConsumerWidget {
         loaded &&
         groupId == null &&
         groups.length == 1 &&
-        autoSelected.value != groups.single.id;
+        autoSelected.value != groups.single.id &&
+        GoRouter.of(context).state.matchedLocation ==
+            const CalendarGroupListRoute().location;
     final group = loaded
         ? groups.where((group) => group.id == groupId).firstOrNull
         : null;
     useEffect(() {
       if (autoSelect) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!context.mounted) return;
+          if (!context.mounted ||
+              GoRouter.of(context).state.matchedLocation !=
+                  const CalendarGroupListRoute().location) {
+            return;
+          }
           autoSelected.value = groups.single.id;
           CalendarRoute(groupId: groups.single.id).go(context);
         });
