@@ -7,6 +7,7 @@ import 'package:memora/core/app_logger.dart';
 
 class CustomSearchBar extends HookConsumerWidget {
   final String hintText;
+  final bool enabled;
   final ValueChanged<String>? onChanged;
   final TextEditingController? controller;
   final ValueChanged<LocationCandidateDto>? onCandidateSelected;
@@ -14,6 +15,7 @@ class CustomSearchBar extends HookConsumerWidget {
   const CustomSearchBar({
     super.key,
     required this.hintText,
+    this.enabled = true,
     this.onChanged,
     this.controller,
     this.onCandidateSelected,
@@ -24,9 +26,13 @@ class CustomSearchBar extends HookConsumerWidget {
     final textController = controller ?? useTextEditingController();
     final candidates = useState<List<LocationCandidateDto>>([]);
     final isLoading = useState(false);
+    final message = useState<String?>(null);
 
     Future<void> onSearch() async {
+      if (!enabled || isLoading.value) return;
       isLoading.value = true;
+      candidates.value = [];
+      message.value = null;
       try {
         final results = await ref
             .read(searchLocationsUsecaseProvider)
@@ -35,7 +41,10 @@ class CustomSearchBar extends HookConsumerWidget {
           return;
         }
         candidates.value = results;
+        message.value = results.isEmpty ? '検索結果がありません' : null;
       } catch (e, stack) {
+        if (!context.mounted) return;
+        message.value = '場所を検索できませんでした。再検索してください';
         logger.e(
           'CustomSearchBar.onSearch: ${e.toString()}',
           error: e,
@@ -60,6 +69,7 @@ class CustomSearchBar extends HookConsumerWidget {
         onPressed: () {
           textController.clear();
           candidates.value = [];
+          message.value = null;
           onChanged?.call('');
         },
       );
@@ -70,6 +80,7 @@ class CustomSearchBar extends HookConsumerWidget {
         padding: const EdgeInsets.all(8.0),
         child: TextField(
           controller: textController,
+          enabled: enabled,
           decoration: InputDecoration(
             hintText: hintText,
             filled: true,
@@ -124,9 +135,10 @@ class CustomSearchBar extends HookConsumerWidget {
         child: ListTile(
           title: Text(candidate.name),
           subtitle: Text(candidate.address),
-          onTap: () {
+          onTap: !enabled ? null : () {
             onCandidateSelected?.call(candidate);
             candidates.value = [];
+            message.value = null;
           },
         ),
       );
@@ -166,6 +178,11 @@ class CustomSearchBar extends HookConsumerWidget {
       children: [
         buildSearchField(),
         buildLoadingIndicator(),
+        if (message.value != null)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Text(message.value!),
+          ),
         buildCandidatesList(),
       ],
     );
