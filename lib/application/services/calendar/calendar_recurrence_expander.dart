@@ -145,6 +145,9 @@ class CalendarRecurrenceExpander {
       final original = originalKey(override.originalStartDateTime);
       if (override.isCancelled) continue;
       final value = event.copyWith(
+        url: override.url,
+        memo: override.memo,
+        locationName: override.locationName,
         title: override.title,
         labelId: override.labelId,
 

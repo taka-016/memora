@@ -12,6 +12,9 @@ class CalendarEventMapper {
       labelType: value.labelType,
 
       memberId: value.memberId,
+      url: value.url,
+      memo: value.memo,
+      locationName: value.locationName,
       title: value.title,
       startDateTime: value.startDateTime,
       endDateTime: value.endDateTime,
@@ -33,6 +36,9 @@ class CalendarEventMapper {
       labelType: value.labelType,
 
       memberId: value.memberId,
+      url: value.url,
+      memo: value.memo,
+      locationName: value.locationName,
       title: value.title,
       startDateTime: value.startDateTime,
       endDateTime: value.endDateTime,

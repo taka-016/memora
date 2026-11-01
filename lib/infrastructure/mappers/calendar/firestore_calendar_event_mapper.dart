@@ -22,6 +22,9 @@ class FirestoreCalendarEventMapper {
       memberId: data['memberId'] as String? ?? '',
       notificationMinutesBefore:
           (data['notificationMinutesBefore'] as List? ?? const []).cast<int>(),
+      url: data['url'] as String? ?? '',
+      memo: data['memo'] as String? ?? '',
+      locationName: data['locationName'] as String? ?? '',
       title: data['title'] as String,
       startDateTime: _date(
         data['startDateTime'] as Timestamp,
@@ -50,6 +53,9 @@ class FirestoreCalendarEventMapper {
     'labelId': value.labelType == 'custom' ? value.labelId : null,
     'labelType': value.labelType,
     'memberId': value.labelType == 'member' ? value.memberId : null,
+    'url': value.url,
+    'memo': value.memo,
+    'locationName': value.locationName,
     'title': value.title,
     'startDateTime': Timestamp.fromDate(
       value.isAllDay

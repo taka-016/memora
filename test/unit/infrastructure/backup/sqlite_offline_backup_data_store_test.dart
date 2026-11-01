@@ -473,6 +473,9 @@ void main() {
       groupId: 'group-1',
       labelId: 'label',
       title: '予定',
+      url: 'https://example.com',
+      memo: '持ち物\n雨具',
+      locationName: '集合場所',
       startDateTime: DateTime.utc(2026, 10, 1),
       endDateTime: DateTime.utc(2026, 10, 3),
       isAllDay: true,
@@ -493,6 +496,9 @@ void main() {
       CalendarChangeScope.only,
       changes: source.copyWith(
         title: '移動',
+        url: '',
+        memo: '個別のメモ\n二行目',
+        locationName: '変更した場所',
         notificationMinutesBefore: [],
         startDateTime: DateTime.utc(2026, 11, 1),
         endDateTime: DateTime.utc(2026, 11, 2),
@@ -531,6 +537,15 @@ void main() {
       isTrue,
     );
     expect(before.where((v) => v.title == '移動'), hasLength(1));
+    final individual = before.singleWhere((v) => v.title == '移動');
+    expect(individual.url, '');
+    expect(individual.memo, '個別のメモ\n二行目');
+    expect(individual.locationName, '変更した場所');
+    for (final event in before.where((v) => v.title != '移動')) {
+      expect(event.url, 'https://example.com');
+      expect(event.memo, '持ち物\n雨具');
+      expect(event.locationName, '集合場所');
+    }
     final snapshot = await dataStore.exportSnapshot();
     await db.deleteRows('groups', 'id', 'group-1');
     await dataStore.restoreSnapshot(snapshot);

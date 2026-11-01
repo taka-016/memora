@@ -20,9 +20,11 @@ void main() {
     await pumpDialog(tester);
     await tester.tap(find.text('予定の通知設定'));
     await pumpDialog(tester);
-    await tester.tap(find.text('通知を追加').first);
+    await tester.tap(find.widgetWithText(ListTile, '通知').first);
     await pumpDialog(tester);
     await tester.tap(find.text('予定の開始時'));
+    await tester.pump();
+    await tester.tap(find.text('決定'));
     await pumpDialog(tester);
     await tester.tap(find.text('キャンセル'));
     await pumpDialog(tester);

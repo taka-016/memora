@@ -1,3 +1,5 @@
+import 'package:memora/composition_root/providers/url_launcher_provider.dart';
+import 'package:memora/presentation/features/calendar/calendar_location_field.dart';
 import 'package:memora/presentation/shared/dialogs/edit_discard_scope.dart';
 import 'package:memora/presentation/features/calendar/calendar_notification_editor.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_notification_preferences_notifier.dart';
@@ -45,6 +47,9 @@ class CalendarEventDialog extends ConsumerStatefulWidget {
 class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
   final _form = GlobalKey<FormState>();
   late final TextEditingController _title;
+  late final TextEditingController _url;
+  late final TextEditingController _memo;
+  late final TextEditingController _locationName;
   late DateTime _start;
   late DateTime _end;
   late bool _allDay;
@@ -61,6 +66,9 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
 
   Object get _editValues => (
     _title.text,
+    _url.text,
+    _memo.text,
+    _locationName.text,
     _start,
     _end,
     _allDay,
@@ -96,6 +104,9 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
         ? null
         : List.of(_notifications!);
     _title = TextEditingController(text: event?.title ?? '');
+    _url = TextEditingController(text: event?.url ?? '');
+    _memo = TextEditingController(text: event?.memo ?? '');
+    _locationName = TextEditingController(text: event?.locationName ?? '');
     _allDay = event?.isAllDay ?? true;
     _start = event == null
         ? widget.date
@@ -163,6 +174,9 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
   @override
   void dispose() {
     _title.dispose();
+    _url.dispose();
+    _memo.dispose();
+    _locationName.dispose();
     super.dispose();
   }
 
@@ -232,6 +246,23 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
     });
   }
 
+  Future<void> _openUrl() async {
+    final uri = Uri.tryParse(_url.text.trim());
+    if (uri == null ||
+        !['https', 'http'].contains(uri.scheme) ||
+        uri.host.isEmpty) {
+      setState(() => _error = 'httpまたはhttpsのURLを入力してください');
+      return;
+    }
+    setState(() => _error = '');
+    try {
+      final opened = await ref.read(openUrlProvider)(uri);
+      if (!opened && mounted) setState(() => _error = 'URLを開けませんでした');
+    } catch (_) {
+      if (mounted) setState(() => _error = 'URLを開けませんでした');
+    }
+  }
+
   Future<void> _save() async {
     if (!_form.currentState!.validate()) return;
     final recurring = widget.event?.originalStartDateTime != null;
@@ -298,6 +329,9 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
             : 'custom',
         memberId: _labelId!.startsWith('member:') ? _labelId!.substring(7) : '',
         title: _title.text.trim(),
+        url: _url.text.trim(),
+        memo: _memo.text,
+        locationName: _locationName.text.trim(),
         startDateTime: start,
         endDateTime: end,
         isAllDay: _allDay,
@@ -376,7 +410,7 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                     Text(
                       deleting
                           ? '対象範囲の個別変更した予定${impact.reset}件も削除します。移動済みの予定も元の予定日時を基準に削除します。対象範囲外の個別変更は維持します。'
-                          : '個別変更した予定はそのまま維持します。日時・タイトル・色ラベル・終日区分・通知の個別変更と個別の取消しは変更しません。',
+                          : '個別変更した予定はそのまま維持します。日時・タイトル・URL・メモ・場所・色ラベル・終日区分・通知の個別変更と個別の取消しは変更しません。',
                     ),
                   if (deleting && scope == CalendarChangeScope.only)
                     const Text('この回の取消しを保存します。'),
@@ -415,7 +449,7 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
         content: Text(
           original == null
               ? '現在の繰り返し条件に対応する回がないため、リセットするとこの個別予定は削除されます。'
-              : '日時・タイトル・色ラベル・終日区分・通知の個別変更をすべて取り消し、現在の繰り返し予定に戻します。\n\n${original.title}\n${calendarPeriodText(original)}',
+              : '日時・タイトル・URL・メモ・場所・色ラベル・終日区分・通知の個別変更をすべて取り消し、現在の繰り返し予定に戻します。\n\n${original.title}\n${calendarPeriodText(original)}',
         ),
         actions: [
           TextButton(
@@ -756,6 +790,41 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                                     : _resetOverride,
                                 child: const Text('個別変更をリセット'),
                               ),
+                            TextFormField(
+                              controller: _url,
+                              onChanged: (_) => setState(() {}),
+                              enabled: !state.isSaving,
+                              keyboardType: TextInputType.url,
+                              decoration: InputDecoration(
+                                labelText: 'URL',
+                                border: const OutlineInputBorder(),
+                                suffixIcon: IconButton(
+                                  tooltip: 'URLを開く',
+                                  icon: const Icon(Icons.open_in_new),
+                                  onPressed:
+                                      state.isSaving || _url.text.trim().isEmpty
+                                      ? null
+                                      : _openUrl,
+                                ),
+                              ),
+                            ),
+                            TextFormField(
+                              controller: _memo,
+                              onChanged: (_) => setState(() {}),
+                              enabled: !state.isSaving,
+                              minLines: 3,
+                              maxLines: null,
+                              keyboardType: TextInputType.multiline,
+                              decoration: const InputDecoration(
+                                labelText: 'メモ',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                            CalendarLocationField(
+                              controller: _locationName,
+                              enabled: !state.isSaving,
+                              onChanged: (_) => setState(() {}),
+                            ),
                             if (_error.isNotEmpty)
                               Text(
                                 _error,
