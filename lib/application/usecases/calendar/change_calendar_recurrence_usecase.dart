@@ -58,6 +58,9 @@ class ChangeCalendarRecurrenceUsecase {
         final override = CalendarEventOverride(
           originalStartDateTime: key,
           isCancelled: changes == null,
+          url: changes?.url ?? '',
+          memo: changes?.memo ?? '',
+          locationName: changes?.locationName ?? '',
           title: changes?.title,
           startDateTime: changes?.startDateTime,
           endDateTime: changes?.endDateTime,
@@ -338,6 +341,9 @@ class ChangeCalendarRecurrenceUsecase {
           labelType: value.labelType,
 
           memberId: value.memberId,
+          url: value.url,
+          memo: value.memo,
+          locationName: value.locationName,
           title: value.title!,
           startDateTime: value.startDateTime!,
           endDateTime: value.endDateTime!,
@@ -396,6 +402,9 @@ class ChangeCalendarRecurrenceUsecase {
       return CalendarEventOverride(
         originalStartDateTime: key,
         isCancelled: value.isCancelled,
+        url: value.url,
+        memo: value.memo,
+        locationName: value.locationName,
         title: value.title,
         labelId: value.labelId,
 
@@ -488,6 +497,9 @@ class ChangeCalendarRecurrenceUsecase {
     labelType: value.labelType,
 
     memberId: value.memberId,
+    url: value.url,
+    memo: value.memo,
+    locationName: value.locationName,
     title: value.title,
     startDateTime: start ?? value.startDateTime,
     endDateTime: end ?? value.endDateTime,

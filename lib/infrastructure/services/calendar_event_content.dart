@@ -14,6 +14,9 @@ CalendarEvent calendarEventContent(CalendarEvent value) {
                 value.isAllDay,
               ),
               isCancelled: v.isCancelled,
+              url: v.url,
+              memo: v.memo,
+              locationName: v.locationName,
               title: v.title,
               labelId: v.labelId,
 

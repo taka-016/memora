@@ -18,6 +18,9 @@ class CalendarOverrideMapper {
       parentAllDay,
     ).microsecondsSinceEpoch,
     'is_cancelled': value.isCancelled ? 1 : 0,
+    'url': value.url,
+    'memo': value.memo,
+    'location_name': value.locationName,
     'title': value.title,
     'notification_minutes_before': jsonEncode(value.notificationMinutesBefore),
     'start_date_time': value.startDateTime == null
@@ -43,6 +46,9 @@ class CalendarOverrideMapper {
     notificationMinutesBefore: (jsonDecode(
       row['notification_minutes_before'] as String,
     ) as List).cast<int>(),
+    url: row['url'] as String? ?? '',
+    memo: row['memo'] as String? ?? '',
+    locationName: row['location_name'] as String? ?? '',
     title: row['title'] as String?,
     startDateTime: row['start_date_time'] == null
         ? null

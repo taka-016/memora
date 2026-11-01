@@ -16,6 +16,9 @@ class CalendarEvent extends Equatable {
     required this.title,
     required this.startDateTime,
     required this.endDateTime,
+    this.url = '',
+    this.memo = '',
+    this.locationName = '',
     required this.isAllDay,
     this.recurrenceRule,
     this.timeZone,
@@ -62,6 +65,9 @@ class CalendarEvent extends Equatable {
   }
 
   final int? version;
+  final String url;
+  final String memo;
+  final String locationName;
   final String id;
   final String groupId;
   final String labelId;
@@ -89,6 +95,9 @@ class CalendarEvent extends Equatable {
     String? labelId,
     String? labelType,
     String? memberId,
+    String? url,
+    String? memo,
+    String? locationName,
     String? title,
     DateTime? startDateTime,
     DateTime? endDateTime,
@@ -105,6 +114,9 @@ class CalendarEvent extends Equatable {
       labelId: labelId ?? this.labelId,
       labelType: labelType ?? this.labelType,
       memberId: memberId ?? this.memberId,
+      url: url ?? this.url,
+      memo: memo ?? this.memo,
+      locationName: locationName ?? this.locationName,
       title: title ?? this.title,
       startDateTime: startDateTime ?? this.startDateTime,
       endDateTime: endDateTime ?? this.endDateTime,
@@ -125,6 +137,9 @@ class CalendarEvent extends Equatable {
     labelId,
     labelType,
     memberId,
+    url,
+    memo,
+    locationName,
     title,
     startDateTime,
     endDateTime,

@@ -10,6 +10,9 @@ class CalendarEventOverride extends Equatable {
     this.title,
     this.startDateTime,
     this.endDateTime,
+    this.url = '',
+    this.memo = '',
+    this.locationName = '',
     this.isAllDay,
     this.labelId,
     this.labelType = 'custom',
@@ -35,6 +38,9 @@ class CalendarEventOverride extends Equatable {
   }
   final DateTime originalStartDateTime;
   final bool isCancelled;
+  final String url;
+  final String memo;
+  final String locationName;
   final String? title;
   final DateTime? startDateTime;
   final DateTime? endDateTime;
@@ -47,6 +53,9 @@ class CalendarEventOverride extends Equatable {
   List<Object?> get props => [
     originalStartDateTime.toUtc(),
     isCancelled,
+    url,
+    memo,
+    locationName,
     title,
     startDateTime,
     endDateTime,
