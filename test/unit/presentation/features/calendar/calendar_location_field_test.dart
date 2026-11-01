@@ -31,11 +31,17 @@ void main() {
   });
   tearDown(() => controller.dispose());
 
-  Future<void> pumpField(WidgetTester tester, {bool offline = false, bool enabled = true}) async {
+  Future<void> pumpField(
+    WidgetTester tester, {
+    bool offline = false,
+    bool enabled = true,
+  }) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          appCapabilitiesProvider.overrideWithValue(AppCapabilities.forMode(offline ? AppMode.offline : AppMode.online)),
+          appCapabilitiesProvider.overrideWithValue(
+            AppCapabilities.forMode(offline ? AppMode.offline : AppMode.online),
+          ),
           searchLocationsUsecaseProvider.overrideWithValue(search),
         ],
         child: MaterialApp(

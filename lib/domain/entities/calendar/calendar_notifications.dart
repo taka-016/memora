@@ -1,6 +1,7 @@
 // ignore_for_file: constant_identifier_names
 
 import 'package:memora/domain/exceptions/validation_exception.dart';
+
 const MAX_CALENDAR_NOTIFICATIONS = 5;
 const MAX_TIMED_CALENDAR_NOTIFICATION_MINUTES = 7 * 24 * 60;
 const MAX_ALL_DAY_CALENDAR_NOTIFICATION_MINUTES = 4 * 7 * 24 * 60;

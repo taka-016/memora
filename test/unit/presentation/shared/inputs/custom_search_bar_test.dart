@@ -87,13 +87,15 @@ void main() {
   testWidgets('虫眼鏡ボタンから検索して候補を選択できる', (tester) async {
     final usecase = _mockSearchLocationsUsecase(mockCandidatesDefault);
     LocationCandidateDto? selected;
-    await tester.pumpWidget(buildTestApp(
-      searchLocationsUsecase: usecase,
-      child: CustomSearchBar(
-        hintText: '場所を検索',
-        onCandidateSelected: (candidate) => selected = candidate,
+    await tester.pumpWidget(
+      buildTestApp(
+        searchLocationsUsecase: usecase,
+        child: CustomSearchBar(
+          hintText: '場所を検索',
+          onCandidateSelected: (candidate) => selected = candidate,
+        ),
       ),
-    ));
+    );
     await tester.enterText(find.byType(TextField), '東京');
     await tester.pump();
     await tester.tap(find.byTooltip('場所を検索'));
