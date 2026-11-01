@@ -25,9 +25,9 @@ void main() {
     await tester.ensureVisible(find.byType(SwitchListTile));
     await tester.tap(find.byType(SwitchListTile));
     await tester.pump();
-    await tester.ensureVisible(find.text('10分前'));
+    await tester.ensureVisible(find.text('10分前、1時間前'));
     expect(find.text('1日前'), findsNothing);
-    expect(find.text('1時間前'), findsOneWidget);
+    expect(find.text('10分前、1時間前'), findsOneWidget);
     await tester.ensureVisible(find.byType(TextFormField).first);
     await tester.enterText(find.byType(TextFormField).first, '通知のある予定');
     await tester.tap(find.text('保存'));
@@ -55,8 +55,14 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     await tester.ensureVisible(find.text('30分前'));
-    await tester.tap(find.byTooltip('通知を解除'));
+    await tester.tap(find.widgetWithText(ListTile, '通知'));
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text('通知なし'));
+    await tester.pump();
+    await tester.tap(find.text('決定'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
     await tester.tap(find.text('保存'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));

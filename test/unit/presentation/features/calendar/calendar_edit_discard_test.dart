@@ -70,10 +70,12 @@ void main() {
   });
   testWidgets('通知だけの変更も破棄確認し保存では確認せず保存できる', (tester) async {
     final harness = await openEvent(tester);
-    await tester.ensureVisible(find.text('通知を追加'));
-    await tester.tap(find.text('通知を追加'));
+    await tester.ensureVisible(find.widgetWithText(ListTile, '通知'));
+    await tester.tap(find.widgetWithText(ListTile, '通知'));
     await pumpDialog(tester);
     await tester.tap(find.text('予定の開始時'));
+    await tester.pump();
+    await tester.tap(find.text('決定'));
     await pumpDialog(tester);
     await tester.tap(find.text('キャンセル'));
     await pumpDialog(tester);

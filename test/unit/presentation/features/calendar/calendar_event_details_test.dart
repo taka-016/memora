@@ -4,7 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/models/app_capabilities.dart';
 import 'package:memora/application/models/app_mode.dart';
 import 'package:memora/presentation/features/calendar/calendar_event_dialog.dart';
-import 'package:memora/presentation/shared/inputs/custom_search_bar.dart';
 import 'package:mockito/mockito.dart';
 
 import '../../shared/inputs/custom_search_bar_test.mocks.dart';
@@ -63,7 +62,7 @@ void main() {
       await tester.ensureVisible(field(entry.key));
       await tester.enterText(field(entry.key), entry.value);
     }
-    expect(find.byType(CustomSearchBar), findsNothing);
+    expect(find.byTooltip('場所を検索'), findsNothing);
     await tester.pump();
     await tester.ensureVisible(find.text('保存'));
     await tester.tap(find.text('保存'));
@@ -112,13 +111,11 @@ void main() {
       capabilities: AppCapabilities.forMode(AppMode.online),
     );
     await openEvent(tester);
-    await tester.ensureVisible(find.byType(CustomSearchBar));
-    final searchField = find.descendant(
-      of: find.byType(CustomSearchBar),
-      matching: find.byType(TextField),
-    );
+    await tester.ensureVisible(field('場所名'));
+    final searchField = field('場所名');
     await tester.enterText(searchField, '東京');
-    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pump();
+    await tester.tap(find.byTooltip('場所を検索'));
     await tester.pump();
     await tester.ensureVisible(find.text('東京タワー'));
     await tester.tap(find.text('東京タワー'));
@@ -134,9 +131,10 @@ void main() {
     expect(find.byType(CalendarEventDialog), findsNothing);
     expect(harness.savedEvents.single.locationName, '');
     await openEvent(tester);
-    await tester.ensureVisible(find.byType(CustomSearchBar));
+    await tester.ensureVisible(field('場所名'));
     await tester.enterText(searchField, '東京');
-    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pump();
+    await tester.tap(find.byTooltip('場所を検索'));
     await tester.pump();
     await tester.ensureVisible(find.text('東京タワー'));
     await tester.tap(find.text('東京タワー'));
