@@ -22,6 +22,7 @@ import 'package:memora/application/usecases/calendar/save_calendar_label_usecase
 import 'package:memora/application/usecases/calendar/delete_calendar_label_usecase.dart';
 import 'package:memora/application/usecases/calendar/reorder_calendar_labels_usecase.dart';
 import 'package:memora/composition_root/providers/calendar_providers.dart';
+import 'package:memora/composition_root/providers/android_widget_providers.dart';
 import 'package:memora/composition_root/providers/app_providers.dart';
 import 'package:memora/infrastructure/time/fixed_app_clock.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_notifier.dart';
@@ -51,6 +52,8 @@ void main() {
   late MockSaveCalendarLabelUsecase saveLabel;
   late MockDeleteCalendarLabelUsecase deleteLabel;
   late MockReorderCalendarLabelsUsecase reorder;
+  late List<String> mutations;
+  late Future<void> Function() refreshWidget;
   const label = CalendarLabelDto(
     id: 'family',
     groupId: 'g1',
@@ -77,10 +80,17 @@ void main() {
     saveLabel = MockSaveCalendarLabelUsecase();
     deleteLabel = MockDeleteCalendarLabelUsecase();
     reorder = MockReorderCalendarLabelsUsecase();
+    mutations = [];
+    refreshWidget = () async {
+      mutations.add('ウィジェット更新');
+    };
     when(events.execute(any)).thenAnswer((_) async => [event]);
     when(labels.execute(any)).thenAnswer((_) async => [label]);
     container = ProviderContainer(
       overrides: [
+        refreshSelectedAndroidWidgetCacheProvider.overrideWithValue(
+          () => refreshWidget(),
+        ),
         getGroupWithMembersByIdUsecaseProvider.overrideWithValue(
           calendarTestGroupLoader(),
         ),
@@ -104,6 +114,63 @@ void main() {
     );
     container.listen(provider, (_, _) {});
     addTearDown(container.dispose);
+  });
+  test('予定の作成・更新・削除の成功後にウィジェットを更新する', () async {
+    await container.read(provider.notifier).load();
+    when(create.execute(any)).thenAnswer((_) async {
+      mutations.add('作成');
+      return 'new';
+    });
+    when(update.execute(any)).thenAnswer((_) async {
+      mutations.add('変更');
+    });
+    when(delete.execute(any, expectedVersion: anyNamed('expectedVersion')))
+        .thenAnswer((_) async {
+          mutations.add('削除');
+        });
+    final notifier = container.read(provider.notifier);
+    expect(await notifier.saveEvent(event.copyWith(id: '')), isTrue);
+    expect(await notifier.saveEvent(event), isTrue);
+    expect(await notifier.deleteEvent(event.id), isTrue);
+    expect(mutations, ['作成', 'ウィジェット更新', '変更', 'ウィジェット更新', '削除', 'ウィジェット更新']);
+  });
+  test('予定保存に失敗した場合はウィジェットを更新しない', () async {
+    await container.read(provider.notifier).load();
+    when(update.execute(any)).thenThrow(TestException('保存失敗'));
+    expect(await container.read(provider.notifier).saveEvent(event), isFalse);
+    expect(mutations, isEmpty);
+  });
+  test('ウィジェット更新に失敗しても予定保存の成功を維持する', () async {
+    await container.read(provider.notifier).load();
+    refreshWidget = () async {
+      mutations.add('ウィジェット更新');
+      throw TestException('ウィジェット更新失敗');
+    };
+    expect(await container.read(provider.notifier).saveEvent(event), isTrue);
+    expect(mutations, ['ウィジェット更新']);
+    expect(container.read(provider).mutationError, isEmpty);
+    expect(container.read(provider).isSaving, isFalse);
+    verify(update.execute(event)).called(1);
+  });
+  test('予定保存はウィジェット更新の完了を待たずに終了する', () async {
+    await container.read(provider.notifier).load();
+    final started = Completer<void>();
+    final release = Completer<void>();
+    refreshWidget = () async {
+      started.complete();
+      await release.future;
+    };
+    final operation = container.read(provider.notifier).saveEvent(event);
+    try {
+      await started.future.timeout(const Duration(seconds: 1));
+      await expectLater(
+        operation.timeout(const Duration(seconds: 1)),
+        completion(isTrue),
+      );
+      expect(container.read(provider).isSaving, isFalse);
+    } finally {
+      release.complete();
+    }
   });
   test('系列の再取得後も編集開始時の系列と期待値で保存する', () async {
     final original = event.copyWith(
