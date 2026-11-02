@@ -98,6 +98,30 @@ void main() {
     expect(await storage.loadSelectedDate(), DateTime(2026, 7, 1));
   });
 
+  test('カレンダー更新は既存月を置き換え設定と選択日を維持する', () async {
+    const storage = HomeWidgetCalendarCacheStorage();
+    values[HomeWidgetCalendarCacheStorage.selectedDateKey] = '2026-11-03';
+    values[HomeWidgetAndroidWidgetCacheStorage.targetGroupIdKey] = 'group';
+    Map<String, Object?> month(String key) => {
+      'sourceMode': 'offline',
+      'groupId': 'group',
+      'month': key,
+      'months': {
+        key: {'month': key, 'days': <Object?>[]},
+      },
+    };
+    await storage.save(month('2026-05-01'));
+    await storage.save(month('2026-11-01'), merge: false);
+    final path = values[HomeWidgetCalendarCacheStorage.cacheKey] as String;
+    final saved = jsonDecode(await File(path).readAsString()) as Map;
+    expect((saved['months'] as Map).keys, ['2026-11-01']);
+    expect(await storage.loadSelectedDate(), DateTime(2026, 11, 3));
+    expect(
+      values[HomeWidgetAndroidWidgetCacheStorage.targetGroupIdKey],
+      'group',
+    );
+  });
+
   test('単一キャッシュを消去すると公開済みファイルも削除する', () async {
     const storage = HomeWidgetAndroidWidgetCacheStorage();
     await storage.saveItineraryCache(
@@ -146,19 +170,15 @@ void main() {
     recentItineraryDateId: ids.firstOrNull,
   );
 
-  test('移動時に取得した日付を蓄積し同じ日付は新しい取得結果で更新する', () async {
+  test('公開時は渡された日付だけに置き換え古いキャッシュを残さない', () async {
     const storage = HomeWidgetAndroidWidgetCacheStorage();
     await storage.saveItineraryCache(cache([date('date-1'), date('date-2')]));
     await storage.saveItineraryCache(
       cache([date('date-2', name: '更新後の旅行'), date('date-3')]),
     );
     final loaded = (await storage.loadItineraryCache())!;
-    expect(loaded.itineraryDates.map((date) => date.id), [
-      'date-1',
-      'date-2',
-      'date-3',
-    ]);
-    expect(loaded.itineraryDates[1].tripName, '更新後の旅行');
+    expect(loaded.itineraryDates.map((date) => date.id), ['date-2', 'date-3']);
+    expect(loaded.itineraryDates.first.tripName, '更新後の旅行');
   });
 
   for (final differentGroup in [false, true]) {
@@ -191,7 +211,7 @@ void main() {
       (await storage.loadItineraryCache())!.itineraryDates.map(
         (date) => date.id,
       ),
-      ['date-2', 'date-3'],
+      ['date-3'],
     );
   });
 

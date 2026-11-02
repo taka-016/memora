@@ -8,6 +8,29 @@ import '../../../../helpers/test_exception.dart';
 
 void main() {
   group('AndroidWidgetActionHandler', () {
+    test('旅程の移動時だけ蓄積し手動更新と通常更新は置換する', () async {
+      final modes = <bool>[];
+      final handler = AndroidWidgetActionHandler(
+        cacheStorage: _FakeAndroidWidgetCacheStorage(targetGroupId: 'group-1'),
+        refreshCache:
+            ({
+              required String groupId,
+              String? selectedItineraryDateId,
+              bool extendCache = false,
+            }) async {
+              modes.add(extendCache);
+            },
+        moveDate: (_) async => true,
+        showToast: (_) async {},
+      );
+      await handler.handle(
+        Uri.parse('memoraWidget://itineraryrefresh?extend=true'),
+      );
+      await handler.handle(Uri.parse('memoraWidget://refresh'));
+      await handler.handle(Uri.parse('memoraWidget://itineraryrefresh'));
+      expect(modes, [true, false, false]);
+    });
+
     test('カレンダーの月移動で指定月を取得し、失敗時には通知する', () async {
       final storage = _FakeAndroidWidgetCacheStorage(targetGroupId: 'group-1');
       final toast = _FakeAndroidWidgetToastNotifier();
@@ -17,6 +40,7 @@ void main() {
         refreshCache: ({
           required String groupId,
           String? selectedItineraryDateId,
+          bool extendCache = false,
         }) async {},
         moveDate: (_) async => true,
         showToast: toast.show,
@@ -45,6 +69,7 @@ void main() {
         refreshCache: ({
           required String groupId,
           String? selectedItineraryDateId,
+          bool extendCache = false,
         }) async {},
         moveDate: (_) async => true,
       );
@@ -63,7 +88,11 @@ void main() {
         cacheStorage: storage,
         showToast: toastNotifier.show,
         refreshCache:
-            ({required String groupId, String? selectedItineraryDateId}) async {
+            ({
+              required String groupId,
+              String? selectedItineraryDateId,
+              bool extendCache = false,
+            }) async {
               refreshCalls.add((
                 groupId: groupId,
                 selectedId: selectedItineraryDateId,
@@ -89,7 +118,11 @@ void main() {
         cacheStorage: storage,
         showToast: toastNotifier.show,
         refreshCache:
-            ({required String groupId, String? selectedItineraryDateId}) async {
+            ({
+              required String groupId,
+              String? selectedItineraryDateId,
+              bool extendCache = false,
+            }) async {
               throw TestException('取得失敗');
             },
         moveDate: (_) async => true,
@@ -116,6 +149,7 @@ void main() {
         refreshCache: ({
           required String groupId,
           String? selectedItineraryDateId,
+          bool extendCache = false,
         }) async {},
         moveDate: (_) async => true,
       );
@@ -139,6 +173,7 @@ void main() {
         refreshCache: ({
           required String groupId,
           String? selectedItineraryDateId,
+          bool extendCache = false,
         }) async {},
         moveDate: (_) async => false,
       );
@@ -161,7 +196,11 @@ void main() {
         cacheStorage: storage,
         showToast: toastNotifier.show,
         refreshCache:
-            ({required String groupId, String? selectedItineraryDateId}) async {
+            ({
+              required String groupId,
+              String? selectedItineraryDateId,
+              bool extendCache = false,
+            }) async {
               refreshCalls.add((
                 groupId: groupId,
                 selectedId: selectedItineraryDateId,

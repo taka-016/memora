@@ -97,6 +97,63 @@ void main() {
   });
 
   group('RefreshAndroidWidgetItineraryCacheUsecase', () {
+    test('移動時は蓄積し更新成功時は置換するが取得失敗時は以前の内容を残す', () async {
+      final storage = _FakeAndroidWidgetCacheStorage()
+        ..targetGroupId = 'group-1';
+      final trips = _FakeTripEntryQueryService()
+        ..trips = [
+          const TripEntryDto(id: 'trip', groupId: 'group-1', year: 2026),
+        ];
+      final items = _FakeItineraryItemQueryService()
+        ..items = [
+          for (var day = 24; day <= 31; day++)
+            ItineraryItemDto(
+              id: 'item-$day',
+              tripId: 'trip',
+              name: '予定$day',
+              startDateTime: DateTime(2026, 5, day, 9),
+            ),
+        ];
+      final calendarUpdates = <String>[];
+      final usecase = _buildRefreshUsecase(
+        storage,
+        trips,
+        items,
+        refreshCalendar: (groupId) async => calendarUpdates.add(groupId),
+      );
+      await usecase.execute(
+        groupId: 'group-1',
+        selectedItineraryDateId: 'trip_2026-05-24',
+      );
+      expect(storage.cache!.itineraryDates, hasLength(4));
+      await usecase.execute(
+        groupId: 'group-1',
+        selectedItineraryDateId: 'trip_2026-05-28',
+        extendCache: true,
+      );
+      expect(storage.cache!.itineraryDates, hasLength(8));
+      expect(calendarUpdates, ['group-1']);
+      await usecase.execute(
+        groupId: 'group-1',
+        selectedItineraryDateId: 'trip_2026-05-28',
+      );
+      expect(storage.cache!.itineraryDates.map((date) => date.id), [
+        for (var day = 27; day <= 31; day++) 'trip_2026-05-$day',
+      ]);
+      expect(storage.targetGroupId, 'group-1');
+      expect(storage.selectedItineraryDateId, 'trip_2026-05-28');
+      expect(calendarUpdates, ['group-1', 'group-1']);
+      final previous = storage.cache;
+      trips.exception = TestException('通信失敗');
+      await expectLater(
+        usecase.executeForSelectedGroup(),
+        throwsA(isA<TestException>()),
+      );
+      expect(storage.cache, same(previous));
+      expect(storage.targetGroupId, 'group-1');
+      expect(storage.selectedItineraryDateId, 'trip_2026-05-28');
+    });
+
     test('旅程がなくても同じ対象グループのカレンダーを更新する', () async {
       final storage = _FakeAndroidWidgetCacheStorage();
       final refreshed = <String>[];
@@ -155,7 +212,7 @@ void main() {
       addTearDown(container.dispose);
       await container
           .read(refreshAndroidWidgetItineraryCacheUsecaseProvider)
-          .execute(groupId: 'group-1', preserveExistingCacheOnEmpty: true);
+          .execute(groupId: 'group-1');
       expect(storage.cache, isNull);
       expect(storage.targetGroupId, isNull);
       expect(await db.rows('trip_entries'), hasLength(1));
@@ -163,9 +220,7 @@ void main() {
 
     for (final missing in [true, false]) {
       test(
-        missing
-            ? '退避済みグループは既存キャッシュ保持指定でも対象設定ごと解除する'
-            : 'グループ取得失敗時は既存キャッシュと対象設定を維持する',
+        missing ? '退避済みグループは対象設定ごと解除する' : 'グループ取得失敗時は既存キャッシュと対象設定を維持する',
         () async {
           final storage = _FakeAndroidWidgetCacheStorage(
             cache: _cacheWithItinerary(),
@@ -198,7 +253,7 @@ void main() {
           addTearDown(container.dispose);
           final future = container
               .read(refreshAndroidWidgetItineraryCacheUsecaseProvider)
-              .execute(groupId: 'group-1', preserveExistingCacheOnEmpty: true);
+              .execute(groupId: 'group-1');
           if (missing) {
             await future;
             expect(storage.cache, isNull);
@@ -252,7 +307,7 @@ void main() {
       });
     }
 
-    test('自動更新で取得結果が空の場合は既存の旅程キャッシュを維持する', () async {
+    test('自動更新の空結果も置換し描画は呼び出し元に任せる', () async {
       final existingCache = _cacheWithItinerary();
       final storage = _FakeAndroidWidgetCacheStorage(cache: existingCache);
       final usecase = _buildRefreshUsecase(
@@ -263,11 +318,12 @@ void main() {
 
       await usecase.execute(
         groupId: 'group-1',
-        preserveExistingCacheOnEmpty: true,
+        updateWidgetAfterRefresh: false,
       );
 
-      expect(storage.cache, same(existingCache));
-      expect(storage.updateWidgetCount, 1);
+      expect(storage.cache?.itineraryDates, isEmpty);
+      expect(storage.cache, isNot(same(existingCache)));
+      expect(storage.updateWidgetCount, 0);
     });
 
     test('手動更新で取得結果が空の場合は空キャッシュへ更新する', () async {
@@ -510,6 +566,7 @@ RefreshAndroidWidgetItineraryCacheUsecase _buildRefreshUsecase(
   TripEntryQueryService tripEntryQueryService,
   ItineraryItemQueryService itineraryItemQueryService, {
   ReadTransaction? readTransaction,
+  Future<void> Function(String)? refreshCalendar,
 }) {
   final groups = MockGroupQueryService();
   when(groups.groupExists(any)).thenAnswer((_) async => true);
@@ -517,6 +574,7 @@ RefreshAndroidWidgetItineraryCacheUsecase _buildRefreshUsecase(
     groupQueryService: groups,
     cacheStorage: storage,
     readTransaction: readTransaction,
+    refreshCalendar: refreshCalendar,
     getCacheUsecase: GetAndroidWidgetItineraryCacheUsecase(
       tripEntryQueryService: tripEntryQueryService,
       itineraryItemQueryService: itineraryItemQueryService,
@@ -597,6 +655,7 @@ class _FakeAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
 }
 
 class _FakeTripEntryQueryService implements TripEntryQueryService {
+  List<TripEntryDto> trips = [];
   Object? exception;
   Future<void> Function(String groupId)? beforeReturn;
 
@@ -619,7 +678,7 @@ class _FakeTripEntryQueryService implements TripEntryQueryService {
     if (exception != null) {
       throw exception;
     }
-    return [];
+    return trips;
   }
 
   @override
@@ -633,11 +692,12 @@ class _FakeTripEntryQueryService implements TripEntryQueryService {
 }
 
 class _FakeItineraryItemQueryService implements ItineraryItemQueryService {
+  List<ItineraryItemDto> items = [];
   @override
   Future<List<ItineraryItemDto>> getItineraryItemsByTripId(
     String tripId, {
     List<OrderBy>? orderBy,
   }) async {
-    return [];
+    return items;
   }
 }

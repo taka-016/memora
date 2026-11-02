@@ -109,7 +109,7 @@ void main() {
         contains('return await _refreshAndroidWidgetFromBackground();'),
       );
       expect(source, isNot(contains('return false;')));
-      expect(source, contains('preserveExistingCacheOnEmpty: true'));
+      expect(source, isNot(contains('preserveExistingCacheOnEmpty: true')));
     });
 
     test('Firebase初期化を含むバックグラウンド更新全体を例外処理する', () {

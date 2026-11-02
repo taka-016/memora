@@ -118,8 +118,8 @@ internal object CalendarWidgetRenderer {
         val cached = requireNotNull(monthViews[widgetId])
         val portrait = copyViews(cached.portrait)
         val landscape = copyViews(cached.landscape)
-        updateSelection(context, portrait, next)
-        updateSelection(context, landscape, next)
+        updateSelection(context, portrait, widgetId, next)
+        updateSelection(context, landscape, widgetId, next)
         manager.updateAppWidget(widgetId, RemoteViews(landscape, portrait))
         states[widgetId] = next
         if (Build.VERSION.SDK_INT < 31) {
@@ -228,6 +228,7 @@ internal object CalendarWidgetRenderer {
     private fun updateSelection(
         context: Context,
         views: RemoteViews,
+        widgetId: Int,
         state: RenderedState,
     ) {
         state.month.days.forEachIndexed { index, day ->
@@ -242,8 +243,11 @@ internal object CalendarWidgetRenderer {
             R.id.calendar_last_updated, if (lastUpdatedAt.isBlank()) View.GONE else View.VISIBLE,
         )
         views.setTextViewText(
-            R.id.calendar_empty, if (state.loaded) "予定はありません" else "予定を読み込み中…",
+            R.id.calendar_empty, if (state.loaded) "予定はありません" else "タップして予定を読み込む",
         )
+        views.setOnClickPendingIntent(R.id.calendar_empty, if (state.loaded) null else {
+            calendarWidgetAction(context, widgetId, state.selected)
+        })
         if (Build.VERSION.SDK_INT >= 31) {
             val items = RemoteViews.RemoteCollectionItems.Builder()
                 .setHasStableIds(false)

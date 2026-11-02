@@ -79,21 +79,7 @@ class HomeWidgetAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
 
   @override
   Future<void> saveItineraryCache(AndroidWidgetItineraryCacheDto cache) async {
-    final previous = await loadItineraryCache();
-    final dates = {
-      if (previous?.groupId == cache.groupId &&
-          previous?.sourceMode == cache.sourceMode)
-        for (final date in previous!.itineraryDates) date.id: date,
-      for (final date in cache.itineraryDates) date.id: date,
-    };
-    final publishedCache = {
-      ...cache.toJson(),
-      'itineraryDates': [
-        for (final id in cache.itineraryDateIds)
-          if (dates.containsKey(id)) dates[id]!.toJson(),
-      ],
-    };
-    final json = jsonEncode(publishedCache);
+    final json = jsonEncode(cache.toJson());
     await _saveCacheFile(Uint8List.fromList(utf8.encode(json)));
     await HomeWidget.saveWidgetData<String>(
       lastUpdatedAtKey,

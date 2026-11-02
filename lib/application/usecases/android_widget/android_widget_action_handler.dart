@@ -5,6 +5,7 @@ import 'package:memora/application/usecases/android_widget/android_widget_itiner
 typedef RefreshAndroidWidgetCache = Future<void> Function({
   required String groupId,
   String? selectedItineraryDateId,
+  bool extendCache,
 });
 
 typedef MoveAndroidWidgetItineraryDate = Future<bool> Function(
@@ -40,6 +41,7 @@ class AndroidWidgetActionHandler {
             groupId: groupId,
             selectedItineraryDateId: await _cacheStorage
                 .getSelectedItineraryDateId(),
+            extendCache: uri?.queryParameters['extend'] == 'true',
           );
         } catch (_) {
           await _showMoveFailedToast();

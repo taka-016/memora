@@ -28,8 +28,8 @@ class HomeWidgetCalendarCacheStorage {
     return DateTime.tryParse(value ?? '');
   }
 
-  Future<void> save(Map<String, Object?> cache) async {
-    final previous = await _load();
+  Future<void> save(Map<String, Object?> cache, {bool merge = true}) async {
+    final previous = merge ? await _load() : null;
     final previousMonths = previous?['months'] as Map<String, dynamic>?;
     final incomingMonths = cache['months'] as Map<String, Object?>?;
     final months = <String, Object?>{

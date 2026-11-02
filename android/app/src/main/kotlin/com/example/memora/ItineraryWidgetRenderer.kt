@@ -41,10 +41,13 @@ internal object ItineraryWidgetRenderer {
         }
         views.setViewVisibility(R.id.itinerary_content, View.VISIBLE)
         views.setViewVisibility(R.id.itinerary_message, View.GONE)
-        views.setTextViewText(R.id.itinerary_trip_name, date?.tripName ?: "旅程を読み込み中…")
+        views.setTextViewText(R.id.itinerary_trip_name, date?.tripName ?: "旅程を取得してください")
         views.setTextViewText(R.id.itinerary_trip_period, date?.tripPeriodLabel.orEmpty())
         views.setTextViewText(R.id.itinerary_date, date?.dateLabel.orEmpty())
-        views.setTextViewText(R.id.itinerary_empty, if (date == null) "旅程を読み込み中…" else "旅程項目がありません")
+        views.setTextViewText(R.id.itinerary_empty, if (date == null) "タップして旅程を読み込む" else "旅程項目がありません")
+        views.setOnClickPendingIntent(R.id.itinerary_empty, if (date == null) {
+            itineraryWidgetAction(context, widgetId, "refresh")
+        } else null)
         views.setOnClickPendingIntent(R.id.itinerary_previous, itineraryWidgetAction(context, widgetId, "previous"))
         views.setOnClickPendingIntent(R.id.itinerary_next, itineraryWidgetAction(context, widgetId, "next"))
         views.setOnClickPendingIntent(R.id.itinerary_recent, itineraryWidgetAction(context, widgetId, "recent"))

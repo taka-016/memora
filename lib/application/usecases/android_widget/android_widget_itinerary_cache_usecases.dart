@@ -44,15 +44,17 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
   Future<void> execute({
     required String groupId,
     String? selectedItineraryDateId,
-    bool preserveExistingCacheOnEmpty = false,
     bool updateWidgetAfterRefresh = true,
+    bool extendCache = false,
   }) async {
     try {
       Future<AndroidWidgetItineraryCacheDto?> read() async {
         if (!await _groupQueryService.groupExists(groupId)) {
           return null;
         }
-        final previous = await _cacheStorage.loadItineraryCache();
+        final previous = extendCache
+            ? await _cacheStorage.loadItineraryCache()
+            : null;
         return _getCacheUsecase.execute(
           groupId: groupId,
           selectedItineraryDateId: selectedItineraryDateId,
@@ -71,13 +73,6 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
         if (cache == null) {
           await _cacheStorage.clear();
           return;
-        }
-        if (preserveExistingCacheOnEmpty && cache.itineraryDates.isEmpty) {
-          final existingCache = await _cacheStorage.loadItineraryCache();
-          if (existingCache?.groupId == groupId &&
-              existingCache!.itineraryDates.isNotEmpty) {
-            return;
-          }
         }
         await _cacheStorage.saveItineraryCache(
           AndroidWidgetItineraryCacheDto(
@@ -101,7 +96,7 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
           await publish(await read());
         });
       }
-      await refreshCalendar?.call(groupId);
+      if (!extendCache) await refreshCalendar?.call(groupId);
     } finally {
       if (updateWidgetAfterRefresh) {
         await _cacheStorage.updateWidget();
@@ -197,6 +192,7 @@ class MoveAndroidWidgetSelectedItineraryDateUsecase {
     await _refreshCacheUsecase.execute(
       groupId: refreshTarget.$1,
       selectedItineraryDateId: refreshTarget.$2,
+      extendCache: true,
     );
   }
 

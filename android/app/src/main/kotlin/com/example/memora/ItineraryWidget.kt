@@ -41,7 +41,7 @@ open class ItineraryWidgetReceiver : AppWidgetProvider() {
             }
             val cache = ItineraryWidgetData.read(context)
             if (cache == null) {
-                requestItineraryRefresh(context)
+                requestItineraryRefresh(context, extendCache = true)
                 return
             }
             val current = ItineraryWidgetData.selectedId(context, cache)
@@ -70,7 +70,7 @@ open class ItineraryWidgetReceiver : AppWidgetProvider() {
                 cache.dateIds.getOrNull(targetIndex - 1), cache.dateIds.getOrNull(targetIndex + 1),
             ).any { it !in cachedIds }
             if (target !in cachedIds || (target != current && missingNeighbor)) {
-                requestItineraryRefresh(context)
+                requestItineraryRefresh(context, extendCache = true)
             }
         } else if (intent.action == AppWidgetManager.ACTION_APPWIDGET_UPDATE &&
             !intent.getBooleanExtra(HomeWidgetPlugin.TRIGGERED_FROM_HOME_WIDGET, false)) {
@@ -95,8 +95,15 @@ internal fun itineraryWidgetAction(context: Context, widgetId: Int, operation: S
     )
 }
 
-private fun requestItineraryRefresh(context: Context, manual: Boolean = false) {
+private fun requestItineraryRefresh(
+    context: Context,
+    manual: Boolean = false,
+    extendCache: Boolean = false,
+) {
+    val uri = Uri.Builder().scheme("memoraWidget")
+        .authority(if (manual) "refresh" else "itineraryrefresh")
+    if (extendCache) uri.appendQueryParameter("extend", "true")
     HomeWidgetBackgroundIntent.getBroadcast(
-        context, Uri.parse("memoraWidget://${if (manual) "refresh" else "itineraryrefresh"}"),
+        context, uri.build(),
     ).send()
 }

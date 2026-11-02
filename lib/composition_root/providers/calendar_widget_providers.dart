@@ -36,7 +36,7 @@ final refreshCalendarWidgetProvider =
           await storage.save({
             ...cache,
             'lastUpdatedAt': clock.now().toIso8601String(),
-          });
+          }, merge: date != null);
         }
         await storage.update();
       };
