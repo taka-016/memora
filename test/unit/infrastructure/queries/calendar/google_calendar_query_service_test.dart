@@ -32,7 +32,7 @@ void main() {
       return http.Response(jsonEncode({
         'items': [{'id': '$count', 'summary': '予定$count'}],
         if (count == 1) 'nextPageToken': 'next',
-      }), 200, encoding: utf8);
+      }), 200, headers: {'content-type': 'application/json; charset=utf-8'});
     }));
     final calendars = await query.calendars('account');
     expect(calendars.map((v) => v.name), ['予定1', '予定2']);
@@ -50,11 +50,11 @@ void main() {
           {'id': 'all', 'summary': '旅行', 'description': '本文', 'start': {'date': '2026-11-01'}, 'end': {'date': '2026-11-04'}},
           {'id': 'cancel', 'status': 'cancelled'},
         ], 'nextPageToken': 'second',
-      }), 200, encoding: utf8);
+      }), 200, headers: {'content-type': 'application/json; charset=utf-8'});
       expect(request.url.queryParameters['pageToken'], 'second');
       return http.Response(jsonEncode({'items': [
         {'id': 'instance', 'summary': '変更後', 'recurringEventId': 'series', 'start': {'dateTime': '2026-11-05T09:00:00+09:00'}, 'end': {'dateTime': '2026-11-05T10:00:00+09:00'}},
-      ]}), 200, encoding: utf8);
+      ]}), 200, headers: {'content-type': 'application/json; charset=utf-8'});
     }));
     final events = await query.events('account', [const ExternalCalendarDto(id: 'a/b@example.com', name: '仕事')], DateTime(2026, 11), DateTime(2026, 12));
     expect(events.length, 2);
@@ -85,7 +85,7 @@ void main() {
     var count = 0;
     final query = GoogleCalendarQueryService(auth, MockClient((request) async {
       count++;
-      return http.Response(count == 1 ? '{}' : '{"items": [{"id": "c", "summary": "予定"}]}', count == 1 ? 401 : 200, encoding: utf8);
+      return http.Response(count == 1 ? '{}' : '{"items": [{"id": "c", "summary": "予定"}]}', count == 1 ? 401 : 200, headers: {'content-type': 'application/json; charset=utf-8'});
     }));
     expect((await query.calendars('account')).single.id, 'c');
     verify(auth.accessToken('account', invalidToken: 'token')).called(1);
