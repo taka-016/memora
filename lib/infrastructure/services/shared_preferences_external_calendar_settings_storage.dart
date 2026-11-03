@@ -52,7 +52,8 @@ class SharedPreferencesExternalCalendarSettingsStorage
   @override
   Future<void> remove(String ownerId) async {
     final preferences = await SharedPreferences.getInstance();
-    if (!await preferences.remove(_key(ownerId)))
+    if (!await preferences.remove(_key(ownerId))) {
       throw StateError('Googleカレンダーの表示設定を解除できませんでした');
+    }
   }
 }

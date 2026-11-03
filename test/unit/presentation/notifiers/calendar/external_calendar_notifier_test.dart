@@ -186,6 +186,7 @@ void main() {
     final pending = Completer<List<ExternalCalendarEventDto>>();
     when(query.events('google', any, any, any))
         .thenAnswer((_) => pending.future);
+    clearInteractions(query);
     final loading = notifier.refresh();
     await untilCalled(query.events('google', any, any, any));
     await notifier.disconnect('google');
@@ -214,6 +215,7 @@ void main() {
     await notifier.initialize();
     final pending = Completer<List<ExternalCalendarEventDto>>();
     when(query.events(any, any, any, any)).thenAnswer((_) => pending.future);
+    clearInteractions(query);
     final loading = notifier.refresh();
     await untilCalled(query.events(any, any, any, any));
     container.updateOverrides([

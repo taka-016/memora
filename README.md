@@ -105,7 +105,7 @@ Google Cloud ConsoleでMaps SDK for AndroidとPlaces API (New)を有効にし、
 
 ### Googleカレンダー連携の事前設定
 
-オンライン版の連携機能を導入する前に、Firebaseと同じGoogle Cloudプロジェクトを選び、次を設定してください。設定後はオンライン版のカレンダー画面にある「Googleカレンダー連携」からGoogleアカウントと表示対象を選びます。
+オンライン版の連携機能を導入する前に、Firebaseと同じGoogle Cloudプロジェクトを選び、次を設定してください。設定後はオンライン版のカレンダー画面にある「Googleカレンダー連携」からGoogleアカウントを追加し、アカウントごとに表示対象を選びます。
 
 1. [APIライブラリ](https://console.cloud.google.com/apis/library/calendar-json.googleapis.com)でGoogle Calendar APIを有効にする。
 2. [Google Auth Platform](https://console.cloud.google.com/auth/overview)の「ブランディング」でアプリ名、サポートメール、連絡先を設定する。「対象」で利用対象を選び、外部向けの開発中はテストユーザーに連携を試すGoogleアカウントを追加する。
