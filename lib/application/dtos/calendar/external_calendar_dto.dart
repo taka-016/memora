@@ -21,6 +21,7 @@ class ExternalCalendarConnection {
 
 class ExternalCalendarEventDto {
   const ExternalCalendarEventDto({
+    required this.accountId,
     required this.id,
     required this.calendarId,
     required this.calendarName,
@@ -34,6 +35,7 @@ class ExternalCalendarEventDto {
     this.recurrence = const [],
     this.timeZone,
   });
+  final String accountId;
   final String id;
   final String calendarId;
   final String calendarName;

@@ -142,6 +142,7 @@ class GoogleCalendarQueryService implements ExternalCalendarQueryService {
         }
         result.add(
           ExternalCalendarEventDto(
+            accountId: accountId,
             id: item['id'] as String,
             calendarId: calendar.id,
             calendarName: calendar.name,

@@ -4,48 +4,59 @@ import 'package:memora/application/exceptions/external_calendar_exception.dart';
 class ExternalCalendarState {
   ExternalCalendarState({
     required this.month,
-    this.connection,
-    List<ExternalCalendarDto> calendars = const [],
-    List<ExternalCalendarEventDto> events = const [],
+    List<ExternalCalendarConnection> connections = const [],
+    Map<String, List<ExternalCalendarDto>> calendarsByAccount = const {},
+    Map<String, List<ExternalCalendarEventDto>> eventsByAccount = const {},
+    Map<String, ExternalCalendarException> failures = const {},
     this.isLoading = false,
     this.isBusy = false,
-    this.isStale = false,
     this.error = '',
     this.failure,
-  }) : calendars = List.unmodifiable(calendars),
-       events = List.unmodifiable(events);
+  }) : connections = List.unmodifiable(connections),
+       calendarsByAccount = Map.unmodifiable({
+         for (final entry in calendarsByAccount.entries)
+           entry.key: List<ExternalCalendarDto>.unmodifiable(entry.value),
+       }),
+       eventsByAccount = Map.unmodifiable({
+         for (final entry in eventsByAccount.entries)
+           entry.key: List<ExternalCalendarEventDto>.unmodifiable(entry.value),
+       }),
+       failures = Map.unmodifiable(failures);
+
   final DateTime month;
-  final ExternalCalendarConnection? connection;
-  final List<ExternalCalendarDto> calendars;
-  final List<ExternalCalendarEventDto> events;
+  final List<ExternalCalendarConnection> connections;
+  final Map<String, List<ExternalCalendarDto>> calendarsByAccount;
+  final Map<String, List<ExternalCalendarEventDto>> eventsByAccount;
+  final Map<String, ExternalCalendarException> failures;
   final bool isLoading;
   final bool isBusy;
-  final bool isStale;
   final String error;
   final ExternalCalendarFailure? failure;
-  bool get needsAuthentication =>
-      failure == ExternalCalendarFailure.authentication ||
-      failure == ExternalCalendarFailure.permission;
+  List<ExternalCalendarEventDto> get events => [
+    for (final events in eventsByAccount.values) ...events,
+  ];
+  bool needsAuthenticationFor(String accountId) =>
+      failures[accountId]?.kind == ExternalCalendarFailure.authentication ||
+      failures[accountId]?.kind == ExternalCalendarFailure.permission;
 
   ExternalCalendarState copyWith({
     DateTime? month,
-    ExternalCalendarConnection? connection,
-    bool clearConnection = false,
-    List<ExternalCalendarDto>? calendars,
-    List<ExternalCalendarEventDto>? events,
+    List<ExternalCalendarConnection>? connections,
+    Map<String, List<ExternalCalendarDto>>? calendarsByAccount,
+    Map<String, List<ExternalCalendarEventDto>>? eventsByAccount,
+    Map<String, ExternalCalendarException>? failures,
     bool? isLoading,
     bool? isBusy,
-    bool? isStale,
     String? error,
     ExternalCalendarFailure? failure,
   }) => ExternalCalendarState(
     month: month ?? this.month,
-    connection: clearConnection ? null : connection ?? this.connection,
-    calendars: calendars ?? this.calendars,
-    events: events ?? this.events,
+    connections: connections ?? this.connections,
+    calendarsByAccount: calendarsByAccount ?? this.calendarsByAccount,
+    eventsByAccount: eventsByAccount ?? this.eventsByAccount,
+    failures: failures ?? this.failures,
     isLoading: isLoading ?? this.isLoading,
     isBusy: isBusy ?? this.isBusy,
-    isStale: isStale ?? this.isStale,
     error: error ?? this.error,
     failure: failure,
   );

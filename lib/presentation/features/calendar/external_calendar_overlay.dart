@@ -7,8 +7,9 @@ import 'package:memora/presentation/notifiers/calendar/calendar_state.dart';
 import 'package:memora/presentation/notifiers/calendar/external_calendar_state.dart';
 
 String externalEventDisplayId(ExternalCalendarEventDto event) =>
-    'google:${jsonEncode([event.calendarId, event.id])}';
-String _labelId(String calendarId) => 'google:$calendarId';
+    'google:${jsonEncode([event.accountId, event.calendarId, event.id])}';
+String _labelId(String accountId, String calendarId) =>
+    'google:${jsonEncode([accountId, calendarId])}';
 
 CalendarState overlayExternalCalendar(
   CalendarState shared,
@@ -20,7 +21,7 @@ CalendarState overlayExternalCalendar(
       CalendarEventDto(
         id: externalEventDisplayId(event),
         groupId: '',
-        labelId: _labelId(event.calendarId),
+        labelId: _labelId(event.accountId, event.calendarId),
         title: '${event.title} · ${event.calendarName}',
         startDateTime: event.startDateTime,
         endDateTime: event.endDateTime,
@@ -29,13 +30,14 @@ CalendarState overlayExternalCalendar(
   ],
   labels: [
     ...shared.labels,
-    for (final calendar in external.calendars)
-      CalendarLabelDto(
-        id: _labelId(calendar.id),
-        groupId: '',
-        name: 'Google · ${calendar.name}',
-        color: '#1967D2',
-        isSelectable: false,
-      ),
+    for (final entry in external.calendarsByAccount.entries)
+      for (final calendar in entry.value)
+        CalendarLabelDto(
+          id: _labelId(entry.key, calendar.id),
+          groupId: '',
+          name: 'Google · ${calendar.name}',
+          color: '#1967D2',
+          isSelectable: false,
+        ),
   ],
 );

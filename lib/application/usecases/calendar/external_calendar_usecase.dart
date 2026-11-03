@@ -9,41 +9,64 @@ class ExternalCalendarUsecase {
   final ExternalCalendarSettingsStorage _storage;
   final ExternalCalendarQueryService _query;
 
-  Future<ExternalCalendarConnection?> restore(String ownerId) =>
-      _storage.load(ownerId);
-
-  Future<ExternalCalendarConnection> connect(String ownerId) async {
-    final previous = await _storage.load(ownerId);
-    final account = await _auth.connect();
-    final connection = ExternalCalendarConnection(
-      account: account,
-      calendarIds: previous?.account.id == account.id
-          ? previous!.calendarIds
-          : const {},
-    );
-    await _storage.save(ownerId, connection);
-    return connection;
+  Future<List<ExternalCalendarConnection>> restore(String ownerId) async {
+    final connections = await _storage.load(ownerId);
+    _auth.restoreAccounts(connections.map((v) => v.account));
+    return connections;
   }
 
-  Future<ExternalCalendarConnection> select(
-    String ownerId,
-    ExternalCalendarConnection connection,
-    Set<String> ids,
-  ) async {
-    final next = ExternalCalendarConnection(
-      account: connection.account,
-      calendarIds: ids,
+  Future<List<ExternalCalendarConnection>> connect(String ownerId) async {
+    final previous = await restore(ownerId);
+    final account = await _auth.connect();
+    final existing = previous
+        .where((v) => v.account.id == account.id)
+        .firstOrNull;
+    final connection = ExternalCalendarConnection(
+      account: account,
+      calendarIds: existing?.calendarIds ?? const {},
     );
+    final next = [
+      for (final entry in previous)
+        if (entry.account.id == account.id) connection else entry,
+      if (existing == null) connection,
+    ];
     await _storage.save(ownerId, next);
     return next;
   }
 
-  Future<void> disconnect(String ownerId) async {
-    try {
+  Future<List<ExternalCalendarConnection>> select(
+    String ownerId,
+    ExternalCalendarConnection connection,
+    Set<String> ids,
+  ) async {
+    final previous = await _storage.load(ownerId);
+    final next = [
+      for (final entry in previous)
+        if (entry.account.id == connection.account.id)
+          ExternalCalendarConnection(
+            account: connection.account,
+            calendarIds: ids,
+          )
+        else
+          entry,
+    ];
+    await _storage.save(ownerId, next);
+    return next;
+  }
+
+  Future<List<ExternalCalendarConnection>> disconnect(
+    String ownerId,
+    String accountId,
+  ) async {
+    final previous = await _storage.load(ownerId);
+    final next = previous.where((v) => v.account.id != accountId).toList();
+    if (next.isEmpty) {
       await _storage.remove(ownerId);
-    } finally {
-      await _auth.disconnect();
+    } else {
+      await _storage.save(ownerId, next);
     }
+    await _auth.disconnect(accountId);
+    return next;
   }
 
   Future<List<ExternalCalendarDto>> calendars(String accountId) =>
