@@ -38,7 +38,7 @@
 
 1. memora用のGoogle CloudプロジェクトでGoogle Calendar APIを有効にし、OAuth同意画面とAndroid用OAuthクライアントを設定する。利用するAPKの署名証明書を登録し、開発中に連携するGoogleアカウントをテストユーザーへ追加する。
 2. カレンダー参照用のスコープとして`https://www.googleapis.com/auth/calendar.calendarlist.readonly`と`https://www.googleapis.com/auth/calendar.events.readonly`を登録する。Webアプリケーション用OAuthクライアントも用意し、その項目を含む最新の`android/app/google-services.json`へ更新する。
-3. [READMEの公開手順](../README.md#紹介ページポリシーの公開)に従って紹介ページ・プライバシーポリシー・利用規約をGitHub Pagesで公開し、サイトの所有確認とGoogle Auth Platformへの各URLの登録を行う。登録スコープに必要なOAuth審査・公開設定を完了する。
+3. 外部公開前に、プライバシーポリシー等の必要事項と、登録スコープに必要なOAuth審査・公開設定を整える。
 
 ## デザイン
 
