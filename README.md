@@ -102,6 +102,24 @@ OAuthクライアントはアプリを識別します。取得する予定のGoo
 
 詳細はGoogle公式の[API有効化](https://developers.google.com/workspace/guides/enable-apis)、[同意画面の設定](https://developers.google.com/workspace/guides/configure-oauth-consent)、[Calendar APIのスコープ](https://developers.google.com/workspace/calendar/api/auth)、[署名証明書の確認](https://developers.google.com/android/guides/client-auth)を参照してください。
 
+### 紹介ページ・ポリシーの公開
+
+紹介ページ、プライバシーポリシー、利用規約は`docs/`の静的ページです。運営者名・問い合わせ先・情報の取扱いが実際の運用と一致することを確認してから公開してください。
+
+1. ページを含む変更を`main`へ反映する。
+2. [リポジトリのPages設定](https://github.com/taka-016/memora/settings/pages)で、Sourceを「Deploy from a branch」、Branchを`main`、フォルダを`/docs`にして保存する。
+3. GitHubのデプロイ完了後、以下の3ページが開けることを確認する。
+
+| 項目 | 公開後のURL |
+| --- | --- |
+| アプリのホームページ | `https://taka-016.github.io/memora/` |
+| プライバシーポリシー | `https://taka-016.github.io/memora/privacy.html` |
+| 利用規約 | `https://taka-016.github.io/memora/terms.html` |
+
+OAuth審査で求められるサイトの所有確認は、Google Cloudプロジェクトの所有者または編集者のGoogleアカウントで[Search Console](https://search.google.com/search-console)から行います。GitHub Pagesの標準ドメインではDNSを変更できないため、「URLプレフィックス」に公開サイトのURLを指定し、HTMLファイルまたはHTMLタグによる確認方法を選びます。HTMLファイル方式では、Googleが発行した確認ファイルを内容・名前を変えずに`docs/`直下へ追加し、公開先の指定URLで取得できるようにしてから確認してください。HTMLタグ方式では、発行されたタグを`docs/index.html`の`head`内へ追加して公開します。所有確認後も確認ファイル・タグは残します。
+
+Google Auth Platformの「承認済みドメイン」には、ページURLではなく`taka-016.github.io`を追加し、その後「ブランディング」の各項目へ上表のURLを登録します。GitHub Pagesの設定・Search Consoleの所有確認・OAuth審査は、リポジトリへのpushだけでは完了しません。詳細は[GitHubの公開設定](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site)、[Googleの所有確認](https://support.google.com/webmasters/answer/9008080)、[OAuthホームページの要件](https://support.google.com/cloud/answer/13807376)を参照してください。
+
 ### アプリモードと成果物
 
 `run`・`build`・`release`・`check`の第1引数は`online`または`offline`で、省略時は`online`です。両モードは同じ端末にインストールできますが、データは共有しません。機能の違いは[ユースケース図](./docs/usecase_diagram.md)を参照してください。
