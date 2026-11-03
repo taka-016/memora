@@ -183,14 +183,7 @@ erDiagram
         string textColor "NOT NULL、#RRGGBB"
         integer sortOrder "NOT NULL、0以上"
     }
-    google_calendar_connections {
-        string memberId PK, FK
-        string googleAccountId "NOT NULL"
-    }
-    google_calendar_selections {
-        string memberId PK, FK
-        string calendarId PK
-    }
+
 
     trip_entries ||--o{ locations : "id → tripId"
     trip_entries ||--o{ tasks : "id → tripId"
@@ -216,8 +209,6 @@ erDiagram
     calendar_labels ||--o{ calendar_events : "id → labelId"
     calendar_events ||--o{ calendar_event_overrides : "id → eventId"
     calendar_labels |o--o{ calendar_event_overrides : "id → labelId"
-    members ||--o| google_calendar_connections : "id → memberId"
-    google_calendar_connections ||--o{ google_calendar_selections : "memberId → memberId"
     externally_managed_accounts ||--|| members : "id → accountId"
 ```
 
