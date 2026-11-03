@@ -3,15 +3,18 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="memoraは家族や友人との思い出、旅行、予定を記録・共有するAndroidアプリです。Googleカレンダーの本人の予定を読み取り専用で確認できます。">
+  <meta name="description" content="memoraは家族や友人との思い出、旅行、予定を記録・共有するAndroidアプリです。年表やカレンダーで記録を整理し、日々の予定を確認できます。">
   <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#03a9f4">
   <title>思い出と予定を、ひとつの場所に | memora</title>
+  <link rel="icon" type="image/png" href="assets/memora_logo.png">
+  <link rel="apple-touch-icon" href="assets/memora_logo.png">
   <link rel="stylesheet" href="assets/site.css">
 </head>
 <body>
   <a class="skip-link" href="#main">本文へ移動</a>
   <header class="site-header">
-    <a class="brand" href="./" aria-label="memora ホーム"><span class="brand-mark" aria-hidden="true">m</span>memora</a>
+    <a class="brand" href="./" aria-label="memora ホーム"><img class="brand-mark" src="assets/memora_logo.png" width="40" height="40" alt="">memora</a>
     <nav aria-label="メインナビゲーション"><a href="index.html" aria-current="page">ホーム</a><a href="privacy.html">プライバシーポリシー</a><a href="terms.html">利用規約</a></nav>
   </header>
   <main id="main">
@@ -28,25 +31,14 @@
       <div class="feature-list">
         <article><span class="number" aria-hidden="true">01</span><div><h3>思い出を、年表で振り返る</h3><p>グループやメンバーのイベント、旅行を年表で整理。家族や友人と記録を共有できます。</p></div></article>
         <article><span class="number" aria-hidden="true">02</span><div><h3>旅行の準備から、旅の記録まで</h3><p>旅程やタスクをまとめ、オンライン版では地図で訪問場所も管理できます。</p></div></article>
-        <article><span class="number" aria-hidden="true">03</span><div><h3>共有の予定と、自分の予定を一緒に</h3><p>グループのカレンダーに、自分のGoogleカレンダーの予定を重ねて確認できます。</p></div></article>
+        <article><span class="number" aria-hidden="true">03</span><div><h3>家族や友人の予定を、日付ごとに</h3><p>グループの予定をカレンダーにまとめて、これからのイベントを確認できます。</p></div></article>
       </div>
-    </section>
-    <section class="section calendar-section" aria-labelledby="calendar-title">
-      <p class="eyebrow">Googleカレンダー連携</p>
-      <h2 id="calendar-title">自分の予定は、自分だけに。</h2>
-      <p>オンライン版では、利用者が選んだGoogleアカウントのカレンダー一覧と予定を読み取り、共有予定と同じ日付に表示します。予定の確認先を行き来する負担を減らすための機能です。</p>
-      <ul class="check-list">
-        <li><strong>読むだけ。</strong>Googleカレンダーの予定を作成・編集・削除する権限は要求しません。</li>
-        <li><strong>本人の画面だけ。</strong>連携したGoogle予定は、グループの他のメンバーへ公開しません。</li>
-        <li><strong>表示対象を選べる。</strong>表示するカレンダーを選び、アプリ内から連携を解除できます。</li>
-      </ul>
-      <p>Google予定は表示中の端末のメモリで扱い、memoraの共有データベースやバックアップへ複製しません。詳しくは<a href="privacy.html#google-calendar">Googleカレンダーの情報の扱い</a>をご確認ください。</p>
     </section>
     <section class="section" aria-labelledby="modes-title">
       <h2 id="modes-title">利用する環境に合わせて。</h2>
       <div class="mode-grid">
-        <article><p class="eyebrow">オンライン版</p><h3>グループで共有する</h3><p>ログインして共有の記録を管理します。Googleカレンダー連携と地図機能はオンライン版で利用できます。</p></article>
-        <article><p class="eyebrow">オフライン版</p><h3>端末内で管理する</h3><p>データを端末内に保存し、手動でバックアップ・復元できます。Googleカレンダー連携や他の利用者との共有は行いません。</p></article>
+        <article><p class="eyebrow">オンライン版</p><h3>グループで共有する</h3><p>ログインして、グループで記録や予定を共有します。地図を使った旅行記録も管理できます。</p></article>
+        <article><p class="eyebrow">オフライン版</p><h3>端末内で管理する</h3><p>データを端末内に保存して管理します。手動のバックアップ・復元にも対応しています。</p></article>
       </div>
     </section>
     <section class="section closing" aria-labelledby="info-title">
