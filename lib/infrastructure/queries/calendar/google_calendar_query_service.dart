@@ -100,6 +100,7 @@ class GoogleCalendarQueryService implements ExternalCalendarQueryService {
   ) async {
     final result = <ExternalCalendarEventDto>[];
     for (final calendar in calendars) {
+      final series = <String, Map<String, dynamic>>{};
       final items = await _pages(
         accountId,
         ['calendars', calendar.id, 'events'],
@@ -116,6 +117,15 @@ class GoogleCalendarQueryService implements ExternalCalendarQueryService {
         final start = item['start'] as Map<String, dynamic>;
         final end = item['end'] as Map<String, dynamic>;
         final allDay = start['date'] != null;
+        final seriesId = item['recurringEventId'] as String?;
+        Map<String, dynamic>? parent;
+        if (seriesId != null) {
+          parent = series[seriesId];
+          if (parent == null) {
+            parent = await _get(accountId, Uri(scheme: 'https', host: 'www.googleapis.com', pathSegments: ['calendar', 'v3', 'calendars', calendar.id, 'events', seriesId]));
+            series[seriesId] = parent;
+          }
+        }
         result.add(
           ExternalCalendarEventDto(
             id: item['id'] as String,
@@ -132,7 +142,9 @@ class GoogleCalendarQueryService implements ExternalCalendarQueryService {
                       .subtract(const Duration(days: 1))
                 : DateTime.parse(end['dateTime'] as String),
             isAllDay: allDay,
-            isRecurring: item['recurringEventId'] != null,
+            isRecurring: seriesId != null,
+            recurrence: List.unmodifiable((parent?['recurrence'] as List? ?? const []).cast<String>()),
+            timeZone: (parent?['start'] as Map<String, dynamic>?)?['timeZone'] as String?,
           ),
         );
       }

@@ -31,6 +31,8 @@ class ExternalCalendarEventDto {
     this.memo = '',
     this.locationName = '',
     this.isRecurring = false,
+    this.recurrence = const [],
+    this.timeZone,
   });
   final String id;
   final String calendarId;
@@ -42,4 +44,6 @@ class ExternalCalendarEventDto {
   final String memo;
   final String locationName;
   final bool isRecurring;
+  final List<String> recurrence;
+  final String? timeZone;
 }

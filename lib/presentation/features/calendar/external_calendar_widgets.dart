@@ -1,3 +1,4 @@
+import 'package:memora/presentation/features/calendar/external_calendar_recurrence_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
@@ -168,7 +169,11 @@ Future<void> showExternalCalendarEvent(
               ),
             ),
           ),
-          if (event.isRecurring) const Text('繰り返し予定'),
+          if (event.isRecurring) ...[
+            const Text('繰り返し予定'),
+            for (final rule in event.recurrence) Text(externalCalendarRecurrenceText(rule)),
+            if (event.timeZone != null) Text('タイムゾーン: ${event.timeZone}'),
+          ],
           if (event.locationName.isNotEmpty) Text(event.locationName),
           if (event.memo.isNotEmpty) Text(event.memo),
         ],
