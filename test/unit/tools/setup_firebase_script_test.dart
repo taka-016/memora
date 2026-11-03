@@ -139,7 +139,7 @@ esac
       workingDirectory: project.path,
       environment: {
         ...Platform.environment,
-        'PATH': '${project.path}/bin',
+        'PATH': '${project.path}/bin:${Platform.environment['PATH']}',
         'FIREBASE_API_KEY': key,
         'MEMORA_TEST_COMMAND_LOG': commands.path,
         'MEMORA_TEST_FAIL_COMMAND': failCommand,
