@@ -72,9 +72,11 @@ test-dev *configs:
 test-emulator:
   bash scripts/test/emulator.sh
 
-# Firebaseの初期設定とFirestoreのデプロイを実行する
-setup-firebase:
-  bash scripts/firebase/setup.sh
+# Firebaseの処理を選択する（引数なし: メニュー、all: 全処理、複数指定可）
+# configure: 設定生成、api-key: キー更新、project: プロジェクト選択
+# rules / indexes: 各デプロイ、sync-indexes: インデックス取得
+setup-firebase *actions:
+  bash scripts/firebase/setup.sh "$@"
 
 # SSH鍵を作成する（省略時はssh_keys/memora_ed25519）
 ssh-key *args:
