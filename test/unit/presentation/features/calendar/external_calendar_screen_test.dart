@@ -12,6 +12,8 @@ class _ExternalCalendar extends ExternalCalendarNotifier {
   bool selected = false;
   bool disconnected = false;
   int retries = 0;
+  List<String> get eventAccounts =>
+      state.events.map((v) => v.accountId).toList();
   @override
   ExternalCalendarState build() =>
       ExternalCalendarState(month: DateTime(2026, 10));
@@ -21,63 +23,82 @@ class _ExternalCalendar extends ExternalCalendarNotifier {
   Future<void> setPeriod(DateTime day) async {}
   @override
   Future<void> connect() async {
+    final id = state.connections.isEmpty ? 'google' : 'second';
     state = state.copyWith(
-      connection: ExternalCalendarConnection(
-        account: const ExternalCalendarAccount(
-          id: 'google',
-          email: 'me@example.com',
+      connections: [
+        ...state.connections,
+        ExternalCalendarConnection(
+          account: ExternalCalendarAccount(id: id, email: '$id@example.com'),
         ),
-      ),
-      calendars: [const ExternalCalendarDto(id: 'personal', name: '個人')],
+      ],
+      calendarsByAccount: {
+        ...state.calendarsByAccount,
+        id: [const ExternalCalendarDto(id: 'personal', name: '個人')],
+      },
     );
   }
 
   @override
-  Future<void> selectCalendars(Set<String> ids) async {
+  Future<void> selectCalendars(String accountId, Set<String> ids) async {
     selected = ids.contains('personal');
     state = state.copyWith(
-      connection: ExternalCalendarConnection(
-        account: state.connection!.account,
-        calendarIds: ids,
-      ),
-      events: selected
-          ? [
-              ExternalCalendarEventDto(
-                id: 'external',
-                calendarId: 'personal',
-                calendarName: '個人',
-                title: '自分の予定',
-                memo: '予定の本文',
-                isRecurring: true,
-                recurrence: [
-                  'RRULE:FREQ=WEEKLY;INTERVAL=2;BYDAY=MO,FR;COUNT=10',
-                ],
-                timeZone: 'Asia/Tokyo',
-                startDateTime: DateTime(2026, 10, 2, 9),
-                endDateTime: DateTime(2026, 10, 2, 10),
-                isAllDay: false,
-              ),
-            ]
-          : [],
+      connections: [
+        for (final connection in state.connections)
+          if (connection.account.id == accountId)
+            ExternalCalendarConnection(
+              account: connection.account,
+              calendarIds: ids,
+            )
+          else
+            connection,
+      ],
+      eventsByAccount: {
+        ...state.eventsByAccount,
+        accountId: selected
+            ? [
+                ExternalCalendarEventDto(
+                  accountId: accountId,
+                  id: 'external',
+                  calendarId: 'personal',
+                  calendarName: '個人',
+                  title: '自分の予定',
+                  memo: '予定の本文',
+                  isRecurring: true,
+                  recurrence: [
+                    'RRULE:FREQ=WEEKLY;INTERVAL=2;BYDAY=MO,FR;COUNT=10',
+                  ],
+                  timeZone: 'Asia/Tokyo',
+                  startDateTime: DateTime(2026, 10, 2, 9),
+                  endDateTime: DateTime(2026, 10, 2, 10),
+                  isAllDay: false,
+                ),
+              ]
+            : [],
+      },
     );
   }
 
   @override
-  Future<void> disconnect() async {
+  Future<void> disconnect(String accountId) async {
     disconnected = true;
-    state = ExternalCalendarState(month: state.month);
+    state = state.copyWith(
+      connections: state.connections
+          .where((v) => v.account.id != accountId)
+          .toList(),
+      calendarsByAccount: {...state.calendarsByAccount}..remove(accountId),
+      eventsByAccount: {...state.eventsByAccount}..remove(accountId),
+    );
   }
 
   @override
-  Future<void> refresh() async {
+  Future<void> refresh({String? accountId}) async {
     retries++;
-    state = state.copyWith(error: '', isStale: false);
+    state = state.copyWith(error: '');
   }
 
   void fail() {
     state = state.copyWith(
       error: '外部予定を取得できません',
-      isStale: true,
       failure: ExternalCalendarFailure.network,
     );
   }
@@ -97,7 +118,7 @@ void main() {
       textScale: 2,
     );
     await external.connect();
-    await external.selectCalendars({'personal'});
+    await external.selectCalendars('google', {'personal'});
     external.fail();
     await tester.pump();
     expect(tester.takeException(), isNull);
@@ -115,6 +136,45 @@ void main() {
     expect(external.disconnected, isTrue);
     expect(tester.takeException(), isNull);
   });
+  testWidgets('2アカウントを追加してそれぞれの予定を表示し一方だけ解除できる', (tester) async {
+    final external = _ExternalCalendar();
+    await CalendarTestHarness().pump(tester, externalCalendar: external);
+    await tester.tap(find.byTooltip('Googleカレンダー連携'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Googleアカウントを選択して連携'));
+    await tester.pump();
+    await tester.tap(find.widgetWithText(CheckboxListTile, '個人'));
+    await tester.pump();
+    await tester.ensureVisible(find.text('Googleアカウントを追加'));
+    await tester.tap(find.text('Googleアカウントを追加'));
+    await tester.pump();
+    expect(find.text('google@example.com'), findsOneWidget);
+    expect(find.text('second@example.com'), findsOneWidget);
+    final secondSection = find.byKey(const ValueKey('external_account_second'));
+    final secondCalendar = find.descendant(
+      of: secondSection,
+      matching: find.byType(CheckboxListTile),
+    );
+    await tester.ensureVisible(secondCalendar);
+    await tester.tap(secondCalendar);
+    await tester.pump();
+    expect(external.eventAccounts, ['google', 'second']);
+    final firstSection = find.byKey(const ValueKey('external_account_google'));
+    final disconnect = find.descendant(
+      of: firstSection,
+      matching: find.text('連携を解除'),
+    );
+    await tester.ensureVisible(disconnect);
+    await tester.tap(disconnect);
+    await tester.pump();
+    expect(find.text('google@example.com'), findsNothing);
+    expect(find.text('second@example.com'), findsOneWidget);
+    await tester.tap(find.text('閉じる'));
+    await tester.pumpAndSettle();
+    expect(find.text('自分の予定 · 個人'), findsWidgets);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('連携・選択した予定を共有予定と重ねて読み取り専用で表示し解除する', (tester) async {
     final external = _ExternalCalendar();
     final harness = CalendarTestHarness()

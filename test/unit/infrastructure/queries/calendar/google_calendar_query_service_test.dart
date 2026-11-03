@@ -120,6 +120,7 @@ void main() {
       DateTime(2026, 11),
       DateTime(2026, 12),
     );
+    expect(events.map((event) => event.accountId).toSet(), {'account'});
     expect(events.length, 2);
     expect(events.first.endDateTime, DateTime.utc(2026, 11, 3));
     expect(events.first.calendarName, '仕事');
