@@ -101,7 +101,7 @@ Google Cloud ConsoleでMaps SDK for AndroidとPlaces API (New)を有効にし、
 
 必要に応じてFirestoreのセキュリティルールを設定した後、`just setup-firebase`を実行します。画面の案内に従ってログインし、対象プロジェクトを選択してください。`lib/firebase_options.dart`と`firebase.json`の設定に加え、Firestoreのルールとインデックスもデプロイされます。
 
-Firebase設定を更新するときは、最新の`android/app/google-services.json`を配置し、`lib/firebase_options.dart`だけを削除してから`just setup-firebase`を再実行してください。既存の`lib/firebase_options.dart`は自動更新されません。同じFirebaseプロジェクト・Androidアプリを選択して再生成し、アプリを再ビルドします。ローカルの設定ファイルを削除してもFirebase上のユーザーやデータは削除されませんが、セットアップの再実行ではFirestoreのルールとインデックスもデプロイされます。
+Firebase設定を更新するときは、最新の`android/app/google-services.json`を配置し、`lib/firebase_options.dart`を削除してから`just setup-firebase`を再実行し、アプリを再ビルドしてください。
 
 ### Googleカレンダー連携の事前設定
 
@@ -113,7 +113,7 @@ Firebase設定を更新するときは、最新の`android/app/google-services.j
    - `https://www.googleapis.com/auth/calendar.calendarlist.readonly`
    - `https://www.googleapis.com/auth/calendar.events.readonly`
 4. 「クライアント」でAndroid用OAuthクライアントを確認・作成する。オンライン版のパッケージ名は`com.example.memora`。実行するAPKの署名証明書のSHA-1を登録し、debug・releaseで署名が異なる場合はそれぞれ用意する。Google Play App Signingを使う場合は、配信APKのアプリ署名証明書を使う。証明書はリポジトリの`android`ディレクトリで`./gradlew signingReport`を実行して確認できる。
-5. 同じプロジェクトのWebアプリケーション用OAuthクライアント（`client_type: 3`）も含む最新の`android/app/google-services.json`をFirebase Consoleから取得する。前述のFirebase設定の更新手順に従い、`lib/firebase_options.dart`を削除して`just setup-firebase`で再生成し、アプリを再ビルドする。WebクライアントIDはAndroid SDKの初期化に使用するもので、サーバーの実装やクライアントシークレットのアプリへの埋め込みは不要。
+5. 同じプロジェクトのWebアプリケーション用OAuthクライアント（`client_type: 3`）も含む最新の`android/app/google-services.json`をFirebase Consoleから取得する。前述の手順に従ってFirebase設定を更新する。WebクライアントIDはAndroid SDKの初期化に使用するもので、サーバーの実装やクライアントシークレットのアプリへの埋め込みは不要。
 6. 外部公開前に、公開先、プライバシーポリシー等の必要事項を整え、登録スコープに必要なOAuth審査と公開設定を完了する。
 
 開発中は、予定を参照するGoogleアカウントをテストユーザーへ登録してください。memoraのログイン用アカウントだけを登録しても、別アカウントの連携は試せません。
