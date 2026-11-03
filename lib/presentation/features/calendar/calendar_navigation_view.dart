@@ -8,7 +8,20 @@ import 'package:memora/presentation/notifiers/member/current_member_notifier.dar
 import 'package:memora/presentation/notifiers/timeline/group_timeline_group_selection_notifier.dart';
 
 class CalendarNavigationView extends HookConsumerWidget {
-  const CalendarNavigationView({super.key, this.groupId});
+  const CalendarNavigationView({
+    super.key,
+    this.groupId,
+    this.initialDate,
+    this.createEvent = false,
+    this.initialRequest = 0,
+    this.initialEventId,
+    this.initialOccurrence,
+  });
+  final DateTime? initialDate;
+  final bool createEvent;
+  final int initialRequest;
+  final String? initialEventId;
+  final DateTime? initialOccurrence;
   final String? groupId;
 
   @override
@@ -25,14 +38,20 @@ class CalendarNavigationView extends HookConsumerWidget {
         loaded &&
         groupId == null &&
         groups.length == 1 &&
-        autoSelected.value != groups.single.id;
+        autoSelected.value != groups.single.id &&
+        GoRouter.of(context).state.matchedLocation ==
+            const CalendarGroupListRoute().location;
     final group = loaded
         ? groups.where((group) => group.id == groupId).firstOrNull
         : null;
     useEffect(() {
       if (autoSelect) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!context.mounted) return;
+          if (!context.mounted ||
+              GoRouter.of(context).state.matchedLocation !=
+                  const CalendarGroupListRoute().location) {
+            return;
+          }
           autoSelected.value = groups.single.id;
           CalendarRoute(groupId: groups.single.id).go(context);
         });
@@ -78,6 +97,11 @@ class CalendarNavigationView extends HookConsumerWidget {
         key: ValueKey(group.id),
         groupId: group.id,
         groupName: group.name,
+        initialDate: initialDate,
+        createEvent: createEvent,
+        initialRequest: initialRequest,
+        initialEventId: initialEventId,
+        initialOccurrence: initialOccurrence,
         onBack: () {
           if (context.canPop()) {
             context.pop();

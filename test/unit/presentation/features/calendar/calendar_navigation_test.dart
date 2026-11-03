@@ -1,3 +1,5 @@
+import 'package:memora/presentation/notifiers/android_widget/android_widget_launch_notifier.dart';
+import 'package:memora/presentation/features/calendar/calendar_event_dialog.dart';
 import 'package:memora/composition_root/providers/group_providers.dart';
 
 import '../../../../helpers/calendar_group_test_support.dart';
@@ -21,6 +23,7 @@ void main() {
     WidgetTester tester, {
     int count = 2,
     String location = '/calendar',
+    AndroidWidgetLaunchNotifier? launch,
   }) async {
     final events = MockGetCalendarEventsUsecase();
     final labels = MockGetCalendarLabelsUsecase();
@@ -40,6 +43,7 @@ void main() {
           ...support.createTopPageTestOverrides(
             availableGroupsWithMembers: groups,
             initialLocation: location,
+            androidWidgetLaunchNotifier: launch,
           ),
           getCalendarEventsUsecaseProvider.overrideWithValue(events),
           getCalendarLabelsUsecaseProvider.overrideWithValue(labels),
@@ -54,6 +58,34 @@ void main() {
     await tester.pumpAndSettle();
     return events;
   }
+
+  testWidgets('グループが1件でも起動URLの日付と追加要求を自動選択で上書きしない', (tester) async {
+    await pump(
+      tester,
+      count: 1,
+      location: '/groups',
+      launch: _CalendarLaunchNotifier(),
+    );
+    expect(find.byType(CalendarEventDialog), findsOneWidget);
+    expect(find.text('開始日: 2027/1/1'), findsOneWidget);
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(CalendarEventDialog)),
+    );
+    final router = container.read(appRouterConfigProvider);
+    expect(router.state.uri.queryParameters['create'], 'true');
+    await tester.tap(find.text('キャンセル'));
+    await tester.pumpAndSettle();
+    router.go(
+      const CalendarRoute(
+        groupId: '1',
+        date: '2027-01-01',
+        create: true,
+        request: 2,
+      ).location,
+    );
+    await tester.pumpAndSettle();
+    expect(find.byType(CalendarEventDialog), findsOneWidget);
+  });
 
   testWidgets('複数グループは選択後に月表示を開き戻ると別グループに切り替えられる', (tester) async {
     final events = await pump(tester);
@@ -138,4 +170,13 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('グループ1のカレンダー'), findsNothing);
   });
+}
+
+class _CalendarLaunchNotifier extends AndroidWidgetLaunchNotifier {
+  @override
+  AndroidWidgetLaunchState build() => AndroidWidgetLaunchState(
+    pendingCalendarUri: Uri.parse(
+      'memoraWidget://openCalendar?groupId=1&date=2027-01-01&create=true',
+    ),
+  );
 }

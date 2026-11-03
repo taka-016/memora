@@ -67,6 +67,105 @@ void main() {
   }
 
   group('AndroidWidgetLaunchNotifier', () {
+    test('カレンダー起動で所属を確認し選択日と予定追加の要求を渡す', () async {
+      final source = _FakeAndroidWidgetLaunchUriSource(
+        initialUri: Uri.parse(
+          'memoraWidget://openCalendar?groupId=group-1&date=2026-11-02&create=true',
+        ),
+      );
+      final container = createContainer(source);
+      addTearDown(() async {
+        container.dispose();
+        await source.controller.close();
+      });
+      when(getGroupsUsecase.execute(member))
+          .thenAnswer((_) async => [testGroup]);
+      container.read(androidWidgetLaunchNotifierProvider);
+      await pumpEventQueue();
+      final notifier = container.read(
+        androidWidgetLaunchNotifierProvider.notifier,
+      );
+      await notifier.resolvePendingLaunch(member);
+      final destination = notifier.takeResolution(
+        member.id,
+      ) as AndroidWidgetCalendarLaunchDestination;
+      expect(destination.groupId, 'group-1');
+      expect(destination.date, DateTime(2026, 11, 2));
+      expect(destination.create, isTrue);
+      source.controller.add(
+        Uri.parse(
+          'memoraWidget://openCalendar?groupId=group-1&date=2026-11-02&create=true',
+        ),
+      );
+      await pumpEventQueue();
+      await notifier.resolvePendingLaunch(member);
+      final second = notifier.takeResolution(
+        member.id,
+      ) as AndroidWidgetCalendarLaunchDestination;
+      expect(second.requestId, greaterThan(destination.requestId));
+      verifyNever(getTripUsecase.execute(any));
+    });
+
+    test('予定の編集起動は予定IDと繰り返し対象の日時を渡す', () async {
+      final occurrence = DateTime.utc(2026, 11, 2, 9);
+      final source = _FakeAndroidWidgetLaunchUriSource(
+        initialUri: Uri(
+          scheme: 'memoraWidget',
+          host: 'openCalendar',
+          queryParameters: {
+            'groupId': 'group-1',
+            'date': '2026-11-02',
+            'eventId': 'series',
+            'occurrence': occurrence.toIso8601String(),
+          },
+        ),
+      );
+      final container = createContainer(source);
+      addTearDown(() async {
+        container.dispose();
+        await source.controller.close();
+      });
+      when(getGroupsUsecase.execute(member))
+          .thenAnswer((_) async => [testGroup]);
+      container.read(androidWidgetLaunchNotifierProvider);
+      await pumpEventQueue();
+      final notifier = container.read(
+        androidWidgetLaunchNotifierProvider.notifier,
+      );
+      await notifier.resolvePendingLaunch(member);
+      final destination = notifier.takeResolution(
+        member.id,
+      ) as AndroidWidgetCalendarLaunchDestination;
+      expect(destination.eventId, 'series');
+      expect(destination.occurrence, occurrence);
+      expect(destination.create, isFalse);
+    });
+
+    test('所属していないカレンダーからの起動を拒否する', () async {
+      final source = _FakeAndroidWidgetLaunchUriSource(
+        initialUri: Uri.parse(
+          'memoraWidget://openCalendar?groupId=other&date=2026-11-02',
+        ),
+      );
+      final container = createContainer(source);
+      addTearDown(() async {
+        container.dispose();
+        await source.controller.close();
+      });
+      when(getGroupsUsecase.execute(member))
+          .thenAnswer((_) async => [testGroup]);
+      container.read(androidWidgetLaunchNotifierProvider);
+      await pumpEventQueue();
+      final notifier = container.read(
+        androidWidgetLaunchNotifierProvider.notifier,
+      );
+      await notifier.resolvePendingLaunch(member);
+      expect(
+        notifier.takeResolution(member.id),
+        isA<AndroidWidgetLaunchFailure>(),
+      );
+    });
+
     setUp(() {
       getTripUsecase = MockGetTripEntryByIdUsecase();
       getGroupsUsecase = MockGetGroupsWithMembersUsecase();

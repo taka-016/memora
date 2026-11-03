@@ -32,21 +32,14 @@ void main() {
       expect(handlerSource, contains('context.applicationContext'));
     });
 
-    test('キャッシュ内の選択IDを優先し見つからない場合は先頭旅程を表示する', () {
-      final source = File(_itineraryWidgetPath).readAsStringSync();
-
+    test('ネイティブの選択日は現在のナビゲーションに存在する場合だけ使う', () {
+      final source = File(
+        'android/app/src/main/kotlin/com/example/memora/ItineraryWidgetCache.kt',
+      ).readAsStringSync();
+      expect(source, contains('it in cache.dateIds'));
       expect(
         source,
-        contains(
-          'val selectedItineraryDateId = cache?.selectedItineraryDateId',
-        ),
-      );
-      expect(source, contains('?: cache?.itineraryDates?.firstOrNull()'));
-      expect(
-        source,
-        isNot(
-          contains('prefs.getString(SELECTED_ITINERARY_DATE_ID_KEY, null)'),
-        ),
+        contains('?: cache.selectedId ?: cache.dates.firstOrNull()?.id'),
       );
     });
   });

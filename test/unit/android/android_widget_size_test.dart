@@ -6,6 +6,15 @@ const _widgetInfoPath =
     'android/app/src/main/res/xml/itinerary_widget_info.xml';
 
 void main() {
+  test('カレンダーは標準の4行ホーム画面でも追加できるサイズを指定する', () {
+    final calendar = File(
+      'android/app/src/main/res/xml/calendar_widget_info.xml',
+    ).readAsStringSync();
+    expect(calendar, contains('android:targetCellHeight="4"'));
+    expect(calendar, contains('android:minHeight="280dp"'));
+    expect(calendar, contains('android:minResizeHeight="280dp"'));
+  });
+
   final source = File(_widgetInfoPath).readAsStringSync();
 
   test('Androidウィジェットの初期幅を4セルにする', () {

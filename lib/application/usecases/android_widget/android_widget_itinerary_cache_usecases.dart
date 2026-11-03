@@ -21,6 +21,7 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
     required this._getCacheUsecase,
     required this._groupQueryService,
     this._mode = AppMode.online,
+    this.refreshCalendar,
     this._readTransaction,
   });
 
@@ -28,6 +29,7 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
   final GetAndroidWidgetItineraryCacheUsecase _getCacheUsecase;
   final GroupQueryService _groupQueryService;
   final AppMode _mode;
+  final Future<void> Function(String groupId)? refreshCalendar;
   final ReadTransaction? _readTransaction;
 
   Future<void> executeForSelectedGroup() async {
@@ -42,17 +44,24 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
   Future<void> execute({
     required String groupId,
     String? selectedItineraryDateId,
-    bool preserveExistingCacheOnEmpty = false,
     bool updateWidgetAfterRefresh = true,
+    bool extendCache = false,
   }) async {
     try {
       Future<AndroidWidgetItineraryCacheDto?> read() async {
         if (!await _groupQueryService.groupExists(groupId)) {
           return null;
         }
+        final previous = extendCache
+            ? await _cacheStorage.loadItineraryCache()
+            : null;
         return _getCacheUsecase.execute(
           groupId: groupId,
           selectedItineraryDateId: selectedItineraryDateId,
+          retainedItineraryDateIds:
+              previous?.groupId == groupId && previous?.sourceMode == _mode
+              ? previous!.itineraryDates.map((date) => date.id).toSet()
+              : const {},
         );
       }
 
@@ -65,13 +74,6 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
           await _cacheStorage.clear();
           return;
         }
-        if (preserveExistingCacheOnEmpty && cache.itineraryDates.isEmpty) {
-          final existingCache = await _cacheStorage.loadItineraryCache();
-          if (existingCache?.groupId == groupId &&
-              existingCache!.itineraryDates.isNotEmpty) {
-            return;
-          }
-        }
         await _cacheStorage.saveItineraryCache(
           AndroidWidgetItineraryCacheDto(
             version: cache.version,
@@ -80,6 +82,8 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
             selectedItineraryDateId: cache.selectedItineraryDateId,
             lastUpdatedAt: cache.lastUpdatedAt,
             itineraryDates: cache.itineraryDates,
+            itineraryDateIds: cache.itineraryDateIds,
+            recentItineraryDateId: cache.recentItineraryDateId,
           ),
         );
       }
@@ -92,6 +96,7 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
           await publish(await read());
         });
       }
+      if (!extendCache) await refreshCalendar?.call(groupId);
     } finally {
       if (updateWidgetAfterRefresh) {
         await _cacheStorage.updateWidget();
@@ -187,6 +192,7 @@ class MoveAndroidWidgetSelectedItineraryDateUsecase {
     await _refreshCacheUsecase.execute(
       groupId: refreshTarget.$1,
       selectedItineraryDateId: refreshTarget.$2,
+      extendCache: true,
     );
   }
 
@@ -209,6 +215,8 @@ class MoveAndroidWidgetSelectedItineraryDateUsecase {
           selectedItineraryDateId: cachedTarget,
           lastUpdatedAt: cache.lastUpdatedAt,
           itineraryDates: cache.itineraryDates,
+          itineraryDateIds: cache.itineraryDateIds,
+          recentItineraryDateId: cache.recentItineraryDateId,
         ),
       );
       await _cacheStorage.updateWidget();

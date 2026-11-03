@@ -1,3 +1,4 @@
+import 'package:memora/composition_root/providers/calendar_widget_providers.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -25,6 +26,15 @@ import 'android_widget_providers_test.mocks.dart';
   MockSpec<AndroidWidgetCacheStorage>(),
 ])
 void main() {
+  test('Android以外のカレンダー更新はデータ取得の依存を生成しない', () async {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    await expectLater(
+      container.read(refreshCalendarWidgetProvider)('group', null),
+      completes,
+    );
+  });
+
   for (final failTrips in [true, false]) {
     test('保存後更新で${failTrips ? '旅行' : '一部の旅程'}取得が失敗したらキャッシュを書き換えない', () async {
       final firestore = MockFirebaseFirestore();

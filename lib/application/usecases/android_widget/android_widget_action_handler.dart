@@ -5,6 +5,7 @@ import 'package:memora/application/usecases/android_widget/android_widget_itiner
 typedef RefreshAndroidWidgetCache = Future<void> Function({
   required String groupId,
   String? selectedItineraryDateId,
+  bool extendCache,
 });
 
 typedef MoveAndroidWidgetItineraryDate = Future<bool> Function(
@@ -21,15 +22,42 @@ class AndroidWidgetActionHandler {
     required this._refreshCache,
     required this._moveDate,
     required this._showToast,
+    this.refreshCalendar,
   });
 
   final AndroidWidgetCacheStorage _cacheStorage;
   final RefreshAndroidWidgetCache _refreshCache;
   final MoveAndroidWidgetItineraryDate _moveDate;
   final ShowAndroidWidgetToast _showToast;
+  final Future<void> Function(DateTime? date)? refreshCalendar;
 
   Future<void> handle(Uri? uri) async {
     switch (uri?.host) {
+      case 'itineraryrefresh':
+        final groupId = await _cacheStorage.getTargetGroupId();
+        if (groupId == null) break;
+        try {
+          await _refreshCache(
+            groupId: groupId,
+            selectedItineraryDateId: await _cacheStorage
+                .getSelectedItineraryDateId(),
+            extendCache: uri?.queryParameters['extend'] == 'true',
+          );
+        } catch (_) {
+          await _showMoveFailedToast();
+        }
+        break;
+      case 'calendarrefresh':
+        try {
+          await refreshCalendar?.call(
+            DateTime.tryParse(uri?.queryParameters['date'] ?? ''),
+          );
+        } catch (_) {
+          await _showToastSafely(
+            const AndroidWidgetToastNotification.error('更新に失敗しました'),
+          );
+        }
+        break;
       case 'previous':
         await _move(AndroidWidgetItineraryDateMoveDirection.previous);
         break;

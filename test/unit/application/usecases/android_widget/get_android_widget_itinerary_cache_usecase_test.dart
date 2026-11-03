@@ -107,6 +107,48 @@ void main() {
       ]);
     });
 
+    test('初回は5件に絞り保持済み日付は最新内容で再取得して削除済みを除く', () async {
+      tripEntryQueryService.trips = [_trip('trip', DateTime(2026, 5, 25))];
+      itineraryItemQueryService.itemsByTripId['trip'] = [
+        for (var day = 25; day <= 32; day++)
+          _item('item-$day', '予定$day', DateTime(2026, 5, day, 9), null),
+      ];
+      final initial = await usecase.execute(
+        groupId: 'group001',
+        selectedItineraryDateId: 'trip_2026-05-26',
+      );
+      expect(initial.itineraryDates, hasLength(5));
+      final retainedIds = initial.itineraryDates.map((date) => date.id).toSet();
+      itineraryItemQueryService.itemsByTripId['trip'] = [
+        for (var day = 25; day <= 32; day++)
+          if (day != 26)
+            _item(
+              'item-$day',
+              day == 25 ? '編集後の予定' : '予定$day',
+              DateTime(2026, 5, day, 9),
+              null,
+            ),
+      ];
+      final refreshed = await usecase.execute(
+        groupId: 'group001',
+        selectedItineraryDateId: 'trip_2026-05-31',
+        retainedItineraryDateIds: retainedIds,
+      );
+      expect(refreshed.itineraryDates.map((date) => date.id), [
+        'trip_2026-05-25',
+        'trip_2026-05-27',
+        'trip_2026-05-28',
+        'trip_2026-05-29',
+        'trip_2026-05-30',
+        'trip_2026-05-31',
+        'trip_2026-06-01',
+      ]);
+      expect(
+        refreshed.itineraryDates.first.itineraryItems.single.name,
+        '編集後の予定',
+      );
+    });
+
     test('旅程項目は日付単位にまとめ、開始日時、終了日時の昇順に並べる', () async {
       tripEntryQueryService.trips = [_trip('trip-1', DateTime(2026, 5, 25))];
       itineraryItemQueryService.itemsByTripId['trip-1'] = [

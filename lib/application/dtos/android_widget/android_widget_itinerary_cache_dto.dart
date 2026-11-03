@@ -9,6 +9,8 @@ class AndroidWidgetItineraryCacheDto extends Equatable {
     required this.selectedItineraryDateId,
     required this.lastUpdatedAt,
     required this.itineraryDates,
+    this.itineraryDateIds = const [],
+    this.recentItineraryDateId,
   });
 
   final int version;
@@ -17,6 +19,8 @@ class AndroidWidgetItineraryCacheDto extends Equatable {
   final String? selectedItineraryDateId;
   final DateTime lastUpdatedAt;
   final List<AndroidWidgetItineraryDateCacheDto> itineraryDates;
+  final List<String> itineraryDateIds;
+  final String? recentItineraryDateId;
 
   Map<String, dynamic> toJson() {
     return {
@@ -25,6 +29,8 @@ class AndroidWidgetItineraryCacheDto extends Equatable {
       'groupId': groupId,
       'selectedItineraryDateId': selectedItineraryDateId,
       'lastUpdatedAt': lastUpdatedAt.toIso8601String(),
+      'itineraryDateIds': itineraryDateIds,
+      'recentItineraryDateId': recentItineraryDateId,
       'itineraryDates': itineraryDates
           .map((itineraryDate) => itineraryDate.toJson())
           .toList(),
@@ -40,6 +46,9 @@ class AndroidWidgetItineraryCacheDto extends Equatable {
       },
       groupId: json['groupId'] as String? ?? '',
       selectedItineraryDateId: json['selectedItineraryDateId'] as String?,
+      itineraryDateIds: (json['itineraryDateIds'] as List<dynamic>? ?? [])
+          .cast<String>(),
+      recentItineraryDateId: json['recentItineraryDateId'] as String?,
       lastUpdatedAt:
           DateTime.tryParse(json['lastUpdatedAt'] as String? ?? '') ??
           DateTime.fromMillisecondsSinceEpoch(0),
@@ -58,6 +67,8 @@ class AndroidWidgetItineraryCacheDto extends Equatable {
     selectedItineraryDateId,
     lastUpdatedAt,
     itineraryDates,
+    itineraryDateIds,
+    recentItineraryDateId,
   ];
 }
 

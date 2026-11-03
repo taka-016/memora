@@ -151,7 +151,6 @@ Future<void> _refreshAndroidWidgetCache() async {
     await refresh.execute(
       groupId: groupId,
       selectedItineraryDateId: await storage.getSelectedItineraryDateId(),
-      preserveExistingCacheOnEmpty: true,
       updateWidgetAfterRefresh: false,
     );
   });

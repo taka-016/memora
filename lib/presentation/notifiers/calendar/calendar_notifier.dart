@@ -10,7 +10,9 @@ import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/application/dtos/calendar/calendar_label_dto.dart';
 import 'package:memora/application/exceptions/application_validation_exception.dart';
 import 'package:memora/composition_root/providers/app_providers.dart';
+import 'package:memora/composition_root/providers/android_widget_providers.dart';
 import 'package:memora/composition_root/providers/calendar_providers.dart';
+import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_state.dart';
 
 part 'calendar_notifier.g.dart';
@@ -212,6 +214,7 @@ class CalendarNotifier extends _$CalendarNotifier {
 
   Future<bool> _mutate(Future<void> Function() action) async {
     if (state.isSaving) return false;
+    final refreshWidget = ref.read(refreshSelectedAndroidWidgetCacheProvider);
     state = state.copyWith(isSaving: true, mutationError: '');
     try {
       await action();
@@ -226,6 +229,7 @@ class CalendarNotifier extends _$CalendarNotifier {
       }
       return false;
     }
+    unawaited(_refreshWidgetAfterMutation(refreshWidget));
     if (!ref.mounted) return true;
     if (ref.exists(calendarNotificationsNotifierProvider)) {
       unawaited(
@@ -236,6 +240,16 @@ class CalendarNotifier extends _$CalendarNotifier {
     if (!state.isWatching) await load();
     if (ref.mounted) state = state.copyWith(isSaving: false);
     return true;
+  }
+
+  Future<void> _refreshWidgetAfterMutation(
+    Future<void> Function() refreshWidget,
+  ) async {
+    try {
+      await refreshWidget();
+    } catch (error, stackTrace) {
+      logger.w('保存後のウィジェット更新に失敗しました', error: error, stackTrace: stackTrace);
+    }
   }
 
   CalendarEventDto? seriesForEvent(String id) =>

@@ -36,6 +36,38 @@ final class AndroidWidgetLaunchDestination
   List<Object?> get props => [memberId, groupId, year, tripId, groups];
 }
 
+final class AndroidWidgetCalendarLaunchDestination
+    extends AndroidWidgetLaunchResolution {
+  const AndroidWidgetCalendarLaunchDestination({
+    required super.memberId,
+    required this.groupId,
+    required this.requestId,
+    required this.date,
+    required this.create,
+    this.eventId,
+    this.occurrence,
+    required this.groups,
+  });
+  final String groupId;
+  final int requestId;
+  final DateTime? date;
+  final bool create;
+  final String? eventId;
+  final DateTime? occurrence;
+  final List<GroupDto> groups;
+  @override
+  List<Object?> get props => [
+    memberId,
+    groupId,
+    requestId,
+    date,
+    create,
+    eventId,
+    occurrence,
+    groups,
+  ];
+}
+
 final class AndroidWidgetSettingsLaunchDestination
     extends AndroidWidgetLaunchResolution {
   const AndroidWidgetSettingsLaunchDestination({required super.memberId});
@@ -54,6 +86,7 @@ final class AndroidWidgetLaunchFailure extends AndroidWidgetLaunchResolution {
 class AndroidWidgetLaunchState extends Equatable {
   const AndroidWidgetLaunchState({
     this.pendingTripId,
+    this.pendingCalendarUri,
     this.isSettingsLaunchPending = false,
     this.isInitialUriLoading = false,
     this.isResolving = false,
@@ -61,6 +94,7 @@ class AndroidWidgetLaunchState extends Equatable {
   });
 
   final String? pendingTripId;
+  final Uri? pendingCalendarUri;
   final bool isSettingsLaunchPending;
   final bool isInitialUriLoading;
   final bool isResolving;
@@ -69,6 +103,7 @@ class AndroidWidgetLaunchState extends Equatable {
   @override
   List<Object?> get props => [
     pendingTripId,
+    pendingCalendarUri,
     isSettingsLaunchPending,
     isInitialUriLoading,
     isResolving,
@@ -77,6 +112,8 @@ class AndroidWidgetLaunchState extends Equatable {
 
   AndroidWidgetLaunchState copyWith({
     String? pendingTripId,
+    Uri? pendingCalendarUri,
+    bool clearPendingCalendarUri = false,
     bool? isSettingsLaunchPending,
     bool? isInitialUriLoading,
     bool? isResolving,
@@ -86,6 +123,9 @@ class AndroidWidgetLaunchState extends Equatable {
     bool clearResolution = false,
   }) {
     return AndroidWidgetLaunchState(
+      pendingCalendarUri: clearPendingCalendarUri
+          ? null
+          : pendingCalendarUri ?? this.pendingCalendarUri,
       pendingTripId: clearPendingTripId
           ? null
           : (pendingTripId ?? this.pendingTripId),
@@ -146,6 +186,10 @@ class AndroidWidgetLaunchNotifier extends Notifier<AndroidWidgetLaunchState> {
         state = state.copyWith(isInitialUriLoading: false);
         return;
       }
+      if (_isCalendarLaunchUri(uri)) {
+        _acceptCalendarLaunch(uri!, isInitialUriLoading: false);
+        return;
+      }
       if (_isSettingsLaunchUri(uri)) {
         _acceptSettingsLaunch(isInitialUriLoading: false);
         return;
@@ -167,6 +211,10 @@ class AndroidWidgetLaunchNotifier extends Notifier<AndroidWidgetLaunchState> {
   }
 
   void _receiveUri(Uri? uri) {
+    if (_isCalendarLaunchUri(uri)) {
+      _acceptCalendarLaunch(uri!);
+      return;
+    }
     if (_isSettingsLaunchUri(uri)) {
       if (state.isSettingsLaunchPending ||
           state.resolution is AndroidWidgetSettingsLaunchDestination) {
@@ -187,10 +235,30 @@ class AndroidWidgetLaunchNotifier extends Notifier<AndroidWidgetLaunchState> {
     _acceptTripId(tripId);
   }
 
+  bool _isCalendarLaunchUri(Uri? uri) =>
+      uri?.scheme.toLowerCase() == _launchScheme &&
+      uri?.host.toLowerCase() == 'opencalendar' &&
+      (uri?.queryParameters['groupId']?.isNotEmpty ?? false);
+
+  void _acceptCalendarLaunch(Uri uri, {bool? isInitialUriLoading}) {
+    _requestVersion++;
+    _resolvingRequest = null;
+    _resolvedTripId = null;
+    state = state.copyWith(
+      pendingCalendarUri: uri,
+      clearPendingTripId: true,
+      isSettingsLaunchPending: false,
+      isInitialUriLoading: isInitialUriLoading,
+      isResolving: false,
+      clearResolution: true,
+    );
+  }
+
   void _acceptTripId(String tripId, {bool? isInitialUriLoading}) {
     _requestVersion++;
     _resolvedTripId = null;
     state = state.copyWith(
+      clearPendingCalendarUri: true,
       pendingTripId: tripId,
       isSettingsLaunchPending: false,
       isInitialUriLoading: isInitialUriLoading,
@@ -204,6 +272,7 @@ class AndroidWidgetLaunchNotifier extends Notifier<AndroidWidgetLaunchState> {
     _resolvingRequest = null;
     _resolvedTripId = null;
     state = state.copyWith(
+      clearPendingCalendarUri: true,
       isSettingsLaunchPending: true,
       isInitialUriLoading: isInitialUriLoading,
       isResolving: false,
@@ -213,6 +282,38 @@ class AndroidWidgetLaunchNotifier extends Notifier<AndroidWidgetLaunchState> {
   }
 
   Future<void> resolvePendingLaunch(MemberDto member) async {
+    final calendarUri = state.pendingCalendarUri;
+    if (calendarUri != null) {
+      final version = _requestVersion;
+      state = state.copyWith(clearPendingCalendarUri: true, isResolving: true);
+      AndroidWidgetLaunchResolution resolution = AndroidWidgetLaunchFailure(
+        memberId: member.id,
+      );
+      try {
+        final groups = await ref
+            .read(getGroupsWithMembersUsecaseProvider)
+            .execute(member);
+        final groupId = calendarUri.queryParameters['groupId']!;
+        if (groups.any((group) => group.id == groupId)) {
+          resolution = AndroidWidgetCalendarLaunchDestination(
+            requestId: version,
+            memberId: member.id,
+            groupId: groupId,
+            groups: groups,
+            date: DateTime.tryParse(calendarUri.queryParameters['date'] ?? ''),
+            create: calendarUri.queryParameters['create'] == 'true',
+            eventId: calendarUri.queryParameters['eventId'],
+            occurrence: DateTime.tryParse(
+              calendarUri.queryParameters['occurrence'] ?? '',
+            ),
+          );
+        }
+      } catch (_) {}
+      if (ref.mounted && _isCurrentRequest(version)) {
+        state = state.copyWith(isResolving: false, resolution: resolution);
+      }
+      return;
+    }
     if (state.isSettingsLaunchPending) {
       state = state.copyWith(
         isResolving: false,

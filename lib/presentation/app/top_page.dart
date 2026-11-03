@@ -55,6 +55,7 @@ class TopPage extends HookConsumerWidget {
     final shouldHideForAndroidWidgetLaunch =
         androidWidgetLaunchState.isInitialUriLoading ||
         pendingAndroidWidgetTripId != null ||
+        androidWidgetLaunchState.pendingCalendarUri != null ||
         androidWidgetLaunchState.isSettingsLaunchPending ||
         androidWidgetLaunchState.isResolving ||
         androidWidgetLaunchResolution != null;
@@ -79,6 +80,7 @@ class TopPage extends HookConsumerWidget {
     useEffect(
       () {
         if ((pendingAndroidWidgetTripId == null &&
+                androidWidgetLaunchState.pendingCalendarUri == null &&
                 !androidWidgetLaunchState.isSettingsLaunchPending) ||
             currentMember == null) {
           return null;
@@ -97,6 +99,7 @@ class TopPage extends HookConsumerWidget {
       },
       [
         pendingAndroidWidgetTripId,
+        androidWidgetLaunchState.pendingCalendarUri,
         androidWidgetLaunchState.isSettingsLaunchPending,
         currentMember?.id,
       ],
@@ -256,6 +259,23 @@ class TopPage extends HookConsumerWidget {
       return;
     }
 
+    if (resolution case AndroidWidgetCalendarLaunchDestination()) {
+      ref
+          .read(groupTimelineGroupSelectionNotifierProvider.notifier)
+          .setLoadedGroups(
+            memberId: currentMember.id,
+            groups: resolution.groups,
+          );
+      CalendarRoute(
+        groupId: resolution.groupId,
+        date: resolution.date?.toIso8601String(),
+        create: resolution.create,
+        eventId: resolution.eventId,
+        occurrence: resolution.occurrence?.toIso8601String(),
+        request: resolution.requestId,
+      ).go(context);
+      return;
+    }
     final destination = resolution as AndroidWidgetLaunchDestination;
     ref
         .read(groupTimelineGroupSelectionNotifierProvider.notifier)

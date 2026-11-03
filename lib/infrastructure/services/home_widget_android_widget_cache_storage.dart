@@ -1,4 +1,7 @@
 import 'dart:convert';
+
+import 'package:memora/infrastructure/services/home_widget_calendar_cache_storage.dart';
+
 import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
@@ -55,7 +58,23 @@ class HomeWidgetAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
       return null;
     }
     final decoded = jsonDecode(content) as Map<String, dynamic>;
-    return AndroidWidgetItineraryCacheDto.fromJson(decoded);
+    final cache = AndroidWidgetItineraryCacheDto.fromJson(decoded);
+    final selected = await HomeWidget.getWidgetData<String>(
+      selectedItineraryDateIdKey,
+    );
+    if (selected == null || !cache.itineraryDateIds.contains(selected)) {
+      return cache;
+    }
+    return AndroidWidgetItineraryCacheDto(
+      version: cache.version,
+      sourceMode: cache.sourceMode,
+      groupId: cache.groupId,
+      selectedItineraryDateId: selected,
+      lastUpdatedAt: cache.lastUpdatedAt,
+      itineraryDates: cache.itineraryDates,
+      itineraryDateIds: cache.itineraryDateIds,
+      recentItineraryDateId: cache.recentItineraryDateId,
+    );
   }
 
   @override
@@ -100,6 +119,7 @@ class HomeWidgetAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
   Future<void> clear() async {
     await Future.wait([
       clearTargetGroupId(),
+      const HomeWidgetCalendarCacheStorage().clear(),
       HomeWidget.saveWidgetData<String>(selectedItineraryDateIdKey, ''),
       HomeWidget.saveWidgetData<String>(lastUpdatedAtKey, ''),
       HomeWidget.saveWidgetData<String>(cacheFileKey, null),
@@ -112,5 +132,9 @@ class HomeWidgetAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
       return;
     }
     await HomeWidget.updateWidget(qualifiedAndroidName: qualifiedAndroidName);
+    await HomeWidget.updateWidget(
+      qualifiedAndroidName: 'com.example.memora.ItineraryDarkWidgetReceiver',
+    );
+    await const HomeWidgetCalendarCacheStorage().update();
   }
 }
