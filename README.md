@@ -83,6 +83,22 @@ Google Cloud ConsoleでMaps SDK for AndroidとPlaces API (New)を有効にし、
 
 必要に応じてFirestoreのセキュリティルールを設定した後、`just setup-firebase`を実行します。画面の案内に従ってログインし、対象プロジェクトを選択してください。`lib/firebase_options.dart`と`firebase.json`の設定に加え、Firestoreのルールとインデックスもデプロイされます。
 
+### Googleカレンダー連携の事前設定
+
+オンライン版の連携機能を導入する前に、Firebaseと同じGoogle Cloudプロジェクトを選び、次を設定してください。Cloud側の設定だけでは、アプリの連携機能は利用できません。実装状況は[TODO一覧](./docs/todo.md#カレンダー)で確認してください。
+
+1. [APIライブラリ](https://console.cloud.google.com/apis/library/calendar-json.googleapis.com)でGoogle Calendar APIを有効にする。
+2. [Google Auth Platform](https://console.cloud.google.com/auth/overview)の「ブランディング」でアプリ名、サポートメール、連絡先を設定する。「対象」で利用対象を選び、外部向けの開発中はテストユーザーに連携を試すGoogleアカウントを追加する。
+3. 「データアクセス」に以下の2スコープを登録する。カレンダーの書き込み権限は追加しない。
+   - `https://www.googleapis.com/auth/calendar.calendarlist.readonly`
+   - `https://www.googleapis.com/auth/calendar.events.readonly`
+4. 「クライアント」でAndroid用OAuthクライアントを確認・作成する。オンライン版のパッケージ名は`com.example.memora`。実行するAPKの署名証明書のSHA-1を登録し、debug・releaseで署名が異なる場合はそれぞれ用意する。Google Play App Signingを使う場合は、配信APKのアプリ署名証明書を使う。
+5. 外部公開前に、公開先、プライバシーポリシー等の必要事項を整え、登録スコープに必要なOAuth審査と公開設定を完了する。
+
+OAuthクライアントはアプリを識別します。取得する予定のGoogleアカウントは利用者が連携時に選び、memoraへログインするアカウントと異なっていても構いません。APIキーやFirebaseのログイントークンでは非公開の予定を参照できません。
+
+詳細はGoogle公式の[API有効化](https://developers.google.com/workspace/guides/enable-apis)、[同意画面の設定](https://developers.google.com/workspace/guides/configure-oauth-consent)、[Calendar APIのスコープ](https://developers.google.com/workspace/calendar/api/auth)、[署名証明書の確認](https://developers.google.com/android/guides/client-auth)を参照してください。
+
 ### アプリモードと成果物
 
 `run`・`build`・`release`・`check`の第1引数は`online`または`offline`で、省略時は`online`です。両モードは同じ端末にインストールできますが、データは共有しません。機能の違いは[ユースケース図](./docs/usecase_diagram.md)を参照してください。

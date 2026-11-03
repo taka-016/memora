@@ -41,7 +41,7 @@
 #### 1. Google CloudのAPI・OAuth設定を用意する
 
 1. memora用のGoogle CloudプロジェクトでGoogle Calendar APIを有効化し、対象アプリのOAuthクライアントと同意画面を設定する。開発時のテストユーザーを登録し、外部公開時に必要なOAuth審査・公開設定を整える。プロジェクト・OAuthクライアントは利用アプリを識別するものであり、取得対象のGoogleアカウントは利用者が連携時に選ぶ。
-2. カレンダー参照用のスコープとして`https://www.googleapis.com/auth/calendar.calendarlist.readonly`と`https://www.googleapis.com/auth/calendar.events.readonly`を登録する。アプリ側の認可要求もこの2つに合わせ、カレンダーの書き込み権限は要求しない。必要な手動設定・導入時の注意事項はREADMEへ記載する。権限の定義は[Google公式資料](https://developers.google.com/workspace/calendar/api/auth)を参照する。
+2. カレンダー参照用のスコープとして`https://www.googleapis.com/auth/calendar.calendarlist.readonly`と`https://www.googleapis.com/auth/calendar.events.readonly`を登録する。アプリ側の認可要求もこの2つに合わせ、カレンダーの書き込み権限は要求しない。手動設定は[README](../README.md#googleカレンダー連携の事前設定)、権限の定義は[Google公式資料](https://developers.google.com/workspace/calendar/api/auth)を参照する。
 
 #### 2. 読み取り専用の取得境界とモード別の依存を追加する
 
