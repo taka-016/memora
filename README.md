@@ -99,9 +99,9 @@ Google Cloud ConsoleでMaps SDK for AndroidとPlaces API (New)を有効にし、
 - Identity Toolkit API
 - Token Service API
 
-必要に応じてFirestoreのセキュリティルールを設定した後、`just setup-firebase`を実行します。画面の案内に従ってログインし、対象プロジェクトを選択してください。`lib/firebase_options.dart`と`firebase.json`の設定に加え、Firestoreのルールとインデックスもデプロイされます。
+必要に応じてFirestoreのセキュリティルールを設定した後、`just setup-firebase`を実行し、メニューで必要な処理を選びます。初回は「すべて実行」を選択し、画面の案内に従ってログインとプロジェクト選択を行ってください。処理を直接指定する方法は[justfile](./justfile)を参照してください。
 
-Firebase設定を更新するときは、最新の`android/app/google-services.json`を配置し、`lib/firebase_options.dart`を削除してから`just setup-firebase`を再実行し、アプリを再ビルドしてください。
+設定の生成・更新時は、Google Cloudの「APIとサービス → 認証情報」からFirebase用APIキーをコピーして入力してください（環境変数`FIREBASE_API_KEY`でも指定可）。指定したキーは`android/app/google-services.json`と`lib/firebase_options.dart`の両方へ反映されます。既存ファイルの削除は不要です。設定更新後はアプリを再ビルドしてください。
 
 ### Googleカレンダー連携の事前設定
 

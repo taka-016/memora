@@ -44,8 +44,6 @@
 
 ## 開発環境
 
-- Firebaseセットアップで処理を選択可能にし、指定したFirebase用APIキーをAndroidのJSON・Dart設定へ反映する。READMEとjustfileの案内を更新する。
-
 - KGP未対応の外部プラグイン（home_widget、workmanager_android）がbuilt-in Kotlin対応版に更新されたら対応する
 
 ## 全体
