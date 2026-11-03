@@ -1,3 +1,7 @@
+import 'package:memora/composition_root/providers/external_calendar_providers.dart';
+import 'package:memora/presentation/notifiers/calendar/external_calendar_notifier.dart';
+import 'package:memora/presentation/features/calendar/external_calendar_overlay.dart';
+import 'package:memora/presentation/features/calendar/external_calendar_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
@@ -52,6 +56,9 @@ class _CalendarDayEventsSheetState
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(calendarNotifierProvider(widget.groupId));
+    final externalSupported = ref.watch(externalCalendarSupportedProvider);
+    final external = externalSupported ? ref.watch(externalCalendarNotifierProvider) : null;
+    final displayState = external == null ? state : overlayExternalCalendar(state, external);
     final canEdit =
         !state.isSaving && !state.isLoading && state.loadError.isEmpty;
     return PopScope(
@@ -71,7 +78,7 @@ class _CalendarDayEventsSheetState
                     .selectDate(_dateForIndex(index)),
                 itemBuilder: (context, index) {
                   final date = _dateForIndex(index);
-                  final events = state.eventsForDay(date);
+                  final events = displayState.eventsForDay(date);
                   return Column(
                     children: [
                       Padding(
@@ -94,6 +101,7 @@ class _CalendarDayEventsSheetState
                           ],
                         ),
                       ),
+                      if (externalSupported) const ExternalCalendarStatus(),
                       if (state.isLoading) const LinearProgressIndicator(),
                       Expanded(
                         child: ListView(
@@ -112,11 +120,12 @@ class _CalendarDayEventsSheetState
                               Builder(
                                 builder: (context) {
                                   final scheme = Theme.of(context).colorScheme;
-                                  final label = state.displayLabels
+                                  final label = displayState.displayLabels
                                       .where(
                                         (label) => label.id == event.labelKey,
                                       )
                                       .firstOrNull;
+                                  final source = external?.events.where((value) => externalEventDisplayId(value) == event.id && event.groupId.isEmpty).firstOrNull;
                                   return ListTile(
                                     contentPadding: EdgeInsets.zero,
                                     leading: event.isAllDay
@@ -172,9 +181,9 @@ class _CalendarDayEventsSheetState
                                         Text(calendarPeriodText(event)),
                                       ],
                                     ),
-                                    onTap: canEdit
-                                        ? () => widget.onEdit(event)
-                                        : null,
+                                    onTap: source != null
+                                        ? () => showExternalCalendarEvent(context, source)
+                                        : canEdit ? () => widget.onEdit(event) : null,
                                   );
                                 },
                               ),
