@@ -14,7 +14,9 @@ class ExternalCalendarStatus extends ConsumerWidget {
     if (state.connection == null && state.error.isEmpty && !state.isBusy) {
       return const SizedBox.shrink();
     }
-    return Padding(
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * .25),
+      child: SingleChildScrollView(child: Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -40,7 +42,8 @@ class ExternalCalendarStatus extends ConsumerWidget {
           ),
         ],
       ),
-    );
+    )));
+
   }
 }
 

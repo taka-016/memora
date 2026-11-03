@@ -262,10 +262,15 @@ class _CalendarDayCell extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(
-                  '${date.day}',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 14, height: 1.4),
+                SizedBox(
+                  height: MediaQuery.textScalerOf(context).scale(14) * 1.4,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      '${date.day}',
+                      style: const TextStyle(fontSize: 14, height: 1.4),
+                    ),
+                  ),
                 ),
                 for (var lane = 0; lane < 3; lane++)
                   SizedBox(

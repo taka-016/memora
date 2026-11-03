@@ -42,6 +42,9 @@ class GoogleCalendarAuthService implements ExternalCalendarAuthService {
     await _signIn.signOut();
     final account = await _signIn.authenticate(scopeHint: scopes);
     await account.authorizationClient.authorizeScopes(scopes);
+    if (await account.authorizationClient.authorizationForScopes(scopes) == null) {
+      throw const ExternalCalendarException(ExternalCalendarFailure.permission);
+    }
     _account = account;
     return ExternalCalendarAccount(id: account.id, email: account.email);
   });

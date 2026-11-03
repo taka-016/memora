@@ -47,7 +47,7 @@ class ExternalCalendarNotifier extends _$ExternalCalendarNotifier {
   Future<void> setPeriod(DateTime day) async {
     final month = DateTime(day.year, day.month);
     if (state.month == month) return;
-    _version++;
+    if (!state.isBusy && state.connection != null) _version++;
     state = state.copyWith(
       month: month,
       events: [],

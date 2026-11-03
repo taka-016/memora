@@ -13,9 +13,12 @@ class ExternalCalendarUsecase {
       _storage.load(ownerId);
 
   Future<ExternalCalendarConnection> connect(String ownerId) async {
-    await _storage.remove(ownerId);
+    final previous = await _storage.load(ownerId);
     final account = await _auth.connect();
-    final connection = ExternalCalendarConnection(account: account);
+    final connection = ExternalCalendarConnection(
+      account: account,
+      calendarIds: previous?.account.id == account.id ? previous!.calendarIds : const {},
+    );
     await _storage.save(ownerId, connection);
     return connection;
   }
