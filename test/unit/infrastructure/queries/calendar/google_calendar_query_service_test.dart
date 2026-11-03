@@ -55,7 +55,10 @@ void main() {
       auth,
       MockClient((request) async {
         if (request.url.pathSegments.last == 'series') {
-          return http.Response('{"recurrence": ["RRULE:FREQ=WEEKLY"], "start": {"timeZone": "Asia/Tokyo"}}', 200);
+          return http.Response(
+            '{"recurrence": ["RRULE:FREQ=WEEKLY"], "start": {"timeZone": "Asia/Tokyo"}}',
+            200,
+          );
         }
         count++;
         expect(request.url.pathSegments, [
@@ -126,20 +129,50 @@ void main() {
   });
   test('系列の繰り返し設定を取得操作内で一度だけ読み各回へ渡す', () async {
     var seriesReads = 0;
-    final query = GoogleCalendarQueryService(auth, MockClient((request) async {
-      if (request.url.pathSegments.last == 'series') {
-        seriesReads++;
-        return http.Response(jsonEncode({'id': 'series', 'recurrence': ['RRULE:FREQ=WEEKLY;INTERVAL=2;BYDAY=MO,FR;COUNT=10', 'EXDATE;TZID=Asia/Tokyo:20261106T090000'], 'start': {'timeZone': 'Asia/Tokyo'}}), 200);
-      }
-      return http.Response(jsonEncode({'items': [for (final day in [2, 6]) {
-        'id': 'instance$day', 'recurringEventId': 'series',
-        'start': {'dateTime': '2026-11-0${day}T09:00:00+09:00'},
-        'end': {'dateTime': '2026-11-0${day}T10:00:00+09:00'},
-      }]}), 200);
-    }));
-    final events = await query.events('account', [const ExternalCalendarDto(id: 'c', name: '仕事')], DateTime(2026, 11), DateTime(2026, 12));
+    final query = GoogleCalendarQueryService(
+      auth,
+      MockClient((request) async {
+        if (request.url.pathSegments.last == 'series') {
+          seriesReads++;
+          return http.Response(
+            jsonEncode({
+              'id': 'series',
+              'recurrence': [
+                'RRULE:FREQ=WEEKLY;INTERVAL=2;BYDAY=MO,FR;COUNT=10',
+                'EXDATE;TZID=Asia/Tokyo:20261106T090000',
+              ],
+              'start': {'timeZone': 'Asia/Tokyo'},
+            }),
+            200,
+          );
+        }
+        return http.Response(
+          jsonEncode({
+            'items': [
+              for (final day in [2, 6])
+                {
+                  'id': 'instance$day',
+                  'recurringEventId': 'series',
+                  'start': {'dateTime': '2026-11-0${day}T09:00:00+09:00'},
+                  'end': {'dateTime': '2026-11-0${day}T10:00:00+09:00'},
+                },
+            ],
+          }),
+          200,
+        );
+      }),
+    );
+    final events = await query.events(
+      'account',
+      [const ExternalCalendarDto(id: 'c', name: '仕事')],
+      DateTime(2026, 11),
+      DateTime(2026, 12),
+    );
     expect(seriesReads, 1);
-    expect(events.first.recurrence, ['RRULE:FREQ=WEEKLY;INTERVAL=2;BYDAY=MO,FR;COUNT=10', 'EXDATE;TZID=Asia/Tokyo:20261106T090000']);
+    expect(events.first.recurrence, [
+      'RRULE:FREQ=WEEKLY;INTERVAL=2;BYDAY=MO,FR;COUNT=10',
+      'EXDATE;TZID=Asia/Tokyo:20261106T090000',
+    ]);
     expect(events.last.timeZone, 'Asia/Tokyo');
   });
   for (final status in [401, 403, 404, 429, 500]) {

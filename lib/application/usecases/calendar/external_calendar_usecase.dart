@@ -17,7 +17,9 @@ class ExternalCalendarUsecase {
     final account = await _auth.connect();
     final connection = ExternalCalendarConnection(
       account: account,
-      calendarIds: previous?.account.id == account.id ? previous!.calendarIds : const {},
+      calendarIds: previous?.account.id == account.id
+          ? previous!.calendarIds
+          : const {},
     );
     await _storage.save(ownerId, connection);
     return connection;

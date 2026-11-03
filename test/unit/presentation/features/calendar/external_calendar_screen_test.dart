@@ -49,8 +49,10 @@ class _ExternalCalendar extends ExternalCalendarNotifier {
                 title: '自分の予定',
                 memo: '予定の本文',
                 isRecurring: true,
-          recurrence: ['RRULE:FREQ=WEEKLY;INTERVAL=2;BYDAY=MO,FR;COUNT=10'],
-          timeZone: 'Asia/Tokyo',
+                recurrence: [
+                  'RRULE:FREQ=WEEKLY;INTERVAL=2;BYDAY=MO,FR;COUNT=10',
+                ],
+                timeZone: 'Asia/Tokyo',
                 startDateTime: DateTime(2026, 10, 2, 9),
                 endDateTime: DateTime(2026, 10, 2, 10),
                 isAllDay: false,
@@ -89,7 +91,11 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     final external = _ExternalCalendar();
-    await CalendarTestHarness().pump(tester, externalCalendar: external, textScale: 2);
+    await CalendarTestHarness().pump(
+      tester,
+      externalCalendar: external,
+      textScale: 2,
+    );
     await external.connect();
     await external.selectCalendars({'personal'});
     external.fail();

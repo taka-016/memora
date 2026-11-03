@@ -122,7 +122,21 @@ class GoogleCalendarQueryService implements ExternalCalendarQueryService {
         if (seriesId != null) {
           parent = series[seriesId];
           if (parent == null) {
-            parent = await _get(accountId, Uri(scheme: 'https', host: 'www.googleapis.com', pathSegments: ['calendar', 'v3', 'calendars', calendar.id, 'events', seriesId]));
+            parent = await _get(
+              accountId,
+              Uri(
+                scheme: 'https',
+                host: 'www.googleapis.com',
+                pathSegments: [
+                  'calendar',
+                  'v3',
+                  'calendars',
+                  calendar.id,
+                  'events',
+                  seriesId,
+                ],
+              ),
+            );
             series[seriesId] = parent;
           }
         }
@@ -143,8 +157,12 @@ class GoogleCalendarQueryService implements ExternalCalendarQueryService {
                 : DateTime.parse(end['dateTime'] as String),
             isAllDay: allDay,
             isRecurring: seriesId != null,
-            recurrence: List.unmodifiable((parent?['recurrence'] as List? ?? const []).cast<String>()),
-            timeZone: (parent?['start'] as Map<String, dynamic>?)?['timeZone'] as String?,
+            recurrence: List.unmodifiable(
+              (parent?['recurrence'] as List? ?? const []).cast<String>(),
+            ),
+            timeZone:
+                (parent?['start'] as Map<String, dynamic>?)?['timeZone']
+                    as String?,
           ),
         );
       }

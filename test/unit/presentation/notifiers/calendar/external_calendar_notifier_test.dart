@@ -176,11 +176,21 @@ void main() {
       final pending = Completer<void>();
       final started = Completer<void>();
       if (operation == 'connect') {
-        when(auth.connect()).thenAnswer((_) async { started.complete(); await pending.future; return account; });
+        when(auth.connect()).thenAnswer((_) async {
+          started.complete();
+          await pending.future;
+          return account;
+        });
       } else if (operation == 'select') {
-        when(storage.save(any, any)).thenAnswer((_) async { started.complete(); await pending.future; });
+        when(storage.save(any, any)).thenAnswer((_) async {
+          started.complete();
+          await pending.future;
+        });
       } else {
-        when(auth.disconnect()).thenAnswer((_) async { started.complete(); await pending.future; });
+        when(auth.disconnect()).thenAnswer((_) async {
+          started.complete();
+          await pending.future;
+        });
       }
       final working = switch (operation) {
         'connect' => notifier.connect(),
@@ -194,8 +204,11 @@ void main() {
       final state = container.read(externalCalendarNotifierProvider);
       expect(state.isBusy, isFalse);
       expect(state.month, DateTime(2027, 2));
-      if (operation == 'disconnect') { expect(state.connection, isNull); }
-      else { expect(state.connection!.account.id, 'google'); }
+      if (operation == 'disconnect') {
+        expect(state.connection, isNull);
+      } else {
+        expect(state.connection!.account.id, 'google');
+      }
     });
   }
   test('初期復元中の月移動は復元を捨てず移動後の期間を取得する', () async {
@@ -205,18 +218,36 @@ void main() {
     await notifier.setPeriod(DateTime(2027, 2));
     pending.complete(connection);
     await initialization;
-    expect(container.read(externalCalendarNotifierProvider).connection, isNotNull);
-    verify(query.events('google', [calendar], DateTime(2027, 2, -6), DateTime(2027, 3, 8))).called(1);
+    expect(
+      container.read(externalCalendarNotifierProvider).connection,
+      isNotNull,
+    );
+    verify(
+      query.events(
+        'google',
+        [calendar],
+        DateTime(2027, 2, -6),
+        DateTime(2027, 3, 8),
+      ),
+    ).called(1);
   });
   test('同じGoogleアカウントの再認証では表示対象を維持する', () async {
     await notifier.initialize();
     await notifier.connect();
-    expect(container.read(externalCalendarNotifierProvider).connection!.calendarIds, {'calendar'});
+    expect(
+      container.read(externalCalendarNotifierProvider).connection!.calendarIds,
+      {'calendar'},
+    );
     expect(container.read(externalCalendarNotifierProvider).events, [event]);
   });
   test('別Googleアカウントへの切替では前の表示対象を引き継がない', () async {
     await notifier.initialize();
-    when(auth.connect()).thenAnswer((_) async => const ExternalCalendarAccount(id: 'second', email: 'second@example.com'));
+    when(auth.connect()).thenAnswer(
+      (_) async => const ExternalCalendarAccount(
+        id: 'second',
+        email: 'second@example.com',
+      ),
+    );
     await notifier.connect();
     final state = container.read(externalCalendarNotifierProvider);
     expect(state.connection!.account.id, 'second');

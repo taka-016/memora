@@ -16,35 +16,42 @@ class ExternalCalendarStatus extends ConsumerWidget {
       return const SizedBox.shrink();
     }
     return ConstrainedBox(
-      constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * .25),
-      child: SingleChildScrollView(child: Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (state.isLoading || state.isBusy)
-            const LinearProgressIndicator(semanticsLabel: 'Googleカレンダーを取得中'),
-          if (state.error.isNotEmpty) Text(state.error),
-          if (state.isStale) const Text('最新の情報を取得できていません。前回のGoogle予定を表示しています'),
-          Wrap(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.sizeOf(context).height * .25,
+      ),
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TextButton(
-                onPressed: state.isLoading || state.isBusy
-                    ? null
-                    : notifier.refresh,
-                child: const Text('Google予定を再取得'),
-              ),
-              if (state.needsAuthentication)
-                TextButton(
-                  onPressed: state.isBusy ? null : notifier.connect,
-                  child: const Text('Googleカレンダーを再認証'),
+              if (state.isLoading || state.isBusy)
+                const LinearProgressIndicator(
+                  semanticsLabel: 'Googleカレンダーを取得中',
                 ),
+              if (state.error.isNotEmpty) Text(state.error),
+              if (state.isStale)
+                const Text('最新の情報を取得できていません。前回のGoogle予定を表示しています'),
+              Wrap(
+                children: [
+                  TextButton(
+                    onPressed: state.isLoading || state.isBusy
+                        ? null
+                        : notifier.refresh,
+                    child: const Text('Google予定を再取得'),
+                  ),
+                  if (state.needsAuthentication)
+                    TextButton(
+                      onPressed: state.isBusy ? null : notifier.connect,
+                      child: const Text('Googleカレンダーを再認証'),
+                    ),
+                ],
+              ),
             ],
           ),
-        ],
+        ),
       ),
-    )));
-
+    );
   }
 }
 
@@ -171,7 +178,8 @@ Future<void> showExternalCalendarEvent(
           ),
           if (event.isRecurring) ...[
             const Text('繰り返し予定'),
-            for (final rule in event.recurrence) Text(externalCalendarRecurrenceText(rule)),
+            for (final rule in event.recurrence)
+              Text(externalCalendarRecurrenceText(rule)),
             if (event.timeZone != null) Text('タイムゾーン: ${event.timeZone}'),
           ],
           if (event.locationName.isNotEmpty) Text(event.locationName),
