@@ -74,12 +74,7 @@ void main() {
     expect(state.connection!.calendarIds, {'calendar'});
     expect(state.events.single.title, '個人の予定');
     verify(
-      query.events(
-        'google',
-        [calendar],
-        DateTime(2026, 11, -6),
-        DateTime(2026, 12, 8),
-      ),
+      query.events('google', [calendar], DateTime(2026, 10), DateTime(2027, 1)),
     ).called(1);
     await notifier.selectCalendars({});
     state = container.read(externalCalendarNotifierProvider);
@@ -223,12 +218,7 @@ void main() {
       isNotNull,
     );
     verify(
-      query.events(
-        'google',
-        [calendar],
-        DateTime(2027, 2, -6),
-        DateTime(2027, 3, 8),
-      ),
+      query.events('google', [calendar], DateTime(2027, 1), DateTime(2027, 4)),
     ).called(1);
   });
   test('同じGoogleアカウントの再認証では表示対象を維持する', () async {
