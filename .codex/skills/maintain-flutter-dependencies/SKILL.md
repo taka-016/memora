@@ -9,7 +9,7 @@ Flutter、パッケージ、コンテナ、Androidビルドツールを一つの
 
 ## 基本方針
 
-- このスキルによる依存保守だけを目的とする作業では、`docs/todo.md` の確認と更新を不要とし、依存保守自体をtodoへ追加しない。
+- このスキルによる依存保守だけを目的とする作業では、`project_docs/todo.md` の確認と更新を不要とし、依存保守自体をtodoへ追加しない。
 - 作業開始時に `coding-preparation`、アプリやテストのコード修正時に `coding` と `test-coding`、完了時に `coding-completion` を使用する。
 - 現在が `main` なら `chore/` で始まる作業ブランチを作成する。
 - ユーザーが対象を限定していない限り、Flutter、Dartパッケージ、Docker開発環境、Androidビルド環境を一括で点検する。

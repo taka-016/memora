@@ -1,0 +1,73 @@
+:root {
+  color-scheme: light;
+  --ink: #182b38;
+  --muted: #4e626f;
+  --accent: #006493;
+  --paper: #ffffff;
+  --wash: #edf7ff;
+  --line: #d4e5f0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans JP', sans-serif;
+  color: var(--ink);
+  background: var(--paper);
+  line-height: 1.9;
+  font-size: 16px;
+}
+* { box-sizing: border-box; }
+body { margin: 0; }
+a { color: var(--accent); text-underline-offset: .24em; overflow-wrap: anywhere; }
+a:hover { text-decoration-thickness: 2px; }
+a:focus-visible { outline: 3px solid var(--accent); outline-offset: 5px; border-radius: 2px; }
+p { margin: 0 0 1.1em; }
+h1, h2, h3 { line-height: 1.5; text-wrap: pretty; }
+h1 { font-size: clamp(2rem, 5.5vw, 3.6rem); letter-spacing: -.025em; margin: .35em 0 .65em; }
+h2 { font-size: clamp(1.4rem, 3vw, 2rem); margin: .3em 0 .8em; }
+h3 { font-size: 1.15rem; margin: 0 0 .5em; }
+ul { padding-left: 1.5em; }
+li { margin: .55em 0; }
+main, .site-header, .site-footer { max-width: 1080px; margin-inline: auto; padding-inline: clamp(20px, 5vw, 64px); }
+.site-header { display: flex; justify-content: space-between; align-items: center; gap: 20px; padding-block: 26px; }
+.brand { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); font-size: 1.65rem; font-weight: 750; letter-spacing: -.04em; text-decoration: none; }
+.brand-mark { display: block; width: 40px; height: 40px; flex-shrink: 0; object-fit: contain; }
+nav { display: flex; flex-wrap: wrap; gap: 12px 22px; font-size: .88rem; }
+nav a { color: var(--muted); }
+nav a[aria-current='page'] { color: var(--accent); font-weight: 700; }
+.skip-link { position: absolute; left: 16px; top: -100px; padding: 10px; background: white; z-index: 10; }
+.skip-link:focus { top: 8px; }
+.hero { padding-block: clamp(40px, 8vw, 92px) 76px; }
+.eyebrow { color: var(--accent); font-size: .8rem; font-weight: 750; letter-spacing: .08em; margin-bottom: .8em; }
+.lead { font-size: clamp(1rem, 2vw, 1.15rem); color: var(--muted); }
+.button { display: inline-flex; gap: 20px; align-items: center; padding: 12px 22px; margin-top: 16px; border-radius: 6px; background: var(--accent); color: white; font-weight: 650; text-decoration: none; }
+.button:hover { background: #004c72; }
+.hero-note { font-size: .8rem; color: var(--muted); margin-top: 14px; }
+.section { padding-block: 52px; border-top: 1px solid var(--line); }
+.feature-list article { display: flex; gap: 24px; margin-top: 30px; max-width: 760px; }
+.feature-list p { color: var(--muted); }
+.number { color: var(--accent); font-size: .85rem; font-weight: 700; padding-top: 5px; }
+.mode-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px; }
+.mode-grid article { border-left: 3px solid var(--line); padding-left: 22px; }
+.document-links { display: flex; flex-wrap: wrap; gap: 14px 30px; margin-block: 24px; font-weight: 650; }
+.closing > p:last-child { font-size: .88rem; color: var(--muted); }
+.document { max-width: 800px; padding-block: 48px 64px; overflow-wrap: anywhere; }
+.document h1 { font-size: clamp(1.8rem, 4vw, 2.5rem); }
+.document h2 { font-size: 1.35rem; }
+.document section { margin-top: 40px; scroll-margin-top: 24px; }
+.document h3 { margin-top: 25px; }
+.updated { color: var(--muted); font-size: .85rem; margin-bottom: 30px; }
+.contents { background: var(--wash); padding: 18px 22px; border-radius: 6px; margin-block: 26px 40px; }
+.site-footer { border-top: 1px solid var(--line); padding-block: 32px 40px; color: var(--muted); font-size: .85rem; }
+.site-footer nav { margin-bottom: 22px; }
+.footer-brand { color: var(--ink); font-size: 1.3rem; font-weight: 750; }
+@media (max-width: 640px) {
+  .site-header { align-items: flex-start; flex-direction: column; padding-block: 20px; gap: 14px; }
+  nav { gap: 10px 18px; }
+  .hero { padding-block: 34px 48px; }
+  .section { padding-block: 36px; }
+  .mode-grid { grid-template-columns: 1fr; gap: 26px; }
+  .wide-only { display: none; }
+  .document { padding-top: 28px; }
+}
+@media print {
+  .site-header nav, .site-footer, .skip-link { display: none; }
+  main { max-width: none; padding: 0; }
+  a { color: inherit; }
+}
