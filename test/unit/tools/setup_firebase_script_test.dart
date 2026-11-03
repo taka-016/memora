@@ -249,6 +249,20 @@ esac
     });
   }
 
+  test('インデックスのデプロイでは既存のファイル指定を変更しない', () async {
+    final config = {
+      'firestore': {
+        'rules': 'firestore.rules',
+        'indexes': 'custom.indexes.json',
+      },
+    };
+    file('firebase.json').writeAsStringSync(jsonEncode(config));
+
+    success(await runSetup(['indexes']));
+
+    expect(jsonDecode(file('firebase.json').readAsStringSync()), config);
+  });
+
   test('複数処理を順に実行しログイン確認は一度だけ行う', () async {
     success(await runSetup(['rules', 'indexes']));
     expect(commands.readAsLinesSync(), [
