@@ -170,6 +170,59 @@ void main() {
         .initialize();
     expect(container.read(externalCalendarNotifierProvider).connection, isNull);
   });
+  for (final operation in ['connect', 'select', 'disconnect']) {
+    test('月移動が$operationの完了を捨てず操作を再開できる', () async {
+      await notifier.initialize();
+      final pending = Completer<void>();
+      final started = Completer<void>();
+      if (operation == 'connect') {
+        when(auth.connect()).thenAnswer((_) async { started.complete(); await pending.future; return account; });
+      } else if (operation == 'select') {
+        when(storage.save(any, any)).thenAnswer((_) async { started.complete(); await pending.future; });
+      } else {
+        when(auth.disconnect()).thenAnswer((_) async { started.complete(); await pending.future; });
+      }
+      final working = switch (operation) {
+        'connect' => notifier.connect(),
+        'select' => notifier.selectCalendars({'calendar'}),
+        _ => notifier.disconnect(),
+      };
+      await started.future;
+      await notifier.setPeriod(DateTime(2027, 2));
+      pending.complete();
+      await working;
+      final state = container.read(externalCalendarNotifierProvider);
+      expect(state.isBusy, isFalse);
+      expect(state.month, DateTime(2027, 2));
+      if (operation == 'disconnect') { expect(state.connection, isNull); }
+      else { expect(state.connection!.account.id, 'google'); }
+    });
+  }
+  test('初期復元中の月移動は復元を捨てず移動後の期間を取得する', () async {
+    final pending = Completer<ExternalCalendarConnection?>();
+    when(storage.load('owner')).thenAnswer((_) => pending.future);
+    final initialization = notifier.initialize();
+    await notifier.setPeriod(DateTime(2027, 2));
+    pending.complete(connection);
+    await initialization;
+    expect(container.read(externalCalendarNotifierProvider).connection, isNotNull);
+    verify(query.events('google', [calendar], DateTime(2027, 2, -6), DateTime(2027, 3, 8))).called(1);
+  });
+  test('同じGoogleアカウントの再認証では表示対象を維持する', () async {
+    await notifier.initialize();
+    await notifier.connect();
+    expect(container.read(externalCalendarNotifierProvider).connection!.calendarIds, {'calendar'});
+    expect(container.read(externalCalendarNotifierProvider).events, [event]);
+  });
+  test('別Googleアカウントへの切替では前の表示対象を引き継がない', () async {
+    await notifier.initialize();
+    when(auth.connect()).thenAnswer((_) async => const ExternalCalendarAccount(id: 'second', email: 'second@example.com'));
+    await notifier.connect();
+    final state = container.read(externalCalendarNotifierProvider);
+    expect(state.connection!.account.id, 'second');
+    expect(state.connection!.calendarIds, isEmpty);
+    expect(state.events, isEmpty);
+  });
   test('オフラインでは設定・SDK・APIに触れない', () async {
     final offline = ProviderContainer(
       overrides: [externalCalendarSupportedProvider.overrideWithValue(false)],

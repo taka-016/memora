@@ -81,6 +81,30 @@ class _ExternalCalendar extends ExternalCalendarNotifier {
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
+  testWidgets('小画面で文字を拡大しても外部取得エラーをスクロールして再試行できる', (tester) async {
+    tester.view.physicalSize = const Size(320, 480);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final external = _ExternalCalendar();
+    await CalendarTestHarness().pump(tester, externalCalendar: external, textScale: 2);
+    await external.connect();
+    await external.selectCalendars({'personal'});
+    external.fail();
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+    await tester.ensureVisible(find.text('Google予定を再取得'));
+    await tester.tap(find.text('Google予定を再取得'));
+    await tester.pump();
+    expect(external.retries, 1);
+    await tester.tap(find.byTooltip('Googleカレンダー連携'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('連携を解除'));
+    await tester.tap(find.text('連携を解除'));
+    await tester.pump();
+    expect(external.disconnected, isTrue);
+    expect(tester.takeException(), isNull);
+  });
   testWidgets('連携・選択した予定を共有予定と重ねて読み取り専用で表示し解除する', (tester) async {
     final external = _ExternalCalendar();
     final harness = CalendarTestHarness()

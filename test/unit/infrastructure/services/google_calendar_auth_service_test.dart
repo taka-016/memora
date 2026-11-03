@@ -81,6 +81,10 @@ void main() {
     );
     verifyNever(authorization.authorizeScopes(any));
   });
+  test('同意画面が戻っても2権限がそろわなければ連携完了にしない', () async {
+    when(authorization.authorizationForScopes(scopes)).thenAnswer((_) async => null);
+    await expectLater(service.connect(), throwsA(isA<ExternalCalendarException>().having((v) => v.kind, '種別', ExternalCalendarFailure.permission)));
+  });
   test('解除はSDKの認可を取り消す', () async {
     await service.disconnect();
     verify(sdk.disconnect()).called(1);
