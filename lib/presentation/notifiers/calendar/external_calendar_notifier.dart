@@ -18,7 +18,9 @@ class ExternalCalendarNotifier extends _$ExternalCalendarNotifier {
     _initialization = null;
     _owner = ref.watch(externalCalendarOwnerProvider);
     final now = ref.watch(appClockProvider).now();
-    ref.onDispose(() { _version++; });
+    ref.onDispose(() {
+      _version++;
+    });
     return ExternalCalendarState(month: DateTime(now.year, now.month));
   }
 
@@ -46,7 +48,13 @@ class ExternalCalendarNotifier extends _$ExternalCalendarNotifier {
     final month = DateTime(day.year, day.month);
     if (state.month == month) return;
     _version++;
-    state = state.copyWith(month: month, events: [], isLoading: false, isStale: false, error: '');
+    state = state.copyWith(
+      month: month,
+      events: [],
+      isLoading: false,
+      isStale: false,
+      error: '',
+    );
     if (!state.isBusy) await refresh();
   }
 
@@ -61,7 +69,9 @@ class ExternalCalendarNotifier extends _$ExternalCalendarNotifier {
       if (!_active(version)) return;
       state = state.copyWith(connection: connection, isBusy: false);
       await refresh();
-    } catch (error) { _failure(error, version); }
+    } catch (error) {
+      _failure(error, version);
+    }
   }
 
   Future<void> selectCalendars(Set<String> ids) async {
@@ -74,9 +84,16 @@ class ExternalCalendarNotifier extends _$ExternalCalendarNotifier {
     try {
       final next = await usecase.select(owner, connection, ids);
       if (!_active(version)) return;
-      state = state.copyWith(connection: next, events: [], isStale: false, isBusy: false);
+      state = state.copyWith(
+        connection: next,
+        events: [],
+        isStale: false,
+        isBusy: false,
+      );
       await refresh();
-    } catch (error) { _failure(error, version); }
+    } catch (error) {
+      _failure(error, version);
+    }
   }
 
   Future<void> refresh() async {
@@ -90,14 +107,34 @@ class ExternalCalendarNotifier extends _$ExternalCalendarNotifier {
       final calendars = await usecase.calendars(connection.account.id);
       if (!_active(version)) return;
       state = state.copyWith(calendars: calendars);
-      if (connection.calendarIds.any((id) => !calendars.any((calendar) => calendar.id == id))) {
-        throw const ExternalCalendarException(ExternalCalendarFailure.unavailable);
+      if (connection.calendarIds.any(
+        (id) => !calendars.any((calendar) => calendar.id == id),
+      )) {
+        throw const ExternalCalendarException(
+          ExternalCalendarFailure.unavailable,
+        );
       }
-      final selected = calendars.where((v) => connection.calendarIds.contains(v.id)).toList();
-      final events = selected.isEmpty ? <Never>[] : await usecase.events(connection.account.id, selected, DateTime(month.year, month.month, -6), DateTime(month.year, month.month + 1, 8));
+      final selected = calendars
+          .where((v) => connection.calendarIds.contains(v.id))
+          .toList();
+      final events = selected.isEmpty
+          ? <Never>[]
+          : await usecase.events(
+              connection.account.id,
+              selected,
+              DateTime(month.year, month.month, -6),
+              DateTime(month.year, month.month + 1, 8),
+            );
       if (!_active(version)) return;
-      state = state.copyWith(events: events, isLoading: false, isStale: false, error: '');
-    } catch (error) { _failure(error, version); }
+      state = state.copyWith(
+        events: events,
+        isLoading: false,
+        isStale: false,
+        error: '',
+      );
+    } catch (error) {
+      _failure(error, version);
+    }
   }
 
   Future<void> disconnect() async {
@@ -109,12 +146,22 @@ class ExternalCalendarNotifier extends _$ExternalCalendarNotifier {
     try {
       await usecase.disconnect(owner);
       if (_active(version)) state = state.copyWith(isBusy: false);
-    } catch (error) { _failure(error, version); }
+    } catch (error) {
+      _failure(error, version);
+    }
   }
 
   void _failure(Object error, int version) {
     if (!_active(version)) return;
-    final failure = error is ExternalCalendarException ? error : const ExternalCalendarException(ExternalCalendarFailure.network);
-    state = state.copyWith(isLoading: false, isBusy: false, isStale: state.events.isNotEmpty, error: failure.message, failure: failure.kind);
+    final failure = error is ExternalCalendarException
+        ? error
+        : const ExternalCalendarException(ExternalCalendarFailure.network);
+    state = state.copyWith(
+      isLoading: false,
+      isBusy: false,
+      isStale: state.events.isNotEmpty,
+      error: failure.message,
+      failure: failure.kind,
+    );
   }
 }

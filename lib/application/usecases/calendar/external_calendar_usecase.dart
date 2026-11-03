@@ -9,7 +9,8 @@ class ExternalCalendarUsecase {
   final ExternalCalendarSettingsStorage _storage;
   final ExternalCalendarQueryService _query;
 
-  Future<ExternalCalendarConnection?> restore(String ownerId) => _storage.load(ownerId);
+  Future<ExternalCalendarConnection?> restore(String ownerId) =>
+      _storage.load(ownerId);
 
   Future<ExternalCalendarConnection> connect(String ownerId) async {
     await _storage.remove(ownerId);
@@ -19,8 +20,15 @@ class ExternalCalendarUsecase {
     return connection;
   }
 
-  Future<ExternalCalendarConnection> select(String ownerId, ExternalCalendarConnection connection, Set<String> ids) async {
-    final next = ExternalCalendarConnection(account: connection.account, calendarIds: ids);
+  Future<ExternalCalendarConnection> select(
+    String ownerId,
+    ExternalCalendarConnection connection,
+    Set<String> ids,
+  ) async {
+    final next = ExternalCalendarConnection(
+      account: connection.account,
+      calendarIds: ids,
+    );
     await _storage.save(ownerId, next);
     return next;
   }
@@ -33,6 +41,12 @@ class ExternalCalendarUsecase {
     }
   }
 
-  Future<List<ExternalCalendarDto>> calendars(String accountId) => _query.calendars(accountId);
-  Future<List<ExternalCalendarEventDto>> events(String accountId, List<ExternalCalendarDto> calendars, DateTime from, DateTime to) => _query.events(accountId, calendars, from, to);
+  Future<List<ExternalCalendarDto>> calendars(String accountId) =>
+      _query.calendars(accountId);
+  Future<List<ExternalCalendarEventDto>> events(
+    String accountId,
+    List<ExternalCalendarDto> calendars,
+    DateTime from,
+    DateTime to,
+  ) => _query.events(accountId, calendars, from, to);
 }

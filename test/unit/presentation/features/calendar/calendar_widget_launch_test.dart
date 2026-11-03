@@ -1,4 +1,5 @@
 import 'package:memora/composition_root/providers/external_calendar_providers.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -50,7 +51,7 @@ void main() {
         await tester.pumpWidget(
           ProviderScope(
             overrides: [
-          externalCalendarOwnerProvider.overrideWithValue(null),
+              externalCalendarOwnerProvider.overrideWithValue(null),
               appClockProvider.overrideWithValue(
                 FixedAppClock(DateTime(2026, 10, 1)),
               ),
@@ -142,7 +143,7 @@ void main() {
         await tester.pumpWidget(
           ProviderScope(
             overrides: [
-          externalCalendarOwnerProvider.overrideWithValue(null),
+              externalCalendarOwnerProvider.overrideWithValue(null),
               appClockProvider.overrideWithValue(
                 FixedAppClock(DateTime(2026, 11, 1)),
               ),

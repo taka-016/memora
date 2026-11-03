@@ -2,6 +2,7 @@ import 'package:memora/composition_root/providers/external_calendar_providers.da
 import 'package:memora/presentation/notifiers/calendar/external_calendar_notifier.dart';
 import 'package:memora/presentation/features/calendar/external_calendar_overlay.dart';
 import 'package:memora/presentation/features/calendar/external_calendar_widgets.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -70,7 +71,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   Future<void> _loadExternal() async {
     if (!ref.read(externalCalendarSupportedProvider)) return;
     final external = ref.read(externalCalendarNotifierProvider.notifier);
-    final date = ref.read(calendarNotifierProvider(widget.groupId)).selectedDate;
+    final date = ref
+        .read(calendarNotifierProvider(widget.groupId))
+        .selectedDate;
     await external.setPeriod(date);
     if (mounted) await external.initialize();
   }
@@ -139,10 +142,18 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final state = ref.watch(provider);
     final notifier = ref.read(provider.notifier);
     final externalSupported = ref.watch(externalCalendarSupportedProvider);
-    final external = externalSupported ? ref.watch(externalCalendarNotifierProvider) : null;
-    final displayState = external == null ? state : overlayExternalCalendar(state, external);
+    final external = externalSupported
+        ? ref.watch(externalCalendarNotifierProvider)
+        : null;
+    final displayState = external == null
+        ? state
+        : overlayExternalCalendar(state, external);
     ref.listen(provider.select((value) => value.month), (_, month) {
-      if (externalSupported) unawaited(ref.read(externalCalendarNotifierProvider.notifier).setPeriod(month));
+      if (externalSupported) {
+        unawaited(
+          ref.read(externalCalendarNotifierProvider.notifier).setPeriod(month),
+        );
+      }
     });
     ref.listen(provider, (_, next) {
       if ((!_pendingInitialCreate && _pendingInitialEventId == null) ||
@@ -216,8 +227,15 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                           icon: const Icon(Icons.refresh),
                         ),
                       if (externalSupported)
-                        IconButton(tooltip: 'Googleカレンダー連携', icon: const Icon(Icons.calendar_month_outlined),
-                          onPressed: () => showDialog<void>(context: context, builder: (_) => const ExternalCalendarSettingsDialog())),
+                        IconButton(
+                          tooltip: 'Googleカレンダー連携',
+                          icon: const Icon(Icons.calendar_month_outlined),
+                          onPressed: () => showDialog<void>(
+                            context: context,
+                            builder: (_) =>
+                                const ExternalCalendarSettingsDialog(),
+                          ),
+                        ),
                       IconButton(
                         tooltip: '色ラベルの設定',
                         onPressed: canEdit

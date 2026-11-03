@@ -109,7 +109,9 @@ class CalendarTestHarness {
         overrides: [
           externalCalendarOwnerProvider.overrideWithValue(null),
           if (externalCalendar != null)
-            externalCalendarNotifierProvider.overrideWith(() => externalCalendar),
+            externalCalendarNotifierProvider.overrideWith(
+              () => externalCalendar,
+            ),
           if (capabilities != null)
             appCapabilitiesProvider.overrideWithValue(capabilities),
           if (locationSearch != null)

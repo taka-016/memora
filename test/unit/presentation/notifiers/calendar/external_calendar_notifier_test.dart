@@ -21,10 +21,24 @@ import 'package:memora/presentation/notifiers/calendar/external_calendar_notifie
 import 'external_calendar_notifier_test.mocks.dart';
 
 void main() {
-  const account = ExternalCalendarAccount(id: 'google', email: 'me@example.com');
+  const account = ExternalCalendarAccount(
+    id: 'google',
+    email: 'me@example.com',
+  );
   const calendar = ExternalCalendarDto(id: 'calendar', name: '個人');
-  final connection = ExternalCalendarConnection(account: account, calendarIds: {'calendar'});
-  final event = ExternalCalendarEventDto(id: 'e', calendarId: 'calendar', calendarName: '個人', title: '個人の予定', startDateTime: DateTime(2026, 11, 1), endDateTime: DateTime(2026, 11, 1, 1), isAllDay: false);
+  final connection = ExternalCalendarConnection(
+    account: account,
+    calendarIds: {'calendar'},
+  );
+  final event = ExternalCalendarEventDto(
+    id: 'e',
+    calendarId: 'calendar',
+    calendarName: '個人',
+    title: '個人の予定',
+    startDateTime: DateTime(2026, 11, 1),
+    endDateTime: DateTime(2026, 11, 1, 1),
+    isAllDay: false,
+  );
   late MockExternalCalendarQueryService query;
   late MockExternalCalendarAuthService auth;
   late MockExternalCalendarSettingsStorage storage;
@@ -39,11 +53,15 @@ void main() {
     when(auth.connect()).thenAnswer((_) async => account);
     when(query.calendars('google')).thenAnswer((_) async => [calendar]);
     when(query.events(any, any, any, any)).thenAnswer((_) async => [event]);
-    container = ProviderContainer(overrides: [
-      externalCalendarSupportedProvider.overrideWithValue(true),
-      externalCalendarOwnerProvider.overrideWithValue('owner'),
-      externalCalendarUsecaseProvider.overrideWithValue(ExternalCalendarUsecase(auth, storage, query)),
-    ]);
+    container = ProviderContainer(
+      overrides: [
+        externalCalendarSupportedProvider.overrideWithValue(true),
+        externalCalendarOwnerProvider.overrideWithValue('owner'),
+        externalCalendarUsecaseProvider.overrideWithValue(
+          ExternalCalendarUsecase(auth, storage, query),
+        ),
+      ],
+    );
     container.listen(externalCalendarNotifierProvider, (_, _) {});
     notifier = container.read(externalCalendarNotifierProvider.notifier);
     addTearDown(container.dispose);
@@ -55,15 +73,35 @@ void main() {
     var state = container.read(externalCalendarNotifierProvider);
     expect(state.connection!.calendarIds, {'calendar'});
     expect(state.events.single.title, '個人の予定');
-    verify(query.events('google', [calendar], DateTime(2026, 11, -6), DateTime(2026, 12, 8))).called(1);
+    verify(
+      query.events(
+        'google',
+        [calendar],
+        DateTime(2026, 11, -6),
+        DateTime(2026, 12, 8),
+      ),
+    ).called(1);
     await notifier.selectCalendars({});
     state = container.read(externalCalendarNotifierProvider);
     expect(state.events, isEmpty);
-    verify(storage.save('owner', argThat(isA<ExternalCalendarConnection>().having((v) => v.calendarIds, '選択', isEmpty)))).called(1);
+    verify(
+      storage.save(
+        'owner',
+        argThat(
+          isA<ExternalCalendarConnection>().having(
+            (v) => v.calendarIds,
+            '選択',
+            isEmpty,
+          ),
+        ),
+      ),
+    ).called(1);
   });
   test('取得失敗は前回表示と最新でないことを保持し再試行で削除を反映する', () async {
     await notifier.initialize();
-    when(query.events(any, any, any, any)).thenThrow(const ExternalCalendarException(ExternalCalendarFailure.network));
+    when(query.events(any, any, any, any)).thenThrow(
+      const ExternalCalendarException(ExternalCalendarFailure.network),
+    );
     await notifier.refresh();
     var state = container.read(externalCalendarNotifierProvider);
     expect(state.events, [event]);
@@ -77,7 +115,9 @@ void main() {
     expect(state.isStale, isFalse);
   });
   test('保存IDがあっても認証失敗なら再認証を案内し連携完了にしない', () async {
-    when(query.calendars(any)).thenThrow(const ExternalCalendarException(ExternalCalendarFailure.authentication));
+    when(query.calendars(any)).thenThrow(
+      const ExternalCalendarException(ExternalCalendarFailure.authentication),
+    );
     await notifier.initialize();
     final state = container.read(externalCalendarNotifierProvider);
     expect(state.needsAuthentication, isTrue);
@@ -87,7 +127,9 @@ void main() {
   test('連携操作のキャンセルは新しい連携として保存しない', () async {
     when(storage.load('owner')).thenAnswer((_) async => null);
     await notifier.initialize();
-    when(auth.connect()).thenThrow(const ExternalCalendarException(ExternalCalendarFailure.canceled));
+    when(auth.connect()).thenThrow(
+      const ExternalCalendarException(ExternalCalendarFailure.canceled),
+    );
     await notifier.connect();
     expect(container.read(externalCalendarNotifierProvider).connection, isNull);
     verifyNever(storage.save(any, any));
@@ -115,17 +157,23 @@ void main() {
     container.updateOverrides([
       externalCalendarSupportedProvider.overrideWithValue(true),
       externalCalendarOwnerProvider.overrideWithValue('other'),
-      externalCalendarUsecaseProvider.overrideWithValue(ExternalCalendarUsecase(auth, storage, query)),
+      externalCalendarUsecaseProvider.overrideWithValue(
+        ExternalCalendarUsecase(auth, storage, query),
+      ),
     ]);
     expect(container.read(externalCalendarNotifierProvider).events, isEmpty);
     pending.complete([event]);
     await loading;
     expect(container.read(externalCalendarNotifierProvider).events, isEmpty);
-    await container.read(externalCalendarNotifierProvider.notifier).initialize();
+    await container
+        .read(externalCalendarNotifierProvider.notifier)
+        .initialize();
     expect(container.read(externalCalendarNotifierProvider).connection, isNull);
   });
   test('オフラインでは設定・SDK・APIに触れない', () async {
-    final offline = ProviderContainer(overrides: [externalCalendarSupportedProvider.overrideWithValue(false)]);
+    final offline = ProviderContainer(
+      overrides: [externalCalendarSupportedProvider.overrideWithValue(false)],
+    );
     addTearDown(offline.dispose);
     offline.listen(externalCalendarNotifierProvider, (_, _) {});
     await offline.read(externalCalendarNotifierProvider.notifier).initialize();

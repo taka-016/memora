@@ -12,7 +12,8 @@ class ExternalCalendarState {
     this.isStale = false,
     this.error = '',
     this.failure,
-  }) : calendars = List.unmodifiable(calendars), events = List.unmodifiable(events);
+  }) : calendars = List.unmodifiable(calendars),
+       events = List.unmodifiable(events);
   final DateTime month;
   final ExternalCalendarConnection? connection;
   final List<ExternalCalendarDto> calendars;
@@ -22,12 +23,30 @@ class ExternalCalendarState {
   final bool isStale;
   final String error;
   final ExternalCalendarFailure? failure;
-  bool get needsAuthentication => failure == ExternalCalendarFailure.authentication || failure == ExternalCalendarFailure.permission;
+  bool get needsAuthentication =>
+      failure == ExternalCalendarFailure.authentication ||
+      failure == ExternalCalendarFailure.permission;
 
-  ExternalCalendarState copyWith({DateTime? month, ExternalCalendarConnection? connection, bool clearConnection = false, List<ExternalCalendarDto>? calendars, List<ExternalCalendarEventDto>? events, bool? isLoading, bool? isBusy, bool? isStale, String? error, ExternalCalendarFailure? failure}) => ExternalCalendarState(
-    month: month ?? this.month, connection: clearConnection ? null : connection ?? this.connection,
-    calendars: calendars ?? this.calendars, events: events ?? this.events,
-    isLoading: isLoading ?? this.isLoading, isBusy: isBusy ?? this.isBusy,
-    isStale: isStale ?? this.isStale, error: error ?? this.error, failure: failure,
+  ExternalCalendarState copyWith({
+    DateTime? month,
+    ExternalCalendarConnection? connection,
+    bool clearConnection = false,
+    List<ExternalCalendarDto>? calendars,
+    List<ExternalCalendarEventDto>? events,
+    bool? isLoading,
+    bool? isBusy,
+    bool? isStale,
+    String? error,
+    ExternalCalendarFailure? failure,
+  }) => ExternalCalendarState(
+    month: month ?? this.month,
+    connection: clearConnection ? null : connection ?? this.connection,
+    calendars: calendars ?? this.calendars,
+    events: events ?? this.events,
+    isLoading: isLoading ?? this.isLoading,
+    isBusy: isBusy ?? this.isBusy,
+    isStale: isStale ?? this.isStale,
+    error: error ?? this.error,
+    failure: failure,
   );
 }

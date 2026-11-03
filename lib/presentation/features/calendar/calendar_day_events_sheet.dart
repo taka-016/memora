@@ -57,8 +57,12 @@ class _CalendarDayEventsSheetState
   Widget build(BuildContext context) {
     final state = ref.watch(calendarNotifierProvider(widget.groupId));
     final externalSupported = ref.watch(externalCalendarSupportedProvider);
-    final external = externalSupported ? ref.watch(externalCalendarNotifierProvider) : null;
-    final displayState = external == null ? state : overlayExternalCalendar(state, external);
+    final external = externalSupported
+        ? ref.watch(externalCalendarNotifierProvider)
+        : null;
+    final displayState = external == null
+        ? state
+        : overlayExternalCalendar(state, external);
     final canEdit =
         !state.isSaving && !state.isLoading && state.loadError.isEmpty;
     return PopScope(
@@ -125,7 +129,14 @@ class _CalendarDayEventsSheetState
                                         (label) => label.id == event.labelKey,
                                       )
                                       .firstOrNull;
-                                  final source = external?.events.where((value) => externalEventDisplayId(value) == event.id && event.groupId.isEmpty).firstOrNull;
+                                  final source = external?.events
+                                      .where(
+                                        (value) =>
+                                            externalEventDisplayId(value) ==
+                                                event.id &&
+                                            event.groupId.isEmpty,
+                                      )
+                                      .firstOrNull;
                                   return ListTile(
                                     contentPadding: EdgeInsets.zero,
                                     leading: event.isAllDay
@@ -182,8 +193,13 @@ class _CalendarDayEventsSheetState
                                       ],
                                     ),
                                     onTap: source != null
-                                        ? () => showExternalCalendarEvent(context, source)
-                                        : canEdit ? () => widget.onEdit(event) : null,
+                                        ? () => showExternalCalendarEvent(
+                                            context,
+                                            source,
+                                          )
+                                        : canEdit
+                                        ? () => widget.onEdit(event)
+                                        : null,
                                   );
                                 },
                               ),

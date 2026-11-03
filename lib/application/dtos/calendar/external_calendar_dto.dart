@@ -11,8 +11,10 @@ class ExternalCalendarAccount {
 }
 
 class ExternalCalendarConnection {
-  ExternalCalendarConnection({required this.account, Set<String> calendarIds = const {}})
-    : calendarIds = Set.unmodifiable(calendarIds);
+  ExternalCalendarConnection({
+    required this.account,
+    Set<String> calendarIds = const {},
+  }) : calendarIds = Set.unmodifiable(calendarIds);
   final ExternalCalendarAccount account;
   final Set<String> calendarIds;
 }

@@ -5,6 +5,7 @@ import 'package:memora/application/dtos/calendar/external_calendar_dto.dart';
 import 'package:memora/application/exceptions/external_calendar_exception.dart';
 import 'package:memora/presentation/notifiers/calendar/external_calendar_notifier.dart';
 import 'package:memora/presentation/notifiers/calendar/external_calendar_state.dart';
+
 import 'calendar_test_support.dart';
 
 class _ExternalCalendar extends ExternalCalendarNotifier {
@@ -12,35 +13,78 @@ class _ExternalCalendar extends ExternalCalendarNotifier {
   bool disconnected = false;
   int retries = 0;
   @override
-  ExternalCalendarState build() => ExternalCalendarState(month: DateTime(2026, 10));
+  ExternalCalendarState build() =>
+      ExternalCalendarState(month: DateTime(2026, 10));
   @override
   Future<void> initialize() async {}
   @override
   Future<void> setPeriod(DateTime day) async {}
   @override
   Future<void> connect() async {
-    state = state.copyWith(connection: ExternalCalendarConnection(account: const ExternalCalendarAccount(id: 'google', email: 'me@example.com')), calendars: [const ExternalCalendarDto(id: 'personal', name: '個人')]);
+    state = state.copyWith(
+      connection: ExternalCalendarConnection(
+        account: const ExternalCalendarAccount(
+          id: 'google',
+          email: 'me@example.com',
+        ),
+      ),
+      calendars: [const ExternalCalendarDto(id: 'personal', name: '個人')],
+    );
   }
+
   @override
   Future<void> selectCalendars(Set<String> ids) async {
     selected = ids.contains('personal');
-    state = state.copyWith(connection: ExternalCalendarConnection(account: state.connection!.account, calendarIds: ids), events: selected ? [ExternalCalendarEventDto(id: 'external', calendarId: 'personal', calendarName: '個人', title: '自分の予定', memo: '予定の本文', isRecurring: true, startDateTime: DateTime(2026, 10, 2, 9), endDateTime: DateTime(2026, 10, 2, 10), isAllDay: false)] : []);
+    state = state.copyWith(
+      connection: ExternalCalendarConnection(
+        account: state.connection!.account,
+        calendarIds: ids,
+      ),
+      events: selected
+          ? [
+              ExternalCalendarEventDto(
+                id: 'external',
+                calendarId: 'personal',
+                calendarName: '個人',
+                title: '自分の予定',
+                memo: '予定の本文',
+                isRecurring: true,
+                startDateTime: DateTime(2026, 10, 2, 9),
+                endDateTime: DateTime(2026, 10, 2, 10),
+                isAllDay: false,
+              ),
+            ]
+          : [],
+    );
   }
+
   @override
   Future<void> disconnect() async {
     disconnected = true;
     state = ExternalCalendarState(month: state.month);
   }
+
   @override
-  Future<void> refresh() async { retries++; state = state.copyWith(error: '', isStale: false); }
-  void fail() { state = state.copyWith(error: '外部予定を取得できません', isStale: true, failure: ExternalCalendarFailure.network); }
+  Future<void> refresh() async {
+    retries++;
+    state = state.copyWith(error: '', isStale: false);
+  }
+
+  void fail() {
+    state = state.copyWith(
+      error: '外部予定を取得できません',
+      isStale: true,
+      failure: ExternalCalendarFailure.network,
+    );
+  }
 }
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
   testWidgets('連携・選択した予定を共有予定と重ねて読み取り専用で表示し解除する', (tester) async {
     final external = _ExternalCalendar();
-    final harness = CalendarTestHarness()..savedEvents.add(calendarTestEvent('shared', '家族の予定'));
+    final harness = CalendarTestHarness()
+      ..savedEvents.add(calendarTestEvent('shared', '家族の予定'));
     await harness.pump(tester, externalCalendar: external);
     await tester.tap(find.byTooltip('Googleカレンダー連携'));
     await tester.pumpAndSettle();
