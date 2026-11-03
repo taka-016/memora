@@ -122,8 +122,8 @@ class ExternalCalendarNotifier extends _$ExternalCalendarNotifier {
           : await usecase.events(
               connection.account.id,
               selected,
-              DateTime(month.year, month.month, -6),
-              DateTime(month.year, month.month + 1, 8),
+              DateTime(month.year, month.month - 1),
+              DateTime(month.year, month.month + 2),
             );
       if (!_active(version)) return;
       state = state.copyWith(

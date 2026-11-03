@@ -105,7 +105,6 @@ class _CalendarDayEventsSheetState
                           ],
                         ),
                       ),
-                      if (externalSupported) const ExternalCalendarStatus(),
                       if (state.isLoading) const LinearProgressIndicator(),
                       Expanded(
                         child: ListView(

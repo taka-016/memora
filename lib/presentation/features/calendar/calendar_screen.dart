@@ -280,7 +280,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                       ),
                     ],
                   ),
-                  if (externalSupported) const ExternalCalendarStatus(),
                   if (state.isLoading) const LinearProgressIndicator(),
                   if (state.loadError.isNotEmpty)
                     Padding(

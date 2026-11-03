@@ -6,55 +6,6 @@ import 'package:memora/application/dtos/calendar/external_calendar_dto.dart';
 import 'package:memora/presentation/features/calendar/calendar_event_dialog.dart';
 import 'package:memora/presentation/notifiers/calendar/external_calendar_notifier.dart';
 
-class ExternalCalendarStatus extends ConsumerWidget {
-  const ExternalCalendarStatus({super.key});
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(externalCalendarNotifierProvider);
-    final notifier = ref.read(externalCalendarNotifierProvider.notifier);
-    if (state.connection == null && state.error.isEmpty && !state.isBusy) {
-      return const SizedBox.shrink();
-    }
-    return ConstrainedBox(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.sizeOf(context).height * .25,
-      ),
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (state.isLoading || state.isBusy)
-                const LinearProgressIndicator(
-                  semanticsLabel: 'Googleカレンダーを取得中',
-                ),
-              if (state.error.isNotEmpty) Text(state.error),
-              if (state.isStale)
-                const Text('最新の情報を取得できていません。前回のGoogle予定を表示しています'),
-              Wrap(
-                children: [
-                  TextButton(
-                    onPressed: state.isLoading || state.isBusy
-                        ? null
-                        : notifier.refresh,
-                    child: const Text('Google予定を再取得'),
-                  ),
-                  if (state.needsAuthentication)
-                    TextButton(
-                      onPressed: state.isBusy ? null : notifier.connect,
-                      child: const Text('Googleカレンダーを再認証'),
-                    ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class ExternalCalendarSettingsDialog extends ConsumerWidget {
   const ExternalCalendarSettingsDialog({super.key});
   @override
@@ -81,7 +32,6 @@ class ExternalCalendarSettingsDialog extends ConsumerWidget {
                 '自分のGoogle予定をこの端末だけで表示します。他のメンバーには共有されません。予定の変更はGoogleカレンダーで行ってください。',
               ),
               if (connection != null) Text(connection.account.email),
-              if (busy) const LinearProgressIndicator(),
               if (state.error.isNotEmpty) Text(state.error),
               if (state.needsAuthentication)
                 TextButton(
@@ -156,7 +106,7 @@ Future<void> showExternalCalendarEvent(
 ) => showDialog<void>(
   context: context,
   builder: (context) => AlertDialog(
-    title: const Text('Googleカレンダーの予定（読み取り専用）'),
+    title: const Text('Googleカレンダーの予定'),
     content: SingleChildScrollView(
       child: Column(
         mainAxisSize: MainAxisSize.min,
