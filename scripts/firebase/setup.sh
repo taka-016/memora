@@ -89,7 +89,7 @@ deploy_indexes() {
   fi
   local config_tmp
   config_tmp="$(mktemp firebase.json.XXXXXX)"
-  if jq '.firestore.indexes = "firestore.indexes.json"' firebase.json > "$config_tmp"; then
+  if jq '.firestore.indexes //= "firestore.indexes.json"' firebase.json > "$config_tmp"; then
     mv "$config_tmp" firebase.json
   else
     rm -f "$config_tmp"
