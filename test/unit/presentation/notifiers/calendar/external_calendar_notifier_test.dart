@@ -196,6 +196,9 @@ void main() {
     final refreshing = notifier.refresh();
     await untilCalled(query.events(any, any, any, any));
     container.updateOverrides([
+      externalCalendarWidgetRefreshProvider.overrideWithValue(() async {
+        widgetUpdates++;
+      }),
       externalCalendarSupportedProvider.overrideWithValue(true),
       externalCalendarOwnerProvider.overrideWithValue('other'),
       externalCalendarUsecaseProvider.overrideWithValue(
