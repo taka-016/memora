@@ -122,8 +122,8 @@ void main() {
     expect(external.eventAccounts, ['second']);
     await tester.tap(find.text('閉じる'));
     await tester.pumpAndSettle();
-    expect(find.text('secondの予定 · 個人'), findsWidgets);
-    expect(find.text('firstの予定 · 個人'), findsNothing);
+    expect(find.text('secondの予定'), findsWidgets);
+    expect(find.text('firstの予定'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
@@ -145,7 +145,9 @@ void main() {
     await tester.tap(find.byKey(calendarTestDay2));
     await tester.pumpAndSettle();
     expect(find.widgetWithText(ListTile, '家族の予定'), findsOneWidget);
-    await tester.tap(find.widgetWithText(ListTile, 'firstの予定 · 個人'));
+    expect(find.textContaining('端末-first@example.com'), findsOneWidget);
+    expect(find.textContaining('端末 · 個人'), findsNothing);
+    await tester.tap(find.widgetWithText(ListTile, 'firstの予定'));
     await tester.pumpAndSettle();
     expect(find.text('端末カレンダーの予定'), findsOneWidget);
     expect(find.text('予定の本文'), findsOneWidget);

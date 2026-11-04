@@ -24,9 +24,9 @@ class DeviceCalendarWidgetOverlayTest {
             event("夜", millis(2, 23), millis(3, 0)),
         ), mapOf("1" to "個人"), zone)
         fun titles(day: Int) = result.days.first { it.date.dayOfMonth == day && it.date.monthValue == 11 }.events.map { it.title }
-        assertEquals(listOf("旅行 · 個人", "夜 · 個人"), titles(2))
-        assertEquals(listOf("旅行 · 個人"), titles(3))
-        assertEquals(listOf("旅行 · 個人"), titles(4))
+        assertEquals(listOf("旅行", "夜"), titles(2))
+        assertEquals(listOf("旅行"), titles(3))
+        assertEquals(listOf("旅行"), titles(4))
         assertTrue(titles(5).isEmpty())
     }
 
@@ -36,7 +36,7 @@ class DeviceCalendarWidgetOverlayTest {
         val base = month.copy(days = month.days.map { if (it.date == LocalDate.of(2026, 11, 2)) it.copy(events = listOf(shared)) else it })
         val result = DeviceCalendarWidgetOverlay.merge(base, listOf(event("通院", millis(2, 9), millis(2, 10))), mapOf("1" to "個人"), zone)
         val items = result.days.first { it.date == LocalDate.of(2026, 11, 2) }.events
-        assertEquals(listOf("通院 · 個人", "家族の予定"), items.map { it.title })
+        assertEquals(listOf("通院", "家族の予定"), items.map { it.title })
         assertTrue(items.first().isExternal)
         assertNull(items.first().openEventId)
         assertEquals("shared", items.last().openEventId)

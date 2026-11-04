@@ -9,6 +9,12 @@ void main() {
     const calendar = ExternalCalendarDto(id: 'shared', name: '共有');
     final external = ExternalCalendarState(
       month: DateTime(2026, 11),
+      connections: [
+        for (final id in ['first', 'second'])
+          ExternalCalendarConnection(
+            account: ExternalCalendarAccount(id: id, name: '$id@example.com'),
+          ),
+      ],
       calendarsByAccount: {
         'first': [calendar],
         'second': [calendar],
@@ -33,6 +39,11 @@ void main() {
       CalendarState(selectedDate: DateTime(2026, 11)),
       external,
     );
+    expect(result.events.map((v) => v.title), ['firstの予定', 'secondの予定']);
+    expect(result.labels.map((v) => v.name), [
+      '端末-first@example.com',
+      '端末-second@example.com',
+    ]);
     expect(result.events.map((v) => v.id).toSet(), hasLength(2));
     expect(result.labels.map((v) => v.id).toSet(), hasLength(2));
     expect(result.events.first.labelId, result.labels.first.id);
