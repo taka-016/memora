@@ -5,7 +5,7 @@ import 'package:memora/presentation/notifiers/calendar/calendar_state.dart';
 import 'package:memora/presentation/notifiers/calendar/external_calendar_state.dart';
 
 void main() {
-  test('同じカレンダーと予定を複数アカウントから取得しても識別子が衝突しない', () {
+  test('複数アカウントの予定を区別し連携元と重複しないカレンダー名を表示する', () {
     const calendar = ExternalCalendarDto(id: 'shared', name: '共有');
     final external = ExternalCalendarState(
       month: DateTime(2026, 11),
@@ -17,7 +17,9 @@ void main() {
       ],
       calendarsByAccount: {
         'first': [calendar],
-        'second': [calendar],
+        'second': [
+          const ExternalCalendarDto(id: 'shared', name: 'second@example.com'),
+        ],
       },
       eventsByAccount: {
         for (final account in ['first', 'second'])
@@ -26,7 +28,7 @@ void main() {
               accountId: account,
               id: 'same-event',
               calendarId: 'shared',
-              calendarName: '共有',
+              calendarName: account == 'first' ? '共有' : 'second@example.com',
               title: '$accountの予定',
               startDateTime: DateTime(2026, 11, 2, 9),
               endDateTime: DateTime(2026, 11, 2, 10),
@@ -41,7 +43,7 @@ void main() {
     );
     expect(result.events.map((v) => v.title), ['firstの予定', 'secondの予定']);
     expect(result.labels.map((v) => v.name), [
-      '端末-first@example.com',
+      '端末-first@example.com（共有）',
       '端末-second@example.com',
     ]);
     expect(result.events.map((v) => v.id).toSet(), hasLength(2));

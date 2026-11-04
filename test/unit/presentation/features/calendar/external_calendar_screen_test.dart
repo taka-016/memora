@@ -145,11 +145,18 @@ void main() {
     await tester.tap(find.byKey(calendarTestDay2));
     await tester.pumpAndSettle();
     expect(find.widgetWithText(ListTile, '家族の予定'), findsOneWidget);
-    expect(find.textContaining('端末-first@example.com'), findsOneWidget);
+    expect(find.text('端末-first@example.com（個人）'), findsOneWidget);
     expect(find.textContaining('端末 · 個人'), findsNothing);
     await tester.tap(find.widgetWithText(ListTile, 'firstの予定'));
     await tester.pumpAndSettle();
     expect(find.text('端末カレンダーの予定'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.text('端末-first@example.com（個人）'),
+      ),
+      findsOneWidget,
+    );
     expect(find.text('予定の本文'), findsOneWidget);
     expect(find.textContaining('2週間ごと'), findsOneWidget);
     expect(find.textContaining('読み取り専用'), findsNothing);
