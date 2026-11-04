@@ -2,16 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:memora/application/dtos/calendar/external_calendar_dto.dart';
-import 'package:memora/application/exceptions/external_calendar_exception.dart';
 import 'package:memora/presentation/notifiers/calendar/external_calendar_notifier.dart';
 import 'package:memora/presentation/notifiers/calendar/external_calendar_state.dart';
 
 import 'calendar_test_support.dart';
 
 class _ExternalCalendar extends ExternalCalendarNotifier {
-  bool selected = false;
-  bool disconnected = false;
   int retries = 0;
+  bool grantsPermission = true;
   List<String> get eventAccounts =>
       state.events.map((v) => v.accountId).toList();
   @override
@@ -22,25 +20,28 @@ class _ExternalCalendar extends ExternalCalendarNotifier {
   @override
   Future<void> setPeriod(DateTime day) async {}
   @override
-  Future<void> connect() async {
-    final id = state.connections.isEmpty ? 'google' : 'second';
+  Future<void> requestAccess() async {
+    if (!grantsPermission) {
+      state = state.copyWith(error: '端末の設定でカレンダーの読み取りを許可してください');
+      return;
+    }
     state = state.copyWith(
+      hasPermission: true,
       connections: [
-        ...state.connections,
-        ExternalCalendarConnection(
-          account: ExternalCalendarAccount(id: id, email: '$id@example.com'),
-        ),
+        for (final id in ['first', 'second'])
+          ExternalCalendarConnection(
+            account: ExternalCalendarAccount(id: id, name: '$id@example.com'),
+          ),
       ],
       calendarsByAccount: {
-        ...state.calendarsByAccount,
-        id: [const ExternalCalendarDto(id: 'personal', name: '個人')],
+        for (final id in ['first', 'second'])
+          id: [const ExternalCalendarDto(id: 'personal', name: '個人')],
       },
     );
   }
 
   @override
   Future<void> selectCalendars(String accountId, Set<String> ids) async {
-    selected = ids.contains('personal');
     state = state.copyWith(
       connections: [
         for (final connection in state.connections)
@@ -54,14 +55,14 @@ class _ExternalCalendar extends ExternalCalendarNotifier {
       ],
       eventsByAccount: {
         ...state.eventsByAccount,
-        accountId: selected
+        accountId: ids.isNotEmpty
             ? [
                 ExternalCalendarEventDto(
                   accountId: accountId,
                   id: 'external',
                   calendarId: 'personal',
                   calendarName: '個人',
-                  title: '自分の予定',
+                  title: '$accountIdの予定',
                   memo: '予定の本文',
                   isRecurring: true,
                   recurrence: [
@@ -79,34 +80,83 @@ class _ExternalCalendar extends ExternalCalendarNotifier {
   }
 
   @override
-  Future<void> disconnect(String accountId) async {
-    disconnected = true;
-    state = state.copyWith(
-      connections: state.connections
-          .where((v) => v.account.id != accountId)
-          .toList(),
-      calendarsByAccount: {...state.calendarsByAccount}..remove(accountId),
-      eventsByAccount: {...state.eventsByAccount}..remove(accountId),
-    );
-  }
-
-  @override
-  Future<void> refresh({String? accountId}) async {
+  Future<void> refresh() async {
     retries++;
     state = state.copyWith(error: '');
   }
 
   void fail() {
-    state = state.copyWith(
-      error: '外部予定を取得できません',
-      failure: ExternalCalendarFailure.network,
-    );
+    state = state.copyWith(error: '端末の予定を取得できません');
   }
 }
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
-  testWidgets('小画面で文字を拡大しても外部取得エラーをスクロールして再試行できる', (tester) async {
+  Finder section(String id) => find.byKey(ValueKey('external_account_$id'));
+  Finder checkbox(String id) =>
+      find.descendant(of: section(id), matching: find.byType(CheckboxListTile));
+
+  testWidgets('端末の許可後に複数アカウントを選び一方の選択だけを解除できる', (tester) async {
+    final external = _ExternalCalendar();
+    await CalendarTestHarness().pump(tester, externalCalendar: external);
+    await tester.tap(find.byTooltip('端末カレンダー連携'));
+    await tester.pumpAndSettle();
+    expect(find.text('Googleアカウントを追加'), findsNothing);
+    await tester.tap(find.text('カレンダーへのアクセスを許可'));
+    await tester.pump();
+    expect(find.text('first@example.com'), findsOneWidget);
+    expect(find.text('second@example.com'), findsOneWidget);
+    await tester.tap(checkbox('first'));
+    await tester.pump();
+    await tester.ensureVisible(checkbox('second'));
+    await tester.tap(checkbox('second'));
+    await tester.pump();
+    expect(external.eventAccounts, ['first', 'second']);
+    final clear = find.descendant(
+      of: section('first'),
+      matching: find.text('選択を解除'),
+    );
+    await tester.ensureVisible(clear);
+    await tester.tap(clear);
+    await tester.pump();
+    expect(external.eventAccounts, ['second']);
+    await tester.tap(find.text('閉じる'));
+    await tester.pumpAndSettle();
+    expect(find.text('secondの予定 · 個人'), findsWidgets);
+    expect(find.text('firstの予定 · 個人'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('端末の予定を共有予定と重ねて表示し詳細では編集操作や読み取り専用表記を出さない', (tester) async {
+    final external = _ExternalCalendar();
+    final harness = CalendarTestHarness()
+      ..savedEvents.add(calendarTestEvent('shared', '家族の予定'));
+    await harness.pump(tester, externalCalendar: external);
+    await tester.tap(find.byTooltip('端末カレンダー連携'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('カレンダーへのアクセスを許可'));
+    await tester.pump();
+    await tester.tap(checkbox('first'));
+    await tester.pump();
+    await tester.tap(find.text('閉じる'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(calendarTestDay2));
+    await tester.pump();
+    await tester.tap(find.byKey(calendarTestDay2));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(ListTile, '家族の予定'), findsOneWidget);
+    await tester.tap(find.widgetWithText(ListTile, 'firstの予定 · 個人'));
+    await tester.pumpAndSettle();
+    expect(find.text('端末カレンダーの予定'), findsOneWidget);
+    expect(find.text('予定の本文'), findsOneWidget);
+    expect(find.textContaining('2週間ごと'), findsOneWidget);
+    expect(find.textContaining('読み取り専用'), findsNothing);
+    expect(find.text('保存'), findsNothing);
+    expect(find.text('削除'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('小画面でもエラーは連携設定内だけに表示し一覧更新で再試行できる', (tester) async {
     tester.view.physicalSize = const Size(320, 480);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -117,115 +167,28 @@ void main() {
       externalCalendar: external,
       textScale: 2,
     );
-    await external.connect();
-    await external.selectCalendars('google', {'personal'});
+    await external.requestAccess();
     external.fail();
     await tester.pump();
-    expect(tester.takeException(), isNull);
-    expect(find.text('外部予定を取得できません'), findsNothing);
-    expect(find.text('Google予定を再取得'), findsNothing);
-    await tester.tap(find.byTooltip('Googleカレンダー連携'));
+    expect(find.text('端末の予定を取得できません'), findsNothing);
+    await tester.tap(find.byTooltip('端末カレンダー連携'));
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('カレンダー一覧を再取得'));
-    await tester.tap(find.text('カレンダー一覧を再取得'));
+    expect(find.text('端末の予定を取得できません'), findsOneWidget);
+    await tester.ensureVisible(find.text('カレンダー一覧を更新'));
+    await tester.tap(find.text('カレンダー一覧を更新'));
     await tester.pump();
     expect(external.retries, 1);
-    await tester.ensureVisible(find.text('連携を解除'));
-    await tester.tap(find.text('連携を解除'));
-    await tester.pump();
-    expect(external.disconnected, isTrue);
-    expect(tester.takeException(), isNull);
-  });
-  testWidgets('2アカウントを追加してそれぞれの予定を表示し一方だけ解除できる', (tester) async {
-    final external = _ExternalCalendar();
-    await CalendarTestHarness().pump(tester, externalCalendar: external);
-    await tester.tap(find.byTooltip('Googleカレンダー連携'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Googleアカウントを選択して連携'));
-    await tester.pump();
-    await tester.tap(find.widgetWithText(CheckboxListTile, '個人'));
-    await tester.pump();
-    await tester.ensureVisible(find.text('Googleアカウントを追加'));
-    await tester.tap(find.text('Googleアカウントを追加'));
-    await tester.pump();
-    expect(find.text('google@example.com'), findsOneWidget);
-    expect(find.text('second@example.com'), findsOneWidget);
-    final secondSection = find.byKey(const ValueKey('external_account_second'));
-    final secondCalendar = find.descendant(
-      of: secondSection,
-      matching: find.byType(CheckboxListTile),
-    );
-    await tester.ensureVisible(secondCalendar);
-    await tester.tap(secondCalendar);
-    await tester.pump();
-    expect(external.eventAccounts, ['google', 'second']);
-    final firstSection = find.byKey(const ValueKey('external_account_google'));
-    final disconnect = find.descendant(
-      of: firstSection,
-      matching: find.text('連携を解除'),
-    );
-    await tester.ensureVisible(disconnect);
-    await tester.tap(disconnect);
-    await tester.pump();
-    expect(find.text('google@example.com'), findsNothing);
-    expect(find.text('second@example.com'), findsOneWidget);
-    await tester.tap(find.text('閉じる'));
-    await tester.pumpAndSettle();
-    expect(find.text('自分の予定 · 個人'), findsWidgets);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('連携・選択した予定を共有予定と重ねて読み取り専用で表示し解除する', (tester) async {
-    final external = _ExternalCalendar();
-    final harness = CalendarTestHarness()
-      ..savedEvents.add(calendarTestEvent('shared', '家族の予定'));
-    await harness.pump(tester, externalCalendar: external);
-    await tester.tap(find.byTooltip('Googleカレンダー連携'));
+  testWidgets('許可を拒否した場合は端末設定で許可する案内を表示する', (tester) async {
+    final external = _ExternalCalendar()..grantsPermission = false;
+    await CalendarTestHarness().pump(tester, externalCalendar: external);
+    await tester.tap(find.byTooltip('端末カレンダー連携'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Googleアカウントを選択して連携'));
+    await tester.tap(find.text('カレンダーへのアクセスを許可'));
     await tester.pump();
-    await tester.tap(find.widgetWithText(CheckboxListTile, '個人'));
-    await tester.pump();
-    expect(external.selected, isTrue);
-    await tester.tap(find.text('閉じる'));
-    await tester.pumpAndSettle();
-    expect(find.text('自分の予定 · 個人'), findsWidgets);
-    await tester.tap(find.byKey(calendarTestDay2));
-    await tester.pump();
-    await tester.tap(find.byKey(calendarTestDay2));
-    await tester.pumpAndSettle();
-    expect(find.widgetWithText(ListTile, '家族の予定'), findsOneWidget);
-    await tester.tap(find.widgetWithText(ListTile, '自分の予定 · 個人'));
-    await tester.pumpAndSettle();
-    expect(find.text('予定の本文'), findsOneWidget);
-    expect(find.text('Googleカレンダーの予定'), findsOneWidget);
-    expect(find.text('繰り返し予定'), findsOneWidget);
-    expect(find.textContaining('2週間ごと'), findsOneWidget);
-    expect(find.textContaining('月・金'), findsOneWidget);
-    expect(find.textContaining('10回'), findsOneWidget);
-    expect(find.text('保存'), findsNothing);
-    expect(find.text('削除'), findsNothing);
-    await tester.tap(find.text('閉じる'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('予定一覧を閉じる'));
-    await tester.pumpAndSettle();
-    external.fail();
-    await tester.pump();
-    expect(find.textContaining('最新の情報を取得できていません'), findsNothing);
-    expect(find.text('外部予定を取得できません'), findsNothing);
-    expect(find.text('家族の予定'), findsWidgets);
-    await tester.tap(find.byTooltip('Googleカレンダー連携'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('カレンダー一覧を再取得'));
-    await tester.pump();
-    expect(external.retries, 1);
-    await tester.tap(find.text('連携を解除'));
-    await tester.pump();
-    expect(external.disconnected, isTrue);
-    await tester.tap(find.text('閉じる'));
-    await tester.pumpAndSettle();
-    expect(find.text('自分の予定 · 個人'), findsNothing);
-    expect(find.text('家族の予定'), findsWidgets);
-    expect(tester.takeException(), isNull);
+    expect(find.text('端末の設定でカレンダーの読み取りを許可してください'), findsOneWidget);
+    expect(find.byType(CheckboxListTile), findsNothing);
   });
 }

@@ -7,7 +7,7 @@ import 'package:mockito/mockito.dart';
 import 'package:memora/application/dtos/calendar/external_calendar_dto.dart';
 import 'package:memora/application/exceptions/external_calendar_exception.dart';
 import 'package:memora/application/queries/calendar/external_calendar_query_service.dart';
-import 'package:memora/application/services/calendar/external_calendar_auth_service.dart';
+import 'package:memora/application/services/calendar/device_calendar_access_service.dart';
 import 'package:memora/application/services/calendar/external_calendar_settings_storage.dart';
 import 'package:memora/application/usecases/calendar/external_calendar_usecase.dart';
 import 'package:memora/composition_root/providers/external_calendar_providers.dart';
@@ -15,293 +15,205 @@ import 'package:memora/presentation/notifiers/calendar/external_calendar_notifie
 
 @GenerateNiceMocks([
   MockSpec<ExternalCalendarQueryService>(),
-  MockSpec<ExternalCalendarAuthService>(),
+  MockSpec<DeviceCalendarAccessService>(),
   MockSpec<ExternalCalendarSettingsStorage>(),
 ])
 import 'external_calendar_notifier_test.mocks.dart';
 
 void main() {
-  const account = ExternalCalendarAccount(
-    id: 'google',
-    email: 'me@example.com',
-  );
+  const first = ExternalCalendarAccount(id: 'first', name: 'first@example.com');
   const second = ExternalCalendarAccount(
     id: 'second',
-    email: 'second@example.com',
+    name: 'second@example.com',
   );
-  const calendar = ExternalCalendarDto(id: 'calendar', name: '個人');
+  const calendar = ExternalCalendarDto(id: '1', name: '個人');
   final connection = ExternalCalendarConnection(
-    account: account,
-    calendarIds: {'calendar'},
+    account: first,
+    calendarIds: {'1'},
   );
   final secondConnection = ExternalCalendarConnection(
     account: second,
-    calendarIds: {'calendar'},
+    calendarIds: {'1'},
   );
-  ExternalCalendarEventDto event(String accountId) => ExternalCalendarEventDto(
-    accountId: accountId,
-    id: 'e',
-    calendarId: 'calendar',
+  ExternalCalendarEventDto event(String account) => ExternalCalendarEventDto(
+    accountId: account,
+    id: 'event',
+    calendarId: '1',
     calendarName: '個人',
-    title: '$accountIdの予定',
+    title: '$accountの予定',
     startDateTime: DateTime(2026, 11, 1),
     endDateTime: DateTime(2026, 11, 1, 1),
     isAllDay: false,
   );
   late MockExternalCalendarQueryService query;
-  late MockExternalCalendarAuthService auth;
+  late MockDeviceCalendarAccessService access;
   late MockExternalCalendarSettingsStorage storage;
   late ProviderContainer container;
   late ExternalCalendarNotifier notifier;
   late List<ExternalCalendarConnection> saved;
+  late StreamController<void> changes;
 
   setUp(() {
     query = MockExternalCalendarQueryService();
-    auth = MockExternalCalendarAuthService();
+    access = MockDeviceCalendarAccessService();
     storage = MockExternalCalendarSettingsStorage();
     saved = [connection];
+    changes = StreamController<void>.broadcast(sync: true);
+    when(access.hasReadPermission()).thenAnswer((_) async => true);
+    when(access.requestReadPermission()).thenAnswer((_) async => true);
+    when(query.changes).thenAnswer((_) => changes.stream);
+    when(query.accounts()).thenAnswer((_) async => [first, second]);
+    when(query.calendars(any)).thenAnswer((_) async => [calendar]);
+    when(query.events(any, any, any, any)).thenAnswer(
+      (call) async => [event(call.positionalArguments.first as String)],
+    );
     when(storage.load('owner')).thenAnswer((_) async => saved);
     when(storage.save('owner', any)).thenAnswer((call) async {
       saved = List<ExternalCalendarConnection>.from(
         call.positionalArguments[1] as List,
       );
     });
-    when(storage.remove('owner')).thenAnswer((_) async {
-      saved = [];
-    });
-    when(auth.connect()).thenAnswer((_) async => account);
-    when(query.calendars(any)).thenAnswer((_) async => [calendar]);
-    when(query.events(any, any, any, any)).thenAnswer(
-      (call) async => [event(call.positionalArguments.first as String)],
-    );
     container = ProviderContainer(
       overrides: [
         externalCalendarSupportedProvider.overrideWithValue(true),
         externalCalendarOwnerProvider.overrideWithValue('owner'),
         externalCalendarUsecaseProvider.overrideWithValue(
-          ExternalCalendarUsecase(auth, storage, query),
+          ExternalCalendarUsecase(access, storage, query),
         ),
       ],
     );
     container.listen(externalCalendarNotifierProvider, (_, _) {});
     notifier = container.read(externalCalendarNotifierProvider.notifier);
-    addTearDown(container.dispose);
+    addTearDown(() async {
+      container.dispose();
+      await changes.close();
+    });
   });
 
-  test('保存設定を復元し表示月の前後1か月を取得して選択変更を保存する', () async {
+  test('未許可の起動時は要求画面や端末データを開かない', () async {
+    when(access.hasReadPermission()).thenAnswer((_) async => false);
+    await notifier.initialize();
+    expect(
+      container.read(externalCalendarNotifierProvider).hasPermission,
+      isFalse,
+    );
+    verifyNever(access.requestReadPermission());
+    verifyNever(query.accounts());
+    verifyNever(query.events(any, any, any, any));
+  });
+  test('許可操作後は端末の全アカウントを列挙し表示対象を個別選択できる', () async {
+    when(access.hasReadPermission()).thenAnswer((_) async => false);
+    await notifier.initialize();
+    when(access.hasReadPermission()).thenAnswer((_) async => true);
+    await notifier.requestAccess();
+    var state = container.read(externalCalendarNotifierProvider);
+    expect(state.hasPermission, isTrue);
+    expect(state.connections.map((v) => v.account.id), ['first', 'second']);
+    await notifier.selectCalendars('second', {'1'});
+    state = container.read(externalCalendarNotifierProvider);
+    expect(state.events.map((v) => v.accountId), ['first', 'second']);
+    await notifier.selectCalendars('first', {});
+    expect(
+      container.read(externalCalendarNotifierProvider).events.single.accountId,
+      'second',
+    );
+    expect(saved.first.calendarIds, isEmpty);
+    expect(saved.last.calendarIds, {'1'});
+  });
+  test('許可を拒否されても連携完了にせず予定を取得しない', () async {
+    when(access.requestReadPermission()).thenAnswer((_) async => false);
+    await notifier.requestAccess();
+    final state = container.read(externalCalendarNotifierProvider);
+    expect(state.hasPermission, isFalse);
+    expect(state.error, isNotEmpty);
+    verifyNever(query.accounts());
+  });
+  test('再起動時は保存した選択を復元し表示月の前後1か月を取得する', () async {
     await notifier.setPeriod(DateTime(2026, 12));
     await notifier.initialize();
     final state = container.read(externalCalendarNotifierProvider);
-    expect(state.connections.single.calendarIds, {'calendar'});
-    expect(state.events.single.title, 'googleの予定');
-    verify(auth.restoreAccounts([account])).called(1);
+    expect(state.events.single.accountId, 'first');
     verify(
-      query.events('google', [calendar], DateTime(2026, 11), DateTime(2027, 2)),
+      query.events('first', [calendar], DateTime(2026, 11), DateTime(2027, 2)),
     ).called(1);
-    await notifier.selectCalendars('google', {});
-    expect(container.read(externalCalendarNotifierProvider).events, isEmpty);
-    expect(saved.single.calendarIds, isEmpty);
+    verifyNever(access.requestReadPermission());
   });
-
-  test('別アカウントを追加しても既存の選択を維持し両方の予定を取得する', () async {
+  test('端末カレンダーの変更通知で再取得して表示を更新する', () async {
     await notifier.initialize();
-    when(auth.connect()).thenAnswer((_) async => second);
-    await notifier.connect();
-    var state = container.read(externalCalendarNotifierProvider);
-    expect(state.connections.map((v) => v.account.id), ['google', 'second']);
-    expect(state.connections.first.calendarIds, {'calendar'});
-    expect(state.connections.last.calendarIds, isEmpty);
-    expect(state.events.single.accountId, 'google');
-    await notifier.selectCalendars('second', {'calendar'});
-    state = container.read(externalCalendarNotifierProvider);
-    expect(state.events.map((v) => v.accountId), ['google', 'second']);
-    expect(saved.map((v) => v.calendarIds), [
-      {'calendar'},
-      {'calendar'},
-    ]);
-  });
-
-  test('1アカウントの認証失敗でも他アカウントの取得結果を反映する', () async {
-    saved = [connection, secondConnection];
-    when(query.calendars('google')).thenThrow(
-      const ExternalCalendarException(ExternalCalendarFailure.authentication),
-    );
-    await notifier.initialize();
-    final state = container.read(externalCalendarNotifierProvider);
-    expect(state.events.single.accountId, 'second');
-    expect(
-      state.failures['google']!.kind,
-      ExternalCalendarFailure.authentication,
-    );
-    expect(state.failures.containsKey('second'), isFalse);
-  });
-
-  test('取得失敗では前回予定を保持し再取得の成功で削除を反映する', () async {
-    await notifier.initialize();
-    when(query.events(any, any, any, any)).thenThrow(
-      const ExternalCalendarException(ExternalCalendarFailure.network),
-    );
-    await notifier.refresh();
-    expect(
-      container.read(externalCalendarNotifierProvider).events.single.accountId,
-      'google',
-    );
-    expect(
-      container.read(externalCalendarNotifierProvider).failures['google'],
-      isNotNull,
-    );
-    when(query.events(any, any, any, any)).thenAnswer((_) async => []);
-    await notifier.refresh();
-    expect(container.read(externalCalendarNotifierProvider).events, isEmpty);
-    expect(container.read(externalCalendarNotifierProvider).failures, isEmpty);
-  });
-
-  test('連携のキャンセルは既存アカウントの予定と設定を維持する', () async {
-    await notifier.initialize();
-    when(auth.connect()).thenThrow(
-      const ExternalCalendarException(ExternalCalendarFailure.canceled),
-    );
-    await notifier.connect();
-    final state = container.read(externalCalendarNotifierProvider);
-    expect(state.connections.single.account.id, 'google');
-    expect(state.events.single.accountId, 'google');
-    verifyNever(storage.save(any, any));
-  });
-
-  test('同じアカウントの再認証は重複を作らず他アカウントの選択も維持する', () async {
-    saved = [connection, secondConnection];
-    await notifier.initialize();
-    await notifier.connect();
-    final state = container.read(externalCalendarNotifierProvider);
-    expect(state.connections.map((v) => v.account.id), ['google', 'second']);
-    expect(state.connections.map((v) => v.calendarIds), [
-      {'calendar'},
-      {'calendar'},
-    ]);
-  });
-
-  test('一方の解除は他アカウントを維持し処理中の古い結果も反映しない', () async {
-    saved = [connection, secondConnection];
-    await notifier.initialize();
-    final pending = Completer<List<ExternalCalendarEventDto>>();
-    when(query.events('google', any, any, any))
-        .thenAnswer((_) => pending.future);
     clearInteractions(query);
-    final loading = notifier.refresh();
-    await untilCalled(query.events('google', any, any, any));
-    await notifier.disconnect('google');
-    pending.complete([event('google')]);
-    await loading;
-    final state = container.read(externalCalendarNotifierProvider);
-    expect(state.connections.single.account.id, 'second');
-    expect(state.events.single.accountId, 'second');
-    expect(saved.single.account.id, 'second');
-    verify(auth.disconnect('google')).called(1);
-    verifyNever(auth.disconnect('second'));
-  });
-
-  test('最後のアカウント解除は保存設定も削除する', () async {
-    await notifier.initialize();
-    await notifier.disconnect('google');
-    expect(
-      container.read(externalCalendarNotifierProvider).connections,
-      isEmpty,
-    );
+    when(query.events(any, any, any, any)).thenAnswer((_) async => []);
+    final reflected = Completer<void>();
+    container.listen(externalCalendarNotifierProvider, (_, next) {
+      if (next.events.isEmpty && !reflected.isCompleted) reflected.complete();
+    });
+    changes.add(null);
+    await reflected.future;
     expect(container.read(externalCalendarNotifierProvider).events, isEmpty);
-    verify(storage.remove('owner')).called(1);
   });
-
-  test('ユーザー切替で前の予定・選択・処理中の結果が混入しない', () async {
+  test('権限取消し後は取得済み予定も消し読み取りを継続しない', () async {
+    await notifier.initialize();
+    clearInteractions(query);
+    when(access.hasReadPermission()).thenAnswer((_) async => false);
+    await notifier.refresh();
+    final state = container.read(externalCalendarNotifierProvider);
+    expect(state.hasPermission, isFalse);
+    expect(state.events, isEmpty);
+    verifyNever(query.accounts());
+    verifyNever(query.events(any, any, any, any));
+  });
+  test('片方の取得失敗でも他アカウントの予定を表示する', () async {
+    saved = [connection, secondConnection];
+    when(query.calendars('first')).thenThrow(
+      const ExternalCalendarException(ExternalCalendarFailure.unavailable),
+    );
+    await notifier.initialize();
+    final state = container.read(externalCalendarNotifierProvider);
+    expect(state.events.single.accountId, 'second');
+    expect(state.failures['first'], isNotNull);
+  });
+  test('再取得中に選択を解除しても古い結果を表示しない', () async {
     await notifier.initialize();
     final pending = Completer<List<ExternalCalendarEventDto>>();
     when(query.events(any, any, any, any)).thenAnswer((_) => pending.future);
     clearInteractions(query);
-    final loading = notifier.refresh();
+    final refreshing = notifier.refresh();
+    await untilCalled(query.events(any, any, any, any));
+    await notifier.selectCalendars('first', {});
+    pending.complete([event('first')]);
+    await refreshing;
+    expect(container.read(externalCalendarNotifierProvider).events, isEmpty);
+  });
+  test('ユーザー切替後に古い予定と選択を反映しない', () async {
+    await notifier.initialize();
+    final pending = Completer<List<ExternalCalendarEventDto>>();
+    when(query.events(any, any, any, any)).thenAnswer((_) => pending.future);
+    clearInteractions(query);
+    final refreshing = notifier.refresh();
     await untilCalled(query.events(any, any, any, any));
     container.updateOverrides([
       externalCalendarSupportedProvider.overrideWithValue(true),
       externalCalendarOwnerProvider.overrideWithValue('other'),
       externalCalendarUsecaseProvider.overrideWithValue(
-        ExternalCalendarUsecase(auth, storage, query),
+        ExternalCalendarUsecase(access, storage, query),
       ),
     ]);
     expect(container.read(externalCalendarNotifierProvider).events, isEmpty);
-    pending.complete([event('google')]);
-    await loading;
+    pending.complete([event('first')]);
+    await refreshing;
     expect(container.read(externalCalendarNotifierProvider).events, isEmpty);
-    await container
-        .read(externalCalendarNotifierProvider.notifier)
-        .initialize();
-    expect(
-      container.read(externalCalendarNotifierProvider).connections,
-      isEmpty,
-    );
   });
-
-  for (final operation in ['connect', 'select', 'disconnect']) {
-    test('月移動が$operationの完了を捨てず移動後の期間を使用する', () async {
-      await notifier.initialize();
-      final pending = Completer<void>();
-      final started = Completer<void>();
-      if (operation == 'connect') {
-        when(auth.connect()).thenAnswer((_) async {
-          started.complete();
-          await pending.future;
-          return account;
-        });
-      } else if (operation == 'select') {
-        when(storage.save(any, any)).thenAnswer((_) async {
-          started.complete();
-          await pending.future;
-        });
-      } else {
-        when(auth.disconnect(any)).thenAnswer((_) async {
-          started.complete();
-          await pending.future;
-        });
-      }
-      final working = switch (operation) {
-        'connect' => notifier.connect(),
-        'select' => notifier.selectCalendars('google', {'calendar'}),
-        _ => notifier.disconnect('google'),
-      };
-      await started.future;
-      await notifier.setPeriod(DateTime(2027, 2));
-      pending.complete();
-      await working;
-      final state = container.read(externalCalendarNotifierProvider);
-      expect(state.isBusy, isFalse);
-      expect(state.month, DateTime(2027, 2));
-      expect(
-        state.connections,
-        operation == 'disconnect' ? isEmpty : isNotEmpty,
-      );
-    });
-  }
-
-  test('初期復元中の月移動は復元を捨てず移動後の期間を取得する', () async {
-    final pending = Completer<List<ExternalCalendarConnection>>();
-    when(storage.load('owner')).thenAnswer((_) => pending.future);
-    final initialization = notifier.initialize();
-    await notifier.setPeriod(DateTime(2027, 2));
-    pending.complete([connection]);
-    await initialization;
-    expect(
-      container.read(externalCalendarNotifierProvider).connections,
-      isNotEmpty,
-    );
-    verify(
-      query.events('google', [calendar], DateTime(2027, 1), DateTime(2027, 4)),
-    ).called(1);
-  });
-
-  test('オフラインでは設定・SDK・APIに触れない', () async {
+  test('オフラインでは権限・端末のカレンダーへアクセスしない', () async {
     final offline = ProviderContainer(
       overrides: [externalCalendarSupportedProvider.overrideWithValue(false)],
     );
     addTearDown(offline.dispose);
     offline.listen(externalCalendarNotifierProvider, (_, _) {});
     await offline.read(externalCalendarNotifierProvider.notifier).initialize();
-    expect(offline.read(externalCalendarNotifierProvider).connections, isEmpty);
+    expect(
+      offline.read(externalCalendarNotifierProvider).hasPermission,
+      isFalse,
+    );
+    verifyNever(access.hasReadPermission());
+    verifyNever(query.accounts());
   });
 }
