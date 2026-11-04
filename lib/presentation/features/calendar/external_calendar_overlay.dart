@@ -22,7 +22,7 @@ CalendarState overlayExternalCalendar(
         id: externalEventDisplayId(event),
         groupId: '',
         labelId: _labelId(event.accountId, event.calendarId),
-        title: '${event.title} · ${event.calendarName}',
+        title: event.title,
         startDateTime: event.startDateTime,
         endDateTime: event.endDateTime,
         isAllDay: event.isAllDay,
@@ -30,12 +30,14 @@ CalendarState overlayExternalCalendar(
   ],
   labels: [
     ...shared.labels,
-    for (final entry in external.calendarsByAccount.entries)
-      for (final calendar in entry.value)
+    for (final connection in external.connections)
+      for (final calendar
+          in external.calendarsByAccount[connection.account.id] ??
+              <ExternalCalendarDto>[])
         CalendarLabelDto(
-          id: _labelId(entry.key, calendar.id),
+          id: _labelId(connection.account.id, calendar.id),
           groupId: '',
-          name: '端末 · ${calendar.name}',
+          name: '端末-${connection.account.name}',
           color: '#1967D2',
           isSelectable: false,
         ),

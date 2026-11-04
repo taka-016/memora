@@ -18,14 +18,14 @@ internal object DeviceCalendarWidgetOverlay {
         val timeFormat = DateTimeFormatter.ofPattern("HH:mm").withZone(zone)
         val occurrences = rows.mapNotNull { row ->
             val calendarId = row["calendarId"] as String
-            val calendarName = calendarNames[calendarId] ?: return@mapNotNull null
+            if (calendarId !in calendarNames) return@mapNotNull null
             val begin = (row["begin"] as Number).toLong()
             val end = (row["end"] as Number).toLong()
             val allDay = row["allDay"] as Boolean
             Occurrence(begin, end, CalendarWidgetEvent(
                 id = "device:$calendarId:${row["id"]}",
                 occurrence = null,
-                title = "${(row["title"] as? String)?.takeIf { it.isNotBlank() } ?: "予定あり"} · $calendarName",
+                title = (row["title"] as? String)?.takeIf { it.isNotBlank() } ?: "予定あり",
                 isAllDay = allDay,
                 color = 0xFF1967D2.toInt(),
                 textColor = 0xFFFFFFFF.toInt(),
