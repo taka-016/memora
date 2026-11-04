@@ -116,8 +116,9 @@ class ExternalCalendarSettingsDialog extends ConsumerWidget {
 
 Future<void> showExternalCalendarEvent(
   BuildContext context,
-  ExternalCalendarEventDto event,
-) => showDialog<void>(
+  ExternalCalendarEventDto event, {
+  required String sourceLabel,
+}) => showDialog<void>(
   context: context,
   builder: (context) => AlertDialog(
     title: const Text('端末カレンダーの予定'),
@@ -127,7 +128,7 @@ Future<void> showExternalCalendarEvent(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(event.title, style: Theme.of(context).textTheme.titleLarge),
-          Text('端末 · ${event.calendarName}'),
+          Text(sourceLabel),
           Text(
             calendarPeriodText(
               CalendarEventDto(

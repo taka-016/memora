@@ -195,6 +195,8 @@ class _CalendarDayEventsSheetState
                                         ? () => showExternalCalendarEvent(
                                             context,
                                             source,
+                                            sourceLabel:
+                                                label?.name ?? '色ラベルを確認してください',
                                           )
                                         : canEdit
                                         ? () => widget.onEdit(event)

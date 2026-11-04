@@ -37,7 +37,9 @@ CalendarState overlayExternalCalendar(
         CalendarLabelDto(
           id: _labelId(connection.account.id, calendar.id),
           groupId: '',
-          name: '端末-${connection.account.name}',
+          name: calendar.name == connection.account.name
+              ? '端末-${connection.account.name}'
+              : '端末-${connection.account.name}（${calendar.name}）',
           color: '#1967D2',
           isSelectable: false,
         ),
