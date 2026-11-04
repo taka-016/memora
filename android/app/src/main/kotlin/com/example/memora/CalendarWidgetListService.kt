@@ -34,7 +34,7 @@ private class CalendarEventsFactory(
     override fun onDataSetChanged() {
         val date = CalendarWidgetData.selectedDate(context, widgetId)
         val cache = CalendarWidgetData.read(context)
-        val events = cache?.months?.get(date.withDayOfMonth(1))?.days
+        val events = cache?.let { CalendarWidgetData.readMonth(context, it, date.withDayOfMonth(1)) }?.days
             ?.firstOrNull { it.date == date }?.events.orEmpty()
         snapshot = Snapshot(cache?.groupId.orEmpty(), date, events)
     }
@@ -75,8 +75,12 @@ internal fun calendarEventRow(
     setTextViewText(R.id.calendar_event_title, event.title)
     setOnClickFillInIntent(R.id.calendar_event_row, Intent().apply {
         data = calendarLaunchUri(groupId, date).buildUpon()
-            .appendQueryParameter("eventId", event.id)
-            .apply { event.occurrence?.let { appendQueryParameter("occurrence", it) } }
+            .apply {
+                event.openEventId?.let { id ->
+                    appendQueryParameter("eventId", id)
+                    event.occurrence?.let { appendQueryParameter("occurrence", it) }
+                }
+            }
             .build()
     })
 }

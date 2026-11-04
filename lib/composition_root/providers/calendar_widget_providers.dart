@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/usecases/android_widget/get_android_widget_calendar_cache_usecase.dart';
+import 'package:memora/application/models/app_mode.dart';
+import 'package:memora/infrastructure/factories/auth_service_factory.dart';
 import 'package:memora/composition_root/providers/app_providers.dart';
 import 'package:memora/composition_root/providers/calendar_providers.dart';
 import 'package:memora/infrastructure/config/resolved_app_mode_provider.dart';
@@ -19,6 +21,9 @@ final refreshCalendarWidgetProvider =
           groups: ref.read(groupQueryServiceProvider),
           expander: ref.read(calendarRecurrenceExpanderProvider),
           mode: ref.read(appModeProvider),
+          currentUser: ref.read(appModeProvider) == AppMode.online
+              ? ref.read(authServiceProvider)
+              : null,
         );
         final clock = ref.read(appClockProvider);
         const storage = HomeWidgetCalendarCacheStorage();

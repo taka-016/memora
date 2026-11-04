@@ -88,7 +88,7 @@ internal object CalendarWidgetRenderer {
         }
         val selected = CalendarWidgetData.selectedDate(context, widgetId)
         val month = selected.withDayOfMonth(1)
-        val cachedMonth = cache.months[month]
+        val cachedMonth = CalendarWidgetData.readMonth(context, cache, month)
         val options = manager.getAppWidgetOptions(widgetId)
         val sizes = Sizes(
             Size(

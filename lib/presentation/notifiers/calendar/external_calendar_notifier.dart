@@ -199,7 +199,10 @@ class ExternalCalendarNotifier extends _$ExternalCalendarNotifier {
           state = state.copyWith(failures: {...state.failures, id: failure});
         }
       }
-      if (_active(version)) state = state.copyWith(isLoading: false);
+      if (_active(version)) {
+        state = state.copyWith(isLoading: false);
+        await _updateWidgets();
+      }
     } catch (error) {
       _failure(error, version);
     }
@@ -209,6 +212,14 @@ class ExternalCalendarNotifier extends _$ExternalCalendarNotifier {
     unawaited(_changes?.cancel());
     _changes = null;
     state = ExternalCalendarState(month: state.month, error: error);
+    unawaited(_updateWidgets());
+  }
+
+  Future<void> _updateWidgets() async {
+    if (!ref.mounted) return;
+    try {
+      await ref.read(externalCalendarWidgetRefreshProvider)();
+    } catch (_) {}
   }
 
   ExternalCalendarException _externalFailure(Object error) =>
