@@ -101,8 +101,9 @@ class ExternalCalendarNotifier extends _$ExternalCalendarNotifier {
     if (owner == null ||
         connection == null ||
         !state.hasPermission ||
-        state.isBusy)
+        state.isBusy) {
       return;
+    }
     final usecase = ref.read(externalCalendarUsecaseProvider)!;
     final version = ++_version;
     state = state.copyWith(isBusy: true, isLoading: false, error: '');

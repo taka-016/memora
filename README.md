@@ -77,10 +77,6 @@ cd /workspaces/memora
 | プライバシーポリシー | `https://taka-016.github.io/memora/privacy.html` |
 | 利用規約 | `https://taka-016.github.io/memora/terms.html` |
 
-OAuth審査で求められるサイトの所有確認は、Google Cloudプロジェクトの所有者または編集者のGoogleアカウントで[Search Console](https://search.google.com/search-console)から行います。GitHub Pagesの標準ドメインではDNSを変更できないため、「URLプレフィックス」に公開サイトのURLを指定し、HTMLファイルまたはHTMLタグによる確認方法を選びます。HTMLファイル方式では、Googleが発行した確認ファイルを内容・名前を変えずに`docs/`直下へ追加し、公開先の指定URLで取得できるようにしてから確認してください。HTMLタグ方式では、発行されたタグを`docs/index.html`の`head`内へ追加して公開します。所有確認後も確認ファイル・タグは残します。
-
-Google Auth Platformの「承認済みドメイン」には、ページURLではなく`taka-016.github.io`を追加し、その後「ブランディング」の各項目へ上表のURLを登録します。GitHub Pagesの設定・Search Consoleの所有確認・OAuth審査は、リポジトリへのpushだけでは完了しません。詳細は[GitHubの公開設定](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site)、[Googleの所有確認](https://support.google.com/webmasters/answer/9008080)、[OAuthホームページの要件](https://support.google.com/cloud/answer/13807376)を参照してください。
-
 ### アプリの初期設定
 
 開発コンテナの`/workspaces/memora`で、次の手順を実施します。
@@ -103,24 +99,11 @@ Google Cloud ConsoleでMaps SDK for AndroidとPlaces API (New)を有効にし、
 
 設定の生成・更新時は、Google Cloudの「APIとサービス → 認証情報」からFirebase用APIキーをコピーして入力してください（環境変数`FIREBASE_API_KEY`でも指定可）。指定したキーは`android/app/google-services.json`と`lib/firebase_options.dart`の両方へ反映されます。既存ファイルの削除は不要です。設定更新後はアプリを再ビルドしてください。
 
-### Googleカレンダー連携の事前設定
+### 端末カレンダー連携
 
-オンライン版の連携機能を導入する前に、Firebaseと同じGoogle Cloudプロジェクトを選び、次を設定してください。設定後はオンライン版のカレンダー画面にある「Googleカレンダー連携」からGoogleアカウントを追加し、アカウントごとに表示対象を選びます。
+Androidのオンライン版では、カレンダー画面の「端末カレンダー連携」から読み取りを許可し、アカウントごとに表示対象を選びます。Google等の予定は、あらかじめ端末のカレンダー同期を有効にしてください。端末に同期された範囲だけを表示し、予定の編集や他メンバーへの共有は行いません。
 
-1. [APIライブラリ](https://console.cloud.google.com/apis/library/calendar-json.googleapis.com)でGoogle Calendar APIを有効にする。
-2. [Google Auth Platform](https://console.cloud.google.com/auth/overview)の「ブランディング」でアプリ名、サポートメール、連絡先を設定する。「対象」で利用対象を選び、外部向けの開発中はテストユーザーに連携を試すGoogleアカウントを追加する。
-3. 「データアクセス」に以下の2スコープを登録する。カレンダーの書き込み権限は追加しない。
-   - `https://www.googleapis.com/auth/calendar.calendarlist.readonly`
-   - `https://www.googleapis.com/auth/calendar.events.readonly`
-4. 「クライアント」でAndroid用OAuthクライアントを確認・作成する。オンライン版のパッケージ名は`com.example.memora`。実行するAPKの署名証明書のSHA-1を登録し、debug・releaseで署名が異なる場合はそれぞれ用意する。Google Play App Signingを使う場合は、配信APKのアプリ署名証明書を使う。証明書はリポジトリの`android`ディレクトリで`./gradlew signingReport`を実行して確認できる。
-5. 同じプロジェクトのWebアプリケーション用OAuthクライアント（`client_type: 3`）も含む最新の`android/app/google-services.json`をFirebase Consoleから取得する。前述の手順に従ってFirebase設定を更新する。WebクライアントIDはAndroid SDKの初期化に使用するもので、サーバーの実装やクライアントシークレットのアプリへの埋め込みは不要。
-6. 外部公開前に、公開先、プライバシーポリシー等の必要事項を整え、登録スコープに必要なOAuth審査と公開設定を完了する。
-
-開発中は、予定を参照するGoogleアカウントをテストユーザーへ登録してください。memoraのログイン用アカウントだけを登録しても、別アカウントの連携は試せません。
-
-OAuthクライアントはアプリを識別します。取得する予定のGoogleアカウントは利用者が連携時に選び、memoraへログインするアカウントと異なっていても構いません。APIキーやFirebaseのログイントークンでは非公開の予定を参照できません。
-
-詳細はGoogle公式の[API有効化](https://developers.google.com/workspace/guides/enable-apis)、[同意画面の設定](https://developers.google.com/workspace/guides/configure-oauth-consent)、[Calendar APIのスコープ](https://developers.google.com/workspace/calendar/api/auth)、[署名証明書の確認](https://developers.google.com/android/guides/client-auth)を参照してください。
+この連携にGoogle Calendar APIの有効化・OAuthクライアント・カレンダー用スコープの設定は不要です。Androidのカレンダー権限を取り消した場合は、端末の設定から再度許可してください。
 
 ### アプリモードと成果物
 

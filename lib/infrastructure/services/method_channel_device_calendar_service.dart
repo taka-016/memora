@@ -7,12 +7,9 @@ import 'package:memora/application/services/calendar/device_calendar_access_serv
 class MethodChannelDeviceCalendarService
     implements DeviceCalendarAccessService, ExternalCalendarQueryService {
   const MethodChannelDeviceCalendarService({
-    MethodChannel channel = const MethodChannel('memora/device_calendar'),
-    EventChannel eventsChannel = const EventChannel(
-      'memora/device_calendar_changes',
-    ),
-  }) : _channel = channel,
-       _eventsChannel = eventsChannel;
+    this._channel = const MethodChannel('memora/device_calendar'),
+    this._eventsChannel = const EventChannel('memora/device_calendar_changes'),
+  });
 
   final MethodChannel _channel;
   final EventChannel _eventsChannel;
