@@ -52,12 +52,14 @@ void main() {
   late ExternalCalendarNotifier notifier;
   late List<ExternalCalendarConnection> saved;
   late StreamController<void> changes;
+  late int widgetUpdates;
 
   setUp(() {
     query = MockExternalCalendarQueryService();
     access = MockDeviceCalendarAccessService();
     storage = MockExternalCalendarSettingsStorage();
     saved = [connection];
+    widgetUpdates = 0;
     changes = StreamController<void>.broadcast(sync: true);
     when(access.hasReadPermission()).thenAnswer((_) async => true);
     when(access.requestReadPermission()).thenAnswer((_) async => true);
@@ -75,6 +77,9 @@ void main() {
     });
     container = ProviderContainer(
       overrides: [
+        externalCalendarWidgetRefreshProvider.overrideWithValue(() async {
+          widgetUpdates++;
+        }),
         externalCalendarSupportedProvider.overrideWithValue(true),
         externalCalendarOwnerProvider.overrideWithValue('owner'),
         externalCalendarUsecaseProvider.overrideWithValue(
@@ -202,6 +207,17 @@ void main() {
     await refreshing;
     expect(container.read(externalCalendarNotifierProvider).events, isEmpty);
   });
+  test('表示対象の変更と権限取消しをウィジェットにも反映する', () async {
+    await notifier.initialize();
+    final initial = widgetUpdates;
+    await notifier.selectCalendars('first', {});
+    expect(widgetUpdates, greaterThan(initial));
+    final afterSelection = widgetUpdates;
+    when(access.hasReadPermission()).thenAnswer((_) async => false);
+    await notifier.refresh();
+    expect(widgetUpdates, greaterThan(afterSelection));
+  });
+
   test('オフラインでは権限・端末のカレンダーへアクセスしない', () async {
     final offline = ProviderContainer(
       overrides: [externalCalendarSupportedProvider.overrideWithValue(false)],
