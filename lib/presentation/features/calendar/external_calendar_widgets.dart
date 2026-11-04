@@ -14,7 +14,7 @@ class ExternalCalendarSettingsDialog extends ConsumerWidget {
     final notifier = ref.read(externalCalendarNotifierProvider.notifier);
     final busy = state.isBusy || state.isLoading;
     return AlertDialog(
-      title: const Text('Googleカレンダー連携'),
+      title: const Text('端末カレンダー連携'),
       content: SizedBox(
         width: 400,
         child: SingleChildScrollView(
@@ -22,8 +22,20 @@ class ExternalCalendarSettingsDialog extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('自分のGoogle予定をこの端末だけで表示します。他のメンバーには共有されません。'),
+              const Text('端末のカレンダーの予定を表示します。他のメンバーには共有されません。'),
               if (state.error.isNotEmpty) Text(state.error),
+              if (!state.hasPermission)
+                TextButton(
+                  onPressed: busy ? null : notifier.requestAccess,
+                  child: const Text('カレンダーへのアクセスを許可'),
+                ),
+              if (state.hasPermission)
+                TextButton(
+                  onPressed: busy ? null : notifier.refresh,
+                  child: const Text('カレンダー一覧を更新'),
+                ),
+              if (state.hasPermission && state.connections.isEmpty)
+                const Text('端末に同期されたカレンダーがありません。端末のカレンダー同期設定を確認してください。'),
               for (final connection in state.connections)
                 Column(
                   key: ValueKey('external_account_${connection.account.id}'),
@@ -31,17 +43,12 @@ class ExternalCalendarSettingsDialog extends ConsumerWidget {
                   children: [
                     const SizedBox(height: 16),
                     Text(
-                      connection.account.email,
+                      connection.account.name,
                       style: Theme.of(context).textTheme.titleSmall,
                     ),
                     if (state.failures[connection.account.id]
                         case final failure?)
                       Text(failure.message),
-                    if (state.needsAuthenticationFor(connection.account.id))
-                      TextButton(
-                        onPressed: busy ? null : notifier.connect,
-                        child: const Text('Googleカレンダーを再認証'),
-                      ),
                     const Text('表示対象（変更すると保存されます）'),
                     for (final calendar
                         in state.calendarsByAccount[connection.account.id] ??
@@ -85,27 +92,14 @@ class ExternalCalendarSettingsDialog extends ConsumerWidget {
                     TextButton(
                       onPressed: busy
                           ? null
-                          : () => notifier.refresh(
-                              accountId: connection.account.id,
+                          : () => notifier.selectCalendars(
+                              connection.account.id,
+                              {},
                             ),
-                      child: const Text('カレンダー一覧を再取得'),
-                    ),
-                    TextButton(
-                      onPressed: busy
-                          ? null
-                          : () => notifier.disconnect(connection.account.id),
-                      child: const Text('連携を解除'),
+                      child: const Text('選択を解除'),
                     ),
                   ],
                 ),
-              TextButton(
-                onPressed: busy ? null : notifier.connect,
-                child: Text(
-                  state.connections.isEmpty
-                      ? 'Googleアカウントを選択して連携'
-                      : 'Googleアカウントを追加',
-                ),
-              ),
             ],
           ),
         ),
@@ -126,14 +120,14 @@ Future<void> showExternalCalendarEvent(
 ) => showDialog<void>(
   context: context,
   builder: (context) => AlertDialog(
-    title: const Text('Googleカレンダーの予定'),
+    title: const Text('端末カレンダーの予定'),
     content: SingleChildScrollView(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(event.title, style: Theme.of(context).textTheme.titleLarge),
-          Text('Google · ${event.calendarName}'),
+          Text('端末 · ${event.calendarName}'),
           Text(
             calendarPeriodText(
               CalendarEventDto(

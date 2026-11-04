@@ -5,9 +5,9 @@ class ExternalCalendarDto {
 }
 
 class ExternalCalendarAccount {
-  const ExternalCalendarAccount({required this.id, required this.email});
+  const ExternalCalendarAccount({required this.id, required this.name});
   final String id;
-  final String email;
+  final String name;
 }
 
 class ExternalCalendarConnection {

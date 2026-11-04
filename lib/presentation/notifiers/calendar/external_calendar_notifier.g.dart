@@ -42,7 +42,7 @@ final class ExternalCalendarNotifierProvider
 }
 
 String _$externalCalendarNotifierHash() =>
-    r'c04c66841d7469b954a99f909b99029b708a4632';
+    r'48dc7f68b2e4676c10c4d4696be83e8929f2c05d';
 
 abstract class _$ExternalCalendarNotifier
     extends $Notifier<ExternalCalendarState> {

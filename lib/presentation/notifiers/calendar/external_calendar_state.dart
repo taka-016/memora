@@ -8,10 +8,10 @@ class ExternalCalendarState {
     Map<String, List<ExternalCalendarDto>> calendarsByAccount = const {},
     Map<String, List<ExternalCalendarEventDto>> eventsByAccount = const {},
     Map<String, ExternalCalendarException> failures = const {},
+    this.hasPermission = false,
     this.isLoading = false,
     this.isBusy = false,
     this.error = '',
-    this.failure,
   }) : connections = List.unmodifiable(connections),
        calendarsByAccount = Map.unmodifiable({
          for (final entry in calendarsByAccount.entries)
@@ -28,16 +28,13 @@ class ExternalCalendarState {
   final Map<String, List<ExternalCalendarDto>> calendarsByAccount;
   final Map<String, List<ExternalCalendarEventDto>> eventsByAccount;
   final Map<String, ExternalCalendarException> failures;
+  final bool hasPermission;
   final bool isLoading;
   final bool isBusy;
   final String error;
-  final ExternalCalendarFailure? failure;
   List<ExternalCalendarEventDto> get events => [
     for (final events in eventsByAccount.values) ...events,
   ];
-  bool needsAuthenticationFor(String accountId) =>
-      failures[accountId]?.kind == ExternalCalendarFailure.authentication ||
-      failures[accountId]?.kind == ExternalCalendarFailure.permission;
 
   ExternalCalendarState copyWith({
     DateTime? month,
@@ -45,19 +42,19 @@ class ExternalCalendarState {
     Map<String, List<ExternalCalendarDto>>? calendarsByAccount,
     Map<String, List<ExternalCalendarEventDto>>? eventsByAccount,
     Map<String, ExternalCalendarException>? failures,
+    bool? hasPermission,
     bool? isLoading,
     bool? isBusy,
     String? error,
-    ExternalCalendarFailure? failure,
   }) => ExternalCalendarState(
     month: month ?? this.month,
     connections: connections ?? this.connections,
     calendarsByAccount: calendarsByAccount ?? this.calendarsByAccount,
     eventsByAccount: eventsByAccount ?? this.eventsByAccount,
     failures: failures ?? this.failures,
+    hasPermission: hasPermission ?? this.hasPermission,
     isLoading: isLoading ?? this.isLoading,
     isBusy: isBusy ?? this.isBusy,
     error: error ?? this.error,
-    failure: failure,
   );
 }

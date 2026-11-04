@@ -7,9 +7,9 @@ import 'package:memora/presentation/notifiers/calendar/calendar_state.dart';
 import 'package:memora/presentation/notifiers/calendar/external_calendar_state.dart';
 
 String externalEventDisplayId(ExternalCalendarEventDto event) =>
-    'google:${jsonEncode([event.accountId, event.calendarId, event.id])}';
+    'device:${jsonEncode([event.accountId, event.calendarId, event.id])}';
 String _labelId(String accountId, String calendarId) =>
-    'google:${jsonEncode([accountId, calendarId])}';
+    'device:${jsonEncode([accountId, calendarId])}';
 
 CalendarState overlayExternalCalendar(
   CalendarState shared,
@@ -35,7 +35,7 @@ CalendarState overlayExternalCalendar(
         CalendarLabelDto(
           id: _labelId(entry.key, calendar.id),
           groupId: '',
-          name: 'Google · ${calendar.name}',
+          name: '端末 · ${calendar.name}',
           color: '#1967D2',
           isSelectable: false,
         ),

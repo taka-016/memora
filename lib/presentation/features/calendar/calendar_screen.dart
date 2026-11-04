@@ -228,7 +228,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                         ),
                       if (externalSupported)
                         IconButton(
-                          tooltip: 'Googleカレンダー連携',
+                          tooltip: '端末カレンダー連携',
                           icon: const Icon(Icons.calendar_month_outlined),
                           onPressed: () => showDialog<void>(
                             context: context,
