@@ -72,6 +72,10 @@ test-dev *configs:
 test-emulator:
   bash scripts/test/emulator.sh
 
+# Android側のカレンダーウィジェットの予定統合を検証する
+test-calendar-widget:
+  ./android/gradlew -p android :app:testOnlineDebugUnitTest --console=plain
+
 # configure: 設定生成、api-key: キー更新、project: プロジェクト選択
 # rules / indexes: 各デプロイ、sync-indexes: インデックス取得
 # Firebaseの処理を選択する（引数なし: メニュー、all: 全処理、複数指定可）
