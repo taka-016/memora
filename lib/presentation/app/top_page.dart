@@ -60,22 +60,31 @@ class TopPage extends HookConsumerWidget {
         androidWidgetLaunchState.isResolving ||
         androidWidgetLaunchResolution != null;
 
-    useEffect(() {
-      if (!authenticationAvailable ||
-          currentMemberState.status != CurrentMemberStatus.error) {
-        return null;
-      }
-
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!context.mounted) {
-          return;
+    useEffect(
+      () {
+        if (!authenticationAvailable ||
+            currentMemberState.status != CurrentMemberStatus.error ||
+            currentMemberState.canRetry) {
+          return null;
         }
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(currentMemberState.message)));
-        ref.read(authNotifierProvider.notifier).logout();
-      });
-      return null;
-    }, [currentMemberState.status, currentMemberState.message]);
+
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!context.mounted) {
+            return;
+          }
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(currentMemberState.message)));
+          ref.read(authNotifierProvider.notifier).logout();
+        });
+        return null;
+      },
+      [
+        currentMemberState.status,
+        currentMemberState.message,
+        currentMemberState.canRetry,
+      ],
+    );
 
     useEffect(
       () {
@@ -220,8 +229,8 @@ class TopPage extends HookConsumerWidget {
           closeDrawer,
         ),
         body:
-            !authenticationAvailable &&
-                currentMemberState.status == CurrentMemberStatus.error
+            currentMemberState.status == CurrentMemberStatus.error &&
+                (!authenticationAvailable || currentMemberState.canRetry)
             ? Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,

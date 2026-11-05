@@ -20,6 +20,7 @@ class CurrentMemberState extends Equatable {
     required this.status,
     this.member,
     this.message = '',
+    this.canRetry = false,
   });
 
   const CurrentMemberState.loading()
@@ -28,15 +29,20 @@ class CurrentMemberState extends Equatable {
   const CurrentMemberState.loaded(MemberDto? member)
     : this._(status: CurrentMemberStatus.loaded, member: member);
 
-  const CurrentMemberState.error(String message)
-    : this._(status: CurrentMemberStatus.error, message: message);
+  const CurrentMemberState.error(String message, {bool canRetry = false})
+    : this._(
+        status: CurrentMemberStatus.error,
+        message: message,
+        canRetry: canRetry,
+      );
 
   final CurrentMemberStatus status;
   final MemberDto? member;
   final String message;
+  final bool canRetry;
 
   @override
-  List<Object?> get props => [status, member, message];
+  List<Object?> get props => [status, member, message, canRetry];
 }
 
 final currentMemberNotifierProvider =
@@ -71,9 +77,12 @@ class CurrentMemberNotifier extends Notifier<CurrentMemberState> {
       });
     }
 
-    Future.microtask(() {
-      if (ref.mounted) unawaited(load());
-    });
+    if (!authenticationAvailable ||
+        ref.read(authNotifierProvider).isAuthenticated) {
+      Future.microtask(() {
+        if (ref.mounted) unawaited(load());
+      });
+    }
 
     return const CurrentMemberState.loading();
   }
@@ -83,12 +92,26 @@ class CurrentMemberNotifier extends Notifier<CurrentMemberState> {
     if (kDebugMode) logger.i('起動データ: 本人情報取得 開始');
     try {
       state = const CurrentMemberState.loading();
-      final member = await _getCurrentMemberUseCase.execute();
+      final authenticationAvailable = ref
+          .read(appCapabilitiesProvider)
+          .availability(AppFeature.authentication)
+          .isAvailable;
+      final request = _getCurrentMemberUseCase.execute();
+      final member = authenticationAvailable
+          ? await request.timeout(const Duration(seconds: 15))
+          : await request;
       if (kDebugMode) {
         logger.i('起動データ: 本人情報取得 完了（${stopwatch.elapsedMilliseconds}ms）');
       }
       if (!ref.mounted) return;
       state = CurrentMemberState.loaded(member);
+    } on TimeoutException catch (e, stack) {
+      logger.w('本人情報の取得がタイムアウトしました', error: e, stackTrace: stack);
+      if (!ref.mounted) return;
+      state = const CurrentMemberState.error(
+        '本人情報の取得に時間がかかっています。再試行してください。',
+        canRetry: true,
+      );
     } catch (e, stack) {
       logger.e(
         'CurrentMemberNotifier.load: ${e.toString()}',
