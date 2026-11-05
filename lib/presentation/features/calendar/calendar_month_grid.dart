@@ -249,7 +249,7 @@ class _CalendarWeekRow extends StatelessWidget {
                       height: laneHeight,
                       child: IgnorePointer(
                         child: Align(
-                          alignment: Alignment.centerRight,
+                          alignment: Alignment.bottomRight,
                           child: _CalendarRemainingCount(
                             count: remaining,
                             selected: date == state.selectedDate,
@@ -337,9 +337,13 @@ class _CalendarDayCell extends StatelessWidget {
                           return Row(
                             children: [
                               Expanded(child: preview),
-                              _CalendarRemainingCount(
-                                count: remaining,
-                                selected: selected,
+                              Align(
+                                alignment: Alignment.bottomRight,
+                                widthFactor: 1,
+                                child: _CalendarRemainingCount(
+                                  count: remaining,
+                                  selected: selected,
+                                ),
                               ),
                             ],
                           );
