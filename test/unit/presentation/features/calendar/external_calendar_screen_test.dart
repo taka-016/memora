@@ -96,7 +96,7 @@ void main() {
   Finder checkbox(String id) =>
       find.descendant(of: section(id), matching: find.byType(CheckboxListTile));
 
-  testWidgets('端末の許可後に複数アカウントを選び一方の選択だけを解除できる', (tester) async {
+  testWidgets('アカウントごとに開閉しても選択を保ち一方だけを解除できる', (tester) async {
     final external = _ExternalCalendar();
     await CalendarTestHarness().pump(tester, externalCalendar: external);
     await tester.tap(find.byTooltip('端末カレンダー連携'));
@@ -106,12 +106,29 @@ void main() {
     await tester.pump();
     expect(find.text('first@example.com'), findsOneWidget);
     expect(find.text('second@example.com'), findsOneWidget);
+    expect(checkbox('first'), findsNothing);
+    expect(checkbox('second'), findsNothing);
+    await tester.tap(find.text('first@example.com'));
+    await tester.pumpAndSettle();
+    expect(checkbox('first'), findsOneWidget);
+    expect(checkbox('second'), findsNothing);
     await tester.tap(checkbox('first'));
     await tester.pump();
+    await tester.tap(find.text('first@example.com'));
+    await tester.pumpAndSettle();
+    expect(checkbox('first'), findsNothing);
+    expect(external.eventAccounts, ['first']);
+    await tester.tap(find.text('second@example.com'));
+    await tester.pumpAndSettle();
     await tester.ensureVisible(checkbox('second'));
     await tester.tap(checkbox('second'));
     await tester.pump();
     expect(external.eventAccounts, ['first', 'second']);
+    await tester.tap(find.text('second@example.com'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('first@example.com'));
+    await tester.pumpAndSettle();
+    expect(tester.widget<CheckboxListTile>(checkbox('first')).value, isTrue);
     final clear = find.descendant(
       of: section('first'),
       matching: find.text('選択を解除'),
@@ -136,6 +153,8 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('カレンダーへのアクセスを許可'));
     await tester.pump();
+    await tester.tap(find.text('first@example.com'));
+    await tester.pumpAndSettle();
     await tester.tap(checkbox('first'));
     await tester.pump();
     await tester.tap(find.text('閉じる'));
