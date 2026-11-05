@@ -65,6 +65,7 @@ class CalendarWeekLayout {
 
     final bandEvents = state.events.where(_isBand).toList()
       ..sort((a, b) {
+        if (a.isAllDay != b.isAllDay) return a.isAllDay ? -1 : 1;
         final order = a.startDateTime.compareTo(b.startDateTime);
         return order != 0 ? order : a.id.compareTo(b.id);
       });

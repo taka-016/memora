@@ -48,7 +48,7 @@ internal object DeviceCalendarWidgetOverlay {
                         (occurrence.begin == occurrence.end && occurrence.begin >= start))
                 }
             }.map { it.event }
-            day.copy(events = (day.events + external).sortedBy { it.startMillis })
+            day.copy(events = (day.events + external).sortedWith(calendarWidgetEventOrder))
         })
     }
 }

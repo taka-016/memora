@@ -21,6 +21,9 @@ internal data class CalendarWidgetEvent(
     val openEventId: String? get() = id
 }
 
+internal val calendarWidgetEventOrder = compareByDescending<CalendarWidgetEvent> { it.isAllDay }
+    .thenBy { it.startMillis }
+
 internal data class CalendarWidgetDay(
     val date: LocalDate,
     val events: List<CalendarWidgetEvent>,
@@ -105,7 +108,10 @@ internal object CalendarWidgetData {
     }.getOrNull()
 
     fun readMonth(context: Context, cache: CalendarWidgetCache, month: LocalDate): CalendarWidgetMonth? {
-        val shared = cache.months[month] ?: return null
+        val stored = cache.months[month] ?: return null
+        val shared = stored.copy(days = stored.days.map { day ->
+            day.copy(events = day.events.sortedWith(calendarWidgetEventOrder))
+        })
         return DeviceCalendarWidgetSource.read(context, cache, shared)
     }
 

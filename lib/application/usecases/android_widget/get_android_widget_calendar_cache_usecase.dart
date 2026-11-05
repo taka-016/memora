@@ -50,9 +50,12 @@ class GetAndroidWidgetCalendarCacheUsecase {
       await labels.getCalendarLabelsByGroupId(groupId),
       events: source,
     );
-    final occurrences = [
-      for (final event in source) ...expander.expand(event, from, to),
-    ]..sort((a, b) => a.startDateTime.compareTo(b.startDateTime));
+    final occurrences =
+        [for (final event in source) ...expander.expand(event, from, to)]
+          ..sort((a, b) {
+            if (a.isAllDay != b.isAllDay) return a.isAllDay ? -1 : 1;
+            return a.startDateTime.compareTo(b.startDateTime);
+          });
     String dayFormat(DateTime date) => date.toIso8601String().substring(0, 10);
     String timeFormat(DateTime date) =>
         '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
