@@ -18,7 +18,7 @@ internal data class CalendarWidgetEvent(
     val startMillis: Long = 0L,
     val isExternal: Boolean = false,
 ) {
-    val openEventId: String? get() = if (isExternal) null else id
+    val openEventId: String? get() = id
 }
 
 internal data class CalendarWidgetDay(
