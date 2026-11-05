@@ -151,6 +151,38 @@ void main() {
     });
   }
 
+  testWidgets('週の混雑で非表示になった帯の別の日にも残件数を表示する', (tester) async {
+    final harness = CalendarTestHarness()
+      ..savedEvents.addAll([
+        for (final id in ['a', 'b', 'c', 'd', 'e'])
+          calendarTestEvent(id, '単日$id').copyWith(
+            startDateTime: DateTime(2026, 10, 5),
+            endDateTime: DateTime(2026, 10, 5),
+            isAllDay: true,
+          ),
+        calendarTestEvent('z', '週の帯').copyWith(
+          startDateTime: DateTime(2026, 10, 5),
+          endDateTime: DateTime(2026, 10, 9),
+          isAllDay: true,
+        ),
+      ]);
+    await harness.pump(tester);
+    for (final day in [6, 7, 8, 9]) {
+      final cell = find.byKey(Key('calendar_day_2026_10_$day'));
+      expect(
+        find.descendant(of: cell, matching: find.text('+1')),
+        findsOneWidget,
+      );
+    }
+    final cell = find.byKey(const Key('calendar_day_2026_10_6'));
+    await tester.tap(cell);
+    await tester.pump();
+    await tester.tap(cell);
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(ListTile, '週の帯'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('複数日の帯が5段ある日も帯に隠れず残件数を表示する', (tester) async {
     final harness = CalendarTestHarness()
       ..savedEvents.addAll([
