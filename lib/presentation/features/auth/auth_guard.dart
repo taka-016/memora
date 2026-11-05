@@ -7,6 +7,7 @@ import 'package:memora/presentation/features/auth/invitation_code_input_dialog.d
 import 'package:memora/presentation/features/auth/member_creation_selection_dialog.dart';
 
 import 'login_page.dart';
+import 'auth_initialization_view.dart';
 
 class AuthGuard extends ConsumerWidget {
   const AuthGuard({super.key, required this.child});
@@ -17,8 +18,8 @@ class AuthGuard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authNotifierProvider);
 
-    if (authState.isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    if (authState.isLoading || authState.hasInitializationError) {
+      return const Scaffold(body: AuthInitializationView());
     }
 
     if (authState.isAuthenticated) {
