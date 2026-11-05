@@ -2,6 +2,10 @@ import 'package:memora/composition_root/providers/external_calendar_providers.da
 
 import 'dart:async';
 
+import 'package:memora/application/dtos/calendar/external_calendar_dto.dart';
+import 'package:memora/presentation/notifiers/calendar/external_calendar_notifier.dart';
+import 'package:memora/presentation/notifiers/calendar/external_calendar_state.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -20,8 +24,139 @@ import '../../../../helpers/calendar_group_test_support.dart';
 import '../../../../helpers/test_exception.dart';
 import '../../notifiers/calendar/calendar_notifier_test.mocks.dart';
 
+class _WidgetDeviceCalendar extends ExternalCalendarNotifier {
+  _WidgetDeviceCalendar({required this.missing});
+  final bool missing;
+  final ready = Completer<void>();
+
+  @override
+  ExternalCalendarState build() =>
+      ExternalCalendarState(month: DateTime(2026, 11), isLoading: true);
+
+  @override
+  Future<void> setPeriod(DateTime day) async {}
+
+  @override
+  Future<void> initialize() async {
+    await ready.future;
+    state = ExternalCalendarState(
+      month: DateTime(2026, 11),
+      hasPermission: true,
+      connections: [
+        ExternalCalendarConnection(
+          account: const ExternalCalendarAccount(
+            id: 'account',
+            name: 'user@example.com',
+          ),
+          calendarIds: {'12'},
+        ),
+      ],
+      calendarsByAccount: {
+        'account': [const ExternalCalendarDto(id: '12', name: '仕事')],
+      },
+      eventsByAccount: {
+        'account': missing
+            ? []
+            : [
+                ExternalCalendarEventDto(
+                  accountId: 'account',
+                  id: '42:1793667600000',
+                  calendarId: '12',
+                  calendarName: '仕事',
+                  title: '端末の会議',
+                  startDateTime: DateTime(2026, 11, 3, 9),
+                  endDateTime: DateTime(2026, 11, 3, 10),
+                  isAllDay: false,
+                  memo: '会議の詳細',
+                ),
+              ],
+      },
+    );
+  }
+}
+
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
+
+  for (final scenario in [
+    (externalFirst: false, missing: false),
+    (externalFirst: true, missing: false),
+    (externalFirst: false, missing: true),
+  ]) {
+    testWidgets(
+      '端末予定のウィジェット起動は取得順序${scenario.externalFirst}・削除${scenario.missing}で詳細を判定する',
+      (tester) async {
+        final group = Completer<GroupDto?>();
+        final loader = calendarTestGroupLoader();
+        when(loader.execute('g1')).thenAnswer((_) => group.future);
+        final events = MockGetCalendarEventsUsecase();
+        final labels = MockGetCalendarLabelsUsecase();
+        when(events.execute('g1')).thenAnswer((_) async => []);
+        when(labels.execute('g1')).thenAnswer((_) async => []);
+        final external = _WidgetDeviceCalendar(missing: scenario.missing);
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              externalCalendarOwnerProvider.overrideWithValue(null),
+              externalCalendarSupportedProvider.overrideWithValue(true),
+              externalCalendarNotifierProvider.overrideWith(() => external),
+              appClockProvider.overrideWithValue(
+                FixedAppClock(DateTime(2026, 11, 1)),
+              ),
+              getGroupWithMembersByIdUsecaseProvider.overrideWithValue(loader),
+              getCalendarEventsUsecaseProvider.overrideWithValue(events),
+              getCalendarLabelsUsecaseProvider.overrideWithValue(labels),
+              watchCalendarGroupUsecaseProvider.overrideWithValue(null),
+              watchCalendarEventsUsecaseProvider.overrideWithValue(null),
+              watchCalendarLabelsUsecaseProvider.overrideWithValue(null),
+            ],
+            child: MaterialApp(
+              home: Scaffold(
+                body: CalendarScreen(
+                  groupId: 'g1',
+                  groupName: '家族',
+                  onBack: () {},
+                  initialDate: DateTime(2026, 11, 3),
+                  initialEventId: 'device:12:42:1793667600000',
+                  initialRequest: 1,
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+        if (scenario.externalFirst) external.ready.complete();
+        group.complete(
+          const GroupDto(id: 'g1', ownerId: 'owner', name: '家族', members: []),
+        );
+        await tester.pump();
+        await tester.pump();
+        if (!scenario.externalFirst) {
+          expect(find.text('指定された予定が見つかりませんでした'), findsNothing);
+          expect(find.byType(AlertDialog), findsNothing);
+          external.ready.complete();
+        }
+        await tester.pump();
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(find.byType(CalendarEventDialog), findsNothing);
+        if (scenario.missing) {
+          expect(find.text('指定された予定が見つかりませんでした'), findsOneWidget);
+          expect(find.byType(AlertDialog), findsNothing);
+        } else {
+          expect(find.text('端末カレンダーの予定'), findsOneWidget);
+          expect(find.text('会議の詳細'), findsOneWidget);
+          expect(find.text('端末-user@example.com（仕事）'), findsOneWidget);
+          expect(find.text('保存'), findsNothing);
+          expect(find.text('削除'), findsNothing);
+          await tester.tap(find.text('閉じる'));
+          await tester.pumpAndSettle();
+          expect(find.byType(AlertDialog), findsNothing);
+        }
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
 
   for (final fail in [false, true]) {
     testWidgets(

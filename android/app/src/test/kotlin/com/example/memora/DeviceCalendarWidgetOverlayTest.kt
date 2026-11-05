@@ -38,7 +38,7 @@ class DeviceCalendarWidgetOverlayTest {
         val items = result.days.first { it.date == LocalDate.of(2026, 11, 2) }.events
         assertEquals(listOf("通院", "家族の予定"), items.map { it.title })
         assertTrue(items.first().isExternal)
-        assertNull(items.first().openEventId)
+        assertEquals("device:1:通院", items.first().openEventId)
         assertEquals("shared", items.last().openEventId)
         assertEquals(listOf(shared), base.days.first { it.date == LocalDate.of(2026, 11, 2) }.events)
     }
