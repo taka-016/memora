@@ -5,4 +5,7 @@
     <TextView android:id="@+id/calendar_preview_gap" android:layout_width="2dp" android:layout_height="1dp"/>
     <TextView android:id="@+id/calendar_preview_title" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent"
         android:gravity="center_vertical" android:includeFontPadding="false" android:textSize="9sp" android:maxLines="1" android:ellipsize="end"/>
+    <TextView android:id="@+id/calendar_preview_more" android:layout_width="wrap_content" android:layout_height="match_parent"
+        android:layout_marginStart="1dp" android:gravity="center_vertical" android:includeFontPadding="false"
+        android:textSize="7sp" android:maxLines="1" android:visibility="gone"/>
 </LinearLayout>

@@ -300,12 +300,15 @@ internal object CalendarWidgetRenderer {
     } else {
         R.layout.calendar_widget_day_event
     }).apply {
-        setInt(R.id.calendar_preview, "setBackgroundColor", if (event.isAllDay) event.color ?: Color.TRANSPARENT else Color.TRANSPARENT)
-        setViewVisibility(R.id.calendar_preview_bar, if (event.isAllDay || event.color == null) View.GONE else View.VISIBLE)
-        setViewVisibility(R.id.calendar_preview_gap, if (event.isAllDay || event.color == null) View.GONE else View.VISIBLE)
-        setInt(R.id.calendar_preview_bar, "setBackgroundColor", event.color ?: Color.TRANSPARENT)
+        setInt(R.id.calendar_preview, "setBackgroundColor", if (event.isAllDay) event.color else Color.TRANSPARENT)
+        setViewVisibility(R.id.calendar_preview_bar, if (event.isAllDay) View.GONE else View.VISIBLE)
+        setViewVisibility(R.id.calendar_preview_gap, if (event.isAllDay) View.GONE else View.VISIBLE)
+        setInt(R.id.calendar_preview_bar, "setBackgroundColor", event.color)
+        setViewVisibility(R.id.calendar_preview_more, if (event.remainingCount > 0) View.VISIBLE else View.GONE)
+        setTextViewText(R.id.calendar_preview_more, "+${event.remainingCount}")
+        setTextColor(R.id.calendar_preview_more, if (event.isAllDay) event.textColor else appearance.text)
         setTextViewText(R.id.calendar_preview_title, event.title)
-        setTextColor(R.id.calendar_preview_title, if (event.isAllDay) event.textColor ?: appearance.text else appearance.text)
+        setTextColor(R.id.calendar_preview_title, if (event.isAllDay) event.textColor else appearance.text)
     }
 
     private fun dp(context: Context, value: Int): Int = dp(context, value.toFloat())

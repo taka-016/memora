@@ -18,6 +18,7 @@ class CalendarWeekEntry {
 }
 
 class CalendarWeekLayout {
+  // ignore: constant_identifier_names
   static const MAX_VISIBLE_EVENTS = 5;
 
   CalendarWeekLayout({
