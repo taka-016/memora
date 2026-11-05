@@ -32,52 +32,6 @@
 
 ## カレンダー
 
-以下の順で実施する。
-
-### 1. 本人のGoogleカレンダー連携（ストーリー25・オンラインのみ）
-
-[ユーザーストーリー25](user_stories.md#25-オンラインモードのユーザーとして別のサービスで管理している自分の予定も一緒に確認したい予定の確認先を行き来したくないから)を対象に、Googleカレンダーを読み取り専用のデータ取得元として扱い、以下の節・各節の番号順に実装する。認証情報・連携設定・取得データは端末内だけで扱い、Firestore・SQLite・バックアップには保存しない。表示対象の選択は端末ごとに保持し、取得したカレンダー一覧・予定はメモリ上だけに保持する。
-
-#### 1. Google CloudのAPI・OAuth設定を用意する
-
-1. memora用のGoogle CloudプロジェクトでGoogle Calendar APIを有効化し、対象アプリのOAuthクライアントと同意画面を設定する。開発時のテストユーザーを登録し、外部公開時に必要なOAuth審査・公開設定を整える。プロジェクト・OAuthクライアントは利用アプリを識別するものであり、取得対象のGoogleアカウントは利用者が連携時に選ぶ。
-2. カレンダー参照用のスコープとして`https://www.googleapis.com/auth/calendar.calendarlist.readonly`と`https://www.googleapis.com/auth/calendar.events.readonly`を登録する。アプリ側の認可要求もこの2つに合わせ、カレンダーの書き込み権限は要求しない。必要な手動設定・導入時の注意事項はREADMEへ記載する。権限の定義は[Google公式資料](https://developers.google.com/workspace/calendar/api/auth)を参照する。
-
-#### 2. 読み取り専用の取得境界とモード別の依存を追加する
-
-1. カレンダー一覧と指定期間の外部予定を取得するQueryServiceのインターフェースと取得結果の型をApplication層へ追加する。グループ予定の保存処理から分離し、Presentation層がGoogle APIや認証SDKを直接参照しない構成にする。
-2. Composition Rootでオンライン用の依存を選択し、オフラインでは連携の入口を利用不可にする。
-3. [ER図](er_diagram.md)から`google_calendar_connections`・`google_calendar_selections`とその関連を削除し、DBに連携設定を保存する前提を解消する。これらのEntity・Firestore用Repository・Rulesは追加しない。
-
-#### 3. 端末内のGoogle認証と表示対象設定を追加する
-
-1. 連携操作からGoogleのアカウント選択・必要時のログイン・読み取り権限への同意を行い、選択したアカウントのアクセストークンを取得する認証処理を追加する。要求するカレンダー参照用スコープは第1節の2つとする。memoraへのログインとカレンダー参照の認可を分け、memoraのログインアカウントと異なるGoogleアカウントも選択できるようにし、連携操作でmemoraのログイン中のユーザーを変更しない。ユーザーがキャンセル・権限拒否した場合は連携完了にしない。
-2. 認証情報の管理と再取得を認証SDK・OSの安全な端末内管理へ委ね、API呼び出しに必要なアクセストークンを取得できるようにする。アプリ再起動後はSDKが復元できる認証状態を利用し、復元・再取得にユーザー操作が必要な場合は再認証を案内する。トークンをアプリの通常設定・Firestore・SQLite・バックアップ・ログへ保存・出力せず、サーバーでのトークン保管・代理取得は追加しない。
-3. 連携アカウントの識別情報と表示対象カレンダーIDを端末内の設定として保存・再読込する処理を追加する。設定はグループに紐付けず、memoraの本人と連携Googleアカウントを識別して扱い、端末間では同期しない。カレンダーIDは取得対象の識別子であり、保存済みIDだけで認証・認可済みとは判定しない。
-
-#### 4. Google APIからカレンダー・予定を取得する
-
-1. QueryServiceのGoogle Calendar API実装をInfrastructure層へ追加し、連携Googleアカウントのアクセストークンを`Authorization: Bearer <token>`として付け、端末からGoogleへ直接リクエストする。APIキーのみで非公開予定を取得しようとせず、memoraのログイン用トークンをCalendar APIへ渡さない。
-2. [CalendarList.list](https://developers.google.com/workspace/calendar/api/v3/reference/calendarList/list)で連携Googleアカウントが利用できるカレンダー一覧を取得し、選択した一覧項目のIDを`calendarId`として[Events.list](https://developers.google.com/workspace/calendar/api/v3/reference/events/list)へ渡し、表示期間に重なる予定を取得する。一覧・予定とも`nextPageToken`がなくなるまでページを取得し、取得結果はDBへ複製しない。カレンダーIDを指定してもGoogle側で許可されていない予定は取得できない前提で扱う。
-3. 外部予定の本文・期間・終日区分・連携元カレンダー名を表示用データへ変換する。タイムゾーンと終日の終了日境界を既存表示へ合わせ、Google側で展開した繰り返し予定の各回と個別回の変更・取消しを反映する。アプリ内の繰り返し規則による再展開や、Googleカレンダーへの書き込み処理は追加しない。
-
-#### 5. 表示対象の選択と共有予定への重ね合わせを追加する
-
-1. Googleカレンダーへの連携操作と、表示対象カレンダーの選択・保存・再読込を行う画面とUseCase・Notifierを追加する。
-2. 選択した外部予定をグループの予定と同じ日付に重ねて表示し、連携元のカレンダー名を付ける。外部予定とその繰り返し設定は読み取り専用で表示し、グループ予定の編集・削除・通知登録の対象に含めない。
-3. 本人の外部予定をグループ切替後も表示し、他メンバーには公開しない。
-
-#### 6. 再取得・エラー表示・再認証を追加する
-
-1. 外部予定の取得状態をグループ予定と別に管理し、表示期間・表示対象の変更と再取得操作でGoogleカレンダーから取得する。取得結果は対象期間のメモリ上の表示状態として保持し、再取得でGoogle側の変更・削除を反映する。
-2. アクセストークンの期限切れ時は認証SDKを通じて再取得する。APIが401を返した場合もトークンの再取得後に元のリクエストを1回だけ再試行し、再取得できない場合や再試行後も認証エラーの場合は自動再試行を終了して再認証を案内する。権限不足は必要なスコープへの再同意を案内し、カレンダーへのアクセス権喪失・削除や通信障害をトークン期限切れと同一扱いにして再認証を繰り返さない。
-3. 取得失敗の表示と再試行・再認証の操作を追加し、失敗時もグループの予定を表示する。前回の取得結果を表示する場合は、最新情報を取得できていないことを示す。
-
-#### 7. 連携解除とユーザー切替時の表示終了を追加する
-
-1. 端末内の連携設定・表示対象と、カレンダー参照用の認証状態を解除するUseCaseと操作を追加し、解除後はメモリ上の取得データを破棄して外部予定の表示を終了する。Googleカレンダーとグループの予定は削除しない。
-2. memoraのログアウト・ユーザー切替、連携Googleアカウントの切替時に、直前のアカウントの予定・表示対象・処理中の取得結果が次のアカウントの表示へ混入しないようにする。
-
 ## デザイン
 
 ## 開発環境
@@ -85,6 +39,27 @@
 - KGP未対応の外部プラグイン（home_widget、workmanager_android）がbuilt-in Kotlin対応版に更新されたら対応する
 
 ## 全体
+
+### `com.example`から正式なアプリ識別子への変更
+
+着手前に「検討保留」の[識別子と既存インストールの扱い](#アプリ識別子と既存インストールの扱い)を確定する。オンライン・オフラインの別アプリ構成を維持し、オフライン版へFirebase・Google APIの設定や連携機能を追加しない。
+
+1. 下表に従い、新しいオンライン版の識別子に対応するFirebase・Google Cloudのアプリ登録と認証設定を用意する。同じプロジェクトのAuthentication・Firestoreデータを引き続き使い、プロジェクトや既存データを作り直さない。
+2. `android/app/build.gradle.kts`の`applicationId`・`namespace`と、`android/app/src/main/kotlin/com/example/memora/`配下のパッケージ宣言・配置を新しい名前へ変更する。オフライン版の`.offline`サフィックスを維持する。`packages/memora_android_widget_toast/`のAndroid namespace・Kotlinパッケージ・配置・`pubspec.yaml`のプラグイン登録も合わせる。
+3. `home_widget_android_widget_cache_storage.dart`・`home_widget_calendar_cache_storage.dart`のReceiver完全修飾名、Androidウィジェットのaction名とManifestのintent-filterを更新する。関連する固定文字列・ソースファイルパスの参照も新しい名前にそろえる。
+4. 新しいFirebase Androidアプリに対応する`android/app/google-services.json`を取得し、FlutterFire設定を再生成して`lib/firebase_options.dart`・ローカルの`firebase.json`を新しいFirebase App IDへ合わせる。利用中の認証設定を維持し、Git管理対象外の設定ファイルを強制追加しない。
+5. iOS・macOSの`Runner.xcodeproj/project.pbxproj`にあるRunner/RunnerTestsのBundle ID、macOSの`Runner/Configs/AppInfo.xcconfig`、Linuxの`CMakeLists.txt`の`APPLICATION_ID`、macOS・Windowsの`com.example`名義の著作権・CompanyNameを正式な識別子・公開者表記へ変更する。未対応プラットフォームの新規対応は含めない。
+6. READMEのFirebase設定・ADB操作のapplication IDと、識別子を記載している導入・配布手順を更新する。Google Play等で配布済みの場合は、下表の別アプリ扱いに合わせて配布先も用意する。
+
+変更に合わせて扱う外部設定は以下とする。現時点ではConsole上の登録状況・公開状況は未確認。
+
+| 対象 | 変更時に行うこと |
+| --- | --- |
+| Firebase Console | 既存Androidアプリのパッケージ名は変更できないため、同じプロジェクトへ新しいオンライン版のAndroidアプリを追加し、利用する署名証明書を登録する。Firebase App IDが変わるため設定ファイルも更新する。[公式手順](https://firebase.google.com/docs/android/setup) |
+| Google CloudのAndroid OAuthクライアント | Googleログイン等で利用している場合、新しいパッケージ名とdebug・releaseそれぞれの署名SHA-1の組でクライアントを用意する。Play App Signing利用時は配信APKのアプリ署名証明書を使う。端末カレンダー連携のためのOAuth設定は不要。[署名証明書の確認](https://developers.google.com/android/guides/client-auth) |
+| Maps・PlacesなどのAPIキー | Androidアプリ制限に新しいパッケージ名と署名SHA-1を登録する。旧版を併存させる間は旧設定の削除を急がず、既存のAPI制限を維持する。[制限の設定](https://developers.google.com/maps/api-security-best-practices) |
+| Google Play（配布済みの場合） | application IDが変わると別アプリとなり、既存掲載への更新として配布できない。新規掲載・配布先を用意するか、既存IDを維持するかを実装前に判断する。[application IDの扱い](https://developer.android.com/build/configure-app-module) |
+| Apple側の登録（利用済みの場合） | iOS・macOSのBundle ID変更に合わせ、Apple DeveloperのApp ID・署名プロファイル・利用中の外部サービスのアプリ登録を更新する。未登録のサービスをこの作業だけのために新規導入しない。 |
 
 ## リファクタリング
 
@@ -95,6 +70,11 @@
 ## 検討保留（実装タスクとは別枠・方針未決定）
 
 この節は、実装できる粒度に達していない検討事項と調査結果の保管先とする。既存の実装タスクとは区別し、ユーザーが方針を決めるまで実装に着手しない。
+
+### アプリ識別子と既存インストールの扱い
+
+- **推奨候補（未決定）**: オンライン版を`io.github.taka016.memora`、オフライン版を`io.github.taka016.memora.offline`とする案。GitHub名`taka-016`からハイフンを除いて利用者名に由来する識別子とし、アプリの表示名とは分ける。利用先での識別子の重複は採用前に確認する。保有する独自ドメインがある場合は、その逆順を接頭辞にする案も比較する。
+- **既存インストール**: application ID変更後はAndroid上で別アプリとなり、旧版のSQLite・端末設定・ログイン状態・端末カレンダーの表示設定・ホーム画面ウィジェットは自動では引き継がれない。旧版の併存・削除時期と、必要なデータ引継ぎの範囲を決める。オフラインデータを残す場合は現行形式のバックアップの手動復元を候補とし、旧形式互換や自動移行を追加する前提にしない。
 
 ### TimeTreeのICSインポート
 

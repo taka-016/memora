@@ -13,6 +13,7 @@ graph LR
             Auth([認証する])
             Invite([メンバーを招待・参加する])
             Map([地図で旅行記録を管理する])
+            ExternalCalendar([端末カレンダーの本人の予定を重ねて確認する])
         end
 
         subgraph Common[オンライン・オフライン共通]
@@ -37,6 +38,7 @@ graph LR
     User --> Auth
     User --> Invite
     User --> Map
+    User --> ExternalCalendar
     User --> Group
     User --> Member
     Group --> DeleteGroup

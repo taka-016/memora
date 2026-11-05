@@ -63,7 +63,10 @@ class CalendarState {
       return first.isBefore(end) &&
           (last.isAfter(start) || (first == last && !first.isBefore(start)));
     }).toList();
-    result.sort((a, b) => a.startDateTime.compareTo(b.startDateTime));
+    result.sort((a, b) {
+      if (a.isAllDay != b.isAllDay) return a.isAllDay ? -1 : 1;
+      return a.startDateTime.compareTo(b.startDateTime);
+    });
     return result;
   }
 

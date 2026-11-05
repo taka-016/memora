@@ -1,4 +1,5 @@
 import 'package:memora/composition_root/providers/group_providers.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
@@ -38,6 +39,8 @@ class GroupTimelineGroupSelectionNotifier
   }
 
   Future<void> load(MemberDto currentMember) async {
+    final stopwatch = Stopwatch()..start();
+    if (kDebugMode) logger.i('起動データ: グループ一覧取得 開始');
     final requestGeneration = ++_requestGeneration;
     state = GroupTimelineGroupSelectionState(
       status: GroupTimelineGroupSelectionStatus.loading,
@@ -48,6 +51,9 @@ class GroupTimelineGroupSelectionNotifier
       final groups = await ref
           .read(getGroupsWithMembersUsecaseProvider)
           .execute(currentMember);
+      if (kDebugMode) {
+        logger.i('起動データ: グループ一覧取得 完了（${stopwatch.elapsedMilliseconds}ms）');
+      }
       if (requestGeneration != _requestGeneration) {
         return;
       }

@@ -1,3 +1,4 @@
+import 'package:memora/composition_root/providers/external_calendar_providers.dart';
 import 'package:memora/composition_root/providers/group_providers.dart';
 
 import '../../../../helpers/calendar_group_test_support.dart';
@@ -30,6 +31,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          externalCalendarOwnerProvider.overrideWithValue(null),
           getGroupWithMembersByIdUsecaseProvider.overrideWithValue(
             calendarTestGroupLoader(),
           ),

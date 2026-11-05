@@ -48,7 +48,7 @@ class AppRedirectController {
       _pendingProtectedLocation = currentUri.toString();
     }
 
-    if (authState.isLoading) {
+    if (authState.isLoading || authState.hasInitializationError) {
       if (matchedLocation == signupLocation ||
           matchedLocation == loadingLocation) {
         return null;
@@ -88,9 +88,13 @@ class AppRedirectController {
 bool isAuthenticationSessionEnding(AuthState? previous, AuthState next) {
   final hadAuthenticationSession =
       previous?.isAuthenticated == true ||
-      previous?.requiresMemberSelection == true;
+      previous?.requiresMemberSelection == true ||
+      previous?.hasInitializationError == true;
   final keepsAuthenticationSession =
-      next.isAuthenticated || next.requiresMemberSelection;
+      next.isAuthenticated ||
+      next.requiresMemberSelection ||
+      next.hasInitializationError ||
+      (previous?.hasInitializationError == true && next.isLoading);
   return hadAuthenticationSession && !keepsAuthenticationSession;
 }
 

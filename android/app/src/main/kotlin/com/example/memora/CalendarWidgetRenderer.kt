@@ -88,7 +88,7 @@ internal object CalendarWidgetRenderer {
         }
         val selected = CalendarWidgetData.selectedDate(context, widgetId)
         val month = selected.withDayOfMonth(1)
-        val cachedMonth = cache.months[month]
+        val cachedMonth = CalendarWidgetData.readMonth(context, cache, month)
         val options = manager.getAppWidgetOptions(widgetId)
         val sizes = Sizes(
             Size(
@@ -174,8 +174,12 @@ internal object CalendarWidgetRenderer {
         val minimumRowHeight = if (shortWidget) 24f else 26f
         val rowHeight = ((size.height - reservedHeight.toFloat()) / rows)
             .coerceIn(minimumRowHeight, 64f)
-        val compactDay = rowHeight < 46f
-        val visibleEvents = if (rowHeight >= 36f) 2 else 1
+        val compactDay = rowHeight < 58f
+        val visibleEvents = when {
+            rowHeight >= 40f -> 3
+            rowHeight >= 32f -> 2
+            else -> 1
+        }
         weekIds.forEachIndexed { index, id ->
             views.setViewVisibility(id, if (index < rows) View.VISIBLE else View.GONE)
             views.setInt(id, "setMinimumHeight", dp(context, rowHeight))
@@ -199,7 +203,7 @@ internal object CalendarWidgetRenderer {
                 android.graphics.Paint.ANTI_ALIAS_FLAG
             })
             cell.removeAllViews(R.id.calendar_day_events)
-            day.events.take(visibleEvents).forEach { event ->
+            CalendarWidgetDayPreview.rows(day.events, visibleEvents).forEach { event ->
                 cell.addView(R.id.calendar_day_events, preview(context, event, compactDay, state.appearance))
             }
             val id = dayIds[index]
@@ -288,7 +292,7 @@ internal object CalendarWidgetRenderer {
 
     private fun preview(
         context: Context,
-        event: CalendarWidgetEvent,
+        event: CalendarWidgetPreviewRow,
         compact: Boolean,
         appearance: WidgetAppearance,
     ): RemoteViews = RemoteViews(context.packageName, if (compact) {
@@ -300,6 +304,9 @@ internal object CalendarWidgetRenderer {
         setViewVisibility(R.id.calendar_preview_bar, if (event.isAllDay) View.GONE else View.VISIBLE)
         setViewVisibility(R.id.calendar_preview_gap, if (event.isAllDay) View.GONE else View.VISIBLE)
         setInt(R.id.calendar_preview_bar, "setBackgroundColor", event.color)
+        setViewVisibility(R.id.calendar_preview_more, if (event.remainingCount > 0) View.VISIBLE else View.GONE)
+        setTextViewText(R.id.calendar_preview_more, "+${event.remainingCount}")
+        setTextColor(R.id.calendar_preview_more, if (event.isAllDay) event.textColor else appearance.text)
         setTextViewText(R.id.calendar_preview_title, event.title)
         setTextColor(R.id.calendar_preview_title, if (event.isAllDay) event.textColor else appearance.text)
     }

@@ -18,12 +18,18 @@ class CalendarWeekEntry {
 }
 
 class CalendarWeekLayout {
+  // ignore: constant_identifier_names
+  static const MAX_VISIBLE_EVENTS = 5;
+
   CalendarWeekLayout({
     required CalendarState state,
     required DateTime weekStart,
     required DateTime month,
   }) {
-    final lanes = List.generate(3, (_) => List.filled(7, false));
+    final lanes = List.generate(
+      MAX_VISIBLE_EVENTS,
+      (_) => List.filled(7, false),
+    );
     final weekDay = _day(weekStart);
     final firstColumn = math.max(
       0,
@@ -34,7 +40,7 @@ class CalendarWeekLayout {
       _day(DateTime(month.year, month.month + 1, 0)) - weekDay,
     );
     void place(CalendarEventDto event, int start, int end) {
-      for (var lane = 0; lane < 3; lane++) {
+      for (var lane = 0; lane < MAX_VISIBLE_EVENTS; lane++) {
         if (List.generate(
           end - start + 1,
           (i) => lanes[lane][start + i],
@@ -59,6 +65,7 @@ class CalendarWeekLayout {
 
     final bandEvents = state.events.where(_isBand).toList()
       ..sort((a, b) {
+        if (a.isAllDay != b.isAllDay) return a.isAllDay ? -1 : 1;
         final order = a.startDateTime.compareTo(b.startDateTime);
         return order != 0 ? order : a.id.compareTo(b.id);
       });

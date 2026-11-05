@@ -2,6 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/models/app_mode.dart';
+import 'package:memora/application/services/current_user_service.dart';
+import 'package:memora/domain/entities/account/user.dart';
 import 'package:memora/application/queries/calendar/calendar_event_query_service.dart';
 import 'package:memora/application/queries/calendar/calendar_label_query_service.dart';
 import 'package:memora/application/queries/group/group_query_service.dart';
@@ -17,6 +19,7 @@ import 'get_android_widget_calendar_cache_usecase_test.mocks.dart';
   MockSpec<CalendarEventQueryService>(),
   MockSpec<CalendarLabelQueryService>(),
   MockSpec<GroupQueryService>(),
+  MockSpec<CurrentUserService>(),
 ])
 void main() {
   late MockCalendarEventQueryService events;
@@ -62,6 +65,37 @@ void main() {
     recurrenceRule: rule,
   );
 
+  test('前日開始の時刻付き予定より終日を先頭にし各分類内を開始日時順で保存する', () async {
+    when(events.getCalendarEventsByGroupId('group')).thenAnswer(
+      (_) async => [
+        event(
+          '朝',
+          DateTime(2026, 11, 2, 1),
+          DateTime(2026, 11, 2, 2),
+          allDay: false,
+        ),
+        event('終日当日', DateTime.utc(2026, 11, 2), DateTime.utc(2026, 11, 2)),
+        event(
+          '前日開始',
+          DateTime(2026, 11, 1, 20),
+          DateTime(2026, 11, 2, 12),
+          allDay: false,
+        ),
+        event('終日前日', DateTime.utc(2026, 11, 1), DateTime.utc(2026, 11, 2)),
+      ],
+    );
+    final cache = (await usecase.execute('group', DateTime(2026, 11)))!;
+    final day = (cache['days'] as List).firstWhere(
+      (value) => value['date'] == '2026-11-02',
+    );
+    expect((day['events'] as List).map((value) => value['title']), [
+      '終日前日',
+      '終日当日',
+      '前日開始',
+      '朝',
+    ]);
+  });
+
   test('月の前後を含む週を作り、予定名と配色を全件保持する', () async {
     when(events.getCalendarEventsByGroupId('group')).thenAnswer(
       (_) async => [
@@ -82,6 +116,10 @@ void main() {
     expect(items.first['color'], '#4CAF50');
     expect(items.first['timeLabel'], '終日');
     expect(items.first['isAllDay'], isTrue);
+    expect(
+      items.first['startMillis'],
+      DateTime(2026, 11, 1).millisecondsSinceEpoch,
+    );
     expect(cache['months'], isA<Map>());
     expect((cache['months'] as Map).keys, [
       '2026-09-01',
@@ -129,6 +167,47 @@ void main() {
       DateTime.utc(2026, 11, 9),
     );
     expect(days[1]['events'][1]['isAllDay'], isFalse);
+  });
+
+  test('オンラインではグループ所有者ではなく現在の利用者を端末カレンダーの表示元にする', () async {
+    final current = MockCurrentUserService();
+    when(current.getCurrentUser()).thenAnswer(
+      (_) async => const User(
+        id: 'viewer',
+        loginId: 'viewer@example.com',
+        isVerified: true,
+      ),
+    );
+    final online = GetAndroidWidgetCalendarCacheUsecase(
+      events: events,
+      labels: labels,
+      groups: groups,
+      expander: CalendarRecurrenceExpander(IanaCalendarTimeZone()),
+      mode: AppMode.online,
+      currentUser: current,
+    );
+    final cache = (await online.execute('group', DateTime(2026, 11)))!;
+    expect(cache['deviceCalendarOwnerId'], 'viewer');
+    expect(
+      (cache['days'] as List).expand((day) => day['events'] as List),
+      isEmpty,
+    );
+    verify(current.getCurrentUser()).called(1);
+  });
+
+  test('オフラインでは端末カレンダーの利用者を取得しない', () async {
+    final current = MockCurrentUserService();
+    final offline = GetAndroidWidgetCalendarCacheUsecase(
+      events: events,
+      labels: labels,
+      groups: groups,
+      expander: CalendarRecurrenceExpander(IanaCalendarTimeZone()),
+      mode: AppMode.offline,
+      currentUser: current,
+    );
+    final cache = (await offline.execute('group', DateTime(2026, 11)))!;
+    expect(cache['deviceCalendarOwnerId'], isNull);
+    verifyNever(current.getCurrentUser());
   });
 
   test('削除・アーカイブ済みグループは取得しない', () async {

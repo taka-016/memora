@@ -1,3 +1,5 @@
+import 'package:memora/composition_root/providers/external_calendar_providers.dart';
+import 'package:memora/presentation/notifiers/calendar/external_calendar_notifier.dart';
 import 'package:memora/application/models/app_capabilities.dart';
 import 'package:memora/application/usecases/location/search_locations_usecase.dart';
 import 'package:memora/composition_root/providers/location_providers.dart';
@@ -54,6 +56,7 @@ class CalendarTestHarness {
     AppCapabilities? capabilities,
     SearchLocationsUsecase? locationSearch,
     Future<bool> Function(Uri)? openUrl,
+    ExternalCalendarNotifier? externalCalendar,
     double textScale = 1,
     Brightness? brightness,
     DateTime? now,
@@ -104,6 +107,11 @@ class CalendarTestHarness {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          externalCalendarOwnerProvider.overrideWithValue(null),
+          if (externalCalendar != null)
+            externalCalendarNotifierProvider.overrideWith(
+              () => externalCalendar,
+            ),
           if (capabilities != null)
             appCapabilitiesProvider.overrideWithValue(capabilities),
           if (locationSearch != null)

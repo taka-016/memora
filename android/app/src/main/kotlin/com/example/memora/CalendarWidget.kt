@@ -10,6 +10,7 @@ import android.os.Bundle
 import es.antonborri.home_widget.HomeWidgetBackgroundIntent
 import es.antonborri.home_widget.HomeWidgetPlugin
 import java.time.LocalDate
+import java.util.concurrent.Executors
 
 internal const val CALENDAR_SELECT_ACTION = "com.example.memora.action.CALENDAR_SELECT"
 internal const val CALENDAR_REFRESH_ACTION = "com.example.memora.action.CALENDAR_REFRESH"
@@ -38,6 +39,17 @@ open class CalendarWidgetReceiver : AppWidgetProvider() {
     }
 
     override fun onReceive(context: Context, intent: Intent) {
+        val pending = goAsync()
+        updates.execute {
+            try {
+                receive(context, intent)
+            } finally {
+                pending.finish()
+            }
+        }
+    }
+
+    private fun receive(context: Context, intent: Intent) {
         super.onReceive(context, intent)
         when (intent.action) {
             CALENDAR_SELECT_ACTION -> selectDate(context, intent)
@@ -47,6 +59,7 @@ open class CalendarWidgetReceiver : AppWidgetProvider() {
                 CalendarWidgetData.selectDate(
                     context, widgetId, CalendarWidgetData.selectedDate(context, widgetId),
                 )
+                CalendarWidgetRenderer.update(context, AppWidgetManager.getInstance(context), widgetId)
                 requestCalendarRefresh(context)
             }
             AppWidgetManager.ACTION_APPWIDGET_UPDATE -> {
@@ -85,6 +98,10 @@ open class CalendarWidgetReceiver : AppWidgetProvider() {
     private fun isCalendarWidget(context: Context, widgetId: Int): Boolean =
         AppWidgetManager.getInstance(context).getAppWidgetInfo(widgetId)?.provider?.className
             .let { it == CalendarWidgetReceiver::class.java.name || it == CalendarDarkWidgetReceiver::class.java.name }
+
+    companion object {
+        private val updates = Executors.newSingleThreadExecutor()
+    }
 
     private fun widgetId(intent: Intent): Int = intent.getIntExtra(
         AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID,

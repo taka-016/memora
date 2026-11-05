@@ -1,5 +1,6 @@
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/application/models/app_mode.dart';
+import 'package:memora/application/services/current_user_service.dart';
 import 'package:memora/application/queries/calendar/calendar_event_query_service.dart';
 import 'package:memora/application/queries/calendar/calendar_label_query_service.dart';
 import 'package:memora/application/queries/group/group_query_service.dart';
@@ -13,6 +14,7 @@ class GetAndroidWidgetCalendarCacheUsecase {
     required this.groups,
     required this.expander,
     required this.mode,
+    this.currentUser,
   });
 
   final CalendarEventQueryService events;
@@ -20,6 +22,7 @@ class GetAndroidWidgetCalendarCacheUsecase {
   final GroupQueryService groups;
   final CalendarRecurrenceExpander expander;
   final AppMode mode;
+  final CurrentUserService? currentUser;
 
   Future<Map<String, Object?>?> execute(String groupId, DateTime month) async {
     final group = await groups.getGroupWithMembersById(groupId);
@@ -47,9 +50,12 @@ class GetAndroidWidgetCalendarCacheUsecase {
       await labels.getCalendarLabelsByGroupId(groupId),
       events: source,
     );
-    final occurrences = [
-      for (final event in source) ...expander.expand(event, from, to),
-    ]..sort((a, b) => a.startDateTime.compareTo(b.startDateTime));
+    final occurrences =
+        [for (final event in source) ...expander.expand(event, from, to)]
+          ..sort((a, b) {
+            if (a.isAllDay != b.isAllDay) return a.isAllDay ? -1 : 1;
+            return a.startDateTime.compareTo(b.startDateTime);
+          });
     String dayFormat(DateTime date) => date.toIso8601String().substring(0, 10);
     String timeFormat(DateTime date) =>
         '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
@@ -59,6 +65,7 @@ class GetAndroidWidgetCalendarCacheUsecase {
           .firstOrNull;
       return {
         'id': event.id,
+        'startMillis': event.startDateTime.millisecondsSinceEpoch,
         'occurrence': (event.originalStartDateTime ?? event.startDateTime)
             .toIso8601String(),
         'title': event.title,
@@ -96,6 +103,9 @@ class GetAndroidWidgetCalendarCacheUsecase {
     };
     return {
       'sourceMode': mode.name,
+      'deviceCalendarOwnerId': mode == AppMode.online
+          ? (await currentUser?.getCurrentUser())?.id
+          : null,
       'groupId': groupId,
       'groupName': group.name,
       ...cachedMonths[dayFormat(first)]!,

@@ -5,6 +5,7 @@ import 'package:memora/presentation/app/top_page.dart';
 import 'package:memora/presentation/features/calendar/calendar_navigation_view.dart';
 import 'package:memora/presentation/features/account_setting/account_settings.dart';
 import 'package:memora/presentation/features/auth/auth_guard.dart';
+import 'package:memora/presentation/features/auth/auth_initialization_view.dart';
 import 'package:memora/presentation/features/auth/login_page.dart';
 import 'package:memora/presentation/features/auth/signup_page.dart';
 import 'package:memora/presentation/features/dvc/dvc_point_calculation_screen.dart';
@@ -71,7 +72,7 @@ class LoadingRoute extends GoRouteData with $LoadingRoute {
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
     return const NoTransitionPage<void>(
-      child: Scaffold(body: Center(child: CircularProgressIndicator())),
+      child: Scaffold(body: AuthInitializationView()),
     );
   }
 }

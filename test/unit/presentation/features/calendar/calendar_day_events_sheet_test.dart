@@ -60,9 +60,10 @@ void main() {
     final harness = CalendarTestHarness();
     await harness.pump(tester);
     final lastDay = find.byKey(const Key('calendar_day_2026_10_31'));
-    await tester.tapAt(tester.getTopLeft(lastDay) + const Offset(8, 8));
+    await tester.ensureVisible(lastDay);
+    await tester.tap(lastDay);
     await tester.pump();
-    await tester.tapAt(tester.getTopLeft(lastDay) + const Offset(8, 8));
+    await tester.tap(lastDay);
     await tester.pumpAndSettle();
     final bounds = tester.getRect(find.byType(BottomSheet));
     for (final (distance, title) in [

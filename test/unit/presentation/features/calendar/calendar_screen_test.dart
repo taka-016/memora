@@ -116,33 +116,88 @@ void main() {
   });
 
   setUp(() => SharedPreferences.setMockInitialValues({}));
-  testWidgets('各日の枠に先頭3件を表示し選択日の再タップで全予定と期間を確認する', (tester) async {
+  for (final count in [5, 6]) {
+    testWidgets('各日の枠に5件まで表示し全$count件を一覧で確認できる', (tester) async {
+      final harness = CalendarTestHarness()
+        ..savedEvents.addAll([
+          for (var i = 1; i <= count; i++) calendarTestEvent('e$i', '予定$i'),
+        ]);
+      await harness.pump(tester);
+      final cell = find.byKey(calendarTestDay2);
+      expect(
+        find.descendant(of: cell, matching: find.text('予定1')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: cell, matching: find.text('予定5')),
+        findsOneWidget,
+      );
+      expect(find.text('予定6'), findsNothing);
+      expect(find.text('+1'), count == 6 ? findsOneWidget : findsNothing);
+      expect(find.text('他1件'), findsNothing);
+      expect(find.text('2026/10/2の予定'), findsNothing);
+      await tester.tap(cell);
+      await tester.pump();
+      expect(find.text('2026/10/2の予定'), findsNothing);
+      await tester.tap(cell);
+      await tester.pumpAndSettle();
+      expect(find.text('2026/10/2の予定'), findsOneWidget);
+      expect(find.widgetWithText(ListTile, '予定$count'), findsOneWidget);
+      expect(find.text('家族全員'), findsNWidgets(count));
+      expect(
+        find.text('2026/10/2 09:00 〜 2026/10/2 10:00'),
+        findsNWidgets(count),
+      );
+    });
+  }
+
+  testWidgets('週の混雑で非表示になった帯の別の日にも残件数を表示する', (tester) async {
     final harness = CalendarTestHarness()
       ..savedEvents.addAll([
-        for (var i = 1; i <= 4; i++) calendarTestEvent('e$i', '予定$i'),
+        for (final id in ['a', 'b', 'c', 'd', 'e'])
+          calendarTestEvent(id, '単日$id').copyWith(
+            startDateTime: DateTime(2026, 10, 5),
+            endDateTime: DateTime(2026, 10, 5),
+            isAllDay: true,
+          ),
+        calendarTestEvent('z', '週の帯').copyWith(
+          startDateTime: DateTime(2026, 10, 5),
+          endDateTime: DateTime(2026, 10, 9),
+          isAllDay: true,
+        ),
       ]);
     await harness.pump(tester);
-    final cell = find.byKey(calendarTestDay2);
-    expect(
-      find.descendant(of: cell, matching: find.text('予定1')),
-      findsOneWidget,
-    );
-    expect(
-      find.descendant(of: cell, matching: find.text('予定3')),
-      findsOneWidget,
-    );
-    expect(find.text('予定4'), findsNothing);
-    expect(find.text('他1件'), findsOneWidget);
-    expect(find.text('2026/10/2の予定'), findsNothing);
+    for (final day in [6, 7, 8, 9]) {
+      final cell = find.byKey(Key('calendar_day_2026_10_$day'));
+      expect(
+        find.descendant(of: cell, matching: find.text('+1')),
+        findsOneWidget,
+      );
+    }
+    final cell = find.byKey(const Key('calendar_day_2026_10_6'));
     await tester.tap(cell);
     await tester.pump();
-    expect(find.text('2026/10/2の予定'), findsNothing);
     await tester.tap(cell);
     await tester.pumpAndSettle();
-    expect(find.text('2026/10/2の予定'), findsOneWidget);
-    expect(find.text('予定4'), findsOneWidget);
-    expect(find.text('家族全員'), findsNWidgets(4));
-    expect(find.text('2026/10/2 09:00 〜 2026/10/2 10:00'), findsNWidgets(4));
+    expect(find.widgetWithText(ListTile, '週の帯'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('複数日の帯が5段ある日も帯に隠れず残件数を表示する', (tester) async {
+    final harness = CalendarTestHarness()
+      ..savedEvents.addAll([
+        for (var i = 1; i <= 6; i++)
+          calendarTestEvent('band$i', '帯$i').copyWith(
+            startDateTime: DateTime(2026, 10, 2),
+            endDateTime: DateTime(2026, 10, 3),
+            isAllDay: true,
+          ),
+      ]);
+    await harness.pump(tester);
+    expect(find.text('+1'), findsNWidgets(2));
+    expect(find.text('帯5'), findsOneWidget);
+    expect(find.text('帯6'), findsNothing);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('左右スワイプと矢印の両方で前月翌月へ移動する', (tester) async {

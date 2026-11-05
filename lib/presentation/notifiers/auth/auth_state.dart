@@ -3,7 +3,12 @@ import 'package:memora/application/dtos/account/user_dto.dart';
 
 const memberSelectionRequiredMessage = 'member_selection_required';
 
-enum AuthStatus { loading, authenticated, unauthenticated }
+enum AuthStatus {
+  loading,
+  authenticated,
+  unauthenticated,
+  initializationFailed,
+}
 
 enum MessageType { info, error }
 
@@ -37,12 +42,21 @@ class AuthState extends Equatable {
         messageType: messageType ?? MessageType.info,
       );
 
+  const AuthState.initializationFailed(String message)
+    : this._(
+        status: AuthStatus.initializationFailed,
+        message: message,
+        messageType: MessageType.error,
+      );
+
   final AuthStatus status;
   final UserDto? user;
   final String message;
   final MessageType messageType;
 
   bool get isLoading => status == AuthStatus.loading;
+
+  bool get hasInitializationError => status == AuthStatus.initializationFailed;
 
   bool get isAuthenticated => status == AuthStatus.authenticated;
 

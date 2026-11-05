@@ -241,6 +241,52 @@ void main() {
     expect(router.state.uri.toString(), initialRoute.location);
   });
 
+  test('認証タイムアウトと再試行では保護された遷移先とセッションを保持する', () {
+    final controller = AppRedirectController();
+    const loading = AuthState.loading();
+    const failed = AuthState.initializationFailed('通信待ち');
+    const authenticated = AuthState.authenticated(
+      UserDto(id: 'user', loginId: 'test@example.com', isVerified: true),
+    );
+    const target = '/calendar?groupId=g1&date=2026-11-03';
+    expect(
+      controller.resolve(
+        authState: loading,
+        matchedLocation: '/calendar',
+        location: target,
+      ),
+      '/loading',
+    );
+    controller.handleAuthStateChange(loading, failed);
+    expect(
+      controller.resolve(
+        authState: failed,
+        matchedLocation: '/loading',
+        location: '/loading',
+      ),
+      isNull,
+    );
+    controller.handleAuthStateChange(failed, loading);
+    controller.handleAuthStateChange(loading, authenticated);
+    expect(
+      controller.resolve(
+        authState: authenticated,
+        matchedLocation: '/loading',
+        location: '/loading',
+      ),
+      target,
+    );
+    expect(isAuthenticationSessionEnding(authenticated, failed), isFalse);
+    expect(isAuthenticationSessionEnding(failed, loading), isFalse);
+    expect(
+      isAuthenticationSessionEnding(
+        failed,
+        const AuthState.unauthenticated(''),
+      ),
+      isTrue,
+    );
+  });
+
   test('認証画面とメンバー作成画面を経由してもディープリンクを復元する', () {
     final controller = AppRedirectController();
     const initialRoute = SettingsRoute();

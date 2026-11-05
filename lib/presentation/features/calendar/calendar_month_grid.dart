@@ -101,7 +101,9 @@ class _CalendarMonthPage extends StatelessWidget {
       builder: (context, constraints) {
         final textScaler = MediaQuery.textScalerOf(context);
         final minHeight =
-            16 + textScaler.scale(14) * 1.4 + textScaler.scale(11) * 1.4 * 4;
+            16 +
+            textScaler.scale(14) * 1.4 +
+            textScaler.scale(11) * 1.4 * CalendarWeekLayout.MAX_VISIBLE_EVENTS;
         final rowHeight = math.max(constraints.maxHeight / rows, minHeight);
         return SingleChildScrollView(
           child: Column(
@@ -189,6 +191,13 @@ class _CalendarWeekRow extends StatelessWidget {
                               )
                               .toList(),
                           visibleCount: layout.visibleCounts[column],
+                          lastLaneOccupied: layout.entries.any(
+                            (entry) =>
+                                entry.lane ==
+                                    CalendarWeekLayout.MAX_VISIBLE_EVENTS - 1 &&
+                                entry.startColumn <= column &&
+                                entry.endColumn >= column,
+                          ),
                           laneHeight: laneHeight,
                           onTap: state.isSaving
                               ? null
@@ -218,6 +227,45 @@ class _CalendarWeekRow extends StatelessWidget {
                   ),
                 ),
               ),
+            for (var column = 0; column < 7; column++)
+              if (layout.entries.any(
+                (entry) =>
+                    entry.lane == CalendarWeekLayout.MAX_VISIBLE_EVENTS - 1 &&
+                    entry.startColumn != entry.endColumn &&
+                    entry.startColumn <= column &&
+                    entry.endColumn >= column,
+              ))
+                Builder(
+                  builder: (context) {
+                    final date = DateTime(
+                      weekStart.year,
+                      weekStart.month,
+                      weekStart.day + column,
+                    );
+                    final remaining =
+                        state.eventsForDay(date).length -
+                        layout.visibleCounts[column];
+                    if (remaining <= 0) return const SizedBox.shrink();
+                    return Positioned(
+                      left: width * column + 2,
+                      width: width - 4,
+                      top:
+                          eventTop +
+                          (CalendarWeekLayout.MAX_VISIBLE_EVENTS - 1) *
+                              laneHeight,
+                      height: laneHeight,
+                      child: IgnorePointer(
+                        child: Align(
+                          alignment: Alignment.bottomRight,
+                          child: _CalendarRemainingCount(
+                            count: remaining,
+                            selected: date == state.selectedDate,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
           ],
         );
       },
@@ -232,6 +280,7 @@ class _CalendarDayCell extends StatelessWidget {
     required this.onTap,
     required this.entries,
     required this.visibleCount,
+    required this.lastLaneOccupied,
     required this.laneHeight,
   });
   final CalendarState state;
@@ -239,6 +288,7 @@ class _CalendarDayCell extends StatelessWidget {
   final VoidCallback? onTap;
   final List<CalendarWeekEntry> entries;
   final int visibleCount;
+  final bool lastLaneOccupied;
   final double laneHeight;
   @override
   Widget build(BuildContext context) {
@@ -262,12 +312,21 @@ class _CalendarDayCell extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(
-                  '${date.day}',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 14, height: 1.4),
+                SizedBox(
+                  height: MediaQuery.textScalerOf(context).scale(14) * 1.4,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      '${date.day}',
+                      style: const TextStyle(fontSize: 14, height: 1.4),
+                    ),
+                  ),
                 ),
-                for (var lane = 0; lane < 3; lane++)
+                for (
+                  var lane = 0;
+                  lane < CalendarWeekLayout.MAX_VISIBLE_EVENTS;
+                  lane++
+                )
                   SizedBox(
                     height: laneHeight,
                     child: Builder(
@@ -275,27 +334,78 @@ class _CalendarDayCell extends StatelessWidget {
                         final entry = entries
                             .where((entry) => entry.lane == lane)
                             .firstOrNull;
-                        return entry == null
-                            ? const SizedBox.shrink()
-                            : _CalendarEventPreview(
-                                state: state,
-                                event: entry.event,
-                                centered: entry.isMultiDay,
-                                filled:
-                                    entry.event.isAllDay || entry.isMultiDay,
-                              );
+                        if (entry == null) {
+                          if (lane ==
+                                  CalendarWeekLayout.MAX_VISIBLE_EVENTS - 1 &&
+                              remaining > 0 &&
+                              !lastLaneOccupied) {
+                            return Align(
+                              alignment: Alignment.bottomRight,
+                              child: _CalendarRemainingCount(
+                                count: remaining,
+                                selected: selected,
+                              ),
+                            );
+                          }
+                          return const SizedBox.shrink();
+                        }
+                        final preview = _CalendarEventPreview(
+                          state: state,
+                          event: entry.event,
+                          centered: entry.isMultiDay,
+                          filled: entry.event.isAllDay || entry.isMultiDay,
+                        );
+                        if (lane == CalendarWeekLayout.MAX_VISIBLE_EVENTS - 1 &&
+                            remaining > 0) {
+                          return Row(
+                            children: [
+                              Expanded(child: preview),
+                              Align(
+                                alignment: Alignment.bottomRight,
+                                widthFactor: 1,
+                                child: _CalendarRemainingCount(
+                                  count: remaining,
+                                  selected: selected,
+                                ),
+                              ),
+                            ],
+                          );
+                        }
+                        return preview;
                       },
                     ),
-                  ),
-                if (remaining > 0)
-                  Text(
-                    '他$remaining件',
-                    maxLines: 1,
-                    style: const TextStyle(fontSize: 11, height: 1.4),
                   ),
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CalendarRemainingCount extends StatelessWidget {
+  const _CalendarRemainingCount({required this.count, required this.selected});
+  final int count;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Semantics(
+      label: '他$count件',
+      child: Container(
+        color: selected
+            ? Color.alphaBlend(
+                scheme.primaryContainer.withValues(alpha: .35),
+                scheme.surface,
+              )
+            : scheme.surface,
+        padding: const EdgeInsets.symmetric(horizontal: 1),
+        child: Text(
+          '+$count',
+          maxLines: 1,
+          style: const TextStyle(fontSize: 9, height: 1.4),
         ),
       ),
     );

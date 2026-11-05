@@ -77,10 +77,6 @@ cd /workspaces/memora
 | プライバシーポリシー | `https://taka-016.github.io/memora/privacy.html` |
 | 利用規約 | `https://taka-016.github.io/memora/terms.html` |
 
-OAuth審査で求められるサイトの所有確認は、Google Cloudプロジェクトの所有者または編集者のGoogleアカウントで[Search Console](https://search.google.com/search-console)から行います。GitHub Pagesの標準ドメインではDNSを変更できないため、「URLプレフィックス」に公開サイトのURLを指定し、HTMLファイルまたはHTMLタグによる確認方法を選びます。HTMLファイル方式では、Googleが発行した確認ファイルを内容・名前を変えずに`docs/`直下へ追加し、公開先の指定URLで取得できるようにしてから確認してください。HTMLタグ方式では、発行されたタグを`docs/index.html`の`head`内へ追加して公開します。所有確認後も確認ファイル・タグは残します。
-
-Google Auth Platformの「承認済みドメイン」には、ページURLではなく`taka-016.github.io`を追加し、その後「ブランディング」の各項目へ上表のURLを登録します。GitHub Pagesの設定・Search Consoleの所有確認・OAuth審査は、リポジトリへのpushだけでは完了しません。詳細は[GitHubの公開設定](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site)、[Googleの所有確認](https://support.google.com/webmasters/answer/9008080)、[OAuthホームページの要件](https://support.google.com/cloud/answer/13807376)を参照してください。
-
 ### アプリの初期設定
 
 開発コンテナの`/workspaces/memora`で、次の手順を実施します。
@@ -99,7 +95,15 @@ Google Cloud ConsoleでMaps SDK for AndroidとPlaces API (New)を有効にし、
 - Identity Toolkit API
 - Token Service API
 
-必要に応じてFirestoreのセキュリティルールを設定した後、`just setup-firebase`を実行します。画面の案内に従ってログインし、対象プロジェクトを選択してください。`lib/firebase_options.dart`と`firebase.json`の設定に加え、Firestoreのルールとインデックスもデプロイされます。
+必要に応じてFirestoreのセキュリティルールを設定した後、`just setup-firebase`を実行し、メニューで必要な処理を選びます。初回は「すべて実行」を選択し、画面の案内に従ってログインとプロジェクト選択を行ってください。処理を直接指定する方法は[justfile](./justfile)を参照してください。
+
+設定の生成・更新時は、Google Cloudの「APIとサービス → 認証情報」からFirebase用APIキーをコピーして入力してください（環境変数`FIREBASE_API_KEY`でも指定可）。指定したキーは`android/app/google-services.json`と`lib/firebase_options.dart`の両方へ反映されます。既存ファイルの削除は不要です。設定更新後はアプリを再ビルドしてください。
+
+### 端末カレンダー連携
+
+Androidのオンライン版では、カレンダー画面の「端末カレンダー連携」から読み取りを許可し、アカウントごとに表示対象を選びます。Google等の予定は、あらかじめ端末のカレンダー同期を有効にしてください。端末に同期された範囲だけを表示し、予定の編集や他メンバーへの共有は行いません。選択した予定はホーム画面のカレンダーウィジェットにも表示し、ウィジェットの更新時に端末から読み直します。
+
+Androidのカレンダー権限を取り消した場合は、端末の設定から再度許可してください。
 
 ### アプリモードと成果物
 

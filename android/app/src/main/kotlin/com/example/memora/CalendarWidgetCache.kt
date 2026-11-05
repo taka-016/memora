@@ -15,7 +15,14 @@ internal data class CalendarWidgetEvent(
     val color: Int,
     val textColor: Int,
     val timeLabel: String,
-)
+    val startMillis: Long = 0L,
+    val isExternal: Boolean = false,
+) {
+    val openEventId: String? get() = id
+}
+
+internal val calendarWidgetEventOrder = compareByDescending<CalendarWidgetEvent> { it.isAllDay }
+    .thenBy { it.startMillis }
 
 internal data class CalendarWidgetDay(
     val date: LocalDate,
@@ -32,6 +39,7 @@ internal data class CalendarWidgetCache(
     val sourceMode: String,
     val months: Map<LocalDate, CalendarWidgetMonth>,
     val lastUpdatedAt: String,
+    val deviceCalendarOwnerId: String? = null,
 )
 
 internal object CalendarWidgetData {
@@ -76,6 +84,7 @@ internal object CalendarWidgetData {
                                 color = parseColor(event.optString("color")),
                                 textColor = parseColor(event.optString("textColor")),
                                 timeLabel = event.getString("timeLabel"),
+                                startMillis = event.optLong("startMillis"),
                             )
                         },
                     )
@@ -86,6 +95,7 @@ internal object CalendarWidgetData {
             val loaded = CalendarWidgetCache(
                 root.getString("groupId"), root.getString("sourceMode"), parsedMonths,
                 root.optString("lastUpdatedAt"),
+                deviceCalendarOwnerId = if (root.isNull("deviceCalendarOwnerId")) null else root.getString("deviceCalendarOwnerId"),
             )
             path = cachePath
             modifiedAt = currentModifiedAt
@@ -96,6 +106,14 @@ internal object CalendarWidgetData {
             it.groupId == targetGroup(context) && it.sourceMode == BuildConfig.RESOLVED_APP_MODE
         }
     }.getOrNull()
+
+    fun readMonth(context: Context, cache: CalendarWidgetCache, month: LocalDate): CalendarWidgetMonth? {
+        val stored = cache.months[month] ?: return null
+        val shared = stored.copy(days = stored.days.map { day ->
+            day.copy(events = day.events.sortedWith(calendarWidgetEventOrder))
+        })
+        return DeviceCalendarWidgetSource.read(context, cache, shared)
+    }
 
     fun selectedDate(context: Context, widgetId: Int): LocalDate {
         val prefs = HomeWidgetPlugin.getData(context)

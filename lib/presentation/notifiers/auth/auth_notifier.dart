@@ -5,6 +5,7 @@ import 'package:memora/composition_root/providers/account_providers.dart';
 
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/account/user_dto.dart';
 import 'package:memora/application/usecases/account/get_current_user_usecase.dart';
@@ -58,9 +59,13 @@ class AuthNotifier extends Notifier<AuthState> {
     }
     _authStateSubscription?.cancel();
     _authStateChangeGeneration++;
+    if (kDebugMode) logger.i('起動認証: 認証状態の通知待ち');
     _authStateSubscription = observeAuthStateChangesUseCase.execute().listen((
       user,
     ) {
+      if (kDebugMode) {
+        logger.i('起動認証: 認証状態を受信（${user == null ? '未ログイン' : 'ログイン済み'}）');
+      }
       final generation = ++_authStateChangeGeneration;
       unawaited(_handleAuthStateChange(user, generation));
     });
@@ -124,12 +129,26 @@ class AuthNotifier extends Notifier<AuthState> {
     }
 
     try {
-      await validateCurrentUserTokenUseCase.execute();
+      final stopwatch = Stopwatch()..start();
+      if (kDebugMode) logger.i('起動認証: トークン確認 開始');
+      await validateCurrentUserTokenUseCase.execute().timeout(
+        const Duration(seconds: 15),
+      );
+      if (kDebugMode) {
+        logger.i('起動認証: トークン確認 完了（${stopwatch.elapsedMilliseconds}ms）');
+      }
       if (!_isLatestAuthStateChange(generation)) {
         return;
       }
 
-      final memberExists = await checkMemberExistsUseCase.execute(user.id);
+      stopwatch.reset();
+      if (kDebugMode) logger.i('起動認証: メンバー存在確認 開始');
+      final memberExists = await checkMemberExistsUseCase
+          .execute(user.id)
+          .timeout(const Duration(seconds: 15));
+      if (kDebugMode) {
+        logger.i('起動認証: メンバー存在確認 完了（${stopwatch.elapsedMilliseconds}ms）');
+      }
       if (!_isLatestAuthStateChange(generation)) {
         return;
       }
@@ -143,6 +162,12 @@ class AuthNotifier extends Notifier<AuthState> {
         memberSelectionRequiredMessage,
         messageType: MessageType.info,
       );
+    } on TimeoutException catch (e, stack) {
+      logger.w('起動時の認証確認がタイムアウトしました', error: e, stackTrace: stack);
+      if (!_isLatestAuthStateChange(generation)) return;
+      state = const AuthState.initializationFailed(
+        'ログイン状態の確認に時間がかかっています。再試行してください。',
+      );
     } catch (e, stack) {
       logger.e(
         'AuthNotifier.authStateChanges: ${e.toString()}',
@@ -153,6 +178,25 @@ class AuthNotifier extends Notifier<AuthState> {
         return;
       }
       await _signOutWithError('認証が無効です。再度ログインしてください。', generation: generation);
+    }
+  }
+
+  Future<void> retryInitialization() async {
+    if (!state.hasInitializationError) return;
+    final generation = ++_authStateChangeGeneration;
+    state = const AuthState.loading();
+    try {
+      final user = await getCurrentUserUseCase.execute().timeout(
+        const Duration(seconds: 15),
+      );
+      if (!_isLatestAuthStateChange(generation)) return;
+      await _handleAuthStateChange(user, generation);
+    } catch (e, stack) {
+      logger.w('起動時の認証確認を再試行できませんでした', error: e, stackTrace: stack);
+      if (!_isLatestAuthStateChange(generation)) return;
+      state = const AuthState.initializationFailed(
+        'ログイン状態を確認できませんでした。再試行してください。',
+      );
     }
   }
 
