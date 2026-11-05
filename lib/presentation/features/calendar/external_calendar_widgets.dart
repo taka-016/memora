@@ -37,15 +37,11 @@ class ExternalCalendarSettingsDialog extends ConsumerWidget {
               if (state.hasPermission && state.connections.isEmpty)
                 const Text('端末に同期されたカレンダーがありません。端末のカレンダー同期設定を確認してください。'),
               for (final connection in state.connections)
-                Column(
+                ExpansionTile(
                   key: ValueKey('external_account_${connection.account.id}'),
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  title: Text(connection.account.name),
+                  expandedCrossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 16),
-                    Text(
-                      connection.account.name,
-                      style: Theme.of(context).textTheme.titleSmall,
-                    ),
                     if (state.failures[connection.account.id]
                         case final failure?)
                       Text(failure.message),
