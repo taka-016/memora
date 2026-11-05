@@ -65,6 +65,37 @@ void main() {
     recurrenceRule: rule,
   );
 
+  test('前日開始の時刻付き予定より終日を先頭にし各分類内を開始日時順で保存する', () async {
+    when(events.getCalendarEventsByGroupId('group')).thenAnswer(
+      (_) async => [
+        event(
+          '朝',
+          DateTime(2026, 11, 2, 1),
+          DateTime(2026, 11, 2, 2),
+          allDay: false,
+        ),
+        event('終日当日', DateTime.utc(2026, 11, 2), DateTime.utc(2026, 11, 2)),
+        event(
+          '前日開始',
+          DateTime(2026, 11, 1, 20),
+          DateTime(2026, 11, 2, 12),
+          allDay: false,
+        ),
+        event('終日前日', DateTime.utc(2026, 11, 1), DateTime.utc(2026, 11, 2)),
+      ],
+    );
+    final cache = (await usecase.execute('group', DateTime(2026, 11)))!;
+    final day = (cache['days'] as List).firstWhere(
+      (value) => value['date'] == '2026-11-02',
+    );
+    expect((day['events'] as List).map((value) => value['title']), [
+      '終日前日',
+      '終日当日',
+      '前日開始',
+      '朝',
+    ]);
+  });
+
   test('月の前後を含む週を作り、予定名と配色を全件保持する', () async {
     when(events.getCalendarEventsByGroupId('group')).thenAnswer(
       (_) async => [

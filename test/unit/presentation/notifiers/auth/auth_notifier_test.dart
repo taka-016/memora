@@ -3,6 +3,9 @@ import 'package:memora/composition_root/providers/account_providers.dart';
 
 import 'dart:async';
 
+import 'package:memora/core/app_logger.dart';
+import 'package:memora/infrastructure/logging/device_app_log.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
@@ -96,6 +99,57 @@ void main() {
             mockAcceptInvitationUseCase,
           ),
         ],
+      );
+    }
+
+    for (final waitForToken in [true, false]) {
+      testWidgets(
+        '起動時の${waitForToken ? 'トークン' : 'メンバー'}確認のタイムアウト後もログアウトせず再試行できる',
+        (tester) async {
+          final previousLog = logger;
+          logger = const SilentAppLog();
+          addTearDown(() => logger = previousLog);
+          const user = UserDto(
+            id: 'user123',
+            loginId: 'test@example.com',
+            isVerified: true,
+          );
+          final pendingToken = Completer<void>();
+          final pendingMember = Completer<bool>();
+          when(mockValidateCurrentUserTokenUseCase.execute()).thenAnswer(
+            (_) => waitForToken ? pendingToken.future : Future.value(),
+          );
+          when(mockCheckMemberExistsUseCase.execute(user.id))
+              .thenAnswer((_) => pendingMember.future);
+          when(mockGetCurrentUserUseCase.execute())
+              .thenAnswer((_) async => user);
+          final controller = StreamController<UserDto?>();
+          addTearDown(controller.close);
+          final container = createContainer(controller.stream);
+          addTearDown(container.dispose);
+          final notifier = container.read(authNotifierProvider.notifier);
+          controller.add(user);
+          await tester.pump();
+          expect(notifier.state.isLoading, isTrue);
+          await tester.pump(const Duration(seconds: 15));
+          expect(notifier.state.hasInitializationError, isTrue);
+          verifyNever(mockLogoutUseCase.execute());
+          when(mockValidateCurrentUserTokenUseCase.execute())
+              .thenAnswer((_) async {});
+          when(mockCheckMemberExistsUseCase.execute(user.id))
+              .thenAnswer((_) async => true);
+          final retry = notifier.retryInitialization();
+          expect(notifier.state.isLoading, isTrue);
+          await tester.pump();
+          await retry;
+          expect(notifier.state.user, user);
+          expect(notifier.state.isAuthenticated, isTrue);
+          pendingToken.complete();
+          pendingMember.complete(false);
+          await tester.pump();
+          expect(notifier.state.isAuthenticated, isTrue);
+          verifyNever(mockLogoutUseCase.execute());
+        },
       );
     }
 

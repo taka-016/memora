@@ -18,6 +18,18 @@ class DeviceCalendarWidgetOverlayTest {
     )
 
     @Test
+    fun `前日開始の時刻付き予定より終日を優先して開始日時順に統合する`() {
+        val shared = CalendarWidgetEvent("shared", null, "前日開始", false, 0, 0, "20:00–12:00", startMillis = millis(1, 20))
+        val base = month.copy(days = month.days.map { if (it.date == LocalDate.of(2026, 11, 2)) it.copy(events = listOf(shared)) else it })
+        val result = DeviceCalendarWidgetOverlay.merge(base, listOf(
+            event("朝", millis(2, 1), millis(2, 2)),
+            event("終日", millis(2, 0, true), millis(3, 0, true), true),
+        ), mapOf("1" to "個人"), zone)
+        val day = result.days.first { it.date == LocalDate.of(2026, 11, 2) }
+        assertEquals(listOf("終日", "前日開始", "朝"), day.events.map { it.title })
+    }
+
+    @Test
     fun `終日予定はUTCの終了日を含めず午前0時終了の予定も翌日へ出さない`() {
         val result = DeviceCalendarWidgetOverlay.merge(month, listOf(
             event("旅行", millis(2, 0, true), millis(5, 0, true), true),
