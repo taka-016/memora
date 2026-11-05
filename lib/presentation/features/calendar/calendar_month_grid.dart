@@ -101,7 +101,11 @@ class _CalendarMonthPage extends StatelessWidget {
       builder: (context, constraints) {
         final textScaler = MediaQuery.textScalerOf(context);
         final minHeight =
-            16 + textScaler.scale(14) * 1.4 + textScaler.scale(11) * 1.4 * 4;
+            16 +
+            textScaler.scale(14) * 1.4 +
+            textScaler.scale(11) *
+                1.4 *
+                (CalendarWeekLayout.MAX_VISIBLE_EVENTS + 1);
         final rowHeight = math.max(constraints.maxHeight / rows, minHeight);
         return SingleChildScrollView(
           child: Column(
@@ -272,7 +276,11 @@ class _CalendarDayCell extends StatelessWidget {
                     ),
                   ),
                 ),
-                for (var lane = 0; lane < 3; lane++)
+                for (
+                  var lane = 0;
+                  lane < CalendarWeekLayout.MAX_VISIBLE_EVENTS;
+                  lane++
+                )
                   SizedBox(
                     height: laneHeight,
                     child: Builder(

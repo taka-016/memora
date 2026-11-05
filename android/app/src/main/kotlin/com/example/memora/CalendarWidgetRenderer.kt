@@ -174,8 +174,12 @@ internal object CalendarWidgetRenderer {
         val minimumRowHeight = if (shortWidget) 24f else 26f
         val rowHeight = ((size.height - reservedHeight.toFloat()) / rows)
             .coerceIn(minimumRowHeight, 64f)
-        val compactDay = rowHeight < 46f
-        val visibleEvents = if (rowHeight >= 36f) 2 else 1
+        val compactDay = rowHeight < 58f
+        val visibleEvents = when {
+            rowHeight >= 40f -> 3
+            rowHeight >= 32f -> 2
+            else -> 1
+        }
         weekIds.forEachIndexed { index, id ->
             views.setViewVisibility(id, if (index < rows) View.VISIBLE else View.GONE)
             views.setInt(id, "setMinimumHeight", dp(context, rowHeight))
@@ -199,7 +203,7 @@ internal object CalendarWidgetRenderer {
                 android.graphics.Paint.ANTI_ALIAS_FLAG
             })
             cell.removeAllViews(R.id.calendar_day_events)
-            day.events.take(visibleEvents).forEach { event ->
+            CalendarWidgetDayPreview.rows(day.events, visibleEvents).forEach { event ->
                 cell.addView(R.id.calendar_day_events, preview(context, event, compactDay, state.appearance))
             }
             val id = dayIds[index]
@@ -288,7 +292,7 @@ internal object CalendarWidgetRenderer {
 
     private fun preview(
         context: Context,
-        event: CalendarWidgetEvent,
+        event: CalendarWidgetPreviewRow,
         compact: Boolean,
         appearance: WidgetAppearance,
     ): RemoteViews = RemoteViews(context.packageName, if (compact) {
@@ -296,12 +300,12 @@ internal object CalendarWidgetRenderer {
     } else {
         R.layout.calendar_widget_day_event
     }).apply {
-        setInt(R.id.calendar_preview, "setBackgroundColor", if (event.isAllDay) event.color else Color.TRANSPARENT)
-        setViewVisibility(R.id.calendar_preview_bar, if (event.isAllDay) View.GONE else View.VISIBLE)
-        setViewVisibility(R.id.calendar_preview_gap, if (event.isAllDay) View.GONE else View.VISIBLE)
-        setInt(R.id.calendar_preview_bar, "setBackgroundColor", event.color)
+        setInt(R.id.calendar_preview, "setBackgroundColor", if (event.isAllDay) event.color ?: Color.TRANSPARENT else Color.TRANSPARENT)
+        setViewVisibility(R.id.calendar_preview_bar, if (event.isAllDay || event.color == null) View.GONE else View.VISIBLE)
+        setViewVisibility(R.id.calendar_preview_gap, if (event.isAllDay || event.color == null) View.GONE else View.VISIBLE)
+        setInt(R.id.calendar_preview_bar, "setBackgroundColor", event.color ?: Color.TRANSPARENT)
         setTextViewText(R.id.calendar_preview_title, event.title)
-        setTextColor(R.id.calendar_preview_title, if (event.isAllDay) event.textColor else appearance.text)
+        setTextColor(R.id.calendar_preview_title, if (event.isAllDay) event.textColor ?: appearance.text else appearance.text)
     }
 
     private fun dp(context: Context, value: Int): Int = dp(context, value.toFloat())
