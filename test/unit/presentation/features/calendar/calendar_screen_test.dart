@@ -133,7 +133,8 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('予定6'), findsNothing);
-      expect(find.text('他1件'), count == 6 ? findsOneWidget : findsNothing);
+      expect(find.text('+1'), count == 6 ? findsOneWidget : findsNothing);
+      expect(find.text('他1件'), findsNothing);
       expect(find.text('2026/10/2の予定'), findsNothing);
       await tester.tap(cell);
       await tester.pump();
@@ -149,6 +150,23 @@ void main() {
       );
     });
   }
+
+  testWidgets('複数日の帯が5段ある日も帯に隠れず残件数を表示する', (tester) async {
+    final harness = CalendarTestHarness()
+      ..savedEvents.addAll([
+        for (var i = 1; i <= 6; i++)
+          calendarTestEvent('band$i', '帯$i').copyWith(
+            startDateTime: DateTime(2026, 10, 2),
+            endDateTime: DateTime(2026, 10, 3),
+            isAllDay: true,
+          ),
+      ]);
+    await harness.pump(tester);
+    expect(find.text('+1'), findsNWidgets(2));
+    expect(find.text('帯5'), findsOneWidget);
+    expect(find.text('帯6'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets('左右スワイプと矢印の両方で前月翌月へ移動する', (tester) async {
     await CalendarTestHarness().pump(tester);

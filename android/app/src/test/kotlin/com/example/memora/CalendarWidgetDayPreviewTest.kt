@@ -14,6 +14,7 @@ class CalendarWidgetDayPreviewTest {
             val source = events(count)
             val rows = CalendarWidgetDayPreview.rows(source, 3)
             assertEquals(source.map { it.title }, rows.map { it.title })
+            assertTrue(rows.all { it.remainingCount == 0 })
             assertEquals(source.map { it.color }, rows.map { it.color })
             assertEquals(source.map { it.isAllDay }, rows.map { it.isAllDay })
             assertEquals(source.map { it.textColor }, rows.map { it.textColor })
@@ -21,20 +22,22 @@ class CalendarWidgetDayPreviewTest {
     }
 
     @Test
-    fun `4件以上は先頭2件と3行目の残件数を表示し元の予定を変更しない`() {
+    fun `4件以上も先頭3件を表示し最終行に残件数を添える`() {
         for (count in listOf(4, 5, 8)) {
             val source = events(count)
             val rows = CalendarWidgetDayPreview.rows(source, 3)
-            assertEquals(listOf("予定1", "予定2", "他${count - 2}件"), rows.map { it.title })
-            assertNull(rows.last().color)
-            assertNull(rows.last().textColor)
+            assertEquals(listOf("予定1", "予定2", "予定3"), rows.map { it.title })
+            assertEquals(listOf(0, 0, count - 3), rows.map { it.remainingCount })
+            assertEquals(source.last { it.title == "予定3" }.color, rows.last().color)
             assertEquals(count, source.size)
         }
     }
 
     @Test
     fun `小さいマスでは収まる行数の最終行に残件数を表示する`() {
-        assertEquals(listOf("予定1", "他3件"), CalendarWidgetDayPreview.rows(events(4), 2).map { it.title })
-        assertEquals(listOf("他4件"), CalendarWidgetDayPreview.rows(events(4), 1).map { it.title })
+        assertEquals(listOf("予定1", "予定2"), CalendarWidgetDayPreview.rows(events(4), 2).map { it.title })
+        assertEquals(listOf(0, 2), CalendarWidgetDayPreview.rows(events(4), 2).map { it.remainingCount })
+        assertEquals("予定1", CalendarWidgetDayPreview.rows(events(4), 1).single().title)
+        assertEquals(3, CalendarWidgetDayPreview.rows(events(4), 1).single().remainingCount)
     }
 }
