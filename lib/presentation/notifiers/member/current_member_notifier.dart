@@ -5,6 +5,7 @@ import 'package:memora/composition_root/providers/member_providers.dart';
 import 'dart:async';
 
 import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/usecases/member/get_current_member_usecase.dart';
@@ -78,9 +79,14 @@ class CurrentMemberNotifier extends Notifier<CurrentMemberState> {
   }
 
   Future<void> load() async {
+    final stopwatch = Stopwatch()..start();
+    if (kDebugMode) logger.i('起動データ: 本人情報取得 開始');
     try {
       state = const CurrentMemberState.loading();
       final member = await _getCurrentMemberUseCase.execute();
+      if (kDebugMode) {
+        logger.i('起動データ: 本人情報取得 完了（${stopwatch.elapsedMilliseconds}ms）');
+      }
       if (!ref.mounted) return;
       state = CurrentMemberState.loaded(member);
     } catch (e, stack) {

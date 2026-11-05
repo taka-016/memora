@@ -5,6 +5,7 @@ import 'package:memora/composition_root/providers/account_providers.dart';
 
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/account/user_dto.dart';
 import 'package:memora/application/usecases/account/get_current_user_usecase.dart';
@@ -58,9 +59,13 @@ class AuthNotifier extends Notifier<AuthState> {
     }
     _authStateSubscription?.cancel();
     _authStateChangeGeneration++;
+    if (kDebugMode) logger.i('起動認証: 認証状態の通知待ち');
     _authStateSubscription = observeAuthStateChangesUseCase.execute().listen((
       user,
     ) {
+      if (kDebugMode) {
+        logger.i('起動認証: 認証状態を受信（${user == null ? '未ログイン' : 'ログイン済み'}）');
+      }
       final generation = ++_authStateChangeGeneration;
       unawaited(_handleAuthStateChange(user, generation));
     });
@@ -124,12 +129,22 @@ class AuthNotifier extends Notifier<AuthState> {
     }
 
     try {
+      final stopwatch = Stopwatch()..start();
+      if (kDebugMode) logger.i('起動認証: トークン確認 開始');
       await validateCurrentUserTokenUseCase.execute();
+      if (kDebugMode) {
+        logger.i('起動認証: トークン確認 完了（${stopwatch.elapsedMilliseconds}ms）');
+      }
       if (!_isLatestAuthStateChange(generation)) {
         return;
       }
 
+      stopwatch.reset();
+      if (kDebugMode) logger.i('起動認証: メンバー存在確認 開始');
       final memberExists = await checkMemberExistsUseCase.execute(user.id);
+      if (kDebugMode) {
+        logger.i('起動認証: メンバー存在確認 完了（${stopwatch.elapsedMilliseconds}ms）');
+      }
       if (!_isLatestAuthStateChange(generation)) {
         return;
       }
