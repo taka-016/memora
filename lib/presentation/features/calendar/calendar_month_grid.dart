@@ -191,6 +191,13 @@ class _CalendarWeekRow extends StatelessWidget {
                               )
                               .toList(),
                           visibleCount: layout.visibleCounts[column],
+                          lastLaneOccupied: layout.entries.any(
+                            (entry) =>
+                                entry.lane ==
+                                    CalendarWeekLayout.MAX_VISIBLE_EVENTS - 1 &&
+                                entry.startColumn <= column &&
+                                entry.endColumn >= column,
+                          ),
                           laneHeight: laneHeight,
                           onTap: state.isSaving
                               ? null
@@ -273,6 +280,7 @@ class _CalendarDayCell extends StatelessWidget {
     required this.onTap,
     required this.entries,
     required this.visibleCount,
+    required this.lastLaneOccupied,
     required this.laneHeight,
   });
   final CalendarState state;
@@ -280,6 +288,7 @@ class _CalendarDayCell extends StatelessWidget {
   final VoidCallback? onTap;
   final List<CalendarWeekEntry> entries;
   final int visibleCount;
+  final bool lastLaneOccupied;
   final double laneHeight;
   @override
   Widget build(BuildContext context) {
@@ -325,7 +334,21 @@ class _CalendarDayCell extends StatelessWidget {
                         final entry = entries
                             .where((entry) => entry.lane == lane)
                             .firstOrNull;
-                        if (entry == null) return const SizedBox.shrink();
+                        if (entry == null) {
+                          if (lane ==
+                                  CalendarWeekLayout.MAX_VISIBLE_EVENTS - 1 &&
+                              remaining > 0 &&
+                              !lastLaneOccupied) {
+                            return Align(
+                              alignment: Alignment.bottomRight,
+                              child: _CalendarRemainingCount(
+                                count: remaining,
+                                selected: selected,
+                              ),
+                            );
+                          }
+                          return const SizedBox.shrink();
+                        }
                         final preview = _CalendarEventPreview(
                           state: state,
                           event: entry.event,
