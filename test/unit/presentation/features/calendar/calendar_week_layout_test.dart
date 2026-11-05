@@ -85,7 +85,7 @@ void main() {
     expect(layout.entries.single.endColumn, 1);
     expect(layout.visibleCounts[2], 0);
   });
-  test('重複する帯を別段へ配置し同日に時刻付き予定を含め3段まで表示する', () {
+  test('重複する帯を別段へ配置し同日に時刻付き予定を含め5段まで表示する', () {
     final state = CalendarState(
       selectedDate: DateTime(2026, 10, 4),
       events: [
@@ -97,12 +97,13 @@ void main() {
           DateTime(2026, 10, 5, 10),
           allDay: false,
         ),
-        event(
-          'd',
-          DateTime(2026, 10, 5, 11),
-          DateTime(2026, 10, 5, 12),
-          allDay: false,
-        ),
+        for (final id in ['d', 'e', 'f'])
+          event(
+            id,
+            DateTime(2026, 10, 5, 11),
+            DateTime(2026, 10, 5, 12),
+            allDay: false,
+          ),
       ],
     );
     final layout = CalendarWeekLayout(
@@ -110,8 +111,14 @@ void main() {
       weekStart: DateTime(2026, 10, 4),
       month: DateTime(2026, 10),
     );
-    expect(layout.entries.map((entry) => entry.event.id), ['a', 'b', 'c']);
-    expect(layout.entries.map((entry) => entry.lane), [0, 1, 2]);
-    expect(layout.visibleCounts[1], 3);
+    expect(layout.entries.map((entry) => entry.event.id), [
+      'a',
+      'b',
+      'c',
+      'd',
+      'e',
+    ]);
+    expect(layout.entries.map((entry) => entry.lane), [0, 1, 2, 3, 4]);
+    expect(layout.visibleCounts[1], 5);
   });
 }
