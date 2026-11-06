@@ -5,7 +5,8 @@ import 'package:memora/domain/entities/calendar/calendar_event_override.dart';
 import 'package:equatable/equatable.dart';
 import 'package:memora/domain/exceptions/validation_exception.dart';
 
-const _unsetCoordinate = Object();
+// ignore: constant_identifier_names
+const _UNSET_COORDINATE = Object();
 
 class CalendarEvent extends Equatable {
   CalendarEvent({
@@ -104,8 +105,8 @@ class CalendarEvent extends Equatable {
     String? url,
     String? memo,
     String? locationName,
-    Object? latitude = _unsetCoordinate,
-    Object? longitude = _unsetCoordinate,
+    Object? latitude = _UNSET_COORDINATE,
+    Object? longitude = _UNSET_COORDINATE,
     String? title,
     DateTime? startDateTime,
     DateTime? endDateTime,
@@ -125,10 +126,10 @@ class CalendarEvent extends Equatable {
       url: url ?? this.url,
       memo: memo ?? this.memo,
       locationName: locationName ?? this.locationName,
-      latitude: identical(latitude, _unsetCoordinate)
+      latitude: identical(latitude, _UNSET_COORDINATE)
           ? this.latitude
           : latitude as double?,
-      longitude: identical(longitude, _unsetCoordinate)
+      longitude: identical(longitude, _UNSET_COORDINATE)
           ? this.longitude
           : longitude as double?,
       title: title ?? this.title,
