@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/services/calendar/calendar_notification_preferences.dart';
 
 import '../../../scripts/timetree/import_timetree.dart';
+import '../../helpers/test_exception.dart';
 
 class _LocalHttpOverrides extends HttpOverrides {}
 
@@ -172,18 +173,25 @@ void main() {
     late FirestoreImportClient client;
     late List<Map<String, dynamic>> commits;
     var reject = false;
+    var rejectionCode = 400;
+    var memberExists = true;
     setUp(() async {
       commits = [];
       reject = false;
+      rejectionCode = 400;
+      memberExists = true;
       server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
       server.listen((request) async {
         request.response.headers.contentType = ContentType.json;
-        if (request.method == 'POST') {
+        if (request.uri.path.endsWith(':runQuery')) {
+          await utf8.decoder.bind(request).join();
+          request.response.write(jsonEncode([{'document': {'fields': {'memberId': {'stringValue': 'member'}}}}]));
+        } else if (request.method == 'POST') {
           commits.add(
             jsonDecode(await utf8.decoder.bind(request).join())
                 as Map<String, dynamic>,
           );
-          request.response.statusCode = reject ? 400 : 200;
+          request.response.statusCode = reject ? rejectionCode : 200;
           request.response.write(
             jsonEncode(
               reject
@@ -195,6 +203,9 @@ void main() {
           );
         } else {
           final name = request.uri.path.split('/').last;
+          if (request.uri.path.contains('/members/') && !memberExists) {
+            request.response.statusCode = 404;
+          }
           request.response.write(
             jsonEncode({
               'name': name,
@@ -263,6 +274,53 @@ void main() {
       expect(jsonEncode(commits), isNot(contains('UID')));
     });
 
+    for (final code in [408, 500, 503, 504]) {
+      test('CommitのHTTP$codeは確定失敗とせず結果確認を求める', () async {
+        rejectionCode = code;
+        reject = true;
+        await expectLater(
+          applyTimeTreeImportPlan(plan(calendar([event('valid')])), client),
+          throwsA(isA<FirestoreImportOutcomeUnknown>()),
+        );
+        expect(commits, hasLength(1));
+      });
+    }
+
+    for (final memberId in ['unrelated', 'member']) {
+      test('別グループまたは削除済みメンバーのラベルでは新規登録しない（$memberId）', () async {
+        memberExists = memberId != 'member';
+        final config = configuration();
+        (config['labels'] as Map)['existing'] = {'type': 'member', 'memberId': memberId};
+        final result = buildTimeTreeImportPlan(calendar([event('member-event')]), TimeTreeImportConfig.fromJson(config));
+        await expectLater(applyTimeTreeImportPlan(result, client), throwsA(isA<FormatException>()));
+        expect(commits, isEmpty);
+      });
+    }
+
+    test('所属中のメンバーのラベルをラベル利用件数なしで登録する', () async {
+      final config = configuration();
+      (config['labels'] as Map)['existing'] = {'type': 'member', 'memberId': 'member'};
+      final result = buildTimeTreeImportPlan(calendar([event('member-event')]), TimeTreeImportConfig.fromJson(config));
+      await applyTimeTreeImportPlan(result, client);
+      final writes = commits.single['writes'] as List;
+      expect(writes, hasLength(1));
+      expect(writes.single['update']['fields']['memberId']['stringValue'], 'member');
+    });
+
+    test('登録成功後にレポートを保存できなくても成功を伝え再登録を促さない', () async {
+      final messages = <String>[];
+      await executeTimeTreeImport(
+        plan(calendar([event('valid')])), client,
+        saveReport: (status) async {
+          if (status == '成功') throw TestException('レポート保存失敗');
+        },
+        output: messages.add,
+      );
+      expect(commits, hasLength(1));
+      expect(messages.join('\n'), contains('成功=1'));
+      expect(messages.join('\n'), contains('再実行しないでください'));
+      expect(messages.join('\n'), isNot(contains('成功=0')));
+    });
     test('変換失敗を含む場合は書き込まずCommit拒否時も一部の書き込みを再試行しない', () async {
       final invalid = plan(
         calendar([event('bad', extra: 'RRULE:FREQ=SECONDLY')]),
