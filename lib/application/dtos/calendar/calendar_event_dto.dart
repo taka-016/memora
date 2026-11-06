@@ -94,8 +94,12 @@ class CalendarEventDto extends Equatable {
       url: url ?? this.url,
       memo: memo ?? this.memo,
       locationName: locationName ?? this.locationName,
-      latitude: identical(latitude, _unsetCoordinate) ? this.latitude : latitude as double?,
-      longitude: identical(longitude, _unsetCoordinate) ? this.longitude : longitude as double?,
+      latitude: identical(latitude, _unsetCoordinate)
+          ? this.latitude
+          : latitude as double?,
+      longitude: identical(longitude, _unsetCoordinate)
+          ? this.longitude
+          : longitude as double?,
       title: title ?? this.title,
       startDateTime: startDateTime ?? this.startDateTime,
       endDateTime: endDateTime ?? this.endDateTime,

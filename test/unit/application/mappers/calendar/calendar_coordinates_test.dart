@@ -24,11 +24,17 @@ void main() {
       longitude: 135.0,
     );
     final dto = CalendarEventDto(
-      id: 'event', groupId: 'group', labelId: 'label', title: '予定',
+      id: 'event',
+      groupId: 'group',
+      labelId: 'label',
+      title: '予定',
       startDateTime: DateTime.utc(2026, 11, 6),
-      endDateTime: DateTime.utc(2026, 11, 7), isAllDay: true,
-      latitude: 35.0, longitude: 139.0,
-      recurrenceRule: 'FREQ=DAILY;COUNT=2', overrides: [override],
+      endDateTime: DateTime.utc(2026, 11, 7),
+      isAllDay: true,
+      latitude: 35.0,
+      longitude: 139.0,
+      recurrenceRule: 'FREQ=DAILY;COUNT=2',
+      overrides: [override],
     );
     final entity = CalendarEventMapper.toEntity(dto);
     final row = SqliteCalendarEventMapper.toRow(entity);
@@ -38,16 +44,29 @@ void main() {
     final document = FirestoreCalendarEventMapper.toFirestore(entity);
     expect(document['latitude'], 35.0);
     expect(document['longitude'], 139.0);
-    final overrideRow = CalendarOverrideMapper.toRow(override, 'event', 'group', true);
+    final overrideRow = CalendarOverrideMapper.toRow(
+      override,
+      'event',
+      'group',
+      true,
+    );
     expect(CalendarOverrideMapper.fromRow(overrideRow, true), override);
     final overrideDoc = FirestoreCalendarEventOverrideMapper.toFirestore(
-      override, eventId: 'event', groupId: 'group', parentAllDay: true,
+      override,
+      eventId: 'event',
+      groupId: 'group',
+      parentAllDay: true,
     );
-    expect(FirestoreCalendarEventOverrideMapper.fromFirestore(overrideDoc, parentAllDay: true), override);
+    expect(
+      FirestoreCalendarEventOverrideMapper.fromFirestore(
+        overrideDoc,
+        parentAllDay: true,
+      ),
+      override,
+    );
     expect(calendarEventContent(entity).overrides.single, override);
-    final events = CalendarRecurrenceExpander(IanaCalendarTimeZone()).expand(
-      dto, DateTime.utc(2026, 11, 6), DateTime.utc(2026, 11, 8),
-    );
+    final events = CalendarRecurrenceExpander(IanaCalendarTimeZone())
+        .expand(dto, DateTime.utc(2026, 11, 6), DateTime.utc(2026, 11, 8));
     expect(events.map((v) => v.latitude), [35.0, 34.0]);
     expect(events.map((v) => v.longitude), [139.0, 135.0]);
   });
