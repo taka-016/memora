@@ -117,6 +117,7 @@ void main() {
         );
         final target = source.startDateTime.add(Duration(days: days));
         final expectedEnd = source.endDateTime.add(Duration(days: days));
+        final displayEnd = allDay ? expectedEnd.subtract(const Duration(days: 1)) : expectedEnd;
         final harness = CalendarTestHarness()..savedEvents.add(source);
         await harness.pump(tester);
         await tester.tap(find.byKey(calendarTestDay2));
@@ -141,7 +142,7 @@ void main() {
         await tester.pump(const Duration(milliseconds: 300));
         expect(
           find.text(
-            '終了日: ${expectedEnd.year}/${expectedEnd.month}/${expectedEnd.day}',
+            '終了日: ${displayEnd.year}/${displayEnd.month}/${displayEnd.day}',
           ),
           findsOneWidget,
         );
