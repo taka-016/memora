@@ -168,6 +168,22 @@ void main() {
     );
   });
 
+  test('レポート出力に失敗しても失敗件数と理由を表示する', () async {
+    final directory = await Directory.systemTemp.createTemp('memora-timetree-');
+    addTearDown(() => directory.delete(recursive: true));
+    final source = File('${directory.path}/input.ics');
+    await source.writeAsString(calendar([event('valid')]));
+    final config = configuration()
+      ..['inputIcs'] = source.path
+      ..['reportPath'] = directory.path;
+    final configFile = File('${directory.path}/config.json');
+    await configFile.writeAsString(jsonEncode(config));
+    final result = await Process.run('dart', ['run', 'scripts/timetree/import_timetree.dart', configFile.path]);
+    expect(result.exitCode, 1);
+    expect(result.stderr.toString(), contains('成功=0、失敗=1'));
+    expect(result.stderr.toString(), contains('レポート'));
+  });
+
   group('Firestoreの一括登録', () {
     late HttpServer server;
     late FirestoreImportClient client;
