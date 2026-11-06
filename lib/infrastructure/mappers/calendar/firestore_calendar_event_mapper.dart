@@ -25,6 +25,8 @@ class FirestoreCalendarEventMapper {
       url: data['url'] as String? ?? '',
       memo: data['memo'] as String? ?? '',
       locationName: data['locationName'] as String? ?? '',
+      latitude: (data['latitude'] as num?)?.toDouble(),
+      longitude: (data['longitude'] as num?)?.toDouble(),
       title: data['title'] as String,
       startDateTime: _date(
         data['startDateTime'] as Timestamp,
@@ -56,6 +58,8 @@ class FirestoreCalendarEventMapper {
     'url': value.url,
     'memo': value.memo,
     'locationName': value.locationName,
+    'latitude': value.latitude,
+    'longitude': value.longitude,
     'title': value.title,
     'startDateTime': Timestamp.fromDate(
       value.isAllDay

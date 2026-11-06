@@ -11,11 +11,13 @@ class CalendarLocationField extends ConsumerStatefulWidget {
     required this.controller,
     required this.enabled,
     required this.onChanged,
+    this.onSelected,
   });
 
   final TextEditingController controller;
   final bool enabled;
   final ValueChanged<String> onChanged;
+  final ValueChanged<LocationCandidateDto>? onSelected;
 
   @override
   ConsumerState<CalendarLocationField> createState() =>
@@ -106,6 +108,7 @@ class _CalendarLocationFieldState extends ConsumerState<CalendarLocationField> {
                       _message = null;
                     });
                     widget.onChanged(candidate.name);
+                    widget.onSelected?.call(candidate);
                   },
           ),
       ],

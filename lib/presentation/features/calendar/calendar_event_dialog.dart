@@ -50,6 +50,8 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
   late final TextEditingController _url;
   late final TextEditingController _memo;
   late final TextEditingController _locationName;
+  double? _latitude;
+  double? _longitude;
   late DateTime _start;
   late DateTime _end;
   late bool _allDay;
@@ -69,6 +71,8 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
     _url.text,
     _memo.text,
     _locationName.text,
+    _latitude,
+    _longitude,
     _start,
     _end,
     _allDay,
@@ -107,6 +111,8 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
     _url = TextEditingController(text: event?.url ?? '');
     _memo = TextEditingController(text: event?.memo ?? '');
     _locationName = TextEditingController(text: event?.locationName ?? '');
+    _latitude = event?.latitude;
+    _longitude = event?.longitude;
     _allDay = event?.isAllDay ?? true;
     _start = event == null
         ? widget.date
@@ -332,6 +338,8 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
         url: _url.text.trim(),
         memo: _memo.text,
         locationName: _locationName.text.trim(),
+        latitude: _latitude,
+        longitude: _longitude,
         startDateTime: start,
         endDateTime: end,
         isAllDay: _allDay,
@@ -823,7 +831,14 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                             CalendarLocationField(
                               controller: _locationName,
                               enabled: !state.isSaving,
-                              onChanged: (_) => setState(() {}),
+                              onChanged: (_) => setState(() {
+                                _latitude = null;
+                                _longitude = null;
+                              }),
+                              onSelected: (candidate) => setState(() {
+                                _latitude = candidate.coordinate.latitude;
+                                _longitude = candidate.coordinate.longitude;
+                              }),
                             ),
                             if (_error.isNotEmpty)
                               Text(

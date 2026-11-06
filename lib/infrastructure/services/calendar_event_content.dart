@@ -17,6 +17,8 @@ CalendarEvent calendarEventContent(CalendarEvent value) {
               url: v.url,
               memo: v.memo,
               locationName: v.locationName,
+              latitude: v.latitude,
+              longitude: v.longitude,
               title: v.title,
               labelId: v.labelId,
 

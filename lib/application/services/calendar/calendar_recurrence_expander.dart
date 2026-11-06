@@ -148,6 +148,8 @@ class CalendarRecurrenceExpander {
         url: override.url,
         memo: override.memo,
         locationName: override.locationName,
+        latitude: override.latitude,
+        longitude: override.longitude,
         title: override.title,
         labelId: override.labelId,
 

@@ -27,6 +27,8 @@ class FirestoreCalendarEventOverrideMapper {
     'url': value.url,
     'memo': value.memo,
     'locationName': value.locationName,
+    'latitude': value.latitude,
+    'longitude': value.longitude,
     'title': value.isCancelled ? null : value.title,
     'labelId': value.isCancelled || value.labelType != 'custom'
         ? null
@@ -63,6 +65,8 @@ class FirestoreCalendarEventOverrideMapper {
       url: data['url'] as String? ?? '',
       memo: data['memo'] as String? ?? '',
       locationName: data['locationName'] as String? ?? '',
+      latitude: (data['latitude'] as num?)?.toDouble(),
+      longitude: (data['longitude'] as num?)?.toDouble(),
       title: cancelled ? null : data['title'] as String,
       labelId: cancelled ? null : data['labelId'] as String? ?? '',
       labelType: cancelled ? 'custom' : data['labelType'] as String,

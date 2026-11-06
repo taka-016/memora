@@ -5,6 +5,8 @@ import 'package:memora/domain/entities/calendar/calendar_event_override.dart';
 import 'package:equatable/equatable.dart';
 import 'package:memora/domain/exceptions/validation_exception.dart';
 
+const _unsetCoordinate = Object();
+
 class CalendarEvent extends Equatable {
   CalendarEvent({
     this.version,
@@ -19,6 +21,8 @@ class CalendarEvent extends Equatable {
     this.url = '',
     this.memo = '',
     this.locationName = '',
+    this.latitude,
+    this.longitude,
     required this.isAllDay,
     this.recurrenceRule,
     this.timeZone,
@@ -68,6 +72,8 @@ class CalendarEvent extends Equatable {
   final String url;
   final String memo;
   final String locationName;
+  final double? latitude;
+  final double? longitude;
   final String id;
   final String groupId;
   final String labelId;
@@ -98,6 +104,8 @@ class CalendarEvent extends Equatable {
     String? url,
     String? memo,
     String? locationName,
+    Object? latitude = _unsetCoordinate,
+    Object? longitude = _unsetCoordinate,
     String? title,
     DateTime? startDateTime,
     DateTime? endDateTime,
@@ -117,6 +125,8 @@ class CalendarEvent extends Equatable {
       url: url ?? this.url,
       memo: memo ?? this.memo,
       locationName: locationName ?? this.locationName,
+      latitude: identical(latitude, _unsetCoordinate) ? this.latitude : latitude as double?,
+      longitude: identical(longitude, _unsetCoordinate) ? this.longitude : longitude as double?,
       title: title ?? this.title,
       startDateTime: startDateTime ?? this.startDateTime,
       endDateTime: endDateTime ?? this.endDateTime,
@@ -140,6 +150,8 @@ class CalendarEvent extends Equatable {
     url,
     memo,
     locationName,
+    latitude,
+    longitude,
     title,
     startDateTime,
     endDateTime,
