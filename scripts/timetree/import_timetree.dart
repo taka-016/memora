@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:memora/application/services/calendar/calendar_notification_preferences.dart';
 import 'package:memora/domain/entities/calendar/calendar_event.dart';
-import 'package:memora/domain/entities/calendar/calendar_label.dart';
 import 'package:memora/infrastructure/services/iana_calendar_time_zone.dart';
 import 'package:memora/infrastructure/services/validate_calendar_recurrence.dart';
 import 'package:uuid/uuid.dart';
@@ -29,90 +28,29 @@ String _mappingKey(String? category, String color) =>
     jsonEncode([category, color.toUpperCase()]);
 
 class TimeTreeImportConfig {
-  TimeTreeImportConfig.fromJson(Map<String, dynamic> value)
-    : projectId = _required(value, 'projectId'),
-      databaseId = _required(value, 'databaseId'),
-      groupId = _documentId(_required(value, 'groupId')),
+  TimeTreeImportConfig.fromJson(Map<String, dynamic> value, {required this.projectId})
+    : groupName = _required(value, 'groupName'),
       inputIcs = _required(value, 'inputIcs'),
       reportPath = _required(value, 'reportPath'),
-      accessTokenEnvironmentVariable = _required(
-        value,
-        'accessTokenEnvironmentVariable',
-      ),
-      allDayExceptionTimeZone = _required(value, 'allDayExceptionTimeZone'),
-      labels = _map(value['labels']) {
-    if (!RegExp(r'^[a-z][a-z0-9-]+$').hasMatch(projectId) ||
-        databaseId.contains('/')) {
-      throw const FormatException('FirebaseプロジェクトまたはデータベースIDが不正です');
-    }
+      accessTokenEnvironmentVariable = _required(value, 'accessTokenEnvironmentVariable'),
+      allDayExceptionTimeZone = _required(value, 'allDayExceptionTimeZone') {
     for (final item in value['mappings'] as List) {
       final row = _map(item);
-      final category = row['category'] as String?;
-      final key = _mappingKey(category, _required(row, 'color'));
-      final label = _required(row, 'label');
-      if (mappings.containsKey(key) || !labels.containsKey(label)) {
-        throw const FormatException('分類・色の重複または未定義のラベル対応があります');
+      final key = _mappingKey(row['category'] as String?, _required(row, 'color'));
+      if (mappings.containsKey(key)) {
+        throw const FormatException('ICSの分類・色が対応表で重複しています');
       }
-      mappings[key] = label;
+      mappings[key] = (row['memberName'] as String? ?? '').trim();
     }
   }
   final String projectId;
-  final String databaseId;
-  final String groupId;
+  String get databaseId => '(default)';
+  final String groupName;
   final String inputIcs;
   final String reportPath;
   final String accessTokenEnvironmentVariable;
   final String allDayExceptionTimeZone;
-  final Map<String, dynamic> labels;
   final Map<String, String> mappings = {};
-}
-
-class _ImportLabel {
-  _ImportLabel(
-    String key,
-    Map<String, dynamic> value,
-    String groupId,
-    String Function() newId,
-  ) : type = _required(value, 'type'),
-      memberId = value['memberId'] as String? ?? '',
-      id = value['new'] != null ? newId() : value['id'] as String? ?? '' {
-    if (type == 'custom') {
-      _documentId(id);
-      if (id.isEmpty || (value['new'] != null && value['id'] != null)) {
-        throw FormatException('ラベル$keyは既存IDまたは新規定義のいずれかを指定してください');
-      }
-      if (value['new'] != null) {
-        final definition = _map(value['new']);
-        created = CalendarLabel(
-          id: id,
-          groupId: groupId,
-          name: _required(definition, 'name'),
-          color: _required(definition, 'color'),
-          textColor: _required(definition, 'textColor'),
-          sortOrder: definition['sortOrder'] as int,
-        );
-      }
-    } else if (type != 'group' && type != 'member' ||
-        type == 'member' && memberId.trim().isEmpty) {
-      throw FormatException('ラベル$keyの種別またはメンバーIDが不正です');
-    }
-  }
-  final String type;
-  final String memberId;
-  final String id;
-  CalendarLabel? created;
-  Map<String, Object?> report() => {
-    'type': type,
-    if (type == 'custom') 'id': id,
-    if (type == 'member') 'memberId': memberId,
-    if (created case final label?)
-      'new': {
-        'name': label.name,
-        'color': label.color,
-        'textColor': label.textColor,
-        'sortOrder': label.sortOrder,
-      },
-  };
 }
 
 class TimeTreeImportEvent {
@@ -121,19 +59,19 @@ class TimeTreeImportEvent {
     this.createdAt,
     this.updatedAt,
     this._uid,
-    this.labelKey,
+    this.memberName,
   );
-  final CalendarEvent event;
+  CalendarEvent event;
   final DateTime createdAt;
   final DateTime updatedAt;
   final String _uid;
-  final String labelKey;
+  final String memberName;
   Map<String, Object?> document() => {
     'groupId': event.groupId,
     'title': event.title,
-    'labelId': event.labelType == 'custom' ? event.labelId : null,
-    'labelType': event.labelType,
-    'memberId': event.labelType == 'member' ? event.memberId : null,
+    'labelId': null,
+    'labelType': 'member',
+    'memberId': event.memberId,
     'url': event.url,
     'memo': event.memo,
     'locationName': event.locationName,
@@ -145,7 +83,7 @@ class TimeTreeImportEvent {
     'notificationMinutesBefore': event.notificationMinutesBefore,
     'recurrenceRule': event.recurrenceRule,
     'timeZone': event.timeZone,
-    'referencedLabelIds': [if (event.labelType == 'custom') event.labelId],
+    'referencedLabelIds': <String>[],
     'overrideIds': <String>[],
     'version': 1,
     'createdAt': createdAt,
@@ -154,9 +92,9 @@ class TimeTreeImportEvent {
 }
 
 class TimeTreeImportPlan {
-  TimeTreeImportPlan(this.config, this._labels);
+  TimeTreeImportPlan(this.config);
   final TimeTreeImportConfig config;
-  final Map<String, _ImportLabel> _labels;
+  String? groupId;
   final List<TimeTreeImportEvent> events = [];
   final List<Map<String, Object?>> excluded = [];
   final List<Map<String, Object?>> failures = [];
@@ -165,22 +103,25 @@ class TimeTreeImportPlan {
   Map<String, Object?> report() => {
     'projectId': config.projectId,
     'databaseId': config.databaseId,
-    'groupId': config.groupId,
+    'groupName': config.groupName,
+    if (groupId != null) 'groupId': groupId,
     'counts': {
       'ready': events.length,
       'failed': failures.length,
       'excluded': excluded.length,
     },
-    'labels': {
-      for (final key in events.map((v) => v.labelKey).toSet())
-        key: _labels[key]!.report(),
-    },
+    'mappings': [
+      for (final entry in config.mappings.entries)
+        {'category': (jsonDecode(entry.key) as List)[0], 'color': (jsonDecode(entry.key) as List)[1], 'memberName': entry.value},
+    ],
     'events': [
       for (final value in events)
         {
           'eventId': value.event.id,
-          'label': value.labelKey,
-          ..._jsonDates(value.document()),
+          'memberName': value.memberName,
+          ...(_jsonDates(value.document())..remove('groupId')..remove('memberId')),
+          if (groupId != null) 'groupId': groupId,
+          if (groupId != null) 'memberId': value.event.memberId,
         },
     ],
     'failures': failures,
@@ -380,16 +321,7 @@ TimeTreeImportPlan buildTimeTreeImportPlan(
   String Function()? newId,
 }) {
   final allocate = newId ?? const Uuid().v4;
-  final labels = {
-    for (final entry in config.labels.entries)
-      entry.key: _ImportLabel(
-        entry.key,
-        _map(entry.value),
-        config.groupId,
-        allocate,
-      ),
-  };
-  final plan = TimeTreeImportPlan(config, labels);
+  final plan = TimeTreeImportPlan(config);
   final sources = _parse(ics);
   final zones = IanaCalendarTimeZone();
   final related = <String, List<Map<String, Object?>>>{};
@@ -420,22 +352,19 @@ TimeTreeImportPlan buildTimeTreeImportPlan(
       }
       final category = source.text('CATEGORIES');
       final color = source.text('COLOR');
-      final key = config
-          .mappings[_mappingKey(category.isEmpty ? null : category, color)];
-      if (key == null) {
+      final memberName = config.mappings[_mappingKey(category.isEmpty ? null : category, color)];
+      if (memberName == null || memberName.isEmpty) {
         throw FormatException(
-          'ラベル対応がありません: 分類=${category.isEmpty ? '分類なし' : category}、色=$color',
+          'メンバー名を指定してください: 分類=${category.isEmpty ? '分類なし' : category}、色=$color',
         );
       }
-      final label = labels[key]!;
       final recurrence = _rule(source);
       final allDay = content['isAllDay'] as bool;
       final event = CalendarEvent(
         id: allocate(),
-        groupId: config.groupId,
-        labelId: label.type == 'custom' ? label.id : '',
-        labelType: label.type,
-        memberId: label.memberId,
+        groupId: config.groupName,
+        labelType: 'member',
+        memberId: memberName,
         title: content['title'] as String,
         startDateTime: content['startDateTime'] as DateTime,
         endDateTime: content['endDateTime'] as DateTime,
@@ -459,7 +388,7 @@ TimeTreeImportPlan buildTimeTreeImportPlan(
         _metadataDate(source, 'CREATED', zones),
         _metadataDate(source, 'LAST-MODIFIED', zones),
         uid,
-        key,
+        memberName,
       );
       plan.events.add(value);
       if (recurrence != source.property('RRULE')?.value) {
@@ -598,21 +527,23 @@ class FirestoreImportClient {
     return value == null ? null : _map(value);
   }
 
-  Future<Set<String>> groupMemberIds(String groupId) async {
-    final rows = await _request('POST', ':runQuery', {
-      'structuredQuery': {
-        'from': [
-          {'collectionId': 'group_members'},
-        ],
-        'where': {
-          'fieldFilter': {
-            'field': {'fieldPath': 'groupId'},
-            'op': 'EQUAL',
-            'value': {'stringValue': groupId},
-          },
+  Future<List<dynamic>> _query(String collection, String field, String value) async =>
+      await _request('POST', ':runQuery', {
+        'structuredQuery': {
+          'from': [{'collectionId': collection}],
+          'where': {'fieldFilter': {'field': {'fieldPath': field}, 'op': 'EQUAL', 'value': {'stringValue': value}}},
         },
-      },
-    }) as List;
+      }) as List;
+
+  Future<String> groupIdByName(String name) async {
+    final rows = await _query('groups', 'name', name);
+    final groups = rows.where((row) => row['document'] != null).toList();
+    if (groups.length != 1) throw FormatException('グループ名「$name」に一致するグループを一意に取得できません');
+    return (groups.single['document']['name'] as String).split('/').last;
+  }
+
+  Future<Set<String>> groupMemberIds(String groupId) async {
+    final rows = await _query('group_members', 'groupId', groupId);
     return {
       for (final row in rows)
         if (row['document'] != null)
@@ -651,85 +582,26 @@ Future<void> applyTimeTreeImportPlan(
       client.databaseId != plan.config.databaseId) {
     throw const FormatException('接続先と設定のプロジェクトが一致しません');
   }
-  if (await client.read('groups', plan.config.groupId) == null) {
-    throw const FormatException('取り込み先グループが存在しません');
+  final groupId = await client.groupIdByName(plan.config.groupName);
+  final membersByName = <String, String>{};
+  for (final memberId in await client.groupMemberIds(groupId)) {
+    final member = await client.read('members', memberId);
+    final name = member?['fields']?['displayName']?['stringValue'] as String?;
+    if (name != null) membersByName[name] = memberId;
   }
-  final memberIds = plan.events
-      .where((value) => value.event.labelType == 'member')
-      .map((value) => value.event.memberId)
-      .toSet();
-  if (memberIds.isNotEmpty) {
-    final groupMembers = await client.groupMemberIds(plan.config.groupId);
-    for (final memberId in memberIds) {
-      if (!groupMembers.contains(memberId) ||
-          await client.read('members', memberId) == null) {
-        throw const FormatException('メンバーのラベルには取り込み先グループに所属中のメンバーを指定してください');
-      }
+  for (final value in plan.events) {
+    if (!membersByName.containsKey(value.memberName)) {
+      throw FormatException('グループ「${plan.config.groupName}」にメンバー「${value.memberName}」が見つかりません');
     }
   }
+  plan.groupId = groupId;
   final writes = <Map<String, Object?>>[];
-  final uses = <String, int>{};
-  final usedLabels = <String, _ImportLabel>{};
-  for (final event in plan.events) {
-    final label = plan._labels[event.labelKey]!;
-    if (label.type == 'custom') {
-      uses.update(label.id, (value) => value + 1, ifAbsent: () => 1);
-      usedLabels[label.id] = label;
-    }
+  for (final value in plan.events) {
+    value.event = value.event.copyWith(groupId: groupId, memberId: membersByName[value.memberName]!);
     writes.add({
-      'update': {
-        'name': '${client.documentRoot}/calendar_events/${event.event.id}',
-        'fields': _fields(event.document()),
-      },
+      'update': {'name': '${client.documentRoot}/calendar_events/${value.event.id}', 'fields': _fields(value.document())},
       'currentDocument': {'exists': false},
     });
-  }
-  for (final entry in uses.entries) {
-    final label = usedLabels[entry.key]!;
-    final name = '${client.documentRoot}/calendar_labels/${entry.key}';
-    final created = label.created;
-    if (created != null) {
-      writes.add({
-        'update': {
-          'name': name,
-          'fields': _fields({
-            'groupId': created.groupId,
-            'name': created.name,
-            'color': created.color,
-            'textColor': created.textColor,
-            'sortOrder': created.sortOrder,
-            'version': 1,
-            'eventCount': entry.value,
-          }),
-        },
-        'currentDocument': {'exists': false},
-        'updateTransforms': [
-          for (final field in ['createdAt', 'updatedAt'])
-            {'fieldPath': field, 'setToServerValue': 'REQUEST_TIME'},
-        ],
-      });
-    } else {
-      final snapshot = await client.read('calendar_labels', label.id);
-      final fields = snapshot?['fields'] as Map?;
-      if (fields == null ||
-          fields['groupId']?['stringValue'] != plan.config.groupId) {
-        throw const FormatException('同じグループの既存ラベルを指定してください');
-      }
-      final count = int.tryParse(
-        fields['eventCount']?['integerValue']?.toString() ?? '',
-      );
-      if (count == null) throw const FormatException('既存ラベルの利用件数が不正です');
-      writes.add({
-        'update': {
-          'name': name,
-          'fields': _fields({'eventCount': count + entry.value}),
-        },
-        'updateMask': {
-          'fieldPaths': ['eventCount'],
-        },
-        'currentDocument': {'updateTime': snapshot!['updateTime']},
-      });
-    }
   }
   await client.commit(writes);
 }
@@ -768,8 +640,14 @@ Future<void> main(List<String> args) async {
       throw const FormatException('不明な引数です');
     }
     final configFile = File(args.first).absolute;
+    final firebaseFile = File('.firebaserc');
+    if (!await firebaseFile.exists()) {
+      throw const FormatException('リポジトリ直下で実行し、先にアプリのFirebase設定を完了してください（.firebasercが必要です）');
+    }
+    final firebase = _map(jsonDecode(await firebaseFile.readAsString()));
     final config = TimeTreeImportConfig.fromJson(
       _map(jsonDecode(await configFile.readAsString())),
+      projectId: _required(_map(firebase['projects']), 'default'),
     );
     File relative(String path) =>
         File.fromUri(configFile.parent.uri.resolve(path));
@@ -787,7 +665,7 @@ Future<void> main(List<String> args) async {
     );
     await save('確認のみ');
     stdout.writeln(
-      'プロジェクト=${config.projectId}、DB=${config.databaseId}、グループ=${config.groupId}\n取り込み対象=${plan.events.length}、失敗=${plan.failures.length}、除外=${plan.excluded.length}\n変換内容・ラベル対応・手修正事項: ${report.path}',
+      'プロジェクト=${config.projectId}、DB=${config.databaseId}、グループ=${config.groupName}\n取り込み対象=${plan.events.length}、失敗=${plan.failures.length}、除外=${plan.excluded.length}\n変換内容・ラベル対応・手修正事項: ${report.path}',
     );
     if (plan.failures.isNotEmpty) {
       for (final failure in plan.failures) {
