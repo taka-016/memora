@@ -9,6 +9,47 @@ import 'calendar_test_support.dart';
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
+  testWidgets('終日の最終日を開始日前にした場合は保存せず修正を求める', (tester) async {
+    final harness = CalendarTestHarness();
+    await harness.pump(tester);
+    await tester.tap(find.byKey(calendarTestDay2));
+    await tester.pump();
+    await tester.tap(find.byTooltip('予定を追加'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.enterText(find.widgetWithText(TextFormField, 'タイトル'), '予定');
+    await tester.tap(find.text('終了日: 2026/10/2'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.byKey(const Key('date_header')));
+    await tester.pump();
+    await tester.enterText(find.byKey(const Key('date_field')), '20261001');
+    await tester.tap(find.text('確定'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text('保存'));
+    await tester.pump();
+    expect(find.text('終了日時は開始日時以降にしてください'), findsOneWidget);
+    expect(harness.savedEvents, isEmpty);
+  });
+  testWidgets('夏時間の切り替え日も単日の終日予定をUTCの暦日で保存する', (tester) async {
+    final harness = CalendarTestHarness();
+    await harness.pump(tester, now: DateTime(2026, 3, 8));
+    await tester.tap(find.byKey(const Key('calendar_day_2026_3_8')));
+    await tester.pump();
+    await tester.tap(find.byTooltip('予定を追加'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.enterText(find.widgetWithText(TextFormField, 'タイトル'), '終日');
+    await tester.tap(find.text('保存'));
+    await tester.pump();
+    final saved = harness.savedEvents.single;
+    expect(saved.startDateTime.isUtc, isTrue);
+    expect(saved.endDateTime.isUtc, isTrue);
+    expect(saved.endDateTime.difference(saved.startDateTime), const Duration(days: 1));
+    expect(saved.startDateTime, DateTime.utc(2026, 3, 8));
+    expect(saved.endDateTime, DateTime.utc(2026, 3, 9));
+  });
   for (final move in [false, true]) {
     testWidgets('月末補正回の同日確定は基準維持し個別移動は終了条件外も許可する（$move）', (tester) async {
       final source = calendarTestEvent('e', '月末の予定').copyWith(
