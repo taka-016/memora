@@ -99,6 +99,14 @@ Google Cloud ConsoleでMaps SDK for AndroidとPlaces API (New)を有効にし、
 
 設定の生成・更新時は、Google Cloudの「APIとサービス → 認証情報」からFirebase用APIキーをコピーして入力してください（環境変数`FIREBASE_API_KEY`でも指定可）。指定したキーは`android/app/google-services.json`と`lib/firebase_options.dart`の両方へ反映されます。既存ファイルの削除は不要です。設定更新後はアプリを再ビルドしてください。
 
+### TimeTreeのICS取り込み
+
+オンライン版のFirestoreに一度だけ取り込む場合は、[設定ひな形](scripts/timetree/config.example.json)をリポジトリ直下の`timetree-import.local.json`へコピーし、接続先、入力ICS、分類・色ごとのラベル対応を記入してください。ファイルのパスは設定ファイルからの相対指定です。分類なしは`category: null`で指定し、不要なラベル定義は削除してください。
+
+書き込み時はFirestoreの読み書き権限を持つGoogle CloudアカウントのOAuthアクセストークンを、設定で指定した環境変数へ設定します。Google Cloud CLIを利用する場合は、`gcloud auth login`後に`export GOOGLE_OAUTH_ACCESS_TOKEN="$(gcloud auth print-access-token)"`で取得できます。
+
+まず確認用レポートを作成し、予定・ラベル対応・除外理由・手修正事項を確認してください。適用時もレポートの出力後に入力確認があります。実行方法は`just --list`の`import-timetree`を参照してください。元UIDによる重複判定は行わないため、成功後に再実行しないでください。結果不明の場合はレポートの予定IDで登録結果を確認してください。ICS、認証情報、記入済み設定、レポートは共有・コミットしないでください。
+
 ### 端末カレンダー連携
 
 Androidのオンライン版では、カレンダー画面の「端末カレンダー連携」から読み取りを許可し、アカウントごとに表示対象を選びます。Google等の予定は、あらかじめ端末のカレンダー同期を有効にしてください。端末に同期された範囲だけを表示し、予定の編集や他メンバーへの共有は行いません。選択した予定はホーム画面のカレンダーウィジェットにも表示し、ウィジェットの更新時に端末から読み直します。
