@@ -542,8 +542,9 @@ Map<String, Object?> _fields(Map<String, Object?> values) =>
     values.map((key, value) => MapEntry(key, _firestoreValue(value)));
 
 class FirestoreImportRejected implements Exception {
-  FirestoreImportRejected(this.message);
+  FirestoreImportRejected(this.message, {this.statusCode});
   final String message;
+  final int? statusCode;
   @override
   String toString() => message;
 }
@@ -568,7 +569,7 @@ class FirestoreImportClient {
   final HttpClient _http = HttpClient();
   String get documentRoot =>
       'projects/$projectId/databases/$databaseId/documents';
-  Future<Map<String, dynamic>?> _request(
+  Future<Object?> _request(
     String method,
     String suffix, [
     Map<String, Object?>? body,
@@ -586,13 +587,31 @@ class FirestoreImportClient {
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw FirestoreImportRejected(
         'Firestoreが要求を拒否しました（HTTP ${response.statusCode}）: $text',
+        statusCode: response.statusCode,
       );
     }
-    return _map(jsonDecode(text));
+    return jsonDecode(text);
   }
 
-  Future<Map<String, dynamic>?> read(String collection, String id) =>
-      _request('GET', '/$collection/${_documentId(id)}');
+  Future<Map<String, dynamic>?> read(String collection, String id) async {
+    final value = await _request('GET', '/$collection/${_documentId(id)}');
+    return value == null ? null : _map(value);
+  }
+
+  Future<Set<String>> groupMemberIds(String groupId) async {
+    final rows = await _request('POST', ':runQuery', {
+      'structuredQuery': {
+        'from': [{'collectionId': 'group_members'}],
+        'where': {'fieldFilter': {'field': {'fieldPath': 'groupId'}, 'op': 'EQUAL', 'value': {'stringValue': groupId}}},
+      },
+    }) as List;
+    return {
+      for (final row in rows)
+        if (row['document'] != null)
+          row['document']['fields']['memberId']['stringValue'] as String,
+    };
+  }
+
   Future<void> commit(List<Map<String, Object?>> writes) async {
     final body = {'writes': writes};
     if (utf8.encode(jsonEncode(body)).length > 10 * 1024 * 1024) {
@@ -600,7 +619,10 @@ class FirestoreImportClient {
     }
     try {
       await _request('POST', ':commit', body);
-    } on FirestoreImportRejected {
+    } on FirestoreImportRejected catch (error) {
+      if (error.statusCode == 408 || (error.statusCode ?? 0) >= 500) {
+        throw FirestoreImportOutcomeUnknown();
+      }
       rethrow;
     } catch (_) {
       throw FirestoreImportOutcomeUnknown();
@@ -623,6 +645,15 @@ Future<void> applyTimeTreeImportPlan(
   }
   if (await client.read('groups', plan.config.groupId) == null) {
     throw const FormatException('取り込み先グループが存在しません');
+  }
+  final memberIds = plan.events.where((value) => value.event.labelType == 'member').map((value) => value.event.memberId).toSet();
+  if (memberIds.isNotEmpty) {
+    final groupMembers = await client.groupMemberIds(plan.config.groupId);
+    for (final memberId in memberIds) {
+      if (!groupMembers.contains(memberId) || await client.read('members', memberId) == null) {
+        throw const FormatException('メンバーのラベルには取り込み先グループに所属中のメンバーを指定してください');
+      }
+    }
   }
   final writes = <Map<String, Object?>>[];
   final uses = <String, int>{};
@@ -699,7 +730,11 @@ Future<void> executeTimeTreeImport(
 }) async {
   await saveReport('実行中');
   await applyTimeTreeImportPlan(plan, client);
-  await saveReport('成功');
+  try {
+    await saveReport('成功');
+  } catch (error) {
+    output('Firestoreへの登録は成功しましたがレポートを保存できませんでした。再実行しないでください。事前レポートの予定IDを確認してください: $error');
+  }
   output(
     '成功=${plan.events.length}、失敗=0、除外=${plan.excluded.length}。手修正事項はレポートを確認してください',
   );
@@ -777,13 +812,17 @@ Future<void> main(List<String> args) async {
   } catch (error) {
     final unknown = error is FirestoreImportOutcomeUnknown;
     if (plan != null && report != null) {
-      await report.writeAsString(
-        jsonEncode({
-          ...plan.report(),
-          'status': unknown ? '結果不明' : '失敗',
-          'reason': error.toString(),
-        }),
-      );
+      try {
+        await report.writeAsString(
+          jsonEncode({
+            ...plan.report(),
+            'status': unknown ? '結果不明' : '失敗',
+            'reason': error.toString(),
+          }),
+        );
+      } catch (reportError) {
+        stderr.writeln('レポートを保存できませんでした: $reportError');
+      }
     }
     stderr.writeln(
       '成功=0、${unknown ? '結果不明' : '失敗'}=${plan?.events.length ?? 0}、除外=${plan?.excluded.length ?? 0}: $error',
