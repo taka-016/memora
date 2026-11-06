@@ -312,16 +312,16 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
             );
       final inputZone = rule != null ? _zone : widget.event?.timeZone;
       final start = _allDay
-          ? DateTime(_start.year, _start.month, _start.day)
+          ? DateTime.utc(_start.year, _start.month, _start.day)
           : inputZone != null
           ? expander.resolveTime(_start, inputZone)
           : _start;
       final end = _allDay
-          ? DateTime(_end.year, _end.month, _end.day + 1)
+          ? DateTime.utc(_end.year, _end.month, _end.day + 1)
           : inputZone != null
           ? expander.resolveTime(_end, inputZone)
           : _end;
-      if (end.isBefore(start)) {
+      if (_allDay ? !end.isAfter(start) : end.isBefore(start)) {
         setState(() => _error = '終了日時は開始日時以降にしてください');
         return;
       }
