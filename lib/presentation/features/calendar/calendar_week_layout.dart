@@ -91,7 +91,9 @@ class CalendarWeekLayout {
   static DateTime _startDate(CalendarEventDto event) =>
       event.isAllDay ? event.startDateTime : event.startDateTime.toLocal();
   static DateTime _endDate(CalendarEventDto event) {
-    if (event.isAllDay) return event.endDateTime;
+    if (event.isAllDay) {
+      return DateTime.utc(event.endDateTime.year, event.endDateTime.month, event.endDateTime.day - 1);
+    }
     final end = event.endDateTime.toLocal();
     return end.isAfter(_startDate(event))
         ? end.subtract(const Duration(microseconds: 1))

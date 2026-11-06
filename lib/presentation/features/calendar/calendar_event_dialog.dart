@@ -21,7 +21,7 @@ String calendarTimeText(DateTime value) =>
     '${value.hour.toString().padLeft(2, '0')}:${value.minute.toString().padLeft(2, '0')}';
 String calendarPeriodText(CalendarEventDto event) {
   if (event.isAllDay) {
-    return '${calendarDateText(event.startDateTime)} 〜 ${calendarDateText(event.endDateTime)}（終日）';
+    return '${calendarDateText(event.startDateTime)} 〜 ${calendarDateText(DateTime.utc(event.endDateTime.year, event.endDateTime.month, event.endDateTime.day - 1))}（終日）';
   }
   final start = event.startDateTime.toLocal();
   final end = event.endDateTime.toLocal();
@@ -129,7 +129,7 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
         ? DateTime(
             event.endDateTime.year,
             event.endDateTime.month,
-            event.endDateTime.day,
+            event.endDateTime.day - 1,
           )
         : event.endDateTime.toLocal();
     _seriesAllDay = event == null
@@ -312,7 +312,7 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
           ? expander.resolveTime(_start, inputZone)
           : _start;
       final end = _allDay
-          ? DateTime(_end.year, _end.month, _end.day)
+          ? DateTime(_end.year, _end.month, _end.day + 1)
           : inputZone != null
           ? expander.resolveTime(_end, inputZone)
           : _end;

@@ -125,7 +125,7 @@ class GetAndroidWidgetCalendarCacheUsecase {
         event.endDateTime.month,
         event.endDateTime.day,
       );
-      return !day.isBefore(first) && !day.isAfter(last);
+      return !day.isBefore(first) && day.isBefore(last);
     }
     final first = event.startDateTime.toLocal();
     final last = event.endDateTime.toLocal();

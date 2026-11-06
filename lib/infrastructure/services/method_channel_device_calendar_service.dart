@@ -112,7 +112,7 @@ class MethodChannelDeviceCalendarService
         data['begin'] as int,
         isUtc: true,
       ),
-      endDateTime: allDay ? end.subtract(const Duration(days: 1)) : end,
+      endDateTime: end,
       isAllDay: allDay,
       memo: data['description'] as String? ?? '',
       locationName: data['location'] as String? ?? '',
