@@ -99,7 +99,3 @@ sync-main:
     --format='%(refname:short) %(upstream:track) %(worktreepath)' refs/heads/ \
     | awk '$2 == "[gone]" && NF == 2 {printf "%s%c", $1, 0}' \
     | xargs -0 -r git branch -d
-
-# TimeTreeのICSを確認する（--applyを追加すると確認後にFirestoreへ一括登録）
-import-timetree config *args:
-  dart run scripts/timetree/import_timetree.dart "$@"

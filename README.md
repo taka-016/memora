@@ -105,7 +105,7 @@ Google Cloud ConsoleでMaps SDK for AndroidとPlaces API (New)を有効にし、
 
 書き込み時はFirestoreの読み書き権限を持つGoogle CloudアカウントのOAuthアクセストークンを、設定で指定した環境変数へ設定します。Google Cloud CLIを利用する場合は、`gcloud auth login`後に`export GOOGLE_OAUTH_ACCESS_TOKEN="$(gcloud auth print-access-token)"`で取得できます。
 
-まず確認用レポートを作成し、予定・ラベル対応・除外理由・手修正事項を確認してください。適用時もレポートの出力後に入力確認があります。実行方法は`just --list`の`import-timetree`を参照してください。元UIDによる重複判定は行わないため、成功後に再実行しないでください。結果不明の場合はレポートの予定IDで登録結果を確認してください。ICS、認証情報、記入済み設定、レポートは共有・コミットしないでください。
+`dart run scripts/timetree/import_timetree.dart timetree-import.local.json`で確認用レポートを作成し、予定・ラベル対応・除外理由・手修正事項を確認してください。実際に取り込む場合は同じコマンドの末尾に`--apply`を追加します。レポートの出力後に入力確認があります。元UIDによる重複判定は行わないため、成功後に再実行しないでください。結果不明の場合はレポートの予定IDで登録結果を確認してください。ICS、認証情報、記入済み設定、レポートは共有・コミットしないでください。
 
 ### 端末カレンダー連携
 
