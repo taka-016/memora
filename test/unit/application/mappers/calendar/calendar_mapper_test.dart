@@ -11,11 +11,17 @@ void main() {
       groupId: 'group',
       labelId: 'label',
       title: '家族旅行',
+      latitude: 35.0,
+      longitude: 139.0,
       startDateTime: DateTime(2026, 10, 31),
       endDateTime: DateTime(2026, 11, 2),
       isAllDay: true,
     );
     final entity = CalendarEventMapper.toEntity(dto);
+    expect(entity.latitude, 35.0);
+    expect(entity.longitude, 139.0);
+    expect(dto.copyWith(latitude: null, longitude: null).latitude, isNull);
+    expect(entity.copyWith(latitude: null, longitude: null).longitude, isNull);
     expect(entity.groupId, dto.groupId);
     expect(entity.labelId, dto.labelId);
     expect(entity.title, dto.title);
