@@ -601,8 +601,16 @@ class FirestoreImportClient {
   Future<Set<String>> groupMemberIds(String groupId) async {
     final rows = await _request('POST', ':runQuery', {
       'structuredQuery': {
-        'from': [{'collectionId': 'group_members'}],
-        'where': {'fieldFilter': {'field': {'fieldPath': 'groupId'}, 'op': 'EQUAL', 'value': {'stringValue': groupId}}},
+        'from': [
+          {'collectionId': 'group_members'},
+        ],
+        'where': {
+          'fieldFilter': {
+            'field': {'fieldPath': 'groupId'},
+            'op': 'EQUAL',
+            'value': {'stringValue': groupId},
+          },
+        },
       },
     }) as List;
     return {
@@ -646,11 +654,15 @@ Future<void> applyTimeTreeImportPlan(
   if (await client.read('groups', plan.config.groupId) == null) {
     throw const FormatException('取り込み先グループが存在しません');
   }
-  final memberIds = plan.events.where((value) => value.event.labelType == 'member').map((value) => value.event.memberId).toSet();
+  final memberIds = plan.events
+      .where((value) => value.event.labelType == 'member')
+      .map((value) => value.event.memberId)
+      .toSet();
   if (memberIds.isNotEmpty) {
     final groupMembers = await client.groupMemberIds(plan.config.groupId);
     for (final memberId in memberIds) {
-      if (!groupMembers.contains(memberId) || await client.read('members', memberId) == null) {
+      if (!groupMembers.contains(memberId) ||
+          await client.read('members', memberId) == null) {
         throw const FormatException('メンバーのラベルには取り込み先グループに所属中のメンバーを指定してください');
       }
     }
@@ -733,7 +745,9 @@ Future<void> executeTimeTreeImport(
   try {
     await saveReport('成功');
   } catch (error) {
-    output('Firestoreへの登録は成功しましたがレポートを保存できませんでした。再実行しないでください。事前レポートの予定IDを確認してください: $error');
+    output(
+      'Firestoreへの登録は成功しましたがレポートを保存できませんでした。再実行しないでください。事前レポートの予定IDを確認してください: $error',
+    );
   }
   output(
     '成功=${plan.events.length}、失敗=0、除外=${plan.excluded.length}。手修正事項はレポートを確認してください',

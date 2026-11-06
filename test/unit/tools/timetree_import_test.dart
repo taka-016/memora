@@ -178,7 +178,11 @@ void main() {
       ..['reportPath'] = directory.path;
     final configFile = File('${directory.path}/config.json');
     await configFile.writeAsString(jsonEncode(config));
-    final result = await Process.run('dart', ['run', 'scripts/timetree/import_timetree.dart', configFile.path]);
+    final result = await Process.run('dart', [
+      'run',
+      'scripts/timetree/import_timetree.dart',
+      configFile.path,
+    ]);
     expect(result.exitCode, 1);
     expect(result.stderr.toString(), contains('成功=0、失敗=1'));
     expect(result.stderr.toString(), contains('レポート'));
@@ -201,7 +205,17 @@ void main() {
         request.response.headers.contentType = ContentType.json;
         if (request.uri.path.endsWith(':runQuery')) {
           await utf8.decoder.bind(request).join();
-          request.response.write(jsonEncode([{'document': {'fields': {'memberId': {'stringValue': 'member'}}}}]));
+          request.response.write(
+            jsonEncode([
+              {
+                'document': {
+                  'fields': {
+                    'memberId': {'stringValue': 'member'},
+                  },
+                },
+              },
+            ]),
+          );
         } else if (request.method == 'POST') {
           commits.add(
             jsonDecode(await utf8.decoder.bind(request).join())
@@ -306,27 +320,46 @@ void main() {
       test('別グループまたは削除済みメンバーのラベルでは新規登録しない（$memberId）', () async {
         memberExists = memberId != 'member';
         final config = configuration();
-        (config['labels'] as Map)['existing'] = {'type': 'member', 'memberId': memberId};
-        final result = buildTimeTreeImportPlan(calendar([event('member-event')]), TimeTreeImportConfig.fromJson(config));
-        await expectLater(applyTimeTreeImportPlan(result, client), throwsA(isA<FormatException>()));
+        (config['labels'] as Map)['existing'] = {
+          'type': 'member',
+          'memberId': memberId,
+        };
+        final result = buildTimeTreeImportPlan(
+          calendar([event('member-event')]),
+          TimeTreeImportConfig.fromJson(config),
+        );
+        await expectLater(
+          applyTimeTreeImportPlan(result, client),
+          throwsA(isA<FormatException>()),
+        );
         expect(commits, isEmpty);
       });
     }
 
     test('所属中のメンバーのラベルをラベル利用件数なしで登録する', () async {
       final config = configuration();
-      (config['labels'] as Map)['existing'] = {'type': 'member', 'memberId': 'member'};
-      final result = buildTimeTreeImportPlan(calendar([event('member-event')]), TimeTreeImportConfig.fromJson(config));
+      (config['labels'] as Map)['existing'] = {
+        'type': 'member',
+        'memberId': 'member',
+      };
+      final result = buildTimeTreeImportPlan(
+        calendar([event('member-event')]),
+        TimeTreeImportConfig.fromJson(config),
+      );
       await applyTimeTreeImportPlan(result, client);
       final writes = commits.single['writes'] as List;
       expect(writes, hasLength(1));
-      expect(writes.single['update']['fields']['memberId']['stringValue'], 'member');
+      expect(
+        writes.single['update']['fields']['memberId']['stringValue'],
+        'member',
+      );
     });
 
     test('登録成功後にレポートを保存できなくても成功を伝え再登録を促さない', () async {
       final messages = <String>[];
       await executeTimeTreeImport(
-        plan(calendar([event('valid')])), client,
+        plan(calendar([event('valid')])),
+        client,
         saveReport: (status) async {
           if (status == '成功') throw TestException('レポート保存失敗');
         },
