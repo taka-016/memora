@@ -21,7 +21,12 @@ String calendarTimeText(DateTime value) =>
     '${value.hour.toString().padLeft(2, '0')}:${value.minute.toString().padLeft(2, '0')}';
 String calendarPeriodText(CalendarEventDto event) {
   if (event.isAllDay) {
-    return '${calendarDateText(event.startDateTime)} 〜 ${calendarDateText(DateTime.utc(event.endDateTime.year, event.endDateTime.month, event.endDateTime.day - 1))}（終日）';
+    final lastDay = DateTime.utc(
+      event.endDateTime.year,
+      event.endDateTime.month,
+      event.endDateTime.day - 1,
+    );
+    return '${calendarDateText(event.startDateTime)} 〜 ${calendarDateText(lastDay)}（終日）';
   }
   final start = event.startDateTime.toLocal();
   final end = event.endDateTime.toLocal();

@@ -92,7 +92,11 @@ class CalendarWeekLayout {
       event.isAllDay ? event.startDateTime : event.startDateTime.toLocal();
   static DateTime _endDate(CalendarEventDto event) {
     if (event.isAllDay) {
-      return DateTime.utc(event.endDateTime.year, event.endDateTime.month, event.endDateTime.day - 1);
+      return DateTime.utc(
+        event.endDateTime.year,
+        event.endDateTime.month,
+        event.endDateTime.day - 1,
+      );
     }
     final end = event.endDateTime.toLocal();
     return end.isAfter(_startDate(event))

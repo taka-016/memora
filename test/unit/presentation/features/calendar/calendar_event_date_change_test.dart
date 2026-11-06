@@ -117,7 +117,9 @@ void main() {
         );
         final target = source.startDateTime.add(Duration(days: days));
         final expectedEnd = source.endDateTime.add(Duration(days: days));
-        final displayEnd = allDay ? expectedEnd.subtract(const Duration(days: 1)) : expectedEnd;
+        final displayEnd = allDay
+            ? expectedEnd.subtract(const Duration(days: 1))
+            : expectedEnd;
         final harness = CalendarTestHarness()..savedEvents.add(source);
         await harness.pump(tester);
         await tester.tap(find.byKey(calendarTestDay2));

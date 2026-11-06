@@ -157,12 +157,12 @@ void main() {
         for (final id in ['a', 'b', 'c', 'd', 'e'])
           calendarTestEvent(id, '単日$id').copyWith(
             startDateTime: DateTime(2026, 10, 5),
-            endDateTime: DateTime(2026, 10, 5),
+            endDateTime: DateTime(2026, 10, 6),
             isAllDay: true,
           ),
         calendarTestEvent('z', '週の帯').copyWith(
           startDateTime: DateTime(2026, 10, 5),
-          endDateTime: DateTime(2026, 10, 9),
+          endDateTime: DateTime(2026, 10, 10),
           isAllDay: true,
         ),
       ]);
@@ -189,7 +189,7 @@ void main() {
         for (var i = 1; i <= 6; i++)
           calendarTestEvent('band$i', '帯$i').copyWith(
             startDateTime: DateTime(2026, 10, 2),
-            endDateTime: DateTime(2026, 10, 3),
+            endDateTime: DateTime(2026, 10, 4),
             isAllDay: true,
           ),
       ]);
@@ -309,7 +309,12 @@ void main() {
 
   testWidgets('白黒の文字色を選び背景色と名前を含むプレビューと予定表示へ反映する', (tester) async {
     final harness = CalendarTestHarness()
-      ..savedEvents.add(calendarTestEvent('e', '予定').copyWith(isAllDay: true));
+      ..savedEvents.add(
+        calendarTestEvent(
+          'e',
+          '予定',
+        ).copyWith(isAllDay: true, endDateTime: DateTime(2026, 10, 3)),
+      );
     await harness.pump(tester);
     await tester.tap(find.byTooltip('色ラベルの設定'));
     await tester.pumpAndSettle();
@@ -362,7 +367,12 @@ void main() {
   testWidgets('任意の文字色を表示し名前だけの編集では文字色を保持する', (tester) async {
     final harness = CalendarTestHarness()
       ..savedLabels[0] = calendarTestFamily.copyWith(textColor: '#Ab12Cd')
-      ..savedEvents.add(calendarTestEvent('e', '予定').copyWith(isAllDay: true));
+      ..savedEvents.add(
+        calendarTestEvent(
+          'e',
+          '予定',
+        ).copyWith(isAllDay: true, endDateTime: DateTime(2026, 10, 3)),
+      );
     await harness.pump(tester);
     expect(
       tester.widget<Text>(find.text('予定')).style!.color,
@@ -383,7 +393,10 @@ void main() {
     final harness = CalendarTestHarness()
       ..savedLabels[0] = calendarTestFamily.copyWith(textColor: '#FFFFFF')
       ..savedEvents.addAll([
-        calendarTestEvent('all', '終日の予定').copyWith(isAllDay: true),
+        calendarTestEvent(
+          'all',
+          '終日の予定',
+        ).copyWith(isAllDay: true, endDateTime: DateTime(2026, 10, 3)),
         calendarTestEvent('timed', title),
       ]);
     await harness.pump(tester);
