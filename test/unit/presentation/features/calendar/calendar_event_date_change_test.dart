@@ -18,6 +18,9 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     await tester.enterText(find.widgetWithText(TextFormField, 'タイトル'), '予定');
+    tester.testTextInput.hide();
+    await tester.pump();
+    await tester.ensureVisible(find.text('終了日: 2026/10/2'));
     await tester.tap(find.text('終了日: 2026/10/2'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
@@ -34,7 +37,7 @@ void main() {
   });
   testWidgets('夏時間の切り替え日も単日の終日予定をUTCの暦日で保存する', (tester) async {
     final harness = CalendarTestHarness();
-    await harness.pump(tester, now: DateTime(2026, 3, 8));
+    await harness.pump(tester, now: DateTime(2026, 3, 1));
     await tester.tap(find.byKey(const Key('calendar_day_2026_3_8')));
     await tester.pump();
     await tester.tap(find.byTooltip('予定を追加'));
@@ -150,10 +153,10 @@ void main() {
         final source = calendarTestEvent('e', '複数日の予定').copyWith(
           isAllDay: allDay,
           startDateTime: allDay
-              ? DateTime(2026, 10, 2)
+              ? DateTime.utc(2026, 10, 2)
               : DateTime(2026, 10, 2, 9),
           endDateTime: allDay
-              ? DateTime(2026, 10, 5)
+              ? DateTime.utc(2026, 10, 5)
               : DateTime(2026, 10, 4, 23, 59),
         );
         final target = source.startDateTime.add(Duration(days: days));

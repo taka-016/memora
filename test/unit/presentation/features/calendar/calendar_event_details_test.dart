@@ -68,7 +68,7 @@ void main() {
     await tester.tap(find.text('保存'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-    expect(harness.savedEvents.single.endDateTime, DateTime(2026, 10, 3));
+    expect(harness.savedEvents.single.endDateTime, DateTime.utc(2026, 10, 3));
     expect(harness.savedEvents.single.memo, '一行目\n二行目');
     expect(harness.savedEvents.single.locationName, '集合場所');
     await openEvent(tester);
