@@ -10,28 +10,14 @@ import '../../helpers/test_exception.dart';
 class _LocalHttpOverrides extends HttpOverrides {}
 
 Map<String, dynamic> configuration() => {
-  'projectId': 'test-project',
-  'databaseId': '(default)',
-  'groupId': 'group',
+  'groupName': '家族',
   'inputIcs': 'timetree.ics',
   'reportPath': 'timetree-import.report.json',
   'accessTokenEnvironmentVariable': 'GOOGLE_OAUTH_ACCESS_TOKEN',
   'allDayExceptionTimeZone': 'Asia/Tokyo',
-  'labels': {
-    'existing': {'type': 'custom', 'id': 'label'},
-    'new': {
-      'type': 'custom',
-      'new': {
-        'name': '新規分類',
-        'color': '#123456',
-        'textColor': '#FFFFFF',
-        'sortOrder': 2,
-      },
-    },
-  },
   'mappings': [
-    {'category': '分類', 'color': '#123456', 'label': 'existing'},
-    {'category': null, 'color': '#212121', 'label': 'new'},
+    {'category': '分類', 'color': '#123456', 'memberName': '本人'},
+    {'category': null, 'color': '#212121', 'memberName': '本人'},
   ],
 };
 
@@ -57,7 +43,7 @@ TimeTreeImportPlan plan(String ics) {
   var next = 0;
   return buildTimeTreeImportPlan(
     ics,
-    TimeTreeImportConfig.fromJson(configuration()),
+    TimeTreeImportConfig.fromJson(configuration(), projectId: 'test-project'),
     newId: () => 'id${next++}',
   );
 }
@@ -178,11 +164,12 @@ void main() {
       ..['reportPath'] = directory.path;
     final configFile = File('${directory.path}/config.json');
     await configFile.writeAsString(jsonEncode(config));
+    await File('${directory.path}/.firebaserc').writeAsString(jsonEncode({'projects': {'default': 'test-project'}}));
     final result = await Process.run('dart', [
-      'run',
-      'scripts/timetree/import_timetree.dart',
+      '--packages=${File('.dart_tool/package_config.json').absolute.path}',
+      File('scripts/timetree/import_timetree.dart').absolute.path,
       configFile.path,
-    ]);
+    ], workingDirectory: directory.path);
     expect(result.exitCode, 1);
     expect(result.stderr.toString(), contains('成功=0、失敗=1'));
     expect(result.stderr.toString(), contains('レポート'));
@@ -204,18 +191,12 @@ void main() {
       server.listen((request) async {
         request.response.headers.contentType = ContentType.json;
         if (request.uri.path.endsWith(':runQuery')) {
-          await utf8.decoder.bind(request).join();
-          request.response.write(
-            jsonEncode([
-              {
-                'document': {
-                  'fields': {
-                    'memberId': {'stringValue': 'member'},
-                  },
-                },
-              },
-            ]),
-          );
+          final query = jsonDecode(await utf8.decoder.bind(request).join()) as Map<String, dynamic>;
+          final collection = query['structuredQuery']['from'][0]['collectionId'];
+          final name = query['structuredQuery']['where']['fieldFilter']['value']['stringValue'];
+          request.response.write(jsonEncode(collection == 'groups'
+            ? [if (name == '家族') {'document': {'name': 'projects/test-project/databases/(default)/documents/groups/group', 'fields': {'name': {'stringValue': '家族'}}}}]
+            : [{'document': {'fields': {'memberId': {'stringValue': 'member'}}}}]));
         } else if (request.method == 'POST') {
           commits.add(
             jsonDecode(await utf8.decoder.bind(request).join())
@@ -242,7 +223,7 @@ void main() {
               'updateTime': '2026-11-01T00:00:00Z',
               'fields': {
                 'groupId': {'stringValue': 'group'},
-                'eventCount': {'integerValue': '7'},
+                'displayName': {'stringValue': '本人'},
               },
             }),
           );
@@ -264,22 +245,14 @@ void main() {
       await server.close(force: true);
     });
 
-    test('予定と新規ラベルと利用件数を元日時・バージョン・参照を含む1回のCommitで保存する', () async {
+    test('名称をIDへ解決しラベルを変更せず予定だけを1回のCommitで保存する', () async {
       final result = plan(
         calendar([event('first'), event('second', classified: false)]),
       );
       await applyTimeTreeImportPlan(result, client);
       final writes = commits.single['writes'] as List;
-      expect(writes, hasLength(4));
-      final oldLabel = writes.singleWhere(
-        (dynamic w) =>
-            (w['update']?['name'] as String?)?.endsWith(
-              '/calendar_labels/label',
-            ) ??
-            false,
-      );
-      expect(oldLabel['update']['fields']['eventCount']['integerValue'], '8');
-      expect(oldLabel['currentDocument']['updateTime'], '2026-11-01T00:00:00Z');
+      expect(writes, hasLength(2));
+      expect(writes.every((dynamic w) => (w['update']['name'] as String).contains('/calendar_events/')), isTrue);
       final eventWrites = writes
           .where(
             (dynamic w) =>
@@ -295,11 +268,11 @@ void main() {
       expect(fields['createdAt']['timestampValue'], '2020-01-01T01:02:03.000Z');
       expect(fields['updatedAt']['timestampValue'], '2025-11-01T02:03:04.000Z');
       expect(fields['overrideIds']['arrayValue'], isA<Map>());
-      expect(
-        fields['referencedLabelIds']['arrayValue']['values']
-            .single['stringValue'],
-        'label',
-      );
+      expect(fields['referencedLabelIds']['arrayValue']['values'], isEmpty);
+      expect(fields['labelType']['stringValue'], 'member');
+      expect(fields['labelId']['nullValue'], isNull);
+      expect(fields['memberId']['stringValue'], 'member');
+      expect(fields['groupId']['stringValue'], 'group');
       expect(eventWrites.first['currentDocument']['exists'], isFalse);
       expect(jsonEncode(commits), isNot(contains('UID')));
     });
@@ -316,17 +289,14 @@ void main() {
       });
     }
 
-    for (final memberId in ['unrelated', 'member']) {
-      test('別グループまたは削除済みメンバーのラベルでは新規登録しない（$memberId）', () async {
-        memberExists = memberId != 'member';
+    for (final memberName in ['未所属', '本人']) {
+      test('別グループまたは削除済みメンバーのラベルでは新規登録しない（$memberName）', () async {
+        memberExists = memberName != '本人';
         final config = configuration();
-        (config['labels'] as Map)['existing'] = {
-          'type': 'member',
-          'memberId': memberId,
-        };
+        (config['mappings'] as List).first['memberName'] = memberName;
         final result = buildTimeTreeImportPlan(
           calendar([event('member-event')]),
-          TimeTreeImportConfig.fromJson(config),
+          TimeTreeImportConfig.fromJson(config, projectId: 'test-project'),
         );
         await expectLater(
           applyTimeTreeImportPlan(result, client),
@@ -338,13 +308,10 @@ void main() {
 
     test('所属中のメンバーのラベルをラベル利用件数なしで登録する', () async {
       final config = configuration();
-      (config['labels'] as Map)['existing'] = {
-        'type': 'member',
-        'memberId': 'member',
-      };
+      (config['mappings'] as List).first['memberName'] = '本人';
       final result = buildTimeTreeImportPlan(
         calendar([event('member-event')]),
-        TimeTreeImportConfig.fromJson(config),
+        TimeTreeImportConfig.fromJson(config, projectId: 'test-project'),
       );
       await applyTimeTreeImportPlan(result, client);
       final writes = commits.single['writes'] as List;
@@ -353,6 +320,13 @@ void main() {
         writes.single['update']['fields']['memberId']['stringValue'],
         'member',
       );
+    });
+
+    test('名称が一致するグループがなければ書き込まない', () async {
+      final config = configuration()..['groupName'] = '存在しないグループ';
+      final result = buildTimeTreeImportPlan(calendar([event('valid')]), TimeTreeImportConfig.fromJson(config, projectId: 'test-project'));
+      await expectLater(applyTimeTreeImportPlan(result, client), throwsA(isA<FormatException>()));
+      expect(commits, isEmpty);
     });
 
     test('登録成功後にレポートを保存できなくても成功を伝え再登録を促さない', () async {
