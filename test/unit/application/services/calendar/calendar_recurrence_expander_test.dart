@@ -28,7 +28,9 @@ void main() {
     labelId: 'label',
     title: '予定',
     startDateTime: start,
-    endDateTime: start.add(duration),
+    endDateTime: start.add(
+      allDay && duration == Duration.zero ? const Duration(days: 1) : duration,
+    ),
     isAllDay: allDay,
     recurrenceRule: rule,
     timeZone: allDay ? null : zone,

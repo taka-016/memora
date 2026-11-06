@@ -14,7 +14,7 @@ void main() {
       final source = calendarTestEvent('e', '月末の予定').copyWith(
         isAllDay: true,
         startDateTime: DateTime.utc(2026, 1, 31),
-        endDateTime: DateTime.utc(2026, 1, 31),
+        endDateTime: DateTime.utc(2026, 2, 1),
         recurrenceRule: 'FREQ=MONTHLY;BYMONTHDAY=31;UNTIL=20260228',
       );
       final harness = CalendarTestHarness()..savedEvents.add(source);
@@ -112,7 +112,7 @@ void main() {
               ? DateTime(2026, 10, 2)
               : DateTime(2026, 10, 2, 9),
           endDateTime: allDay
-              ? DateTime(2026, 10, 4)
+              ? DateTime(2026, 10, 5)
               : DateTime(2026, 10, 4, 23, 59),
         );
         final target = source.startDateTime.add(Duration(days: days));

@@ -111,7 +111,7 @@ void main() {
     });
     expect(events.first.accountId, 'first');
     expect(events.first.startDateTime, DateTime.utc(2026, 11, 2));
-    expect(events.first.endDateTime, DateTime.utc(2026, 11, 4));
+    expect(events.first.endDateTime, DateTime.utc(2026, 11, 5));
     expect(events.first.memo, '本文');
     expect(events.first.locationName, '東京');
     expect(events.first.isRecurring, isTrue);

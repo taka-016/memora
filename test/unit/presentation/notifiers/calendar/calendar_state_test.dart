@@ -24,7 +24,7 @@ void main() {
         event(
           '終日当日',
           DateTime.utc(2026, 11, 2),
-          DateTime.utc(2026, 11, 2),
+          DateTime.utc(2026, 11, 3),
           true,
         ),
         event(
@@ -36,7 +36,7 @@ void main() {
         event(
           '終日前日',
           DateTime.utc(2026, 11, 1),
-          DateTime.utc(2026, 11, 2),
+          DateTime.utc(2026, 11, 3),
           true,
         ),
       ],

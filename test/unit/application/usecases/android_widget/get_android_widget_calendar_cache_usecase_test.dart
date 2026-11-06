@@ -74,14 +74,14 @@ void main() {
           DateTime(2026, 11, 2, 2),
           allDay: false,
         ),
-        event('終日当日', DateTime.utc(2026, 11, 2), DateTime.utc(2026, 11, 2)),
+        event('終日当日', DateTime.utc(2026, 11, 2), DateTime.utc(2026, 11, 3)),
         event(
           '前日開始',
           DateTime(2026, 11, 1, 20),
           DateTime(2026, 11, 2, 12),
           allDay: false,
         ),
-        event('終日前日', DateTime.utc(2026, 11, 1), DateTime.utc(2026, 11, 2)),
+        event('終日前日', DateTime.utc(2026, 11, 1), DateTime.utc(2026, 11, 3)),
       ],
     );
     final cache = (await usecase.execute('group', DateTime(2026, 11)))!;
@@ -100,7 +100,7 @@ void main() {
     when(events.getCalendarEventsByGroupId('group')).thenAnswer(
       (_) async => [
         for (var i = 0; i < 4; i++)
-          event('予定$i', DateTime(2026, 11, 1), DateTime(2026, 11, 1)),
+          event('予定$i', DateTime(2026, 11, 1), DateTime(2026, 11, 2)),
         event('月またぎ', DateTime(2026, 11, 30), DateTime(2026, 12, 2)),
       ],
     );
@@ -139,7 +139,7 @@ void main() {
         event(
           '毎週',
           DateTime(2026, 10, 26),
-          DateTime(2026, 10, 26),
+          DateTime(2026, 10, 27),
           rule: 'FREQ=WEEKLY;BYDAY=MO',
         ),
         event(
