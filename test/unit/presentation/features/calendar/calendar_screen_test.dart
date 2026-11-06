@@ -569,7 +569,7 @@ void main() {
     await tester.tap(find.text('保存'));
     await tester.pumpAndSettle();
     expect(find.widgetWithText(ListTile, '一覧から追加'), findsOneWidget);
-    expect(harness.savedEvents.single.startDateTime, DateTime(2026, 10, 2));
+    expect(harness.savedEvents.single.startDateTime, DateTime.utc(2026, 10, 2));
     await tester.tap(find.byTooltip('予定一覧を閉じる'));
     await tester.pumpAndSettle();
     expect(

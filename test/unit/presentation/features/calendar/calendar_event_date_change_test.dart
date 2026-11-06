@@ -49,7 +49,10 @@ void main() {
     final saved = harness.savedEvents.single;
     expect(saved.startDateTime.isUtc, isTrue);
     expect(saved.endDateTime.isUtc, isTrue);
-    expect(saved.endDateTime.difference(saved.startDateTime), const Duration(days: 1));
+    expect(
+      saved.endDateTime.difference(saved.startDateTime),
+      const Duration(days: 1),
+    );
     expect(saved.startDateTime, DateTime.utc(2026, 3, 8));
     expect(saved.endDateTime, DateTime.utc(2026, 3, 9));
   });
