@@ -65,6 +65,7 @@ internal object DailyCalendarWidgetRenderer {
             }
             views.setRemoteAdapter(R.id.calendar_events, adapter)
         }
+        views.setScrollPosition(R.id.calendar_events, 0)
         val updated = cache?.lastUpdatedAt.orEmpty().replace("-", "/").replace("T", " ").take(16)
         views.setTextViewText(R.id.calendar_last_updated, if (updated.isBlank()) "" else "最終更新 $updated")
         val options = manager.getAppWidgetOptions(widgetId)
