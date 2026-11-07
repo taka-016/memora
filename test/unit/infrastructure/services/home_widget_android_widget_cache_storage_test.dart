@@ -49,6 +49,32 @@ void main() {
     await directory.delete(recursive: true);
   });
 
+  test('旅程取得中と失敗を選択日ごとに公開し再試行成功で解除する', () async {
+    const storage = HomeWidgetAndroidWidgetCacheStorage();
+    const selected = 'trip_2026-11-08';
+    const key = 'memora_widget_itinerary_load_group_$selected';
+    await expectLater(
+      storage.trackItineraryLoading('group', selected, () async {
+        expect(values[key], startsWith('loading:'));
+        expect(values['memora_widget_itinerary_load_other_$selected'], isNull);
+        throw TestException('旅程取得失敗');
+      }, false),
+      throwsA(isA<TestException>()),
+    );
+    expect(values[key], 'failed');
+    await storage.trackItineraryLoading('group', selected, () async {
+      expect(values[key], startsWith('loading:'));
+    }, false);
+    expect(values[key], isNull);
+    await storage.trackItineraryLoading('group', null, () async {
+      expect(
+        values['memora_widget_itinerary_load_group_recent'],
+        startsWith('loading:'),
+      );
+    }, false);
+    expect(values['memora_widget_itinerary_load_group_recent'], isNull);
+  });
+
   test('カレンダー取得中は月ごとに状態を公開し成功後に解除する', () async {
     const storage = HomeWidgetCalendarCacheStorage();
     final result = Completer<void>();

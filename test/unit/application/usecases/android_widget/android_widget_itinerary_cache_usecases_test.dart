@@ -97,6 +97,44 @@ void main() {
   });
 
   group('RefreshAndroidWidgetItineraryCacheUsecase', () {
+    for (final fails in [false, true]) {
+      test('旅程取得${fails ? '失敗' : '成功'}を選択日とともに状態管理へ伝える', () async {
+        final storage = _FakeAndroidWidgetCacheStorage()
+          ..targetGroupId = 'group-1';
+        final trips = _FakeTripEntryQueryService();
+        if (fails) trips.exception = TestException('取得失敗');
+        final trace = <String>[];
+        final usecase = _buildRefreshUsecase(
+          storage,
+          trips,
+          _FakeItineraryItemQueryService(),
+          trackLoading: (groupId, selected, action, updateWidget) async {
+            expect(groupId, 'group-1');
+            expect(selected, 'trip_2026-11-08');
+            expect(updateWidget, isTrue);
+            trace.add('loading');
+            try {
+              await action();
+              trace.add('complete');
+            } catch (_) {
+              trace.add('failed');
+              rethrow;
+            }
+          },
+        );
+        final refresh = usecase.execute(
+          groupId: 'group-1',
+          selectedItineraryDateId: 'trip_2026-11-08',
+        );
+        if (fails) {
+          await expectLater(refresh, throwsA(isA<TestException>()));
+        } else {
+          await refresh;
+        }
+        expect(trace, ['loading', fails ? 'failed' : 'complete']);
+      });
+    }
+
     test('移動時は蓄積し更新成功時は置換するが取得失敗時は以前の内容を残す', () async {
       final storage = _FakeAndroidWidgetCacheStorage()
         ..targetGroupId = 'group-1';
@@ -567,6 +605,7 @@ RefreshAndroidWidgetItineraryCacheUsecase _buildRefreshUsecase(
   ItineraryItemQueryService itineraryItemQueryService, {
   ReadTransaction? readTransaction,
   Future<void> Function(String)? refreshCalendar,
+  TrackAndroidWidgetItineraryLoading? trackLoading,
 }) {
   final groups = MockGroupQueryService();
   when(groups.groupExists(any)).thenAnswer((_) async => true);
@@ -575,6 +614,7 @@ RefreshAndroidWidgetItineraryCacheUsecase _buildRefreshUsecase(
     cacheStorage: storage,
     readTransaction: readTransaction,
     refreshCalendar: refreshCalendar,
+    trackLoading: trackLoading,
     getCacheUsecase: GetAndroidWidgetItineraryCacheUsecase(
       tripEntryQueryService: tripEntryQueryService,
       itineraryItemQueryService: itineraryItemQueryService,

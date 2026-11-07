@@ -8,6 +8,14 @@ import org.junit.Test
 
 class CalendarWidgetLoadStateTest {
     @Test
+    fun `旅程はグループと選択日ごとに読み込み状態を区別する`() {
+        assertEquals("memora_widget_itinerary_load_group_trip_2026-11-08",
+            itineraryWidgetLoadStateKey("group", "trip_2026-11-08"))
+        assertEquals("memora_widget_itinerary_load_other_recent",
+            itineraryWidgetLoadStateKey("other", null))
+    }
+
+    @Test
     fun `取得中は読み込み中を表示し失敗後だけ再試行を案内する`() {
         for (value in listOf("loading", "loading:request-1")) {
             val state = CalendarWidgetLoadState.fromValue(value)
