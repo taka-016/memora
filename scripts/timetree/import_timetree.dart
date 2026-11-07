@@ -553,6 +553,28 @@ class FirestoreImportClient {
     return value == null ? null : _map(value);
   }
 
+  Future<Map<String, Map<String, dynamic>?>> readDocuments(
+    List<String> paths, {
+    required List<String> fieldPaths,
+  }) async {
+    if (paths.isEmpty) return {};
+    final rows = await _request('POST', ':batchGet', {
+      'documents': [for (final path in paths) '$documentRoot/$path'],
+      'mask': {'fieldPaths': fieldPaths},
+    }) as List;
+    final result = <String, Map<String, dynamic>?>{};
+    for (final row in rows) {
+      final found = row['found'];
+      final name = (found == null ? row['missing'] : found['name']) as String?;
+      if (name != null) {
+        result[name.substring(documentRoot.length + 1)] = found == null
+            ? null
+            : _map(found);
+      }
+    }
+    return result;
+  }
+
   Future<List<dynamic>> _query(
     String collection,
     String field,

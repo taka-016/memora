@@ -5,7 +5,12 @@ import 'package:memora/presentation/features/setting/calendar_notification_setti
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  setUp(() => SharedPreferences.setMockInitialValues({}));
+  setUp(
+    () => SharedPreferences.setMockInitialValues({
+      'calendar_notification_preferences':
+          '{"minute":420,"allDay":[],"timed":[]}',
+    }),
+  );
   Future<void> pumpDialog(WidgetTester tester) async {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));

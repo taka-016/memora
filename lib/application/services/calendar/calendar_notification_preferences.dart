@@ -7,8 +7,8 @@ export 'package:memora/domain/entities/calendar/calendar_notifications.dart'
 class CalendarNotificationPreferences {
   const CalendarNotificationPreferences({
     this.allDayMinuteOfDay = 420,
-    this.allDay = const [],
-    this.timed = const [],
+    this.allDay = const [0, 1440, 2880],
+    this.timed = const [0, 30, 60],
   });
   final int allDayMinuteOfDay;
   final List<int> allDay;
