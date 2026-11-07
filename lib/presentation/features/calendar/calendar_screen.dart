@@ -1,3 +1,4 @@
+import 'package:memora/presentation/features/calendar/calendar_month_picker_dialog.dart';
 import 'package:memora/composition_root/providers/external_calendar_providers.dart';
 import 'package:memora/presentation/notifiers/calendar/external_calendar_notifier.dart';
 import 'package:memora/presentation/features/calendar/external_calendar_overlay.dart';
@@ -111,6 +112,16 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     ref
         .read(provider.notifier)
         .selectDate(DateTime(month.year, month.month + offset));
+  }
+
+  Future<void> _selectMonth() async {
+    final provider = calendarNotifierProvider(widget.groupId);
+    final month = await showDialog<DateTime>(
+      context: context,
+      builder: (_) => CalendarMonthPickerDialog(month: ref.read(provider).month),
+    );
+    if (!mounted || month == null) return;
+    ref.read(provider.notifier).selectDate(month);
   }
 
   Future<void> _edit([CalendarEventDto? event]) async {
@@ -305,9 +316,12 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                         child: Center(
                           child: FittedBox(
                             fit: BoxFit.scaleDown,
-                            child: Text(
-                              '${month.year}年${month.month}月',
-                              style: Theme.of(context).textTheme.titleLarge,
+                            child: TextButton(
+                              onPressed: _selectMonth,
+                              child: Text(
+                                '${month.year}年${month.month}月',
+                                style: Theme.of(context).textTheme.titleLarge,
+                              ),
                             ),
                           ),
                         ),
