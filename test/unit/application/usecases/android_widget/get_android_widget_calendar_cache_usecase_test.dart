@@ -171,6 +171,45 @@ void main() {
     expect(days[7]['events'][1]['isAllDay'], isFalse);
   });
 
+  test('複数日判定は終日の終了日と時刻付きの午前0時終了を含めない', () async {
+    when(events.getCalendarEventsByGroupId('group')).thenAnswer(
+      (_) async => [
+        event('終日単日', DateTime.utc(2026, 11, 2), DateTime.utc(2026, 11, 3)),
+        event('終日複数日', DateTime.utc(2026, 11, 2), DateTime.utc(2026, 11, 4)),
+        event(
+          '午前0時終了',
+          DateTime(2026, 11, 2, 23),
+          DateTime(2026, 11, 3),
+          allDay: false,
+        ),
+        event(
+          '日またぎ',
+          DateTime(2026, 11, 2, 23),
+          DateTime(2026, 11, 3, 1),
+          allDay: false,
+        ),
+      ],
+    );
+    final cache = (await usecase.execute('group', DateTime(2026, 11)))!;
+    final days = cache['days'] as List;
+    final first = days.firstWhere((day) => day['date'] == '2026-11-02');
+    final flags = {
+      for (final item in first['events'] as List)
+        item['title']: item['isMultiDay'],
+    };
+    expect(flags, {
+      '終日単日': false,
+      '終日複数日': true,
+      '午前0時終了': false,
+      '日またぎ': true,
+    });
+    final next = days.firstWhere((day) => day['date'] == '2026-11-03');
+    expect((next['events'] as List).map((item) => item['title']), [
+      '終日複数日',
+      '日またぎ',
+    ]);
+  });
+
   test('オンラインではグループ所有者ではなく現在の利用者を端末カレンダーの表示元にする', () async {
     final current = MockCurrentUserService();
     when(current.getCurrentUser()).thenAnswer(
