@@ -59,6 +59,12 @@ open class CalendarWidgetReceiver : AppWidgetProvider() {
     }
 
     private fun receive(context: Context, intent: Intent) {
+        if (intent.action == AppWidgetManager.ACTION_APPWIDGET_UPDATE &&
+            !intent.getBooleanExtra(HomeWidgetPlugin.TRIGGERED_FROM_HOME_WIDGET, false)) {
+            intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)?.forEach { widgetId ->
+                CalendarWidgetData.startLoading(context, CalendarWidgetData.selectedDate(context, widgetId))
+            }
+        }
         super.onReceive(context, intent)
         when (intent.action) {
             CALENDAR_SELECT_ACTION -> selectDate(context, intent)
@@ -68,6 +74,7 @@ open class CalendarWidgetReceiver : AppWidgetProvider() {
                 CalendarWidgetData.selectDate(
                     context, widgetId, CalendarWidgetData.selectedDate(context, widgetId),
                 )
+                CalendarWidgetData.startLoading(context, CalendarWidgetData.selectedDate(context, widgetId))
                 updateWidget(context, AppWidgetManager.getInstance(context), widgetId)
                 requestCalendarRefresh(context)
             }
@@ -95,13 +102,13 @@ open class CalendarWidgetReceiver : AppWidgetProvider() {
         val month = date.withDayOfMonth(1)
         val months = CalendarWidgetData.read(context)?.months.orEmpty()
         CalendarWidgetData.selectDate(context, widgetId, date)
-        updateWidget(context, AppWidgetManager.getInstance(context), widgetId)
         val missingNeighbor = !months.containsKey(month.minusMonths(1)) ||
             !months.containsKey(month.plusMonths(1))
-        if (!months.containsKey(month) ||
-            (previous.withDayOfMonth(1) != month && missingNeighbor)) {
-            requestCalendarRefresh(context, date)
-        }
+        val needsRefresh = !months.containsKey(month) ||
+            (previous.withDayOfMonth(1) != month && missingNeighbor)
+        if (needsRefresh) CalendarWidgetData.startLoading(context, date)
+        updateWidget(context, AppWidgetManager.getInstance(context), widgetId)
+        if (needsRefresh) requestCalendarRefresh(context, date)
     }
 
     private fun isCalendarWidget(context: Context, widgetId: Int): Boolean =

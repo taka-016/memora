@@ -12,6 +12,35 @@ class HomeWidgetCalendarCacheStorage {
   static const qualifiedAndroidName =
       'com.example.memora.CalendarWidgetReceiver';
 
+  static String loadStateKey(String groupId, DateTime date) {
+    final month = DateTime(date.year, date.month).toIso8601String().substring(0, 10);
+    return 'memora_widget_calendar_load_${groupId}_$month';
+  }
+
+  Future<void> refresh(
+    String groupId,
+    DateTime month,
+    Future<void> Function() action,
+  ) async {
+    final key = loadStateKey(groupId, month);
+    final request = 'loading:${DateTime.now().microsecondsSinceEpoch}';
+    await HomeWidget.saveWidgetData<String>(key, request);
+    try {
+      await update();
+      await action();
+      if (await HomeWidget.getWidgetData<String>(key) == request) {
+        await HomeWidget.saveWidgetData<String>(key, null);
+      }
+    } catch (_) {
+      if (await HomeWidget.getWidgetData<String>(key) == request) {
+        await HomeWidget.saveWidgetData<String>(key, 'failed');
+      }
+      rethrow;
+    } finally {
+      await update();
+    }
+  }
+
   Future<Map<String, dynamic>?> _load() async {
     final path = await HomeWidget.getWidgetData<String>(cacheKey);
     if (path == null || !await File(path).exists()) return null;

@@ -115,6 +115,18 @@ internal object CalendarWidgetData {
         return DeviceCalendarWidgetSource.read(context, cache, shared)
     }
 
+    fun loadState(context: Context, date: LocalDate): CalendarWidgetLoadState =
+        CalendarWidgetLoadState.fromValue(HomeWidgetPlugin.getData(context).getString(
+            calendarWidgetLoadStateKey(targetGroup(context), date), null,
+        ))
+
+    fun startLoading(context: Context, date: LocalDate) {
+        val groupId = targetGroup(context)
+        if (groupId.isEmpty()) return
+        HomeWidgetPlugin.getData(context).edit()
+            .putString(calendarWidgetLoadStateKey(groupId, date), "loading").apply()
+    }
+
     fun selectedDate(context: Context, widgetId: Int): LocalDate {
         val prefs = HomeWidgetPlugin.getData(context)
         val date = if (prefs.getString(groupKey(widgetId), null) == targetGroup(context)) {

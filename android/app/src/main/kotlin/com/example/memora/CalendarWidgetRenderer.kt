@@ -22,6 +22,7 @@ internal object CalendarWidgetRenderer {
         val groupId: String,
         val month: CalendarWidgetMonth,
         val loaded: Boolean,
+        val loadState: CalendarWidgetLoadState,
         val sizes: Sizes,
         val today: LocalDate,
         val selected: LocalDate,
@@ -66,6 +67,8 @@ internal object CalendarWidgetRenderer {
         val groupId = CalendarWidgetData.targetGroup(context)
         val cache = CalendarWidgetData.read(context)
         val appearance = WidgetAppearance.forWidget(manager, widgetId)
+        val selected = CalendarWidgetData.selectedDate(context, widgetId)
+        val loadState = CalendarWidgetData.loadState(context, selected)
         if (groupId.isEmpty() || cache == null) {
             val view = RemoteViews(context.packageName, appearance.calendarLayout)
             view.setViewVisibility(R.id.calendar_content, View.GONE)
@@ -73,20 +76,19 @@ internal object CalendarWidgetRenderer {
             view.setTextViewText(R.id.calendar_message, if (groupId.isEmpty()) {
                 "表示対象グループを設定してください"
             } else {
-                "タップしてカレンダーを読み込む"
+                loadState.message
             })
             view.setOnClickPendingIntent(R.id.calendar_message, if (groupId.isEmpty()) {
                 HomeWidgetLaunchIntent.getActivity(
                     context, MainActivity::class.java, Uri.parse("memoraWidget://openSettings"),
                 )
-            } else {
+            } else if (loadState.canRetry) {
                 calendarWidgetAction(context, widgetId)
-            })
+            } else null)
             manager.updateAppWidget(widgetId, view)
             forget(widgetId)
             return
         }
-        val selected = CalendarWidgetData.selectedDate(context, widgetId)
         val month = selected.withDayOfMonth(1)
         val cachedMonth = CalendarWidgetData.readMonth(context, cache, month)
         val options = manager.getAppWidgetOptions(widgetId)
@@ -102,7 +104,7 @@ internal object CalendarWidgetRenderer {
         )
         val next = RenderedState(
             groupId, cachedMonth ?: CalendarWidgetData.emptyMonth(month), cachedMonth != null,
-            sizes, LocalDate.now(), selected, cache.lastUpdatedAt, appearance,
+            loadState, sizes, LocalDate.now(), selected, cache.lastUpdatedAt, appearance,
         )
         val previous = states[widgetId]
         val full = forceFull || previous == null || monthViews[widgetId] == null ||
@@ -247,9 +249,9 @@ internal object CalendarWidgetRenderer {
             R.id.calendar_last_updated, if (lastUpdatedAt.isBlank()) View.GONE else View.VISIBLE,
         )
         views.setTextViewText(
-            R.id.calendar_empty, if (state.loaded) "予定はありません" else "タップして予定を読み込む",
+            R.id.calendar_empty, if (state.loaded) "予定はありません" else state.loadState.message,
         )
-        views.setOnClickPendingIntent(R.id.calendar_empty, if (state.loaded) null else {
+        views.setOnClickPendingIntent(R.id.calendar_empty, if (state.loaded || !state.loadState.canRetry) null else {
             calendarWidgetAction(context, widgetId, state.selected)
         })
         if (Build.VERSION.SDK_INT >= 31) {

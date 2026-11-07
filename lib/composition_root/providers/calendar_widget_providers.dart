@@ -28,21 +28,22 @@ final refreshCalendarWidgetProvider =
         final clock = ref.read(appClockProvider);
         const storage = HomeWidgetCalendarCacheStorage();
         final month =
-            await storage.loadSelectedDate() ??
             date ??
+            await storage.loadSelectedDate() ??
             await storage.loadMonth() ??
             clock.now();
-        final cache = await usecase.execute(groupId, month);
-        const target = HomeWidgetAndroidWidgetCacheStorage();
-        if (await target.getTargetGroupId() != groupId) return;
-        if (cache == null) {
-          await storage.clear();
-        } else {
-          await storage.save({
-            ...cache,
-            'lastUpdatedAt': clock.now().toIso8601String(),
-          }, merge: date != null);
-        }
-        await storage.update();
+        await storage.refresh(groupId, month, () async {
+          final cache = await usecase.execute(groupId, month);
+          const target = HomeWidgetAndroidWidgetCacheStorage();
+          if (await target.getTargetGroupId() != groupId) return;
+          if (cache == null) {
+            await storage.clear();
+          } else {
+            await storage.save({
+              ...cache,
+              'lastUpdatedAt': clock.now().toIso8601String(),
+            }, merge: date != null);
+          }
+        });
       };
     });

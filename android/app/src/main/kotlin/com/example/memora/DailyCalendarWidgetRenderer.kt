@@ -43,8 +43,9 @@ internal object DailyCalendarWidgetRenderer {
             context, MainActivity::class.java, calendarLaunchUri(groupId, selected, create = true),
         ))
         views.setOnClickPendingIntent(R.id.calendar_refresh, calendarWidgetAction(context, widgetId))
-        views.setTextViewText(R.id.calendar_empty, if (month == null) "タップして予定を読み込む" else "予定はありません")
-        views.setOnClickPendingIntent(R.id.calendar_empty, if (month == null) {
+        val loadState = CalendarWidgetData.loadState(context, selected)
+        views.setTextViewText(R.id.calendar_empty, if (month == null) loadState.message else "予定はありません")
+        views.setOnClickPendingIntent(R.id.calendar_empty, if (month == null && loadState.canRetry) {
             calendarWidgetAction(context, widgetId, selected)
         } else null)
         views.setEmptyView(R.id.calendar_events, R.id.calendar_empty)
