@@ -1,27 +1,39 @@
 {
-  "projectId": "your-firebase-project",
-  "databaseId": "(default)",
-  "groupId": "取り込み先のグループID",
+  "groupName": "",
   "inputIcs": "timetree.ics",
   "reportPath": "timetree-import.report.json",
   "accessTokenEnvironmentVariable": "GOOGLE_OAUTH_ACCESS_TOKEN",
   "allDayExceptionTimeZone": "Asia/Tokyo",
-  "labels": {
-    "group": { "type": "group" },
-    "member": { "type": "member", "memberId": "所属メンバーID" },
-    "existing": { "type": "custom", "id": "既存ラベルID" },
-    "new": {
-      "type": "custom",
-      "new": {
-        "name": "新規ラベル名",
-        "color": "#123456",
-        "textColor": "#FFFFFF",
-        "sortOrder": 0
-      }
-    }
-  },
   "mappings": [
-    { "category": "TimeTreeの分類名", "color": "#123456", "label": "existing" },
-    { "category": null, "color": "#212121", "label": "new" }
+    {
+      "category": "〇〇の予定",
+      "color": "#3dc2c8",
+      "memberName": ""
+    },
+    {
+      "category": "〇〇の予定",
+      "color": "#47b2f7",
+      "memberName": ""
+    },
+    {
+      "category": "〇〇の予定",
+      "color": "#f35f8c",
+      "memberName": ""
+    },
+    {
+      "category": "〇〇の予定",
+      "color": "#fdd835",
+      "memberName": ""
+    },
+    {
+      "category": "家族の予定",
+      "color": "#2ecc87",
+      "memberName": ""
+    },
+    {
+      "category": null,
+      "color": "#212121",
+      "memberName": ""
+    }
   ]
 }

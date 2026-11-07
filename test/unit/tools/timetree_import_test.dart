@@ -164,7 +164,11 @@ void main() {
       ..['reportPath'] = directory.path;
     final configFile = File('${directory.path}/config.json');
     await configFile.writeAsString(jsonEncode(config));
-    await File('${directory.path}/.firebaserc').writeAsString(jsonEncode({'projects': {'default': 'test-project'}}));
+    await File('${directory.path}/.firebaserc').writeAsString(
+      jsonEncode({
+        'projects': {'default': 'test-project'},
+      }),
+    );
     final result = await Process.run('dart', [
       '--packages=${File('.dart_tool/package_config.json').absolute.path}',
       File('scripts/timetree/import_timetree.dart').absolute.path,
@@ -191,12 +195,38 @@ void main() {
       server.listen((request) async {
         request.response.headers.contentType = ContentType.json;
         if (request.uri.path.endsWith(':runQuery')) {
-          final query = jsonDecode(await utf8.decoder.bind(request).join()) as Map<String, dynamic>;
-          final collection = query['structuredQuery']['from'][0]['collectionId'];
-          final name = query['structuredQuery']['where']['fieldFilter']['value']['stringValue'];
-          request.response.write(jsonEncode(collection == 'groups'
-            ? [if (name == '家族') {'document': {'name': 'projects/test-project/databases/(default)/documents/groups/group', 'fields': {'name': {'stringValue': '家族'}}}}]
-            : [{'document': {'fields': {'memberId': {'stringValue': 'member'}}}}]));
+          final query = jsonDecode(
+            await utf8.decoder.bind(request).join(),
+          ) as Map<String, dynamic>;
+          final collection =
+              query['structuredQuery']['from'][0]['collectionId'];
+          final name =
+              query['structuredQuery']['where']['fieldFilter']['value']['stringValue'];
+          request.response.write(
+            jsonEncode(
+              collection == 'groups'
+                  ? [
+                      if (name == '家族')
+                        {
+                          'document': {
+                            'name': 'projects/test-project/databases/(default)/documents/groups/group',
+                            'fields': {
+                              'name': {'stringValue': '家族'},
+                            },
+                          },
+                        },
+                    ]
+                  : [
+                      {
+                        'document': {
+                          'fields': {
+                            'memberId': {'stringValue': 'member'},
+                          },
+                        },
+                      },
+                    ],
+            ),
+          );
         } else if (request.method == 'POST') {
           commits.add(
             jsonDecode(await utf8.decoder.bind(request).join())
@@ -252,7 +282,13 @@ void main() {
       await applyTimeTreeImportPlan(result, client);
       final writes = commits.single['writes'] as List;
       expect(writes, hasLength(2));
-      expect(writes.every((dynamic w) => (w['update']['name'] as String).contains('/calendar_events/')), isTrue);
+      expect(
+        writes.every(
+          (dynamic w) =>
+              (w['update']['name'] as String).contains('/calendar_events/'),
+        ),
+        isTrue,
+      );
       final eventWrites = writes
           .where(
             (dynamic w) =>
@@ -324,8 +360,14 @@ void main() {
 
     test('名称が一致するグループがなければ書き込まない', () async {
       final config = configuration()..['groupName'] = '存在しないグループ';
-      final result = buildTimeTreeImportPlan(calendar([event('valid')]), TimeTreeImportConfig.fromJson(config, projectId: 'test-project'));
-      await expectLater(applyTimeTreeImportPlan(result, client), throwsA(isA<FormatException>()));
+      final result = buildTimeTreeImportPlan(
+        calendar([event('valid')]),
+        TimeTreeImportConfig.fromJson(config, projectId: 'test-project'),
+      );
+      await expectLater(
+        applyTimeTreeImportPlan(result, client),
+        throwsA(isA<FormatException>()),
+      );
       expect(commits, isEmpty);
     });
 

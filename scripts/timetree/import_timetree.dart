@@ -28,15 +28,23 @@ String _mappingKey(String? category, String color) =>
     jsonEncode([category, color.toUpperCase()]);
 
 class TimeTreeImportConfig {
-  TimeTreeImportConfig.fromJson(Map<String, dynamic> value, {required this.projectId})
-    : groupName = _required(value, 'groupName'),
-      inputIcs = _required(value, 'inputIcs'),
-      reportPath = _required(value, 'reportPath'),
-      accessTokenEnvironmentVariable = _required(value, 'accessTokenEnvironmentVariable'),
-      allDayExceptionTimeZone = _required(value, 'allDayExceptionTimeZone') {
+  TimeTreeImportConfig.fromJson(
+    Map<String, dynamic> value, {
+    required this.projectId,
+  }) : groupName = _required(value, 'groupName'),
+       inputIcs = _required(value, 'inputIcs'),
+       reportPath = _required(value, 'reportPath'),
+       accessTokenEnvironmentVariable = _required(
+         value,
+         'accessTokenEnvironmentVariable',
+       ),
+       allDayExceptionTimeZone = _required(value, 'allDayExceptionTimeZone') {
     for (final item in value['mappings'] as List) {
       final row = _map(item);
-      final key = _mappingKey(row['category'] as String?, _required(row, 'color'));
+      final key = _mappingKey(
+        row['category'] as String?,
+        _required(row, 'color'),
+      );
       if (mappings.containsKey(key)) {
         throw const FormatException('ICSの分類・色が対応表で重複しています');
       }
@@ -112,14 +120,20 @@ class TimeTreeImportPlan {
     },
     'mappings': [
       for (final entry in config.mappings.entries)
-        {'category': (jsonDecode(entry.key) as List)[0], 'color': (jsonDecode(entry.key) as List)[1], 'memberName': entry.value},
+        {
+          'category': (jsonDecode(entry.key) as List)[0],
+          'color': (jsonDecode(entry.key) as List)[1],
+          'memberName': entry.value,
+        },
     ],
     'events': [
       for (final value in events)
         {
           'eventId': value.event.id,
           'memberName': value.memberName,
-          ...(_jsonDates(value.document())..remove('groupId')..remove('memberId')),
+          ...(_jsonDates(value.document())
+            ..remove('groupId')
+            ..remove('memberId')),
           if (groupId != null) 'groupId': groupId,
           if (groupId != null) 'memberId': value.event.memberId,
         },
@@ -352,7 +366,8 @@ TimeTreeImportPlan buildTimeTreeImportPlan(
       }
       final category = source.text('CATEGORIES');
       final color = source.text('COLOR');
-      final memberName = config.mappings[_mappingKey(category.isEmpty ? null : category, color)];
+      final memberName = config
+          .mappings[_mappingKey(category.isEmpty ? null : category, color)];
       if (memberName == null || memberName.isEmpty) {
         throw FormatException(
           'メンバー名を指定してください: 分類=${category.isEmpty ? '分類なし' : category}、色=$color',
@@ -527,18 +542,31 @@ class FirestoreImportClient {
     return value == null ? null : _map(value);
   }
 
-  Future<List<dynamic>> _query(String collection, String field, String value) async =>
-      await _request('POST', ':runQuery', {
-        'structuredQuery': {
-          'from': [{'collectionId': collection}],
-          'where': {'fieldFilter': {'field': {'fieldPath': field}, 'op': 'EQUAL', 'value': {'stringValue': value}}},
+  Future<List<dynamic>> _query(
+    String collection,
+    String field,
+    String value,
+  ) async => await _request('POST', ':runQuery', {
+    'structuredQuery': {
+      'from': [
+        {'collectionId': collection},
+      ],
+      'where': {
+        'fieldFilter': {
+          'field': {'fieldPath': field},
+          'op': 'EQUAL',
+          'value': {'stringValue': value},
         },
-      }) as List;
+      },
+    },
+  }) as List;
 
   Future<String> groupIdByName(String name) async {
     final rows = await _query('groups', 'name', name);
     final groups = rows.where((row) => row['document'] != null).toList();
-    if (groups.length != 1) throw FormatException('グループ名「$name」に一致するグループを一意に取得できません');
+    if (groups.length != 1) {
+      throw FormatException('グループ名「$name」に一致するグループを一意に取得できません');
+    }
     return (groups.single['document']['name'] as String).split('/').last;
   }
 
@@ -591,15 +619,23 @@ Future<void> applyTimeTreeImportPlan(
   }
   for (final value in plan.events) {
     if (!membersByName.containsKey(value.memberName)) {
-      throw FormatException('グループ「${plan.config.groupName}」にメンバー「${value.memberName}」が見つかりません');
+      throw FormatException(
+        'グループ「${plan.config.groupName}」にメンバー「${value.memberName}」が見つかりません',
+      );
     }
   }
   plan.groupId = groupId;
   final writes = <Map<String, Object?>>[];
   for (final value in plan.events) {
-    value.event = value.event.copyWith(groupId: groupId, memberId: membersByName[value.memberName]!);
+    value.event = value.event.copyWith(
+      groupId: groupId,
+      memberId: membersByName[value.memberName]!,
+    );
     writes.add({
-      'update': {'name': '${client.documentRoot}/calendar_events/${value.event.id}', 'fields': _fields(value.document())},
+      'update': {
+        'name': '${client.documentRoot}/calendar_events/${value.event.id}',
+        'fields': _fields(value.document()),
+      },
       'currentDocument': {'exists': false},
     });
   }
@@ -642,7 +678,9 @@ Future<void> main(List<String> args) async {
     final configFile = File(args.first).absolute;
     final firebaseFile = File('.firebaserc');
     if (!await firebaseFile.exists()) {
-      throw const FormatException('リポジトリ直下で実行し、先にアプリのFirebase設定を完了してください（.firebasercが必要です）');
+      throw const FormatException(
+        'リポジトリ直下で実行し、先にアプリのFirebase設定を完了してください（.firebasercが必要です）',
+      );
     }
     final firebase = _map(jsonDecode(await firebaseFile.readAsString()));
     final config = TimeTreeImportConfig.fromJson(

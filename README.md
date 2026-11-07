@@ -101,7 +101,9 @@ Google Cloud ConsoleでMaps SDK for AndroidとPlaces API (New)を有効にし、
 
 ### TimeTreeのICS取り込み
 
-オンライン版のFirestoreに一度だけ取り込む場合は、[設定ひな形](scripts/timetree/config.example.json)をリポジトリ直下の`timetree-import.local.json`へコピーし、接続先、入力ICS、分類・色ごとのラベル対応を記入してください。ファイルのパスは設定ファイルからの相対指定です。分類なしは`category: null`で指定し、不要なラベル定義は削除してください。
+オンライン版のFirestoreに一度だけ取り込む場合は、[設定ひな形](scripts/timetree/config.example.json)をリポジトリ直下の`timetree-import.local.json`へコピーし、`groupName`に取り込み先のグループ名、対応表の`memberName`に各分類を紐づけるメンバーの表示名を記入してください。対応表には今回のICSから抽出した分類・色を設定済みです。分類なしの行も含め、各行に対応するメンバー名を記入してください。グループ名・メンバー名は一意である前提です。
+
+リポジトリ直下で実行してください。Firebaseの接続先はアプリ設定の`.firebaserc`から取得し、既定のデータベースを使用します。IDの記入や新規ラベルの作成は不要です。入力ICS・レポートのパスは設定ファイルからの相対指定です。
 
 書き込み時はFirestoreの読み書き権限を持つGoogle CloudアカウントのOAuthアクセストークンを、設定で指定した環境変数へ設定します。Google Cloud CLIを利用する場合は、`gcloud auth login`後に`export GOOGLE_OAUTH_ACCESS_TOKEN="$(gcloud auth print-access-token)"`で取得できます。
 
