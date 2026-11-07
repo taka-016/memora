@@ -5,22 +5,22 @@
     <LinearLayout android:id="@+id/calendar_content" android:layout_width="match_parent"
         android:layout_height="match_parent" android:orientation="vertical">
         <LinearLayout android:id="@+id/daily_compact_header" android:layout_width="match_parent"
-            android:layout_height="20dp" android:visibility="gone" android:gravity="center_vertical">
+            android:layout_height="24dp" android:visibility="gone" android:gravity="center_vertical">
             <TextView android:id="@+id/daily_compact_date" android:layout_width="0dp" android:layout_weight="1"
                 android:layout_height="match_parent" android:gravity="center" android:maxLines="1"
-                android:textSize="12sp" android:textColor="#212121" android:ellipsize="end"/>
+                android:textSize="14sp" android:textColor="#212121" android:ellipsize="end"/>
             <ImageView android:id="@+id/daily_compact_refresh" android:layout_width="24dp" android:layout_height="match_parent"
                 android:scaleType="fitCenter" android:src="@drawable/ic_widget_refresh" android:contentDescription="更新"/>
         </LinearLayout>
-        <LinearLayout android:layout_width="match_parent" android:layout_height="40dp"
+        <LinearLayout android:id="@+id/daily_navigation" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="48dp"
             android:gravity="center_vertical" android:baselineAligned="false">
             <TextView android:id="@+id/calendar_today" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent"
-                android:gravity="center" android:includeFontPadding="false" android:text="今日" android:textSize="11sp" android:textColor="#212121"/>
+                android:gravity="center" android:includeFontPadding="false" android:text="今日" android:textSize="14sp" android:textColor="#212121"/>
             <ImageView android:id="@+id/calendar_previous" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent"
                 android:scaleType="fitCenter" android:src="@drawable/calendar_widget_previous" android:contentDescription="前日"/>
             <TextView android:id="@+id/calendar_selected_date" android:text="11月8日(日)" android:layout_width="0dp" android:layout_weight="4"
                 android:layout_height="match_parent" android:gravity="center" android:includeFontPadding="false"
-                android:textSize="16sp" android:textColor="#212121" android:maxLines="1" android:ellipsize="end"/>
+                android:textSize="18sp" android:textColor="#212121" android:maxLines="1" android:ellipsize="end"/>
             <ImageView android:id="@+id/calendar_next" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent"
                 android:scaleType="fitCenter" android:src="@drawable/calendar_widget_next" android:contentDescription="翌日"/>
             <ImageView android:id="@+id/calendar_add" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent"

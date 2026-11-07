@@ -71,8 +71,8 @@ internal object DailyCalendarWidgetRenderer {
         val options = manager.getAppWidgetOptions(widgetId)
         val portrait = copyViews(views)
         val landscape = copyViews(views)
-        resize(portrait, options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 110))
-        resize(landscape, options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH, 110))
+        resize(context, portrait, options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 110))
+        resize(context, landscape, options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH, 110))
         manager.updateAppWidget(widgetId, RemoteViews(landscape, portrait))
         if (Build.VERSION.SDK_INT < 31) {
             manager.notifyAppWidgetViewDataChanged(widgetId, R.id.calendar_events)
@@ -83,8 +83,13 @@ internal object DailyCalendarWidgetRenderer {
     private fun copyViews(views: RemoteViews): RemoteViews =
         if (Build.VERSION.SDK_INT >= 28) RemoteViews(views) else views.clone()
 
-    private fun resize(views: RemoteViews, width: Int) {
+    private fun resize(context: Context, views: RemoteViews, width: Int) {
         val compact = width < 220
+        val headerHeight = if (compact) 40 else 48
+        views.setInt(
+            R.id.daily_navigation, "setMinimumHeight",
+            (headerHeight * context.resources.displayMetrics.density).toInt(),
+        )
         views.setViewVisibility(R.id.daily_compact_header, if (compact) View.VISIBLE else View.GONE)
         views.setViewVisibility(R.id.calendar_selected_date, if (compact) View.GONE else View.VISIBLE)
         views.setViewVisibility(R.id.daily_footer, if (compact) View.GONE else View.VISIBLE)
