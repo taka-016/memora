@@ -85,6 +85,10 @@ internal object DailyCalendarWidgetRenderer {
 
     private fun resize(context: Context, views: RemoteViews, width: Int) {
         val compact = width < 220
+        views.setTextViewTextSize(
+            R.id.calendar_today, android.util.TypedValue.COMPLEX_UNIT_SP,
+            if (compact) 12f else 14f,
+        )
         val headerHeight = if (compact) 40 else 48
         views.setInt(
             R.id.daily_navigation, "setMinimumHeight",
