@@ -115,8 +115,8 @@ internal object CalendarWidgetData {
         return DeviceCalendarWidgetSource.read(context, cache, shared)
     }
 
-    fun loadState(context: Context, date: LocalDate): CalendarWidgetLoadState =
-        CalendarWidgetLoadState.fromValue(HomeWidgetPlugin.getData(context).getString(
+    fun loadState(context: Context, date: LocalDate): WidgetLoadState =
+        WidgetLoadState.fromValue(HomeWidgetPlugin.getData(context).getString(
             calendarWidgetLoadStateKey(targetGroup(context), date), null,
         ))
 

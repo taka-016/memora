@@ -83,8 +83,8 @@ internal object ItineraryWidgetData {
             ?: cache.selectedId ?: cache.dates.firstOrNull()?.id
     }
 
-    fun loadState(context: Context, selectedId: String?): CalendarWidgetLoadState =
-        CalendarWidgetLoadState.fromValue(HomeWidgetPlugin.getData(context).getString(
+    fun loadState(context: Context, selectedId: String?): WidgetLoadState =
+        WidgetLoadState.fromValue(HomeWidgetPlugin.getData(context).getString(
             itineraryWidgetLoadStateKey(targetGroup(context), selectedId), null,
         ))
 

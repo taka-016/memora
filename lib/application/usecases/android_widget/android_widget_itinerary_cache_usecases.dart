@@ -59,14 +59,20 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
     Future<void> refresh() => _execute(
       groupId: groupId,
       selectedItineraryDateId: selectedItineraryDateId,
-      updateWidgetAfterRefresh: trackLoading == null && updateWidgetAfterRefresh,
+      updateWidgetAfterRefresh:
+          trackLoading == null && updateWidgetAfterRefresh,
       extendCache: extendCache,
     );
     final tracker = trackLoading;
     if (tracker == null) {
       await refresh();
     } else {
-      await tracker(groupId, selectedItineraryDateId, refresh, updateWidgetAfterRefresh);
+      await tracker(
+        groupId,
+        selectedItineraryDateId,
+        refresh,
+        updateWidgetAfterRefresh,
+      );
     }
   }
 

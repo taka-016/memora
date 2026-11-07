@@ -16,7 +16,7 @@ internal object ItineraryWidgetRenderer {
         val selected = cache?.let { ItineraryWidgetData.selectedId(context, it) }
         val date = cache?.dates?.firstOrNull { it.id == selected }
         val loadState = ItineraryWidgetData.loadState(context, selected)
-        val loadingMessage = if (loadState == CalendarWidgetLoadState.IDLE) {
+        val loadingMessage = if (loadState == WidgetLoadState.IDLE) {
             "タップして旅程を読み込む"
         } else loadState.message
         val appearance = WidgetAppearance.forWidget(manager, widgetId)
@@ -30,7 +30,7 @@ internal object ItineraryWidgetRenderer {
             views.setViewVisibility(R.id.itinerary_message, View.VISIBLE)
             views.setTextViewText(R.id.itinerary_message, when {
                 targetGroup.isEmpty() -> "表示対象グループが未設定です"
-                cache == null || loadState != CalendarWidgetLoadState.IDLE -> loadingMessage
+                cache == null || loadState != WidgetLoadState.IDLE -> loadingMessage
                 else -> "表示できる旅程がありません"
             })
             views.setOnClickPendingIntent(R.id.itinerary_message, if (targetGroup.isEmpty()) {

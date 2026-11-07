@@ -22,7 +22,7 @@ internal object CalendarWidgetRenderer {
         val groupId: String,
         val month: CalendarWidgetMonth,
         val loaded: Boolean,
-        val loadState: CalendarWidgetLoadState,
+        val loadState: WidgetLoadState,
         val sizes: Sizes,
         val today: LocalDate,
         val selected: LocalDate,

@@ -27,7 +27,9 @@ class HomeWidgetCalendarCacheStorage {
     Future<void> Function() action,
   ) async {
     await const HomeWidgetLoadStateStorage().track(
-      loadStateKey(groupId, month), action, update: update,
+      loadStateKey(groupId, month),
+      action,
+      update: update,
     );
   }
 
