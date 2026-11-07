@@ -1,9 +1,13 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
 
 import 'package:memora/infrastructure/services/home_widget_calendar_cache_storage.dart';
 
 import 'package:flutter/services.dart';
+
+import '../../../helpers/test_exception.dart';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/android_widget/android_widget_itinerary_cache_dto.dart';
 import 'package:memora/application/models/app_mode.dart';
@@ -43,6 +47,77 @@ void main() {
         .setMockMethodCallHandler(channel, null);
     PathProviderPlatform.instance = previousPathProvider;
     await directory.delete(recursive: true);
+  });
+
+  test('カレンダー取得中は月ごとに状態を公開し成功後に解除する', () async {
+    const storage = HomeWidgetCalendarCacheStorage();
+    final result = Completer<void>();
+    final started = Completer<void>();
+    final key = HomeWidgetCalendarCacheStorage.loadStateKey(
+      'group',
+      DateTime(2026, 11, 8),
+    );
+    final refresh = storage.refresh('group', DateTime(2026, 11, 8), () async {
+      started.complete();
+      await result.future;
+    });
+    await started.future;
+    expect(values[key], startsWith('loading:'));
+    expect(
+      values[HomeWidgetCalendarCacheStorage.loadStateKey(
+        'group',
+        DateTime(2026, 12),
+      )],
+      isNull,
+    );
+    result.complete();
+    await refresh;
+    expect(values[key], isNull);
+  });
+
+  test('カレンダー取得失敗を公開し再試行で読み込み中へ戻す', () async {
+    const storage = HomeWidgetCalendarCacheStorage();
+    final date = DateTime(2026, 11);
+    final key = HomeWidgetCalendarCacheStorage.loadStateKey('group', date);
+    await expectLater(
+      storage.refresh('group', date, () async {
+        throw TestException('取得失敗');
+      }),
+      throwsA(isA<TestException>()),
+    );
+    expect(values[key], 'failed');
+    await storage.refresh('group', date, () async {
+      expect(values[key], startsWith('loading:'));
+    });
+    expect(values[key], isNull);
+  });
+
+  test('先行した取得の失敗で新しい取得の状態を上書きしない', () async {
+    const storage = HomeWidgetCalendarCacheStorage();
+    final date = DateTime(2026, 11);
+    final first = Completer<void>();
+    final second = Completer<void>();
+    final firstStarted = Completer<void>();
+    final secondStarted = Completer<void>();
+    final oldRefresh = storage.refresh('group', date, () async {
+      firstStarted.complete();
+      await first.future;
+      throw TestException('先行取得の失敗');
+    });
+    final oldFailure = expectLater(oldRefresh, throwsA(isA<TestException>()));
+    await firstStarted.future;
+    final newRefresh = storage.refresh('group', date, () async {
+      secondStarted.complete();
+      await second.future;
+    });
+    await secondStarted.future;
+    first.complete();
+    await oldFailure;
+    final key = HomeWidgetCalendarCacheStorage.loadStateKey('group', date);
+    expect(values[key], startsWith('loading:'));
+    second.complete();
+    await newRefresh;
+    expect(values[key], isNull);
   });
 
   test('カレンダーの月と全予定をファイルで公開し対象解除時に削除する', () async {
