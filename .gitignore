@@ -67,3 +67,4 @@ tools/migrations/*.json
 node_modules/
 /timetree-import.local.json
 /timetree-import.report.json
+*.ics
