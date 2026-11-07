@@ -726,7 +726,7 @@ class GroupEditModal extends HookConsumerWidget {
                     groupState.value.color,
                     (color, textColor) => groupState.value = groupState.value
                         .copyWith(color: color, textColor: textColor),
-                    previewName: 'グループの予定',
+                    previewName: '${nameController.text}の予定',
                     textColor: groupState.value.textColor,
                   ),
                 ],
