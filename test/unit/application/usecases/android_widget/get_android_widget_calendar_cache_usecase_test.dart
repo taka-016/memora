@@ -108,10 +108,12 @@ void main() {
     expect(cache['sourceMode'], 'offline');
     expect(cache['groupId'], 'group');
     final days = cache['days'] as List;
-    expect(days, hasLength(35));
-    expect(days.first['date'], '2026-11-01');
-    expect(days.last['date'], '2026-12-05');
-    final items = days.first['events'] as List;
+    expect(days[8]['holidayName'], '文化の日');
+    expect(days[13]['rokuyo'], '先勝');
+    expect(days, hasLength(42));
+    expect(days.first['date'], '2026-10-26');
+    expect(days.last['date'], '2026-12-06');
+    final items = days[6]['events'] as List;
     expect(items.map((e) => e['title']), ['予定0', '予定1', '予定2', '予定3']);
     expect(items.first['color'], '#4CAF50');
     expect(items.first['timeLabel'], '終日');
@@ -130,7 +132,7 @@ void main() {
     ]);
     verify(events.getCalendarEventsByGroupId('group')).called(1);
     verify(labels.getCalendarLabelsByGroupId('group')).called(1);
-    expect(days[30]['events'].single['title'], '月またぎ');
+    expect(days[36]['events'].single['title'], '月またぎ');
   });
 
   test('繰り返しを展開し、午前0時終了の予定を翌日に表示しない', () async {
@@ -152,11 +154,11 @@ void main() {
     );
     final days =
         (await usecase.execute('group', DateTime(2026, 11)))!['days'] as List;
-    expect((days[1]['events'] as List).map((e) => e['title']), ['毎週', '夜の予定']);
-    expect(days[2]['events'], isEmpty);
-    expect(days[8]['events'].single['title'], '毎週');
-    final firstOccurrence = days[1]['events'][0];
-    final secondOccurrence = days[8]['events'].single;
+    expect((days[7]['events'] as List).map((e) => e['title']), ['毎週', '夜の予定']);
+    expect(days[8]['events'], isEmpty);
+    expect(days[14]['events'].single['title'], '毎週');
+    final firstOccurrence = days[7]['events'][0];
+    final secondOccurrence = days[14]['events'].single;
     expect(firstOccurrence['id'], secondOccurrence['id']);
     expect(
       DateTime.parse(firstOccurrence['occurrence'] as String),
@@ -166,7 +168,7 @@ void main() {
       DateTime.parse(secondOccurrence['occurrence'] as String),
       DateTime.utc(2026, 11, 9),
     );
-    expect(days[1]['events'][1]['isAllDay'], isFalse);
+    expect(days[7]['events'][1]['isAllDay'], isFalse);
   });
 
   test('オンラインではグループ所有者ではなく現在の利用者を端末カレンダーの表示元にする', () async {
