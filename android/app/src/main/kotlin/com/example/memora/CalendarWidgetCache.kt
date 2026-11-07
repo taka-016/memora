@@ -174,7 +174,7 @@ internal val CalendarWidgetDay.displayEvents: List<CalendarWidgetEvent> get() = 
         add(CalendarWidgetEvent(
             id = "holiday:$date", occurrence = null, title = name,
             isAllDay = true, color = 0xFFD32F2F.toInt(), textColor = 0xFFFFFFFF.toInt(),
-            timeLabel = "祝日", isHoliday = true,
+            timeLabel = "", isHoliday = true,
         ))
     }
     addAll(events.sortedWith(calendarWidgetEventOrder))

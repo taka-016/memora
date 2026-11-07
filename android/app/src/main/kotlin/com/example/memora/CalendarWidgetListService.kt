@@ -72,6 +72,7 @@ internal fun calendarEventRow(
 } else {
     appearance.calendarEventLayout
 }).apply {
+    setViewVisibility(R.id.calendar_event_time_column, if (event.isHoliday) View.GONE else View.VISIBLE)
     val times = event.timeLabel.split('–', limit = 2)
     val hasEnd = !event.isAllDay && times.size == 2
     setTextViewText(R.id.calendar_event_start, times[0])
