@@ -13,6 +13,8 @@ class CalendarEventOverride extends Equatable {
     this.url = '',
     this.memo = '',
     this.locationName = '',
+    this.latitude,
+    this.longitude,
     this.isAllDay,
     this.labelId,
     this.labelType = 'custom',
@@ -41,6 +43,8 @@ class CalendarEventOverride extends Equatable {
   final String url;
   final String memo;
   final String locationName;
+  final double? latitude;
+  final double? longitude;
   final String? title;
   final DateTime? startDateTime;
   final DateTime? endDateTime;
@@ -56,6 +60,8 @@ class CalendarEventOverride extends Equatable {
     url,
     memo,
     locationName,
+    latitude,
+    longitude,
     title,
     startDateTime,
     endDateTime,

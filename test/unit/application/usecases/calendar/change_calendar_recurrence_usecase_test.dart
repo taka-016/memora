@@ -47,7 +47,7 @@ void main() {
   test('個別回の参照先が衝突する系列変更は全体を保存前に拒否する', () async {
     final original = source.copyWith(
       startDateTime: DateTime.utc(2026, 1, 31),
-      endDateTime: DateTime.utc(2026, 1, 31),
+      endDateTime: DateTime.utc(2026, 1, 31).add(const Duration(days: 1)),
       recurrenceRule: 'FREQ=MONTHLY;BYMONTHDAY=31;COUNT=4',
       overrides: [
         for (final date in [
@@ -61,7 +61,7 @@ void main() {
             labelId: 'label',
             isAllDay: true,
             startDateTime: date,
-            endDateTime: date,
+            endDateTime: date.add(const Duration(days: 1)),
           ),
       ],
     );
@@ -72,7 +72,7 @@ void main() {
         CalendarChangeScope.all,
         changes: original.copyWith(
           startDateTime: DateTime.utc(2026, 1, 30),
-          endDateTime: DateTime.utc(2026, 1, 30),
+          endDateTime: DateTime.utc(2026, 1, 30).add(const Duration(days: 1)),
           recurrenceRule: 'FREQ=MONTHLY;BYMONTHDAY=30;COUNT=4',
         ),
       ),
@@ -85,7 +85,7 @@ void main() {
       final february = DateTime.utc(2026, 2, 28);
       final original = source.copyWith(
         startDateTime: DateTime.utc(2026, 1, 31),
-        endDateTime: DateTime.utc(2026, 1, 31),
+        endDateTime: DateTime.utc(2026, 1, 31).add(const Duration(days: 1)),
         recurrenceRule: 'FREQ=MONTHLY;BYMONTHDAY=31;COUNT=3',
         overrides: [
           CalendarEventOverride(
@@ -95,7 +95,9 @@ void main() {
             labelId: cancelled ? null : 'label',
             isAllDay: cancelled ? null : true,
             startDateTime: cancelled ? null : february,
-            endDateTime: cancelled ? null : february,
+            endDateTime: cancelled
+                ? null
+                : february.add(const Duration(days: 1)),
           ),
         ],
       );
@@ -105,7 +107,7 @@ void main() {
         CalendarChangeScope.all,
         changes: original.copyWith(
           startDateTime: DateTime.utc(2026, 1, 30),
-          endDateTime: DateTime.utc(2026, 1, 30),
+          endDateTime: DateTime.utc(2026, 1, 30).add(const Duration(days: 1)),
           recurrenceRule: 'FREQ=MONTHLY;BYMONTHDAY=30;COUNT=3',
         ),
       );
@@ -128,7 +130,7 @@ void main() {
     test('月末補正回からの分割でも元の31日基準と残り回数を維持する（$explicit）', () async {
       final original = source.copyWith(
         startDateTime: DateTime.utc(2026, 1, 31),
-        endDateTime: DateTime.utc(2026, 1, 31),
+        endDateTime: DateTime.utc(2026, 1, 31).add(const Duration(days: 1)),
         recurrenceRule:
             'FREQ=MONTHLY;${explicit ? 'BYMONTHDAY=31;' : ''}COUNT=4',
         overrides: [],
@@ -141,7 +143,7 @@ void main() {
         changes: original.copyWith(
           title: '変更',
           startDateTime: day,
-          endDateTime: day,
+          endDateTime: day.add(const Duration(days: 1)),
         ),
       );
       final saved = verify(
@@ -165,7 +167,7 @@ void main() {
   test('曜日を自動追従した回を分割しても元の回数を超えない', () async {
     final original = source.copyWith(
       startDateTime: DateTime.utc(2026, 10, 1),
-      endDateTime: DateTime.utc(2026, 10, 1),
+      endDateTime: DateTime.utc(2026, 10, 1).add(const Duration(days: 1)),
       recurrenceRule: 'FREQ=WEEKLY;BYDAY=TH;COUNT=5',
       overrides: [],
     );
@@ -175,7 +177,7 @@ void main() {
       CalendarChangeScope.following,
       changes: original.copyWith(
         startDateTime: DateTime.utc(2026, 10, 16),
-        endDateTime: DateTime.utc(2026, 10, 16),
+        endDateTime: DateTime.utc(2026, 10, 16).add(const Duration(days: 1)),
         recurrenceRule: 'FREQ=WEEKLY;BYDAY=FR;COUNT=5',
       ),
     );

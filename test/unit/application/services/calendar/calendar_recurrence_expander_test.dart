@@ -28,7 +28,9 @@ void main() {
     labelId: 'label',
     title: '予定',
     startDateTime: start,
-    endDateTime: start.add(duration),
+    endDateTime: start.add(
+      allDay && duration == Duration.zero ? const Duration(days: 1) : duration,
+    ),
     isAllDay: allDay,
     recurrenceRule: rule,
     timeZone: allDay ? null : zone,
@@ -210,7 +212,7 @@ void main() {
       [15, 15],
     );
   });
-  test('終了日を含み複数日の重なりと無期限の表示期間だけを返す', () {
+  test('終了境界を含めず複数日の重なりと無期限の表示期間だけを返す', () {
     final value = event(
       'FREQ=DAILY;INTERVAL=2;UNTIL=20260105',
       DateTime.utc(2026, 1, 1),
@@ -222,7 +224,7 @@ void main() {
         DateTime.utc(2026, 1, 3),
         DateTime.utc(2026, 1, 8),
       ).map((v) => v.startDateTime.day),
-      [1, 3, 5],
+      [3, 5],
     );
     expect(
       expand(

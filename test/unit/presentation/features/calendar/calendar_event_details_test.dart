@@ -68,6 +68,7 @@ void main() {
     await tester.tap(find.text('保存'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
+    expect(harness.savedEvents.single.endDateTime, DateTime.utc(2026, 10, 3));
     expect(harness.savedEvents.single.memo, '一行目\n二行目');
     expect(harness.savedEvents.single.locationName, '集合場所');
     await openEvent(tester);
@@ -90,7 +91,7 @@ void main() {
     expect(harness.savedEvents.single.locationName, '');
   });
 
-  testWidgets('場所の候補は名称だけを編集中の入力に反映しキャンセルで破棄する', (tester) async {
+  testWidgets('場所の候補の名称と座標を保存し再編集で維持し手入力で解除する', (tester) async {
     tester.view.physicalSize = const Size(1000, 1800);
     addTearDown(tester.view.resetPhysicalSize);
     final search = MockSearchLocationsUsecase();
@@ -139,6 +140,19 @@ void main() {
     await tester.ensureVisible(find.text('東京タワー'));
     await tester.tap(find.text('東京タワー'));
     await tester.pump();
+    await tester.ensureVisible(find.text('保存'));
+    await tester.tap(find.text('保存'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(harness.savedEvents.single.latitude, 35.0);
+    expect(harness.savedEvents.single.longitude, 139.0);
+    await openEvent(tester);
+    await tester.ensureVisible(find.text('保存'));
+    await tester.tap(find.text('保存'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(harness.savedEvents.single.latitude, 35.0);
+    await openEvent(tester);
     await tester.ensureVisible(field('場所名'));
     await tester.enterText(field('場所名'), '東京タワー入口');
     await tester.pump();
@@ -147,6 +161,8 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     expect(harness.savedEvents.single.locationName, '東京タワー入口');
+    expect(harness.savedEvents.single.latitude, isNull);
+    expect(harness.savedEvents.single.longitude, isNull);
   });
 
   for (final throwsError in [false, true]) {

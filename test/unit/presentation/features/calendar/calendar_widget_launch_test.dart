@@ -240,7 +240,7 @@ void main() {
         await tester.tap(find.text('保存'));
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 300));
-        expect(saved.single.startDateTime, DateTime(2026, 11, 2));
+        expect(saved.single.startDateTime, DateTime.utc(2026, 11, 2));
         expect(saved.single.labelType, 'group');
         expect(find.byType(CalendarEventDialog), findsNothing);
         request.value++;

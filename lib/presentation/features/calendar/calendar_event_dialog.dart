@@ -21,7 +21,12 @@ String calendarTimeText(DateTime value) =>
     '${value.hour.toString().padLeft(2, '0')}:${value.minute.toString().padLeft(2, '0')}';
 String calendarPeriodText(CalendarEventDto event) {
   if (event.isAllDay) {
-    return '${calendarDateText(event.startDateTime)} 〜 ${calendarDateText(event.endDateTime)}（終日）';
+    final lastDay = DateTime.utc(
+      event.endDateTime.year,
+      event.endDateTime.month,
+      event.endDateTime.day - 1,
+    );
+    return '${calendarDateText(event.startDateTime)} 〜 ${calendarDateText(lastDay)}（終日）';
   }
   final start = event.startDateTime.toLocal();
   final end = event.endDateTime.toLocal();
@@ -50,6 +55,8 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
   late final TextEditingController _url;
   late final TextEditingController _memo;
   late final TextEditingController _locationName;
+  double? _latitude;
+  double? _longitude;
   late DateTime _start;
   late DateTime _end;
   late bool _allDay;
@@ -69,6 +76,8 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
     _url.text,
     _memo.text,
     _locationName.text,
+    _latitude,
+    _longitude,
     _start,
     _end,
     _allDay,
@@ -107,6 +116,8 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
     _url = TextEditingController(text: event?.url ?? '');
     _memo = TextEditingController(text: event?.memo ?? '');
     _locationName = TextEditingController(text: event?.locationName ?? '');
+    _latitude = event?.latitude;
+    _longitude = event?.longitude;
     _allDay = event?.isAllDay ?? true;
     _start = event == null
         ? widget.date
@@ -123,7 +134,7 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
         ? DateTime(
             event.endDateTime.year,
             event.endDateTime.month,
-            event.endDateTime.day,
+            event.endDateTime.day - 1,
           )
         : event.endDateTime.toLocal();
     _seriesAllDay = event == null
@@ -301,16 +312,16 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
             );
       final inputZone = rule != null ? _zone : widget.event?.timeZone;
       final start = _allDay
-          ? DateTime(_start.year, _start.month, _start.day)
+          ? DateTime.utc(_start.year, _start.month, _start.day)
           : inputZone != null
           ? expander.resolveTime(_start, inputZone)
           : _start;
       final end = _allDay
-          ? DateTime(_end.year, _end.month, _end.day)
+          ? DateTime.utc(_end.year, _end.month, _end.day + 1)
           : inputZone != null
           ? expander.resolveTime(_end, inputZone)
           : _end;
-      if (end.isBefore(start)) {
+      if (_allDay ? !end.isAfter(start) : end.isBefore(start)) {
         setState(() => _error = '終了日時は開始日時以降にしてください');
         return;
       }
@@ -332,6 +343,8 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
         url: _url.text.trim(),
         memo: _memo.text,
         locationName: _locationName.text.trim(),
+        latitude: _latitude,
+        longitude: _longitude,
         startDateTime: start,
         endDateTime: end,
         isAllDay: _allDay,
@@ -823,7 +836,14 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                             CalendarLocationField(
                               controller: _locationName,
                               enabled: !state.isSaving,
-                              onChanged: (_) => setState(() {}),
+                              onChanged: (_) => setState(() {
+                                _latitude = null;
+                                _longitude = null;
+                              }),
+                              onSelected: (candidate) => setState(() {
+                                _latitude = candidate.coordinate.latitude;
+                                _longitude = candidate.coordinate.longitude;
+                              }),
                             ),
                             if (_error.isNotEmpty)
                               Text(

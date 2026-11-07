@@ -1,0 +1,39 @@
+{
+  "groupName": "",
+  "inputIcs": "timetree.ics",
+  "reportPath": "timetree-import.report.json",
+  "accessTokenEnvironmentVariable": "GOOGLE_OAUTH_ACCESS_TOKEN",
+  "allDayExceptionTimeZone": "Asia/Tokyo",
+  "mappings": [
+    {
+      "category": "〇〇の予定",
+      "color": "#3dc2c8",
+      "memberName": ""
+    },
+    {
+      "category": "〇〇の予定",
+      "color": "#47b2f7",
+      "memberName": ""
+    },
+    {
+      "category": "〇〇の予定",
+      "color": "#f35f8c",
+      "memberName": ""
+    },
+    {
+      "category": "〇〇の予定",
+      "color": "#fdd835",
+      "memberName": ""
+    },
+    {
+      "category": "家族の予定",
+      "color": "#2ecc87",
+      "groupLabel": true
+    },
+    {
+      "category": null,
+      "color": "#212121",
+      "memberName": ""
+    }
+  ]
+}

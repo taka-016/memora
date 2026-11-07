@@ -65,3 +65,7 @@ test/.test_optimizer.dart
 coverage/
 tools/migrations/*.json
 node_modules/
+/timetree-import.local.json
+/timetree-import.report.json
+*.ics
+/timetree-notifications.report.json

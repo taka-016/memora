@@ -472,11 +472,11 @@ void main() {
       isEmpty,
     );
   });
-  test('終日は日付で扱い終了日を含めて複数日を表示する', () async {
+  test('終日は日付で扱い終了境界の前日まで複数日を表示する', () async {
     final allDay = event.copyWith(
       isAllDay: true,
       startDateTime: DateTime.utc(2026, 9, 30),
-      endDateTime: DateTime.utc(2026, 10, 2),
+      endDateTime: DateTime.utc(2026, 10, 3),
     );
     when(events.execute('g1')).thenAnswer((_) async => [allDay]);
     await container.read(provider.notifier).load();

@@ -56,7 +56,7 @@ class CalendarState {
           event.endDateTime.month,
           event.endDateTime.day,
         );
-        return !start.isBefore(first) && !start.isAfter(last);
+        return !start.isBefore(first) && start.isBefore(last);
       }
       final first = event.startDateTime.toLocal();
       final last = event.endDateTime.toLocal();

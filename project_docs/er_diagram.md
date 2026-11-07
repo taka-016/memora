@@ -151,9 +151,11 @@ erDiagram
         string title "NOT NULL"
         string url "未設定は空文字"
         string memo "改行を保持、未設定は空文字"
-        string locationName "名称のみ、未設定は空文字"
+        string locationName "未設定は空文字"
+        number latitude "未設定はnull"
+        number longitude "未設定はnull"
         timestamp startDateTime "NOT NULL"
-        timestamp endDateTime "NOT NULL"
+        timestamp endDateTime "NOT NULL、終日はその日を含まない終了境界"
         boolean isAllDay "NOT NULL"
         int[] notificationMinutesBefore "開始何分前か、0は開始時"
         string recurrenceRule
@@ -167,9 +169,11 @@ erDiagram
         string title
         string url "空文字で解除"
         string memo "改行を保持、空文字で解除"
-        string locationName "名称のみ、空文字で解除"
+        string locationName "空文字で解除"
+        number latitude "未設定はnull"
+        number longitude "未設定はnull"
         timestamp startDateTime
-        timestamp endDateTime
+        timestamp endDateTime "終日はその日を含まない終了境界"
         boolean isAllDay
         int[] notificationMinutesBefore "個別回の通知、空配列で解除"
         string labelType "変更回はgroup/member/custom"

@@ -419,7 +419,7 @@ void main() {
       labelType: 'group',
       title: '家族旅行',
       startDateTime: DateTime.utc(2026, 10, 1),
-      endDateTime: DateTime.utc(2026, 10, 1),
+      endDateTime: DateTime.utc(2026, 10, 2),
       isAllDay: true,
       recurrenceRule: 'FREQ=DAILY;COUNT=4',
     );

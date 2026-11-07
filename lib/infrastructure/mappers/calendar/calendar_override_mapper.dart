@@ -21,6 +21,8 @@ class CalendarOverrideMapper {
     'url': value.url,
     'memo': value.memo,
     'location_name': value.locationName,
+    'latitude': value.latitude,
+    'longitude': value.longitude,
     'title': value.title,
     'notification_minutes_before': jsonEncode(value.notificationMinutesBefore),
     'start_date_time': value.startDateTime == null
@@ -49,6 +51,8 @@ class CalendarOverrideMapper {
     url: row['url'] as String? ?? '',
     memo: row['memo'] as String? ?? '',
     locationName: row['location_name'] as String? ?? '',
+    latitude: (row['latitude'] as num?)?.toDouble(),
+    longitude: (row['longitude'] as num?)?.toDouble(),
     title: row['title'] as String?,
     startDateTime: row['start_date_time'] == null
         ? null

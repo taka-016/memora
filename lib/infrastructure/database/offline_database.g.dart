@@ -5765,6 +5765,28 @@ class CalendarEvents extends Table
     $customConstraints: 'NOT NULL DEFAULT \'\'',
     defaultValue: const CustomExpression('\'\''),
   );
+  static const VerificationMeta _latitudeMeta = const VerificationMeta(
+    'latitude',
+  );
+  late final GeneratedColumn<double> latitude = GeneratedColumn<double>(
+    'latitude',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  static const VerificationMeta _longitudeMeta = const VerificationMeta(
+    'longitude',
+  );
+  late final GeneratedColumn<double> longitude = GeneratedColumn<double>(
+    'longitude',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
   static const VerificationMeta _startDateTimeMeta = const VerificationMeta(
     'startDateTime',
   );
@@ -5832,6 +5854,8 @@ class CalendarEvents extends Table
     url,
     memo,
     locationName,
+    latitude,
+    longitude,
     startDateTime,
     endDateTime,
     isAllDay,
@@ -5919,6 +5943,18 @@ class CalendarEvents extends Table
           data['location_name']!,
           _locationNameMeta,
         ),
+      );
+    }
+    if (data.containsKey('latitude')) {
+      context.handle(
+        _latitudeMeta,
+        latitude.isAcceptableOrUnknown(data['latitude']!, _latitudeMeta),
+      );
+    }
+    if (data.containsKey('longitude')) {
+      context.handle(
+        _longitudeMeta,
+        longitude.isAcceptableOrUnknown(data['longitude']!, _longitudeMeta),
       );
     }
     if (data.containsKey('start_date_time')) {
@@ -6019,6 +6055,14 @@ class CalendarEvents extends Table
         DriftSqlType.string,
         data['${effectivePrefix}location_name'],
       )!,
+      latitude: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}latitude'],
+      ),
+      longitude: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}longitude'],
+      ),
       startDateTime: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}start_date_time'],
@@ -6071,6 +6115,8 @@ class SqliteCalendarEventRow extends DataClass
   final String url;
   final String memo;
   final String locationName;
+  final double? latitude;
+  final double? longitude;
   final int startDateTime;
   final int endDateTime;
   final int isAllDay;
@@ -6087,6 +6133,8 @@ class SqliteCalendarEventRow extends DataClass
     required this.url,
     required this.memo,
     required this.locationName,
+    this.latitude,
+    this.longitude,
     required this.startDateTime,
     required this.endDateTime,
     required this.isAllDay,
@@ -6112,6 +6160,12 @@ class SqliteCalendarEventRow extends DataClass
     map['url'] = Variable<String>(url);
     map['memo'] = Variable<String>(memo);
     map['location_name'] = Variable<String>(locationName);
+    if (!nullToAbsent || latitude != null) {
+      map['latitude'] = Variable<double>(latitude);
+    }
+    if (!nullToAbsent || longitude != null) {
+      map['longitude'] = Variable<double>(longitude);
+    }
     map['start_date_time'] = Variable<int>(startDateTime);
     map['end_date_time'] = Variable<int>(endDateTime);
     map['is_all_day'] = Variable<int>(isAllDay);
@@ -6140,6 +6194,12 @@ class SqliteCalendarEventRow extends DataClass
       url: Value(url),
       memo: Value(memo),
       locationName: Value(locationName),
+      latitude: latitude == null && nullToAbsent
+          ? const Value.absent()
+          : Value(latitude),
+      longitude: longitude == null && nullToAbsent
+          ? const Value.absent()
+          : Value(longitude),
       startDateTime: Value(startDateTime),
       endDateTime: Value(endDateTime),
       isAllDay: Value(isAllDay),
@@ -6170,6 +6230,8 @@ class SqliteCalendarEventRow extends DataClass
       url: serializer.fromJson<String>(json['url']),
       memo: serializer.fromJson<String>(json['memo']),
       locationName: serializer.fromJson<String>(json['location_name']),
+      latitude: serializer.fromJson<double?>(json['latitude']),
+      longitude: serializer.fromJson<double?>(json['longitude']),
       startDateTime: serializer.fromJson<int>(json['start_date_time']),
       endDateTime: serializer.fromJson<int>(json['end_date_time']),
       isAllDay: serializer.fromJson<int>(json['is_all_day']),
@@ -6193,6 +6255,8 @@ class SqliteCalendarEventRow extends DataClass
       'url': serializer.toJson<String>(url),
       'memo': serializer.toJson<String>(memo),
       'location_name': serializer.toJson<String>(locationName),
+      'latitude': serializer.toJson<double?>(latitude),
+      'longitude': serializer.toJson<double?>(longitude),
       'start_date_time': serializer.toJson<int>(startDateTime),
       'end_date_time': serializer.toJson<int>(endDateTime),
       'is_all_day': serializer.toJson<int>(isAllDay),
@@ -6212,6 +6276,8 @@ class SqliteCalendarEventRow extends DataClass
     String? url,
     String? memo,
     String? locationName,
+    Value<double?> latitude = const Value.absent(),
+    Value<double?> longitude = const Value.absent(),
     int? startDateTime,
     int? endDateTime,
     int? isAllDay,
@@ -6229,6 +6295,8 @@ class SqliteCalendarEventRow extends DataClass
     url: url ?? this.url,
     memo: memo ?? this.memo,
     locationName: locationName ?? this.locationName,
+    latitude: latitude.present ? latitude.value : this.latitude,
+    longitude: longitude.present ? longitude.value : this.longitude,
     startDateTime: startDateTime ?? this.startDateTime,
     endDateTime: endDateTime ?? this.endDateTime,
     isAllDay: isAllDay ?? this.isAllDay,
@@ -6253,6 +6321,8 @@ class SqliteCalendarEventRow extends DataClass
       locationName: data.locationName.present
           ? data.locationName.value
           : this.locationName,
+      latitude: data.latitude.present ? data.latitude.value : this.latitude,
+      longitude: data.longitude.present ? data.longitude.value : this.longitude,
       startDateTime: data.startDateTime.present
           ? data.startDateTime.value
           : this.startDateTime,
@@ -6280,6 +6350,8 @@ class SqliteCalendarEventRow extends DataClass
           ..write('url: $url, ')
           ..write('memo: $memo, ')
           ..write('locationName: $locationName, ')
+          ..write('latitude: $latitude, ')
+          ..write('longitude: $longitude, ')
           ..write('startDateTime: $startDateTime, ')
           ..write('endDateTime: $endDateTime, ')
           ..write('isAllDay: $isAllDay, ')
@@ -6301,6 +6373,8 @@ class SqliteCalendarEventRow extends DataClass
     url,
     memo,
     locationName,
+    latitude,
+    longitude,
     startDateTime,
     endDateTime,
     isAllDay,
@@ -6321,6 +6395,8 @@ class SqliteCalendarEventRow extends DataClass
           other.url == this.url &&
           other.memo == this.memo &&
           other.locationName == this.locationName &&
+          other.latitude == this.latitude &&
+          other.longitude == this.longitude &&
           other.startDateTime == this.startDateTime &&
           other.endDateTime == this.endDateTime &&
           other.isAllDay == this.isAllDay &&
@@ -6339,6 +6415,8 @@ class CalendarEventsCompanion extends UpdateCompanion<SqliteCalendarEventRow> {
   final Value<String> url;
   final Value<String> memo;
   final Value<String> locationName;
+  final Value<double?> latitude;
+  final Value<double?> longitude;
   final Value<int> startDateTime;
   final Value<int> endDateTime;
   final Value<int> isAllDay;
@@ -6356,6 +6434,8 @@ class CalendarEventsCompanion extends UpdateCompanion<SqliteCalendarEventRow> {
     this.url = const Value.absent(),
     this.memo = const Value.absent(),
     this.locationName = const Value.absent(),
+    this.latitude = const Value.absent(),
+    this.longitude = const Value.absent(),
     this.startDateTime = const Value.absent(),
     this.endDateTime = const Value.absent(),
     this.isAllDay = const Value.absent(),
@@ -6374,6 +6454,8 @@ class CalendarEventsCompanion extends UpdateCompanion<SqliteCalendarEventRow> {
     this.url = const Value.absent(),
     this.memo = const Value.absent(),
     this.locationName = const Value.absent(),
+    this.latitude = const Value.absent(),
+    this.longitude = const Value.absent(),
     required int startDateTime,
     required int endDateTime,
     required int isAllDay,
@@ -6398,6 +6480,8 @@ class CalendarEventsCompanion extends UpdateCompanion<SqliteCalendarEventRow> {
     Expression<String>? url,
     Expression<String>? memo,
     Expression<String>? locationName,
+    Expression<double>? latitude,
+    Expression<double>? longitude,
     Expression<int>? startDateTime,
     Expression<int>? endDateTime,
     Expression<int>? isAllDay,
@@ -6417,6 +6501,8 @@ class CalendarEventsCompanion extends UpdateCompanion<SqliteCalendarEventRow> {
       if (url != null) 'url': url,
       if (memo != null) 'memo': memo,
       if (locationName != null) 'location_name': locationName,
+      if (latitude != null) 'latitude': latitude,
+      if (longitude != null) 'longitude': longitude,
       if (startDateTime != null) 'start_date_time': startDateTime,
       if (endDateTime != null) 'end_date_time': endDateTime,
       if (isAllDay != null) 'is_all_day': isAllDay,
@@ -6437,6 +6523,8 @@ class CalendarEventsCompanion extends UpdateCompanion<SqliteCalendarEventRow> {
     Value<String>? url,
     Value<String>? memo,
     Value<String>? locationName,
+    Value<double?>? latitude,
+    Value<double?>? longitude,
     Value<int>? startDateTime,
     Value<int>? endDateTime,
     Value<int>? isAllDay,
@@ -6456,6 +6544,8 @@ class CalendarEventsCompanion extends UpdateCompanion<SqliteCalendarEventRow> {
       url: url ?? this.url,
       memo: memo ?? this.memo,
       locationName: locationName ?? this.locationName,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
       startDateTime: startDateTime ?? this.startDateTime,
       endDateTime: endDateTime ?? this.endDateTime,
       isAllDay: isAllDay ?? this.isAllDay,
@@ -6500,6 +6590,12 @@ class CalendarEventsCompanion extends UpdateCompanion<SqliteCalendarEventRow> {
     if (locationName.present) {
       map['location_name'] = Variable<String>(locationName.value);
     }
+    if (latitude.present) {
+      map['latitude'] = Variable<double>(latitude.value);
+    }
+    if (longitude.present) {
+      map['longitude'] = Variable<double>(longitude.value);
+    }
     if (startDateTime.present) {
       map['start_date_time'] = Variable<int>(startDateTime.value);
     }
@@ -6534,6 +6630,8 @@ class CalendarEventsCompanion extends UpdateCompanion<SqliteCalendarEventRow> {
           ..write('url: $url, ')
           ..write('memo: $memo, ')
           ..write('locationName: $locationName, ')
+          ..write('latitude: $latitude, ')
+          ..write('longitude: $longitude, ')
           ..write('startDateTime: $startDateTime, ')
           ..write('endDateTime: $endDateTime, ')
           ..write('isAllDay: $isAllDay, ')
@@ -6647,6 +6745,28 @@ class CalendarEventOverrides extends Table
     $customConstraints: 'NOT NULL DEFAULT \'\'',
     defaultValue: const CustomExpression('\'\''),
   );
+  static const VerificationMeta _latitudeMeta = const VerificationMeta(
+    'latitude',
+  );
+  late final GeneratedColumn<double> latitude = GeneratedColumn<double>(
+    'latitude',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  static const VerificationMeta _longitudeMeta = const VerificationMeta(
+    'longitude',
+  );
+  late final GeneratedColumn<double> longitude = GeneratedColumn<double>(
+    'longitude',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
   static const VerificationMeta _startDateTimeMeta = const VerificationMeta(
     'startDateTime',
   );
@@ -6724,6 +6844,8 @@ class CalendarEventOverrides extends Table
     url,
     memo,
     locationName,
+    latitude,
+    longitude,
     startDateTime,
     endDateTime,
     isAllDay,
@@ -6817,6 +6939,18 @@ class CalendarEventOverrides extends Table
         ),
       );
     }
+    if (data.containsKey('latitude')) {
+      context.handle(
+        _latitudeMeta,
+        latitude.isAcceptableOrUnknown(data['latitude']!, _latitudeMeta),
+      );
+    }
+    if (data.containsKey('longitude')) {
+      context.handle(
+        _longitudeMeta,
+        longitude.isAcceptableOrUnknown(data['longitude']!, _longitudeMeta),
+      );
+    }
     if (data.containsKey('start_date_time')) {
       context.handle(
         _startDateTimeMeta,
@@ -6907,6 +7041,14 @@ class CalendarEventOverrides extends Table
         DriftSqlType.string,
         data['${effectivePrefix}location_name'],
       )!,
+      latitude: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}latitude'],
+      ),
+      longitude: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}longitude'],
+      ),
       startDateTime: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}start_date_time'],
@@ -6961,6 +7103,8 @@ class SqliteCalendarEventOverrideRow extends DataClass
   final String url;
   final String memo;
   final String locationName;
+  final double? latitude;
+  final double? longitude;
   final int? startDateTime;
   final int? endDateTime;
   final int? isAllDay;
@@ -6977,6 +7121,8 @@ class SqliteCalendarEventOverrideRow extends DataClass
     required this.url,
     required this.memo,
     required this.locationName,
+    this.latitude,
+    this.longitude,
     this.startDateTime,
     this.endDateTime,
     this.isAllDay,
@@ -7000,6 +7146,12 @@ class SqliteCalendarEventOverrideRow extends DataClass
     map['url'] = Variable<String>(url);
     map['memo'] = Variable<String>(memo);
     map['location_name'] = Variable<String>(locationName);
+    if (!nullToAbsent || latitude != null) {
+      map['latitude'] = Variable<double>(latitude);
+    }
+    if (!nullToAbsent || longitude != null) {
+      map['longitude'] = Variable<double>(longitude);
+    }
     if (!nullToAbsent || startDateTime != null) {
       map['start_date_time'] = Variable<int>(startDateTime);
     }
@@ -7034,6 +7186,12 @@ class SqliteCalendarEventOverrideRow extends DataClass
       url: Value(url),
       memo: Value(memo),
       locationName: Value(locationName),
+      latitude: latitude == null && nullToAbsent
+          ? const Value.absent()
+          : Value(latitude),
+      longitude: longitude == null && nullToAbsent
+          ? const Value.absent()
+          : Value(longitude),
       startDateTime: startDateTime == null && nullToAbsent
           ? const Value.absent()
           : Value(startDateTime),
@@ -7074,6 +7232,8 @@ class SqliteCalendarEventOverrideRow extends DataClass
       url: serializer.fromJson<String>(json['url']),
       memo: serializer.fromJson<String>(json['memo']),
       locationName: serializer.fromJson<String>(json['location_name']),
+      latitude: serializer.fromJson<double?>(json['latitude']),
+      longitude: serializer.fromJson<double?>(json['longitude']),
       startDateTime: serializer.fromJson<int?>(json['start_date_time']),
       endDateTime: serializer.fromJson<int?>(json['end_date_time']),
       isAllDay: serializer.fromJson<int?>(json['is_all_day']),
@@ -7097,6 +7257,8 @@ class SqliteCalendarEventOverrideRow extends DataClass
       'url': serializer.toJson<String>(url),
       'memo': serializer.toJson<String>(memo),
       'location_name': serializer.toJson<String>(locationName),
+      'latitude': serializer.toJson<double?>(latitude),
+      'longitude': serializer.toJson<double?>(longitude),
       'start_date_time': serializer.toJson<int?>(startDateTime),
       'end_date_time': serializer.toJson<int?>(endDateTime),
       'is_all_day': serializer.toJson<int?>(isAllDay),
@@ -7116,6 +7278,8 @@ class SqliteCalendarEventOverrideRow extends DataClass
     String? url,
     String? memo,
     String? locationName,
+    Value<double?> latitude = const Value.absent(),
+    Value<double?> longitude = const Value.absent(),
     Value<int?> startDateTime = const Value.absent(),
     Value<int?> endDateTime = const Value.absent(),
     Value<int?> isAllDay = const Value.absent(),
@@ -7133,6 +7297,8 @@ class SqliteCalendarEventOverrideRow extends DataClass
     url: url ?? this.url,
     memo: memo ?? this.memo,
     locationName: locationName ?? this.locationName,
+    latitude: latitude.present ? latitude.value : this.latitude,
+    longitude: longitude.present ? longitude.value : this.longitude,
     startDateTime: startDateTime.present
         ? startDateTime.value
         : this.startDateTime,
@@ -7163,6 +7329,8 @@ class SqliteCalendarEventOverrideRow extends DataClass
       locationName: data.locationName.present
           ? data.locationName.value
           : this.locationName,
+      latitude: data.latitude.present ? data.latitude.value : this.latitude,
+      longitude: data.longitude.present ? data.longitude.value : this.longitude,
       startDateTime: data.startDateTime.present
           ? data.startDateTime.value
           : this.startDateTime,
@@ -7188,6 +7356,8 @@ class SqliteCalendarEventOverrideRow extends DataClass
           ..write('url: $url, ')
           ..write('memo: $memo, ')
           ..write('locationName: $locationName, ')
+          ..write('latitude: $latitude, ')
+          ..write('longitude: $longitude, ')
           ..write('startDateTime: $startDateTime, ')
           ..write('endDateTime: $endDateTime, ')
           ..write('isAllDay: $isAllDay, ')
@@ -7209,6 +7379,8 @@ class SqliteCalendarEventOverrideRow extends DataClass
     url,
     memo,
     locationName,
+    latitude,
+    longitude,
     startDateTime,
     endDateTime,
     isAllDay,
@@ -7229,6 +7401,8 @@ class SqliteCalendarEventOverrideRow extends DataClass
           other.url == this.url &&
           other.memo == this.memo &&
           other.locationName == this.locationName &&
+          other.latitude == this.latitude &&
+          other.longitude == this.longitude &&
           other.startDateTime == this.startDateTime &&
           other.endDateTime == this.endDateTime &&
           other.isAllDay == this.isAllDay &&
@@ -7248,6 +7422,8 @@ class CalendarEventOverridesCompanion
   final Value<String> url;
   final Value<String> memo;
   final Value<String> locationName;
+  final Value<double?> latitude;
+  final Value<double?> longitude;
   final Value<int?> startDateTime;
   final Value<int?> endDateTime;
   final Value<int?> isAllDay;
@@ -7265,6 +7441,8 @@ class CalendarEventOverridesCompanion
     this.url = const Value.absent(),
     this.memo = const Value.absent(),
     this.locationName = const Value.absent(),
+    this.latitude = const Value.absent(),
+    this.longitude = const Value.absent(),
     this.startDateTime = const Value.absent(),
     this.endDateTime = const Value.absent(),
     this.isAllDay = const Value.absent(),
@@ -7283,6 +7461,8 @@ class CalendarEventOverridesCompanion
     this.url = const Value.absent(),
     this.memo = const Value.absent(),
     this.locationName = const Value.absent(),
+    this.latitude = const Value.absent(),
+    this.longitude = const Value.absent(),
     this.startDateTime = const Value.absent(),
     this.endDateTime = const Value.absent(),
     this.isAllDay = const Value.absent(),
@@ -7304,6 +7484,8 @@ class CalendarEventOverridesCompanion
     Expression<String>? url,
     Expression<String>? memo,
     Expression<String>? locationName,
+    Expression<double>? latitude,
+    Expression<double>? longitude,
     Expression<int>? startDateTime,
     Expression<int>? endDateTime,
     Expression<int>? isAllDay,
@@ -7324,6 +7506,8 @@ class CalendarEventOverridesCompanion
       if (url != null) 'url': url,
       if (memo != null) 'memo': memo,
       if (locationName != null) 'location_name': locationName,
+      if (latitude != null) 'latitude': latitude,
+      if (longitude != null) 'longitude': longitude,
       if (startDateTime != null) 'start_date_time': startDateTime,
       if (endDateTime != null) 'end_date_time': endDateTime,
       if (isAllDay != null) 'is_all_day': isAllDay,
@@ -7344,6 +7528,8 @@ class CalendarEventOverridesCompanion
     Value<String>? url,
     Value<String>? memo,
     Value<String>? locationName,
+    Value<double?>? latitude,
+    Value<double?>? longitude,
     Value<int?>? startDateTime,
     Value<int?>? endDateTime,
     Value<int?>? isAllDay,
@@ -7364,6 +7550,8 @@ class CalendarEventOverridesCompanion
       url: url ?? this.url,
       memo: memo ?? this.memo,
       locationName: locationName ?? this.locationName,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
       startDateTime: startDateTime ?? this.startDateTime,
       endDateTime: endDateTime ?? this.endDateTime,
       isAllDay: isAllDay ?? this.isAllDay,
@@ -7408,6 +7596,12 @@ class CalendarEventOverridesCompanion
     if (locationName.present) {
       map['location_name'] = Variable<String>(locationName.value);
     }
+    if (latitude.present) {
+      map['latitude'] = Variable<double>(latitude.value);
+    }
+    if (longitude.present) {
+      map['longitude'] = Variable<double>(longitude.value);
+    }
     if (startDateTime.present) {
       map['start_date_time'] = Variable<int>(startDateTime.value);
     }
@@ -7444,6 +7638,8 @@ class CalendarEventOverridesCompanion
           ..write('url: $url, ')
           ..write('memo: $memo, ')
           ..write('locationName: $locationName, ')
+          ..write('latitude: $latitude, ')
+          ..write('longitude: $longitude, ')
           ..write('startDateTime: $startDateTime, ')
           ..write('endDateTime: $endDateTime, ')
           ..write('isAllDay: $isAllDay, ')

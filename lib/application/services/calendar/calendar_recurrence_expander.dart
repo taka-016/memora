@@ -43,7 +43,7 @@ class CalendarRecurrenceExpander {
         : event.startDateTime;
     final end = event.isAllDay ? _date(event.endDateTime) : event.endDateTime;
     return start.isBefore(event.isAllDay ? _date(to) : to) &&
-        !end.isBefore(event.isAllDay ? _date(from) : from);
+        (event.isAllDay ? end.isAfter(_date(from)) : !end.isBefore(from));
   }
 
   List<CalendarEventDto> expand(
@@ -148,6 +148,8 @@ class CalendarRecurrenceExpander {
         url: override.url,
         memo: override.memo,
         locationName: override.locationName,
+        latitude: override.latitude,
+        longitude: override.longitude,
         title: override.title,
         labelId: override.labelId,
 

@@ -21,7 +21,7 @@ void main() {
   test('複数日終日の帯を週と月の境界で切り各週にタイトルを配置する', () {
     final state = CalendarState(
       selectedDate: DateTime(2026, 10, 1),
-      events: [event('trip', DateTime(2026, 9, 30), DateTime(2026, 10, 6))],
+      events: [event('trip', DateTime(2026, 9, 30), DateTime(2026, 10, 7))],
     );
     final first = CalendarWeekLayout(
       state: state,
