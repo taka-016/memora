@@ -64,6 +64,8 @@ dependencies:
   timezone: ^0.11.1
   flutter_local_notifications: ^22.3.3
   url_launcher: ^6.3.3
+  holiday_jp: ^0.0.8
+  qreki_dart: ^1.1.2
 
 dev_dependencies:
   flutter_test:

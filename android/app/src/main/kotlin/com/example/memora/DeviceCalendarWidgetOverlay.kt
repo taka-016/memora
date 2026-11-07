@@ -22,6 +22,9 @@ internal object DeviceCalendarWidgetOverlay {
             val begin = (row["begin"] as Number).toLong()
             val end = (row["end"] as Number).toLong()
             val allDay = row["allDay"] as Boolean
+            val dayZone = if (allDay) ZoneOffset.UTC else zone
+            val firstDay = Instant.ofEpochMilli(begin).atZone(dayZone).toLocalDate()
+            val lastDay = Instant.ofEpochMilli(if (end > begin) end - 1 else end).atZone(dayZone).toLocalDate()
             Occurrence(begin, end, CalendarWidgetEvent(
                 id = "device:$calendarId:${row["id"]}",
                 occurrence = null,
@@ -32,6 +35,7 @@ internal object DeviceCalendarWidgetOverlay {
                 timeLabel = if (allDay) "終日" else "${timeFormat.format(Instant.ofEpochMilli(begin))}–${timeFormat.format(Instant.ofEpochMilli(end))}",
                 startMillis = begin,
                 isExternal = true,
+                isMultiDay = firstDay != lastDay,
             ))
         }
         if (occurrences.isEmpty()) return month

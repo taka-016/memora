@@ -27,8 +27,14 @@ internal object DailyCalendarWidgetRenderer {
         views.setOnClickPendingIntent(R.id.calendar_message, HomeWidgetLaunchIntent.getActivity(
             context, MainActivity::class.java, Uri.parse("memoraWidget://openSettings"),
         ))
-        views.setTextViewText(R.id.calendar_selected_date, selected.format(dateFormat))
-        views.setTextViewText(R.id.daily_compact_date, selected.format(dateFormat))
+        val settings = CalendarWidgetDisplaySettings.read(context)
+        val day = month?.days?.firstOrNull { it.date == selected }
+        val dateText = calendarWidgetDateLabel(selected.format(dateFormat), day, settings)
+        val color = (day ?: CalendarWidgetDay(selected, emptyList())).dateColor(appearance)
+        views.setTextViewText(R.id.calendar_selected_date, dateText)
+        views.setTextViewText(R.id.daily_compact_date, dateText)
+        views.setTextColor(R.id.calendar_selected_date, color)
+        views.setTextColor(R.id.daily_compact_date, color)
         views.setOnClickPendingIntent(R.id.daily_compact_date, HomeWidgetLaunchIntent.getActivity(
             context, MainActivity::class.java, calendarLaunchUri(groupId, selected),
         ))

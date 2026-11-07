@@ -1,3 +1,4 @@
+import 'package:memora/application/services/calendar/japanese_calendar.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/application/models/app_mode.dart';
 import 'package:memora/application/services/current_user_service.dart';
@@ -29,12 +30,12 @@ class GetAndroidWidgetCalendarCacheUsecase {
     if (group == null) return null;
     DateTime gridStart(DateTime value) {
       final first = DateTime(value.year, value.month);
-      return DateTime(first.year, first.month, 1 - first.weekday % 7);
+      return DateTime(first.year, first.month, 1 - 6);
     }
 
     DateTime gridEnd(DateTime value) {
       final last = DateTime(value.year, value.month + 1, 0);
-      return DateTime(last.year, last.month, last.day + 7 - last.weekday % 7);
+      return DateTime(last.year, last.month, last.day + 7);
     }
 
     final first = DateTime(month.year, month.month);
@@ -70,6 +71,7 @@ class GetAndroidWidgetCalendarCacheUsecase {
             .toIso8601String(),
         'title': event.title,
         'isAllDay': event.isAllDay,
+        'isMultiDay': _isMultiDay(event),
         'color': label?.color ?? '#808080',
         'textColor': label?.textColor ?? '#FFFFFF',
         'timeLabel': event.isAllDay
@@ -89,6 +91,8 @@ class GetAndroidWidgetCalendarCacheUsecase {
       ) {
         days.add({
           'date': dayFormat(day),
+          'holidayName': JapaneseCalendar.holidayName(day),
+          'rokuyo': JapaneseCalendar.rokuyo(day),
           'events': occurrences
               .where((event) => _onDay(event, day))
               .map(item)
@@ -111,6 +115,21 @@ class GetAndroidWidgetCalendarCacheUsecase {
       ...cachedMonths[dayFormat(first)]!,
       'months': cachedMonths,
     };
+  }
+
+  bool _isMultiDay(CalendarEventDto event) {
+    final start = event.isAllDay
+        ? event.startDateTime
+        : event.startDateTime.toLocal();
+    final end = event.isAllDay
+        ? event.endDateTime
+        : event.endDateTime.toLocal();
+    final last = end.isAfter(start)
+        ? end.subtract(const Duration(microseconds: 1))
+        : end;
+    return start.year != last.year ||
+        start.month != last.month ||
+        start.day != last.day;
   }
 
   bool _onDay(CalendarEventDto event, DateTime day) {

@@ -85,6 +85,34 @@ void main() {
     expect(layout.entries.single.endColumn, 1);
     expect(layout.visibleCounts[2], 0);
   });
+  test('祝日の先頭行を避けて複数日の帯を配置し非表示件数は予定だけを数える', () {
+    final state = CalendarState(
+      selectedDate: DateTime(2026, 11),
+      events: [
+        event('旅行', DateTime.utc(2026, 11, 2), DateTime.utc(2026, 11, 4)),
+      ],
+    );
+    CalendarWeekLayout layout(int lines) => CalendarWeekLayout(
+      state: state,
+      weekStart: DateTime(2026, 11),
+      month: DateTime(2026, 11),
+      maxVisibleEvents: lines,
+      isHoliday: (date) => date.day == 3,
+    );
+    final visible = layout(2);
+    expect(visible.entries.single.lane, 1);
+    expect(visible.entries.single.startColumn, 1);
+    expect(visible.entries.single.endColumn, 2);
+    expect(visible.visibleCounts[2], 1);
+    final hidden = layout(1);
+    expect(hidden.entries, isEmpty);
+    expect(
+      state.eventsForDay(DateTime(2026, 11, 3)).length -
+          hidden.visibleCounts[2],
+      1,
+    );
+  });
+
   test('重複する帯を別段へ配置し同日に時刻付き予定を含め5段まで表示する', () {
     final state = CalendarState(
       selectedDate: DateTime(2026, 10, 4),

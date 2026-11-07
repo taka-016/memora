@@ -17,8 +17,10 @@ internal data class CalendarWidgetEvent(
     val timeLabel: String,
     val startMillis: Long = 0L,
     val isExternal: Boolean = false,
+    val isHoliday: Boolean = false,
+    val isMultiDay: Boolean = false,
 ) {
-    val openEventId: String? get() = id
+    val openEventId: String? get() = if (isHoliday) null else id
 }
 
 internal val calendarWidgetEventOrder = compareByDescending<CalendarWidgetEvent> { it.isAllDay }
@@ -27,6 +29,8 @@ internal val calendarWidgetEventOrder = compareByDescending<CalendarWidgetEvent>
 internal data class CalendarWidgetDay(
     val date: LocalDate,
     val events: List<CalendarWidgetEvent>,
+    val holidayName: String? = null,
+    val rokuyo: String? = null,
 )
 
 internal data class CalendarWidgetMonth(
@@ -81,12 +85,15 @@ internal object CalendarWidgetData {
                                 occurrence = event.optString("occurrence").takeIf { it.isNotBlank() },
                                 title = event.getString("title"),
                                 isAllDay = event.optBoolean("isAllDay"),
+                                isMultiDay = event.optBoolean("isMultiDay"),
                                 color = parseColor(event.optString("color")),
                                 textColor = parseColor(event.optString("textColor")),
                                 timeLabel = event.getString("timeLabel"),
                                 startMillis = event.optLong("startMillis"),
                             )
                         },
+                        holidayName = day.optString("holidayName").takeIf { !day.isNull("holidayName") && it.isNotBlank() },
+                        rokuyo = day.optString("rokuyo").takeIf { !day.isNull("rokuyo") && it.isNotBlank() },
                     )
                 }
                 val date = LocalDate.parse(key)
@@ -109,7 +116,9 @@ internal object CalendarWidgetData {
 
     fun readMonth(context: Context, cache: CalendarWidgetCache, month: LocalDate): CalendarWidgetMonth? {
         val stored = cache.months[month] ?: return null
-        val shared = stored.copy(days = stored.days.map { day ->
+        val aligned = calendarWidgetMonthForDisplay(stored,
+            CalendarWidgetDisplaySettings.read(context).weekStartsOnMonday)
+        val shared = aligned.copy(days = aligned.days.map { day ->
             day.copy(events = day.events.sortedWith(calendarWidgetEventOrder))
         })
         return DeviceCalendarWidgetSource.read(context, cache, shared)
@@ -151,14 +160,8 @@ internal object CalendarWidgetData {
             .remove(dateKey(widgetId)).remove(groupKey(widgetId)).apply()
     }
 
-    fun emptyMonth(month: LocalDate): CalendarWidgetMonth {
-        val offset = month.dayOfWeek.value % 7
-        val start = month.minusDays(offset.toLong())
-        val count = ((offset + month.lengthOfMonth() + 6) / 7) * 7
-        return CalendarWidgetMonth(month, List(count) { index ->
-            CalendarWidgetDay(start.plusDays(index.toLong()), emptyList())
-        })
-    }
+    fun emptyMonth(month: LocalDate, weekStartsOnMonday: Boolean = false): CalendarWidgetMonth =
+        calendarWidgetMonthForDisplay(CalendarWidgetMonth(month, emptyList()), weekStartsOnMonday)
 
     private fun dateKey(widgetId: Int) = "memora_calendar_date_$widgetId"
     private fun groupKey(widgetId: Int) = "memora_calendar_group_$widgetId"
@@ -166,6 +169,16 @@ internal object CalendarWidgetData {
         runCatching { Color.parseColor(value) }.getOrDefault(Color.GRAY)
 }
 
+internal val CalendarWidgetDay.displayEvents: List<CalendarWidgetEvent> get() = buildList {
+    holidayName?.let { name ->
+        add(CalendarWidgetEvent(
+            id = "holiday:$date", occurrence = null, title = name,
+            isAllDay = true, color = 0xFFD32F2F.toInt(), textColor = 0xFFFFFFFF.toInt(),
+            timeLabel = "", isHoliday = true,
+        ))
+    }
+    addAll(events.sortedWith(calendarWidgetEventOrder))
+}
+
 internal fun calendarWidgetEventsForDate(month: CalendarWidgetMonth?, date: LocalDate): List<CalendarWidgetEvent> =
-    month?.days?.firstOrNull { it.date == date }?.events
-        .orEmpty().sortedWith(calendarWidgetEventOrder)
+    month?.days?.firstOrNull { it.date == date }?.displayEvents.orEmpty()
