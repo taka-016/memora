@@ -50,8 +50,9 @@ class CalendarDisplaySetting extends ConsumerWidget {
             onChanged: value.isSaving
                 ? null
                 : (day) async {
-                    if (day != null)
+                    if (day != null) {
                       await save(value.settings.copyWith(weekStart: day));
+                    }
                   },
           ),
         ),

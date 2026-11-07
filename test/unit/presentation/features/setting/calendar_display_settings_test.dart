@@ -11,17 +11,28 @@ void main() {
   testWidgets('週の始まりと六曜を変更しウィジェットを更新して再表示時にも保持する', (tester) async {
     SharedPreferences.setMockInitialValues({});
     var updates = 0;
-    final container = ProviderContainer(overrides: [
-      updateCalendarWidgetAppearanceProvider.overrideWithValue(() async { updates++; }),
-    ]);
+    final container = ProviderContainer(
+      overrides: [
+        updateCalendarWidgetAppearanceProvider.overrideWithValue(() async {
+          updates++;
+        }),
+      ],
+    );
     addTearDown(container.dispose);
-    await tester.pumpWidget(UncontrolledProviderScope(
-      container: container,
-      child: const MaterialApp(home: Scaffold(body: CalendarDisplaySetting())),
-    ));
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(
+          home: Scaffold(body: CalendarDisplaySetting()),
+        ),
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.text('日曜日'), findsOneWidget);
-    expect(tester.widget<SwitchListTile>(find.byType(SwitchListTile)).value, isFalse);
+    expect(
+      tester.widget<SwitchListTile>(find.byType(SwitchListTile)).value,
+      isFalse,
+    );
     await tester.tap(find.byKey(const Key('calendar_week_start_setting')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('月曜日').last);
@@ -29,15 +40,29 @@ void main() {
     await tester.tap(find.text('六曜を表示'));
     await tester.pumpAndSettle();
     expect(updates, 2);
-    final saved = await const SharedPreferencesCalendarDisplaySettingsStorage().load();
-    expect(saved, const CalendarDisplaySettings(weekStart: CalendarWeekStart.monday, showRokuyo: true));
+    final saved = await const SharedPreferencesCalendarDisplaySettingsStorage()
+        .load();
+    expect(
+      saved,
+      const CalendarDisplaySettings(
+        weekStart: CalendarWeekStart.monday,
+        showRokuyo: true,
+      ),
+    );
     await tester.pumpWidget(const SizedBox());
-    await tester.pumpWidget(UncontrolledProviderScope(
-      container: container,
-      child: const MaterialApp(home: Scaffold(body: CalendarDisplaySetting())),
-    ));
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(
+          home: Scaffold(body: CalendarDisplaySetting()),
+        ),
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.text('月曜日'), findsOneWidget);
-    expect(tester.widget<SwitchListTile>(find.byType(SwitchListTile)).value, isTrue);
+    expect(
+      tester.widget<SwitchListTile>(find.byType(SwitchListTile)).value,
+      isTrue,
+    );
   });
 }

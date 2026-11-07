@@ -49,8 +49,9 @@ class CalendarDisplaySettingsNotifier
     } catch (_) {
       return false;
     } finally {
-      if (ref.mounted)
+      if (ref.mounted) {
         state = AsyncData(CalendarDisplaySettingsState(settings: settings));
+      }
     }
   }
 }

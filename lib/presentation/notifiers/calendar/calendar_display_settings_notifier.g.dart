@@ -39,7 +39,7 @@ final class CalendarDisplaySettingsNotifierProvider
 }
 
 String _$calendarDisplaySettingsNotifierHash() =>
-    r'316cf322c16b57106be6a1bb3e3aa8cce9077995';
+    r'4c5c4bed6b70da226ed6900bb3cadc4846c2d0c3';
 
 abstract class _$CalendarDisplaySettingsNotifier
     extends $AsyncNotifier<CalendarDisplaySettingsState> {

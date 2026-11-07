@@ -38,14 +38,17 @@ Future<void> _pumpGrid(
 
 void main() {
   testWidgets('祝日は日曜と同じ赤色で表示し六曜を設定で切り替える', (tester) async {
-    Future<void> pump(bool showRokuyo) => _pumpGrid(tester,
+    Future<void> pump(bool showRokuyo) => _pumpGrid(
+      tester,
       initialDate: DateTime(2026, 11),
       settings: CalendarDisplaySettings(showRokuyo: showRokuyo),
     );
-    Text dayNumber(int day) => tester.widget<Text>(find.descendant(
-      of: find.byKey(Key('calendar_day_2026_11_$day')),
-      matching: find.text('$day'),
-    ));
+    Text dayNumber(int day) => tester.widget<Text>(
+      find.descendant(
+        of: find.byKey(Key('calendar_day_2026_11_$day')),
+        matching: find.text('$day'),
+      ),
+    );
     await pump(false);
     expect(dayNumber(3).style!.color, dayNumber(1).style!.color);
     expect(dayNumber(3).style!.color, const Color(0xFFD32F2F));
@@ -55,7 +58,10 @@ void main() {
     final cell = find.byKey(const Key('calendar_day_2026_11_8'));
     final rokuyo = find.descendant(of: cell, matching: find.text('先勝'));
     expect(rokuyo, findsOneWidget);
-    expect(tester.widget<Text>(rokuyo).style!.fontSize, lessThan(dayNumber(8).style!.fontSize!));
+    expect(
+      tester.widget<Text>(rokuyo).style!.fontSize,
+      lessThan(dayNumber(8).style!.fontSize!),
+    );
     expect(tester.takeException(), isNull);
     await pump(false);
     expect(find.text('先勝'), findsNothing);
@@ -63,12 +69,17 @@ void main() {
 
   for (final start in CalendarWeekStart.values) {
     testWidgets('${start.name}始まりでも月初と月末を選択できる', (tester) async {
-      await _pumpGrid(tester, initialDate: DateTime(2026, 11),
-        settings: CalendarDisplaySettings(weekStart: start, showRokuyo: true));
+      await _pumpGrid(
+        tester,
+        initialDate: DateTime(2026, 11),
+        settings: CalendarDisplaySettings(weekStart: start, showRokuyo: true),
+      );
       final first = find.byKey(const Key('calendar_day_2026_11_1'));
       final second = find.byKey(const Key('calendar_day_2026_11_2'));
-      expect(tester.getTopLeft(first).dx < tester.getTopLeft(second).dx,
-        start == CalendarWeekStart.sunday);
+      expect(
+        tester.getTopLeft(first).dx < tester.getTopLeft(second).dx,
+        start == CalendarWeekStart.sunday,
+      );
       await tester.tap(first);
       await tester.pump();
       await tester.tap(find.byKey(const Key('calendar_day_2026_11_30')));

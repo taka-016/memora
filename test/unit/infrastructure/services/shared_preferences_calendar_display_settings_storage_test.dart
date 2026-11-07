@@ -14,7 +14,10 @@ void main() {
       showRokuyo: true,
     );
     await storage.save(selected);
-    expect(await const SharedPreferencesCalendarDisplaySettingsStorage().load(), selected);
+    expect(
+      await const SharedPreferencesCalendarDisplaySettingsStorage().load(),
+      selected,
+    );
     await storage.save(selected.copyWith(showRokuyo: false));
     expect((await storage.load()).weekStart, CalendarWeekStart.monday);
     expect((await storage.load()).showRokuyo, isFalse);
