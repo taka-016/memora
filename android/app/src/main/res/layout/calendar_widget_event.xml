@@ -1,17 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:theme="@style/MemoraWidgetLight"
     android:id="@+id/calendar_event_row" android:layout_width="match_parent" android:layout_height="wrap_content"
     android:orientation="horizontal" android:gravity="center_vertical" android:paddingTop="6dp" android:paddingBottom="6dp">
     <LinearLayout android:layout_width="44dp" android:layout_height="wrap_content" android:orientation="vertical" android:gravity="center">
-        <TextView android:id="@+id/calendar_event_start" android:layout_width="match_parent" android:layout_height="12dp"
-            android:gravity="center" android:textSize="11sp" android:textStyle="bold" android:includeFontPadding="false" android:textColor="#212121"/>
+        <TextView android:id="@+id/calendar_event_start" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="16dp"
+            android:gravity="center" android:textSize="11sp" android:textStyle="bold" android:includeFontPadding="true" android:textColor="?attr/widgetTextColor"/>
         <TextView android:id="@+id/calendar_event_separator" android:layout_width="match_parent" android:layout_height="12dp"
-            android:gravity="center" android:text="|" android:textSize="11sp" android:includeFontPadding="false" android:textColor="#616161"/>
-        <TextView android:id="@+id/calendar_event_end" android:layout_width="match_parent" android:layout_height="12dp"
-            android:gravity="center" android:textSize="11sp" android:textStyle="bold" android:includeFontPadding="false" android:textColor="#212121"/>
+            android:gravity="center" android:text="|" android:textSize="11sp" android:includeFontPadding="false" android:textColor="?attr/widgetSecondaryTextColor"/>
+        <TextView android:id="@+id/calendar_event_end" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="16dp"
+            android:gravity="center" android:textSize="11sp" android:textStyle="bold" android:includeFontPadding="true" android:textColor="?attr/widgetTextColor"/>
     </LinearLayout>
     <TextView android:id="@+id/calendar_event_bar" android:layout_width="3dp" android:layout_height="28dp"/>
     <TextView android:layout_width="6dp" android:layout_height="1dp"/>
     <TextView android:id="@+id/calendar_event_title" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
-        android:maxLines="2" android:ellipsize="end" android:textSize="13sp" android:textStyle="bold" android:textColor="#212121"/>
+        android:maxLines="2" android:ellipsize="end" android:textSize="13sp" android:textStyle="bold" android:textColor="?attr/widgetTextColor"/>
 </LinearLayout>

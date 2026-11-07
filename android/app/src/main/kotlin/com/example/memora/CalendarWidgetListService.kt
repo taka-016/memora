@@ -34,8 +34,8 @@ private class CalendarEventsFactory(
     override fun onDataSetChanged() {
         val date = CalendarWidgetData.selectedDate(context, widgetId)
         val cache = CalendarWidgetData.read(context)
-        val events = cache?.let { CalendarWidgetData.readMonth(context, it, date.withDayOfMonth(1)) }?.days
-            ?.firstOrNull { it.date == date }?.events.orEmpty()
+        val month = cache?.let { CalendarWidgetData.readMonth(context, it, date.withDayOfMonth(1)) }
+        val events = calendarWidgetEventsForDate(month, date)
         snapshot = Snapshot(cache?.groupId.orEmpty(), date, events)
     }
 
@@ -45,6 +45,7 @@ private class CalendarEventsFactory(
         return calendarEventRow(
             context, current.groupId, current.date, event,
             WidgetAppearance.forWidget(AppWidgetManager.getInstance(context), widgetId),
+            daily = isDailyCalendarWidget(AppWidgetManager.getInstance(context), widgetId),
         )
     }
 
@@ -64,7 +65,12 @@ internal fun calendarEventRow(
     date: LocalDate,
     event: CalendarWidgetEvent,
     appearance: WidgetAppearance,
-): RemoteViews = RemoteViews(context.packageName, appearance.calendarEventLayout).apply {
+    daily: Boolean = false,
+): RemoteViews = RemoteViews(context.packageName, if (daily) {
+    appearance.dailyCalendarEventLayout
+} else {
+    appearance.calendarEventLayout
+}).apply {
     val times = event.timeLabel.split('–', limit = 2)
     val hasEnd = !event.isAllDay && times.size == 2
     setTextViewText(R.id.calendar_event_start, times[0])

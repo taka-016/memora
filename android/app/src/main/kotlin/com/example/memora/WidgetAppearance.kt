@@ -8,6 +8,10 @@ internal enum class WidgetAppearance {
 
     val calendarLayout: Int
         get() = if (this == DARK) R.layout.calendar_widget_dark else R.layout.calendar_widget
+    val dailyCalendarLayout: Int
+        get() = if (this == DARK) R.layout.daily_calendar_widget_dark else R.layout.daily_calendar_widget
+    val dailyCalendarEventLayout: Int
+        get() = if (this == DARK) R.layout.daily_calendar_widget_event_dark else R.layout.daily_calendar_widget_event
     val calendarEventLayout: Int
         get() = if (this == DARK) R.layout.calendar_widget_event_dark else R.layout.calendar_widget_event
     val itineraryLayout: Int
@@ -31,6 +35,7 @@ internal enum class WidgetAppearance {
         fun forWidget(manager: AppWidgetManager, widgetId: Int): WidgetAppearance =
             when (manager.getAppWidgetInfo(widgetId)?.provider?.className) {
                 CalendarDarkWidgetReceiver::class.java.name,
+                DailyCalendarDarkWidgetReceiver::class.java.name,
                 ItineraryDarkWidgetReceiver::class.java.name -> DARK
                 else -> LIGHT
             }
