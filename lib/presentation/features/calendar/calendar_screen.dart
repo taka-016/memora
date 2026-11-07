@@ -118,7 +118,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final provider = calendarNotifierProvider(widget.groupId);
     final month = await showDialog<DateTime>(
       context: context,
-      builder: (_) => CalendarMonthPickerDialog(month: ref.read(provider).month),
+      builder: (_) =>
+          CalendarMonthPickerDialog(month: ref.read(provider).month),
     );
     if (!mounted || month == null) return;
     ref.read(provider.notifier).selectDate(month);

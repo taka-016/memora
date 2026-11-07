@@ -50,9 +50,8 @@ class _CalendarMonthPickerDialogState extends State<CalendarMonthPickerDialog> {
                 itemExtent: itemExtent,
                 childCount: 9999,
                 onSelectedItemChanged: (index) => _year = index + 1,
-                itemBuilder: (context, index) => Center(
-                  child: FittedBox(child: Text('${index + 1}年')),
-                ),
+                itemBuilder: (context, index) =>
+                    Center(child: FittedBox(child: Text('${index + 1}年'))),
               ),
             ),
             Expanded(
@@ -62,9 +61,8 @@ class _CalendarMonthPickerDialogState extends State<CalendarMonthPickerDialog> {
                 itemExtent: itemExtent,
                 childCount: 12,
                 onSelectedItemChanged: (index) => _month = index + 1,
-                itemBuilder: (context, index) => Center(
-                  child: FittedBox(child: Text('${index + 1}月')),
-                ),
+                itemBuilder: (context, index) =>
+                    Center(child: FittedBox(child: Text('${index + 1}月'))),
               ),
             ),
           ],
