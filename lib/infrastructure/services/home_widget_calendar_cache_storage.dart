@@ -13,7 +13,10 @@ class HomeWidgetCalendarCacheStorage {
       'com.example.memora.CalendarWidgetReceiver';
 
   static String loadStateKey(String groupId, DateTime date) {
-    final month = DateTime(date.year, date.month).toIso8601String().substring(0, 10);
+    final month = DateTime(
+      date.year,
+      date.month,
+    ).toIso8601String().substring(0, 10);
     return 'memora_widget_calendar_load_${groupId}_$month';
   }
 

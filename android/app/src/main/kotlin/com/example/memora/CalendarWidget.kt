@@ -59,12 +59,6 @@ open class CalendarWidgetReceiver : AppWidgetProvider() {
     }
 
     private fun receive(context: Context, intent: Intent) {
-        if (intent.action == AppWidgetManager.ACTION_APPWIDGET_UPDATE &&
-            !intent.getBooleanExtra(HomeWidgetPlugin.TRIGGERED_FROM_HOME_WIDGET, false)) {
-            intent.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)?.forEach { widgetId ->
-                CalendarWidgetData.startLoading(context, CalendarWidgetData.selectedDate(context, widgetId))
-            }
-        }
         super.onReceive(context, intent)
         when (intent.action) {
             CALENDAR_SELECT_ACTION -> selectDate(context, intent)
