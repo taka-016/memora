@@ -6,4 +6,7 @@
     <string name="calendar_widget_dark_name">memora カレンダー（ダーク）</string>
     <string name="itinerary_widget_dark_name">memora 旅程（ダーク）</string>
     <string name="itinerary_widget_light_name">memora 旅程（ライト）</string>
+    <string name="daily_calendar_widget_name">memora 日別予定（ライト）</string>
+    <string name="daily_calendar_widget_dark_name">memora 日別予定（ダーク）</string>
+    <string name="daily_calendar_widget_description">選択した日の予定一覧を表示</string>
 </resources>

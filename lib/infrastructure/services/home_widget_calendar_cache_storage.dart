@@ -85,5 +85,11 @@ class HomeWidgetCalendarCacheStorage {
     await HomeWidget.updateWidget(
       qualifiedAndroidName: 'com.example.memora.CalendarDarkWidgetReceiver',
     );
+    await HomeWidget.updateWidget(
+      qualifiedAndroidName: 'com.example.memora.DailyCalendarWidgetReceiver',
+    );
+    await HomeWidget.updateWidget(
+      qualifiedAndroidName: 'com.example.memora.DailyCalendarDarkWidgetReceiver',
+    );
   }
 }

@@ -19,7 +19,7 @@ private const val CALENDAR_TODAY_EXTRA = "today"
 
 open class CalendarWidgetReceiver : AppWidgetProvider() {
     override fun onUpdate(context: Context, manager: AppWidgetManager, widgetIds: IntArray) {
-        widgetIds.forEach { CalendarWidgetRenderer.update(context, manager, it) }
+        widgetIds.forEach { updateWidget(context, manager, it) }
     }
 
     override fun onAppWidgetOptionsChanged(
@@ -28,7 +28,16 @@ open class CalendarWidgetReceiver : AppWidgetProvider() {
         widgetId: Int,
         newOptions: Bundle,
     ) {
-        CalendarWidgetRenderer.update(context, manager, widgetId, forceFull = true)
+        updateWidget(context, manager, widgetId, forceFull = true)
+    }
+
+    protected open fun updateWidget(
+        context: Context,
+        manager: AppWidgetManager,
+        widgetId: Int,
+        forceFull: Boolean = false,
+    ) {
+        CalendarWidgetRenderer.update(context, manager, widgetId, forceFull)
     }
 
     override fun onDeleted(context: Context, widgetIds: IntArray) {
@@ -59,7 +68,7 @@ open class CalendarWidgetReceiver : AppWidgetProvider() {
                 CalendarWidgetData.selectDate(
                     context, widgetId, CalendarWidgetData.selectedDate(context, widgetId),
                 )
-                CalendarWidgetRenderer.update(context, AppWidgetManager.getInstance(context), widgetId)
+                updateWidget(context, AppWidgetManager.getInstance(context), widgetId)
                 requestCalendarRefresh(context)
             }
             AppWidgetManager.ACTION_APPWIDGET_UPDATE -> {
@@ -86,7 +95,7 @@ open class CalendarWidgetReceiver : AppWidgetProvider() {
         val month = date.withDayOfMonth(1)
         val months = CalendarWidgetData.read(context)?.months.orEmpty()
         CalendarWidgetData.selectDate(context, widgetId, date)
-        CalendarWidgetRenderer.update(context, AppWidgetManager.getInstance(context), widgetId)
+        updateWidget(context, AppWidgetManager.getInstance(context), widgetId)
         val missingNeighbor = !months.containsKey(month.minusMonths(1)) ||
             !months.containsKey(month.plusMonths(1))
         if (!months.containsKey(month) ||
@@ -97,7 +106,10 @@ open class CalendarWidgetReceiver : AppWidgetProvider() {
 
     private fun isCalendarWidget(context: Context, widgetId: Int): Boolean =
         AppWidgetManager.getInstance(context).getAppWidgetInfo(widgetId)?.provider?.className
-            .let { it == CalendarWidgetReceiver::class.java.name || it == CalendarDarkWidgetReceiver::class.java.name }
+            .let { it in setOf(
+                CalendarWidgetReceiver::class.java.name, CalendarDarkWidgetReceiver::class.java.name,
+                DailyCalendarWidgetReceiver::class.java.name, DailyCalendarDarkWidgetReceiver::class.java.name,
+            ) }
 
     companion object {
         private val updates = Executors.newSingleThreadExecutor()
