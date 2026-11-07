@@ -17,8 +17,9 @@ internal data class CalendarWidgetEvent(
     val timeLabel: String,
     val startMillis: Long = 0L,
     val isExternal: Boolean = false,
+    val isHoliday: Boolean = false,
 ) {
-    val openEventId: String? get() = id
+    val openEventId: String? get() = if (isHoliday) null else id
 }
 
 internal val calendarWidgetEventOrder = compareByDescending<CalendarWidgetEvent> { it.isAllDay }
@@ -166,6 +167,16 @@ internal object CalendarWidgetData {
         runCatching { Color.parseColor(value) }.getOrDefault(Color.GRAY)
 }
 
+internal val CalendarWidgetDay.displayEvents: List<CalendarWidgetEvent> get() = buildList {
+    holidayName?.let { name ->
+        add(CalendarWidgetEvent(
+            id = "holiday:$date", occurrence = null, title = name,
+            isAllDay = true, color = 0xFFD32F2F.toInt(), textColor = 0xFFFFFFFF.toInt(),
+            timeLabel = "祝日", isHoliday = true,
+        ))
+    }
+    addAll(events.sortedWith(calendarWidgetEventOrder))
+}
+
 internal fun calendarWidgetEventsForDate(month: CalendarWidgetMonth?, date: LocalDate): List<CalendarWidgetEvent> =
-    month?.days?.firstOrNull { it.date == date }?.events
-        .orEmpty().sortedWith(calendarWidgetEventOrder)
+    month?.days?.firstOrNull { it.date == date }?.displayEvents.orEmpty()

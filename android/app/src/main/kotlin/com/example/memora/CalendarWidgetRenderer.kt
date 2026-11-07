@@ -223,7 +223,7 @@ internal object CalendarWidgetRenderer {
                 android.graphics.Paint.ANTI_ALIAS_FLAG
             })
             cell.removeAllViews(R.id.calendar_day_events)
-            CalendarWidgetDayPreview.rows(day.events, visibleEvents).forEach { event ->
+            CalendarWidgetDayPreview.rows(day.displayEvents, visibleEvents).forEach { event ->
                 cell.addView(R.id.calendar_day_events, preview(context, event, compactDay, state.appearance))
             }
             val id = dayIds[index]
@@ -280,7 +280,7 @@ internal object CalendarWidgetRenderer {
             val items = RemoteViews.RemoteCollectionItems.Builder()
                 .setHasStableIds(false)
                 .setViewTypeCount(1)
-            val events = state.month.days.firstOrNull { it.date == state.selected }?.events.orEmpty()
+            val events = calendarWidgetEventsForDate(state.month, state.selected)
             events.forEachIndexed { index, event ->
                 items.addItem(
                     index.toLong(),

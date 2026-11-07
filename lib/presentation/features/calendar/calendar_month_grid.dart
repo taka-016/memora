@@ -1,3 +1,4 @@
+import 'package:memora/presentation/features/calendar/calendar_holiday_banner.dart';
 import 'package:memora/application/models/calendar_display_settings.dart';
 import 'package:memora/application/services/calendar/japanese_calendar.dart';
 import 'package:memora/presentation/features/calendar/calendar_date_color.dart';
@@ -168,6 +169,7 @@ class _CalendarWeekRow extends StatelessWidget {
           weekStart: weekStart,
           month: month,
           maxVisibleEvents: maxVisibleEvents,
+          isHoliday: (date) => JapaneseCalendar.holidayName(date) != null,
         );
         final width = constraints.maxWidth / 7;
         return Stack(
@@ -304,6 +306,7 @@ class _CalendarDayCell extends StatelessWidget {
   Widget build(BuildContext context) {
     final remaining = state.eventsForDay(date).length - visibleCount;
     final selected = date == state.selectedDate;
+    final holiday = JapaneseCalendar.holidayName(date);
     final scheme = Theme.of(context).colorScheme;
     return Semantics(
       selected: selected,
@@ -328,7 +331,8 @@ class _CalendarDayCell extends StatelessWidget {
                     fit: BoxFit.scaleDown,
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.end,
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
                       children: [
                         Text(
                           '${date.day}',
@@ -357,6 +361,24 @@ class _CalendarDayCell extends StatelessWidget {
                     height: laneHeight,
                     child: Builder(
                       builder: (context) {
+                        if (lane == 0 && holiday != null) {
+                          final banner = CalendarHolidayBanner(
+                            name: holiday,
+                            compact: true,
+                          );
+                          if (maxVisibleEvents == 1 && remaining > 0) {
+                            return Row(
+                              children: [
+                                Expanded(child: banner),
+                                _CalendarRemainingCount(
+                                  count: remaining,
+                                  selected: selected,
+                                ),
+                              ],
+                            );
+                          }
+                          return banner;
+                        }
                         final entry = entries
                             .where((entry) => entry.lane == lane)
                             .firstOrNull;

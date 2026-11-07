@@ -3,6 +3,7 @@ package com.example.memora
 import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.view.View
 import android.widget.RemoteViews
 import android.widget.RemoteViewsService
@@ -79,6 +80,11 @@ internal fun calendarEventRow(
     setViewVisibility(R.id.calendar_event_end, if (hasEnd) View.VISIBLE else View.GONE)
     setInt(R.id.calendar_event_bar, "setBackgroundColor", event.color)
     setTextViewText(R.id.calendar_event_title, event.title)
+    setInt(R.id.calendar_event_row, "setBackgroundColor", if (event.isHoliday) event.color else Color.TRANSPARENT)
+    setTextColor(R.id.calendar_event_title, if (event.isHoliday) event.textColor else appearance.text)
+    setTextColor(R.id.calendar_event_start, if (event.isHoliday) event.textColor else appearance.text)
+    setTextColor(R.id.calendar_event_end, if (event.isHoliday) event.textColor else appearance.text)
+    setViewVisibility(R.id.calendar_event_bar, if (event.isHoliday) View.GONE else View.VISIBLE)
     setOnClickFillInIntent(R.id.calendar_event_row, Intent().apply {
         data = calendarLaunchUri(groupId, date).buildUpon()
             .apply {

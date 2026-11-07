@@ -4,8 +4,6 @@ import android.content.Context
 import android.text.SpannableString
 import android.text.Spanned
 import android.text.style.RelativeSizeSpan
-import android.text.style.SubscriptSpan
-import java.time.LocalDate
 import org.json.JSONObject
 
 internal data class CalendarWidgetDisplaySettings(
@@ -69,6 +67,5 @@ internal fun calendarWidgetDateLabel(
     val rokuyo = day?.rokuyo?.takeIf { settings.showRokuyo && it.isNotEmpty() } ?: return text
     return SpannableString("$text $rokuyo").apply {
         setSpan(RelativeSizeSpan(.6f), text.length + 1, length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-        setSpan(SubscriptSpan(), text.length + 1, length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
     }
 }
