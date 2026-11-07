@@ -153,3 +153,7 @@ internal object CalendarWidgetData {
     private fun parseColor(value: String): Int =
         runCatching { Color.parseColor(value) }.getOrDefault(Color.GRAY)
 }
+
+internal fun calendarWidgetEventsForDate(month: CalendarWidgetMonth?, date: LocalDate): List<CalendarWidgetEvent> =
+    month?.days?.firstOrNull { it.date == date }?.events
+        .orEmpty().sortedWith(calendarWidgetEventOrder)

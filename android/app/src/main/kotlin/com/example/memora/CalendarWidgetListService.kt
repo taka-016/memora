@@ -35,7 +35,7 @@ private class CalendarEventsFactory(
         val date = CalendarWidgetData.selectedDate(context, widgetId)
         val cache = CalendarWidgetData.read(context)
         val month = cache?.let { CalendarWidgetData.readMonth(context, it, date.withDayOfMonth(1)) }
-        val events = dailyCalendarEvents(month, date)
+        val events = calendarWidgetEventsForDate(month, date)
         snapshot = Snapshot(cache?.groupId.orEmpty(), date, events)
     }
 

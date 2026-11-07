@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
-import android.util.TypedValue
 import android.view.View
 import android.widget.RemoteViews
 import es.antonborri.home_widget.HomeWidgetLaunchIntent
@@ -53,7 +52,7 @@ internal object DailyCalendarWidgetRenderer {
         if (Build.VERSION.SDK_INT >= 31) {
             val items = RemoteViews.RemoteCollectionItems.Builder()
                 .setHasStableIds(false).setViewTypeCount(1)
-            dailyCalendarEvents(month, selected).forEachIndexed { index, event ->
+            calendarWidgetEventsForDate(month, selected).forEachIndexed { index, event ->
                 items.addItem(index.toLong(), calendarEventRow(
                     context, groupId, selected, event, appearance, daily = true,
                 ))
@@ -88,9 +87,5 @@ internal object DailyCalendarWidgetRenderer {
         views.setViewVisibility(R.id.daily_compact_header, if (compact) View.VISIBLE else View.GONE)
         views.setViewVisibility(R.id.calendar_selected_date, if (compact) View.GONE else View.VISIBLE)
         views.setViewVisibility(R.id.daily_footer, if (compact) View.GONE else View.VISIBLE)
-        views.setTextViewTextSize(
-            R.id.calendar_selected_date, TypedValue.COMPLEX_UNIT_SP,
-            if (width < 200) 11f else 16f,
-        )
     }
 }

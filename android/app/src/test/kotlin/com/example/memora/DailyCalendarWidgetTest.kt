@@ -19,8 +19,8 @@ class DailyCalendarWidgetTest {
             CalendarWidgetDay(date.minusDays(1), listOf(event("前日", true, 0))),
             CalendarWidgetDay(date, listOf(late, early, allDay)),
         ))
-        assertEquals(listOf(allDay, early, late), dailyCalendarEvents(month, date))
-        assertEquals(emptyList<CalendarWidgetEvent>(), dailyCalendarEvents(month, date.plusDays(1)))
-        assertEquals(emptyList<CalendarWidgetEvent>(), dailyCalendarEvents(null, date))
+        assertEquals(listOf(allDay, early, late), calendarWidgetEventsForDate(month, date))
+        assertEquals(emptyList<CalendarWidgetEvent>(), calendarWidgetEventsForDate(month, date.plusDays(1)))
+        assertEquals(emptyList<CalendarWidgetEvent>(), calendarWidgetEventsForDate(null, date))
     }
 }

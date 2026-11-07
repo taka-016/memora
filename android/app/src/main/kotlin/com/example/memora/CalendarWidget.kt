@@ -106,10 +106,12 @@ open class CalendarWidgetReceiver : AppWidgetProvider() {
 
     private fun isCalendarWidget(context: Context, widgetId: Int): Boolean =
         AppWidgetManager.getInstance(context).getAppWidgetInfo(widgetId)?.provider?.className
-            .let { it in setOf(
-                CalendarWidgetReceiver::class.java.name, CalendarDarkWidgetReceiver::class.java.name,
-                DailyCalendarWidgetReceiver::class.java.name, DailyCalendarDarkWidgetReceiver::class.java.name,
-            ) }
+            .let { provider ->
+                provider == CalendarWidgetReceiver::class.java.name ||
+                    provider == CalendarDarkWidgetReceiver::class.java.name ||
+                    provider == DailyCalendarWidgetReceiver::class.java.name ||
+                    provider == DailyCalendarDarkWidgetReceiver::class.java.name
+            }
 
     companion object {
         private val updates = Executors.newSingleThreadExecutor()
