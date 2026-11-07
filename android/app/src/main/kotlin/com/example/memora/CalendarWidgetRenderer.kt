@@ -3,7 +3,6 @@ package com.example.memora
 import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
-import android.graphics.Color
 import android.net.Uri
 import android.os.Build
 import android.util.TypedValue
@@ -52,6 +51,11 @@ internal object CalendarWidgetRenderer {
     private val weekIds = intArrayOf(
         R.id.calendar_week_0, R.id.calendar_week_1, R.id.calendar_week_2,
         R.id.calendar_week_3, R.id.calendar_week_4, R.id.calendar_week_5,
+    )
+
+    private val weekEventIds = intArrayOf(
+        R.id.calendar_week_events_0, R.id.calendar_week_events_1, R.id.calendar_week_events_2,
+        R.id.calendar_week_events_3, R.id.calendar_week_events_4, R.id.calendar_week_events_5,
     )
 
     fun forget(widgetId: Int) {
@@ -223,9 +227,6 @@ internal object CalendarWidgetRenderer {
                 android.graphics.Paint.ANTI_ALIAS_FLAG
             })
             cell.removeAllViews(R.id.calendar_day_events)
-            CalendarWidgetDayPreview.rows(day.displayEvents, visibleEvents).forEach { event ->
-                cell.addView(R.id.calendar_day_events, preview(context, event, compactDay, state.appearance))
-            }
             val id = dayIds[index]
             views.removeAllViews(id)
             if (Build.VERSION.SDK_INT >= 31) {
@@ -235,6 +236,12 @@ internal object CalendarWidgetRenderer {
             }
             views.setOnClickPendingIntent(id, calendarWidgetAction(context, widgetId, day.date))
             setDaySelection(views, id, day, false, state.appearance)
+        }
+        state.month.days.chunked(7).forEachIndexed { week, days ->
+            views.setImageViewBitmap(weekEventIds[week], CalendarWidgetWeekImage.render(
+                context, days, month, (size.width - 16).coerceAtLeast(7), rowHeight,
+                compactDay, visibleEvents, state.appearance,
+            ))
         }
         if (Build.VERSION.SDK_INT < 31) {
             val adapter = Intent(context, CalendarWidgetListService::class.java).apply {
@@ -310,30 +317,8 @@ internal object CalendarWidgetRenderer {
     ) {
         views.setInt(id, "setBackgroundColor", if (selected) appearance.selected else appearance.background)
         views.setContentDescription(
-            id, "${day.date.format(dateFormat)}${day.holidayName?.let { "、$it" }.orEmpty()}、予定${day.events.size}件${if (selected) "、選択中" else ""}",
+            id, "${day.date.format(dateFormat)}、予定${day.events.size}件${if (selected) "、選択中" else ""}${day.displayEvents.joinToString(separator = "、", prefix = if (day.displayEvents.isEmpty()) "" else "、") { it.title }}",
         )
-    }
-
-    private fun preview(
-        context: Context,
-        event: CalendarWidgetPreviewRow,
-        compact: Boolean,
-        appearance: WidgetAppearance,
-    ): RemoteViews = RemoteViews(context.packageName, if (compact) {
-        R.layout.calendar_widget_day_event_compact
-    } else {
-        R.layout.calendar_widget_day_event
-    }).apply {
-        setInt(R.id.calendar_preview, "setBackgroundColor", if (event.isAllDay) event.color else Color.TRANSPARENT)
-        setViewVisibility(R.id.calendar_preview_bar, if (event.isAllDay) View.GONE else View.VISIBLE)
-        setViewVisibility(R.id.calendar_preview_gap, if (event.isAllDay) View.GONE else View.VISIBLE)
-        setInt(R.id.calendar_preview_bar, "setBackgroundColor", event.color)
-        setViewVisibility(R.id.calendar_preview_more, if (event.remainingCount > 0) View.VISIBLE else View.GONE)
-        setTextViewText(R.id.calendar_preview_more, "+${event.remainingCount}")
-        setTextColor(R.id.calendar_preview_more, if (event.isAllDay) event.textColor else appearance.text)
-        setViewPadding(R.id.calendar_preview_title, if (event.isAllDay) dp(context, 2) else 0, 0, 0, 0)
-        setTextViewText(R.id.calendar_preview_title, event.title)
-        setTextColor(R.id.calendar_preview_title, if (event.isAllDay) event.textColor else appearance.text)
     }
 
     private fun dp(context: Context, value: Int): Int = dp(context, value.toFloat())

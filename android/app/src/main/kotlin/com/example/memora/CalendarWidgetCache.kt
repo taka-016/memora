@@ -18,6 +18,7 @@ internal data class CalendarWidgetEvent(
     val startMillis: Long = 0L,
     val isExternal: Boolean = false,
     val isHoliday: Boolean = false,
+    val isMultiDay: Boolean = false,
 ) {
     val openEventId: String? get() = if (isHoliday) null else id
 }
@@ -84,6 +85,7 @@ internal object CalendarWidgetData {
                                 occurrence = event.optString("occurrence").takeIf { it.isNotBlank() },
                                 title = event.getString("title"),
                                 isAllDay = event.optBoolean("isAllDay"),
+                                isMultiDay = event.optBoolean("isMultiDay"),
                                 color = parseColor(event.optString("color")),
                                 textColor = parseColor(event.optString("textColor")),
                                 timeLabel = event.getString("timeLabel"),

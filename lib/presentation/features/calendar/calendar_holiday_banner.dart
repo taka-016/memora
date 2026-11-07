@@ -1,3 +1,4 @@
+import 'package:memora/presentation/features/calendar/calendar_preview_text.dart';
 import 'package:flutter/material.dart';
 
 class CalendarHolidayBanner extends StatelessWidget {
@@ -20,16 +21,15 @@ class CalendarHolidayBanner extends StatelessWidget {
       horizontal: compact ? 2 : 8,
       vertical: compact ? 0 : 8,
     ),
-    child: Text(
-      name,
-      maxLines: compact ? 1 : null,
-      overflow: compact ? TextOverflow.clip : null,
-      softWrap: !compact,
-      style: TextStyle(
-        color: Colors.white,
-        fontSize: compact ? 11 : null,
-        height: 1.4,
-      ),
-    ),
+    child: compact
+        ? CalendarPreviewText(
+            text: name,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 11,
+              height: 1.4,
+            ),
+          )
+        : Text(name, style: const TextStyle(color: Colors.white, height: 1.4)),
   );
 }

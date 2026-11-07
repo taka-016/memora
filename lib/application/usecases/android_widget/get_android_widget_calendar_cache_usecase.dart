@@ -71,6 +71,7 @@ class GetAndroidWidgetCalendarCacheUsecase {
             .toIso8601String(),
         'title': event.title,
         'isAllDay': event.isAllDay,
+        'isMultiDay': _isMultiDay(event),
         'color': label?.color ?? '#808080',
         'textColor': label?.textColor ?? '#FFFFFF',
         'timeLabel': event.isAllDay
@@ -114,6 +115,21 @@ class GetAndroidWidgetCalendarCacheUsecase {
       ...cachedMonths[dayFormat(first)]!,
       'months': cachedMonths,
     };
+  }
+
+  bool _isMultiDay(CalendarEventDto event) {
+    final start = event.isAllDay
+        ? event.startDateTime
+        : event.startDateTime.toLocal();
+    final end = event.isAllDay
+        ? event.endDateTime
+        : event.endDateTime.toLocal();
+    final last = end.isAfter(start)
+        ? end.subtract(const Duration(microseconds: 1))
+        : end;
+    return start.year != last.year ||
+        start.month != last.month ||
+        start.day != last.day;
   }
 
   bool _onDay(CalendarEventDto event, DateTime day) {

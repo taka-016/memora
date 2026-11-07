@@ -1,3 +1,4 @@
+import 'package:memora/presentation/features/calendar/calendar_preview_text.dart';
 import 'package:memora/presentation/features/calendar/calendar_holiday_banner.dart';
 import 'package:memora/application/models/calendar_display_settings.dart';
 import 'package:memora/application/services/calendar/japanese_calendar.dart';
@@ -233,7 +234,6 @@ class _CalendarWeekRow extends StatelessWidget {
                     ),
                     state: state,
                     event: entry.event,
-                    centered: true,
                     filled: entry.event.isAllDay || entry.isMultiDay,
                   ),
                 ),
@@ -399,7 +399,6 @@ class _CalendarDayCell extends StatelessWidget {
                         final preview = _CalendarEventPreview(
                           state: state,
                           event: entry.event,
-                          centered: entry.isMultiDay,
                           filled: entry.event.isAllDay || entry.isMultiDay,
                         );
                         if (lane == maxVisibleEvents - 1 && remaining > 0) {
@@ -464,11 +463,9 @@ class _CalendarEventPreview extends StatelessWidget {
     required this.state,
     required this.event,
     required this.filled,
-    this.centered = false,
   });
   final CalendarState state;
   final CalendarEventDto event;
-  final bool centered;
   final bool filled;
   @override
   Widget build(BuildContext context) {
@@ -492,12 +489,9 @@ class _CalendarEventPreview extends StatelessWidget {
                 ? null
                 : Border(left: BorderSide(color: color, width: 3)),
           ),
-          child: Text(
-            event.title,
-            maxLines: 1,
-            overflow: TextOverflow.clip,
-            softWrap: false,
-            textAlign: centered ? TextAlign.center : TextAlign.left,
+          child: CalendarPreviewText(
+            text: event.title,
+            centerWhenFits: filled,
             style: TextStyle(
               fontSize: 11,
               height: 1.4,
