@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <attr name="widgetBackgroundColor" format="color"/>
+    <attr name="widgetTextColor" format="color"/>
+    <attr name="widgetSecondaryTextColor" format="color"/>
+    <attr name="widgetDividerColor" format="color"/>
+    <attr name="widgetItineraryDividerColor" format="color"/>
+    <attr name="widgetSundayColor" format="color"/>
+    <attr name="widgetSaturdayColor" format="color"/>
+    <attr name="widgetIconColor" format="color"/>
+    <attr name="widgetRefreshIconColor" format="color"/>
+    <attr name="widgetPreviewTextColor" format="color"/>
+    <attr name="widgetPreviewSecondaryTextColor" format="color"/>
+    <attr name="widgetCalendarName" format="string"/>
+    <attr name="widgetItineraryName" format="string"/>
+
+    <attr name="widgetPreviewDate" format="string"/>
+    <attr name="widgetPreviewEvents" format="string"/>
+
+    <style name="MemoraWidgetLight" parent="">
+        <item name="widgetPreviewDate">@null</item>
+        <item name="widgetPreviewEvents">@null</item>
+        <item name="widgetBackgroundColor">#FFFFFF</item>
+        <item name="widgetTextColor">#212121</item>
+        <item name="widgetSecondaryTextColor">#616161</item>
+        <item name="widgetDividerColor">#EEEEEE</item>
+        <item name="widgetItineraryDividerColor">#E0E0E0</item>
+        <item name="widgetSundayColor">#D32F2F</item>
+        <item name="widgetSaturdayColor">#1976D2</item>
+        <item name="widgetIconColor">#212121</item>
+        <item name="widgetRefreshIconColor">#000000</item>
+        <item name="widgetPreviewTextColor">#222222</item>
+        <item name="widgetPreviewSecondaryTextColor">#444444</item>
+        <item name="widgetCalendarName">@string/calendar_widget_name</item>
+        <item name="widgetItineraryName">@string/itinerary_widget_light_name</item>
+    </style>
+
+    <style name="MemoraWidgetDark" parent="MemoraWidgetLight">
+        <item name="widgetBackgroundColor">#1E1E1E</item>
+        <item name="widgetTextColor">#EEEEEE</item>
+        <item name="widgetSecondaryTextColor">#BDBDBD</item>
+        <item name="widgetDividerColor">#424242</item>
+        <item name="widgetItineraryDividerColor">#424242</item>
+        <item name="widgetSundayColor">#FF8A80</item>
+        <item name="widgetSaturdayColor">#82B1FF</item>
+        <item name="widgetIconColor">#EEEEEE</item>
+        <item name="widgetRefreshIconColor">#FFFFFF</item>
+        <item name="widgetPreviewTextColor">#EEEEEE</item>
+        <item name="widgetPreviewSecondaryTextColor">#BDBDBD</item>
+        <item name="widgetCalendarName">@string/calendar_widget_dark_name</item>
+        <item name="widgetItineraryName">@string/itinerary_widget_dark_name</item>
+    </style>
+    <style name="MemoraWidgetPreviewLight" parent="MemoraWidgetLight">
+        <item name="widgetPreviewDate">@string/widget_preview_date</item>
+        <item name="widgetPreviewEvents">@string/widget_preview_events</item>
+    </style>
+
+    <style name="MemoraWidgetPreviewDark" parent="MemoraWidgetDark">
+        <item name="widgetPreviewDate">@string/widget_preview_date</item>
+        <item name="widgetPreviewEvents">@string/widget_preview_events</item>
+    </style>
+</resources>

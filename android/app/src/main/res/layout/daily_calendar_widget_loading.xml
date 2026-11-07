@@ -1,46 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent" android:layout_height="match_parent"
-    android:background="@drawable/calendar_widget_background" android:padding="4dp">
-    <LinearLayout android:id="@+id/calendar_content" android:layout_width="match_parent"
-        android:layout_height="match_parent" android:orientation="vertical">
-        <LinearLayout android:id="@+id/daily_compact_header" android:layout_width="match_parent"
-            android:layout_height="24dp" android:visibility="gone" android:gravity="center_vertical">
-            <TextView android:id="@+id/daily_compact_date" android:layout_width="0dp" android:layout_weight="1"
-                android:layout_height="match_parent" android:gravity="center" android:maxLines="1"
-                android:textSize="14sp" android:textColor="#212121" android:ellipsize="end"/>
-            <ImageView android:id="@+id/daily_compact_refresh" android:layout_width="24dp" android:layout_height="match_parent"
-                android:scaleType="fitCenter" android:src="@drawable/ic_widget_refresh" android:contentDescription="更新"/>
-        </LinearLayout>
-        <LinearLayout android:id="@+id/daily_navigation" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="48dp"
-            android:gravity="center_vertical" android:baselineAligned="false">
-            <TextView android:id="@+id/calendar_today" android:layout_width="0dp" android:layout_weight="1.2" android:layout_height="match_parent"
-                android:gravity="center" android:includeFontPadding="false" android:text="今日" android:textSize="16sp" android:textColor="#212121"/>
-            <ImageView android:id="@+id/calendar_previous" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent"
-                android:scaleType="fitCenter" android:src="@drawable/calendar_widget_previous" android:contentDescription="前日"/>
-            <TextView android:id="@+id/calendar_selected_date" android:text="11月8日(日)" android:layout_width="0dp" android:layout_weight="4"
-                android:layout_height="match_parent" android:gravity="center" android:includeFontPadding="false"
-                android:textSize="18sp" android:textColor="#212121" android:maxLines="1" android:ellipsize="end"/>
-            <ImageView android:id="@+id/calendar_next" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent"
-                android:scaleType="fitCenter" android:src="@drawable/calendar_widget_next" android:contentDescription="翌日"/>
-            <ImageView android:id="@+id/calendar_add" android:layout_width="0dp" android:layout_weight="1.2" android:layout_height="match_parent"
-                android:scaleType="fitCenter" android:src="@drawable/calendar_widget_add" android:contentDescription="予定を追加"/>
-        </LinearLayout>
-        <TextView android:layout_width="match_parent" android:layout_height="1dp" android:background="#EEEEEE"/>
-        <FrameLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1">
-            <ListView android:id="@+id/calendar_events" android:layout_width="match_parent" android:layout_height="match_parent"
-                android:divider="@android:color/transparent" android:dividerHeight="0dp" android:scrollbars="vertical"/>
-            <TextView android:id="@+id/calendar_empty" android:text="今日の予定" android:layout_width="match_parent" android:layout_height="match_parent"
-                android:gravity="center" android:textSize="12sp" android:textColor="#616161"/>
-        </FrameLayout>
-        <LinearLayout android:id="@+id/daily_footer" android:layout_width="match_parent" android:layout_height="24dp" android:gravity="center_vertical">
-            <TextView android:id="@+id/calendar_last_updated" android:layout_width="0dp" android:layout_weight="1"
-                android:layout_height="match_parent" android:gravity="end|center_vertical"
-                android:textSize="9sp" android:textColor="#616161" android:maxLines="1" android:ellipsize="end"/>
-            <ImageView android:id="@+id/calendar_refresh" android:layout_width="24dp" android:layout_height="match_parent"
-                android:scaleType="fitCenter" android:src="@drawable/ic_widget_refresh" android:contentDescription="更新"/>
-        </LinearLayout>
-    </LinearLayout>
-    <TextView android:id="@+id/calendar_message" android:layout_width="match_parent" android:layout_height="match_parent"
-        android:text="表示対象グループを設定してください" android:gravity="center" android:textSize="12sp" android:textColor="#212121" android:visibility="gone"/>
+    android:layout_width="match_parent" android:layout_height="match_parent">
+    <include layout="@layout/daily_calendar_widget" android:theme="@style/MemoraWidgetPreviewLight"
+        android:layout_width="match_parent" android:layout_height="match_parent"/>
 </FrameLayout>
