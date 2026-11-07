@@ -7,6 +7,7 @@ import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:home_widget/home_widget.dart';
+import 'package:memora/infrastructure/services/home_widget_load_state_storage.dart';
 import 'package:memora/application/dtos/android_widget/android_widget_itinerary_cache_dto.dart';
 import 'package:memora/application/services/android_widget_cache_storage.dart';
 import 'package:path_provider/path_provider.dart';
@@ -21,6 +22,19 @@ class HomeWidgetAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
   static const cacheFileKey = 'memora_widget_itinerary_cache';
   static const qualifiedAndroidName =
       'com.example.memora.ItineraryWidgetReceiver';
+
+  Future<void> trackItineraryLoading(
+    String groupId,
+    String? selectedId,
+    Future<void> Function() action,
+    bool updateWidgetAfterRefresh,
+  ) async {
+    await const HomeWidgetLoadStateStorage().track(
+      'memora_widget_itinerary_load_${groupId}_${selectedId ?? 'recent'}',
+      action,
+      update: updateWidgetAfterRefresh ? updateWidget : () async {},
+    );
+  }
 
   @override
   Future<String?> getTargetGroupId() async {

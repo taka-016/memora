@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:home_widget/home_widget.dart';
+import 'package:memora/infrastructure/services/home_widget_load_state_storage.dart';
 import 'package:path_provider/path_provider.dart';
 
 class HomeWidgetCalendarCacheStorage {
@@ -25,23 +26,9 @@ class HomeWidgetCalendarCacheStorage {
     DateTime month,
     Future<void> Function() action,
   ) async {
-    final key = loadStateKey(groupId, month);
-    final request = 'loading:${DateTime.now().microsecondsSinceEpoch}';
-    await HomeWidget.saveWidgetData<String>(key, request);
-    try {
-      await update();
-      await action();
-      if (await HomeWidget.getWidgetData<String>(key) == request) {
-        await HomeWidget.saveWidgetData<String>(key, null);
-      }
-    } catch (_) {
-      if (await HomeWidget.getWidgetData<String>(key) == request) {
-        await HomeWidget.saveWidgetData<String>(key, 'failed');
-      }
-      rethrow;
-    } finally {
-      await update();
-    }
+    await const HomeWidgetLoadStateStorage().track(
+      loadStateKey(groupId, month), action, update: update,
+    );
   }
 
   Future<Map<String, dynamic>?> _load() async {

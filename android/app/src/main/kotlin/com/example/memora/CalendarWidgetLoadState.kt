@@ -18,3 +18,6 @@ internal enum class CalendarWidgetLoadState(val message: String, val canRetry: B
 
 internal fun calendarWidgetLoadStateKey(groupId: String, date: LocalDate): String =
     "memora_widget_calendar_load_${groupId}_${date.withDayOfMonth(1)}"
+
+internal fun itineraryWidgetLoadStateKey(groupId: String, selectedId: String?): String =
+    "memora_widget_itinerary_load_${groupId}_${selectedId ?: "recent"}"
