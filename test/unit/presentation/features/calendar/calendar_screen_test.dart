@@ -10,7 +10,66 @@ import 'package:memora/application/dtos/calendar/calendar_label_dto.dart';
 
 import 'calendar_test_support.dart';
 
+void _useTallScreen(WidgetTester tester) {
+  tester.view.physicalSize = const Size(800, 900);
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
+}
+
 void main() {
+  for (final textScale in [1.0, 1.5]) {
+    testWidgets('6週の月は小画面でも予定件数を減らして縦スクロールせず表示する（文字倍率$textScale）', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(320, 640);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final harness = CalendarTestHarness()
+        ..savedEvents.addAll([
+          for (var i = 1; i <= 6; i++)
+            calendarTestEvent('e$i', '予定$i').copyWith(
+              startDateTime: DateTime(2026, 11, 1, 9),
+              endDateTime: DateTime(2026, 11, 1, 10),
+            ),
+        ]);
+      await harness.pump(
+        tester,
+        now: DateTime(2026, 11, 1),
+        textScale: textScale,
+      );
+      final grid = find.byKey(const Key('calendar_month_grid'));
+      final first = find.byKey(const Key('calendar_day_2026_11_1'));
+      final last = find.byKey(const Key('calendar_day_2026_11_30'));
+      final bounds = tester.getRect(grid);
+      expect(bounds.contains(tester.getCenter(first)), isTrue);
+      expect(bounds.contains(tester.getCenter(last)), isTrue);
+      final visible = find
+          .descendant(
+            of: first,
+            matching: find.textContaining(RegExp(r'^予定[1-6]$')),
+          )
+          .evaluate()
+          .length;
+      expect(visible, inInclusiveRange(1, 4));
+      expect(
+        find.descendant(of: first, matching: find.text('+${6 - visible}')),
+        findsOneWidget,
+      );
+      final before = tester.getRect(last);
+      await tester.drag(grid, const Offset(0, -150));
+      await tester.pumpAndSettle();
+      expect(tester.getRect(last), before);
+      await tester.tap(last);
+      await tester.pump();
+      await tester.tap(last);
+      await tester.pumpAndSettle();
+      expect(find.text('2026/11/30の予定'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
   testWidgets('長いメンバー名は省略して末尾の「の予定」を表示し選択して保存できる', (tester) async {
     tester.view.physicalSize = const Size(320, 640);
     tester.view.devicePixelRatio = 1;
@@ -118,6 +177,7 @@ void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
   for (final count in [5, 6]) {
     testWidgets('各日の枠に5件まで表示し全$count件を一覧で確認できる', (tester) async {
+      _useTallScreen(tester);
       final harness = CalendarTestHarness()
         ..savedEvents.addAll([
           for (var i = 1; i <= count; i++) calendarTestEvent('e$i', '予定$i'),
@@ -184,6 +244,7 @@ void main() {
   });
 
   testWidgets('複数日の帯が5段ある日も帯に隠れず残件数を表示する', (tester) async {
+    _useTallScreen(tester);
     final harness = CalendarTestHarness()
       ..savedEvents.addAll([
         for (var i = 1; i <= 6; i++)

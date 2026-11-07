@@ -307,6 +307,7 @@ internal object CalendarWidgetRenderer {
         setViewVisibility(R.id.calendar_preview_more, if (event.remainingCount > 0) View.VISIBLE else View.GONE)
         setTextViewText(R.id.calendar_preview_more, "+${event.remainingCount}")
         setTextColor(R.id.calendar_preview_more, if (event.isAllDay) event.textColor else appearance.text)
+        setViewPadding(R.id.calendar_preview_title, if (event.isAllDay) dp(context, 2) else 0, 0, 0, 0)
         setTextViewText(R.id.calendar_preview_title, event.title)
         setTextColor(R.id.calendar_preview_title, if (event.isAllDay) event.textColor else appearance.text)
     }
