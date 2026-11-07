@@ -1,3 +1,6 @@
+import 'package:memora/application/models/calendar_display_settings.dart';
+import 'package:memora/application/services/calendar/japanese_calendar.dart';
+import 'package:memora/presentation/features/calendar/calendar_date_color.dart';
 import 'package:flutter/material.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/presentation/features/calendar/calendar_event_dialog.dart';
@@ -12,7 +15,9 @@ class CalendarMonthGrid extends StatefulWidget {
     required this.state,
     required this.onSelectDay,
     required this.onMoveMonth,
+    this.settings = const CalendarDisplaySettings(),
   });
+  final CalendarDisplaySettings settings;
   final CalendarState state;
   final ValueChanged<DateTime> onSelectDay;
   final ValueChanged<int> onMoveMonth;
@@ -72,6 +77,7 @@ class _CalendarMonthGridState extends State<CalendarMonthGrid> {
       return _CalendarMonthPage(
         key: ValueKey('calendar_month_${month.year}_${month.month}'),
         state: widget.state,
+        settings: widget.settings,
         month: month,
         onSelectDay: widget.onSelectDay,
       );
@@ -83,16 +89,18 @@ class _CalendarMonthPage extends StatelessWidget {
   const _CalendarMonthPage({
     super.key,
     required this.state,
+    required this.settings,
     required this.month,
     required this.onSelectDay,
   });
+  final CalendarDisplaySettings settings;
   final CalendarState state;
   final DateTime month;
   final ValueChanged<DateTime> onSelectDay;
 
   @override
   Widget build(BuildContext context) {
-    final firstOffset = month.weekday % 7;
+    final firstOffset = (month.weekday - settings.weekStart.weekday + 7) % 7;
     final days = DateTime(month.year, month.month + 1, 0).day;
     final rows = ((firstOffset + days) / 7).ceil();
     return LayoutBuilder(
@@ -112,6 +120,7 @@ class _CalendarMonthPage extends StatelessWidget {
                   ),
                   child: _CalendarWeekRow(
                     state: state,
+                    showRokuyo: settings.showRokuyo,
                     weekStart: DateTime(
                       month.year,
                       month.month,
@@ -132,10 +141,12 @@ class _CalendarMonthPage extends StatelessWidget {
 class _CalendarWeekRow extends StatelessWidget {
   const _CalendarWeekRow({
     required this.state,
+    required this.showRokuyo,
     required this.weekStart,
     required this.month,
     required this.onSelectDay,
   });
+  final bool showRokuyo;
   final CalendarState state;
   final DateTime weekStart;
   final DateTime month;
@@ -179,6 +190,7 @@ class _CalendarWeekRow extends StatelessWidget {
                         }
                         return _CalendarDayCell(
                           state: state,
+                          showRokuyo: showRokuyo,
                           date: date,
                           entries: layout.entries
                               .where(
@@ -270,6 +282,7 @@ class _CalendarWeekRow extends StatelessWidget {
 class _CalendarDayCell extends StatelessWidget {
   const _CalendarDayCell({
     required this.state,
+    required this.showRokuyo,
     required this.date,
     required this.onTap,
     required this.entries,
@@ -278,6 +291,7 @@ class _CalendarDayCell extends StatelessWidget {
     required this.lastLaneOccupied,
     required this.laneHeight,
   });
+  final bool showRokuyo;
   final CalendarState state;
   final DateTime date;
   final VoidCallback? onTap;
@@ -295,7 +309,7 @@ class _CalendarDayCell extends StatelessWidget {
       selected: selected,
       button: true,
       label:
-          '${calendarDateText(date)}、予定${state.eventsForDay(date).length}件${selected ? '、再タップで予定一覧' : ''}',
+          '${calendarDateText(date)}${JapaneseCalendar.holidayName(date) == null ? '' : '、${JapaneseCalendar.holidayName(date)}'}、予定${state.eventsForDay(date).length}件${selected ? '、再タップで予定一覧' : ''}',
       child: Material(
         color: selected
             ? scheme.primaryContainer.withValues(alpha: .35)
@@ -312,9 +326,29 @@ class _CalendarDayCell extends StatelessWidget {
                   height: MediaQuery.textScalerOf(context).scale(14) * 1.4,
                   child: FittedBox(
                     fit: BoxFit.scaleDown,
-                    child: Text(
-                      '${date.day}',
-                      style: const TextStyle(fontSize: 14, height: 1.4),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          '${date.day}',
+                          style: TextStyle(
+                            fontSize: 14,
+                            height: 1.4,
+                            color: calendarDateColor(
+                              date,
+                              Theme.of(context).brightness,
+                            ),
+                          ),
+                        ),
+                        if (showRokuyo) ...[
+                          const SizedBox(width: 2),
+                          Text(
+                            JapaneseCalendar.rokuyo(date),
+                            style: const TextStyle(fontSize: 8, height: 1.4),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
                 ),

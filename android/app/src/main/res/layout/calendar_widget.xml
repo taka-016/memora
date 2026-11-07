@@ -24,13 +24,13 @@
                 android:contentDescription="予定を追加"/>
         </LinearLayout>
         <LinearLayout android:id="@+id/calendar_weekdays" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="20dp">
-            <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:gravity="center" android:text="日" android:textSize="11sp" android:textColor="?attr/widgetSundayColor"/>
-            <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:gravity="center" android:text="月" android:textSize="11sp" android:textColor="?attr/widgetSecondaryTextColor"/>
-            <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:gravity="center" android:text="火" android:textSize="11sp" android:textColor="?attr/widgetSecondaryTextColor"/>
-            <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:gravity="center" android:text="水" android:textSize="11sp" android:textColor="?attr/widgetSecondaryTextColor"/>
-            <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:gravity="center" android:text="木" android:textSize="11sp" android:textColor="?attr/widgetSecondaryTextColor"/>
-            <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:gravity="center" android:text="金" android:textSize="11sp" android:textColor="?attr/widgetSecondaryTextColor"/>
-            <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:gravity="center" android:text="土" android:textSize="11sp" android:textColor="?attr/widgetSaturdayColor"/>
+            <TextView android:id="@+id/calendar_weekday_0" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:gravity="center" android:text="日" android:textSize="11sp" android:textColor="?attr/widgetSundayColor"/>
+            <TextView android:id="@+id/calendar_weekday_1" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:gravity="center" android:text="月" android:textSize="11sp" android:textColor="?attr/widgetSecondaryTextColor"/>
+            <TextView android:id="@+id/calendar_weekday_2" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:gravity="center" android:text="火" android:textSize="11sp" android:textColor="?attr/widgetSecondaryTextColor"/>
+            <TextView android:id="@+id/calendar_weekday_3" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:gravity="center" android:text="水" android:textSize="11sp" android:textColor="?attr/widgetSecondaryTextColor"/>
+            <TextView android:id="@+id/calendar_weekday_4" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:gravity="center" android:text="木" android:textSize="11sp" android:textColor="?attr/widgetSecondaryTextColor"/>
+            <TextView android:id="@+id/calendar_weekday_5" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:gravity="center" android:text="金" android:textSize="11sp" android:textColor="?attr/widgetSecondaryTextColor"/>
+            <TextView android:id="@+id/calendar_weekday_6" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:gravity="center" android:text="土" android:textSize="11sp" android:textColor="?attr/widgetSaturdayColor"/>
         </LinearLayout>
         <LinearLayout android:id="@+id/calendar_week_0" android:layout_width="match_parent" android:layout_height="wrap_content" android:baselineAligned="false">
             <LinearLayout android:id="@+id/calendar_day_0" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:orientation="vertical" android:padding="1dp"/>

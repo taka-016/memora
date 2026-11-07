@@ -1,3 +1,4 @@
+import 'package:memora/application/services/calendar/japanese_calendar.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/application/models/app_mode.dart';
 import 'package:memora/application/services/current_user_service.dart';
@@ -29,12 +30,12 @@ class GetAndroidWidgetCalendarCacheUsecase {
     if (group == null) return null;
     DateTime gridStart(DateTime value) {
       final first = DateTime(value.year, value.month);
-      return DateTime(first.year, first.month, 1 - first.weekday % 7);
+      return DateTime(first.year, first.month, 1 - 6);
     }
 
     DateTime gridEnd(DateTime value) {
       final last = DateTime(value.year, value.month + 1, 0);
-      return DateTime(last.year, last.month, last.day + 7 - last.weekday % 7);
+      return DateTime(last.year, last.month, last.day + 7);
     }
 
     final first = DateTime(month.year, month.month);
@@ -89,6 +90,8 @@ class GetAndroidWidgetCalendarCacheUsecase {
       ) {
         days.add({
           'date': dayFormat(day),
+          'holidayName': JapaneseCalendar.holidayName(day),
+          'rokuyo': JapaneseCalendar.rokuyo(day),
           'events': occurrences
               .where((event) => _onDay(event, day))
               .map(item)

@@ -27,6 +27,8 @@ internal val calendarWidgetEventOrder = compareByDescending<CalendarWidgetEvent>
 internal data class CalendarWidgetDay(
     val date: LocalDate,
     val events: List<CalendarWidgetEvent>,
+    val holidayName: String? = null,
+    val rokuyo: String? = null,
 )
 
 internal data class CalendarWidgetMonth(
@@ -87,6 +89,8 @@ internal object CalendarWidgetData {
                                 startMillis = event.optLong("startMillis"),
                             )
                         },
+                        holidayName = day.optString("holidayName").takeIf { !day.isNull("holidayName") && it.isNotBlank() },
+                        rokuyo = day.optString("rokuyo").takeIf { !day.isNull("rokuyo") && it.isNotBlank() },
                     )
                 }
                 val date = LocalDate.parse(key)
@@ -109,7 +113,9 @@ internal object CalendarWidgetData {
 
     fun readMonth(context: Context, cache: CalendarWidgetCache, month: LocalDate): CalendarWidgetMonth? {
         val stored = cache.months[month] ?: return null
-        val shared = stored.copy(days = stored.days.map { day ->
+        val aligned = calendarWidgetMonthForDisplay(stored,
+            CalendarWidgetDisplaySettings.read(context).weekStartsOnMonday)
+        val shared = aligned.copy(days = aligned.days.map { day ->
             day.copy(events = day.events.sortedWith(calendarWidgetEventOrder))
         })
         return DeviceCalendarWidgetSource.read(context, cache, shared)
@@ -151,14 +157,8 @@ internal object CalendarWidgetData {
             .remove(dateKey(widgetId)).remove(groupKey(widgetId)).apply()
     }
 
-    fun emptyMonth(month: LocalDate): CalendarWidgetMonth {
-        val offset = month.dayOfWeek.value % 7
-        val start = month.minusDays(offset.toLong())
-        val count = ((offset + month.lengthOfMonth() + 6) / 7) * 7
-        return CalendarWidgetMonth(month, List(count) { index ->
-            CalendarWidgetDay(start.plusDays(index.toLong()), emptyList())
-        })
-    }
+    fun emptyMonth(month: LocalDate, weekStartsOnMonday: Boolean = false): CalendarWidgetMonth =
+        calendarWidgetMonthForDisplay(CalendarWidgetMonth(month, emptyList()), weekStartsOnMonday)
 
     private fun dateKey(widgetId: Int) = "memora_calendar_date_$widgetId"
     private fun groupKey(widgetId: Int) = "memora_calendar_group_$widgetId"

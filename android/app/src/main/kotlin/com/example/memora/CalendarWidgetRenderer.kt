@@ -28,6 +28,7 @@ internal object CalendarWidgetRenderer {
         val selected: LocalDate,
         val lastUpdatedAt: String,
         val appearance: WidgetAppearance,
+        val settings: CalendarWidgetDisplaySettings,
     )
     private data class MonthViews(val portrait: RemoteViews, val landscape: RemoteViews)
 
@@ -102,9 +103,10 @@ internal object CalendarWidgetRenderer {
                 options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 280),
             ),
         )
+        val settings = CalendarWidgetDisplaySettings.read(context)
         val next = RenderedState(
-            groupId, cachedMonth ?: CalendarWidgetData.emptyMonth(month), cachedMonth != null,
-            loadState, sizes, LocalDate.now(), selected, cache.lastUpdatedAt, appearance,
+            groupId, cachedMonth ?: CalendarWidgetData.emptyMonth(month, settings.weekStartsOnMonday), cachedMonth != null,
+            loadState, sizes, LocalDate.now(), selected, cache.lastUpdatedAt, appearance, settings,
         )
         val previous = states[widgetId]
         val full = forceFull || previous == null || monthViews[widgetId] == null ||
@@ -137,6 +139,18 @@ internal object CalendarWidgetRenderer {
         size: Size,
     ) {
         val month = state.month.month
+        val weekdayIds = intArrayOf(
+            R.id.calendar_weekday_0, R.id.calendar_weekday_1, R.id.calendar_weekday_2,
+            R.id.calendar_weekday_3, R.id.calendar_weekday_4, R.id.calendar_weekday_5, R.id.calendar_weekday_6,
+        )
+        state.settings.weekdays.forEachIndexed { index, name ->
+            views.setTextViewText(weekdayIds[index], name)
+            views.setTextColor(weekdayIds[index], when (name) {
+                "日" -> state.appearance.sunday
+                "土" -> state.appearance.saturday
+                else -> state.appearance.text
+            })
+        }
         val compactHeader = size.width < 316
         val shortWidget = size.height < 324
         val headerHeight = if (shortWidget) 40 else 56
@@ -195,10 +209,14 @@ internal object CalendarWidgetRenderer {
             cell.setTextViewText(R.id.calendar_day_number, day.date.dayOfMonth.toString())
             cell.setTextColor(R.id.calendar_day_number, when {
                 day.date.month != month.month -> state.appearance.mutedDate
-                day.date.dayOfWeek.value == 7 -> state.appearance.sunday
-                day.date.dayOfWeek.value == 6 -> state.appearance.saturday
-                else -> state.appearance.text
+                else -> day.dateColor(state.appearance)
             })
+            cell.setTextViewText(R.id.calendar_day_rokuyo, day.rokuyo.orEmpty())
+            cell.setTextColor(R.id.calendar_day_rokuyo, if (day.date.month != month.month) {
+                state.appearance.mutedDate
+            } else state.appearance.text)
+            cell.setViewVisibility(R.id.calendar_day_rokuyo,
+                if (state.settings.showRokuyo && !day.rokuyo.isNullOrEmpty()) View.VISIBLE else View.GONE)
             cell.setInt(R.id.calendar_day_number, "setPaintFlags", if (day.date == state.today) {
                 android.graphics.Paint.FAKE_BOLD_TEXT_FLAG or android.graphics.Paint.ANTI_ALIAS_FLAG
             } else {
@@ -242,7 +260,11 @@ internal object CalendarWidgetRenderer {
                 setDaySelection(views, dayIds[index], day, true, state.appearance)
             }
         }
-        views.setTextViewText(R.id.calendar_selected_date, state.selected.format(dateFormat))
+        val selectedDay = state.month.days.firstOrNull { it.date == state.selected }
+        views.setTextViewText(R.id.calendar_selected_date,
+            calendarWidgetDateLabel(state.selected.format(dateFormat), selectedDay, state.settings))
+        views.setTextColor(R.id.calendar_selected_date,
+            (selectedDay ?: CalendarWidgetDay(state.selected, emptyList())).dateColor(state.appearance))
         val lastUpdatedAt = state.lastUpdatedAt.replace("-", "/").replace("T", " ").take(16)
         views.setTextViewText(R.id.calendar_last_updated, "最終更新 $lastUpdatedAt")
         views.setViewVisibility(
@@ -288,7 +310,7 @@ internal object CalendarWidgetRenderer {
     ) {
         views.setInt(id, "setBackgroundColor", if (selected) appearance.selected else appearance.background)
         views.setContentDescription(
-            id, "${day.date.format(dateFormat)}、予定${day.events.size}件${if (selected) "、選択中" else ""}",
+            id, "${day.date.format(dateFormat)}${day.holidayName?.let { "、$it" }.orEmpty()}、予定${day.events.size}件${if (selected) "、選択中" else ""}",
         )
     }
 
