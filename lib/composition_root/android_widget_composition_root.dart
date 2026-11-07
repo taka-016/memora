@@ -1,3 +1,7 @@
+import 'package:memora/infrastructure/services/home_widget_android_widget_cache_storage.dart';
+
+import 'dart:io';
+
 import 'package:memora/composition_root/providers/calendar_widget_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/models/app_mode.dart';
@@ -80,6 +84,9 @@ Future<void> withAndroidWidgetDependencies(
         getAndroidWidgetItineraryCacheUsecaseProvider,
       ),
       mode: mode,
+      trackLoading: Platform.isAndroid
+          ? const HomeWidgetAndroidWidgetCacheStorage().trackItineraryLoading
+          : null,
       refreshCalendar: (groupId) =>
           container!.read(refreshCalendarWidgetProvider)(groupId, null),
       readTransaction: container.read(androidWidgetReadTransactionProvider),

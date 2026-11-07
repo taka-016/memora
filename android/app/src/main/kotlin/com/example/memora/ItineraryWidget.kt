@@ -36,11 +36,16 @@ open class ItineraryWidgetReceiver : AppWidgetProvider() {
                 provider != ItineraryDarkWidgetReceiver::class.java.name) return
             val action = intent.getStringExtra("operation") ?: return
             if (action == "refresh") {
+                val cache = ItineraryWidgetData.read(context)
+                ItineraryWidgetData.startLoading(context, cache?.let { ItineraryWidgetData.selectedId(context, it) })
+                updateAll(context, manager)
                 requestItineraryRefresh(context, manual = true)
                 return
             }
             val cache = ItineraryWidgetData.read(context)
             if (cache == null) {
+                ItineraryWidgetData.startLoading(context, null)
+                updateAll(context, manager)
                 requestItineraryRefresh(context, extendCache = true)
                 return
             }
@@ -58,20 +63,15 @@ open class ItineraryWidgetReceiver : AppWidgetProvider() {
                 else -> null
             } ?: return
             ItineraryWidgetData.select(context, target)
-            val widgetIds = listOf(
-                ItineraryWidgetReceiver::class.java, ItineraryDarkWidgetReceiver::class.java,
-            ).flatMap { receiver ->
-                manager.getAppWidgetIds(android.content.ComponentName(context, receiver)).toList()
-            }.toIntArray()
-            onUpdate(context, manager, widgetIds)
             val targetIndex = cache.dateIds.indexOf(target)
             val cachedIds = cache.dates.map { it.id }.toSet()
             val missingNeighbor = listOfNotNull(
                 cache.dateIds.getOrNull(targetIndex - 1), cache.dateIds.getOrNull(targetIndex + 1),
             ).any { it !in cachedIds }
-            if (target !in cachedIds || (target != current && missingNeighbor)) {
-                requestItineraryRefresh(context, extendCache = true)
-            }
+            val needsRefresh = target !in cachedIds || (target != current && missingNeighbor)
+            if (needsRefresh) ItineraryWidgetData.startLoading(context, target)
+            updateAll(context, manager)
+            if (needsRefresh) requestItineraryRefresh(context, extendCache = true)
         } else if (intent.action == AppWidgetManager.ACTION_APPWIDGET_UPDATE &&
             !intent.getBooleanExtra(HomeWidgetPlugin.TRIGGERED_FROM_HOME_WIDGET, false)) {
             AndroidWidgetUpdateFallbackScheduler.schedule(context)
@@ -79,6 +79,16 @@ open class ItineraryWidgetReceiver : AppWidgetProvider() {
             requestItineraryRefresh(context)
         }
     }
+
+    private fun updateAll(context: Context, manager: AppWidgetManager) {
+        val widgetIds = listOf(
+            ItineraryWidgetReceiver::class.java, ItineraryDarkWidgetReceiver::class.java,
+        ).flatMap { receiver ->
+            manager.getAppWidgetIds(android.content.ComponentName(context, receiver)).toList()
+        }.toIntArray()
+        onUpdate(context, manager, widgetIds)
+    }
+
 }
 
 internal fun itineraryWidgetAction(context: Context, widgetId: Int, operation: String): PendingIntent {

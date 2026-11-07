@@ -83,6 +83,18 @@ internal object ItineraryWidgetData {
             ?: cache.selectedId ?: cache.dates.firstOrNull()?.id
     }
 
+    fun loadState(context: Context, selectedId: String?): WidgetLoadState =
+        WidgetLoadState.fromValue(HomeWidgetPlugin.getData(context).getString(
+            itineraryWidgetLoadStateKey(targetGroup(context), selectedId), null,
+        ))
+
+    fun startLoading(context: Context, selectedId: String?) {
+        val groupId = targetGroup(context)
+        if (groupId.isEmpty()) return
+        HomeWidgetPlugin.getData(context).edit()
+            .putString(itineraryWidgetLoadStateKey(groupId, selectedId), "loading").apply()
+    }
+
     fun select(context: Context, id: String) {
         HomeWidgetPlugin.getData(context).edit().putString(SELECTED_KEY, id).apply()
     }

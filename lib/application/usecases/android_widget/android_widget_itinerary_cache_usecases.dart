@@ -15,6 +15,13 @@ import 'package:memora/application/usecases/android_widget/update_android_widget
 
 enum AndroidWidgetItineraryDateMoveDirection { previous, next }
 
+typedef TrackAndroidWidgetItineraryLoading = Future<void> Function(
+  String groupId,
+  String? selectedId,
+  Future<void> Function() action,
+  bool updateWidgetAfterRefresh,
+);
+
 class RefreshAndroidWidgetItineraryCacheUsecase {
   const RefreshAndroidWidgetItineraryCacheUsecase({
     required this._cacheStorage,
@@ -22,6 +29,7 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
     required this._groupQueryService,
     this._mode = AppMode.online,
     this.refreshCalendar,
+    this.trackLoading,
     this._readTransaction,
   });
 
@@ -31,6 +39,7 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
   final AppMode _mode;
   final Future<void> Function(String groupId)? refreshCalendar;
   final ReadTransaction? _readTransaction;
+  final TrackAndroidWidgetItineraryLoading? trackLoading;
 
   Future<void> executeForSelectedGroup() async {
     final groupId = await _cacheStorage.getTargetGroupId();
@@ -46,6 +55,32 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
     String? selectedItineraryDateId,
     bool updateWidgetAfterRefresh = true,
     bool extendCache = false,
+  }) async {
+    Future<void> refresh() => _execute(
+      groupId: groupId,
+      selectedItineraryDateId: selectedItineraryDateId,
+      updateWidgetAfterRefresh:
+          trackLoading == null && updateWidgetAfterRefresh,
+      extendCache: extendCache,
+    );
+    final tracker = trackLoading;
+    if (tracker == null) {
+      await refresh();
+    } else {
+      await tracker(
+        groupId,
+        selectedItineraryDateId,
+        refresh,
+        updateWidgetAfterRefresh,
+      );
+    }
+  }
+
+  Future<void> _execute({
+    required String groupId,
+    String? selectedItineraryDateId,
+    required bool updateWidgetAfterRefresh,
+    required bool extendCache,
   }) async {
     try {
       Future<AndroidWidgetItineraryCacheDto?> read() async {

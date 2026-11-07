@@ -1,3 +1,4 @@
+import 'package:memora/infrastructure/services/home_widget_android_widget_cache_storage.dart';
 import 'package:memora/composition_root/providers/calendar_widget_providers.dart';
 
 import 'dart:io';
@@ -39,6 +40,9 @@ final refreshAndroidWidgetItineraryCacheUsecaseProvider =
           getAndroidWidgetItineraryCacheUsecaseProvider,
         ),
         mode: ref.watch(appModeProvider),
+        trackLoading: Platform.isAndroid
+            ? const HomeWidgetAndroidWidgetCacheStorage().trackItineraryLoading
+            : null,
         refreshCalendar: (groupId) =>
             ref.read(refreshCalendarWidgetProvider)(groupId, null),
         readTransaction: ref.watch(androidWidgetReadTransactionProvider),

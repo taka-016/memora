@@ -15,6 +15,10 @@ internal object ItineraryWidgetRenderer {
         val targetGroup = ItineraryWidgetData.targetGroup(context)
         val selected = cache?.let { ItineraryWidgetData.selectedId(context, it) }
         val date = cache?.dates?.firstOrNull { it.id == selected }
+        val loadState = ItineraryWidgetData.loadState(context, selected)
+        val loadingMessage = if (loadState == WidgetLoadState.IDLE) {
+            "タップして旅程を読み込む"
+        } else loadState.message
         val appearance = WidgetAppearance.forWidget(manager, widgetId)
         val views = RemoteViews(context.packageName, appearance.itineraryLayout)
         views.setOnClickPendingIntent(R.id.itinerary_refresh, itineraryWidgetAction(context, widgetId, "refresh"))
@@ -26,16 +30,16 @@ internal object ItineraryWidgetRenderer {
             views.setViewVisibility(R.id.itinerary_message, View.VISIBLE)
             views.setTextViewText(R.id.itinerary_message, when {
                 targetGroup.isEmpty() -> "表示対象グループが未設定です"
-                cache == null -> "タップして旅程を読み込む"
+                cache == null || loadState != WidgetLoadState.IDLE -> loadingMessage
                 else -> "表示できる旅程がありません"
             })
             views.setOnClickPendingIntent(R.id.itinerary_message, if (targetGroup.isEmpty()) {
                 HomeWidgetLaunchIntent.getActivity(
                     context, MainActivity::class.java, Uri.parse("memoraWidget://openSettings"),
                 )
-            } else {
+            } else if (loadState.canRetry) {
                 itineraryWidgetAction(context, widgetId, "refresh")
-            })
+            } else null)
             manager.updateAppWidget(widgetId, views)
             return
         }
@@ -44,8 +48,8 @@ internal object ItineraryWidgetRenderer {
         views.setTextViewText(R.id.itinerary_trip_name, date?.tripName ?: "旅程を取得してください")
         views.setTextViewText(R.id.itinerary_trip_period, date?.tripPeriodLabel.orEmpty())
         views.setTextViewText(R.id.itinerary_date, date?.dateLabel.orEmpty())
-        views.setTextViewText(R.id.itinerary_empty, if (date == null) "タップして旅程を読み込む" else "旅程項目がありません")
-        views.setOnClickPendingIntent(R.id.itinerary_empty, if (date == null) {
+        views.setTextViewText(R.id.itinerary_empty, if (date == null) loadingMessage else "旅程項目がありません")
+        views.setOnClickPendingIntent(R.id.itinerary_empty, if (date == null && loadState.canRetry) {
             itineraryWidgetAction(context, widgetId, "refresh")
         } else null)
         views.setOnClickPendingIntent(R.id.itinerary_previous, itineraryWidgetAction(context, widgetId, "previous"))

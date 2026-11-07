@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:home_widget/home_widget.dart';
+import 'package:memora/infrastructure/services/home_widget_load_state_storage.dart';
 import 'package:path_provider/path_provider.dart';
 
 class HomeWidgetCalendarCacheStorage {
@@ -11,6 +12,26 @@ class HomeWidgetCalendarCacheStorage {
   static const selectedDateKey = 'memora_widget_calendar_selected_date';
   static const qualifiedAndroidName =
       'com.example.memora.CalendarWidgetReceiver';
+
+  static String loadStateKey(String groupId, DateTime date) {
+    final month = DateTime(
+      date.year,
+      date.month,
+    ).toIso8601String().substring(0, 10);
+    return 'memora_widget_calendar_load_${groupId}_$month';
+  }
+
+  Future<void> refresh(
+    String groupId,
+    DateTime month,
+    Future<void> Function() action,
+  ) async {
+    await const HomeWidgetLoadStateStorage().track(
+      loadStateKey(groupId, month),
+      action,
+      update: update,
+    );
+  }
 
   Future<Map<String, dynamic>?> _load() async {
     final path = await HomeWidget.getWidgetData<String>(cacheKey);
@@ -84,6 +105,13 @@ class HomeWidgetCalendarCacheStorage {
     await HomeWidget.updateWidget(qualifiedAndroidName: qualifiedAndroidName);
     await HomeWidget.updateWidget(
       qualifiedAndroidName: 'com.example.memora.CalendarDarkWidgetReceiver',
+    );
+    await HomeWidget.updateWidget(
+      qualifiedAndroidName: 'com.example.memora.DailyCalendarWidgetReceiver',
+    );
+    await HomeWidget.updateWidget(
+      qualifiedAndroidName:
+          'com.example.memora.DailyCalendarDarkWidgetReceiver',
     );
   }
 }

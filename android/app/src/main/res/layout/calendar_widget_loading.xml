@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:theme="@style/MemoraWidgetLight"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#FFFFFF"
+    android:background="?attr/widgetBackgroundColor"
     android:gravity="center"
     android:padding="16dp">
     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-        android:text="@string/calendar_widget_name" android:textColor="#222222" android:textSize="20sp" />
+        android:text="?attr/widgetCalendarName" android:textColor="?attr/widgetPreviewTextColor" android:textSize="20sp" />
     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-        android:text="@string/calendar_widget_description" android:textColor="#444444" android:textSize="14sp" />
+        android:text="@string/calendar_widget_description" android:textColor="?attr/widgetPreviewSecondaryTextColor" android:textSize="14sp" />
 </LinearLayout>

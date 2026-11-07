@@ -1,35 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:theme="@style/MemoraWidgetLight"
     android:layout_width="match_parent" android:layout_height="match_parent"
     android:background="@drawable/calendar_widget_background" android:padding="8dp">
     <LinearLayout android:id="@+id/calendar_content" android:layout_width="match_parent"
         android:layout_height="match_parent" android:orientation="vertical">
         <LinearLayout android:id="@+id/calendar_header" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="56dp" android:gravity="center_vertical" android:baselineAligned="false">
             <TextView android:id="@+id/calendar_today" android:layout_width="36dp" android:layout_height="match_parent"
-                android:gravity="center" android:includeFontPadding="false" android:text="今日" android:textSize="14sp" android:textColor="#212121"/>
+                android:gravity="center" android:includeFontPadding="false" android:text="今日" android:textSize="16sp" android:textColor="?attr/widgetTextColor"/>
             <TextView android:id="@+id/calendar_header_gap_start" android:layout_width="wrap_content" android:layout_height="1dp"/>
             <ImageView android:id="@+id/calendar_previous" android:layout_width="wrap_content"
-                android:layout_height="match_parent" android:scaleType="center" android:src="@drawable/calendar_widget_previous"
+                android:layout_height="match_parent" android:scaleType="center" android:src="@drawable/calendar_widget_previous" android:tint="?attr/widgetIconColor"
                 android:contentDescription="前月"/>
             <TextView android:id="@+id/calendar_month" android:layout_width="0dp" android:layout_weight="1"
                 android:layout_height="match_parent" android:gravity="center" android:includeFontPadding="false" android:textSize="16sp"
-                android:textStyle="bold" android:textColor="#212121" android:maxLines="1"/>
+                android:textStyle="bold" android:textColor="?attr/widgetTextColor" android:maxLines="1"/>
             <ImageView android:id="@+id/calendar_next" android:layout_width="wrap_content"
-                android:layout_height="match_parent" android:scaleType="center" android:src="@drawable/calendar_widget_next"
+                android:layout_height="match_parent" android:scaleType="center" android:src="@drawable/calendar_widget_next" android:tint="?attr/widgetIconColor"
                 android:contentDescription="翌月"/>
             <TextView android:id="@+id/calendar_header_gap_end" android:layout_width="wrap_content" android:layout_height="1dp"/>
             <ImageView android:id="@+id/calendar_add" android:layout_width="36dp" android:layout_height="match_parent"
-                android:scaleType="center" android:src="@drawable/calendar_widget_add"
+                android:scaleType="center" android:src="@drawable/calendar_widget_add" android:tint="?attr/widgetIconColor"
                 android:contentDescription="予定を追加"/>
         </LinearLayout>
         <LinearLayout android:id="@+id/calendar_weekdays" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="20dp">
-            <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:gravity="center" android:text="日" android:textSize="11sp" android:textColor="#D32F2F"/>
-            <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:gravity="center" android:text="月" android:textSize="11sp" android:textColor="#616161"/>
-            <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:gravity="center" android:text="火" android:textSize="11sp" android:textColor="#616161"/>
-            <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:gravity="center" android:text="水" android:textSize="11sp" android:textColor="#616161"/>
-            <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:gravity="center" android:text="木" android:textSize="11sp" android:textColor="#616161"/>
-            <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:gravity="center" android:text="金" android:textSize="11sp" android:textColor="#616161"/>
-            <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:gravity="center" android:text="土" android:textSize="11sp" android:textColor="#1976D2"/>
+            <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:gravity="center" android:text="日" android:textSize="11sp" android:textColor="?attr/widgetSundayColor"/>
+            <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:gravity="center" android:text="月" android:textSize="11sp" android:textColor="?attr/widgetSecondaryTextColor"/>
+            <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:gravity="center" android:text="火" android:textSize="11sp" android:textColor="?attr/widgetSecondaryTextColor"/>
+            <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:gravity="center" android:text="水" android:textSize="11sp" android:textColor="?attr/widgetSecondaryTextColor"/>
+            <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:gravity="center" android:text="木" android:textSize="11sp" android:textColor="?attr/widgetSecondaryTextColor"/>
+            <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:gravity="center" android:text="金" android:textSize="11sp" android:textColor="?attr/widgetSecondaryTextColor"/>
+            <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:gravity="center" android:text="土" android:textSize="11sp" android:textColor="?attr/widgetSaturdayColor"/>
         </LinearLayout>
         <LinearLayout android:id="@+id/calendar_week_0" android:layout_width="match_parent" android:layout_height="wrap_content" android:baselineAligned="false">
             <LinearLayout android:id="@+id/calendar_day_0" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:orientation="vertical" android:padding="1dp"/>
@@ -89,21 +90,21 @@
             android:gravity="center_vertical" android:baselineAligned="false">
             <TextView android:id="@+id/calendar_selected_date" android:layout_width="wrap_content"
                 android:layout_height="match_parent" android:gravity="center_vertical" android:includeFontPadding="false"
-                android:textSize="12sp" android:textStyle="bold" android:textColor="#212121" android:maxLines="1"/>
+                android:textSize="12sp" android:textStyle="bold" android:textColor="?attr/widgetTextColor" android:maxLines="1"/>
             <TextView android:id="@+id/calendar_last_updated" android:layout_width="0dp" android:layout_weight="1"
                 android:layout_height="match_parent" android:layout_marginStart="4dp"
                 android:gravity="end|center_vertical" android:includeFontPadding="false"
-                android:textSize="10sp" android:textColor="#212121" android:maxLines="1" android:ellipsize="end"/>
+                android:textSize="10sp" android:textColor="?attr/widgetTextColor" android:maxLines="1" android:ellipsize="end"/>
             <ImageView android:id="@+id/calendar_refresh" android:layout_width="36dp" android:layout_height="match_parent"
-                android:scaleType="center" android:src="@drawable/ic_widget_refresh" android:contentDescription="更新"/>
+                android:scaleType="center" android:src="@drawable/ic_widget_refresh" android:tint="?attr/widgetRefreshIconColor" android:contentDescription="更新"/>
         </LinearLayout>
         <FrameLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1">
             <ListView android:id="@+id/calendar_events" android:layout_width="match_parent" android:layout_height="match_parent"
                 android:divider="@android:color/transparent" android:dividerHeight="0dp" android:scrollbars="vertical"/>
             <TextView android:id="@+id/calendar_empty" android:layout_width="match_parent" android:layout_height="match_parent"
-                android:gravity="center" android:textSize="12sp" android:textColor="#616161"/>
+                android:gravity="center" android:textSize="12sp" android:textColor="?attr/widgetSecondaryTextColor"/>
         </FrameLayout>
     </LinearLayout>
     <TextView android:id="@+id/calendar_message" android:layout_width="match_parent" android:layout_height="match_parent"
-        android:gravity="center" android:textSize="13sp" android:textColor="#212121" android:visibility="gone"/>
+        android:gravity="center" android:textSize="13sp" android:textColor="?attr/widgetTextColor" android:visibility="gone"/>
 </FrameLayout>

@@ -94,6 +94,22 @@
             <meta-data android:name="android.appwidget.provider"
                 android:resource="@xml/itinerary_widget_dark_info"/>
         </receiver>
+        <receiver android:name=".DailyCalendarWidgetReceiver"
+            android:label="@string/daily_calendar_widget_name" android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider"
+                android:resource="@xml/daily_calendar_widget_info"/>
+        </receiver>
+        <receiver android:name=".DailyCalendarDarkWidgetReceiver"
+            android:label="@string/daily_calendar_widget_dark_name" android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider"
+                android:resource="@xml/daily_calendar_widget_dark_info"/>
+        </receiver>
         <receiver
             android:name="es.antonborri.home_widget.HomeWidgetBackgroundReceiver"
             android:exported="true">
