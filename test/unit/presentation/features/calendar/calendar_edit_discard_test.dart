@@ -73,6 +73,8 @@ void main() {
     await tester.ensureVisible(find.widgetWithText(ListTile, '通知'));
     await tester.tap(find.widgetWithText(ListTile, '通知'));
     await pumpDialog(tester);
+    await tester.tap(find.text('通知なし'));
+    await tester.pump();
     await tester.tap(find.text('予定の開始時'));
     await tester.pump();
     await tester.tap(find.text('決定'));
