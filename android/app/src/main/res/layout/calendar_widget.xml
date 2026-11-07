@@ -6,7 +6,7 @@
         android:layout_height="match_parent" android:orientation="vertical">
         <LinearLayout android:id="@+id/calendar_header" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="56dp" android:gravity="center_vertical" android:baselineAligned="false">
             <TextView android:id="@+id/calendar_today" android:layout_width="36dp" android:layout_height="match_parent"
-                android:gravity="center" android:includeFontPadding="false" android:text="今日" android:textSize="14sp" android:textColor="#212121"/>
+                android:gravity="center" android:includeFontPadding="false" android:text="今日" android:textSize="16sp" android:textColor="#212121"/>
             <TextView android:id="@+id/calendar_header_gap_start" android:layout_width="wrap_content" android:layout_height="1dp"/>
             <ImageView android:id="@+id/calendar_previous" android:layout_width="wrap_content"
                 android:layout_height="match_parent" android:scaleType="center" android:src="@drawable/calendar_widget_previous"
