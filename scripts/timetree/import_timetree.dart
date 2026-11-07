@@ -49,6 +49,9 @@ class TimeTreeImportConfig {
         throw const FormatException('ICSの分類・色が対応表で重複しています');
       }
       mappings[key] = (row['memberName'] as String? ?? '').trim();
+      if (row['groupLabel'] == true) {
+        groupLabels.add(key);
+      }
     }
   }
   final String projectId;
@@ -59,6 +62,7 @@ class TimeTreeImportConfig {
   final String accessTokenEnvironmentVariable;
   final String allDayExceptionTimeZone;
   final Map<String, String> mappings = {};
+  final Set<String> groupLabels = {};
 }
 
 class TimeTreeImportEvent {
@@ -78,8 +82,8 @@ class TimeTreeImportEvent {
     'groupId': event.groupId,
     'title': event.title,
     'labelId': null,
-    'labelType': 'member',
-    'memberId': event.memberId,
+    'labelType': event.labelType,
+    'memberId': event.labelType == 'member' ? event.memberId : null,
     'url': event.url,
     'memo': event.memo,
     'locationName': event.locationName,
@@ -123,19 +127,25 @@ class TimeTreeImportPlan {
         {
           'category': (jsonDecode(entry.key) as List)[0],
           'color': (jsonDecode(entry.key) as List)[1],
-          'memberName': entry.value,
+          if (config.groupLabels.contains(entry.key))
+            'groupLabel': true
+          else
+            'memberName': entry.value,
         },
     ],
     'events': [
       for (final value in events)
         {
           'eventId': value.event.id,
-          'memberName': value.memberName,
+          if (value.event.labelType == 'member') 'memberName': value.memberName,
           ...(_jsonDates(value.document())
             ..remove('groupId')
             ..remove('memberId')),
           if (groupId != null) 'groupId': groupId,
-          if (groupId != null) 'memberId': value.event.memberId,
+          if (groupId != null)
+            'memberId': value.event.labelType == 'member'
+                ? value.event.memberId
+                : null,
         },
     ],
     'failures': failures,
@@ -366,9 +376,10 @@ TimeTreeImportPlan buildTimeTreeImportPlan(
       }
       final category = source.text('CATEGORIES');
       final color = source.text('COLOR');
-      final memberName = config
-          .mappings[_mappingKey(category.isEmpty ? null : category, color)];
-      if (memberName == null || memberName.isEmpty) {
+      final key = _mappingKey(category.isEmpty ? null : category, color);
+      final memberName = config.mappings[key];
+      final groupLabel = config.groupLabels.contains(key);
+      if (!groupLabel && (memberName == null || memberName.isEmpty)) {
         throw FormatException(
           'メンバー名を指定してください: 分類=${category.isEmpty ? '分類なし' : category}、色=$color',
         );
@@ -378,8 +389,8 @@ TimeTreeImportPlan buildTimeTreeImportPlan(
       final event = CalendarEvent(
         id: allocate(),
         groupId: config.groupName,
-        labelType: 'member',
-        memberId: memberName,
+        labelType: groupLabel ? 'group' : 'member',
+        memberId: groupLabel ? '' : memberName!,
         title: content['title'] as String,
         startDateTime: content['startDateTime'] as DateTime,
         endDateTime: content['endDateTime'] as DateTime,
@@ -403,7 +414,7 @@ TimeTreeImportPlan buildTimeTreeImportPlan(
         _metadataDate(source, 'CREATED', zones),
         _metadataDate(source, 'LAST-MODIFIED', zones),
         uid,
-        memberName,
+        groupLabel ? '' : memberName!,
       );
       plan.events.add(value);
       if (recurrence != source.property('RRULE')?.value) {
@@ -618,7 +629,8 @@ Future<void> applyTimeTreeImportPlan(
     if (name != null) membersByName[name] = memberId;
   }
   for (final value in plan.events) {
-    if (!membersByName.containsKey(value.memberName)) {
+    if (value.event.labelType == 'member' &&
+        !membersByName.containsKey(value.memberName)) {
       throw FormatException(
         'グループ「${plan.config.groupName}」にメンバー「${value.memberName}」が見つかりません',
       );
@@ -629,7 +641,9 @@ Future<void> applyTimeTreeImportPlan(
   for (final value in plan.events) {
     value.event = value.event.copyWith(
       groupId: groupId,
-      memberId: membersByName[value.memberName]!,
+      memberId: value.event.labelType == 'member'
+          ? membersByName[value.memberName]!
+          : '',
     );
     writes.add({
       'update': {

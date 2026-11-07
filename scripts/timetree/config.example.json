@@ -28,7 +28,7 @@
     {
       "category": "家族の予定",
       "color": "#2ecc87",
-      "memberName": ""
+      "groupLabel": true
     },
     {
       "category": null,
