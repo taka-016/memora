@@ -304,7 +304,7 @@ void main() {
     final groupPreview = tester.widget<Text>(
       find.descendant(of: preview, matching: find.byType(Text)),
     );
-    expect(groupPreview.data, 'グループの予定');
+    expect(groupPreview.data, '家族の予定');
     expect(groupPreview.style!.color, Colors.white);
     final timed = tester.widget<Text>(
       find.descendant(

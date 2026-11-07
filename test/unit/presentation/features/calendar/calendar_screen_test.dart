@@ -115,7 +115,7 @@ void main() {
     await harness.pump(tester);
     await tester.tap(find.byType(FloatingActionButton));
     await tester.pumpAndSettle();
-    expect(find.text('グループの予定'), findsOneWidget);
+    expect(find.text('家族の予定'), findsOneWidget);
     await tester.enterText(find.byType(TextFormField).first, '家族旅行');
     await tester.tap(find.text('保存'));
     await tester.pumpAndSettle();

@@ -31,7 +31,7 @@ void main() {
     final labels = buildCalendarDisplayLabels(group, const [
       CalendarLabelDto(id: 'l', groupId: 'g', name: '仕事', color: '#123456'),
     ]);
-    expect(labels.map((v) => v.name), ['グループの予定', '太郎の予定', '花子の予定', '仕事']);
+    expect(labels.map((v) => v.name), ['家族の予定', '太郎の予定', '花子の予定', '仕事']);
     expect(labels.first.textColor, '#FFFFFF');
     expect(labels[2].textColor, '#000000');
     expect(labels[2].memberId, 'a');
