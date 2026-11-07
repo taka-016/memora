@@ -1,3 +1,4 @@
+import 'package:memora/composition_root/providers/app_providers.dart';
 import 'package:memora/presentation/features/calendar/calendar_month_picker_dialog.dart';
 import 'package:memora/composition_root/providers/external_calendar_providers.dart';
 import 'package:memora/presentation/notifiers/calendar/external_calendar_notifier.dart';
@@ -312,6 +313,12 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                             ? null
                             : () => _moveMonth(-1),
                         icon: const Icon(Icons.chevron_left),
+                      ),
+                      TextButton(
+                        onPressed: () => notifier.selectDate(
+                          ref.read(appClockProvider).now(),
+                        ),
+                        child: const Text('今日'),
                       ),
                       Expanded(
                         child: Center(
