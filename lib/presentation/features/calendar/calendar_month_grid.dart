@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/presentation/features/calendar/calendar_event_dialog.dart';
@@ -99,18 +97,11 @@ class _CalendarMonthPage extends StatelessWidget {
     final rows = ((firstOffset + days) / 7).ceil();
     return LayoutBuilder(
       builder: (context, constraints) {
-        final textScaler = MediaQuery.textScalerOf(context);
-        final minHeight =
-            16 +
-            textScaler.scale(14) * 1.4 +
-            textScaler.scale(11) * 1.4 * CalendarWeekLayout.MAX_VISIBLE_EVENTS;
-        final rowHeight = math.max(constraints.maxHeight / rows, minHeight);
-        return SingleChildScrollView(
-          child: Column(
-            children: [
-              for (var row = 0; row < rows; row++)
-                Container(
-                  height: rowHeight,
+        return Column(
+          children: [
+            for (var row = 0; row < rows; row++)
+              Expanded(
+                child: Container(
                   decoration: BoxDecoration(
                     border: Border(
                       top: BorderSide(
@@ -130,8 +121,8 @@ class _CalendarMonthPage extends StatelessWidget {
                     onSelectDay: onSelectDay,
                   ),
                 ),
-            ],
-          ),
+              ),
+          ],
         );
       },
     );
@@ -151,16 +142,22 @@ class _CalendarWeekRow extends StatelessWidget {
   final ValueChanged<DateTime> onSelectDay;
   @override
   Widget build(BuildContext context) {
-    final layout = CalendarWeekLayout(
-      state: state,
-      weekStart: weekStart,
-      month: month,
-    );
     final scaler = MediaQuery.textScalerOf(context);
     final laneHeight = scaler.scale(11) * 1.4 + 2;
     final eventTop = 2 + scaler.scale(14) * 1.4;
     return LayoutBuilder(
       builder: (context, constraints) {
+        final maxVisibleEvents =
+            ((constraints.maxHeight - eventTop - 2) / laneHeight).floor().clamp(
+              0,
+              CalendarWeekLayout.MAX_VISIBLE_EVENTS,
+            );
+        final layout = CalendarWeekLayout(
+          state: state,
+          weekStart: weekStart,
+          month: month,
+          maxVisibleEvents: maxVisibleEvents,
+        );
         final width = constraints.maxWidth / 7;
         return Stack(
           children: [
@@ -191,10 +188,10 @@ class _CalendarWeekRow extends StatelessWidget {
                               )
                               .toList(),
                           visibleCount: layout.visibleCounts[column],
+                          maxVisibleEvents: maxVisibleEvents,
                           lastLaneOccupied: layout.entries.any(
                             (entry) =>
-                                entry.lane ==
-                                    CalendarWeekLayout.MAX_VISIBLE_EVENTS - 1 &&
+                                entry.lane == maxVisibleEvents - 1 &&
                                 entry.startColumn <= column &&
                                 entry.endColumn >= column,
                           ),
@@ -230,7 +227,7 @@ class _CalendarWeekRow extends StatelessWidget {
             for (var column = 0; column < 7; column++)
               if (layout.entries.any(
                 (entry) =>
-                    entry.lane == CalendarWeekLayout.MAX_VISIBLE_EVENTS - 1 &&
+                    entry.lane == maxVisibleEvents - 1 &&
                     entry.startColumn != entry.endColumn &&
                     entry.startColumn <= column &&
                     entry.endColumn >= column,
@@ -249,10 +246,7 @@ class _CalendarWeekRow extends StatelessWidget {
                     return Positioned(
                       left: width * column + 2,
                       width: width - 4,
-                      top:
-                          eventTop +
-                          (CalendarWeekLayout.MAX_VISIBLE_EVENTS - 1) *
-                              laneHeight,
+                      top: eventTop + (maxVisibleEvents - 1) * laneHeight,
                       height: laneHeight,
                       child: IgnorePointer(
                         child: Align(
@@ -280,6 +274,7 @@ class _CalendarDayCell extends StatelessWidget {
     required this.onTap,
     required this.entries,
     required this.visibleCount,
+    required this.maxVisibleEvents,
     required this.lastLaneOccupied,
     required this.laneHeight,
   });
@@ -288,6 +283,7 @@ class _CalendarDayCell extends StatelessWidget {
   final VoidCallback? onTap;
   final List<CalendarWeekEntry> entries;
   final int visibleCount;
+  final int maxVisibleEvents;
   final bool lastLaneOccupied;
   final double laneHeight;
   @override
@@ -322,11 +318,7 @@ class _CalendarDayCell extends StatelessWidget {
                     ),
                   ),
                 ),
-                for (
-                  var lane = 0;
-                  lane < CalendarWeekLayout.MAX_VISIBLE_EVENTS;
-                  lane++
-                )
+                for (var lane = 0; lane < maxVisibleEvents; lane++)
                   SizedBox(
                     height: laneHeight,
                     child: Builder(
@@ -335,8 +327,7 @@ class _CalendarDayCell extends StatelessWidget {
                             .where((entry) => entry.lane == lane)
                             .firstOrNull;
                         if (entry == null) {
-                          if (lane ==
-                                  CalendarWeekLayout.MAX_VISIBLE_EVENTS - 1 &&
+                          if (lane == maxVisibleEvents - 1 &&
                               remaining > 0 &&
                               !lastLaneOccupied) {
                             return Align(
@@ -355,8 +346,7 @@ class _CalendarDayCell extends StatelessWidget {
                           centered: entry.isMultiDay,
                           filled: entry.event.isAllDay || entry.isMultiDay,
                         );
-                        if (lane == CalendarWeekLayout.MAX_VISIBLE_EVENTS - 1 &&
-                            remaining > 0) {
+                        if (lane == maxVisibleEvents - 1 && remaining > 0) {
                           return Row(
                             children: [
                               Expanded(child: preview),

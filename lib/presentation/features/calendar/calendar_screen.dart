@@ -334,6 +334,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                           ),
                         ),
                       ),
+                      const SizedBox(width: 64),
                       IconButton(
                         tooltip: '次の月',
                         onPressed: month.year == 9999 && month.month == 12
