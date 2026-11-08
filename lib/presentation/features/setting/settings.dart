@@ -1,3 +1,4 @@
+import 'package:memora/presentation/features/setting/calendar_display_setting.dart';
 import 'package:memora/presentation/features/setting/calendar_notification_setting.dart';
 import 'package:memora/presentation/features/setting/theme_mode_setting.dart';
 import 'package:memora/application/models/app_capabilities.dart';
@@ -245,6 +246,7 @@ class Settings extends ConsumerWidget {
             _buildCategory(
               title: 'カレンダー',
               children: const [
+                CalendarDisplaySetting(),
                 CalendarDefaultDurationSetting(),
                 CalendarNotificationSetting(),
                 CalendarNotificationStatusView(),

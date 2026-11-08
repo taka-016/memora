@@ -1,3 +1,6 @@
+import 'package:memora/application/models/calendar_display_settings.dart';
+import 'package:memora/presentation/notifiers/calendar/calendar_display_settings_notifier.dart';
+import 'package:memora/presentation/features/calendar/calendar_date_color.dart';
 import 'package:memora/composition_root/providers/app_providers.dart';
 import 'package:memora/presentation/features/calendar/calendar_month_picker_dialog.dart';
 import 'package:memora/composition_root/providers/external_calendar_providers.dart';
@@ -244,6 +247,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         (_, _) => _openInitialRequest(),
       );
     }
+    final settings =
+        ref.watch(calendarDisplaySettingsNotifierProvider).value?.settings ??
+        const CalendarDisplaySettings();
     final month = state.month;
     final canEdit =
         !state.isSaving && !state.isLoading && state.loadError.isEmpty;
@@ -362,19 +368,28 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                     ),
                   Row(
                     children: [
-                      for (final day in const [
-                        '日',
-                        '月',
-                        '火',
-                        '水',
-                        '木',
-                        '金',
-                        '土',
-                      ])
+                      for (final day in settings.weekStart.dayNames)
                         Expanded(
                           child: Padding(
                             padding: const EdgeInsets.symmetric(vertical: 4),
-                            child: Center(child: Text(day)),
+                            child: Center(
+                              child: Text(
+                                day,
+                                style: TextStyle(
+                                  color: day == '日'
+                                      ? calendarWeekdayColor(
+                                          DateTime.sunday,
+                                          Theme.of(context).brightness,
+                                        )
+                                      : day == '土'
+                                      ? calendarWeekdayColor(
+                                          DateTime.saturday,
+                                          Theme.of(context).brightness,
+                                        )
+                                      : null,
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                     ],
@@ -382,6 +397,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   Expanded(
                     child: CalendarMonthGrid(
                       state: displayState,
+                      settings: settings,
                       onSelectDay: (date) => _selectDay(date),
                       onMoveMonth: _moveMonth,
                     ),

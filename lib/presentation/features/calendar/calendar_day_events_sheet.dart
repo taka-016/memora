@@ -1,3 +1,5 @@
+import 'package:memora/application/services/calendar/japanese_calendar.dart';
+import 'package:memora/presentation/features/calendar/calendar_holiday_banner.dart';
 import 'package:memora/composition_root/providers/external_calendar_providers.dart';
 import 'package:memora/presentation/notifiers/calendar/external_calendar_notifier.dart';
 import 'package:memora/presentation/features/calendar/external_calendar_overlay.dart';
@@ -83,6 +85,7 @@ class _CalendarDayEventsSheetState
                 itemBuilder: (context, index) {
                   final date = _dateForIndex(index);
                   final events = displayState.eventsForDay(date);
+                  final holiday = JapaneseCalendar.holidayName(date);
                   return Column(
                     children: [
                       Padding(
@@ -110,7 +113,13 @@ class _CalendarDayEventsSheetState
                         child: ListView(
                           padding: const EdgeInsets.fromLTRB(16, 0, 16, 88),
                           children: [
-                            if (!state.isLoading &&
+                            if (holiday != null)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 8),
+                                child: CalendarHolidayBanner(name: holiday),
+                              ),
+                            if (holiday == null &&
+                                !state.isLoading &&
                                 state.loadError.isEmpty &&
                                 events.isEmpty)
                               const Padding(

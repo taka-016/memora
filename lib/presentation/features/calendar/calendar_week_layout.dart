@@ -26,6 +26,7 @@ class CalendarWeekLayout {
     required DateTime weekStart,
     required DateTime month,
     int maxVisibleEvents = MAX_VISIBLE_EVENTS,
+    bool Function(DateTime)? isHoliday,
   }) {
     final lanes = List.generate(maxVisibleEvents, (_) => List.filled(7, false));
     final weekDay = _day(weekStart);
@@ -61,6 +62,16 @@ class CalendarWeekLayout {
       }
     }
 
+    if (maxVisibleEvents > 0 && isHoliday != null) {
+      for (var column = firstColumn; column <= lastColumn; column++) {
+        final date = DateTime(
+          weekStart.year,
+          weekStart.month,
+          weekStart.day + column,
+        );
+        if (isHoliday(date)) lanes[0][column] = true;
+      }
+    }
     final bandEvents = state.events.where(_isBand).toList()
       ..sort((a, b) {
         if (a.isAllDay != b.isAllDay) return a.isAllDay ? -1 : 1;
