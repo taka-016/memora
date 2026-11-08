@@ -232,7 +232,7 @@ void main() {
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 300));
         expect(find.byType(CalendarEventDialog), findsOneWidget);
-        expect(find.text('グループの予定'), findsOneWidget);
+        expect(find.text('家族の予定'), findsOneWidget);
         await tester.enterText(
           find.widgetWithText(TextFormField, 'タイトル'),
           '家族旅行',

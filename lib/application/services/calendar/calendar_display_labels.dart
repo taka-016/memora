@@ -32,7 +32,7 @@ List<CalendarLabelDto> buildCalendarDisplayLabels(
   final result = [
     fixed(
       'group:',
-      'グループの予定',
+      '${group.name}の予定',
       group.color,
       'group',
       textColor: group.textColor,

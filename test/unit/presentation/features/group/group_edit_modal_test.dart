@@ -280,6 +280,34 @@ void main() {
     expect(saved!.color, '#2196F3');
   });
 
+  testWidgets('変更済みフォームで名前を再編集すると色プレビューと保存に最新の名前を使う', (tester) async {
+    GroupDto? saved;
+    await tester.pumpWidget(
+      buildSubject(
+        group: createGroupDto(id: 'g', name: '家族'),
+        onSave: (value) async {
+          saved = value;
+        },
+        availableMembers: [],
+        currentMember: createCurrentMember(),
+      ),
+    );
+    final nameField = find.widgetWithText(TextFormField, 'グループ名');
+    await tester.enterText(nameField, '友人');
+    await tester.pump();
+    await tester.pump();
+    await tester.enterText(nameField, '旅行仲間');
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('group_color_button')));
+    await tester.pumpAndSettle();
+    expect(find.text('旅行仲間の予定'), findsNWidgets(2));
+    await tester.tap(find.text('決定'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('更新'));
+    await tester.pumpAndSettle();
+    expect(saved!.name, '旅行仲間');
+  });
+
   testWidgets('グループと所属の文字色をプレビューで確認して保存する', (tester) async {
     GroupDto? saved;
     await tester.pumpWidget(
@@ -304,7 +332,7 @@ void main() {
     final groupPreview = tester.widget<Text>(
       find.descendant(of: preview, matching: find.byType(Text)),
     );
-    expect(groupPreview.data, 'グループの予定');
+    expect(groupPreview.data, '家族の予定');
     expect(groupPreview.style!.color, Colors.white);
     final timed = tester.widget<Text>(
       find.descendant(
