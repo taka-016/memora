@@ -4,6 +4,7 @@
     <attr name="widgetTextColor" format="color"/>
     <attr name="widgetSecondaryTextColor" format="color"/>
     <attr name="widgetDividerColor" format="color"/>
+    <attr name="widgetCalendarDividerColor" format="color"/>
     <attr name="widgetItineraryDividerColor" format="color"/>
     <attr name="widgetSundayColor" format="color"/>
     <attr name="widgetSaturdayColor" format="color"/>
@@ -24,6 +25,7 @@
         <item name="widgetTextColor">#212121</item>
         <item name="widgetSecondaryTextColor">#616161</item>
         <item name="widgetDividerColor">#EEEEEE</item>
+        <item name="widgetCalendarDividerColor">#D0D0D0</item>
         <item name="widgetItineraryDividerColor">#E0E0E0</item>
         <item name="widgetSundayColor">#D32F2F</item>
         <item name="widgetSaturdayColor">#1976D2</item>
@@ -40,6 +42,7 @@
         <item name="widgetTextColor">#EEEEEE</item>
         <item name="widgetSecondaryTextColor">#BDBDBD</item>
         <item name="widgetDividerColor">#424242</item>
+        <item name="widgetCalendarDividerColor">#616161</item>
         <item name="widgetItineraryDividerColor">#424242</item>
         <item name="widgetSundayColor">#FF8A80</item>
         <item name="widgetSaturdayColor">#82B1FF</item>

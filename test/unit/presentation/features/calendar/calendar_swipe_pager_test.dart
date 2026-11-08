@@ -3,6 +3,35 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/presentation/features/calendar/calendar_swipe_pager.dart';
 
 void main() {
+  testWidgets('移動中は予定更新を通知せずアニメーション完了後に移動先を通知する', (tester) async {
+    final controller = PageController(initialPage: 20);
+    addTearDown(controller.dispose);
+    final changes = <int>[];
+    await tester.pumpWidget(
+      Directionality(
+        textDirection: TextDirection.ltr,
+        child: CalendarSwipePager(
+          controller: controller,
+          itemCount: 100,
+          onPageChanged: changes.add,
+          itemBuilder: (_, index) => Center(child: Text('ページ$index')),
+        ),
+      ),
+    );
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.byType(CalendarSwipePager)),
+    );
+    await gesture.moveBy(const Offset(-500, 0));
+    await tester.pump();
+    expect(controller.page, greaterThan(20.5));
+    expect(changes, isEmpty);
+    await gesture.up();
+    expect(changes, isEmpty);
+    await tester.pumpAndSettle();
+    expect(changes, [21]);
+    expect(tester.takeException(), isNull);
+  });
+
   for (final daily in [false, true]) {
     testWidgets('小数の画面幅でも年月日の全範囲を描画し前後へスワイプできる（$daily）', (tester) async {
       tester.view.physicalSize = const Size(1080, 1920);
