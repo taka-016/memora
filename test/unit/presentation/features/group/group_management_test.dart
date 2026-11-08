@@ -90,6 +90,10 @@ void main() {
   group('GroupManagement', () {
     for (final action in ['編集', '削除']) {
       testWidgets('管理者のグループが一覧に表示され、$actionできる', (tester) async {
+        tester.view.physicalSize = const Size(1200, 1000);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
         final group = groupWithMembers1.copyWith(
           ownerId: 'other-owner',
           members: [
