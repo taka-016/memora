@@ -9,10 +9,21 @@ class GetManagedGroupsWithMembersUsecase {
   GetManagedGroupsWithMembersUsecase(this._groupQueryService);
 
   Future<List<GroupDto>> execute(MemberDto member) async {
-    return await _groupQueryService.getManagedGroupsWithMembersByOwnerId(
+    final groups = await _groupQueryService.getGroupsWithMembersByMemberId(
       member.id,
       groupsOrderBy: [const OrderBy('name', descending: false)],
       membersOrderBy: [const OrderBy('orderIndex', descending: false)],
     );
+    return groups
+        .where(
+          (group) =>
+              group.ownerId == member.id ||
+              group.members.any(
+                (membership) =>
+                    membership.memberId == member.id &&
+                    membership.isAdministrator,
+              ),
+        )
+        .toList();
   }
 }
