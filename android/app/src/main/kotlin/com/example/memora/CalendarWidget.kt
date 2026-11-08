@@ -7,7 +7,6 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import es.antonborri.home_widget.HomeWidgetBackgroundIntent
 import es.antonborri.home_widget.HomeWidgetPlugin
 import java.time.LocalDate
 import java.util.concurrent.Executors
@@ -147,6 +146,8 @@ internal fun calendarWidgetAction(
 }
 
 private fun requestCalendarRefresh(context: Context, date: LocalDate? = null) {
-    HomeWidgetBackgroundIntent.getBroadcast(context,
-        Uri.parse("memoraWidget://calendarRefresh?date=${date?.toString().orEmpty()}")).send()
+    AndroidWidgetBackgroundReceiver.request(
+        context,
+        Uri.parse("memoraWidget://calendarRefresh?date=${date?.toString().orEmpty()}"),
+    )
 }
