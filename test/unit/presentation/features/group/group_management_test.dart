@@ -136,14 +136,14 @@ void main() {
         if (action == '編集') {
           await tester.tap(find.byType(ListTile));
           await tester.pumpAndSettle();
-          await tester.enterText(
-            find.widgetWithText(TextFormField, 'グループ名'),
-            '管理者が更新',
-          );
           await tester.tap(find.byKey(const Key('member_action_menu_1')));
           await tester.pumpAndSettle();
           await tester.tap(find.text('管理者に設定'));
           await tester.pumpAndSettle();
+          await tester.enterText(
+            find.widgetWithText(TextFormField, 'グループ名'),
+            '管理者が更新',
+          );
           await tester.tap(find.text('更新'));
           await tester.pumpAndSettle();
           final saved = verify(mockGroupRepository.updateGroup(captureAny))
