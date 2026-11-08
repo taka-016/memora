@@ -20,6 +20,26 @@ class CalendarSwipePager extends StatefulWidget {
 
 class _CalendarSwipePagerState extends State<CalendarSwipePager> {
   late final _swipeController = CalendarPageSwipeController(widget.controller);
+  int? _pendingPage;
+
+  bool _onScrollNotification(ScrollNotification notification) {
+    _swipeController.onScrollNotification(notification);
+    if (notification.depth == 0 && notification is ScrollEndNotification) {
+      final page = _pendingPage;
+      _pendingPage = null;
+      if (page != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted &&
+              widget.controller.hasClients &&
+              !widget.controller.position.isScrollingNotifier.value &&
+              widget.controller.page?.round() == page) {
+            widget.onPageChanged(page);
+          }
+        });
+      }
+    }
+    return false;
+  }
 
   @override
   Widget build(BuildContext context) => Listener(
@@ -29,7 +49,7 @@ class _CalendarSwipePagerState extends State<CalendarSwipePager> {
     onPointerUp: _swipeController.onPointerUp,
     onPointerCancel: _swipeController.onPointerCancel,
     child: NotificationListener<ScrollNotification>(
-      onNotification: _swipeController.onScrollNotification,
+      onNotification: _onScrollNotification,
       child: LayoutBuilder(
         builder: (context, constraints) => Align(
           child: SizedBox(
@@ -41,7 +61,7 @@ class _CalendarSwipePagerState extends State<CalendarSwipePager> {
                 targetPage: () => _swipeController.targetPage,
               ),
               itemCount: widget.itemCount,
-              onPageChanged: widget.onPageChanged,
+              onPageChanged: (page) => _pendingPage = page,
               itemBuilder: widget.itemBuilder,
             ),
           ),

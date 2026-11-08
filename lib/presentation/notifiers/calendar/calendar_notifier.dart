@@ -47,15 +47,16 @@ class CalendarNotifier extends _$CalendarNotifier {
   }
 
   void selectDate(DateTime day) {
+    final monthChanged = state.month != DateTime(day.year, day.month);
     state = state.copyWith(
       selectedDate: DateTime(day.year, day.month, day.day),
-      events: _expand(_series, day),
+      events: monthChanged ? _expand(_series, day) : null,
     );
   }
 
   List<CalendarEventDto> _expand(List<CalendarEventDto> series, DateTime day) {
-    final from = DateTime(day.year, day.month, -6);
-    final to = DateTime(day.year, day.month + 1, 8);
+    final from = DateTime(day.year, day.month - 1, -6);
+    final to = DateTime(day.year, day.month + 2, 8);
     final expander = ref.read(calendarRecurrenceExpanderProvider);
     return series.expand((event) => expander.expand(event, from, to)).toList();
   }

@@ -265,6 +265,10 @@ internal object CalendarWidgetRenderer {
         state.month.days.forEachIndexed { index, day ->
             if (day.date == state.selected) {
                 setDaySelection(views, dayIds[index], day, true, state.appearance)
+                views.setOnClickPendingIntent(dayIds[index], HomeWidgetLaunchIntent.getActivity(
+                    context, MainActivity::class.java,
+                    calendarLaunchUri(state.groupId, day.date, create = true),
+                ))
             }
         }
         val selectedDay = state.month.days.firstOrNull { it.date == state.selected }

@@ -390,19 +390,25 @@ void main() {
     verifyNever(delete.execute(any));
   });
 
-  test('月切替で系列を表示期間だけ展開し再取得せず次の月の回を表示する', () async {
+  test('前後の月の繰り返し予定を事前に準備し月移動でも再取得しない', () async {
     when(events.execute(any)).thenAnswer(
       (_) async => [
         event.copyWith(
           recurrenceRule: 'FREQ=MONTHLY;COUNT=3',
           timeZone: 'Asia/Tokyo',
-          startDateTime: DateTime(2026, 10, 15, 10),
-          endDateTime: DateTime(2026, 10, 15, 11),
+          startDateTime: DateTime(2026, 9, 15, 10),
+          endDateTime: DateTime(2026, 9, 15, 11),
         ),
       ],
     );
     final notifier = container.read(provider.notifier);
     await notifier.load();
+    for (final month in [9, 10, 11]) {
+      expect(
+        container.read(provider).eventsForDay(DateTime(2026, month, 15)).length,
+        1,
+      );
+    }
     expect(
       container.read(provider).eventsForDay(DateTime(2026, 10, 15)).length,
       1,
