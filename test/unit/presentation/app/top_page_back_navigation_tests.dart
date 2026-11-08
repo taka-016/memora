@@ -6,7 +6,10 @@ extension TopPageBackNavigationTests on TopPageTestContext {
       testWidgets(
         '${deleteGroup ? 'グループ' : 'メンバー'}を退避して管理画面から戻ると年表に退避済みの情報を表示しない',
         (tester) async {
-          var availableGroups = List<GroupDto>.of(groupsWithMembers);
+          var availableGroups = [
+            groupsWithMembers.first.copyWith(ownerId: 'default_member'),
+            ...groupsWithMembers.skip(1),
+          ];
           var memberDeleted = false;
           final widget = createTestWidget(
             initialLocation: const GroupTimelineRoute(groupId: '1').location,

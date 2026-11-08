@@ -111,12 +111,8 @@
                 android:resource="@xml/daily_calendar_widget_dark_info"/>
         </receiver>
         <receiver
-            android:name="es.antonborri.home_widget.HomeWidgetBackgroundReceiver"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="es.antonborri.home_widget.action.BACKGROUND"/>
-            </intent-filter>
-        </receiver>
+            android:name=".AndroidWidgetBackgroundReceiver"
+            android:exported="false" />
         <receiver
             android:name=".AndroidWidgetUpdateFallbackReceiver"
             android:exported="false">

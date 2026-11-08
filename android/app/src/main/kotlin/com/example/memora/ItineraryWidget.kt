@@ -7,7 +7,6 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import es.antonborri.home_widget.HomeWidgetBackgroundIntent
 import es.antonborri.home_widget.HomeWidgetPlugin
 import java.time.LocalDate
 
@@ -113,7 +112,7 @@ private fun requestItineraryRefresh(
     val uri = Uri.Builder().scheme("memoraWidget")
         .authority(if (manual) "refresh" else "itineraryrefresh")
     if (extendCache) uri.appendQueryParameter("extend", "true")
-    HomeWidgetBackgroundIntent.getBroadcast(
+    AndroidWidgetBackgroundReceiver.request(
         context, uri.build(),
-    ).send()
+    )
 }

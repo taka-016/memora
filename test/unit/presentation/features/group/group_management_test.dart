@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
+import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/queries/group/group_query_service.dart';
 import 'package:memora/application/queries/member/member_query_service.dart';
@@ -87,10 +88,94 @@ void main() {
   }
 
   group('GroupManagement', () {
+    for (final action in ['編集', '削除']) {
+      testWidgets('管理者のグループが一覧に表示され、$actionできる', (tester) async {
+        tester.view.physicalSize = const Size(1200, 1000);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        final group = groupWithMembers1.copyWith(
+          ownerId: 'other-owner',
+          members: [
+            GroupMemberDto(
+              memberId: testMember.id,
+              groupId: 'group-1',
+              displayName: '自分',
+              isAdministrator: true,
+            ),
+            const GroupMemberDto(
+              memberId: 'other-member',
+              groupId: 'group-1',
+              displayName: '別のメンバー',
+            ),
+          ],
+        );
+        when(
+          mockGroupQueryService.getGroupsWithMembersByMemberId(
+            testMember.id,
+            groupsOrderBy: anyNamed('groupsOrderBy'),
+            membersOrderBy: anyNamed('membersOrderBy'),
+          ),
+        ).thenAnswer((_) async => [group]);
+        when(
+          mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+            testMember.id,
+            groupsOrderBy: anyNamed('groupsOrderBy'),
+            membersOrderBy: anyNamed('membersOrderBy'),
+          ),
+        ).thenAnswer((_) async => []);
+        when(
+          mockMemberQueryService.getMembersByOwnerId(
+            testMember.id,
+            orderBy: anyNamed('orderBy'),
+          ),
+        ).thenAnswer((_) async => [testMember]);
+        when(mockGroupRepository.updateGroup(any)).thenAnswer((_) async {});
+        when(mockGroupRepository.deleteGroup(group.id))
+            .thenAnswer((_) async {});
+
+        await tester.pumpWidget(createGroupManagementApp());
+        await tester.pumpAndSettle();
+        expect(find.text(group.name), findsOneWidget);
+        if (action == '編集') {
+          await tester.tap(find.byType(ListTile));
+          await tester.pumpAndSettle();
+          await tester.tap(find.byKey(const Key('member_action_menu_1')));
+          await tester.pumpAndSettle();
+          await tester.tap(find.text('管理者に設定'));
+          await tester.pumpAndSettle();
+          await tester.enterText(
+            find.widgetWithText(TextFormField, 'グループ名'),
+            '管理者が更新',
+          );
+          await tester.tap(find.text('更新'));
+          await tester.pumpAndSettle();
+          final saved = verify(mockGroupRepository.updateGroup(captureAny))
+              .captured
+              .single;
+          expect(saved.name, '管理者が更新');
+          expect(saved.ownerId, 'other-owner');
+          expect(
+            saved.members
+                .singleWhere((member) => member.memberId == 'other-member')
+                .isAdministrator,
+            isTrue,
+          );
+        } else {
+          await tester.tap(find.byIcon(Icons.delete));
+          await tester.pumpAndSettle();
+          await tester.tap(find.text('削除'));
+          await tester.pumpAndSettle();
+          verify(mockGroupRepository.deleteGroup(group.id)).called(1);
+          expect(find.text('グループを削除しました'), findsOneWidget);
+        }
+      });
+    }
+
     testWidgets('管理しているグループがない場合、空状態が表示されること', (WidgetTester tester) async {
       // Arrange
       when(
-        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
           testMember.id,
           groupsOrderBy: anyNamed('groupsOrderBy'),
           membersOrderBy: anyNamed('membersOrderBy'),
@@ -111,7 +196,7 @@ void main() {
     testWidgets('グループ追加ボタンが表示されること', (WidgetTester tester) async {
       // Arrange
       when(
-        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
           testMember.id,
           groupsOrderBy: anyNamed('groupsOrderBy'),
           membersOrderBy: anyNamed('membersOrderBy'),
@@ -131,7 +216,7 @@ void main() {
     testWidgets('データ読み込みエラー時にスナックバーが表示されること', (WidgetTester tester) async {
       // Arrange
       when(
-        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
           testMember.id,
           groupsOrderBy: anyNamed('groupsOrderBy'),
           membersOrderBy: anyNamed('membersOrderBy'),
@@ -152,7 +237,7 @@ void main() {
 
     testWidgets('データ読み込みエラー時はグループ追加を開始しないこと', (WidgetTester tester) async {
       when(
-        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
           testMember.id,
           groupsOrderBy: anyNamed('groupsOrderBy'),
           membersOrderBy: anyNamed('membersOrderBy'),
@@ -189,7 +274,7 @@ void main() {
       final managedGroupsWithMembers = [groupWithMembers1];
 
       when(
-        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
           testMember.id,
           groupsOrderBy: anyNamed('groupsOrderBy'),
           membersOrderBy: anyNamed('membersOrderBy'),
@@ -211,7 +296,7 @@ void main() {
       final availableMembers = [testMember];
 
       when(
-        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
           testMember.id,
           groupsOrderBy: anyNamed('groupsOrderBy'),
           membersOrderBy: anyNamed('membersOrderBy'),
@@ -240,7 +325,7 @@ void main() {
 
     testWidgets('メンバー候補の取得失敗時は編集画面を開かずエラーを表示すること', (WidgetTester tester) async {
       when(
-        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
           testMember.id,
           groupsOrderBy: anyNamed('groupsOrderBy'),
           membersOrderBy: anyNamed('membersOrderBy'),
@@ -275,7 +360,7 @@ void main() {
       final availableMembers = [testMember];
 
       when(
-        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
           testMember.id,
           groupsOrderBy: anyNamed('groupsOrderBy'),
           membersOrderBy: anyNamed('membersOrderBy'),
@@ -315,7 +400,7 @@ void main() {
 
     testWidgets('グループ更新失敗時は編集画面を維持してエラーを表示すること', (WidgetTester tester) async {
       when(
-        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
           testMember.id,
           groupsOrderBy: anyNamed('groupsOrderBy'),
           membersOrderBy: anyNamed('membersOrderBy'),
@@ -353,7 +438,7 @@ void main() {
       final managedGroupsWithMembers = [groupWithMembers1];
 
       when(
-        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
           testMember.id,
           groupsOrderBy: anyNamed('groupsOrderBy'),
           membersOrderBy: anyNamed('membersOrderBy'),

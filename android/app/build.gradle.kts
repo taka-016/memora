@@ -91,6 +91,7 @@ android {
         buildConfig = true
         compose = true
     }
+
     
     signingConfigs {
         create("release") {
@@ -137,6 +138,8 @@ configurations.all {
 
 dependencies {
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.robolectric:robolectric:4.17")
+    testImplementation("androidx.work:work-testing:2.11.2")
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
     implementation("com.google.android.libraries.places:places:5.3.0")
     implementation("androidx.glance:glance-appwidget:1.1.1")

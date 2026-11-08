@@ -309,6 +309,11 @@ void main() {
   });
 
   testWidgets('グループと所属の文字色をプレビューで確認して保存する', (tester) async {
+    final previousHitTestSetting = WidgetController.hitTestWarningShouldBeFatal;
+    WidgetController.hitTestWarningShouldBeFatal = true;
+    addTearDown(() {
+      WidgetController.hitTestWarningShouldBeFatal = previousHitTestSetting;
+    });
     GroupDto? saved;
     await tester.pumpWidget(
       buildSubject(
@@ -357,8 +362,14 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('自動'), findsNothing);
     await tester.tap(find.byTooltip('黄'));
-    await tester.ensureVisible(find.text('黒'));
-    await tester.tap(find.text('黒'));
+    final white = find.widgetWithText(ChoiceChip, '白');
+    final black = find.widgetWithText(ChoiceChip, '黒');
+    await tester.ensureVisible(white);
+    await tester.tap(white);
+    await tester.pump();
+    expect(tester.widget<ChoiceChip>(black).selected, isFalse);
+    await tester.ensureVisible(black);
+    await tester.tap(black);
     await tester.pump();
     await tester.ensureVisible(preview);
     final memberPreview = tester.widget<Text>(

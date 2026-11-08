@@ -3,20 +3,18 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 const _androidManifestPath = 'android/app/src/main/AndroidManifest.xml';
-const _homeWidgetBackgroundReceiver =
-    'android:name="es.antonborri.home_widget.HomeWidgetBackgroundReceiver"';
-const _homeWidgetBackgroundAction =
-    'android:name="es.antonborri.home_widget.action.BACKGROUND"';
 const _postNotificationsPermission =
     'android:name="android.permission.POST_NOTIFICATIONS"';
 
 void main() {
   group('AndroidManifest', () {
-    test('HomeWidgetの背景アクションReceiverが登録されている', () {
+    test('ウィジェットの背景アクションはアプリ内のReceiverで受け取る', () {
       final manifest = File(_androidManifestPath).readAsStringSync();
 
-      expect(manifest, contains(_homeWidgetBackgroundReceiver));
-      expect(manifest, contains(_homeWidgetBackgroundAction));
+      final receiver = RegExp(
+        r'<receiver\s+android:name="\.AndroidWidgetBackgroundReceiver"\s+android:exported="false"\s*/>',
+      );
+      expect(receiver.hasMatch(manifest), isTrue);
     });
 
     test('Android 13以降の通知権限が宣言されている', () {

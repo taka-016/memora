@@ -20,6 +20,63 @@ void main() {
   });
 
   group('GetManagedGroupsWithMembersUsecase', () {
+    test('所有グループと管理者として所属するグループだけを順序を保って返す', () async {
+      const member = MemberDto(id: 'me', displayName: '自分');
+      const owned = GroupDto(
+        id: 'owned',
+        ownerId: 'me',
+        name: 'A',
+        members: [],
+      );
+      const administered = GroupDto(
+        id: 'admin',
+        ownerId: 'other',
+        name: 'B',
+        members: [
+          GroupMemberDto(
+            memberId: 'me',
+            groupId: 'admin',
+            displayName: '自分',
+            isAdministrator: true,
+          ),
+        ],
+      );
+      const ordinary = GroupDto(
+        id: 'ordinary',
+        ownerId: 'other',
+        name: 'C',
+        members: [
+          GroupMemberDto(
+            memberId: 'me',
+            groupId: 'ordinary',
+            displayName: '自分',
+          ),
+          GroupMemberDto(
+            memberId: 'other',
+            groupId: 'ordinary',
+            displayName: '所有者',
+            isAdministrator: true,
+          ),
+        ],
+      );
+      when(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          member.id,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => [owned, administered, ordinary]);
+      when(
+        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+          member.id,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => [owned]);
+
+      expect(await usecase.execute(member), [owned, administered]);
+    });
+
     test('管理するグループとそのメンバーの一覧を返すこと', () async {
       // arrange
       const ownerId = 'admin123';
@@ -61,7 +118,7 @@ void main() {
       ];
 
       when(
-        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
           ownerId,
           groupsOrderBy: anyNamed('groupsOrderBy'),
           membersOrderBy: anyNamed('membersOrderBy'),
@@ -78,7 +135,7 @@ void main() {
       expect(result[1].id, equals('2'));
       expect(result[1].members, equals([member2]));
       verify(
-        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
           ownerId,
           groupsOrderBy: anyNamed('groupsOrderBy'),
           membersOrderBy: anyNamed('membersOrderBy'),
@@ -98,7 +155,7 @@ void main() {
       );
 
       when(
-        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
           ownerId,
           groupsOrderBy: anyNamed('groupsOrderBy'),
           membersOrderBy: anyNamed('membersOrderBy'),
@@ -111,7 +168,7 @@ void main() {
       // assert
       expect(result, isEmpty);
       verify(
-        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
           ownerId,
           groupsOrderBy: anyNamed('groupsOrderBy'),
           membersOrderBy: anyNamed('membersOrderBy'),
@@ -133,7 +190,7 @@ void main() {
       final expectedResults = <GroupDto>[];
 
       when(
-        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
           ownerId,
           groupsOrderBy: anyNamed('groupsOrderBy'),
           membersOrderBy: anyNamed('membersOrderBy'),
@@ -145,7 +202,7 @@ void main() {
 
       // assert
       verify(
-        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
           ownerId,
           groupsOrderBy: anyNamed('groupsOrderBy'),
           membersOrderBy: anyNamed('membersOrderBy'),
