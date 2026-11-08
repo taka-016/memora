@@ -410,14 +410,14 @@ class GroupEditModal extends HookConsumerWidget {
       String title,
       String color,
       void Function(String, String?) onChanged, {
-      required String previewName,
+      required String Function() previewName,
       String? textColor,
     }) => IconButton(
       key: key,
       tooltip: title,
       icon: Icon(Icons.circle, color: parseColor(color)),
       onPressed: () =>
-          chooseColor(title, previewName, color, textColor, onChanged),
+          chooseColor(title, previewName(), color, textColor, onChanged),
     );
 
     Widget buildTitle() {
@@ -582,7 +582,7 @@ class GroupEditModal extends HookConsumerWidget {
                 );
                 updateGroupMembers(members);
               },
-              previewName: '$displayNameの予定',
+              previewName: () => '$displayNameの予定',
               textColor: groupMember.textColor,
             ),
             buildAdminBadgeSlot(index, groupMember.isAdministrator),
@@ -726,7 +726,7 @@ class GroupEditModal extends HookConsumerWidget {
                     groupState.value.color,
                     (color, textColor) => groupState.value = groupState.value
                         .copyWith(color: color, textColor: textColor),
-                    previewName: '${nameController.text}の予定',
+                    previewName: () => '${nameController.text}の予定',
                     textColor: groupState.value.textColor,
                   ),
                 ],
