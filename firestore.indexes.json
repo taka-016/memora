@@ -188,6 +188,10 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
+          "fieldPath": "groupId",
+          "order": "ASCENDING"
+        },
+        {
           "fieldPath": "memberId",
           "order": "ASCENDING"
         },

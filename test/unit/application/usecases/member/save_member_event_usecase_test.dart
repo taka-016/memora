@@ -21,6 +21,7 @@ void main() {
 
     test('MemberEventDtoをリポジトリ契約へ変換して保存し保存IDを返す', () async {
       const dto = MemberEventDto(
+        groupId: 'g',
         id: '',
         memberId: 'member-1',
         year: 2026,
@@ -34,6 +35,7 @@ void main() {
       expect(
         result,
         const MemberEventDto(
+          groupId: 'g',
           id: 'saved-event-id',
           memberId: 'member-1',
           year: 2026,
@@ -43,6 +45,7 @@ void main() {
       verify(
         mockMemberEventRepository.saveMemberEvent(
           const MemberEvent(
+            groupId: 'g',
             id: '',
             memberId: 'member-1',
             year: 2026,

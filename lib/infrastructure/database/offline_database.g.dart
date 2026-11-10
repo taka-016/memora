@@ -3222,6 +3222,17 @@ class MemberEvents extends Table
     requiredDuringInsert: true,
     $customConstraints: 'NOT NULL PRIMARY KEY',
   );
+  static const VerificationMeta _groupIdMeta = const VerificationMeta(
+    'groupId',
+  );
+  late final GeneratedColumn<String> groupId = GeneratedColumn<String>(
+    'group_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
   static const VerificationMeta _memberIdMeta = const VerificationMeta(
     'memberId',
   );
@@ -3252,7 +3263,7 @@ class MemberEvents extends Table
     $customConstraints: 'NOT NULL',
   );
   @override
-  List<GeneratedColumn> get $columns => [id, memberId, year, memo];
+  List<GeneratedColumn> get $columns => [id, groupId, memberId, year, memo];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -3269,6 +3280,14 @@ class MemberEvents extends Table
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
     } else if (isInserting) {
       context.missing(_idMeta);
+    }
+    if (data.containsKey('group_id')) {
+      context.handle(
+        _groupIdMeta,
+        groupId.isAcceptableOrUnknown(data['group_id']!, _groupIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_groupIdMeta);
     }
     if (data.containsKey('member_id')) {
       context.handle(
@@ -3301,7 +3320,7 @@ class MemberEvents extends Table
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
   List<Set<GeneratedColumn>> get uniqueKeys => [
-    {memberId, year},
+    {groupId, memberId, year},
   ];
   @override
   SqliteMemberEventRow map(Map<String, dynamic> data, {String? tablePrefix}) {
@@ -3310,6 +3329,10 @@ class MemberEvents extends Table
       id: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}id'],
+      )!,
+      groupId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}group_id'],
       )!,
       memberId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
@@ -3332,7 +3355,9 @@ class MemberEvents extends Table
   }
 
   @override
-  List<String> get customConstraints => const ['UNIQUE(member_id, year)'];
+  List<String> get customConstraints => const [
+    'UNIQUE(group_id, member_id, year)',
+  ];
   @override
   bool get dontWriteConstraints => true;
 }
@@ -3340,11 +3365,13 @@ class MemberEvents extends Table
 class SqliteMemberEventRow extends DataClass
     implements Insertable<SqliteMemberEventRow> {
   final String id;
+  final String groupId;
   final String memberId;
   final int year;
   final String memo;
   const SqliteMemberEventRow({
     required this.id,
+    required this.groupId,
     required this.memberId,
     required this.year,
     required this.memo,
@@ -3353,6 +3380,7 @@ class SqliteMemberEventRow extends DataClass
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<String>(id);
+    map['group_id'] = Variable<String>(groupId);
     map['member_id'] = Variable<String>(memberId);
     map['year'] = Variable<int>(year);
     map['memo'] = Variable<String>(memo);
@@ -3362,6 +3390,7 @@ class SqliteMemberEventRow extends DataClass
   MemberEventsCompanion toCompanion(bool nullToAbsent) {
     return MemberEventsCompanion(
       id: Value(id),
+      groupId: Value(groupId),
       memberId: Value(memberId),
       year: Value(year),
       memo: Value(memo),
@@ -3375,6 +3404,7 @@ class SqliteMemberEventRow extends DataClass
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return SqliteMemberEventRow(
       id: serializer.fromJson<String>(json['id']),
+      groupId: serializer.fromJson<String>(json['group_id']),
       memberId: serializer.fromJson<String>(json['member_id']),
       year: serializer.fromJson<int>(json['year']),
       memo: serializer.fromJson<String>(json['memo']),
@@ -3385,6 +3415,7 @@ class SqliteMemberEventRow extends DataClass
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<String>(id),
+      'group_id': serializer.toJson<String>(groupId),
       'member_id': serializer.toJson<String>(memberId),
       'year': serializer.toJson<int>(year),
       'memo': serializer.toJson<String>(memo),
@@ -3393,11 +3424,13 @@ class SqliteMemberEventRow extends DataClass
 
   SqliteMemberEventRow copyWith({
     String? id,
+    String? groupId,
     String? memberId,
     int? year,
     String? memo,
   }) => SqliteMemberEventRow(
     id: id ?? this.id,
+    groupId: groupId ?? this.groupId,
     memberId: memberId ?? this.memberId,
     year: year ?? this.year,
     memo: memo ?? this.memo,
@@ -3405,6 +3438,7 @@ class SqliteMemberEventRow extends DataClass
   SqliteMemberEventRow copyWithCompanion(MemberEventsCompanion data) {
     return SqliteMemberEventRow(
       id: data.id.present ? data.id.value : this.id,
+      groupId: data.groupId.present ? data.groupId.value : this.groupId,
       memberId: data.memberId.present ? data.memberId.value : this.memberId,
       year: data.year.present ? data.year.value : this.year,
       memo: data.memo.present ? data.memo.value : this.memo,
@@ -3415,6 +3449,7 @@ class SqliteMemberEventRow extends DataClass
   String toString() {
     return (StringBuffer('SqliteMemberEventRow(')
           ..write('id: $id, ')
+          ..write('groupId: $groupId, ')
           ..write('memberId: $memberId, ')
           ..write('year: $year, ')
           ..write('memo: $memo')
@@ -3423,12 +3458,13 @@ class SqliteMemberEventRow extends DataClass
   }
 
   @override
-  int get hashCode => Object.hash(id, memberId, year, memo);
+  int get hashCode => Object.hash(id, groupId, memberId, year, memo);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is SqliteMemberEventRow &&
           other.id == this.id &&
+          other.groupId == this.groupId &&
           other.memberId == this.memberId &&
           other.year == this.year &&
           other.memo == this.memo);
@@ -3436,12 +3472,14 @@ class SqliteMemberEventRow extends DataClass
 
 class MemberEventsCompanion extends UpdateCompanion<SqliteMemberEventRow> {
   final Value<String> id;
+  final Value<String> groupId;
   final Value<String> memberId;
   final Value<int> year;
   final Value<String> memo;
   final Value<int> rowid;
   const MemberEventsCompanion({
     this.id = const Value.absent(),
+    this.groupId = const Value.absent(),
     this.memberId = const Value.absent(),
     this.year = const Value.absent(),
     this.memo = const Value.absent(),
@@ -3449,16 +3487,19 @@ class MemberEventsCompanion extends UpdateCompanion<SqliteMemberEventRow> {
   });
   MemberEventsCompanion.insert({
     required String id,
+    required String groupId,
     required String memberId,
     required int year,
     required String memo,
     this.rowid = const Value.absent(),
   }) : id = Value(id),
+       groupId = Value(groupId),
        memberId = Value(memberId),
        year = Value(year),
        memo = Value(memo);
   static Insertable<SqliteMemberEventRow> custom({
     Expression<String>? id,
+    Expression<String>? groupId,
     Expression<String>? memberId,
     Expression<int>? year,
     Expression<String>? memo,
@@ -3466,6 +3507,7 @@ class MemberEventsCompanion extends UpdateCompanion<SqliteMemberEventRow> {
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
+      if (groupId != null) 'group_id': groupId,
       if (memberId != null) 'member_id': memberId,
       if (year != null) 'year': year,
       if (memo != null) 'memo': memo,
@@ -3475,6 +3517,7 @@ class MemberEventsCompanion extends UpdateCompanion<SqliteMemberEventRow> {
 
   MemberEventsCompanion copyWith({
     Value<String>? id,
+    Value<String>? groupId,
     Value<String>? memberId,
     Value<int>? year,
     Value<String>? memo,
@@ -3482,6 +3525,7 @@ class MemberEventsCompanion extends UpdateCompanion<SqliteMemberEventRow> {
   }) {
     return MemberEventsCompanion(
       id: id ?? this.id,
+      groupId: groupId ?? this.groupId,
       memberId: memberId ?? this.memberId,
       year: year ?? this.year,
       memo: memo ?? this.memo,
@@ -3494,6 +3538,9 @@ class MemberEventsCompanion extends UpdateCompanion<SqliteMemberEventRow> {
     final map = <String, Expression>{};
     if (id.present) {
       map['id'] = Variable<String>(id.value);
+    }
+    if (groupId.present) {
+      map['group_id'] = Variable<String>(groupId.value);
     }
     if (memberId.present) {
       map['member_id'] = Variable<String>(memberId.value);
@@ -3514,6 +3561,7 @@ class MemberEventsCompanion extends UpdateCompanion<SqliteMemberEventRow> {
   String toString() {
     return (StringBuffer('MemberEventsCompanion(')
           ..write('id: $id, ')
+          ..write('groupId: $groupId, ')
           ..write('memberId: $memberId, ')
           ..write('year: $year, ')
           ..write('memo: $memo, ')

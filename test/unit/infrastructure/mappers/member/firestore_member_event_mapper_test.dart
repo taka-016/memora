@@ -13,12 +13,17 @@ void main() {
     test('FirestoreドキュメントからMemberEventDtoへ変換できる', () {
       final doc = MockDocumentSnapshot<Map<String, dynamic>>();
       when(doc.id).thenReturn('event001');
-      when(doc.data())
-          .thenReturn({'memberId': 'member001', 'year': 2026, 'memo': '入学式'});
+      when(doc.data()).thenReturn({
+        'groupId': 'g',
+        'memberId': 'member001',
+        'year': 2026,
+        'memo': '入学式',
+      });
 
       final result = FirestoreMemberEventMapper.fromFirestore(doc);
 
       expect(result.id, 'event001');
+      expect(result.groupId, 'g');
       expect(result.memberId, 'member001');
       expect(result.year, 2026);
       expect(result.memo, '入学式');
@@ -27,7 +32,7 @@ void main() {
     test('Firestoreの欠損値をER図項目のデフォルトで変換できる', () {
       final doc = MockDocumentSnapshot<Map<String, dynamic>>();
       when(doc.id).thenReturn('event002');
-      when(doc.data()).thenReturn({});
+      when(doc.data()).thenReturn({'groupId': 'g'});
 
       final result = FirestoreMemberEventMapper.fromFirestore(doc);
 
@@ -40,8 +45,12 @@ void main() {
     test('Firestoreのyearがdoubleでもintへ変換できる', () {
       final doc = MockDocumentSnapshot<Map<String, dynamic>>();
       when(doc.id).thenReturn('event003');
-      when(doc.data())
-          .thenReturn({'memberId': 'member001', 'year': 2026.0, 'memo': '入学式'});
+      when(doc.data()).thenReturn({
+        'groupId': 'g',
+        'memberId': 'member001',
+        'year': 2026.0,
+        'memo': '入学式',
+      });
 
       final result = FirestoreMemberEventMapper.fromFirestore(doc);
 
@@ -50,6 +59,7 @@ void main() {
 
     test('MemberEventを新規作成用FirestoreのMapへ変換できる', () {
       const memberEvent = MemberEvent(
+        groupId: 'g',
         id: '',
         memberId: 'member001',
         year: 2026,
@@ -58,6 +68,7 @@ void main() {
 
       final data = FirestoreMemberEventMapper.toCreateFirestore(memberEvent);
 
+      expect(data['groupId'], 'g');
       expect(data['memberId'], 'member001');
       expect(data['year'], 2026);
       expect(data['memo'], '入学式');
@@ -71,6 +82,7 @@ void main() {
 
     test('MemberEventを更新用FirestoreのMapへ変換できる', () {
       const memberEvent = MemberEvent(
+        groupId: 'g',
         id: 'memberevent001',
         memberId: 'member001',
         year: 2026,
@@ -79,6 +91,7 @@ void main() {
 
       final data = FirestoreMemberEventMapper.toUpdateFirestore(memberEvent);
 
+      expect(data['groupId'], 'g');
       expect(data['memberId'], 'member001');
       expect(data['year'], 2026);
       expect(data['memo'], '卒業式');

@@ -14,6 +14,7 @@ class FirestoreMemberEventQueryService implements MemberEventQueryService {
   @override
   Future<List<MemberEventDto>> getMemberEventsByMemberIds(
     List<String> memberIds, {
+    required String groupId,
     List<OrderBy>? orderBy,
   }) async {
     if (memberIds.isEmpty) {
@@ -25,6 +26,7 @@ class FirestoreMemberEventQueryService implements MemberEventQueryService {
       for (final chunk in _chunkMemberIds(memberIds)) {
         Query<Map<String, dynamic>> query = _firestore
             .collection('member_events')
+            .where('groupId', isEqualTo: groupId)
             .where('memberId', whereIn: chunk);
 
         if (orderBy != null && orderBy.isNotEmpty) {

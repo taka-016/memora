@@ -803,6 +803,7 @@ void main() {
         createTestWidget(
           memberEventService: _FakeMemberEventQueryService([
             MemberEventDto(
+              groupId: 'group1',
               id: 'member-event-1',
               memberId: 'member1',
               year: currentYear,
@@ -850,6 +851,7 @@ void main() {
         createTestWidget(
           memberEventService: _FakeMemberEventQueryService([
             MemberEventDto(
+              groupId: 'group1',
               id: 'member-event-1',
               memberId: 'member1',
               year: currentYear,
@@ -871,6 +873,7 @@ void main() {
         createTestWidget(
           memberEventService: _FakeMemberEventQueryService([
             MemberEventDto(
+              groupId: 'group1',
               id: 'member-event-1',
               memberId: 'member1',
               year: currentYear,
@@ -902,6 +905,7 @@ void main() {
         createTestWidget(
           memberEventService: _FakeMemberEventQueryService([
             MemberEventDto(
+              groupId: 'group1',
               id: 'member-event-1',
               memberId: 'member1',
               year: currentYear,
@@ -935,6 +939,7 @@ void main() {
         createTestWidget(
           memberEventService: _FakeMemberEventQueryService([
             MemberEventDto(
+              groupId: 'group1',
               id: 'member-event-1',
               memberId: 'member1',
               year: currentYear,
@@ -961,6 +966,7 @@ void main() {
 
       expect(repository.savedEvents, [
         MemberEvent(
+          groupId: 'group1',
           id: 'member-event-1',
           memberId: 'member1',
           year: currentYear,
@@ -978,6 +984,7 @@ void main() {
         createTestWidget(
           memberEventService: _FakeMemberEventQueryService([
             MemberEventDto(
+              groupId: 'group1',
               id: 'member-event-1',
               memberId: 'member1',
               year: currentYear,
@@ -1004,6 +1011,7 @@ void main() {
 
       expect(repository.savedEvents, [
         MemberEvent(
+          groupId: 'group1',
           id: 'member-event-1',
           memberId: 'member1',
           year: currentYear,
@@ -1024,6 +1032,7 @@ void main() {
         createTestWidget(
           memberEventService: _FakeMemberEventQueryService([
             MemberEventDto(
+              groupId: 'group1',
               id: 'member-event-1',
               memberId: 'member1',
               year: currentYear,
@@ -1764,6 +1773,7 @@ void main() {
       ]);
       final memberEventService = _RefreshFailingMemberEventQueryService([
         MemberEventDto(
+          groupId: 'group1',
           id: 'member-event-1',
           memberId: 'member1',
           year: currentYear,
@@ -1818,6 +1828,7 @@ void main() {
       final currentYear = fixedNow.year;
       final service = _RefreshFailingMemberEventQueryService([
         MemberEventDto(
+          groupId: 'group1',
           id: 'member-event-1',
           memberId: 'member1',
           year: currentYear,
@@ -2193,6 +2204,7 @@ class _FakeMemberEventQueryService implements MemberEventQueryService {
   @override
   Future<List<MemberEventDto>> getMemberEventsByMemberIds(
     List<String> memberIds, {
+    required String groupId,
     List<OrderBy>? orderBy,
   }) async {
     return memberEvents
@@ -2207,6 +2219,7 @@ class _PendingMemberEventQueryService implements MemberEventQueryService {
   @override
   Future<List<MemberEventDto>> getMemberEventsByMemberIds(
     List<String> memberIds, {
+    required String groupId,
     List<OrderBy>? orderBy,
   }) => completer.future;
 }
@@ -2215,6 +2228,7 @@ class _ThrowingMemberEventQueryService implements MemberEventQueryService {
   @override
   Future<List<MemberEventDto>> getMemberEventsByMemberIds(
     List<String> memberIds, {
+    required String groupId,
     List<OrderBy>? orderBy,
   }) async => throw TestException('取得失敗');
 }
@@ -2229,6 +2243,7 @@ class _RefreshFailingMemberEventQueryService
   @override
   Future<List<MemberEventDto>> getMemberEventsByMemberIds(
     List<String> memberIds, {
+    required String groupId,
     List<OrderBy>? orderBy,
   }) async {
     if (shouldFail) {

@@ -257,6 +257,7 @@ extension TopPageNavigationTests on TopPageTestContext {
         mockMemberEventQueryService.getMemberEventsByMemberIds(
           any,
           orderBy: anyNamed('orderBy'),
+          groupId: anyNamed('groupId'),
         ),
       ).called(greaterThan(0));
     });

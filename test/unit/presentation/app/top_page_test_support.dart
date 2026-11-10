@@ -284,6 +284,7 @@ class TopPageTestContext {
       mockMemberEventQueryService.getMemberEventsByMemberIds(
         any,
         orderBy: anyNamed('orderBy'),
+        groupId: anyNamed('groupId'),
       ),
     ).thenAnswer((_) async => []);
     when(

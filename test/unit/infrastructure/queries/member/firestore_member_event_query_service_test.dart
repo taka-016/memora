@@ -27,6 +27,8 @@ void main() {
       mockCollection = MockCollectionReference<Map<String, dynamic>>();
       when(mockFirestore.collection('member_events'))
           .thenReturn(mockCollection);
+      when(mockCollection.where('groupId', isEqualTo: 'g'))
+          .thenReturn(mockCollection);
       service = FirestoreMemberEventQueryService(firestore: mockFirestore);
     });
 
@@ -50,12 +52,17 @@ void main() {
       when(mockOrderedQuery.get()).thenAnswer((_) async => mockSnapshot);
       when(mockSnapshot.docs).thenReturn([mockDoc]);
       when(mockDoc.id).thenReturn('event001');
-      when(mockDoc.data())
-          .thenReturn({'memberId': 'member001', 'year': 2026, 'memo': '入学式'});
+      when(mockDoc.data()).thenReturn({
+        'groupId': 'g',
+        'memberId': 'member001',
+        'year': 2026,
+        'memo': '入学式',
+      });
 
       final result = await service.getMemberEventsByMemberIds(
         const ['member001', 'member002'],
         orderBy: const [OrderBy('year', descending: false)],
+        groupId: 'g',
       );
 
       expect(result, hasLength(1));
@@ -105,22 +112,34 @@ void main() {
       when(firstSnapshot.docs).thenReturn([firstDoc]);
       when(secondSnapshot.docs).thenReturn([secondDoc]);
       when(firstDoc.id).thenReturn('event-2027');
-      when(firstDoc.data())
-          .thenReturn({'memberId': 'member001', 'year': 2027, 'memo': '卒業式'});
+      when(firstDoc.data()).thenReturn({
+        'groupId': 'g',
+        'memberId': 'member001',
+        'year': 2027,
+        'memo': '卒業式',
+      });
       when(secondDoc.id).thenReturn('event-2026');
-      when(secondDoc.data())
-          .thenReturn({'memberId': 'member031', 'year': 2026, 'memo': '入学式'});
+      when(secondDoc.data()).thenReturn({
+        'groupId': 'g',
+        'memberId': 'member031',
+        'year': 2026,
+        'memo': '入学式',
+      });
 
       final result = await service.getMemberEventsByMemberIds(
         memberIds,
         orderBy: const [OrderBy('year', descending: false)],
+        groupId: 'g',
       );
 
       expect(result.map((event) => event.year), [2026, 2027]);
     });
 
     test('memberId一覧が空ならFirestoreへ問い合わせず空リストを返す', () async {
-      final result = await service.getMemberEventsByMemberIds(const []);
+      final result = await service.getMemberEventsByMemberIds(
+        const [],
+        groupId: 'g',
+      );
 
       expect(result, isEmpty);
       verifyNever(
@@ -137,7 +156,7 @@ void main() {
       ).thenThrow(TestException('firestore error'));
 
       await expectLater(
-        service.getMemberEventsByMemberIds(const ['member001']),
+        service.getMemberEventsByMemberIds(const ['member001'], groupId: 'g'),
         throwsA(isA<TestException>()),
       );
     });

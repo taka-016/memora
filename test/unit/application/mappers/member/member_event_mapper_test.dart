@@ -7,6 +7,7 @@ void main() {
   group('MemberEventMapper', () {
     test('MemberEventDtoからエンティティへ変換できる', () {
       const dto = MemberEventDto(
+        groupId: 'g',
         id: 'member-event-003',
         memberId: 'member-010',
         year: 2026,
@@ -18,6 +19,7 @@ void main() {
       expect(
         entity,
         const MemberEvent(
+          groupId: 'g',
           id: 'member-event-003',
           memberId: 'member-010',
           year: 2026,
@@ -28,6 +30,7 @@ void main() {
 
     test('MemberEventエンティティからDtoへ変換できる', () {
       const entity = MemberEvent(
+        groupId: 'g',
         id: 'member-event-004',
         memberId: 'member-020',
         year: 2027,
@@ -39,6 +42,7 @@ void main() {
       expect(
         dto,
         const MemberEventDto(
+          groupId: 'g',
           id: 'member-event-004',
           memberId: 'member-020',
           year: 2027,
@@ -50,12 +54,14 @@ void main() {
     test('Dtoリストからエンティティリストへ変換できる', () {
       const dtos = [
         MemberEventDto(
+          groupId: 'g',
           id: 'member-event-101',
           memberId: 'member-101',
           year: 2026,
           memo: '入学式',
         ),
         MemberEventDto(
+          groupId: 'g',
           id: 'member-event-102',
           memberId: 'member-102',
           year: 2027,
@@ -73,12 +79,14 @@ void main() {
     test('エンティティリストからDtoリストへ変換できる', () {
       const entities = [
         MemberEvent(
+          groupId: 'g',
           id: 'member-event-201',
           memberId: 'member-201',
           year: 2026,
           memo: '入学式',
         ),
         MemberEvent(
+          groupId: 'g',
           id: 'member-event-202',
           memberId: 'member-202',
           year: 2027,

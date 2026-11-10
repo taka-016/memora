@@ -12,6 +12,7 @@ class FirestoreMemberEventMapper {
     return MemberEventDto(
       version: data['version'] as int?,
       id: doc.id,
+      groupId: data['groupId'] as String,
       memberId: data['memberId'] as String? ?? '',
       year: FirestoreMapperValueParser.asInt(data['year']),
       memo: data['memo'] as String? ?? '',
@@ -20,6 +21,7 @@ class FirestoreMemberEventMapper {
 
   static Map<String, dynamic> toCreateFirestore(MemberEvent memberEvent) {
     return {
+      'groupId': memberEvent.groupId,
       'memberId': memberEvent.memberId,
       'year': memberEvent.year,
       'memo': memberEvent.memo,
@@ -30,6 +32,7 @@ class FirestoreMemberEventMapper {
 
   static Map<String, dynamic> toUpdateFirestore(MemberEvent memberEvent) {
     return {
+      'groupId': memberEvent.groupId,
       'memberId': memberEvent.memberId,
       'year': memberEvent.year,
       'memo': memberEvent.memo,
