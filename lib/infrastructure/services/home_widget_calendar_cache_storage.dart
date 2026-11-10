@@ -1,3 +1,4 @@
+import 'package:memora/infrastructure/services/home_widget_android_widget_cache_storage.dart';
 import 'dart:convert';
 import 'dart:io';
 
@@ -90,6 +91,13 @@ class HomeWidgetCalendarCacheStorage {
         published.path,
         deleteFile: false,
       );
+      final lastUpdatedAt = cache['lastUpdatedAt'] as String?;
+      if (lastUpdatedAt != null) {
+        await HomeWidget.saveWidgetData<String>(
+          HomeWidgetAndroidWidgetCacheStorage.lastUpdatedAtKey,
+          lastUpdatedAt,
+        );
+      }
     } finally {
       await temporary.delete(recursive: true);
     }
