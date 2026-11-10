@@ -20,13 +20,13 @@ void main() {
 
     test('memberId一覧に紐づくメンバーイベント一覧を年昇順で取得できる', () async {
       const expected = [
-        MemberEventDto(
+        MemberEventDto(groupId: 'g', 
           id: 'event-1',
           memberId: 'member-1',
           year: 2026,
           memo: '入学式',
         ),
-        MemberEventDto(
+        MemberEventDto(groupId: 'g', 
           id: 'event-2',
           memberId: 'member-2',
           year: 2027,
@@ -38,17 +38,17 @@ void main() {
         mockMemberEventQueryService.getMemberEventsByMemberIds(const [
           'member-1',
           'member-2',
-        ], orderBy: anyNamed('orderBy')),
+        ], orderBy: anyNamed('orderBy'), groupId: 'g'),
       ).thenAnswer((_) async => expected);
 
-      final result = await usecase.execute(const ['member-1', 'member-2']);
+      final result = await usecase.execute(const ['member-1', 'member-2'], groupId: 'g');
 
       expect(result, expected);
       verify(
         mockMemberEventQueryService.getMemberEventsByMemberIds(const [
           'member-1',
           'member-2',
-        ], orderBy: anyNamed('orderBy')),
+        ], orderBy: anyNamed('orderBy'), groupId: 'g'),
       ).called(1);
     });
   });

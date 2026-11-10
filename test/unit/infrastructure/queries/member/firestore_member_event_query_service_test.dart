@@ -27,6 +27,7 @@ void main() {
       mockCollection = MockCollectionReference<Map<String, dynamic>>();
       when(mockFirestore.collection('member_events'))
           .thenReturn(mockCollection);
+      when(mockCollection.where('groupId', isEqualTo: 'g')).thenReturn(mockCollection);
       service = FirestoreMemberEventQueryService(firestore: mockFirestore);
     });
 
@@ -55,8 +56,7 @@ void main() {
 
       final result = await service.getMemberEventsByMemberIds(
         const ['member001', 'member002'],
-        orderBy: const [OrderBy('year', descending: false)],
-      );
+        orderBy: const [OrderBy('year', descending: false)], groupId: 'g');
 
       expect(result, hasLength(1));
       expect(result.first, isA<MemberEventDto>());
@@ -113,14 +113,13 @@ void main() {
 
       final result = await service.getMemberEventsByMemberIds(
         memberIds,
-        orderBy: const [OrderBy('year', descending: false)],
-      );
+        orderBy: const [OrderBy('year', descending: false)], groupId: 'g');
 
       expect(result.map((event) => event.year), [2026, 2027]);
     });
 
     test('memberId一覧が空ならFirestoreへ問い合わせず空リストを返す', () async {
-      final result = await service.getMemberEventsByMemberIds(const []);
+      final result = await service.getMemberEventsByMemberIds(const [], groupId: 'g');
 
       expect(result, isEmpty);
       verifyNever(
@@ -137,7 +136,7 @@ void main() {
       ).thenThrow(TestException('firestore error'));
 
       await expectLater(
-        service.getMemberEventsByMemberIds(const ['member001']),
+        service.getMemberEventsByMemberIds(const ['member001'], groupId: 'g'),
         throwsA(isA<TestException>()),
       );
     });

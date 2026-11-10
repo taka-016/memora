@@ -802,7 +802,7 @@ void main() {
       await tester.pumpWidget(
         createTestWidget(
           memberEventService: _FakeMemberEventQueryService([
-            MemberEventDto(
+            MemberEventDto(groupId: 'group1', 
               id: 'member-event-1',
               memberId: 'member1',
               year: currentYear,
@@ -849,7 +849,7 @@ void main() {
       await tester.pumpWidget(
         createTestWidget(
           memberEventService: _FakeMemberEventQueryService([
-            MemberEventDto(
+            MemberEventDto(groupId: 'group1', 
               id: 'member-event-1',
               memberId: 'member1',
               year: currentYear,
@@ -870,7 +870,7 @@ void main() {
       await tester.pumpWidget(
         createTestWidget(
           memberEventService: _FakeMemberEventQueryService([
-            MemberEventDto(
+            MemberEventDto(groupId: 'group1', 
               id: 'member-event-1',
               memberId: 'member1',
               year: currentYear,
@@ -901,7 +901,7 @@ void main() {
       await tester.pumpWidget(
         createTestWidget(
           memberEventService: _FakeMemberEventQueryService([
-            MemberEventDto(
+            MemberEventDto(groupId: 'group1', 
               id: 'member-event-1',
               memberId: 'member1',
               year: currentYear,
@@ -934,7 +934,7 @@ void main() {
       await tester.pumpWidget(
         createTestWidget(
           memberEventService: _FakeMemberEventQueryService([
-            MemberEventDto(
+            MemberEventDto(groupId: 'group1', 
               id: 'member-event-1',
               memberId: 'member1',
               year: currentYear,
@@ -960,7 +960,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(repository.savedEvents, [
-        MemberEvent(
+        MemberEvent(groupId: 'group1', 
           id: 'member-event-1',
           memberId: 'member1',
           year: currentYear,
@@ -977,7 +977,7 @@ void main() {
       await tester.pumpWidget(
         createTestWidget(
           memberEventService: _FakeMemberEventQueryService([
-            MemberEventDto(
+            MemberEventDto(groupId: 'group1', 
               id: 'member-event-1',
               memberId: 'member1',
               year: currentYear,
@@ -1003,7 +1003,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(repository.savedEvents, [
-        MemberEvent(
+        MemberEvent(groupId: 'group1', 
           id: 'member-event-1',
           memberId: 'member1',
           year: currentYear,
@@ -1023,7 +1023,7 @@ void main() {
       await tester.pumpWidget(
         createTestWidget(
           memberEventService: _FakeMemberEventQueryService([
-            MemberEventDto(
+            MemberEventDto(groupId: 'group1', 
               id: 'member-event-1',
               memberId: 'member1',
               year: currentYear,
@@ -1763,7 +1763,7 @@ void main() {
         ),
       ]);
       final memberEventService = _RefreshFailingMemberEventQueryService([
-        MemberEventDto(
+        MemberEventDto(groupId: 'group1', 
           id: 'member-event-1',
           memberId: 'member1',
           year: currentYear,
@@ -1817,7 +1817,7 @@ void main() {
     ) async {
       final currentYear = fixedNow.year;
       final service = _RefreshFailingMemberEventQueryService([
-        MemberEventDto(
+        MemberEventDto(groupId: 'group1', 
           id: 'member-event-1',
           memberId: 'member1',
           year: currentYear,
@@ -2193,6 +2193,7 @@ class _FakeMemberEventQueryService implements MemberEventQueryService {
   @override
   Future<List<MemberEventDto>> getMemberEventsByMemberIds(
     List<String> memberIds, {
+    required String groupId,
     List<OrderBy>? orderBy,
   }) async {
     return memberEvents
@@ -2207,6 +2208,7 @@ class _PendingMemberEventQueryService implements MemberEventQueryService {
   @override
   Future<List<MemberEventDto>> getMemberEventsByMemberIds(
     List<String> memberIds, {
+    required String groupId,
     List<OrderBy>? orderBy,
   }) => completer.future;
 }
@@ -2215,6 +2217,7 @@ class _ThrowingMemberEventQueryService implements MemberEventQueryService {
   @override
   Future<List<MemberEventDto>> getMemberEventsByMemberIds(
     List<String> memberIds, {
+    required String groupId,
     List<OrderBy>? orderBy,
   }) async => throw TestException('取得失敗');
 }
@@ -2229,6 +2232,7 @@ class _RefreshFailingMemberEventQueryService
   @override
   Future<List<MemberEventDto>> getMemberEventsByMemberIds(
     List<String> memberIds, {
+    required String groupId,
     List<OrderBy>? orderBy,
   }) async {
     if (shouldFail) {

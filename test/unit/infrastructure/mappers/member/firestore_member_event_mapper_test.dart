@@ -49,7 +49,7 @@ void main() {
     });
 
     test('MemberEventを新規作成用FirestoreのMapへ変換できる', () {
-      const memberEvent = MemberEvent(
+      const memberEvent = MemberEvent(groupId: 'g', 
         id: '',
         memberId: 'member001',
         year: 2026,
@@ -70,7 +70,7 @@ void main() {
     });
 
     test('MemberEventを更新用FirestoreのMapへ変換できる', () {
-      const memberEvent = MemberEvent(
+      const memberEvent = MemberEvent(groupId: 'g', 
         id: 'memberevent001',
         memberId: 'member001',
         year: 2026,

@@ -283,8 +283,7 @@ class TopPageTestContext {
     when(
       mockMemberEventQueryService.getMemberEventsByMemberIds(
         any,
-        orderBy: anyNamed('orderBy'),
-      ),
+        orderBy: anyNamed('orderBy'), groupId: 'g'),
     ).thenAnswer((_) async => []);
     when(
       mockDvcPointContractQueryService.getDvcPointContractsByGroupId(

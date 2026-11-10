@@ -256,8 +256,7 @@ extension TopPageNavigationTests on TopPageTestContext {
       verify(
         mockMemberEventQueryService.getMemberEventsByMemberIds(
           any,
-          orderBy: anyNamed('orderBy'),
-        ),
+          orderBy: anyNamed('orderBy'), groupId: 'g'),
       ).called(greaterThan(0));
     });
     testWidgets('所属グループが1件のみならメニューから開いてもグループ年表を直接開く', (
