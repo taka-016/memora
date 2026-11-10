@@ -28,7 +28,7 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
     required this._getCacheUsecase,
     required this._groupQueryService,
     this._mode = AppMode.online,
-    this.refreshCalendar,
+    this.isWidgetInstalled,
     this.trackLoading,
     this._readTransaction,
   });
@@ -37,7 +37,7 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
   final GetAndroidWidgetItineraryCacheUsecase _getCacheUsecase;
   final GroupQueryService _groupQueryService;
   final AppMode _mode;
-  final Future<void> Function(String groupId)? refreshCalendar;
+  final Future<bool> Function()? isWidgetInstalled;
   final ReadTransaction? _readTransaction;
   final TrackAndroidWidgetItineraryLoading? trackLoading;
 

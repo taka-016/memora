@@ -87,8 +87,6 @@ Future<void> withAndroidWidgetDependencies(
       trackLoading: Platform.isAndroid
           ? const HomeWidgetAndroidWidgetCacheStorage().trackItineraryLoading
           : null,
-      refreshCalendar: (groupId) =>
-          container!.read(refreshCalendarWidgetProvider)(groupId, null),
       readTransaction: container.read(androidWidgetReadTransactionProvider),
     );
     final move = MoveAndroidWidgetSelectedItineraryDateUsecase(

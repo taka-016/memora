@@ -43,8 +43,6 @@ final refreshAndroidWidgetItineraryCacheUsecaseProvider =
         trackLoading: Platform.isAndroid
             ? const HomeWidgetAndroidWidgetCacheStorage().trackItineraryLoading
             : null,
-        refreshCalendar: (groupId) =>
-            ref.read(refreshCalendarWidgetProvider)(groupId, null),
         readTransaction: ref.watch(androidWidgetReadTransactionProvider),
       );
     });
