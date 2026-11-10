@@ -1,6 +1,7 @@
 import 'package:memora/application/services/calendar/japanese_calendar.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/application/models/app_mode.dart';
+import 'package:memora/application/models/calendar_event_period.dart';
 import 'package:memora/application/services/current_user_service.dart';
 import 'package:memora/application/queries/calendar/calendar_event_query_service.dart';
 import 'package:memora/application/queries/calendar/calendar_label_query_service.dart';
@@ -45,7 +46,9 @@ class GetAndroidWidgetCalendarCacheUsecase {
     ];
     final from = gridStart(months.first);
     final to = gridEnd(months.last);
-    final source = await events.getCalendarEventsByGroupId(groupId);
+    final source = await events.getCalendarEventsByGroupId(
+      groupId, period: CalendarEventPeriod(from: from, to: to),
+    );
     final displayLabels = buildCalendarDisplayLabels(
       group,
       await labels.getCalendarLabelsByGroupId(groupId),

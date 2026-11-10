@@ -131,7 +131,6 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
           await publish(await read());
         });
       }
-      if (!extendCache) await refreshCalendar?.call(groupId);
     } finally {
       if (updateWidgetAfterRefresh) {
         await _cacheStorage.updateWidget();
