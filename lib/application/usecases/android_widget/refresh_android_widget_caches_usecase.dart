@@ -20,7 +20,20 @@ class RefreshAndroidWidgetCachesUsecase {
   }}) async {
     final groupId = await storage.getTargetGroupId();
     if (groupId == null) return;
-    await refreshItinerary(groupId);
-    await refreshCalendar(groupId);
+    final installed = await loadInstalledKinds();
+    final targets = installed.intersection(kinds);
+    Object? failure;
+    StackTrace? failureStack;
+    for (final kind in targets) {
+      try {
+        await (kind == AndroidWidgetKind.itinerary
+            ? refreshItinerary(groupId)
+            : refreshCalendar(groupId));
+      } catch (error, stack) {
+        failure ??= error;
+        failureStack ??= stack;
+      }
+    }
+    if (failure != null) Error.throwWithStackTrace(failure, failureStack!);
   }
 }

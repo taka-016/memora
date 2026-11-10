@@ -56,6 +56,7 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
     bool updateWidgetAfterRefresh = true,
     bool extendCache = false,
   }) async {
+    if (isWidgetInstalled != null && !await isWidgetInstalled!()) return;
     Future<void> refresh() => _execute(
       groupId: groupId,
       selectedItineraryDateId: selectedItineraryDateId,
