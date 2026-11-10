@@ -1,3 +1,5 @@
+import 'package:memora/infrastructure/queries/calendar/firestore_calendar_event_queries.dart';
+import 'package:memora/application/models/calendar_event_period.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/application/queries/calendar/calendar_event_query_service.dart';
@@ -8,13 +10,21 @@ class FirestoreCalendarEventQueryService implements CalendarEventQueryService {
   final FirebaseFirestore _firestore;
   @override
   Future<List<CalendarEventDto>> getCalendarEventsByGroupId(
-    String groupId,
-  ) async {
-    final snapshot = await _firestore
-        .collection('calendar_events')
-        .where('groupId', isEqualTo: groupId)
-        .get();
+    String groupId, {
+    CalendarEventPeriod? period,
+  }) async {
+    final snapshots = await Future.wait(
+      calendarEventQueries(
+        _firestore,
+        groupId,
+        period,
+      ).map((query) => query.get()),
+    );
+    final docs = {
+      for (final snapshot in snapshots)
+        for (final doc in snapshot.docs) doc.id: doc,
+    };
     final store = FirestoreCalendarEventStore(_firestore);
-    return Future.wait(snapshot.docs.map(store.read));
+    return Future.wait(docs.values.map(store.read));
   }
 }

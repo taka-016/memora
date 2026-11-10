@@ -1,3 +1,7 @@
+import 'package:memora/core/time/app_clock.dart';
+import 'package:memora/application/models/calendar_event_period.dart';
+import 'package:memora/infrastructure/queries/calendar/firestore_calendar_event_queries.dart';
+
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -13,9 +17,11 @@ class DeviceCalendarNotificationSource implements CalendarNotificationSource {
     required this.currentMember,
     required this.groups,
     required this.events,
+    required this.clock,
     this.database,
     this.firestore,
   });
+  final AppClock clock;
   final GetCurrentMemberUseCase currentMember;
   final GetGroupsWithMembersUsecase groups;
   final GetCalendarEventsUsecase events;
@@ -36,8 +42,9 @@ class DeviceCalendarNotificationSource implements CalendarNotificationSource {
   @override
   Future<List<CalendarEventDto>> load() async {
     final result = <CalendarEventDto>[];
+    final period = CalendarEventPeriod.forNotifications(clock.now());
     for (final id in await _groupIds()) {
-      result.addAll(await events.execute(id));
+      result.addAll(await events.execute(id, period: period));
     }
     return result;
   }
@@ -47,6 +54,7 @@ class DeviceCalendarNotificationSource implements CalendarNotificationSource {
     if (database != null) return database!.tableUpdates().map((_) {});
     final subscriptions = <StreamSubscription<dynamic>>[];
     final groupSubscriptions = <String, List<StreamSubscription<dynamic>>>{};
+    final period = CalendarEventPeriod.forNotifications(clock.now());
     var closed = false;
     var revision = 0;
     late StreamController<void> controller;
@@ -73,13 +81,10 @@ class DeviceCalendarNotificationSource implements CalendarNotificationSource {
             firestore!.collection('groups').doc(id).snapshots().listen((_) {
               if (!closed) controller.add(null);
             }, onError: error),
-            firestore!
-                .collection('calendar_events')
-                .where('groupId', isEqualTo: id)
-                .snapshots()
-                .listen((_) {
-                  if (!closed) controller.add(null);
-                }, onError: error),
+            for (final query in calendarEventQueries(firestore!, id, period))
+              query.snapshots().listen((_) {
+                if (!closed) controller.add(null);
+              }, onError: error),
           ];
         }
         if (!closed) controller.add(null);
