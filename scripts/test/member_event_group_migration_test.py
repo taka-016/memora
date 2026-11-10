@@ -1,7 +1,7 @@
 import importlib.util
 from pathlib import Path
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 spec = importlib.util.spec_from_file_location(
     'migration', Path(__file__).parents[1] / 'firebase' / 'migrate_member_event_groups.py')
@@ -68,6 +68,44 @@ class メンバーイベント移行テスト(unittest.TestCase):
         client.collection.return_value.document.return_value.update.side_effect = RuntimeError('変更済み')
         plan = migration.make_plan({'a': event()}, {'g'}, {'a': 'g'})
         self.assertEqual(migration.apply_entry(client, plan[0], conflict_errors=(RuntimeError,)), 'conflict')
+
+    def test_退避済みグループも移行先として識別する(self):
+        client = Mock()
+        active = Mock()
+        active.id = 'g'
+        archived = Mock()
+        archived.id = 'deleted'
+        collections = {}
+        for name, docs in [('member_events', []), ('groups', [active]), ('deleted_groups', [archived])]:
+            collections[name] = Mock()
+            collections[name].stream.return_value = docs
+        client.collection.side_effect = lambda name: collections[name]
+        self.assertEqual(migration.read_state(client), ({}, {'g', 'deleted'}))
+
+    def test_確認後の未指定追加と重複と変更は全件の書き込み前に報告する(self):
+        plan = migration.make_plan({'a': event()}, {'g'}, {'a': 'g'})
+        for events in [
+            {'a': event(), 'b': event()},
+            {'a': event(), 'b': event('g')},
+            {'a': event(stamp='変更後')},
+        ]:
+            with patch.object(migration, 'read_state', return_value=(events, {'g'})), patch.object(migration, 'apply_entry') as write:
+                entries, blocked = migration.apply_plan(Mock(), plan)
+                self.assertTrue(blocked)
+                write.assert_not_called()
+
+    def test_同じ計画の再実行は書き込みせず補完済みを返す(self):
+        client = Mock()
+        snapshot = client.collection.return_value.document.return_value.get.return_value
+        snapshot.exists = True
+        snapshot.to_dict.return_value = event('g')['data']
+        snapshot.update_time.isoformat.return_value = '補完後'
+        plan = migration.make_plan({'a': event()}, {'g'}, {'a': 'g'})
+        with patch.object(migration, 'read_state', return_value=({'a': event('g', stamp='補完後')}, {'g'})):
+            entries, blocked = migration.apply_plan(client, plan)
+        self.assertFalse(blocked)
+        self.assertEqual(entries[0]['status'], 'completed')
+        client.collection.return_value.document.return_value.update.assert_not_called()
 
 
 if __name__ == '__main__':
