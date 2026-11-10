@@ -1,3 +1,4 @@
+import 'package:memora/application/models/calendar_event_period.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_notifications_notifier.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/composition_root/providers/group_providers.dart';
@@ -20,6 +21,7 @@ part 'calendar_notifier.g.dart';
 @riverpod
 class CalendarNotifier extends _$CalendarNotifier {
   int _loadVersion = 0;
+  int _eventsVersion = 0;
   StreamSubscription<GroupDto?>? _groupSubscription;
   bool _groupWaiting = false;
   StreamSubscription<List<CalendarEventDto>>? _eventsSubscription;
@@ -34,6 +36,7 @@ class CalendarNotifier extends _$CalendarNotifier {
   CalendarState build(String groupId) {
     ref.onDispose(() {
       _loadVersion++;
+      _eventsVersion++;
       unawaited(_groupSubscription?.cancel());
       unawaited(_eventsSubscription?.cancel());
       unawaited(_labelsSubscription?.cancel());
@@ -52,13 +55,19 @@ class CalendarNotifier extends _$CalendarNotifier {
       selectedDate: DateTime(day.year, day.month, day.day),
       events: monthChanged ? _expand(_series, day) : null,
     );
+    if (monthChanged &&
+        state.isWatching &&
+        (state.isLoading || state.hasLoadedEvents)) {
+      unawaited(_watchEvents(_loadVersion));
+    }
   }
 
   List<CalendarEventDto> _expand(List<CalendarEventDto> series, DateTime day) {
-    final from = DateTime(day.year, day.month - 1, -6);
-    final to = DateTime(day.year, day.month + 2, 8);
+    final period = CalendarEventPeriod.forMonth(day);
     final expander = ref.read(calendarRecurrenceExpanderProvider);
-    return series.expand((event) => expander.expand(event, from, to)).toList();
+    return series
+        .expand((event) => expander.expand(event, period.from, period.to))
+        .toList();
   }
 
   Future<void> load() async {
@@ -70,7 +79,9 @@ class CalendarNotifier extends _$CalendarNotifier {
     state = state.copyWith(isLoading: true, loadError: '');
     try {
       final results = await Future.wait<Object?>([
-        ref.read(getCalendarEventsUsecaseProvider).execute(groupId),
+        ref
+            .read(getCalendarEventsUsecaseProvider)
+            .execute(groupId, period: null),
         ref.read(getCalendarLabelsUsecaseProvider).execute(groupId),
         ref.read(getGroupWithMembersByIdUsecaseProvider).execute(groupId),
       ]);
@@ -101,7 +112,6 @@ class CalendarNotifier extends _$CalendarNotifier {
 
   Future<void> _watch(int version) async {
     await _groupSubscription?.cancel();
-    await _eventsSubscription?.cancel();
     await _labelsSubscription?.cancel();
     if (!ref.mounted || version != _loadVersion) return;
     _groupWaiting = true;
@@ -126,25 +136,8 @@ class CalendarNotifier extends _$CalendarNotifier {
       );
     }
 
-    try {
-      _eventsSubscription = ref
-          .read(watchCalendarEventsUsecaseProvider)!
-          .execute(groupId)
-          .listen((series) {
-            if (!active()) return;
-            try {
-              final expanded = _expand(series, state.selectedDate);
-              _series = series;
-              _eventsWaiting = false;
-              state = state.copyWith(events: expanded, hasLoadedEvents: true);
-              _receiveStatus(events: true);
-            } catch (_) {
-              failure(true);
-            }
-          }, onError: (Object _) => failure(true));
-    } catch (_) {
-      failure(true);
-    }
+    await _watchEvents(version);
+    if (!active()) return;
     try {
       _labelsSubscription = ref
           .read(watchCalendarLabelsUsecaseProvider)!
@@ -195,6 +188,51 @@ class CalendarNotifier extends _$CalendarNotifier {
       }
     } catch (_) {
       groupFailure();
+    }
+  }
+
+  Future<void> _watchEvents(int version) async {
+    final eventVersion = ++_eventsVersion;
+    bool active() =>
+        ref.mounted &&
+        version == _loadVersion &&
+        eventVersion == _eventsVersion;
+    await _eventsSubscription?.cancel();
+    if (!active()) return;
+    _eventsWaiting = true;
+    state = state.copyWith(isLoading: true);
+    void failure() {
+      if (!active()) return;
+      _eventsWaiting = false;
+      _receiveStatus(
+        events: true,
+        error: state.hasLoadedEvents
+            ? '予定を自動更新できませんでした。再試行してください'
+            : '予定はまだ取得できていません。再試行してください',
+      );
+    }
+
+    try {
+      _eventsSubscription = ref
+          .read(watchCalendarEventsUsecaseProvider)!
+          .execute(
+            groupId,
+            period: CalendarEventPeriod.forMonth(state.selectedDate),
+          )
+          .listen((series) {
+            if (!active()) return;
+            try {
+              final expanded = _expand(series, state.selectedDate);
+              _series = series;
+              _eventsWaiting = false;
+              state = state.copyWith(events: expanded, hasLoadedEvents: true);
+              _receiveStatus(events: true);
+            } catch (_) {
+              failure();
+            }
+          }, onError: (Object _) => failure());
+    } catch (_) {
+      failure();
     }
   }
 

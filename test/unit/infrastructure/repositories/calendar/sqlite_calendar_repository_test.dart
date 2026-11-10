@@ -1,3 +1,4 @@
+import 'package:memora/application/models/calendar_event_period.dart';
 import 'package:memora/application/mappers/calendar/calendar_event_mapper.dart';
 import 'package:memora/domain/entities/calendar/calendar_event_override.dart';
 import 'package:drift/native.dart';
@@ -79,6 +80,73 @@ void main() {
         endDateTime: DateTime(2026, 10, 3),
         isAllDay: allDay,
       );
+
+  test('期間取得は過去・遠い未来の通常予定を除き跨ぐ予定と過去開始の個別変更を保持する', () async {
+    final labelId = await labels.saveCalendarLabel(label());
+    final normal = event(labelId);
+    final definitions = {
+      '過去': normal.copyWith(
+        startDateTime: DateTime(2021, 1, 1),
+        endDateTime: DateTime(2021, 1, 2),
+      ),
+      '未来': normal.copyWith(
+        startDateTime: DateTime(2028, 1, 1),
+        endDateTime: DateTime(2028, 1, 2),
+      ),
+      '期間内': normal.copyWith(
+        startDateTime: DateTime(2026, 11, 11),
+        endDateTime: DateTime(2026, 11, 12),
+      ),
+      '跨ぐ予定': normal.copyWith(
+        startDateTime: DateTime(2026, 10, 1),
+        endDateTime: DateTime(2026, 12, 1),
+      ),
+      '境界の瞬間': normal.copyWith(
+        startDateTime: DateTime(2026, 11, 10),
+        endDateTime: DateTime(2026, 11, 10),
+      ),
+      '過去の系列': normal.copyWith(
+        startDateTime: DateTime(2021, 1, 1, 12),
+        endDateTime: DateTime(2021, 1, 1, 13),
+        recurrenceRule: 'FREQ=DAILY;COUNT=2',
+        timeZone: 'Asia/Tokyo',
+        overrides: [
+          CalendarEventOverride(
+            originalStartDateTime: DateTime(2021, 1, 1, 12).toUtc(),
+            isCancelled: false,
+            title: '移動した回',
+            labelType: 'custom',
+            labelId: labelId,
+            isAllDay: false,
+            startDateTime: DateTime(2026, 11, 11, 12),
+            endDateTime: DateTime(2026, 11, 11, 13),
+          ),
+        ],
+      ),
+    };
+    for (final entry in definitions.entries) {
+      await events.saveCalendarEvent(entry.value.copyWith(title: entry.key));
+    }
+    final loaded = await eventQuery.getCalendarEventsByGroupId(
+      'family',
+      period: CalendarEventPeriod(
+        from: DateTime(2026, 11, 10),
+        to: DateTime(2026, 12, 1),
+      ),
+    );
+    expect(
+      loaded.map((value) => value.title),
+      unorderedEquals(['期間内', '跨ぐ予定', '境界の瞬間', '過去の系列']),
+    );
+    expect(
+      loaded
+          .singleWhere((value) => value.title == '過去の系列')
+          .overrides
+          .single
+          .title,
+      '移動した回',
+    );
+  });
 
   test('系列を単発へ変更するとき個別予定を同じトランザクションで維持する', () async {
     final labelId = await labels.saveCalendarLabel(label());

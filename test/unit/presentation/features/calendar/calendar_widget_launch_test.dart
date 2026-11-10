@@ -91,7 +91,8 @@ void main() {
         when(loader.execute('g1')).thenAnswer((_) => group.future);
         final events = MockGetCalendarEventsUsecase();
         final labels = MockGetCalendarLabelsUsecase();
-        when(events.execute('g1')).thenAnswer((_) async => []);
+        when(events.execute('g1', period: anyNamed('period')))
+            .thenAnswer((_) async => []);
         when(labels.execute('g1')).thenAnswer((_) async => []);
         final external = _WidgetDeviceCalendar(missing: scenario.missing);
         await tester.pumpWidget(
@@ -175,7 +176,8 @@ void main() {
         final labels = MockGetCalendarLabelsUsecase();
         final create = MockCreateCalendarEventUsecase();
         final saved = <CalendarEventDto>[];
-        when(events.execute('g1')).thenAnswer((_) async => []);
+        when(events.execute('g1', period: anyNamed('period')))
+            .thenAnswer((_) async => []);
         when(labels.execute('g1')).thenAnswer((_) async => []);
         when(create.execute(any)).thenAnswer((call) async {
           saved.add(call.positionalArguments.single as CalendarEventDto);
@@ -260,7 +262,7 @@ void main() {
         when(loader.execute('g1')).thenAnswer((_) => group.future);
         final events = MockGetCalendarEventsUsecase();
         final labels = MockGetCalendarLabelsUsecase();
-        when(events.execute('g1')).thenAnswer(
+        when(events.execute('g1', period: anyNamed('period'))).thenAnswer(
           (_) async => [
             CalendarEventDto(
               id: 'series',
@@ -338,7 +340,7 @@ void main() {
     );
     final events = MockGetCalendarEventsUsecase();
     final labels = MockGetCalendarLabelsUsecase();
-    when(events.execute('g1')).thenAnswer(
+    when(events.execute('g1', period: anyNamed('period'))).thenAnswer(
       (_) async => [
         CalendarEventDto(
           id: 'event',

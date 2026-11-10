@@ -3,6 +3,8 @@ import 'package:memora/application/queries/calendar/calendar_group_watch_query_s
 
 import 'dart:async';
 
+import 'package:memora/application/models/calendar_event_period.dart';
+
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/application/dtos/calendar/calendar_label_dto.dart';
 import 'package:memora/application/queries/calendar/calendar_event_watch_query_service.dart';
@@ -11,9 +13,14 @@ import 'package:memora/application/queries/calendar/calendar_label_watch_query_s
 class EventSource implements CalendarEventWatchQueryService {
   final streams = <StreamController<List<CalendarEventDto>>>[];
   final groups = <String>[];
+  final periods = <CalendarEventPeriod?>[];
   int cancelled = 0;
   @override
-  Stream<List<CalendarEventDto>> watchCalendarEventsByGroupId(String groupId) {
+  Stream<List<CalendarEventDto>> watchCalendarEventsByGroupId(
+    String groupId, {
+    CalendarEventPeriod? period,
+  }) {
+    periods.add(period);
     groups.add(groupId);
     final stream = StreamController<List<CalendarEventDto>>(
       onCancel: () {

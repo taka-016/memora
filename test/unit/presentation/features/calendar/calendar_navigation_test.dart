@@ -27,7 +27,8 @@ void main() {
   }) async {
     final events = MockGetCalendarEventsUsecase();
     final labels = MockGetCalendarLabelsUsecase();
-    when(events.execute(any)).thenAnswer((_) async => []);
+    when(events.execute(any, period: anyNamed('period')))
+        .thenAnswer((_) async => []);
     when(labels.execute(any)).thenAnswer((_) async => []);
     final groups = support.groupsWithMembers.take(count).toList();
     support.stubFreshGroupsWithMembers(groups);
@@ -100,8 +101,8 @@ void main() {
     await tester.tap(find.text('グループ2'));
     await tester.pumpAndSettle();
     expect(find.text('グループ2のカレンダー'), findsOneWidget);
-    verify(events.execute('1')).called(1);
-    verify(events.execute('2')).called(1);
+    verify(events.execute('1', period: anyNamed('period'))).called(1);
+    verify(events.execute('2', period: anyNamed('period'))).called(1);
   });
   testWidgets('1件のグループは選択を省略し戻る操作では選択画面を維持する', (tester) async {
     await pump(tester, count: 1);

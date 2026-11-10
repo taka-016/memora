@@ -61,7 +61,8 @@ class CalendarTestHarness {
     Brightness? brightness,
     DateTime? now,
   }) async {
-    when(events.execute('g1')).thenAnswer((_) async => List.of(savedEvents));
+    when(events.execute('g1', period: anyNamed('period')))
+        .thenAnswer((_) async => List.of(savedEvents));
     when(labels.execute('g1')).thenAnswer((_) async => List.of(savedLabels));
     when(reorder.execute('g1', any)).thenAnswer((call) async {
       final ids = call.positionalArguments[1] as List<String>;

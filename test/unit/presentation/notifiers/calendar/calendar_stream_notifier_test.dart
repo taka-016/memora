@@ -163,23 +163,33 @@ void main() {
     expect(live.read(provider).displayLabels.last.name, '花子の予定');
   });
 
-  test('外部変更を受信して選択日と月を保ち通常保存と月移動では購読し直さない', () async {
+  test('外部変更を受信して選択日と月を保ち通常保存では購読し直さず月移動は予定だけを再購読する', () async {
     await start();
     final notifier = container.read(provider.notifier);
-    notifier.selectDate(DateTime(2026, 11, 2));
+    expect(events.periods.single, isNotNull);
+    final oldPeriod = events.periods.single!;
+    notifier.selectDate(DateTime(2026, 10, 3));
+    expect(events.streams, hasLength(1));
+    notifier.selectDate(DateTime(2021, 11, 2));
+    await flush();
+    expect(events.cancelled, 1);
+    expect(events.streams, hasLength(2));
+    expect(labels.streams, hasLength(1));
+    expect(events.periods.last!.from.isBefore(oldPeriod.from), isTrue);
+    events.streams.first.add([event.copyWith(title: '移動前の結果')]);
     events.streams.last.add([
       event.copyWith(
         title: '外部変更',
-        startDateTime: DateTime(2026, 11, 2),
-        endDateTime: DateTime(2026, 11, 2),
+        startDateTime: DateTime(2021, 11, 2),
+        endDateTime: DateTime(2021, 11, 2),
       ),
     ]);
     await flush();
     expect(container.read(provider).events.single.title, '外部変更');
-    expect(container.read(provider).selectedDate, DateTime(2026, 11, 2));
+    expect(container.read(provider).selectedDate, DateTime(2021, 11, 2));
     when(create.execute(any)).thenAnswer((_) async => 'new');
     expect(await notifier.saveEvent(event.copyWith(id: '')), isTrue);
-    expect(events.streams, hasLength(1));
+    expect(events.streams, hasLength(2));
     verifyZeroInteractions(getEvents);
   });
   test('予定とラベルの失敗を別々に保持し既存表示を残して再試行する', () async {

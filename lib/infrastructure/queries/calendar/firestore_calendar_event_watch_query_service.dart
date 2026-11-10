@@ -1,3 +1,6 @@
+import 'package:memora/infrastructure/queries/calendar/firestore_calendar_event_queries.dart';
+import 'package:memora/application/models/calendar_event_period.dart';
+
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -11,23 +14,33 @@ class FirestoreCalendarEventWatchQueryService
   final FirebaseFirestore firestore;
 
   @override
-  Stream<List<CalendarEventDto>> watchCalendarEventsByGroupId(String groupId) {
-    final pending = <String, Future<CalendarEventDto>>{};
+  Stream<List<CalendarEventDto>> watchCalendarEventsByGroupId(
+    String groupId, {
+    CalendarEventPeriod? period,
+  }) {
+    final queries = calendarEventQueries(firestore, groupId, period);
+    final received = List<Map<String, Future<CalendarEventDto>>?>.filled(
+      queries.length,
+      null,
+      growable: true,
+    );
     final store = FirestoreCalendarEventStore(firestore);
-    StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? subscription;
+    final subscriptions =
+        <StreamSubscription<QuerySnapshot<Map<String, dynamic>>>>[];
     var generation = 0;
     var cancelled = false;
     late StreamController<List<CalendarEventDto>> controller;
     controller = StreamController<List<CalendarEventDto>>(
       onListen: () {
-        subscription = firestore
-            .collection('calendar_events')
-            .where('groupId', isEqualTo: groupId)
-            .snapshots()
-            .listen(
+        for (var index = 0; index < queries.length; index++) {
+          final bucket = index;
+          subscriptions.add(
+            queries[index].snapshots().listen(
               (snapshot) async {
                 final current = ++generation;
                 try {
+                  final pending =
+                      received[bucket] ?? <String, Future<CalendarEventDto>>{};
                   for (final change in snapshot.docChanges) {
                     if (change.type == DocumentChangeType.removed) {
                       pending.remove(change.doc.id);
@@ -35,9 +48,14 @@ class FirestoreCalendarEventWatchQueryService
                       pending[change.doc.id] = store.read(change.doc);
                     }
                   }
-                  final events = await Future.wait(
-                    snapshot.docs.map((doc) => pending[doc.id]!),
-                  );
+                  received[bucket] = pending;
+                  await Future.wait(pending.values);
+                  if (cancelled) return;
+                  if (received.any((value) => value == null)) return;
+                  final combined = <String, Future<CalendarEventDto>>{
+                    for (final values in received) ...values!,
+                  };
+                  final events = await Future.wait(combined.values);
                   if (!cancelled && current == generation) {
                     controller.add(events);
                   }
@@ -51,13 +69,17 @@ class FirestoreCalendarEventWatchQueryService
                 generation++;
                 if (!cancelled) controller.addError(error, stack);
               },
-            );
+            ),
+          );
+        }
       },
       onCancel: () async {
         cancelled = true;
         generation++;
-        await subscription?.cancel();
-        pending.clear();
+        await Future.wait(
+          subscriptions.map((subscription) => subscription.cancel()),
+        );
+        received.clear();
       },
     );
     return controller.stream;
