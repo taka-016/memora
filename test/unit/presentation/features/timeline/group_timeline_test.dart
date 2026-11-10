@@ -802,7 +802,8 @@ void main() {
       await tester.pumpWidget(
         createTestWidget(
           memberEventService: _FakeMemberEventQueryService([
-            MemberEventDto(groupId: 'group1', 
+            MemberEventDto(
+              groupId: 'group1',
               id: 'member-event-1',
               memberId: 'member1',
               year: currentYear,
@@ -849,7 +850,8 @@ void main() {
       await tester.pumpWidget(
         createTestWidget(
           memberEventService: _FakeMemberEventQueryService([
-            MemberEventDto(groupId: 'group1', 
+            MemberEventDto(
+              groupId: 'group1',
               id: 'member-event-1',
               memberId: 'member1',
               year: currentYear,
@@ -870,7 +872,8 @@ void main() {
       await tester.pumpWidget(
         createTestWidget(
           memberEventService: _FakeMemberEventQueryService([
-            MemberEventDto(groupId: 'group1', 
+            MemberEventDto(
+              groupId: 'group1',
               id: 'member-event-1',
               memberId: 'member1',
               year: currentYear,
@@ -901,7 +904,8 @@ void main() {
       await tester.pumpWidget(
         createTestWidget(
           memberEventService: _FakeMemberEventQueryService([
-            MemberEventDto(groupId: 'group1', 
+            MemberEventDto(
+              groupId: 'group1',
               id: 'member-event-1',
               memberId: 'member1',
               year: currentYear,
@@ -934,7 +938,8 @@ void main() {
       await tester.pumpWidget(
         createTestWidget(
           memberEventService: _FakeMemberEventQueryService([
-            MemberEventDto(groupId: 'group1', 
+            MemberEventDto(
+              groupId: 'group1',
               id: 'member-event-1',
               memberId: 'member1',
               year: currentYear,
@@ -960,7 +965,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(repository.savedEvents, [
-        MemberEvent(groupId: 'group1', 
+        MemberEvent(
+          groupId: 'group1',
           id: 'member-event-1',
           memberId: 'member1',
           year: currentYear,
@@ -977,7 +983,8 @@ void main() {
       await tester.pumpWidget(
         createTestWidget(
           memberEventService: _FakeMemberEventQueryService([
-            MemberEventDto(groupId: 'group1', 
+            MemberEventDto(
+              groupId: 'group1',
               id: 'member-event-1',
               memberId: 'member1',
               year: currentYear,
@@ -1003,7 +1010,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(repository.savedEvents, [
-        MemberEvent(groupId: 'group1', 
+        MemberEvent(
+          groupId: 'group1',
           id: 'member-event-1',
           memberId: 'member1',
           year: currentYear,
@@ -1023,7 +1031,8 @@ void main() {
       await tester.pumpWidget(
         createTestWidget(
           memberEventService: _FakeMemberEventQueryService([
-            MemberEventDto(groupId: 'group1', 
+            MemberEventDto(
+              groupId: 'group1',
               id: 'member-event-1',
               memberId: 'member1',
               year: currentYear,
@@ -1763,7 +1772,8 @@ void main() {
         ),
       ]);
       final memberEventService = _RefreshFailingMemberEventQueryService([
-        MemberEventDto(groupId: 'group1', 
+        MemberEventDto(
+          groupId: 'group1',
           id: 'member-event-1',
           memberId: 'member1',
           year: currentYear,
@@ -1817,7 +1827,8 @@ void main() {
     ) async {
       final currentYear = fixedNow.year;
       final service = _RefreshFailingMemberEventQueryService([
-        MemberEventDto(groupId: 'group1', 
+        MemberEventDto(
+          groupId: 'group1',
           id: 'member-event-1',
           memberId: 'member1',
           year: currentYear,

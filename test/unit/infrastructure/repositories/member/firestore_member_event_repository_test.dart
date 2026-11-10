@@ -10,7 +10,8 @@ import 'package:memora/infrastructure/repositories/member/firestore_member_event
 import '../../../../helpers/firestore_transaction_store.dart';
 
 void main() {
-  const event = MemberEvent(groupId: 'g', 
+  const event = MemberEvent(
+    groupId: 'g',
     id: 'g_m_2026',
     memberId: 'm',
     year: 2026,
@@ -21,8 +22,11 @@ void main() {
     test('同じメンバーと年の別グループの記録は保存・重複整理・削除で変更しない（$memo）', () async {
       final store = FirestoreTransactionStore();
       store.rows['member_events/other'] = {
-        'groupId': 'other', 'memberId': 'm', 'year': 2026,
-        'memo': '別グループ', 'version': 3,
+        'groupId': 'other',
+        'memberId': 'm',
+        'year': 2026,
+        'memo': '別グループ',
+        'version': 3,
       };
       await FirestoreMemberEventRepository(firestore: store.firestore)
           .saveMemberEvent(event.copyWith(id: '', memo: memo));
@@ -36,7 +40,7 @@ void main() {
         final store = FirestoreTransactionStore();
         store.rows['member_events/g_m_2026'] = {
           'groupId': 'g',
-        'memberId': 'm',
+          'memberId': 'm',
           'year': 2026,
           'memo': '元',
           'version': version,
@@ -69,7 +73,7 @@ void main() {
       final repo = FirestoreMemberEventRepository(firestore: store.firestore);
       await expectLater(
         repo.saveMemberEvent(
-          MemberEvent(id: '', memberId: 'm', year: 2026, memo: memo),
+          MemberEvent(groupId: 'g', id: '', memberId: 'm', year: 2026, memo: memo),
         ),
         throwsA(isA<FirebaseException>()),
       );
@@ -81,7 +85,7 @@ void main() {
     final repo = FirestoreMemberEventRepository(firestore: store.firestore);
     expect(
       await repo.saveMemberEvent(
-        const MemberEvent(id: '', memberId: 'm', year: 2026, memo: '新規'),
+        const MemberEvent(groupId: 'g', id: '', memberId: 'm', year: 2026, memo: '新規'),
       ),
       'g_m_2026',
     );
@@ -121,7 +125,7 @@ void main() {
     final store = FirestoreTransactionStore();
     store.rows['member_events/old'] = {
       'groupId': 'g',
-        'memberId': 'm',
+      'memberId': 'm',
       'year': 2026,
       'memo': '元',
       'version': 3,
@@ -156,7 +160,7 @@ void main() {
       var finished = false;
       final future = FirestoreMemberEventRepository(firestore: store.firestore)
           .saveMemberEvent(
-            const MemberEvent(id: '', memberId: 'm', year: 2026, memo: '新規'),
+            const MemberEvent(groupId: 'g', id: '', memberId: 'm', year: 2026, memo: '新規'),
           )
           .whenComplete(() => finished = true);
       final result = expectLater(
@@ -187,7 +191,7 @@ void main() {
       await expectLater(
         FirestoreMemberEventRepository(firestore: store.firestore)
             .saveMemberEvent(
-              MemberEvent(id: '', memberId: 'm', year: 2026, memo: memo),
+              MemberEvent(groupId: 'g', id: '', memberId: 'm', year: 2026, memo: memo),
             ),
         throwsA(isA<FirebaseException>()),
       );
@@ -222,7 +226,10 @@ void main() {
         await expectLater(saving, throwsA(isA<FirebaseException>()));
         expect(
           store.rows.keys,
-          unorderedEquals(['member_events/g_m_2026', 'member_events/duplicate']),
+          unorderedEquals([
+            'member_events/g_m_2026',
+            'member_events/duplicate',
+          ]),
         );
         expect(store.commits, 0);
       } else {

@@ -103,7 +103,12 @@ void main() {
       ],
       'member_events': [
         {
-          'group_id': 'group','id': 'me', 'member_id': 'member', 'year': 2026, 'memo': '入学'},
+          'group_id': 'group',
+          'id': 'me',
+          'member_id': 'member',
+          'year': 2026,
+          'memo': '入学',
+        },
       ],
       'group_events': [
         {'id': 'ge', 'group_id': 'group-1', 'year': 2026, 'memo': '記念'},

@@ -104,21 +104,43 @@ void main() {
   test('メンバーと年が同じでもグループごとに取得・更新・空メモ削除する', () async {
     final repo = SqliteMemberEventRepository(db);
     final query = SqliteMemberEventQueryService(db);
-    final event = MemberEvent(id: '', groupId: 'g', memberId: memberId, year: 2026, memo: '元');
+    final event = MemberEvent(
+      id: '',
+      groupId: 'g',
+      memberId: memberId,
+      year: 2026,
+      memo: '元',
+    );
     final firstId = await repo.saveMemberEvent(event);
-    final otherId = await repo.saveMemberEvent(event.copyWith(groupId: 'other', memo: '別'));
+    final otherId = await repo.saveMemberEvent(
+      event.copyWith(groupId: 'other', memo: '別'),
+    );
     expect(firstId, isNot(otherId));
     await repo.saveMemberEvent(event.copyWith(memo: '更新'));
-    expect((await query.getMemberEventsByMemberIds([memberId], groupId: 'g')).single.memo, '更新');
+    expect(
+      (await query.getMemberEventsByMemberIds([
+        memberId,
+      ], groupId: 'g')).single.memo,
+      '更新',
+    );
     await repo.saveMemberEvent(event.copyWith(memo: ''));
-    expect(await query.getMemberEventsByMemberIds([memberId], groupId: 'g'), isEmpty);
-    expect((await query.getMemberEventsByMemberIds([memberId], groupId: 'other')).single.memo, '別');
+    expect(
+      await query.getMemberEventsByMemberIds([memberId], groupId: 'g'),
+      isEmpty,
+    );
+    expect(
+      (await query.getMemberEventsByMemberIds([
+        memberId,
+      ], groupId: 'other')).single.memo,
+      '別',
+    );
   });
 
   test('同年のメンバーイベントは置換し空メモで削除する', () async {
     final repo = SqliteMemberEventRepository(db);
     final query = SqliteMemberEventQueryService(db);
-    final event = MemberEvent(groupId: 'g', 
+    final event = MemberEvent(
+      groupId: 'g',
       id: '',
       memberId: memberId,
       year: 2026,
@@ -129,16 +151,23 @@ void main() {
     await repo.saveMemberEvent(event.copyWith(year: 2025));
     final events = await query.getMemberEventsByMemberIds(
       [memberId, memberId],
-      orderBy: [const OrderBy('year', descending: true)], groupId: 'g');
+      orderBy: [const OrderBy('year', descending: true)],
+      groupId: 'g',
+    );
     expect(events.map((e) => e.year), [2026, 2025]);
     expect(events.first.memo, '卒業');
     expect(await repo.saveMemberEvent(event.copyWith(memo: '')), '');
     expect(
-      (await query.getMemberEventsByMemberIds([memberId], groupId: 'g')).single.year,
+      (await query.getMemberEventsByMemberIds([
+        memberId,
+      ], groupId: 'g')).single.year,
       2025,
     );
     await repo.deleteMemberEventsByMemberId(memberId);
-    expect(await query.getMemberEventsByMemberIds([memberId], groupId: 'g'), isEmpty);
+    expect(
+      await query.getMemberEventsByMemberIds([memberId], groupId: 'g'),
+      isEmpty,
+    );
     expect(await query.getMemberEventsByMemberIds([], groupId: 'g'), isEmpty);
   });
 
