@@ -71,7 +71,8 @@ def snapshot_record(snapshot):
 
 def read_state(client):
     events = {doc.id: snapshot_record(doc) for doc in client.collection('member_events').stream()}
-    groups = {doc.id for doc in client.collection('groups').stream()}
+    groups = {doc.id for name in ('groups', 'deleted_groups')
+              for doc in client.collection(name).stream()}
     return events, groups
 
 
