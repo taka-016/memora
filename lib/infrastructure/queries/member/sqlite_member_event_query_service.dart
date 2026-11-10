@@ -10,14 +10,16 @@ class SqliteMemberEventQueryService implements MemberEventQueryService {
   @override
   Future<List<MemberEventDto>> getMemberEventsByMemberIds(
     List<String> memberIds, {
+    required String groupId,
     List<OrderBy>? orderBy,
   }) async {
     if (memberIds.isEmpty) return [];
     final ids = memberIds.toSet().toList();
     return (await db.rows(
       'member_events',
-      where: 'member_id IN (${List.filled(ids.length, '?').join(', ')})',
-      args: ids,
+      where:
+          'group_id = ? AND member_id IN (${List.filled(ids.length, '?').join(', ')})',
+      args: [groupId, ...ids],
       orderBy: orderBy,
     )).map(SqliteMemberEventMapper.fromRow).toList();
   }

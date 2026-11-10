@@ -4,6 +4,7 @@ import 'package:memora/application/queries/order_by.dart';
 abstract class MemberEventQueryService {
   Future<List<MemberEventDto>> getMemberEventsByMemberIds(
     List<String> memberIds, {
+    required String groupId,
     List<OrderBy>? orderBy,
   });
 }

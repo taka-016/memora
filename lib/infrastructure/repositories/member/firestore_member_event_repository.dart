@@ -14,9 +14,10 @@ class FirestoreMemberEventRepository implements MemberEventRepository {
   Future<String> saveMemberEvent(MemberEvent memberEvent) async {
     final collection = _firestore.collection('member_events');
     final docId =
-        '${Uri.encodeComponent(memberEvent.memberId)}_${memberEvent.year}';
+        '${Uri.encodeComponent(memberEvent.groupId).replaceAll('_', '%5F')}_${Uri.encodeComponent(memberEvent.memberId).replaceAll('_', '%5F')}_${memberEvent.year}';
     final target = collection.doc(docId);
     final snapshot = await collection
+        .where('groupId', isEqualTo: memberEvent.groupId)
         .where('memberId', isEqualTo: memberEvent.memberId)
         .where('year', isEqualTo: memberEvent.year)
         .get();

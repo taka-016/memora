@@ -89,10 +89,11 @@ CREATE INDEX itinerary_items_trip_id_idx ON itinerary_items (trip_id, start_date
 
 CREATE TABLE member_events (
   id TEXT NOT NULL PRIMARY KEY,
+  group_id TEXT NOT NULL,
   member_id TEXT NOT NULL,
   year INTEGER NOT NULL,
   memo TEXT NOT NULL,
-  UNIQUE (member_id, year)
+  UNIQUE (group_id, member_id, year)
 ) AS SqliteMemberEventRow;
 
 CREATE TABLE group_events (

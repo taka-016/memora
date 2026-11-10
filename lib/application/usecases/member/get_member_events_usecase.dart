@@ -7,9 +7,13 @@ class GetMemberEventsUsecase {
 
   GetMemberEventsUsecase(this._memberEventQueryService);
 
-  Future<List<MemberEventDto>> execute(List<String> memberIds) async {
+  Future<List<MemberEventDto>> execute(
+    List<String> memberIds, {
+    required String groupId,
+  }) async {
     return await _memberEventQueryService.getMemberEventsByMemberIds(
       memberIds,
+      groupId: groupId,
       orderBy: const [OrderBy('year', descending: false)],
     );
   }

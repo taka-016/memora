@@ -7,21 +7,22 @@ class SqliteMemberEventRepository implements MemberEventRepository {
   SqliteMemberEventRepository(this.db);
   final OfflineDatabase db;
   @override
-  Future<String> saveMemberEvent(MemberEvent memberEvent) async =>
-      db.transaction(() async {
-        await db.customStatement(
-          'DELETE FROM member_events WHERE member_id = ? AND year = ?',
-          [memberEvent.memberId, memberEvent.year],
-        );
-        if (memberEvent.memo.isEmpty) return '';
-        final id =
-            '${Uri.encodeComponent(memberEvent.memberId)}_${memberEvent.year}';
-        await db.insertRow(
-          'member_events',
-          SqliteMemberEventMapper.toRow(memberEvent.copyWith(id: id)),
-        );
-        return id;
-      });
+  Future<String> saveMemberEvent(
+    MemberEvent memberEvent,
+  ) async => db.transaction(() async {
+    await db.customStatement(
+      'DELETE FROM member_events WHERE group_id = ? AND member_id = ? AND year = ?',
+      [memberEvent.groupId, memberEvent.memberId, memberEvent.year],
+    );
+    if (memberEvent.memo.isEmpty) return '';
+    final id =
+        '${Uri.encodeComponent(memberEvent.groupId).replaceAll('_', '%5F')}_${Uri.encodeComponent(memberEvent.memberId).replaceAll('_', '%5F')}_${memberEvent.year}';
+    await db.insertRow(
+      'member_events',
+      SqliteMemberEventMapper.toRow(memberEvent.copyWith(id: id)),
+    );
+    return id;
+  });
   @override
   Future<void> deleteMemberEvent(
     String memberEventId, {

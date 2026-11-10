@@ -9,7 +9,7 @@ import 'package:memora/application/usecases/member/calculate_yakudoshi_usecase.d
 import 'package:memora/presentation/features/member/member_event_edit_modal.dart';
 import 'package:memora/presentation/features/timeline/timeline_display_settings.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
-import 'package:memora/presentation/features/timeline/timeline_rows_refresh_provider.dart';
+import 'package:memora/presentation/features/timeline/timeline_member_events_provider.dart';
 
 class MemberRow extends TimelineRowDefinition {
   const MemberRow({required this.member, required this.initialHeight});
@@ -50,15 +50,6 @@ class MemberRow extends TimelineRowDefinition {
   }
 }
 
-final _memberEventsByYearProvider = FutureProvider.autoDispose
-    .family<Map<int, MemberEventDto>, String>((ref, memberId) async {
-      ref.watch(timelineRowsRefreshProvider);
-      final events = await ref.watch(getMemberEventsUsecaseProvider).execute([
-        memberId,
-      ]);
-      return {for (final event in events) event.year: event};
-    }, retry: (_, _) => null);
-
 class _MemberYearCell extends HookConsumerWidget {
   const _MemberYearCell({
     required this.member,
@@ -77,7 +68,10 @@ class _MemberYearCell extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final eventsByYear = ref.watch(
-      _memberEventsByYearProvider(member.memberId),
+      timelineMemberEventsByYearProvider(
+        groupId: member.groupId,
+        memberId: member.memberId,
+      ),
     );
     final localEvent = useState<MemberEventDto?>(null);
     final hasLoadedEvents = useState(false);
@@ -118,6 +112,7 @@ class _MemberYearCell extends HookConsumerWidget {
                     .read(saveMemberEventUsecaseProvider)
                     .execute(
                       MemberEventDto(
+                        groupId: member.groupId,
                         version: eventAtOpen?.version,
                         id: eventAtOpen?.id ?? '',
                         memberId: member.memberId,
@@ -134,6 +129,7 @@ class _MemberYearCell extends HookConsumerWidget {
                     .read(saveMemberEventUsecaseProvider)
                     .execute(
                       MemberEventDto(
+                        groupId: member.groupId,
                         version: eventAtOpen?.version,
                         id: eventAtOpen?.id ?? '',
                         memberId: member.memberId,
@@ -146,7 +142,12 @@ class _MemberYearCell extends HookConsumerWidget {
                 }
                 localEvent.value = savedEvent;
               }
-              ref.invalidate(_memberEventsByYearProvider(member.memberId));
+              ref.invalidate(
+                timelineMemberEventsByYearProvider(
+                  groupId: member.groupId,
+                  memberId: member.memberId,
+                ),
+              );
             },
           );
         },

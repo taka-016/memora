@@ -6,6 +6,7 @@ class MemberEventMapper {
     return MemberEvent(
       id: dto.id,
       version: dto.version,
+      groupId: dto.groupId,
       memberId: dto.memberId,
       year: dto.year,
       memo: dto.memo,
@@ -16,6 +17,7 @@ class MemberEventMapper {
     return MemberEventDto(
       id: entity.id,
       version: entity.version,
+      groupId: entity.groupId,
       memberId: entity.memberId,
       year: entity.year,
       memo: entity.memo,
