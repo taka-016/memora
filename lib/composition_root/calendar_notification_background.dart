@@ -22,7 +22,7 @@ Future<void> registerCalendarNotificationBackgroundUpdate() async {
     calendarNotificationPeriodicTaskName,
     calendarNotificationPeriodicTaskName,
     existingWorkPolicy: ExistingPeriodicWorkPolicy.update,
-    frequency: const Duration(minutes: 15),
+    frequency: const Duration(hours: 1),
     constraints: Constraints(
       networkType: mode == AppMode.online
           ? NetworkType.connected
