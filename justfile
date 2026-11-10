@@ -82,14 +82,6 @@ test-calendar-widget:
 setup-firebase *actions:
   bash scripts/firebase/setup.sh "$@"
 
-# メンバー別イベントの移行計画を確認・適用する（plan / apply）
-migrate-member-event-groups *args:
-  python3 scripts/firebase/migrate_member_event_groups.py "$@"
-
-# メンバー別イベント移行の未指定・重複・競合検出を検証する
-test-member-event-migration:
-  python3 -m unittest discover -s scripts/test -p member_event_group_migration_test.py
-
 # SSH鍵を作成する（省略時はssh_keys/memora_ed25519）
 ssh-key *args:
   bash scripts/dev/generate_ssh_public_key.sh "$@"
