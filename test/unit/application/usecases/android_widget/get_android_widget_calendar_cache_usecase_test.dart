@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/models/app_mode.dart';
+import 'package:memora/application/models/calendar_event_period.dart';
 import 'package:memora/application/services/current_user_service.dart';
 import 'package:memora/domain/entities/account/user.dart';
 import 'package:memora/application/queries/calendar/calendar_event_query_service.dart';
@@ -65,8 +66,19 @@ void main() {
     recurrenceRule: rule,
   );
 
+  for (final month in [DateTime(2026, 11), DateTime(2016, 1)]) {
+    test('${month.year}年${month.month}月への移動は5か月とグリッドの期間だけ取得する', () async {
+      await usecase.execute('group', month);
+      final period = verify(events.getCalendarEventsByGroupId(
+        'group', period: captureAnyNamed('period'),
+      )).captured.single as CalendarEventPeriod;
+      expect(period.from, DateTime(month.year, month.month - 2, -5));
+      expect(period.to, DateTime(month.year, month.month + 3, 7));
+    });
+  }
+
   test('前日開始の時刻付き予定より終日を先頭にし各分類内を開始日時順で保存する', () async {
-    when(events.getCalendarEventsByGroupId('group')).thenAnswer(
+    when(events.getCalendarEventsByGroupId('group', period: anyNamed('period'))).thenAnswer(
       (_) async => [
         event(
           '朝',
@@ -97,7 +109,7 @@ void main() {
   });
 
   test('月の前後を含む週を作り、予定名と配色を全件保持する', () async {
-    when(events.getCalendarEventsByGroupId('group')).thenAnswer(
+    when(events.getCalendarEventsByGroupId('group', period: anyNamed('period'))).thenAnswer(
       (_) async => [
         for (var i = 0; i < 4; i++)
           event('予定$i', DateTime(2026, 11, 1), DateTime(2026, 11, 2)),
@@ -130,13 +142,13 @@ void main() {
       '2026-12-01',
       '2027-01-01',
     ]);
-    verify(events.getCalendarEventsByGroupId('group')).called(1);
+    verify(events.getCalendarEventsByGroupId('group', period: anyNamed('period'))).called(1);
     verify(labels.getCalendarLabelsByGroupId('group')).called(1);
     expect(days[36]['events'].single['title'], '月またぎ');
   });
 
   test('繰り返しを展開し、午前0時終了の予定を翌日に表示しない', () async {
-    when(events.getCalendarEventsByGroupId('group')).thenAnswer(
+    when(events.getCalendarEventsByGroupId('group', period: anyNamed('period'))).thenAnswer(
       (_) async => [
         event(
           '毎週',
@@ -172,7 +184,7 @@ void main() {
   });
 
   test('複数日判定は終日の終了日と時刻付きの午前0時終了を含めない', () async {
-    when(events.getCalendarEventsByGroupId('group')).thenAnswer(
+    when(events.getCalendarEventsByGroupId('group', period: anyNamed('period'))).thenAnswer(
       (_) async => [
         event('終日単日', DateTime.utc(2026, 11, 2), DateTime.utc(2026, 11, 3)),
         event('終日複数日', DateTime.utc(2026, 11, 2), DateTime.utc(2026, 11, 4)),

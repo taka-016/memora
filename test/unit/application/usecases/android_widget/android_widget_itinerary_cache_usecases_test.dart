@@ -170,7 +170,7 @@ void main() {
         extendCache: true,
       );
       expect(storage.cache!.itineraryDates, hasLength(8));
-      expect(calendarUpdates, ['group-1']);
+      expect(calendarUpdates, isEmpty);
       await usecase.execute(
         groupId: 'group-1',
         selectedItineraryDateId: 'trip_2026-05-28',
@@ -180,7 +180,7 @@ void main() {
       ]);
       expect(storage.targetGroupId, 'group-1');
       expect(storage.selectedItineraryDateId, 'trip_2026-05-28');
-      expect(calendarUpdates, ['group-1', 'group-1']);
+      expect(calendarUpdates, isEmpty);
       final previous = storage.cache;
       trips.exception = TestException('通信失敗');
       await expectLater(
@@ -192,7 +192,7 @@ void main() {
       expect(storage.selectedItineraryDateId, 'trip_2026-05-28');
     });
 
-    test('旅程がなくても同じ対象グループのカレンダーを更新する', () async {
+    test('旅程の更新ではカレンダーを取得しない', () async {
       final storage = _FakeAndroidWidgetCacheStorage();
       final refreshed = <String>[];
       final groups = MockGroupQueryService();
@@ -210,7 +210,7 @@ void main() {
         },
       );
       await usecase.execute(groupId: 'group-1');
-      expect(refreshed, ['group-1']);
+      expect(refreshed, isEmpty);
     });
 
     test('オフラインでグループを退避した後は残した旅行があってもキャッシュを解除する', () async {
