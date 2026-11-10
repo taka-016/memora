@@ -84,7 +84,8 @@ void main() {
     refreshWidget = () async {
       mutations.add('ウィジェット更新');
     };
-    when(events.execute(any)).thenAnswer((_) async => [event]);
+    when(events.execute(any, period: anyNamed('period')))
+        .thenAnswer((_) async => [event]);
     when(labels.execute(any)).thenAnswer((_) async => [label]);
     container = ProviderContainer(
       overrides: [
@@ -178,12 +179,13 @@ void main() {
       recurrenceRule: 'FREQ=DAILY;COUNT=3',
       timeZone: 'Asia/Tokyo',
     );
-    when(events.execute('g1')).thenAnswer((_) async => [original]);
+    when(events.execute('g1', period: anyNamed('period')))
+        .thenAnswer((_) async => [original]);
     final notifier = container.read(provider.notifier);
     await notifier.load();
     final occurrence = container.read(provider).events.first;
     when(
-      events.execute('g1'),
+      events.execute('g1', period: anyNamed('period')),
     ).thenAnswer((_) async => [original.copyWith(version: 8, title: '別端末の変更')]);
     await notifier.load();
     when(change.execute(any, any, any, changes: anyNamed('changes')))
@@ -223,7 +225,8 @@ void main() {
         ),
       ],
     );
-    when(events.execute('g1')).thenAnswer((_) async => [series]);
+    when(events.execute('g1', period: anyNamed('period')))
+        .thenAnswer((_) async => [series]);
     final notifier = container.read(provider.notifier);
     await notifier.load();
     final occurrence = container
@@ -239,7 +242,7 @@ void main() {
       isTrue,
     );
     when(change.resetOverride(any, any)).thenAnswer((_) async {
-      when(events.execute('g1'))
+      when(events.execute('g1', period: anyNamed('period')))
           .thenAnswer((_) async => [series.copyWith(overrides: [])]);
     });
     expect(await notifier.resetRecurringEvent(occurrence), isTrue);
@@ -300,7 +303,8 @@ void main() {
   for (final entry in hiddenEvents.entries) {
     test('${entry.key}が参照するラベルは削除せず使用中と案内する', () async {
       final child = label.copyWith(id: 'child', name: '子供');
-      when(events.execute('g1')).thenAnswer((_) async => [entry.value]);
+      when(events.execute('g1', period: anyNamed('period')))
+          .thenAnswer((_) async => [entry.value]);
       when(labels.execute('g1')).thenAnswer((_) async => [label, child]);
       final notifier = container.read(provider.notifier);
       await notifier.load();
@@ -335,7 +339,8 @@ void main() {
       recurrenceRule: 'FREQ=DAILY;COUNT=3',
       timeZone: 'Asia/Tokyo',
     );
-    when(events.execute(any)).thenAnswer((_) async => [source]);
+    when(events.execute(any, period: anyNamed('period')))
+        .thenAnswer((_) async => [source]);
     final notifier = container.read(provider.notifier);
     await notifier.load();
     final occurrence = container.read(provider).events.last;
@@ -373,7 +378,7 @@ void main() {
     expect(container.read(provider).mutationError, isEmpty);
   });
   test('展開済みの回を単発予定として保存・削除して系列を失う操作を拒否する', () async {
-    when(events.execute(any)).thenAnswer(
+    when(events.execute(any, period: anyNamed('period'))).thenAnswer(
       (_) async => [
         event.copyWith(
           recurrenceRule: 'FREQ=DAILY;COUNT=3',
@@ -391,7 +396,7 @@ void main() {
   });
 
   test('前後の月の繰り返し予定を事前に準備し月移動でも再取得しない', () async {
-    when(events.execute(any)).thenAnswer(
+    when(events.execute(any, period: anyNamed('period'))).thenAnswer(
       (_) async => [
         event.copyWith(
           recurrenceRule: 'FREQ=MONTHLY;COUNT=3',
@@ -418,7 +423,7 @@ void main() {
       container.read(provider).eventsForDay(DateTime(2026, 11, 15)).length,
       1,
     );
-    verify(events.execute('g1')).called(1);
+    verify(events.execute('g1', period: anyNamed('period'))).called(1);
   });
 
   test('ドラッグ順をすぐ表示し保存失敗では元へ戻して再試行できる', () async {
@@ -484,7 +489,8 @@ void main() {
       startDateTime: DateTime.utc(2026, 9, 30),
       endDateTime: DateTime.utc(2026, 10, 3),
     );
-    when(events.execute('g1')).thenAnswer((_) async => [allDay]);
+    when(events.execute('g1', period: anyNamed('period')))
+        .thenAnswer((_) async => [allDay]);
     await container.read(provider.notifier).load();
     expect(container.read(provider).eventsForDay(DateTime(2026, 10, 2)), [
       allDay,
@@ -501,19 +507,23 @@ void main() {
     expect(container.read(calendarNotifierProvider('g2')).events, isEmpty);
   });
   test('取得失敗を空表示と区別し再試行で復旧する', () async {
-    when(events.execute('g1')).thenThrow(TestException('取得失敗'));
+    when(events.execute('g1', period: anyNamed('period')))
+        .thenThrow(TestException('取得失敗'));
     await container.read(provider.notifier).load();
     expect(container.read(provider).loadError, isNotEmpty);
-    when(events.execute('g1')).thenAnswer((_) async => [event]);
+    when(events.execute('g1', period: anyNamed('period')))
+        .thenAnswer((_) async => [event]);
     await container.read(provider.notifier).load();
     expect(container.read(provider).loadError, isEmpty);
     expect(container.read(provider).events, [event]);
   });
   test('後から完了した古い取得結果は再試行の結果を上書きしない', () async {
     final pending = Completer<List<CalendarEventDto>>();
-    when(events.execute('g1')).thenAnswer((_) => pending.future);
+    when(events.execute('g1', period: anyNamed('period')))
+        .thenAnswer((_) => pending.future);
     final first = container.read(provider.notifier).load();
-    when(events.execute('g1')).thenAnswer((_) async => []);
+    when(events.execute('g1', period: anyNamed('period')))
+        .thenAnswer((_) async => []);
     await container.read(provider.notifier).load();
     pending.complete([event]);
     await first;
@@ -534,7 +544,8 @@ void main() {
       isTrue,
     );
     verify(update.execute(event.copyWith(title: '変更'))).called(1);
-    when(events.execute('g1')).thenAnswer((_) async => []);
+    when(events.execute('g1', period: anyNamed('period')))
+        .thenAnswer((_) async => []);
     expect(await container.read(provider.notifier).deleteEvent('e1'), isTrue);
     expect(container.read(provider).events, isEmpty);
   });
@@ -574,7 +585,8 @@ void main() {
   test('保存済みで再取得だけ失敗した場合は重複登録を促さず再取得を案内する', () async {
     await container.read(provider.notifier).load();
     when(create.execute(any)).thenAnswer((_) async => 'new');
-    when(events.execute('g1')).thenThrow(TestException('再取得失敗'));
+    when(events.execute('g1', period: anyNamed('period')))
+        .thenThrow(TestException('再取得失敗'));
     expect(
       await container.read(provider.notifier).saveEvent(event.copyWith(id: '')),
       isTrue,
