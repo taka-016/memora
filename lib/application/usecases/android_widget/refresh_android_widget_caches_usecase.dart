@@ -1,27 +1,29 @@
-import 'package:memora/application/services/android_widget_cache_storage.dart';
-
 enum AndroidWidgetKind { itinerary, calendar }
 
 class RefreshAndroidWidgetCachesUsecase {
   const RefreshAndroidWidgetCachesUsecase({
-    required this.storage,
+    required this.loadTargetGroupId,
     required this.loadInstalledKinds,
     required this.refreshItinerary,
     required this.refreshCalendar,
   });
 
-  final AndroidWidgetCacheStorage storage;
+  final Future<String?> Function() loadTargetGroupId;
   final Future<Set<AndroidWidgetKind>> Function() loadInstalledKinds;
   final Future<void> Function(String groupId) refreshItinerary;
   final Future<void> Function(String groupId) refreshCalendar;
 
-  Future<void> execute({Set<AndroidWidgetKind> kinds = const {
-    AndroidWidgetKind.itinerary, AndroidWidgetKind.calendar,
-  }}) async {
-    final groupId = await storage.getTargetGroupId();
-    if (groupId == null) return;
+  Future<void> execute({
+    Set<AndroidWidgetKind> kinds = const {
+      AndroidWidgetKind.itinerary,
+      AndroidWidgetKind.calendar,
+    },
+  }) async {
     final installed = await loadInstalledKinds();
     final targets = installed.intersection(kinds);
+    if (targets.isEmpty) return;
+    final groupId = await loadTargetGroupId();
+    if (groupId == null) return;
     Object? failure;
     StackTrace? failureStack;
     for (final kind in targets) {

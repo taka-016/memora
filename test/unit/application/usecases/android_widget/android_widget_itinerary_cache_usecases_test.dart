@@ -49,11 +49,11 @@ void main() {
       await syncStarted.future;
       final select = SelectAndroidWidgetTargetGroupUsecase(
         cacheStorage: storage,
-        refreshCacheUsecase: _buildRefreshUsecase(
+        refreshCaches: _buildRefreshUsecase(
           storage,
           _FakeTripEntryQueryService(),
           _FakeItineraryItemQueryService(),
-        ),
+        ).executeForSelectedGroup,
         updateIntervalStorage: _FakeIntervalStorage(),
         registerPeriodicUpdateTask: (_) async {},
         operationLock: operationLock,
@@ -98,14 +98,16 @@ void main() {
 
   group('RefreshAndroidWidgetItineraryCacheUsecase', () {
     test('旅程ウィジェットが未配置なら旅行もグループも取得しない', () async {
-      final storage = _FakeAndroidWidgetCacheStorage()..targetGroupId = 'group-1';
+      final storage = _FakeAndroidWidgetCacheStorage()
+        ..targetGroupId = 'group-1';
       final groups = MockGroupQueryService();
       final usecase = RefreshAndroidWidgetItineraryCacheUsecase(
         cacheStorage: storage,
         groupQueryService: groups,
         isWidgetInstalled: () async => false,
         getCacheUsecase: GetAndroidWidgetItineraryCacheUsecase(
-          tripEntryQueryService: _FakeTripEntryQueryService()..exception = TestException('取得しない'),
+          tripEntryQueryService: _FakeTripEntryQueryService()
+            ..exception = TestException('取得しない'),
           itineraryItemQueryService: _FakeItineraryItemQueryService(),
           clock: FixedAppClock(DateTime(2026, 11, 1)),
         ),
@@ -169,11 +171,7 @@ void main() {
               startDateTime: DateTime(2026, 5, day, 9),
             ),
         ];
-      final usecase = _buildRefreshUsecase(
-        storage,
-        trips,
-        items,
-      );
+      final usecase = _buildRefreshUsecase(storage, trips, items);
       await usecase.execute(
         groupId: 'group-1',
         selectedItineraryDateId: 'trip_2026-05-24',

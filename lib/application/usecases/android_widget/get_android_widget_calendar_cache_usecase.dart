@@ -47,7 +47,8 @@ class GetAndroidWidgetCalendarCacheUsecase {
     final from = gridStart(months.first);
     final to = gridEnd(months.last);
     final source = await events.getCalendarEventsByGroupId(
-      groupId, period: CalendarEventPeriod(from: from, to: to),
+      groupId,
+      period: CalendarEventPeriod(from: from, to: to),
     );
     final displayLabels = buildCalendarDisplayLabels(
       group,

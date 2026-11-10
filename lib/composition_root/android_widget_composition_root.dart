@@ -1,3 +1,4 @@
+import 'package:memora/application/usecases/android_widget/refresh_android_widget_caches_usecase.dart';
 import 'package:memora/infrastructure/services/home_widget_android_widget_cache_storage.dart';
 
 import 'dart:io';
@@ -24,6 +25,7 @@ Future<void> withAndroidWidgetDependencies(
   Future<void> Function(
     RefreshAndroidWidgetItineraryCacheUsecase refresh,
     AndroidWidgetActionHandler handler,
+    RefreshAndroidWidgetCachesUsecase caches,
   )
   action, {
   OfflineDatabase Function()? createOfflineDatabase,
@@ -84,6 +86,11 @@ Future<void> withAndroidWidgetDependencies(
         getAndroidWidgetItineraryCacheUsecaseProvider,
       ),
       mode: mode,
+      isWidgetInstalled: Platform.isAndroid
+          ? () async => (await container!.read(
+              loadInstalledAndroidWidgetKindsProvider,
+            )()).contains(AndroidWidgetKind.itinerary)
+          : null,
       trackLoading: Platform.isAndroid
           ? const HomeWidgetAndroidWidgetCacheStorage().trackItineraryLoading
           : null,
@@ -110,13 +117,26 @@ Future<void> withAndroidWidgetDependencies(
         await container!.read(refreshCalendarWidgetProvider)(groupId, date);
       },
     );
+    final caches = RefreshAndroidWidgetCachesUsecase(
+      loadTargetGroupId: storage.getTargetGroupId,
+      loadInstalledKinds: container.read(
+        loadInstalledAndroidWidgetKindsProvider,
+      ),
+      refreshItinerary: (groupId) async => refresh.execute(
+        groupId: groupId,
+        selectedItineraryDateId: await storage.getSelectedItineraryDateId(),
+        updateWidgetAfterRefresh: false,
+      ),
+      refreshCalendar: (groupId) =>
+          container!.read(refreshCalendarWidgetProvider)(groupId, null),
+    );
     if (database == null) {
-      await action(refresh, handler);
+      await action(refresh, handler, caches);
     } else {
       final OfflineBackupRestoreOperationLock activeOperationLock =
           operationLock ??
           container.read(offlineBackupRestoreOperationLockProvider);
-      await activeOperationLock.run(() => action(refresh, handler));
+      await activeOperationLock.run(() => action(refresh, handler, caches));
     }
   } finally {
     container?.dispose();

@@ -7,11 +7,14 @@ import '../../../../helpers/test_exception.dart';
 
 void main() {
   for (final installed in <Set<AndroidWidgetKind>>[
-    {}, {AndroidWidgetKind.calendar}, {AndroidWidgetKind.itinerary},
+    {},
+    {AndroidWidgetKind.calendar},
+    {AndroidWidgetKind.itinerary},
     AndroidWidgetKind.values.toSet(),
   ]) {
     for (final requested in <Set<AndroidWidgetKind>>[
-      {AndroidWidgetKind.calendar}, {AndroidWidgetKind.itinerary},
+      {AndroidWidgetKind.calendar},
+      {AndroidWidgetKind.itinerary},
       AndroidWidgetKind.values.toSet(),
     ]) {
       test('配置$installedで更新対象$requestedだけを取得する', () async {
@@ -19,7 +22,7 @@ void main() {
         when(storage.getTargetGroupId()).thenAnswer((_) async => 'group');
         final fetched = <AndroidWidgetKind>[];
         final usecase = RefreshAndroidWidgetCachesUsecase(
-          storage: storage,
+          loadTargetGroupId: storage.getTargetGroupId,
           loadInstalledKinds: () async => installed,
           refreshItinerary: (group) async {
             expect(group, 'group');
@@ -39,7 +42,7 @@ void main() {
   test('対象グループ未設定ならデータ取得しない', () async {
     final storage = MockAndroidWidgetCacheStorage();
     final usecase = RefreshAndroidWidgetCachesUsecase(
-      storage: storage,
+      loadTargetGroupId: storage.getTargetGroupId,
       loadInstalledKinds: () async => AndroidWidgetKind.values.toSet(),
       refreshItinerary: (_) async => fail('旅程を取得しない'),
       refreshCalendar: (_) async => fail('カレンダーを取得しない'),
@@ -53,12 +56,14 @@ void main() {
     var attempts = 0;
     var calendarUpdates = 0;
     final usecase = RefreshAndroidWidgetCachesUsecase(
-      storage: storage,
+      loadTargetGroupId: storage.getTargetGroupId,
       loadInstalledKinds: () async => AndroidWidgetKind.values.toSet(),
       refreshItinerary: (_) async {
         if (++attempts == 1) throw TestException('取得失敗');
       },
-      refreshCalendar: (_) async { calendarUpdates++; },
+      refreshCalendar: (_) async {
+        calendarUpdates++;
+      },
     );
     await expectLater(usecase.execute(), throwsA(isA<TestException>()));
     expect(calendarUpdates, 1);

@@ -253,7 +253,7 @@ class CalendarNotifier extends _$CalendarNotifier {
 
   Future<bool> _mutate(Future<void> Function() action) async {
     if (state.isSaving) return false;
-    final refreshWidget = ref.read(refreshSelectedAndroidWidgetCacheProvider);
+    final refreshWidget = ref.read(refreshSelectedCalendarWidgetCacheProvider);
     state = state.copyWith(isSaving: true, mutationError: '');
     try {
       await action();

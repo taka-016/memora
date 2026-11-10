@@ -1,3 +1,5 @@
+import 'package:memora/application/usecases/android_widget/refresh_android_widget_caches_usecase.dart';
+import 'package:memora/infrastructure/services/home_widget_installed_kinds.dart';
 import 'package:memora/infrastructure/services/home_widget_android_widget_cache_storage.dart';
 import 'package:memora/composition_root/providers/calendar_widget_providers.dart';
 
@@ -40,6 +42,11 @@ final refreshAndroidWidgetItineraryCacheUsecaseProvider =
           getAndroidWidgetItineraryCacheUsecaseProvider,
         ),
         mode: ref.watch(appModeProvider),
+        isWidgetInstalled: Platform.isAndroid
+            ? () async => (await ref.read(
+                loadInstalledAndroidWidgetKindsProvider,
+              )()).contains(AndroidWidgetKind.itinerary)
+            : null,
         trackLoading: Platform.isAndroid
             ? const HomeWidgetAndroidWidgetCacheStorage().trackItineraryLoading
             : null,
@@ -51,9 +58,8 @@ final selectAndroidWidgetTargetGroupUsecaseProvider =
     Provider<SelectAndroidWidgetTargetGroupUsecase>((ref) {
       return SelectAndroidWidgetTargetGroupUsecase(
         cacheStorage: ref.watch(androidWidgetCacheStorageProvider),
-        refreshCacheUsecase: ref.watch(
-          refreshAndroidWidgetItineraryCacheUsecaseProvider,
-        ),
+        refreshCaches: () =>
+            ref.read(refreshAndroidWidgetCachesUsecaseProvider).execute(),
         updateIntervalStorage: ref.watch(
           androidWidgetUpdateIntervalStorageProvider,
         ),
@@ -131,12 +137,48 @@ final watchAndroidWidgetLaunchUriUsecaseProvider =
       );
     });
 
+final loadInstalledAndroidWidgetKindsProvider =
+    Provider<Future<Set<AndroidWidgetKind>> Function()>(
+      (ref) => loadInstalledAndroidWidgetKinds,
+    );
+
+final refreshAndroidWidgetCachesUsecaseProvider =
+    Provider<RefreshAndroidWidgetCachesUsecase>((ref) {
+      return RefreshAndroidWidgetCachesUsecase(
+        loadTargetGroupId: () =>
+            ref.read(androidWidgetCacheStorageProvider).getTargetGroupId(),
+        loadInstalledKinds: ref.watch(loadInstalledAndroidWidgetKindsProvider),
+        refreshItinerary: (groupId) async {
+          await ref
+              .read(refreshAndroidWidgetItineraryCacheUsecaseProvider)
+              .execute(
+                groupId: groupId,
+                selectedItineraryDateId: await ref
+                    .read(androidWidgetCacheStorageProvider)
+                    .getSelectedItineraryDateId(),
+              );
+        },
+        refreshCalendar: (groupId) =>
+            ref.read(refreshCalendarWidgetProvider)(groupId, null),
+      );
+    });
+
 final refreshSelectedAndroidWidgetCacheProvider =
     Provider<Future<void> Function()>((ref) {
-      return () async {
-        if (!Platform.isAndroid) return;
-        await ref
-            .read(refreshAndroidWidgetItineraryCacheUsecaseProvider)
-            .executeForSelectedGroup();
-      };
+      return () =>
+          ref.read(refreshAndroidWidgetCachesUsecaseProvider).execute();
+    });
+
+final refreshSelectedCalendarWidgetCacheProvider =
+    Provider<Future<void> Function()>((ref) {
+      return () => ref
+          .read(refreshAndroidWidgetCachesUsecaseProvider)
+          .execute(kinds: const {AndroidWidgetKind.calendar});
+    });
+
+final refreshSelectedItineraryWidgetCacheProvider =
+    Provider<Future<void> Function()>((ref) {
+      return () => ref
+          .read(refreshAndroidWidgetCachesUsecaseProvider)
+          .execute(kinds: const {AndroidWidgetKind.itinerary});
     });

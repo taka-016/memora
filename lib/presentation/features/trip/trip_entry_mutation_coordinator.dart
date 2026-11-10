@@ -22,7 +22,7 @@ final tripEntryMutationCoordinatorProvider =
               .execute(tripEntryId, expectedVersion: expectedVersion);
         },
         refreshWidget: () =>
-            ref.read(refreshSelectedAndroidWidgetCacheProvider)(),
+            ref.read(refreshSelectedItineraryWidgetCacheProvider)(),
         onTripEntriesChanged: () {
           ref.invalidate(timelineTripEntriesProvider);
         },

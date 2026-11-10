@@ -143,14 +143,14 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
 class SelectAndroidWidgetTargetGroupUsecase {
   const SelectAndroidWidgetTargetGroupUsecase({
     required this._cacheStorage,
-    required this._refreshCacheUsecase,
+    required this._refreshCaches,
     required this._updateIntervalStorage,
     required this._registerPeriodicUpdateTask,
     this.operationLock,
   });
 
   final AndroidWidgetCacheStorage _cacheStorage;
-  final RefreshAndroidWidgetItineraryCacheUsecase _refreshCacheUsecase;
+  final Future<void> Function() _refreshCaches;
   final AndroidWidgetUpdateIntervalStorage _updateIntervalStorage;
   final RegisterAndroidWidgetPeriodicUpdateTask _registerPeriodicUpdateTask;
   final OfflineBackupRestoreOperationLock? operationLock;
@@ -165,7 +165,7 @@ class SelectAndroidWidgetTargetGroupUsecase {
     await _cacheStorage.saveTargetGroupId(groupId);
     final updateInterval = await _updateIntervalStorage.load();
     await _registerPeriodicUpdateTask(updateInterval.duration);
-    await _refreshCacheUsecase.execute(groupId: groupId);
+    await _refreshCaches();
   }
 }
 
