@@ -1,5 +1,7 @@
 # ER図
 
+`account_permissions`と`member_events.groupId`は実装予定の構造を示す。対応範囲と移行作業は[todo](todo.md)を参照。
+
 ```mermaid
 erDiagram
     trip_entries {
@@ -104,8 +106,15 @@ erDiagram
         string email
         string phoneNumber
     }
+    account_permissions {
+        string accountId PK "認証UID・Firestore文書ID"
+        string memberId FK "NOT NULL・本人"
+        string[] memberGroupIds "所属先グループID"
+        string[] managedGroupIds "所有者・管理者のグループID"
+    }
     member_events {
         string id PK
+        string groupId FK "NOT NULL"
         string memberId FK "NOT NULL"
         number year "NOT NULL"
         string memo "NOT NULL"
@@ -197,10 +206,12 @@ erDiagram
     locations |o--o{ itinerary_items : "id → locationId"
     groups ||--o{ group_members : "id → groupId"
     groups ||--o{ group_events : "id → groupId"
+    groups ||--o{ member_events : "id → groupId"
     groups ||--o{ trip_entries : "id → groupId"
     groups ||--o{ locations : "id → groupId"
     group_members ||--|| members : "memberId → id"
     members ||--o{ member_events : "id → memberId"
+    members ||--o| account_permissions : "id → memberId"
     members ||--o{ members : "id → ownerId"
     members ||--o{ groups : "id → ownerId"
     members ||--o{ member_invitations : "id → inviteeId"
@@ -214,11 +225,14 @@ erDiagram
     calendar_events ||--o{ calendar_event_overrides : "id → eventId"
     calendar_labels |o--o{ calendar_event_overrides : "id → labelId"
     externally_managed_accounts ||--|| members : "id → accountId"
+    externally_managed_accounts ||--o| account_permissions : "id → accountId"
 ```
 
 ## 図の補足
 
 - 図は共通の業務モデルを示す。SQLiteの物理定義・制約・インデックスは[`offline_schema.drift`](../lib/infrastructure/database/offline_schema.drift)を参照。
+- `account_permissions`はオンライン専用の認可コレクションで、認証UIDごとに1文書を持つ。`memberGroupIds`と`managedGroupIds`はグループIDの重複を持たない一覧で、管理対象は所属先の一部とする。所有者のグループも管理対象に含める。SQLiteやオフラインバックアップには含めない。
+- `member_events`はグループとメンバーの両方に属し、`groupId`・`memberId`・`year`の組ごとに1件のメモを持つ。同じメンバー・同じ年でもグループごとに別の記録を保持する。
 - `deleted_groups`・`deleted_members`はFirestoreの専用コレクションとSQLiteの専用テーブルに対応する。親の退避時は、元のドキュメントID・行IDをそのまま主キーにし、親の全フィールドを保存する。Firestoreでは取得データをそのまま保存し、`createdAt`・`updatedAt`やオンラインの`version`を含むフィールドを欠落させない。通常テーブルの親は残さず、退避保存と元データ削除を原子的に行う。
 - 図の通常グループ・メンバーへの関連線は元のIDによる論理的な関係を示す。退避後は同じIDの親が削除済み保存先にあり、関連データ・所属・タスク担当のIDは変更しない。通常の取得で退避先を参照して親を表示せず、削除済み一覧や復活機能は提供しない。
 - SQLiteでは通常の`groups`・`members`を参照する外部キーを設けず、`owner_id`・`group_id`・`member_id`・`assigned_member_id`を値として保持する。親削除による連鎖削除・担当解除・所有者参照による削除拒否をなくす。旅行内のタスク・旅程、タスクの親子、予定・個別回・ラベル、DVC契約と利用データの外部キーは維持する。退避テーブルから通常テーブルへの外部キーも設けない。
