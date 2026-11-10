@@ -65,7 +65,7 @@ void main() {
       var retried = false;
 
       await withAndroidWidgetDependencies(
-        (refresh, handler) async {
+        (refresh, handler, _) async {
           expect(retried, isTrue);
           await refresh.execute(
             groupId: 'group',
@@ -120,7 +120,7 @@ void main() {
         });
         var completed = false;
         final operation = withAndroidWidgetDependencies(
-          (refresh, handler) async {
+          (refresh, handler, _) async {
             throw failure;
           },
           createOfflineDatabase: () => database,
@@ -147,7 +147,7 @@ void main() {
       var actionCalled = false;
 
       await withAndroidWidgetDependencies(
-        (refresh, handler) async {
+        (refresh, handler, _) async {
           actionCalled = true;
         },
         createOfflineDatabase: () => database,
@@ -171,7 +171,7 @@ void main() {
     var restoreStarted = false;
 
     final widget = withAndroidWidgetDependencies(
-      (refresh, handler) async {
+      (refresh, handler, _) async {
         actionStarted.complete();
         await releaseAction.future;
       },
@@ -200,7 +200,7 @@ void main() {
     var opened = false;
     await expectLater(
       withAndroidWidgetDependencies(
-        (refresh, handler) async {
+        (refresh, handler, _) async {
           fail('旧モードの更新処理を実行しない');
         },
         createOfflineDatabase: () {
@@ -218,7 +218,7 @@ void main() {
     var opened = false;
     await expectLater(
       withAndroidWidgetDependencies(
-        (refresh, handler) async {
+        (refresh, handler, _) async {
           fail('更新処理を実行しない');
         },
         createOfflineDatabase: () {

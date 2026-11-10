@@ -38,7 +38,7 @@ void main() {
     container = ProviderContainer(
       overrides: [
         tripEntryRepositoryProvider.overrideWithValue(repository),
-        refreshSelectedAndroidWidgetCacheProvider.overrideWithValue(() async {
+        refreshSelectedItineraryWidgetCacheProvider.overrideWithValue(() async {
           events.add('ウィジェット更新');
           if (refreshFailure != null) throw refreshFailure!;
         }),
@@ -74,7 +74,7 @@ void main() {
     container = ProviderContainer(
       overrides: [
         tripEntryRepositoryProvider.overrideWithValue(repository),
-        refreshSelectedAndroidWidgetCacheProvider.overrideWithValue(() async {
+        refreshSelectedItineraryWidgetCacheProvider.overrideWithValue(() async {
           refreshStarted.complete();
           await releaseRefresh.future;
         }),

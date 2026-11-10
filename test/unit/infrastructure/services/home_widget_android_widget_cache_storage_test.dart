@@ -149,6 +149,7 @@ void main() {
   test('カレンダーの月と全予定をファイルで公開し対象解除時に削除する', () async {
     const calendar = HomeWidgetCalendarCacheStorage();
     final data = <String, Object?>{
+      'lastUpdatedAt': '2026-11-11T12:00:00.000',
       'groupId': 'group',
       'sourceMode': 'offline',
       'months': {
@@ -167,6 +168,10 @@ void main() {
     await calendar.save(data);
     final path = values[HomeWidgetCalendarCacheStorage.cacheKey] as String;
     expect(jsonDecode(await File(path).readAsString()), data);
+    expect(
+      values[HomeWidgetAndroidWidgetCacheStorage.lastUpdatedAtKey],
+      '2026-11-11T12:00:00.000',
+    );
     expect(await calendar.loadMonth(), DateTime(2026, 11));
     await const HomeWidgetAndroidWidgetCacheStorage().clear();
     expect(values[HomeWidgetCalendarCacheStorage.cacheKey], isNull);

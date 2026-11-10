@@ -28,7 +28,7 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
     required this._getCacheUsecase,
     required this._groupQueryService,
     this._mode = AppMode.online,
-    this.refreshCalendar,
+    this.isWidgetInstalled,
     this.trackLoading,
     this._readTransaction,
   });
@@ -37,7 +37,7 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
   final GetAndroidWidgetItineraryCacheUsecase _getCacheUsecase;
   final GroupQueryService _groupQueryService;
   final AppMode _mode;
-  final Future<void> Function(String groupId)? refreshCalendar;
+  final Future<bool> Function()? isWidgetInstalled;
   final ReadTransaction? _readTransaction;
   final TrackAndroidWidgetItineraryLoading? trackLoading;
 
@@ -56,6 +56,7 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
     bool updateWidgetAfterRefresh = true,
     bool extendCache = false,
   }) async {
+    if (isWidgetInstalled != null && !await isWidgetInstalled!()) return;
     Future<void> refresh() => _execute(
       groupId: groupId,
       selectedItineraryDateId: selectedItineraryDateId,
@@ -131,7 +132,6 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
           await publish(await read());
         });
       }
-      if (!extendCache) await refreshCalendar?.call(groupId);
     } finally {
       if (updateWidgetAfterRefresh) {
         await _cacheStorage.updateWidget();
@@ -143,14 +143,14 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
 class SelectAndroidWidgetTargetGroupUsecase {
   const SelectAndroidWidgetTargetGroupUsecase({
     required this._cacheStorage,
-    required this._refreshCacheUsecase,
+    required this._refreshCaches,
     required this._updateIntervalStorage,
     required this._registerPeriodicUpdateTask,
     this.operationLock,
   });
 
   final AndroidWidgetCacheStorage _cacheStorage;
-  final RefreshAndroidWidgetItineraryCacheUsecase _refreshCacheUsecase;
+  final Future<void> Function() _refreshCaches;
   final AndroidWidgetUpdateIntervalStorage _updateIntervalStorage;
   final RegisterAndroidWidgetPeriodicUpdateTask _registerPeriodicUpdateTask;
   final OfflineBackupRestoreOperationLock? operationLock;
@@ -165,7 +165,7 @@ class SelectAndroidWidgetTargetGroupUsecase {
     await _cacheStorage.saveTargetGroupId(groupId);
     final updateInterval = await _updateIntervalStorage.load();
     await _registerPeriodicUpdateTask(updateInterval.duration);
-    await _refreshCacheUsecase.execute(groupId: groupId);
+    await _refreshCaches();
   }
 }
 

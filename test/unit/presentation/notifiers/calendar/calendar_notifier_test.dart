@@ -89,7 +89,7 @@ void main() {
     when(labels.execute(any)).thenAnswer((_) async => [label]);
     container = ProviderContainer(
       overrides: [
-        refreshSelectedAndroidWidgetCacheProvider.overrideWithValue(
+        refreshSelectedCalendarWidgetCacheProvider.overrideWithValue(
           () => refreshWidget(),
         ),
         getGroupWithMembersByIdUsecaseProvider.overrideWithValue(

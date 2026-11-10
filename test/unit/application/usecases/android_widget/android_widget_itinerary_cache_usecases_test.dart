@@ -49,11 +49,11 @@ void main() {
       await syncStarted.future;
       final select = SelectAndroidWidgetTargetGroupUsecase(
         cacheStorage: storage,
-        refreshCacheUsecase: _buildRefreshUsecase(
+        refreshCaches: _buildRefreshUsecase(
           storage,
           _FakeTripEntryQueryService(),
           _FakeItineraryItemQueryService(),
-        ),
+        ).executeForSelectedGroup,
         updateIntervalStorage: _FakeIntervalStorage(),
         registerPeriodicUpdateTask: (_) async {},
         operationLock: operationLock,
@@ -97,6 +97,25 @@ void main() {
   });
 
   group('RefreshAndroidWidgetItineraryCacheUsecase', () {
+    test('旅程ウィジェットが未配置なら旅行もグループも取得しない', () async {
+      final storage = _FakeAndroidWidgetCacheStorage()
+        ..targetGroupId = 'group-1';
+      final groups = MockGroupQueryService();
+      final usecase = RefreshAndroidWidgetItineraryCacheUsecase(
+        cacheStorage: storage,
+        groupQueryService: groups,
+        isWidgetInstalled: () async => false,
+        getCacheUsecase: GetAndroidWidgetItineraryCacheUsecase(
+          tripEntryQueryService: _FakeTripEntryQueryService()
+            ..exception = TestException('取得しない'),
+          itineraryItemQueryService: _FakeItineraryItemQueryService(),
+          clock: FixedAppClock(DateTime(2026, 11, 1)),
+        ),
+      );
+      await usecase.executeForSelectedGroup();
+      verifyNever(groups.groupExists(any));
+    });
+
     for (final fails in [false, true]) {
       test('旅程取得${fails ? '失敗' : '成功'}を選択日とともに状態管理へ伝える', () async {
         final storage = _FakeAndroidWidgetCacheStorage()
@@ -152,13 +171,7 @@ void main() {
               startDateTime: DateTime(2026, 5, day, 9),
             ),
         ];
-      final calendarUpdates = <String>[];
-      final usecase = _buildRefreshUsecase(
-        storage,
-        trips,
-        items,
-        refreshCalendar: (groupId) async => calendarUpdates.add(groupId),
-      );
+      final usecase = _buildRefreshUsecase(storage, trips, items);
       await usecase.execute(
         groupId: 'group-1',
         selectedItineraryDateId: 'trip_2026-05-24',
@@ -170,7 +183,6 @@ void main() {
         extendCache: true,
       );
       expect(storage.cache!.itineraryDates, hasLength(8));
-      expect(calendarUpdates, ['group-1']);
       await usecase.execute(
         groupId: 'group-1',
         selectedItineraryDateId: 'trip_2026-05-28',
@@ -180,7 +192,6 @@ void main() {
       ]);
       expect(storage.targetGroupId, 'group-1');
       expect(storage.selectedItineraryDateId, 'trip_2026-05-28');
-      expect(calendarUpdates, ['group-1', 'group-1']);
       final previous = storage.cache;
       trips.exception = TestException('通信失敗');
       await expectLater(
@@ -190,27 +201,6 @@ void main() {
       expect(storage.cache, same(previous));
       expect(storage.targetGroupId, 'group-1');
       expect(storage.selectedItineraryDateId, 'trip_2026-05-28');
-    });
-
-    test('旅程がなくても同じ対象グループのカレンダーを更新する', () async {
-      final storage = _FakeAndroidWidgetCacheStorage();
-      final refreshed = <String>[];
-      final groups = MockGroupQueryService();
-      when(groups.groupExists(any)).thenAnswer((_) async => true);
-      final usecase = RefreshAndroidWidgetItineraryCacheUsecase(
-        cacheStorage: storage,
-        groupQueryService: groups,
-        getCacheUsecase: GetAndroidWidgetItineraryCacheUsecase(
-          tripEntryQueryService: _FakeTripEntryQueryService(),
-          itineraryItemQueryService: _FakeItineraryItemQueryService(),
-          clock: FixedAppClock(DateTime(2026, 11, 1)),
-        ),
-        refreshCalendar: (groupId) async {
-          refreshed.add(groupId);
-        },
-      );
-      await usecase.execute(groupId: 'group-1');
-      expect(refreshed, ['group-1']);
     });
 
     test('オフラインでグループを退避した後は残した旅行があってもキャッシュを解除する', () async {
@@ -604,7 +594,7 @@ RefreshAndroidWidgetItineraryCacheUsecase _buildRefreshUsecase(
   TripEntryQueryService tripEntryQueryService,
   ItineraryItemQueryService itineraryItemQueryService, {
   ReadTransaction? readTransaction,
-  Future<void> Function(String)? refreshCalendar,
+  Future<bool> Function()? isWidgetInstalled,
   TrackAndroidWidgetItineraryLoading? trackLoading,
 }) {
   final groups = MockGroupQueryService();
@@ -613,7 +603,7 @@ RefreshAndroidWidgetItineraryCacheUsecase _buildRefreshUsecase(
     groupQueryService: groups,
     cacheStorage: storage,
     readTransaction: readTransaction,
-    refreshCalendar: refreshCalendar,
+    isWidgetInstalled: isWidgetInstalled,
     trackLoading: trackLoading,
     getCacheUsecase: GetAndroidWidgetItineraryCacheUsecase(
       tripEntryQueryService: tripEntryQueryService,

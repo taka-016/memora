@@ -1,3 +1,5 @@
+import 'package:memora/application/usecases/android_widget/refresh_android_widget_caches_usecase.dart';
+import 'package:memora/application/usecases/android_widget/android_widget_itinerary_cache_usecases.dart';
 import 'package:memora/composition_root/providers/calendar_widget_providers.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -24,8 +26,73 @@ import 'android_widget_providers_test.mocks.dart';
   MockSpec<QuerySnapshot<Map<String, dynamic>>>(),
   MockSpec<QueryDocumentSnapshot<Map<String, dynamic>>>(),
   MockSpec<AndroidWidgetCacheStorage>(),
+  MockSpec<RefreshAndroidWidgetItineraryCacheUsecase>(),
 ])
 void main() {
+  for (final entry in [
+    (
+      refreshSelectedAndroidWidgetCacheProvider,
+      AndroidWidgetKind.values.toSet(),
+    ),
+    (refreshSelectedCalendarWidgetCacheProvider, {AndroidWidgetKind.calendar}),
+    (
+      refreshSelectedItineraryWidgetCacheProvider,
+      {AndroidWidgetKind.itinerary},
+    ),
+  ]) {
+    for (final installed in <Set<AndroidWidgetKind>>[
+      {},
+      {AndroidWidgetKind.calendar},
+      {AndroidWidgetKind.itinerary},
+      AndroidWidgetKind.values.toSet(),
+    ]) {
+      test('保存後更新${entry.$2}は配置$installedの必要な取得口だけを呼ぶ', () async {
+        final storage = MockAndroidWidgetCacheStorage();
+        final itinerary = MockRefreshAndroidWidgetItineraryCacheUsecase();
+        when(storage.getTargetGroupId()).thenAnswer((_) async => 'group');
+        var calendarCalls = 0;
+        final container = ProviderContainer(
+          overrides: [
+            androidWidgetCacheStorageProvider.overrideWithValue(storage),
+            loadInstalledAndroidWidgetKindsProvider.overrideWithValue(
+              () async => installed,
+            ),
+            refreshAndroidWidgetItineraryCacheUsecaseProvider.overrideWithValue(
+              itinerary,
+            ),
+            refreshCalendarWidgetProvider.overrideWithValue((
+              group,
+              date,
+            ) async {
+              expect(group, 'group');
+              expect(date, isNull);
+              calendarCalls++;
+            }),
+          ],
+        );
+        addTearDown(container.dispose);
+        await container.read(entry.$1)();
+        final targets = installed.intersection(entry.$2);
+        expect(
+          calendarCalls,
+          targets.contains(AndroidWidgetKind.calendar) ? 1 : 0,
+        );
+        if (targets.contains(AndroidWidgetKind.itinerary)) {
+          verify(
+            itinerary.execute(groupId: 'group', selectedItineraryDateId: null),
+          ).called(1);
+        } else {
+          verifyNever(
+            itinerary.execute(
+              groupId: anyNamed('groupId'),
+              selectedItineraryDateId: anyNamed('selectedItineraryDateId'),
+            ),
+          );
+        }
+      });
+    }
+  }
+
   test('Android以外のカレンダー更新はデータ取得の依存を生成しない', () async {
     final container = ProviderContainer();
     addTearDown(container.dispose);

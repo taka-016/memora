@@ -100,12 +100,8 @@ final synchronizeOfflineBackupRestoreUsecaseProvider =
           await storage.clear();
           await storage.updateWidget();
         },
-        refreshWidgetCache: (groupId, selectedItineraryDateId) => ref
-            .read(refreshAndroidWidgetItineraryCacheUsecaseProvider)
-            .execute(
-              groupId: groupId,
-              selectedItineraryDateId: selectedItineraryDateId,
-            ),
+        refreshWidgetCache: (groupId, selectedItineraryDateId) =>
+            ref.read(refreshAndroidWidgetCachesUsecaseProvider).execute(),
         registerPeriodicUpdateTask: ref.watch(
           androidWidgetPeriodicUpdateRegistrarProvider,
         ),

@@ -8,7 +8,7 @@ import 'package:memora/composition_root/android_widget_composition_root.dart';
 Future<void> androidWidgetInteractivityCallback(Uri? uri) async {
   WidgetsFlutterBinding.ensureInitialized();
   await withAndroidWidgetDependencies(
-    (refresh, handler) => handler.handle(uri),
+    (refresh, handler, _) => handler.handle(uri),
   );
 }
 

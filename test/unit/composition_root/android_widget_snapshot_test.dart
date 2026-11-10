@@ -114,7 +114,7 @@ void main() {
         await releaseOldRead.future;
       };
       final backgroundRefresh = withAndroidWidgetDependencies(
-        (refresh, handler) async => refresh.executeForSelectedGroup(),
+        (refresh, handler, _) async => refresh.executeForSelectedGroup(),
         createOfflineDatabase: () => reader,
         recoverPendingRestore: (_) async {},
         retryPendingRestore: (_) async {},
@@ -178,7 +178,7 @@ void main() {
 
         if (background) {
           await withAndroidWidgetDependencies(
-            (refresh, handler) async => verifyRefresh(refresh),
+            (refresh, handler, _) async => verifyRefresh(refresh),
             createOfflineDatabase: () => reader,
             recoverPendingRestore: (_) async {},
             retryPendingRestore: (_) async {},
@@ -270,7 +270,7 @@ void main() {
       );
 
       await withAndroidWidgetDependencies(
-        (refresh, handler) async {
+        (refresh, handler, _) async {
           await handler.handle(Uri.parse('memoraWidget://next'));
         },
         createOfflineDatabase: () => reader,
