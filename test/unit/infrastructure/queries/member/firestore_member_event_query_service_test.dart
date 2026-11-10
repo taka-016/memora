@@ -52,7 +52,7 @@ void main() {
       when(mockSnapshot.docs).thenReturn([mockDoc]);
       when(mockDoc.id).thenReturn('event001');
       when(mockDoc.data())
-          .thenReturn({'memberId': 'member001', 'year': 2026, 'memo': '入学式'});
+          .thenReturn({'groupId': 'g', 'memberId': 'member001', 'year': 2026, 'memo': '入学式'});
 
       final result = await service.getMemberEventsByMemberIds(
         const ['member001', 'member002'],
@@ -106,10 +106,10 @@ void main() {
       when(secondSnapshot.docs).thenReturn([secondDoc]);
       when(firstDoc.id).thenReturn('event-2027');
       when(firstDoc.data())
-          .thenReturn({'memberId': 'member001', 'year': 2027, 'memo': '卒業式'});
+          .thenReturn({'groupId': 'g', 'memberId': 'member001', 'year': 2027, 'memo': '卒業式'});
       when(secondDoc.id).thenReturn('event-2026');
       when(secondDoc.data())
-          .thenReturn({'memberId': 'member031', 'year': 2026, 'memo': '入学式'});
+          .thenReturn({'groupId': 'g', 'memberId': 'member031', 'year': 2026, 'memo': '入学式'});
 
       final result = await service.getMemberEventsByMemberIds(
         memberIds,
