@@ -10,7 +10,7 @@ import '../../../../helpers/test_exception.dart';
 import '../../repositories/group/firestore_group_repository_test.mocks.dart';
 
 void main() {
-  test('グループとメンバーを監視して名前・所属色を再取得し解除時は購読を止める', () async {
+  test('初回とメンバー変更は受信データを使い全員を再取得せず所属変更と解除を反映する', () async {
     final firestore = MockFirebaseFirestore();
     final groups = MockCollectionReference<Map<String, dynamic>>();
     final members = MockCollectionReference<Map<String, dynamic>>();
@@ -79,11 +79,19 @@ void main() {
     Future<void> flush() => Future<void>(() {});
     parentStream.add(groupDoc);
     await flush();
+    memberStream.add(memberDoc);
+    await flush();
     expect(values.last!.members.single.displayName, '太郎');
+    verifyNever(groupRef.get());
+    verifyNever(memberRef.get());
+    verify(query.get()).called(1);
     memberData['displayName'] = '花子';
     memberStream.add(memberDoc);
     await flush();
     expect(values.last!.members.single.displayName, '花子');
+    verifyNever(query.get());
+    verifyNever(groupRef.get());
+    verifyNever(memberRef.get());
     linkData['textColor'] = '#000000';
     groupData['textColor'] = '#FFFFFF';
     linkData['color'] = '#00FF00';
