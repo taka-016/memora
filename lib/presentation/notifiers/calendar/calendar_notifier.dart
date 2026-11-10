@@ -81,10 +81,7 @@ class CalendarNotifier extends _$CalendarNotifier {
       final results = await Future.wait<Object?>([
         ref
             .read(getCalendarEventsUsecaseProvider)
-            .execute(
-              groupId,
-              period: null,
-            ),
+            .execute(groupId, period: null),
         ref.read(getCalendarLabelsUsecaseProvider).execute(groupId),
         ref.read(getGroupWithMembersByIdUsecaseProvider).execute(groupId),
       ]);
