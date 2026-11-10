@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/member/member_event_dto.dart';
 import 'package:memora/application/queries/member/member_event_query_service.dart';
-import 'package:memora/composition_root/providers/app_providers.dart';
+import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/presentation/features/timeline/timeline_member_events_provider.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';

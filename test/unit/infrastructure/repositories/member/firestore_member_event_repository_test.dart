@@ -73,7 +73,13 @@ void main() {
       final repo = FirestoreMemberEventRepository(firestore: store.firestore);
       await expectLater(
         repo.saveMemberEvent(
-          MemberEvent(groupId: 'g', id: '', memberId: 'm', year: 2026, memo: memo),
+          MemberEvent(
+            groupId: 'g',
+            id: '',
+            memberId: 'm',
+            year: 2026,
+            memo: memo,
+          ),
         ),
         throwsA(isA<FirebaseException>()),
       );
@@ -85,7 +91,13 @@ void main() {
     final repo = FirestoreMemberEventRepository(firestore: store.firestore);
     expect(
       await repo.saveMemberEvent(
-        const MemberEvent(groupId: 'g', id: '', memberId: 'm', year: 2026, memo: '新規'),
+        const MemberEvent(
+          groupId: 'g',
+          id: '',
+          memberId: 'm',
+          year: 2026,
+          memo: '新規',
+        ),
       ),
       'g_m_2026',
     );
@@ -160,7 +172,13 @@ void main() {
       var finished = false;
       final future = FirestoreMemberEventRepository(firestore: store.firestore)
           .saveMemberEvent(
-            const MemberEvent(groupId: 'g', id: '', memberId: 'm', year: 2026, memo: '新規'),
+            const MemberEvent(
+              groupId: 'g',
+              id: '',
+              memberId: 'm',
+              year: 2026,
+              memo: '新規',
+            ),
           )
           .whenComplete(() => finished = true);
       final result = expectLater(
@@ -191,7 +209,13 @@ void main() {
       await expectLater(
         FirestoreMemberEventRepository(firestore: store.firestore)
             .saveMemberEvent(
-              MemberEvent(groupId: 'g', id: '', memberId: 'm', year: 2026, memo: memo),
+              MemberEvent(
+                groupId: 'g',
+                id: '',
+                memberId: 'm',
+                year: 2026,
+                memo: memo,
+              ),
             ),
         throwsA(isA<FirebaseException>()),
       );
