@@ -65,9 +65,9 @@ class メンバーイベント移行テスト(unittest.TestCase):
         snapshot.exists = True
         snapshot.to_dict.return_value = event()['data']
         snapshot.update_time.isoformat.return_value = '取得時点'
-        client.collection.return_value.document.return_value.update.side_effect = migration.MigrationConflict('変更済み')
+        client.collection.return_value.document.return_value.update.side_effect = RuntimeError('変更済み')
         plan = migration.make_plan({'a': event()}, {'g'}, {'a': 'g'})
-        self.assertEqual(migration.apply_entry(client, plan[0]), 'conflict')
+        self.assertEqual(migration.apply_entry(client, plan[0], conflict_errors=(RuntimeError,)), 'conflict')
 
 
 if __name__ == '__main__':
