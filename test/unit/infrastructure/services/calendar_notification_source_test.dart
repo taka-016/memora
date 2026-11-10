@@ -26,8 +26,8 @@ void main() {
     when(currentMember.execute()).thenAnswer((_) async => member);
     when(groups.execute(member)).thenAnswer(
       (_) async => [
-        const GroupDto(id: 'g1', ownerId: 'm', name: '家族'),
-        const GroupDto(id: 'g2', ownerId: 'other', name: '友人'),
+        const GroupDto(id: 'g1', ownerId: 'm', name: '家族', members: []),
+        const GroupDto(id: 'g2', ownerId: 'other', name: '友人', members: []),
       ],
     );
     final now = DateTime(2026, 11, 10, 15);
