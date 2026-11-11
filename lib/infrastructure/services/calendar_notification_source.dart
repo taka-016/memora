@@ -112,6 +112,11 @@ class DeviceCalendarNotificationSource implements CalendarNotificationSource {
           } else {
             existing.remove(id);
             received.remove(id);
+            groupSubscriptions.remove(id);
+            loadedGroups.remove(id);
+            for (final subscription in subscriptions) {
+              unawaited(subscription.cancel());
+            }
           }
           publish();
         }, onError: error),
@@ -143,6 +148,7 @@ class DeviceCalendarNotificationSource implements CalendarNotificationSource {
             }
           }
         }
+        if (closed || current != revision) return;
         for (final id in ids) {
           if (!groupSubscriptions.containsKey(id)) subscribe(id);
         }

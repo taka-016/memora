@@ -53,11 +53,14 @@ class FirestoreCalendarEventWatchQueryService
     controller = StreamController<List<CalendarEventDto>>(
       onListen: () {
         final key = (groupId, period);
-        final shared =
-            _covering(groupId, period) ??
-            (_active[key] = _SharedEvents(_watch(groupId, period: period), () {
-              _active.remove(key);
-            }));
+        var shared = _covering(groupId, period);
+        if (shared == null) {
+          final created = _SharedEvents(_watch(groupId, period: period));
+          created.onEmpty = () {
+            if (identical(_active[key], created)) _active.remove(key);
+          };
+          _active[key] = shared = created;
+        }
         subscription = shared.stream.listen(
           controller.add,
           onError: controller.addError,
@@ -142,9 +145,9 @@ class FirestoreCalendarEventWatchQueryService
 }
 
 class _SharedEvents {
-  _SharedEvents(this.source, this.onEmpty);
+  _SharedEvents(this.source);
   final Stream<List<CalendarEventDto>> source;
-  final void Function() onEmpty;
+  late final void Function() onEmpty;
   final _listeners = <StreamController<List<CalendarEventDto>>>{};
   StreamSubscription<List<CalendarEventDto>>? _subscription;
   List<CalendarEventDto>? _latest;
@@ -172,6 +175,7 @@ class _SharedEvents {
           onError: (Object error, StackTrace stack) {
             _error = error;
             _stack = stack;
+            onEmpty();
             for (final listener in _listeners) {
               listener.addError(error, stack);
             }
