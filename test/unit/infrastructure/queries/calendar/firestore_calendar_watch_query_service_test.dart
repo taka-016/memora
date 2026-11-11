@@ -79,6 +79,32 @@ void main() {
     when(query.snapshots()).thenAnswer((_) => source.stream);
     addTearDown(source.close);
   });
+  test('共有相手の購読が残っていても監視失敗後の再試行で再接続する', () async {
+    final service = FirestoreCalendarEventWatchQueryService(firestore: firestore);
+    final errors = <Object>[];
+    final first = service.watchCalendarEventsByGroupId('g').listen((_) {}, onError: errors.add);
+    source.addError(TestException('通信失敗'));
+    await flush();
+    expect(errors, hasLength(1));
+    await source.close();
+    source = StreamController<QuerySnapshot<Map<String, dynamic>>>();
+    final values = <List<dynamic>>[];
+    final retry = service.watchCalendarEventsByGroupId('g').listen(values.add, onError: errors.add);
+    final a = doc('a');
+    emit([a], [(DocumentChangeType.added, a)]);
+    await flush();
+    expect(values.single.single.id, 'a');
+    await first.cancel();
+    // 古い共有先の破棄で新しい共有先を外さない。
+    final thirdValues = <List<dynamic>>[];
+    final third = service.watchCalendarEventsByGroupId('g').listen(thirdValues.add);
+    await flush();
+    expect(thirdValues.single.single.id, 'a');
+    verify(query.snapshots()).called(2);
+    await retry.cancel();
+    await third.cancel();
+  });
+
   test('同じグループと期間の監視を共有し後からの購読にも受信済み予定を渡す', () async {
     final service = FirestoreCalendarEventWatchQueryService(
       firestore: firestore,

@@ -1,3 +1,5 @@
+import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
+import 'package:memora/application/usecases/calendar/watch_calendar_events_usecase.dart';
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -21,10 +23,50 @@ import 'calendar_notification_source_test.mocks.dart';
 
 @GenerateNiceMocks([
   MockSpec<GetCurrentMemberUseCase>(),
+  MockSpec<WatchCalendarEventsUsecase>(),
   MockSpec<GetGroupsWithMembersUsecase>(),
   MockSpec<GetCalendarEventsUsecase>(),
 ])
 void main() {
+  for (final closeDuringUpdate in [false, true]) {
+    test('所属監視の遅い解除後に古い取得結果で予定監視を追加しない（終了=$closeDuringUpdate）', () async {
+      final fixture = _NotificationFixture();
+      addTearDown(fixture.dispose);
+      await fixture.start();
+      final cancellation = Completer<void>();
+      final cancelling = Completer<void>();
+      fixture.eventStreams['g']!.onCancel = () {
+        cancelling.complete();
+        return cancellation.future;
+      };
+      fixture.ids = ['old'];
+      fixture.membership.add(fs.MockQuerySnapshot());
+      await cancelling.future;
+      if (closeDuringUpdate) {
+        await fixture.subscription.cancel();
+      } else {
+        fixture.ids = ['new'];
+        fixture.membership.add(fs.MockQuerySnapshot());
+        await fixture.flush();
+      }
+      cancellation.complete();
+      await fixture.flush();
+      verifyNever(fixture.watcher.execute('old', period: anyNamed('period')));
+      await fixture.dispose();
+    });
+  }
+
+  test('グループが削除されたら所属文書が残っていても予定監視を解除する', () async {
+    final fixture = _NotificationFixture();
+      addTearDown(fixture.dispose);
+    await fixture.start();
+    fixture.groupExists('g', false);
+    await fixture.flush();
+    expect(fixture.eventStreams['g']!.hasListener, isFalse);
+    expect(await fixture.source.load(), isEmpty);
+    await fixture.dispose();
+  });
+
   test('監視の初回受信と変更受信では全グループの予定を取り直さない', () async {
     final currentMember = MockGetCurrentMemberUseCase();
     final groups = MockGetGroupsWithMembersUsecase();
@@ -116,4 +158,67 @@ void main() {
     verify(events.execute('g2', period: period)).called(1);
     verifyNoMoreInteractions(events);
   });
+}
+
+class _NotificationFixture {
+  _NotificationFixture() {
+    const member = MemberDto(id: 'm', displayName: '本人');
+    when(current.execute()).thenAnswer((_) async => member);
+    when(groups.execute(member)).thenAnswer((_) async => [
+      for (final id in ids) GroupDto(id: id, ownerId: 'other', name: id, members: []),
+    ]);
+    when(firestore.collection(any)).thenReturn(collection);
+    when(collection.where('memberId', isEqualTo: 'm')).thenReturn(query);
+    when(collection.where('ownerId', isEqualTo: 'm')).thenReturn(query);
+    when(query.snapshots()).thenAnswer((_) => membership.stream);
+    when(collection.doc(any)).thenAnswer((invocation) {
+      final id = invocation.positionalArguments.single as String;
+      final document = fs.MockDocumentReference();
+      final stream = groupStreams.putIfAbsent(id, () => StreamController<DocumentSnapshot<Map<String, dynamic>>>.broadcast());
+      when(document.snapshots()).thenAnswer((_) => stream.stream);
+      return document;
+    });
+    when(watcher.execute(any, period: anyNamed('period'))).thenAnswer((invocation) {
+      final id = invocation.positionalArguments.single as String;
+      return eventStreams.putIfAbsent(id, () => StreamController<List<CalendarEventDto>>()).stream;
+    });
+    source = DeviceCalendarNotificationSource(currentMember: current, groups: groups,
+      events: events, watchEvents: watcher, firestore: firestore,
+      clock: FixedAppClock(DateTime(2026, 11, 10, 15)));
+  }
+  final current = MockGetCurrentMemberUseCase();
+  final groups = MockGetGroupsWithMembersUsecase();
+  final events = MockGetCalendarEventsUsecase();
+  final watcher = MockWatchCalendarEventsUsecase();
+  final firestore = fs.MockFirebaseFirestore();
+  final collection = fs.MockCollectionReference();
+  final query = fs.MockQuery();
+  final membership = StreamController<QuerySnapshot<Map<String, dynamic>>>.broadcast();
+  final groupStreams = <String, StreamController<DocumentSnapshot<Map<String, dynamic>>>>{};
+  final eventStreams = <String, StreamController<List<CalendarEventDto>>>{};
+  var ids = ['g'];
+  late DeviceCalendarNotificationSource source;
+  late StreamSubscription<void> subscription;
+  Future<void> flush() => Future<void>(() {});
+  void groupExists(String id, bool exists) {
+    final doc = fs.MockDocumentSnapshot();
+    when(doc.exists).thenReturn(exists);
+    groupStreams[id]!.add(doc);
+  }
+  Future<void> start() async {
+    subscription = source.changes().listen((_) {}, onError: (Object _) {});
+    await flush();
+    membership.add(fs.MockQuerySnapshot());
+    await flush();
+    groupExists('g', true);
+    eventStreams['g']!.add([]);
+    await flush();
+    await source.load();
+  }
+  Future<void> dispose() async {
+    await subscription.cancel();
+    await membership.close();
+    for (final stream in groupStreams.values) { await stream.close(); }
+    for (final stream in eventStreams.values) { await stream.close(); }
+  }
 }
