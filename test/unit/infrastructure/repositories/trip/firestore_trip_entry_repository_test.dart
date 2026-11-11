@@ -99,7 +99,7 @@ void main() {
         ),
       ).called(1);
       verify(mockBatch.set(mockTaskDocRef, any)).called(1);
-      verify(mockBatch.set(mockItineraryItemDocRef, any)).called(1);
+      verify(mockBatch.set(mockItineraryItemDocRef, argThat(containsPair('groupId', 'group001')))).called(1);
       verify(mockBatch.commit()).called(1);
     });
 
@@ -179,7 +179,7 @@ void main() {
       verify(mockBatch.delete(mockExistingLocationDocRef)).called(1);
       verify(mockBatch.set(mockLocationDocRef, any)).called(1);
       verify(mockBatch.set(mockTaskDocRef, any)).called(1);
-      verify(mockBatch.set(mockItineraryItemDocRef, any)).called(1);
+      verify(mockBatch.set(mockItineraryItemDocRef, argThat(containsPair('groupId', 'group001')))).called(1);
       verify(mockBatch.commit()).called(1);
     });
   });
