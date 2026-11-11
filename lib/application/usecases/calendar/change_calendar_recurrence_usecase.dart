@@ -57,22 +57,21 @@ class ChangeCalendarRecurrenceUsecase {
       if (scope == CalendarChangeScope.only) {
         final override = CalendarEventOverride(
           originalStartDateTime: key,
-          isCancelled: changes == null,
-          url: changes?.url ?? '',
-          memo: changes?.memo ?? '',
-          locationName: changes?.locationName ?? '',
-          latitude: changes?.latitude,
-          longitude: changes?.longitude,
-          title: changes?.title,
-          startDateTime: changes?.startDateTime,
-          endDateTime: changes?.endDateTime,
-          notificationMinutesBefore:
-              changes?.notificationMinutesBefore ?? const [],
-          isAllDay: changes?.isAllDay,
-          labelId: changes?.labelId,
-          labelType: changes?.labelType ?? 'custom',
-          memberId: changes?.memberId ?? '',
+          isCancelled: true,
         );
+        if (changes != null) {
+          preservedEvents.add(CalendarEvent(
+            id: '', groupId: changes.groupId,
+            labelId: changes.labelId, labelType: changes.labelType,
+            memberId: changes.memberId,
+            title: changes.title, startDateTime: changes.startDateTime,
+            endDateTime: changes.endDateTime, isAllDay: changes.isAllDay,
+            url: changes.url, memo: changes.memo,
+            locationName: changes.locationName,
+            latitude: changes.latitude, longitude: changes.longitude,
+            notificationMinutesBefore: changes.notificationMinutesBefore,
+          ));
+        }
         replacement = source.copyWith(
           overrides: [
             ...source.overrides.where(
