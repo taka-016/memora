@@ -279,7 +279,7 @@ void main() {
     expect(independent.notificationMinutesBefore, changes.notificationMinutesBefore);
     expect(independent.labelId, changes.labelId);
   });
-  test('これ以降の分割は対象範囲の個別変更も引き継いで残り回数を保つ', () async {
+  test('これ以降の分割は取消を引き継がず残り回数を保つ', () async {
     await usecase.execute(
       source,
       DateTime.utc(2026, 10, 3),
@@ -296,7 +296,7 @@ void main() {
     final before = CalendarEventMapper.toDto(saved[0] as CalendarEvent);
     final after = CalendarEventMapper.toDto(saved[1] as CalendarEvent);
     expect(before.overrides, [source.overrides.first]);
-    expect(after.overrides, [source.overrides.last]);
+    expect(after.overrides, isEmpty);
     expect(
       expander
           .expand(before, DateTime.utc(2026, 10), DateTime.utc(2026, 12))
@@ -337,7 +337,7 @@ void main() {
     CalendarChangeScope.all,
     CalendarChangeScope.following,
   ]) {
-    test('繰り返し条件と終了回数を変えても個別変更を維持する（$scope）', () async {
+    test('繰り返し条件と終了回数を変えた系列へ保存する（$scope）', () async {
       await usecase.execute(
         source,
         DateTime.utc(2026, 10, 3),
@@ -354,6 +354,11 @@ void main() {
       final result =
           (scope == CalendarChangeScope.all ? saved[0] : saved[1])
               as CalendarEvent;
+      if (scope == CalendarChangeScope.following) {
+        expect(result.overrides, isEmpty);
+        expect(expander.expand(CalendarEventMapper.toDto(result), DateTime.utc(2026, 10), DateTime.utc(2026, 12)).single.title, source.title);
+        return;
+      }
       expect(result.overrides.last, source.overrides.last);
       final occurrences = expander.expand(
         CalendarEventMapper.toDto(result),
@@ -486,11 +491,8 @@ void main() {
                 : 'FREQ=WEEKLY;BYDAY=FR;UNTIL=20270101',
           ),
         );
-        final result =
-            verify(repository.replaceCalendarEvent(any, captureAny, null))
-                    .captured
-                    .single
-                as CalendarEvent;
+        final captured = verify(repository.replaceCalendarEvent(any, captureAny, captureAny)).captured;
+        final result = (scope == CalendarChangeScope.following ? captured.last : captured.first) as CalendarEvent;
         expect(result.recurrenceRule, contains('BYDAY=SA'));
         expect(
           result.recurrenceRule,
@@ -630,6 +632,37 @@ void main() {
       hasLength(1),
     );
   });
+  test('初回からの以降変更は元系列を削除し取消を持たない別IDの系列を作成する', () async {
+    await usecase.execute(source, source.startDateTime, CalendarChangeScope.following,
+      changes: source.copyWith(title: '新系列'));
+    final tail = verify(repository.replaceCalendarEvent(any, null, captureAny)).captured.single as CalendarEvent;
+    expect(tail.id, isEmpty);
+    expect(tail.overrides, isEmpty);
+    expect(tail.recurrenceRule, source.recurrenceRule);
+  });
+
+  for (final allDay in [true, false]) {
+    for (final movingForward in [true, false]) {
+      test('以降変更は移動先にかかわらず元の回より前で元系列を終了する（終日=$allDay・後方=$movingForward）', () async {
+        final first = DateTime.utc(2026, 10, 1, allDay ? 0 : 9);
+        final selected = DateTime.utc(2026, 10, 3, allDay ? 0 : 9);
+        final series = source.copyWith(startDateTime: first,
+          endDateTime: first.add(Duration(hours: allDay ? 24 : 1)),
+          isAllDay: allDay, timeZone: allDay ? null : 'Asia/Tokyo', overrides: []);
+        final moved = selected.add(Duration(days: movingForward ? 10 : -10));
+        await usecase.execute(series, selected, CalendarChangeScope.following,
+          changes: series.copyWith(startDateTime: moved, endDateTime: moved.add(Duration(hours: allDay ? 24 : 1))));
+        final saved = verify(repository.replaceCalendarEvent(any, captureAny, captureAny)).captured;
+        final head = saved.first as CalendarEvent;
+        final tail = saved.last as CalendarEvent;
+        expect(expander.expand(CalendarEventMapper.toDto(head), first, selected.add(const Duration(days: 1))).map((v) => v.originalStartDateTime), [first, first.add(const Duration(days: 1))]);
+        expect(tail.startDateTime, moved);
+        expect(tail.recurrenceRule, contains('COUNT=3'));
+        expect(tail.overrides, isEmpty);
+      });
+    }
+  }
+
   test('初回からの削除と全系列の削除は親を削除する', () async {
     for (final scope in [
       CalendarChangeScope.following,
