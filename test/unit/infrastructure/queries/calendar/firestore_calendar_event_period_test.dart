@@ -58,7 +58,13 @@ void main() {
     ).thenReturn(recurring);
     when(bounded.orderBy('endDateTime')).thenReturn(bounded);
     when(bounded.orderBy('startDateTime')).thenReturn(bounded);
-    for (final field in ['recurrenceEndDateTime', 'startDateTime', 'recurrenceRule']) { when(recurring.orderBy(field)).thenReturn(recurring); }
+    for (final field in [
+      'recurrenceEndDateTime',
+      'startDateTime',
+      'recurrenceRule',
+    ]) {
+      when(recurring.orderBy(field)).thenReturn(recurring);
+    }
     when(empty.docs).thenReturn([]);
     when(empty.docChanges).thenReturn([]);
     when(base.get()).thenAnswer((_) async => empty);

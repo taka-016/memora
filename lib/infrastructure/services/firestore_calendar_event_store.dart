@@ -37,7 +37,9 @@ class FirestoreCalendarEventStore {
             .where(
               'originalStartDateTime',
               isLessThan: Timestamp.fromDate(period.queryTo),
-            ).orderBy('originalEndDateTime').orderBy('originalStartDateTime');
+            )
+            .orderBy('originalEndDateTime')
+            .orderBy('originalStartDateTime');
       }
       final snapshot = await query.get();
       overrides.addAll(

@@ -18,7 +18,8 @@ List<Query<Map<String, dynamic>>> calendarEventQueries(
           isGreaterThanOrEqualTo: Timestamp.fromDate(period.queryFrom),
         )
         .where('startDateTime', isLessThan: Timestamp.fromDate(period.queryTo))
-        .orderBy('endDateTime').orderBy('startDateTime'),
+        .orderBy('endDateTime')
+        .orderBy('startDateTime'),
     base
         .where('recurrenceRule', isNull: false)
         .where(
@@ -26,6 +27,8 @@ List<Query<Map<String, dynamic>>> calendarEventQueries(
           isGreaterThanOrEqualTo: Timestamp.fromDate(period.queryFrom),
         )
         .where('startDateTime', isLessThan: Timestamp.fromDate(period.queryTo))
-        .orderBy('recurrenceEndDateTime').orderBy('startDateTime').orderBy('recurrenceRule'),
+        .orderBy('recurrenceEndDateTime')
+        .orderBy('startDateTime')
+        .orderBy('recurrenceRule'),
   ];
 }
