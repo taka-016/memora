@@ -80,8 +80,7 @@ class ChangeCalendarRecurrenceUsecase {
             override,
           ],
         );
-      } else if (scope == CalendarChangeScope.all ||
-          key == _key(source.startDateTime, source.isAllDay)) {
+      } else if (scope == CalendarChangeScope.all) {
         if (changes != null) {
           final oldWall = source.isAllDay
               ? _key(source.startDateTime, true)
@@ -173,7 +172,7 @@ class ChangeCalendarRecurrenceUsecase {
             .split(';')
             .where((v) => !v.startsWith('COUNT=') && !v.startsWith('UNTIL='))
             .join(';');
-        replacement = _with(
+        replacement = key == _key(source.startDateTime, source.isAllDay) ? null : _with(
           source,
           rule: '$rule;UNTIL=$stamp',
           overrides: source.overrides
@@ -228,42 +227,11 @@ class ChangeCalendarRecurrenceUsecase {
               _wall(changes, changes.startDateTime),
             );
           }
-          if (nextRule == null) {
-            preservedEvents.addAll(
-              _individualEvents(
-                source,
-                source.overrides
-                    .where(
-                      (value) => !_key(
-                        value.originalStartDateTime,
-                        source.isAllDay,
-                      ).isBefore(key),
-                    )
-                    .toList(),
-              ),
-            );
-          }
           following = _with(
             changes,
             id: '',
             rule: nextRule,
-            overrides: nextRule == null
-                ? []
-                : _moveOverrides(
-                    source,
-                    changes,
-                    source.overrides
-                        .where(
-                          (value) => !_key(
-                            value.originalStartDateTime,
-                            source.isAllDay,
-                          ).isBefore(key),
-                        )
-                        .toList(),
-                    key,
-                    changes.startDateTime,
-                    nextRule,
-                  ),
+            overrides: [],
           );
         }
       }
