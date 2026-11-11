@@ -168,6 +168,8 @@ CREATE TABLE calendar_events (
   end_date_time INTEGER NOT NULL CHECK (end_date_time >= start_date_time),
   is_all_day INTEGER NOT NULL CHECK (is_all_day IN (0, 1)),
   recurrence_rule TEXT,
+  recurrence_end_date_time INTEGER,
+  overrides_fingerprint TEXT NOT NULL DEFAULT '[]',
   time_zone TEXT,
   UNIQUE (id, group_id),
   CHECK ((label_type = 'group' AND member_id IS NULL AND label_id IS NULL)
@@ -182,30 +184,15 @@ CREATE INDEX calendar_events_group_start_idx ON calendar_events (group_id, start
 CREATE INDEX calendar_events_label_idx ON calendar_events (label_id);
 
 CREATE TABLE calendar_event_overrides (
-  notification_minutes_before TEXT NOT NULL DEFAULT '[]',
   event_id TEXT NOT NULL,
   group_id TEXT NOT NULL,
   original_start_date_time INTEGER NOT NULL,
-  is_cancelled INTEGER NOT NULL CHECK (is_cancelled IN (0, 1)),
-  title TEXT,
-  url TEXT NOT NULL DEFAULT '',
-  memo TEXT NOT NULL DEFAULT '',
-  location_name TEXT NOT NULL DEFAULT '',
-  latitude REAL,
-  longitude REAL,
-  start_date_time INTEGER,
-  end_date_time INTEGER,
-  is_all_day INTEGER CHECK (is_all_day IN (0, 1)),
-  label_id TEXT,
-  label_type TEXT,
-  member_id TEXT,
+  original_end_date_time INTEGER NOT NULL CHECK (original_end_date_time >= original_start_date_time),
+  is_cancelled INTEGER NOT NULL CHECK (is_cancelled = 1),
   PRIMARY KEY (event_id, original_start_date_time),
-  FOREIGN KEY (event_id, group_id) REFERENCES calendar_events(id, group_id) ON DELETE CASCADE,
-  FOREIGN KEY (label_id, group_id) REFERENCES calendar_labels(id, group_id) ON DELETE NO ACTION,
-  CHECK (is_cancelled = 1 OR (title IS NOT NULL AND length(trim(title)) > 0 AND start_date_time IS NOT NULL AND end_date_time IS NOT NULL AND end_date_time >= start_date_time AND is_all_day IS NOT NULL AND label_type IS NOT NULL AND ((label_type = 'group' AND member_id IS NULL AND label_id IS NULL) OR (label_type = 'member' AND member_id IS NOT NULL AND length(trim(member_id)) > 0 AND label_id IS NULL) OR (label_type = 'custom' AND member_id IS NULL AND label_id IS NOT NULL))))
+  FOREIGN KEY (event_id, group_id) REFERENCES calendar_events(id, group_id) ON DELETE CASCADE
 ) AS SqliteCalendarEventOverrideRow;
-CREATE INDEX calendar_overrides_label_idx ON calendar_event_overrides (label_id);
-CREATE INDEX calendar_overrides_group_start_idx ON calendar_event_overrides (group_id, start_date_time);
+CREATE INDEX calendar_overrides_group_period_idx ON calendar_event_overrides (group_id, original_end_date_time, original_start_date_time);
 
 CREATE TABLE deleted_members (
   id TEXT NOT NULL PRIMARY KEY,

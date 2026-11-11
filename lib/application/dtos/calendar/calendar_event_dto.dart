@@ -1,3 +1,4 @@
+import 'package:memora/core/time/calendar_event_duration.dart';
 import 'package:memora/domain/entities/calendar/calendar_event_override.dart';
 import 'package:equatable/equatable.dart';
 
@@ -7,6 +8,7 @@ const _UNSET_COORDINATE = Object();
 class CalendarEventDto extends Equatable {
   const CalendarEventDto({
     this.version,
+    this.overridesFingerprint,
     required this.id,
     required this.groupId,
     this.labelId = '',
@@ -29,6 +31,7 @@ class CalendarEventDto extends Equatable {
   });
 
   final int? version;
+  final String? overridesFingerprint;
   final String url;
   final String memo;
   final String locationName;
@@ -48,6 +51,7 @@ class CalendarEventDto extends Equatable {
   final String title;
   final DateTime startDateTime;
   final DateTime endDateTime;
+  Duration get duration => calendarEventDuration(startDateTime, endDateTime, isAllDay);
   final bool isAllDay;
   final List<int> notificationMinutesBefore;
   final String? recurrenceRule;
@@ -55,16 +59,9 @@ class CalendarEventDto extends Equatable {
   final List<CalendarEventOverride> overrides;
   final DateTime? originalStartDateTime;
 
-  bool get hasIndividualChanges =>
-      originalStartDateTime != null &&
-      overrides.any(
-        (value) =>
-            value.originalStartDateTime.toUtc() ==
-            originalStartDateTime!.toUtc(),
-      );
-
   CalendarEventDto copyWith({
     int? version,
+    String? overridesFingerprint,
     String? id,
     String? groupId,
     String? labelId,
@@ -87,6 +84,7 @@ class CalendarEventDto extends Equatable {
   }) {
     return CalendarEventDto(
       version: version ?? this.version,
+      overridesFingerprint: overridesFingerprint ?? this.overridesFingerprint,
       id: id ?? this.id,
       groupId: groupId ?? this.groupId,
       labelId: labelId ?? this.labelId,

@@ -77,6 +77,7 @@ final changeCalendarRecurrenceUsecaseProvider =
       (ref) => ChangeCalendarRecurrenceUsecase(
         ref.watch(calendarEventRepositoryProvider),
         ref.watch(calendarRecurrenceExpanderProvider),
+        queryService: ref.watch(calendarEventQueryServiceProvider),
       ),
     );
 

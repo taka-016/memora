@@ -318,61 +318,6 @@ class CalendarNotifier extends _$CalendarNotifier {
         );
   });
 
-  CalendarEventDto? originalOccurrenceForEvent(CalendarEventDto occurrence) {
-    final source = seriesForEvent(occurrence.id);
-    final key = occurrence.originalStartDateTime;
-    if (source == null || key == null || occurrence.groupId != groupId) {
-      return null;
-    }
-    return ref
-        .read(calendarRecurrenceExpanderProvider)
-        .expand(
-          source.copyWith(overrides: []),
-          key,
-          key.add(const Duration(days: 1)),
-        )
-        .where((value) => value.originalStartDateTime == key)
-        .firstOrNull;
-  }
-
-  Future<bool> resetRecurringEvent(
-    CalendarEventDto occurrence, {
-    CalendarEventDto? expectedSeries,
-  }) => _mutate(() async {
-    final source = expectedSeries ?? seriesForEvent(occurrence.id);
-    if (source == null ||
-        occurrence.groupId != groupId ||
-        occurrence.originalStartDateTime == null) {
-      throw const ApplicationValidationException(
-        'リセットする予定が見つかりません。再読み込みしてください',
-      );
-    }
-    await ref
-        .read(changeCalendarRecurrenceUsecaseProvider)
-        .resetOverride(source, occurrence.originalStartDateTime!);
-  });
-
-  ({int reset, int retained}) recurrenceImpact(
-    CalendarEventDto occurrence,
-    CalendarChangeScope scope,
-  ) {
-    final source = _series.where((v) => v.id == occurrence.id).firstOrNull;
-    final key = occurrence.originalStartDateTime;
-    if (source == null || key == null) return (reset: 0, retained: 0);
-    final reset = source.overrides
-        .where(
-          (v) => switch (scope) {
-            CalendarChangeScope.only => v.originalStartDateTime == key,
-            CalendarChangeScope.following => !v.originalStartDateTime.isBefore(
-              key,
-            ),
-            CalendarChangeScope.all => true,
-          },
-        )
-        .length;
-    return (reset: reset, retained: source.overrides.length - reset);
-  }
-
   Future<bool> saveEvent(CalendarEventDto event) => _mutate(() async {
     if (event.originalStartDateTime != null ||
         _series.any((v) => v.id == event.id && v.recurrenceRule != null)) {
@@ -474,11 +419,7 @@ class CalendarNotifier extends _$CalendarNotifier {
       }
       if (_series.any(
         (event) =>
-            (event.labelType == 'custom' && event.labelId == id) ||
-            event.overrides.any(
-              (v) =>
-                  !v.isCancelled && v.labelType == 'custom' && v.labelId == id,
-            ),
+            event.labelType == 'custom' && event.labelId == id,
       )) {
         throw const ApplicationValidationException('予定で使用中の色ラベルは削除できません');
       }

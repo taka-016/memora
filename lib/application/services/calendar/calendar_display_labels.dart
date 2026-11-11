@@ -55,13 +55,7 @@ List<CalendarLabelDto> buildCalendarDisplayLabels(
         !currentMembers.contains(event.memberId)) {
       missingMembers.add(event.memberId);
     }
-    for (final value in event.overrides.where(
-      (v) => !v.isCancelled && v.labelType == 'member',
-    )) {
-      if (!currentMembers.contains(value.memberId)) {
-        missingMembers.add(value.memberId);
-      }
-    }
+
   }
   for (final memberId in missingMembers) {
     result.add(

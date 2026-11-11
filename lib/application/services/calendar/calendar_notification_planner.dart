@@ -31,7 +31,6 @@ class CalendarNotificationPlanner {
     for (final event in events) {
       final offsets = [
         ...event.notificationMinutesBefore,
-        ...event.overrides.expand((v) => v.notificationMinutesBefore),
       ];
       if (offsets.isEmpty) continue;
       final max = offsets.reduce((a, b) => a > b ? a : b);

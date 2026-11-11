@@ -10,7 +10,7 @@ class CalendarRecurrenceExpander {
   DateTime? seriesEndDateTime(CalendarEventDto event) {
     if (event.recurrenceRule == null) return event.endDateTime;
     final rule = CalendarRecurrenceRule.parse(event.recurrenceRule!);
-    final duration = event.endDateTime.difference(event.startDateTime);
+    final duration = event.duration;
     if (rule.until != null) return rule.until!.add(duration);
     if (rule.count == null) return null;
     final start = event.isAllDay ? _date(event.startDateTime) : timeZone.local(event.startDateTime, event.timeZone!);
@@ -110,7 +110,7 @@ class CalendarRecurrenceExpander {
     }
     final duration = event.isAllDay
         ? _date(event.endDateTime).difference(start)
-        : event.endDateTime.difference(event.startDateTime);
+        : event.duration;
     DateTime? occurrence(DateTime day) {
       if (!rule.matches(day, start)) return null;
       final wall = day.add(
@@ -174,29 +174,6 @@ class CalendarRecurrenceExpander {
             ? instant.add(duration)
             : instant.add(duration).toLocal(),
         originalStartDateTime: instant,
-      );
-      if (_overlaps(value, from, to)) result.add(value);
-    }
-    for (final override in event.overrides) {
-      final original = originalKey(override.originalStartDateTime);
-      if (override.isCancelled) continue;
-      final value = event.copyWith(
-        url: override.url,
-        memo: override.memo,
-        locationName: override.locationName,
-        latitude: override.latitude,
-        longitude: override.longitude,
-        title: override.title,
-        labelId: override.labelId,
-
-        labelType: override.labelType,
-
-        memberId: override.memberId,
-        startDateTime: override.startDateTime,
-        endDateTime: override.endDateTime,
-        isAllDay: override.isAllDay,
-        notificationMinutesBefore: override.notificationMinutesBefore,
-        originalStartDateTime: original,
       );
       if (_overlaps(value, from, to)) result.add(value);
     }

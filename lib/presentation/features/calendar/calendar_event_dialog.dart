@@ -97,7 +97,6 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
           ),
   );
 
-  bool get _hasIndividualChanges => widget.event?.hasIndividualChanges ?? false;
 
   @override
   void initState() {
@@ -234,8 +233,7 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
       if (start) {
         if (!time) {
           _end = _end.add(next.difference(_start));
-          if (!_hasIndividualChanges &&
-              _recurrence.frequency != null &&
+          if (              _recurrence.frequency != null &&
               (next.year != _start.year ||
                   next.month != _start.month ||
                   next.day != _start.day)) {
@@ -280,8 +278,7 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
     final scope = recurring ? await _chooseScope(false) : null;
     if (!mounted || recurring && scope == null) return;
     if (scope != CalendarChangeScope.only &&
-        !_hasIndividualChanges &&
-        _recurrence.until != null &&
+                _recurrence.until != null &&
         DateTime(
           _recurrence.until!.year,
           _recurrence.until!.month,
@@ -385,9 +382,6 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, update) {
-          final impact = ref
-              .read(calendarNotifierProvider(widget.groupId).notifier)
-              .recurrenceImpact(widget.event!, scope);
           return AlertDialog(
             title: Text(deleting ? '予定を削除' : '予定の変更範囲'),
             content: SingleChildScrollView(
@@ -403,10 +397,8 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                       children: [
                         for (final entry in {
                           CalendarChangeScope.only: 'この予定のみ',
-                          if (!_hasIndividualChanges)
-                            CalendarChangeScope.following: 'この予定とこれ以降',
-                          if (!_hasIndividualChanges)
-                            CalendarChangeScope.all: 'すべての予定',
+                                                      CalendarChangeScope.following: 'この予定とこれ以降',
+                                                      CalendarChangeScope.all: 'すべての予定',
                         }.entries)
                           RadioListTile<CalendarChangeScope>(
                             value: entry.key,
@@ -422,8 +414,8 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                   if (scope != CalendarChangeScope.only)
                     Text(
                       deleting
-                          ? '対象範囲の個別変更した予定${impact.reset}件も削除します。移動済みの予定も元の予定日時を基準に削除します。対象範囲外の個別変更は維持します。'
-                          : '個別変更した予定はそのまま維持します。日時・タイトル・URL・メモ・場所・色ラベル・終日区分・通知の個別変更と個別の取消しは変更しません。',
+                          ? '独立した通常予定は変更・削除されません。'
+                          : '独立した通常予定は変更・削除されません。新系列へ取消情報は引き継ぎません。', 
                     ),
                   if (deleting && scope == CalendarChangeScope.only)
                     const Text('この回の取消しを保存します。'),
@@ -444,53 +436,6 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
         },
       ),
     );
-  }
-
-  Future<void> _resetOverride() async {
-    final notifier = ref.read(
-      calendarNotifierProvider(widget.groupId).notifier,
-    );
-    final original = notifier.originalOccurrenceForEvent(widget.event!);
-    if (notifier.seriesForEvent(widget.event!.id) == null) {
-      setState(() => _error = '元の予定が見つかりません。再読み込みしてください');
-      return;
-    }
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('個別変更をリセット'),
-        content: Text(
-          original == null
-              ? '現在の繰り返し条件に対応する回がないため、リセットするとこの個別予定は削除されます。'
-              : '日時・タイトル・URL・メモ・場所・色ラベル・終日区分・通知の個別変更をすべて取り消し、現在の繰り返し予定に戻します。\n\n${original.title}\n${calendarPeriodText(original)}',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('キャンセル'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('リセットする'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true || !mounted) return;
-    final success = await notifier.resetRecurringEvent(
-      widget.event!,
-      expectedSeries: _seriesAtOpen,
-    );
-    if (!mounted) return;
-    if (success) {
-      Navigator.pop(context);
-    } else {
-      setState(
-        () => _error = ref
-            .read(calendarNotifierProvider(widget.groupId))
-            .mutationError,
-      );
-    }
   }
 
   Future<void> _delete() async {
@@ -748,16 +693,9 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                             ListTile(
                               contentPadding: EdgeInsets.zero,
                               title: const Text('繰り返し'),
-                              enabled: !_hasIndividualChanges,
-                              subtitle: Text(
-                                _hasIndividualChanges
-                                    ? '${_recurrence.summary}\n個別変更した予定です。繰り返しに戻すには個別変更をリセットしてください。'
-                                    : _recurrence.summary,
-                              ),
-                              trailing: _hasIndividualChanges
-                                  ? null
-                                  : const Icon(Icons.chevron_right),
-                              onTap: state.isSaving || _hasIndividualChanges
+                              subtitle: Text(_recurrence.summary),
+                              trailing: const Icon(Icons.chevron_right),
+                              onTap: state.isSaving
                                   ? null
                                   : () async {
                                       final value =
@@ -795,13 +733,6 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                                   calendarPreferencesNotifierProvider,
                                 ),
                                 child: const Text('標準時間を再取得'),
-                              ),
-                            if (_hasIndividualChanges)
-                              TextButton(
-                                onPressed: state.isSaving
-                                    ? null
-                                    : _resetOverride,
-                                child: const Text('個別変更をリセット'),
                               ),
                             TextFormField(
                               controller: _url,

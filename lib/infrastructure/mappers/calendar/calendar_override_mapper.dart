@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:memora/domain/entities/calendar/calendar_event_override.dart';
 
 class CalendarOverrideMapper {
@@ -9,68 +7,19 @@ class CalendarOverrideMapper {
     CalendarEventOverride value,
     String eventId,
     String groupId,
-    bool parentAllDay,
-  ) => {
-    'event_id': eventId,
-    'group_id': groupId,
-    'original_start_date_time': date(
-      value.originalStartDateTime,
-      parentAllDay,
-    ).microsecondsSinceEpoch,
-    'is_cancelled': value.isCancelled ? 1 : 0,
-    'url': value.url,
-    'memo': value.memo,
-    'location_name': value.locationName,
-    'latitude': value.latitude,
-    'longitude': value.longitude,
-    'title': value.title,
-    'notification_minutes_before': jsonEncode(value.notificationMinutesBefore),
-    'start_date_time': value.startDateTime == null
-        ? null
-        : date(value.startDateTime!, value.isAllDay!).microsecondsSinceEpoch,
-    'end_date_time': value.endDateTime == null
-        ? null
-        : date(value.endDateTime!, value.isAllDay!).microsecondsSinceEpoch,
-    'is_all_day': value.isAllDay == null ? null : (value.isAllDay! ? 1 : 0),
-    'label_id': value.labelType == 'custom' ? value.labelId : null,
-    'label_type': value.isCancelled ? null : value.labelType,
-    'member_id': value.labelType == 'member' ? value.memberId : null,
-  };
-  static CalendarEventOverride fromRow(
-    Map<String, Object?> row,
-    bool parentAllDay,
-  ) => CalendarEventOverride(
-    originalStartDateTime: DateTime.fromMicrosecondsSinceEpoch(
-      row['original_start_date_time'] as int,
-      isUtc: parentAllDay,
-    ),
-    isCancelled: row['is_cancelled'] == 1,
-    notificationMinutesBefore: (jsonDecode(
-      row['notification_minutes_before'] as String,
-    ) as List).cast<int>(),
-    url: row['url'] as String? ?? '',
-    memo: row['memo'] as String? ?? '',
-    locationName: row['location_name'] as String? ?? '',
-    latitude: (row['latitude'] as num?)?.toDouble(),
-    longitude: (row['longitude'] as num?)?.toDouble(),
-    title: row['title'] as String?,
-    startDateTime: row['start_date_time'] == null
-        ? null
-        : DateTime.fromMicrosecondsSinceEpoch(
-            row['start_date_time'] as int,
-            isUtc: row['is_all_day'] == 1,
-          ),
-    endDateTime: row['end_date_time'] == null
-        ? null
-        : DateTime.fromMicrosecondsSinceEpoch(
-            row['end_date_time'] as int,
-            isUtc: row['is_all_day'] == 1,
-          ),
-    isAllDay: row['is_all_day'] == null ? null : row['is_all_day'] == 1,
-    labelId: row['is_cancelled'] == 1 ? null : row['label_id'] as String? ?? '',
-    labelType: row['is_cancelled'] == 1
-        ? 'custom'
-        : row['label_type'] as String,
-    memberId: row['member_id'] as String? ?? '',
-  );
+    bool parentAllDay, {
+    Duration parentDuration = Duration.zero,
+  }) {
+    final start = date(value.originalStartDateTime, parentAllDay);
+    return {
+      'event_id': eventId,
+      'group_id': groupId,
+      'original_start_date_time': start.microsecondsSinceEpoch,
+      'original_end_date_time': start.add(parentDuration).microsecondsSinceEpoch,
+      'is_cancelled': 1,
+    };
+  }
+  static CalendarEventOverride fromRow(Map<String, Object?> row, bool parentAllDay) =>
+      CalendarEventOverride(originalStartDateTime: DateTime.fromMicrosecondsSinceEpoch(
+        row['original_start_date_time'] as int, isUtc: parentAllDay));
 }

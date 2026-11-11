@@ -1,3 +1,4 @@
+import 'package:memora/application/queries/calendar/calendar_event_query_service.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/application/exceptions/application_validation_exception.dart';
 import 'package:memora/application/mappers/calendar/calendar_event_mapper.dart';
@@ -11,7 +12,8 @@ import 'package:memora/domain/repositories/calendar/calendar_event_repository.da
 enum CalendarChangeScope { only, following, all }
 
 class ChangeCalendarRecurrenceUsecase {
-  ChangeCalendarRecurrenceUsecase(this._repository, this._expander);
+  ChangeCalendarRecurrenceUsecase(this._repository, this._expander, {CalendarEventQueryService? queryService}) : _queryService = queryService;
+  final CalendarEventQueryService? _queryService;
   final CalendarEventRepository _repository;
   final CalendarRecurrenceExpander _expander;
 
@@ -22,6 +24,15 @@ class ChangeCalendarRecurrenceUsecase {
     CalendarEventDto? changes,
   }) async {
     try {
+      if (_queryService != null) {
+        final complete = await _queryService.getCalendarEventById(source.id);
+        if (complete == null) throw ValidationException('元の予定が見つかりません。再読み込みしてください');
+        final originalKeys = source.overrides.map((value) => _key(value.originalStartDateTime, source.isAllDay)).toSet();
+        source = source.copyWith(overrides: [
+          ...complete.overrides.where((value) => !originalKeys.contains(_key(value.originalStartDateTime, source.isAllDay))),
+          ...source.overrides,
+        ]);
+      }
       if (source.recurrenceRule == null ||
           source.id.isEmpty ||
           (changes != null &&
@@ -131,9 +142,6 @@ class ChangeCalendarRecurrenceUsecase {
                   wall.second,
                 );
           if (start == null) throw ValidationException('変更後の初回の時刻が存在しません');
-          if (changes.recurrenceRule == null) {
-            preservedEvents.addAll(_individualEvents(source, source.overrides));
-          }
           final movedRule = _moveRule(
             changes.recurrenceRule,
             _sameSchedule(changes.recurrenceRule, source.recurrenceRule)
@@ -268,67 +276,6 @@ class ChangeCalendarRecurrenceUsecase {
     }
   }
 
-  Future<void> resetOverride(CalendarEventDto source, DateTime original) async {
-    final key = _key(original, source.isAllDay);
-    if (source.id.isEmpty ||
-        source.recurrenceRule == null ||
-        !source.overrides.any(
-          (value) => _key(value.originalStartDateTime, source.isAllDay) == key,
-        )) {
-      throw const ApplicationValidationException(
-        'リセットする個別変更が見つかりません。再読み込みしてください',
-      );
-    }
-    final replacement = source.copyWith(
-      overrides: source.overrides
-          .where(
-            (value) =>
-                _key(value.originalStartDateTime, source.isAllDay) != key,
-          )
-          .toList(),
-    );
-    try {
-      await _repository.replaceCalendarEvent(
-        CalendarEventMapper.toEntity(source),
-        CalendarEventMapper.toEntity(replacement),
-        null,
-      );
-    } on ValidationException catch (e, stack) {
-      Error.throwWithStackTrace(
-        ApplicationValidationException(e.message),
-        stack,
-      );
-    }
-  }
-
-  List<CalendarEvent> _individualEvents(
-    CalendarEventDto source,
-    List<CalendarEventOverride> overrides,
-  ) => overrides
-      .where((value) => !value.isCancelled)
-      .map(
-        (value) => CalendarEvent(
-          id: '',
-          groupId: source.groupId,
-          labelId: value.labelId!,
-
-          labelType: value.labelType,
-
-          memberId: value.memberId,
-          url: value.url,
-          memo: value.memo,
-          locationName: value.locationName,
-          latitude: value.latitude,
-          longitude: value.longitude,
-          title: value.title!,
-          startDateTime: value.startDateTime!,
-          endDateTime: value.endDateTime!,
-          notificationMinutesBefore: value.notificationMinutesBefore,
-          isAllDay: value.isAllDay!,
-        ),
-      )
-      .toList();
-
   List<CalendarEventOverride> _moveOverrides(
     CalendarEventDto source,
     CalendarEventDto target,
@@ -377,22 +324,7 @@ class ChangeCalendarRecurrenceUsecase {
           : _expander.resolveTime(wall, target.timeZone!);
       return CalendarEventOverride(
         originalStartDateTime: key,
-        isCancelled: value.isCancelled,
-        url: value.url,
-        memo: value.memo,
-        locationName: value.locationName,
-        latitude: value.latitude,
-        longitude: value.longitude,
-        title: value.title,
-        labelId: value.labelId,
 
-        labelType: value.labelType,
-
-        memberId: value.memberId,
-        notificationMinutesBefore: value.notificationMinutesBefore,
-        isAllDay: value.isAllDay,
-        startDateTime: value.startDateTime,
-        endDateTime: value.endDateTime,
       );
     }).toList();
   }

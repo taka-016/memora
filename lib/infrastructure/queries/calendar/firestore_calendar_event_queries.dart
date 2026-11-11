@@ -12,12 +12,14 @@ List<Query<Map<String, dynamic>>> calendarEventQueries(
   if (period == null) return [base];
   return [
     base
+        .where('recurrenceRule', isNull: true)
         .where(
           'endDateTime',
           isGreaterThanOrEqualTo: Timestamp.fromDate(period.queryFrom),
         )
         .where('startDateTime', isLessThan: Timestamp.fromDate(period.queryTo)),
-    // 個別回の日時変更で期間内に入る系列も取得する。
-    base.where('recurrenceRule', isNull: false),
+    base.where('recurrenceRule', isNull: false)
+        .where('recurrenceEndDateTime', isGreaterThanOrEqualTo: Timestamp.fromDate(period.queryFrom))
+        .where('startDateTime', isLessThan: Timestamp.fromDate(period.queryTo)),
   ];
 }
