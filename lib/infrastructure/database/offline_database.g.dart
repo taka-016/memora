@@ -8566,6 +8566,10 @@ abstract class _$OfflineDatabase extends GeneratedDatabase {
     'CREATE INDEX tasks_parent_task_id_idx ON tasks (parent_task_id, order_index)',
   );
   late final ItineraryItems itineraryItems = ItineraryItems(this);
+  late final Index itineraryItemsStartIdx = Index(
+    'itinerary_items_start_idx',
+    'CREATE INDEX itinerary_items_start_idx ON itinerary_items (start_date_time)',
+  );
   late final Index itineraryItemsTripIdIdx = Index(
     'itinerary_items_trip_id_idx',
     'CREATE INDEX itinerary_items_trip_id_idx ON itinerary_items (trip_id, start_date_time)',
@@ -8640,6 +8644,7 @@ abstract class _$OfflineDatabase extends GeneratedDatabase {
     tasksAssignedMemberIdIdx,
     tasksParentTaskIdIdx,
     itineraryItems,
+    itineraryItemsStartIdx,
     itineraryItemsTripIdIdx,
     memberEvents,
     groupEvents,

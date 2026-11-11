@@ -19,41 +19,79 @@ class GetAndroidWidgetItineraryCacheUsecase {
     Set<String> retainedItineraryDateIds = const {},
   }) async {
     final loaded = <DateTime, List<AndroidWidgetItineraryDateCacheDto>>{};
-    Future<List<AndroidWidgetItineraryDateCacheDto>> loadDay(DateTime date) async {
+    Future<List<AndroidWidgetItineraryDateCacheDto>> loadDay(
+      DateTime date,
+    ) async {
       final day = _dateOnly(date);
       if (loaded.containsKey(day)) return loaded[day]!;
       final trips = await _queryService.getDay(groupId, day);
-      final values = [for (final trip in trips) ..._toItineraryDateCaches(trip, trip.itineraryItems ?? const [])]..sort(_compareItineraryDateCaches);
+      final values = [
+        for (final trip in trips)
+          ..._toItineraryDateCaches(trip, trip.itineraryItems ?? const []),
+      ]..sort(_compareItineraryDateCaches);
       return loaded[day] = values;
     }
+
     final today = _dateOnly(_clock.now());
     final next = await _queryService.findDate(groupId, today, before: false);
-    final recentDay = next ?? await _queryService.findDate(groupId, today, before: true);
-    final recentValues = recentDay == null ? <AndroidWidgetItineraryDateCacheDto>[] : await loadDay(recentDay);
-    final recent = next != null ? recentValues.firstOrNull : recentValues.lastOrNull;
+    final recentDay =
+        next ?? await _queryService.findDate(groupId, today, before: true);
+    final recentValues = recentDay == null
+        ? <AndroidWidgetItineraryDateCacheDto>[]
+        : await loadDay(recentDay);
+    final recent = next != null
+        ? recentValues.firstOrNull
+        : recentValues.lastOrNull;
     AndroidWidgetItineraryDateCacheDto? selected;
-    if (selectedItineraryDateId != null && selectedItineraryDateId.length >= 10) {
-      final date = DateTime.tryParse(selectedItineraryDateId.substring(selectedItineraryDateId.length - 10));
-      if (date != null) selected = (await loadDay(date)).where((value) => value.id == selectedItineraryDateId).firstOrNull;
+    if (selectedItineraryDateId != null &&
+        selectedItineraryDateId.length >= 10) {
+      final date = DateTime.tryParse(
+        selectedItineraryDateId.substring(selectedItineraryDateId.length - 10),
+      );
+      if (date != null) {
+        selected = (await loadDay(date))
+            .where((value) => value.id == selectedItineraryDateId)
+            .firstOrNull;
+      }
     }
     selected ??= recent;
     if (selected == null) {
-      return AndroidWidgetItineraryCacheDto(version: 1, groupId: groupId, selectedItineraryDateId: null,
-        lastUpdatedAt: _clock.now(), itineraryDates: const [], itineraryDateIds: const []);
+      return AndroidWidgetItineraryCacheDto(
+        version: 1,
+        groupId: groupId,
+        selectedItineraryDateId: null,
+        lastUpdatedAt: _clock.now(),
+        itineraryDates: const [],
+        itineraryDateIds: const [],
+      );
     }
-    final allDates = [...await loadDay(selected.date)]..sort(_compareItineraryDateCaches);
+    final allDates = [...await loadDay(selected.date)]
+      ..sort(_compareItineraryDateCaches);
     var previousBoundary = selected.date;
-    var nextBoundary = DateTime(selected.date.year, selected.date.month, selected.date.day + 1);
-    int selectedIndex() => allDates.indexWhere((value) => value.id == selected!.id);
+    var nextBoundary = DateTime(
+      selected.date.year,
+      selected.date.month,
+      selected.date.day + 1,
+    );
+    int selectedIndex() =>
+        allDates.indexWhere((value) => value.id == selected!.id);
     while (selectedIndex() < 2) {
-      final date = await _queryService.findDate(groupId, previousBoundary, before: true);
+      final date = await _queryService.findDate(
+        groupId,
+        previousBoundary,
+        before: true,
+      );
       if (date == null) break;
       previousBoundary = date;
       allDates.addAll(await loadDay(date));
       allDates.sort(_compareItineraryDateCaches);
     }
     while (allDates.length - selectedIndex() - 1 < 4) {
-      final date = await _queryService.findDate(groupId, nextBoundary, before: false);
+      final date = await _queryService.findDate(
+        groupId,
+        nextBoundary,
+        before: false,
+      );
       if (date == null) break;
       nextBoundary = DateTime(date.year, date.month, date.day + 1);
       allDates.addAll(await loadDay(date));
@@ -68,10 +106,17 @@ class GetAndroidWidgetItineraryCacheUsecase {
       ...retainedItineraryDateIds.where(referenceIds.contains),
       ..._selectCacheRange(allDates, selected).map((value) => value.id),
     };
-    return AndroidWidgetItineraryCacheDto(version: 1, groupId: groupId,
-      selectedItineraryDateId: selected.id, lastUpdatedAt: _clock.now(),
-      itineraryDates: references.where((value) => includedIds.contains(value.id)).toList(),
-      itineraryDateIds: references.map((value) => value.id).toList(), recentItineraryDateId: recent?.id);
+    return AndroidWidgetItineraryCacheDto(
+      version: 1,
+      groupId: groupId,
+      selectedItineraryDateId: selected.id,
+      lastUpdatedAt: _clock.now(),
+      itineraryDates: references
+          .where((value) => includedIds.contains(value.id))
+          .toList(),
+      itineraryDateIds: references.map((value) => value.id).toList(),
+      recentItineraryDateId: recent?.id,
+    );
   }
 
   List<AndroidWidgetItineraryDateCacheDto> _selectCacheRange(

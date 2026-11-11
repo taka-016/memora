@@ -266,11 +266,6 @@ class QueryServiceFactory {
   }
 }
 
-final androidWidgetItineraryItemQueryServiceProvider =
-    Provider<ItineraryItemQueryService>((ref) {
-      return QueryServiceFactory.create<ItineraryItemQueryService>(ref: ref);
-    });
-
 final calendarEventQueryServiceProvider = Provider<CalendarEventQueryService>(
   (ref) => QueryServiceFactory.create<CalendarEventQueryService>(ref: ref),
 );

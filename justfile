@@ -100,6 +100,6 @@ sync-main:
     | awk '$2 == "[gone]" && NF == 2 {printf "%s%c", $1, 0}' \
     | xargs -0 -r git branch -d
 
-# 既存オンライン予定の新形式への移行計画を出力する（--applyで適用）
-migrate-calendar project report *args:
-    dart run scripts/firebase/migrate_calendar_events.dart "$@"
+# 既存オンライン予定と旅程の検索形式への移行計画を出力する（--applyで適用）
+migrate-firestore-reads project report *args:
+    dart run scripts/firebase/migrate_firestore_read_models.dart "$@"

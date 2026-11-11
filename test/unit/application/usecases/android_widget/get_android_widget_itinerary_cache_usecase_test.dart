@@ -1,4 +1,5 @@
 import '../../../../helpers/widget_itinerary_day_query_fixture.dart';
+
 import 'package:memora/infrastructure/time/fixed_app_clock.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
@@ -18,7 +19,10 @@ void main() {
     setUp(() {
       tripEntryQueryService = _FakeTripEntryQueryService();
       itineraryItemQueryService = _FakeItineraryItemQueryService();
-      query = WidgetItineraryDayQueryFixture(tripEntryQueryService, itineraryItemQueryService);
+      query = WidgetItineraryDayQueryFixture(
+        tripEntryQueryService,
+        itineraryItemQueryService,
+      );
       usecase = GetAndroidWidgetItineraryCacheUsecase(
         queryService: query,
         clock: FixedAppClock(DateTime(2026, 5, 24, 10)),
@@ -129,7 +133,10 @@ void main() {
         retainedItineraryDateIds: retainedIds,
       );
       expect(refreshed.itineraryDates.map((date) => date.id), [
-        'trip_2026-05-29', 'trip_2026-05-30', 'trip_2026-05-31', 'trip_2026-06-01',
+        'trip_2026-05-29',
+        'trip_2026-05-30',
+        'trip_2026-05-31',
+        'trip_2026-06-01',
       ]);
       expect(
         refreshed.itineraryDates.first.itineraryItems.single.name,
@@ -139,16 +146,34 @@ void main() {
 
     test('過去の旅行が蓄積しても表示日と前後に必要な日付だけ取得する', () async {
       tripEntryQueryService.trips = [
-        for (var year = 2010; year < 2026; year++) _trip('past-$year', DateTime(year, 1, 1)),
-        for (var day = 20; day <= 31; day++) _trip('trip-$day', DateTime(2026, 5, day)),
+        for (var year = 2010; year < 2026; year++)
+          _trip('past-$year', DateTime(year, 1, 1)),
+        for (var day = 20; day <= 31; day++)
+          _trip('trip-$day', DateTime(2026, 5, day)),
       ];
       for (final trip in tripEntryQueryService.trips) {
-        itineraryItemQueryService.itemsByTripId[trip.id] = [_item('item-${trip.id}', trip.id, trip.startDate!.add(const Duration(hours: 9)), null)];
+        itineraryItemQueryService.itemsByTripId[trip.id] = [
+          _item(
+            'item-${trip.id}',
+            trip.id,
+            trip.startDate!.add(const Duration(hours: 9)),
+            null,
+          ),
+        ];
       }
       final cache = await usecase.execute(groupId: 'group001');
       expect(cache.selectedItineraryDateId, 'trip-24_2026-05-24');
       expect(query.requestedDays.length, lessThanOrEqualTo(8));
-      expect(query.requestedDays.every((day) => day.year == 2026 && day.month == 5 && day.day >= 22 && day.day <= 28), isTrue);
+      expect(
+        query.requestedDays.every(
+          (day) =>
+              day.year == 2026 &&
+              day.month == 5 &&
+              day.day >= 22 &&
+              day.day <= 28,
+        ),
+        isTrue,
+      );
       expect(cache.itineraryDates, hasLength(5));
       expect(cache.itineraryDateIds, hasLength(7));
     });

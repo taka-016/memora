@@ -35,6 +35,7 @@ import 'package:memora/presentation/notifiers/member/current_member_notifier.dar
 
 import '../../../../helpers/fake_current_member_notifier.dart';
 import '../../../../helpers/test_exception.dart';
+import '../../../../helpers/widget_itinerary_day_query_fixture.dart';
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
@@ -641,8 +642,11 @@ Widget _buildTestApp({
       mapTripEntryQueryServiceProvider.overrideWithValue(
         _FakeTripEntryQueryService(),
       ),
-      androidWidgetItineraryItemQueryServiceProvider.overrideWithValue(
-        _FakeItineraryItemQueryService(),
+      androidWidgetItineraryQueryServiceProvider.overrideWithValue(
+        WidgetItineraryDayQueryFixture(
+          _FakeTripEntryQueryService(),
+          _FakeItineraryItemQueryService(),
+        ),
       ),
       if (prepareRestoreUsecase != null)
         prepareOfflineRestoreUsecaseProvider.overrideWithValue(

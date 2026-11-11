@@ -110,7 +110,11 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
           return;
         }
         final selectedNow = await _cacheStorage.getSelectedItineraryDateId();
-        if (selectedNow != selectedAtStart && selectedNow != null && !cache.itineraryDateIds.contains(selectedNow)) return;
+        if (selectedNow != selectedAtStart &&
+            selectedNow != null &&
+            !cache.itineraryDateIds.contains(selectedNow)) {
+          return;
+        }
         await _cacheStorage.saveItineraryCache(
           AndroidWidgetItineraryCacheDto(
             version: cache.version,
@@ -294,20 +298,33 @@ class MoveAndroidWidgetSelectedItineraryDateUsecase {
     AndroidWidgetItineraryDateMoveDirection direction,
   ) async {
     final selectedId = cache.selectedItineraryDateId!;
-    final date = DateTime.tryParse(selectedId.substring(selectedId.length - 10));
+    final date = DateTime.tryParse(
+      selectedId.substring(selectedId.length - 10),
+    );
     if (date == null) return null;
     Future<List<_ItineraryDateIndex>> datesFor(DateTime day) async {
       final trips = await _queryService.getDay(cache.groupId, day);
-      return [for (final trip in trips) ..._toItineraryDateIndexes(trip, trip.itineraryItems ?? const [])]..sort(_compareItineraryDateIndexes);
+      return [
+        for (final trip in trips)
+          ..._toItineraryDateIndexes(trip, trip.itineraryItems ?? const []),
+      ]..sort(_compareItineraryDateIndexes);
     }
+
     final dates = await datesFor(date);
     final index = dates.indexWhere((value) => value.id == selectedId);
     if (index < 0) return null;
-    final before = direction == AndroidWidgetItineraryDateMoveDirection.previous;
+    final before =
+        direction == AndroidWidgetItineraryDateMoveDirection.previous;
     final target = before ? index - 1 : index + 1;
     if (target >= 0 && target < dates.length) return dates[target].id;
-    final boundary = before ? date : DateTime(date.year, date.month, date.day + 1);
-    final nextDay = await _queryService.findDate(cache.groupId, boundary, before: before);
+    final boundary = before
+        ? date
+        : DateTime(date.year, date.month, date.day + 1);
+    final nextDay = await _queryService.findDate(
+      cache.groupId,
+      boundary,
+      before: before,
+    );
     if (nextDay == null) return null;
     final nextDates = await datesFor(nextDay);
     return before ? nextDates.lastOrNull?.id : nextDates.firstOrNull?.id;

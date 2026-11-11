@@ -134,7 +134,10 @@ class HomeWidgetAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
     await Future.wait([
       clearTargetGroupId(),
       for (final field in ['action', 'source', 'group', 'generation'])
-        HomeWidget.saveWidgetData<String>('memora_widget_itinerary_pending_$field', ''),
+        HomeWidget.saveWidgetData<String>(
+          'memora_widget_itinerary_pending_$field',
+          '',
+        ),
       const HomeWidgetCalendarCacheStorage().clear(),
       HomeWidget.saveWidgetData<String>(selectedItineraryDateIdKey, ''),
       HomeWidget.saveWidgetData<String>(lastUpdatedAtKey, ''),

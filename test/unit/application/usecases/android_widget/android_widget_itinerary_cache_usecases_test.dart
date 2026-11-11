@@ -1,4 +1,5 @@
 import '../../../../helpers/widget_itinerary_day_query_fixture.dart';
+
 import 'package:drift/native.dart';
 import 'package:memora/application/models/app_mode.dart';
 import 'package:memora/infrastructure/config/resolved_app_mode_provider.dart';
@@ -107,7 +108,10 @@ void main() {
         groupQueryService: groups,
         isWidgetInstalled: () async => false,
         getCacheUsecase: GetAndroidWidgetItineraryCacheUsecase(
-          queryService: WidgetItineraryDayQueryFixture(_FakeTripEntryQueryService()..exception = TestException('取得しない'), _FakeItineraryItemQueryService()),
+          queryService: WidgetItineraryDayQueryFixture(
+            _FakeTripEntryQueryService()..exception = TestException('取得しない'),
+            _FakeItineraryItemQueryService(),
+          ),
           clock: FixedAppClock(DateTime(2026, 11, 1)),
         ),
       );
@@ -229,7 +233,10 @@ void main() {
           androidWidgetCacheStorageProvider.overrideWithValue(storage),
           getAndroidWidgetItineraryCacheUsecaseProvider.overrideWithValue(
             GetAndroidWidgetItineraryCacheUsecase(
-              queryService: WidgetItineraryDayQueryFixture(_FakeTripEntryQueryService(), _FakeItineraryItemQueryService()),
+              queryService: WidgetItineraryDayQueryFixture(
+                _FakeTripEntryQueryService(),
+                _FakeItineraryItemQueryService(),
+              ),
               clock: FixedAppClock(DateTime(2026, 5, 24, 10)),
             ),
           ),
@@ -269,7 +276,10 @@ void main() {
               androidWidgetCacheStorageProvider.overrideWithValue(storage),
               getAndroidWidgetItineraryCacheUsecaseProvider.overrideWithValue(
                 GetAndroidWidgetItineraryCacheUsecase(
-                  queryService: WidgetItineraryDayQueryFixture(_FakeTripEntryQueryService(), _FakeItineraryItemQueryService()),
+                  queryService: WidgetItineraryDayQueryFixture(
+                    _FakeTripEntryQueryService(),
+                    _FakeItineraryItemQueryService(),
+                  ),
                   clock: FixedAppClock(DateTime(2026, 5, 24, 10)),
                 ),
               ),
@@ -395,23 +405,42 @@ void main() {
 
     test('取得中に選んだ日付が新しい取得範囲外なら古い選択による更新を公開しない', () async {
       final first = _cacheWithItinerary().itineraryDates.single;
-      final previous = AndroidWidgetItineraryCacheDto(version: 1, groupId: 'group-1',
-        selectedItineraryDateId: 'trip-1_2026-05-30', lastUpdatedAt: DateTime(2026, 5, 24),
-        itineraryDates: [first], itineraryDateIds: [first.id, 'trip-1_2026-05-30']);
+      final previous = AndroidWidgetItineraryCacheDto(
+        version: 1,
+        groupId: 'group-1',
+        selectedItineraryDateId: 'trip-1_2026-05-30',
+        lastUpdatedAt: DateTime(2026, 5, 24),
+        itineraryDates: [first],
+        itineraryDateIds: [first.id, 'trip-1_2026-05-30'],
+      );
       final storage = _FakeAndroidWidgetCacheStorage(cache: previous)
-        ..targetGroupId = 'group-1'..selectedItineraryDateId = 'trip-1_2026-05-30';
+        ..targetGroupId = 'group-1'
+        ..selectedItineraryDateId = 'trip-1_2026-05-30';
       final started = Completer<void>();
       final release = Completer<void>();
       final trips = _FakeTripEntryQueryService()
-        ..trips = [const TripEntryDto(id: 'trip-1', groupId: 'group-1', year: 2026)]
+        ..trips = [
+          const TripEntryDto(id: 'trip-1', groupId: 'group-1', year: 2026),
+        ]
         ..beforeReturn = (_) async {
           if (!started.isCompleted) started.complete();
           await release.future;
         };
-      final items = _FakeItineraryItemQueryService()..items = [for (var day = 24; day <= 31; day++)
-        ItineraryItemDto(id: 'item-$day', tripId: 'trip-1', name: '予定', startDateTime: DateTime(2026, 5, day, 9))];
+      final items = _FakeItineraryItemQueryService()
+        ..items = [
+          for (var day = 24; day <= 31; day++)
+            ItineraryItemDto(
+              id: 'item-$day',
+              tripId: 'trip-1',
+              name: '予定',
+              startDateTime: DateTime(2026, 5, day, 9),
+            ),
+        ];
       final usecase = _buildRefreshUsecase(storage, trips, items);
-      final loading = usecase.execute(groupId: 'group-1', selectedItineraryDateId: 'trip-1_2026-05-30');
+      final loading = usecase.execute(
+        groupId: 'group-1',
+        selectedItineraryDateId: 'trip-1_2026-05-30',
+      );
       await started.future;
       storage.selectedItineraryDateId = first.id;
       release.complete();
@@ -546,7 +575,10 @@ void main() {
       final itineraryItemQueryService = _FakeItineraryItemQueryService();
       final usecase = MoveAndroidWidgetSelectedItineraryDateUsecase(
         cacheStorage: storage,
-        queryService: WidgetItineraryDayQueryFixture(tripEntryQueryService, itineraryItemQueryService),
+        queryService: WidgetItineraryDayQueryFixture(
+          tripEntryQueryService,
+          itineraryItemQueryService,
+        ),
         refreshCacheUsecase: _buildRefreshUsecase(
           storage,
           tripEntryQueryService,
@@ -628,7 +660,10 @@ RefreshAndroidWidgetItineraryCacheUsecase _buildRefreshUsecase(
     isWidgetInstalled: isWidgetInstalled,
     trackLoading: trackLoading,
     getCacheUsecase: GetAndroidWidgetItineraryCacheUsecase(
-      queryService: WidgetItineraryDayQueryFixture(tripEntryQueryService, itineraryItemQueryService),
+      queryService: WidgetItineraryDayQueryFixture(
+        tripEntryQueryService,
+        itineraryItemQueryService,
+      ),
       clock: FixedAppClock(DateTime(2026, 5, 24, 10)),
     ),
   );

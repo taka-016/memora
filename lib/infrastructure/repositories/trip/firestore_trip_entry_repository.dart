@@ -245,13 +245,12 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
     final itineraryItemsCollection = context.collection('itinerary_items');
     for (final item in itineraryItems) {
       final itemDocRef = itineraryItemsCollection.doc(item.id);
-      context.set(
-        itemDocRef,
-        {
-          ...FirestoreItineraryItemMapper.toCreateFirestore(item.copyWith(tripId: tripId)),
-          'groupId': groupId,
-        },
-      );
+      context.set(itemDocRef, {
+        ...FirestoreItineraryItemMapper.toCreateFirestore(
+          item.copyWith(tripId: tripId),
+        ),
+        'groupId': groupId,
+      });
     }
   }
 }

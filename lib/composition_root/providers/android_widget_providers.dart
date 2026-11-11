@@ -182,8 +182,13 @@ final refreshSelectedItineraryWidgetCacheProvider =
           .execute(kinds: const {AndroidWidgetKind.itinerary});
     });
 
-final androidWidgetItineraryQueryServiceProvider = Provider<AndroidWidgetItineraryQueryService>((ref) {
-  return ref.watch(appModeProvider) == AppMode.offline
-      ? SqliteAndroidWidgetItineraryQueryService(ref.watch(offlineDatabaseProvider))
-      : FirestoreAndroidWidgetItineraryQueryService(ref.watch(firebaseFirestoreProvider));
-});
+final androidWidgetItineraryQueryServiceProvider =
+    Provider<AndroidWidgetItineraryQueryService>((ref) {
+      return ref.watch(appModeProvider) == AppMode.offline
+          ? SqliteAndroidWidgetItineraryQueryService(
+              ref.watch(offlineDatabaseProvider),
+            )
+          : FirestoreAndroidWidgetItineraryQueryService(
+              ref.watch(firebaseFirestoreProvider),
+            );
+    });
