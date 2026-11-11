@@ -46,6 +46,7 @@ class FirestoreCalendarEventMapper {
   static DateTime _date(Timestamp value, bool allDay) =>
       allDay ? value.toDate().toUtc() : value.toDate();
   static Map<String, dynamic> toFirestore(CalendarEvent value) => {
+    'calendarFormatVersion': 2,
     'recurrenceRule': value.recurrenceRule,
     'recurrenceEndDateTime': Timestamp.fromDate(
       CalendarRecurrenceExpander(IanaCalendarTimeZone())

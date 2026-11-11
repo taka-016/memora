@@ -1,3 +1,5 @@
+import 'package:memora/application/mappers/calendar/calendar_event_mapper.dart';
+import 'package:memora/application/services/calendar/calendar_recurrence_expander.dart';
 import 'dart:convert';
 import 'dart:io';
 
@@ -80,6 +82,8 @@ class TimeTreeImportEvent {
   final String memberName;
   Map<String, Object?> document() => {
     'groupId': event.groupId,
+    'calendarFormatVersion': 2,
+    'recurrenceEndDateTime': CalendarRecurrenceExpander(IanaCalendarTimeZone()).seriesEndDateTime(CalendarEventMapper.toDto(event)) ?? DateTime.utc(9999, 12, 31, 23, 59, 59),
     'title': event.title,
     'labelId': null,
     'labelType': event.labelType,
@@ -573,6 +577,16 @@ class FirestoreImportClient {
       }
     }
     return result;
+  }
+
+  Future<List<Map<String, dynamic>>> queryDocuments(String collection, {String? field, String? value}) async {
+    final rows = await _request('POST', ':runQuery', {
+      'structuredQuery': {
+        'from': [{'collectionId': collection}],
+        if (field != null) 'where': {'fieldFilter': {'field': {'fieldPath': field}, 'op': 'EQUAL', 'value': {'stringValue': value}}},
+      },
+    }) as List;
+    return [for (final row in rows) if (row['document'] != null) _map(row['document'])];
   }
 
   Future<List<dynamic>> _query(
