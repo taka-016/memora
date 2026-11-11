@@ -15,6 +15,7 @@ void main() {
       isAllDay: true,
       recurrenceRule: 'FREQ=DAILY;COUNT=3',
     );
+    expect(FirestoreCalendarEventMapper.toFirestore(event)['calendarFormatVersion'], 2);
     expect(
       FirestoreCalendarEventMapper.toFirestore(event)['recurrenceEndDateTime'],
       Timestamp.fromDate(DateTime.utc(2026, 1, 5)),
