@@ -81,6 +81,7 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
     required bool updateWidgetAfterRefresh,
     required bool extendCache,
   }) async {
+    final selectedAtStart = await _cacheStorage.getSelectedItineraryDateId();
     try {
       Future<AndroidWidgetItineraryCacheDto?> read() async {
         if (!await _groupQueryService.groupExists(groupId)) {
@@ -108,6 +109,8 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
           await _cacheStorage.clear();
           return;
         }
+        final selectedNow = await _cacheStorage.getSelectedItineraryDateId();
+        if (selectedNow != selectedAtStart && selectedNow != null && !cache.itineraryDateIds.contains(selectedNow)) return;
         await _cacheStorage.saveItineraryCache(
           AndroidWidgetItineraryCacheDto(
             version: cache.version,

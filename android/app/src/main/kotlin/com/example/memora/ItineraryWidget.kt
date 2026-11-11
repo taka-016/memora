@@ -8,12 +8,12 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import es.antonborri.home_widget.HomeWidgetPlugin
-import java.time.LocalDate
 
 private const val ITINERARY_ACTION = "com.example.memora.action.ITINERARY_WIDGET"
 
 open class ItineraryWidgetReceiver : AppWidgetProvider() {
     override fun onUpdate(context: Context, manager: AppWidgetManager, widgetIds: IntArray) {
+        ItineraryWidgetData.read(context)?.let { cache -> ItineraryWidgetData.applyPendingNavigation(context, cache) }
         widgetIds.forEach { ItineraryWidgetRenderer.update(context, manager, it) }
     }
 
@@ -34,6 +34,7 @@ open class ItineraryWidgetReceiver : AppWidgetProvider() {
             if (provider != ItineraryWidgetReceiver::class.java.name &&
                 provider != ItineraryDarkWidgetReceiver::class.java.name) return
             val action = intent.getStringExtra("operation") ?: return
+            ItineraryWidgetData.cancelPendingNavigation(context)
             if (action == "refresh") {
                 val cache = ItineraryWidgetData.read(context)
                 ItineraryWidgetData.startLoading(context, cache?.let { ItineraryWidgetData.selectedId(context, it) })
@@ -49,18 +50,18 @@ open class ItineraryWidgetReceiver : AppWidgetProvider() {
                 return
             }
             val current = ItineraryWidgetData.selectedId(context, cache)
-            val index = cache.dateIds.indexOf(current)
             val target = when (action) {
-                "previous" -> if (index > 0) cache.dateIds[index - 1] else null
-                "next" -> if (index >= 0) cache.dateIds.getOrNull(index + 1) else null
-                "recent" -> {
-                    val today = LocalDate.now()
-                    cache.dateIds.firstOrNull { id ->
-                        !LocalDate.parse(id.takeLast(10)).isBefore(today)
-                    } ?: cache.dateIds.lastOrNull()
-                }
-                else -> null
-            } ?: return
+                "previous" -> itineraryAdjacentId(cache.dateIds, current, true)
+                "next" -> itineraryAdjacentId(cache.dateIds, current, false)
+                "recent" -> null
+                else -> return
+            }
+            if (target == null || action == "recent") {
+                ItineraryWidgetData.rememberPendingNavigation(context, cache, current, action)
+                updateAll(context, manager)
+                requestItineraryNavigationRefresh(context, action)
+                return
+            }
             ItineraryWidgetData.select(context, target)
             val targetIndex = cache.dateIds.indexOf(target)
             val cachedIds = cache.dates.map { it.id }.toSet()
@@ -115,4 +116,11 @@ private fun requestItineraryRefresh(
     AndroidWidgetBackgroundReceiver.request(
         context, uri.build(),
     )
+}
+
+private fun requestItineraryNavigationRefresh(context: Context, action: String) {
+    val uri = Uri.Builder().scheme("memoraWidget")
+        .authority(if (action == "recent") "recent" else "itineraryrefresh")
+        .appendQueryParameter("extend", "true").build()
+    AndroidWidgetBackgroundReceiver.request(context, uri)
 }

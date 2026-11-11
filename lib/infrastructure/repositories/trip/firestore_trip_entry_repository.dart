@@ -34,6 +34,7 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
         context,
         tripEntry.itineraryItems,
         tripId: tripDocRef.id,
+        groupId: tripEntry.groupId,
       );
       return tripDocRef.id;
     });
@@ -77,6 +78,7 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
         context,
         tripEntry.itineraryItems,
         tripId: tripEntry.id,
+        groupId: tripEntry.groupId,
       );
     });
   }
@@ -234,6 +236,7 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
     FirestoreWriteContext context,
     List<ItineraryItem> itineraryItems, {
     required String tripId,
+    required String groupId,
   }) {
     if (itineraryItems.isEmpty) {
       return;
@@ -244,9 +247,10 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
       final itemDocRef = itineraryItemsCollection.doc(item.id);
       context.set(
         itemDocRef,
-        FirestoreItineraryItemMapper.toCreateFirestore(
-          item.copyWith(tripId: tripId),
-        ),
+        {
+          ...FirestoreItineraryItemMapper.toCreateFirestore(item.copyWith(tripId: tripId)),
+          'groupId': groupId,
+        },
       );
     }
   }
