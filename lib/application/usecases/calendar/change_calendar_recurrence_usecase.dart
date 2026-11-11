@@ -60,17 +60,25 @@ class ChangeCalendarRecurrenceUsecase {
           isCancelled: true,
         );
         if (changes != null) {
-          preservedEvents.add(CalendarEvent(
-            id: '', groupId: changes.groupId,
-            labelId: changes.labelId, labelType: changes.labelType,
-            memberId: changes.memberId,
-            title: changes.title, startDateTime: changes.startDateTime,
-            endDateTime: changes.endDateTime, isAllDay: changes.isAllDay,
-            url: changes.url, memo: changes.memo,
-            locationName: changes.locationName,
-            latitude: changes.latitude, longitude: changes.longitude,
-            notificationMinutesBefore: changes.notificationMinutesBefore,
-          ));
+          preservedEvents.add(
+            CalendarEvent(
+              id: '',
+              groupId: changes.groupId,
+              labelId: changes.labelId,
+              labelType: changes.labelType,
+              memberId: changes.memberId,
+              title: changes.title,
+              startDateTime: changes.startDateTime,
+              endDateTime: changes.endDateTime,
+              isAllDay: changes.isAllDay,
+              url: changes.url,
+              memo: changes.memo,
+              locationName: changes.locationName,
+              latitude: changes.latitude,
+              longitude: changes.longitude,
+              notificationMinutesBefore: changes.notificationMinutesBefore,
+            ),
+          );
         }
         replacement = source.copyWith(
           overrides: [
@@ -172,18 +180,20 @@ class ChangeCalendarRecurrenceUsecase {
             .split(';')
             .where((v) => !v.startsWith('COUNT=') && !v.startsWith('UNTIL='))
             .join(';');
-        replacement = key == _key(source.startDateTime, source.isAllDay) ? null : _with(
-          source,
-          rule: '$rule;UNTIL=$stamp',
-          overrides: source.overrides
-              .where(
-                (v) => _key(
-                  v.originalStartDateTime,
-                  source.isAllDay,
-                ).isBefore(key),
-              )
-              .toList(),
-        );
+        replacement = key == _key(source.startDateTime, source.isAllDay)
+            ? null
+            : _with(
+                source,
+                rule: '$rule;UNTIL=$stamp',
+                overrides: source.overrides
+                    .where(
+                      (v) => _key(
+                        v.originalStartDateTime,
+                        source.isAllDay,
+                      ).isBefore(key),
+                    )
+                    .toList(),
+              );
         if (changes != null) {
           var nextRule = changes.recurrenceRule;
           final parsed = CalendarRecurrenceRule.parse(source.recurrenceRule!);
@@ -227,12 +237,7 @@ class ChangeCalendarRecurrenceUsecase {
               _wall(changes, changes.startDateTime),
             );
           }
-          following = _with(
-            changes,
-            id: '',
-            rule: nextRule,
-            overrides: [],
-          );
+          following = _with(changes, id: '', rule: nextRule, overrides: []);
         }
       }
       final head = replacement == null

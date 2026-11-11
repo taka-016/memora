@@ -253,17 +253,38 @@ void main() {
     final changes = source.copyWith(
       startDateTime: DateTime.utc(2026, 12, 3),
       endDateTime: DateTime.utc(2026, 12, 4),
-      title: '変更', url: 'https://example.com', memo: '詳細\n補足',
-      locationName: '駅', latitude: 35.0, longitude: 139.0,
+      title: '変更',
+      url: 'https://example.com',
+      memo: '詳細\n補足',
+      locationName: '駅',
+      latitude: 35.0,
+      longitude: 139.0,
       notificationMinutesBefore: [0, 1440],
     );
     final key = DateTime.utc(2026, 10, 3);
-    await usecase.execute(source, key, CalendarChangeScope.only, changes: changes);
-    final saved = verify(repository.replaceCalendarEvent(any, captureAny, null,
-      preservedEvents: captureAnyNamed('preservedEvents'))).captured;
+    await usecase.execute(
+      source,
+      key,
+      CalendarChangeScope.only,
+      changes: changes,
+    );
+    final saved = verify(
+      repository.replaceCalendarEvent(
+        any,
+        captureAny,
+        null,
+        preservedEvents: captureAnyNamed('preservedEvents'),
+      ),
+    ).captured;
     final parent = saved.first as CalendarEvent;
     final independent = (saved.last as List<CalendarEvent>).single;
-    expect(parent.overrides.where((value) => value.originalStartDateTime == key).single.isCancelled, isTrue);
+    expect(
+      parent.overrides
+          .where((value) => value.originalStartDateTime == key)
+          .single
+          .isCancelled,
+      isTrue,
+    );
     expect(independent.id, isEmpty);
     expect(independent.recurrenceRule, isNull);
     expect(independent.timeZone, isNull);
@@ -276,7 +297,10 @@ void main() {
     expect(independent.locationName, changes.locationName);
     expect(independent.latitude, changes.latitude);
     expect(independent.longitude, changes.longitude);
-    expect(independent.notificationMinutesBefore, changes.notificationMinutesBefore);
+    expect(
+      independent.notificationMinutesBefore,
+      changes.notificationMinutesBefore,
+    );
     expect(independent.labelId, changes.labelId);
   });
   test('これ以降の分割は取消を引き継がず残り回数を保つ', () async {
@@ -356,7 +380,17 @@ void main() {
               as CalendarEvent;
       if (scope == CalendarChangeScope.following) {
         expect(result.overrides, isEmpty);
-        expect(expander.expand(CalendarEventMapper.toDto(result), DateTime.utc(2026, 10), DateTime.utc(2026, 12)).single.title, source.title);
+        expect(
+          expander
+              .expand(
+                CalendarEventMapper.toDto(result),
+                DateTime.utc(2026, 10),
+                DateTime.utc(2026, 12),
+              )
+              .single
+              .title,
+          source.title,
+        );
         return;
       }
       expect(result.overrides.last, source.overrides.last);
@@ -382,8 +416,16 @@ void main() {
         ),
       );
       final edited =
-          (verify(repository.replaceCalendarEvent(any, any, null,
-            preservedEvents: captureAnyNamed('preservedEvents'))).captured.single as List<CalendarEvent>).single;
+          (verify(
+                    repository.replaceCalendarEvent(
+                      any,
+                      any,
+                      null,
+                      preservedEvents: captureAnyNamed('preservedEvents'),
+                    ),
+                  ).captured.single
+                  as List<CalendarEvent>)
+              .single;
       expect(edited.title, '個別の再編集');
       expect(edited.recurrenceRule, isNull);
     });
@@ -491,8 +533,14 @@ void main() {
                 : 'FREQ=WEEKLY;BYDAY=FR;UNTIL=20270101',
           ),
         );
-        final captured = verify(repository.replaceCalendarEvent(any, captureAny, captureAny)).captured;
-        final result = (scope == CalendarChangeScope.following ? captured.last : captured.first) as CalendarEvent;
+        final captured = verify(
+          repository.replaceCalendarEvent(any, captureAny, captureAny),
+        ).captured;
+        final result =
+            (scope == CalendarChangeScope.following
+                    ? captured.last
+                    : captured.first)
+                as CalendarEvent;
         expect(result.recurrenceRule, contains('BYDAY=SA'));
         expect(
           result.recurrenceRule,
@@ -561,11 +609,27 @@ void main() {
     });
   }
   test('個別回の移動でも元の系列の曜日を維持して取消だけを追加する', () async {
-    final series = source.copyWith(recurrenceRule: 'FREQ=WEEKLY;BYDAY=TH;COUNT=5', overrides: []);
-    await usecase.execute(series, DateTime.utc(2026, 10, 8), CalendarChangeScope.only,
-      changes: series.copyWith(startDateTime: DateTime.utc(2026, 10, 9), endDateTime: DateTime.utc(2026, 10, 10)));
-    final saved = verify(repository.replaceCalendarEvent(any, captureAny, null,
-      preservedEvents: captureAnyNamed('preservedEvents'))).captured;
+    final series = source.copyWith(
+      recurrenceRule: 'FREQ=WEEKLY;BYDAY=TH;COUNT=5',
+      overrides: [],
+    );
+    await usecase.execute(
+      series,
+      DateTime.utc(2026, 10, 8),
+      CalendarChangeScope.only,
+      changes: series.copyWith(
+        startDateTime: DateTime.utc(2026, 10, 9),
+        endDateTime: DateTime.utc(2026, 10, 10),
+      ),
+    );
+    final saved = verify(
+      repository.replaceCalendarEvent(
+        any,
+        captureAny,
+        null,
+        preservedEvents: captureAnyNamed('preservedEvents'),
+      ),
+    ).captured;
     final parent = saved.first as CalendarEvent;
     final independent = (saved.last as List<CalendarEvent>).single;
     expect(parent.recurrenceRule, series.recurrenceRule);
@@ -633,9 +697,17 @@ void main() {
     );
   });
   test('初回からの以降変更は元系列を削除し取消を持たない別IDの系列を作成する', () async {
-    await usecase.execute(source, source.startDateTime, CalendarChangeScope.following,
-      changes: source.copyWith(title: '新系列'));
-    final tail = verify(repository.replaceCalendarEvent(any, argThat(isNull), captureAny)).captured.single as CalendarEvent;
+    await usecase.execute(
+      source,
+      source.startDateTime,
+      CalendarChangeScope.following,
+      changes: source.copyWith(title: '新系列'),
+    );
+    final tail =
+        verify(
+              repository.replaceCalendarEvent(any, argThat(isNull), captureAny),
+            ).captured.single
+            as CalendarEvent;
     expect(tail.id, isEmpty);
     expect(tail.overrides, isEmpty);
     expect(tail.recurrenceRule, source.recurrenceRule);
@@ -643,23 +715,48 @@ void main() {
 
   for (final allDay in [true, false]) {
     for (final movingForward in [true, false]) {
-      test('以降変更は移動先にかかわらず元の回より前で元系列を終了する（終日=$allDay・後方=$movingForward）', () async {
-        final first = DateTime.utc(2026, 10, 1, allDay ? 0 : 9);
-        final selected = DateTime.utc(2026, 10, 3, allDay ? 0 : 9);
-        final series = source.copyWith(startDateTime: first,
-          endDateTime: first.add(Duration(hours: allDay ? 24 : 1)),
-          isAllDay: allDay, timeZone: allDay ? null : 'Asia/Tokyo', overrides: []);
-        final moved = selected.add(Duration(days: movingForward ? 10 : -10));
-        await usecase.execute(series, selected, CalendarChangeScope.following,
-          changes: series.copyWith(startDateTime: moved, endDateTime: moved.add(Duration(hours: allDay ? 24 : 1))));
-        final saved = verify(repository.replaceCalendarEvent(any, captureAny, captureAny)).captured;
-        final head = saved.first as CalendarEvent;
-        final tail = saved.last as CalendarEvent;
-        expect(expander.expand(CalendarEventMapper.toDto(head), first, selected.add(const Duration(days: 1))).map((v) => v.originalStartDateTime), [first, first.add(const Duration(days: 1))]);
-        expect(tail.startDateTime, moved);
-        expect(tail.recurrenceRule, contains('COUNT=3'));
-        expect(tail.overrides, isEmpty);
-      });
+      test(
+        '以降変更は移動先にかかわらず元の回より前で元系列を終了する（終日=$allDay・後方=$movingForward）',
+        () async {
+          final first = DateTime.utc(2026, 10, 1, allDay ? 0 : 9);
+          final selected = DateTime.utc(2026, 10, 3, allDay ? 0 : 9);
+          final series = source.copyWith(
+            startDateTime: first,
+            endDateTime: first.add(Duration(hours: allDay ? 24 : 1)),
+            isAllDay: allDay,
+            timeZone: allDay ? null : 'Asia/Tokyo',
+            overrides: [],
+          );
+          final moved = selected.add(Duration(days: movingForward ? 10 : -10));
+          await usecase.execute(
+            series,
+            selected,
+            CalendarChangeScope.following,
+            changes: series.copyWith(
+              startDateTime: moved,
+              endDateTime: moved.add(Duration(hours: allDay ? 24 : 1)),
+            ),
+          );
+          final saved = verify(
+            repository.replaceCalendarEvent(any, captureAny, captureAny),
+          ).captured;
+          final head = saved.first as CalendarEvent;
+          final tail = saved.last as CalendarEvent;
+          expect(
+            expander
+                .expand(
+                  CalendarEventMapper.toDto(head),
+                  first,
+                  selected.add(const Duration(days: 1)),
+                )
+                .map((v) => v.originalStartDateTime),
+            [first, first.add(const Duration(days: 1))],
+          );
+          expect(tail.startDateTime, moved);
+          expect(tail.recurrenceRule, contains('COUNT=3'));
+          expect(tail.overrides, isEmpty);
+        },
+      );
     }
   }
 
