@@ -208,6 +208,27 @@ List<Map<String, Object?>> calendarMigrationWrites(
   return writes;
 }
 
+List<Map<String, Object?>> itineraryGroupMigrationWrites(Map<String, dynamic> parent, List<Map<String, dynamic>> children) {
+  final parentFields = parent['fields'] as Map;
+  final groupId = parentFields['groupId']['stringValue'] as String;
+  final writes = <Map<String, Object?>>[];
+  for (final child in children) {
+    if ((child['fields'] as Map)['groupId']?['stringValue'] == groupId) continue;
+    writes.add({
+      'update': {'name': child['name'], 'fields': {'groupId': {'stringValue': groupId}}},
+      'updateMask': {'fieldPaths': ['groupId']},
+      'currentDocument': {'updateTime': child['updateTime']},
+    });
+  }
+  if (writes.isEmpty) return writes;
+  writes.add({
+    'update': {'name': parent['name'], 'fields': {'version': {'integerValue': '${int.parse('${parentFields['version']['integerValue']}') + 1}'}}},
+    'updateMask': {'fieldPaths': ['version']},
+    'currentDocument': {'updateTime': parent['updateTime']},
+  });
+  return writes;
+}
+
 ({String projectId, String reportPath, bool apply}) migrationArguments(List<String> args) {
   if (args.length < 2 || args.length > 3 || args.take(2).any((value) => value.startsWith('--')) ||
       (args.length == 3 && args[2] != '--apply')) {
@@ -282,6 +303,21 @@ Future<void> main(List<String> args) async {
         labels,
         client.documentRoot,
       );
+      result['status'] = '適用前';
+      await save();
+      await client.commit(writes);
+      result['status'] = '成功';
+      await save();
+    }
+    for (final trip in await client.queryDocuments('trip_entries')) {
+      final id = (trip['name'] as String).split('/').last;
+      final children = await client.queryDocuments('itinerary_items', field: 'tripId', value: id);
+      final writes = itineraryGroupMigrationWrites(trip, children);
+      if (writes.isEmpty) continue;
+      final result = <String, Object?>{'tripId': id, 'updatedItineraries': writes.length - 1, 'status': '確認のみ'};
+      results.add(result);
+      await save();
+      if (!options.apply) continue;
       result['status'] = '適用前';
       await save();
       await client.commit(writes);
