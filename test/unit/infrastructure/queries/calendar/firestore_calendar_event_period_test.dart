@@ -42,7 +42,10 @@ void main() {
         isLessThan: Timestamp.fromDate(period.queryTo),
       ),
     ).thenReturn(bounded);
+    when(base.where('recurrenceRule', isNull: true)).thenReturn(base);
     when(base.where('recurrenceRule', isNull: false)).thenReturn(recurring);
+    when(recurring.where('recurrenceEndDateTime', isGreaterThanOrEqualTo: Timestamp.fromDate(period.queryFrom))).thenReturn(recurring);
+    when(recurring.where('startDateTime', isLessThan: Timestamp.fromDate(period.queryTo))).thenReturn(recurring);
     when(empty.docs).thenReturn([]);
     when(empty.docChanges).thenReturn([]);
     when(base.get()).thenAnswer((_) async => empty);
@@ -53,6 +56,8 @@ void main() {
   test('期間指定の取得は終了日時と開始日時で絞り過去開始の繰り返しは別に取得する', () async {
     await FirestoreCalendarEventQueryService(firestore: firestore)
         .getCalendarEventsByGroupId('g', period: period);
+    verify(base.where('recurrenceRule', isNull: true)).called(1);
+    verify(recurring.where('recurrenceEndDateTime', isGreaterThanOrEqualTo: Timestamp.fromDate(period.queryFrom))).called(1);
     verify(bounded.get()).called(1);
     verify(recurring.get()).called(1);
     verifyNever(base.get());

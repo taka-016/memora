@@ -1,3 +1,5 @@
+import 'package:memora/composition_root/providers/calendar_providers.dart';
+import 'package:memora/application/usecases/calendar/change_calendar_recurrence_usecase.dart';
 import 'package:memora/application/models/calendar_event_period.dart';
 import 'package:memora/application/mappers/calendar/calendar_event_mapper.dart';
 import 'package:memora/domain/entities/calendar/calendar_event_override.dart';
@@ -81,7 +83,29 @@ void main() {
         isAllDay: allDay,
       );
 
-  test('期間取得は過去・遠い未来の通常予定を除き跨ぐ予定と過去開始の個別変更を保持する', () async {
+  test('取消は表示期間と重なる回だけ取得し保存時は未取得の過去と未来の取消を保持する', () async {
+    final labelId = await labels.saveCalendarLabel(label());
+    final keys = [DateTime.utc(2021, 1, 2), DateTime.utc(2026, 11, 8), DateTime.utc(2026, 11, 11), DateTime.utc(2027, 1, 1)];
+    final id = await events.saveCalendarEvent(CalendarEvent(id: '', groupId: 'family', labelId: labelId, title: '系列',
+      startDateTime: DateTime.utc(2021), endDateTime: DateTime.utc(2021, 1, 4), isAllDay: true, recurrenceRule: 'FREQ=DAILY',
+      overrides: [for (final key in keys) CalendarEventOverride(originalStartDateTime: key, isCancelled: true)]));
+    final period = CalendarEventPeriod(from: DateTime.utc(2026, 11, 10), to: DateTime.utc(2026, 11, 13));
+    final loaded = (await eventQuery.getCalendarEventsByGroupId('family', period: period)).single;
+    expect(loaded.overrides.map((value) => value.originalStartDateTime), keys.sublist(1, 3));
+    final selected = DateTime.utc(2026, 11, 12);
+    await container.read(changeCalendarRecurrenceUsecaseProvider).execute(loaded, selected, CalendarChangeScope.only,
+      changes: loaded.copyWith(title: '独立した予定', startDateTime: selected, endDateTime: selected.add(const Duration(days: 3))));
+    final saved = await eventQuery.getCalendarEventsByGroupId('family');
+    final parent = saved.singleWhere((value) => value.id == id);
+    expect(parent.overrides.map((value) => value.originalStartDateTime), unorderedEquals([...keys, selected]));
+    final independent = saved.singleWhere((value) => value.id != id);
+    expect(independent.recurrenceRule, isNull);
+    expect(independent.originalStartDateTime, isNull);
+    await events.deleteCalendarEvent(id);
+    expect((await eventQuery.getCalendarEventsByGroupId('family')).single.id, independent.id);
+  });
+
+  test('期間取得は過去・遠い未来の通常予定と終了済み系列を除き跨ぐ予定を取得する', () async {
     final labelId = await labels.saveCalendarLabel(label());
     final normal = event(labelId);
     final definitions = {
@@ -111,16 +135,7 @@ void main() {
         recurrenceRule: 'FREQ=DAILY;COUNT=2',
         timeZone: 'Asia/Tokyo',
         overrides: [
-          CalendarEventOverride(
-            originalStartDateTime: DateTime(2021, 1, 1, 12).toUtc(),
-            isCancelled: false,
-            title: '移動した回',
-            labelType: 'custom',
-            labelId: labelId,
-            isAllDay: false,
-            startDateTime: DateTime(2026, 11, 11, 12),
-            endDateTime: DateTime(2026, 11, 11, 13),
-          ),
+          CalendarEventOverride(originalStartDateTime: DateTime(2021, 1, 1, 12).toUtc(), isCancelled: true),
         ],
       ),
     };
@@ -136,15 +151,7 @@ void main() {
     );
     expect(
       loaded.map((value) => value.title),
-      unorderedEquals(['期間内', '跨ぐ予定', '境界の瞬間', '過去の系列']),
-    );
-    expect(
-      loaded
-          .singleWhere((value) => value.title == '過去の系列')
-          .overrides
-          .single
-          .title,
-      '移動した回',
+      unorderedEquals(['期間内', '跨ぐ予定', '境界の瞬間']),
     );
   });
 
@@ -234,48 +241,23 @@ void main() {
     expect(await eventQuery.getCalendarEventsByGroupId('family'), saved);
   });
 
-  test('系列と個別回を一括保存し不正ラベル時は全体を維持する', () async {
+  test('取消を持つ系列と独立した通常予定を保存し不正ラベル時は予定を維持する', () async {
     final base = await labels.saveCalendarLabel(label());
     final changed = await labels.saveCalendarLabel(label(name: '太郎'));
     final foreign = await labels.saveCalendarLabel(label(group: 'friends'));
-    CalendarEvent series(String overrideLabel) =>
-        event(base, allDay: true).copyWith(
-          recurrenceRule: 'FREQ=DAILY;COUNT=3',
-          overrides: [
-            CalendarEventOverride(
-              originalStartDateTime: DateTime.utc(2026, 10, 2),
-              isCancelled: false,
-              title: '移動',
-              startDateTime: DateTime.utc(2026, 11, 2),
-              endDateTime: DateTime.utc(2026, 11, 3),
-              isAllDay: true,
-              labelId: overrideLabel,
-            ),
-          ],
-        );
-    final id = await events.saveCalendarEvent(series(changed));
-    final saved = (await eventQuery.getCalendarEventsByGroupId('family'))
-        .single;
-    expect(saved.recurrenceRule, 'FREQ=DAILY;COUNT=3');
-    expect(saved.overrides.single.title, '移動');
-    await expectLater(
-      events.updateCalendarEvent(series(foreign).copyWith(id: id)),
-      throwsA(isA<ValidationException>()),
-    );
-    expect(
-      (await eventQuery.getCalendarEventsByGroupId('family'))
-          .single
-          .overrides
-          .single
-          .labelId,
-      changed,
-    );
-    await expectLater(
-      labels.deleteCalendarLabel(changed),
-      throwsA(isA<ValidationException>()),
-    );
+    final id = await events.saveCalendarEvent(event(base, allDay: true).copyWith(
+      recurrenceRule: 'FREQ=DAILY;COUNT=3', overrides: [CalendarEventOverride(originalStartDateTime: DateTime.utc(2026, 10, 2), isCancelled: true)]));
+    final detachedId = await events.saveCalendarEvent(event(changed, allDay: true).copyWith(title: '移動'));
+    final detached = (await eventQuery.getCalendarEventsByGroupId('family')).singleWhere((value) => value.id == detachedId);
+    expect(detached.overrides, isEmpty);
+    expect(detached.recurrenceRule, isNull);
+    await expectLater(events.updateCalendarEvent(CalendarEventMapper.toEntity(detached).copyWith(labelId: foreign)), throwsA(isA<ValidationException>()));
+    expect((await eventQuery.getCalendarEventsByGroupId('family')).singleWhere((value) => value.id == detachedId).labelId, changed);
+    await expectLater(labels.deleteCalendarLabel(changed), throwsA(isA<ValidationException>()));
     await events.deleteCalendarEvent(id);
     expect(await db.rows('calendar_event_overrides'), isEmpty);
+    expect((await eventQuery.getCalendarEventsByGroupId('family')).single.id, detachedId);
+    await events.deleteCalendarEvent(detachedId);
     await labels.deleteCalendarLabel(changed);
   });
 

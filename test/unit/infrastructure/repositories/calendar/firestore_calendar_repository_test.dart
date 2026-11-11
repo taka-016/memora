@@ -67,19 +67,7 @@ void main() {
         .thenReturn(FirestoreCalendarEventMapper.toFirestore(event));
     final loaded = FirestoreCalendarEventMapper.fromFirestore(doc);
     expect(CalendarEventMapper.toEntity(loaded), event);
-    final individual = CalendarEventOverride(
-      originalStartDateTime: event.startDateTime,
-      isCancelled: false,
-      title: event.title,
-      labelId: '',
-      labelType: 'group',
-      isAllDay: true,
-      startDateTime: event.startDateTime,
-      endDateTime: event.endDateTime,
-      url: '',
-      memo: '個別\nメモ',
-      locationName: '',
-    );
+    final individual = CalendarEventOverride(originalStartDateTime: event.startDateTime, isCancelled: true);
     expect(
       FirestoreCalendarEventOverrideMapper.fromFirestore(
         FirestoreCalendarEventOverrideMapper.toFirestore(
@@ -272,10 +260,7 @@ void main() {
       test(
         '${replace ? '系列変更' : '予定更新'}では${changeChildren ? '追加・変更・削除された個別回だけを保存する' : '未変更の個別回を書き込まない'}',
         () async {
-          CalendarEventOverride cancelled(int day) => CalendarEventOverride(
-            originalStartDateTime: DateTime.utc(2026, 10, day),
-            isCancelled: true,
-          );
+          CalendarEventOverride cancelled(int day) => CalendarEventOverride(originalStartDateTime: DateTime.utc(2026, 10, day), isCancelled: true);
           final unchanged = cancelled(2);
           final changed = cancelled(3);
           final removed = cancelled(4);
@@ -311,15 +296,7 @@ void main() {
             });
             when(transaction.get(ref)).thenAnswer((_) async => doc);
           }
-          final modified = CalendarEventOverride(
-            originalStartDateTime: changed.originalStartDateTime,
-            isCancelled: false,
-            title: '変更された回',
-            labelId: 'label',
-            isAllDay: false,
-            startDateTime: DateTime.utc(2026, 10, 3, 10),
-            endDateTime: DateTime.utc(2026, 10, 3, 11),
-          );
+          final modified = CalendarEventOverride(originalStartDateTime: changed.originalStartDateTime, isCancelled: true);
           final added = cancelled(5);
           final replacement = expected.copyWith(
             title: '親予定の変更',
@@ -342,12 +319,7 @@ void main() {
           verifyNever(transaction.set(overrideRefs[id(unchanged)]!, any));
           verifyNever(transaction.delete(overrideRefs[id(unchanged)]!));
           if (changeChildren) {
-            verify(
-              transaction.update(
-                overrideRefs[id(changed)]!,
-                argThat(containsPair('title', '変更された回')),
-              ),
-            ).called(1);
+            verifyNever(transaction.update(overrideRefs[id(changed)]!, any));
             verify(
               transaction.set(
                 overrideRefs[id(added)]!,
@@ -434,17 +406,9 @@ void main() {
       recurrenceRule: 'FREQ=DAILY;COUNT=3',
       timeZone: 'Asia/Tokyo',
       overrides: [
-        CalendarEventOverride(
-          originalStartDateTime: event().startDateTime.add(
+        CalendarEventOverride(originalStartDateTime: event().startDateTime.add(
             const Duration(days: 1),
-          ),
-          isCancelled: false,
-          title: '移動',
-          startDateTime: DateTime.utc(2026, 11, 2),
-          endDateTime: DateTime.utc(2026, 11, 3),
-          isAllDay: true,
-          labelId: 'other',
-        ),
+          ), isCancelled: true),
       ],
     );
     await events.saveCalendarEvent(value);
@@ -465,27 +429,20 @@ void main() {
             as Map<String, dynamic>;
     expect(overrideData['eventId'], 'event');
     expect(overrideData['groupId'], 'group');
-    expect(overrideData['labelId'], 'other');
-    expect(overrideData['isCancelled'], false);
-    expect(
-      overrideData['startDateTime'],
-      Timestamp.fromDate(DateTime.utc(2026, 11, 2)),
-    );
+    expect(overrideData.containsKey('labelId'), isFalse);
+    expect(overrideData['isCancelled'], true);
+    expect(overrideData.containsKey('startDateTime'), isFalse);
     expect(data['overrideIds'], [overrideRefs.keys.single]);
-    verify(transaction.update(otherRef, argThat(containsPair('eventCount', 2))))
-        .called(1);
+    verifyNever(transaction.update(otherRef, any));
   });
 
   CalendarEvent recurring() => event(id: 'event').copyWith(
     recurrenceRule: 'FREQ=DAILY;COUNT=3',
     timeZone: 'Asia/Tokyo',
     overrides: [
-      CalendarEventOverride(
-        originalStartDateTime: event().startDateTime.add(
+      CalendarEventOverride(originalStartDateTime: event().startDateTime.add(
           const Duration(days: 1),
-        ),
-        isCancelled: true,
-      ),
+        ), isCancelled: true),
     ],
   );
 
@@ -630,17 +587,9 @@ void main() {
       timeZone: 'Asia/Tokyo',
       overrides: [
         for (var day = 1; day <= 2; day++)
-          CalendarEventOverride(
-            originalStartDateTime: event().startDateTime.add(
+          CalendarEventOverride(originalStartDateTime: event().startDateTime.add(
               Duration(days: day),
-            ),
-            isCancelled: false,
-            title: '変更',
-            startDateTime: event().startDateTime,
-            endDateTime: event().endDateTime,
-            isAllDay: false,
-            labelId: 'new$day',
-          ),
+            ), isCancelled: true),
       ],
     );
     await events.updateCalendarEvent(value);
@@ -649,7 +598,7 @@ void main() {
     ).called(1);
     verify(transaction.update(labelRef, argThat(containsPair('eventCount', 0))))
         .called(1);
-    verifyNever(transaction.update(otherRef, any));
+    verify(transaction.update(otherRef, argThat(containsPair('eventCount', 2)))).called(1);
   });
 
   test('予定の新規保存は同じグループのラベルを検証し参照数と予定を同時に保存する', () async {
@@ -726,8 +675,7 @@ void main() {
     );
     verify(transaction.update(labelRef, argThat(containsPair('eventCount', 0))))
         .called(1);
-    verify(transaction.update(otherRef, argThat(containsPair('eventCount', 2))))
-        .called(1);
+    verify(transaction.update(otherRef, argThat(containsPair('eventCount', 2)))).called(1);
     await events.deleteCalendarEvent('event', expectedVersion: 1);
     verify(transaction.delete(eventRef)).called(1);
     verify(transaction.update(labelRef, argThat(containsPair('eventCount', 0))))

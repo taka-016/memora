@@ -23,19 +23,8 @@ void main() {
     isAllDay: true,
     recurrenceRule: 'FREQ=DAILY;COUNT=5',
     overrides: [
-      CalendarEventOverride(
-        originalStartDateTime: DateTime.utc(2026, 10, 2),
-        isCancelled: true,
-      ),
-      CalendarEventOverride(
-        originalStartDateTime: DateTime.utc(2026, 10, 4),
-        isCancelled: false,
-        title: '移動',
-        labelId: 'label',
-        isAllDay: true,
-        startDateTime: DateTime.utc(2026, 11, 1),
-        endDateTime: DateTime.utc(2026, 11, 2),
-      ),
+      CalendarEventOverride(originalStartDateTime: DateTime.utc(2026, 10, 2), isCancelled: true),
+      CalendarEventOverride(originalStartDateTime: DateTime.utc(2026, 10, 4), isCancelled: true),
     ],
   );
   late MockCalendarEventRepository repository;
@@ -44,43 +33,7 @@ void main() {
     repository = MockCalendarEventRepository();
     usecase = ChangeCalendarRecurrenceUsecase(repository, expander);
   });
-  test('個別回の参照先が衝突する系列変更は全体を保存前に拒否する', () async {
-    final original = source.copyWith(
-      startDateTime: DateTime.utc(2026, 1, 31),
-      endDateTime: DateTime.utc(2026, 1, 31).add(const Duration(days: 1)),
-      recurrenceRule: 'FREQ=MONTHLY;BYMONTHDAY=31;COUNT=4',
-      overrides: [
-        for (final date in [
-          DateTime.utc(2026, 2, 28),
-          DateTime.utc(2026, 3, 1),
-        ])
-          CalendarEventOverride(
-            originalStartDateTime: date,
-            isCancelled: false,
-            title: '個別',
-            labelId: 'label',
-            isAllDay: true,
-            startDateTime: date,
-            endDateTime: date.add(const Duration(days: 1)),
-          ),
-      ],
-    );
-    await expectLater(
-      usecase.execute(
-        original,
-        original.startDateTime,
-        CalendarChangeScope.all,
-        changes: original.copyWith(
-          startDateTime: DateTime.utc(2026, 1, 30),
-          endDateTime: DateTime.utc(2026, 1, 30).add(const Duration(days: 1)),
-          recurrenceRule: 'FREQ=MONTHLY;BYMONTHDAY=30;COUNT=4',
-        ),
-      ),
-      throwsA(isA<ApplicationValidationException>()),
-    );
-    verifyZeroInteractions(repository);
-  });
-  for (final cancelled in [false, true]) {
+  for (final cancelled in [true]) {
     test('月末補正後の対応回へ個別変更と取消しのキーを追従させる（$cancelled）', () async {
       final february = DateTime.utc(2026, 2, 28);
       final original = source.copyWith(
@@ -88,17 +41,7 @@ void main() {
         endDateTime: DateTime.utc(2026, 1, 31).add(const Duration(days: 1)),
         recurrenceRule: 'FREQ=MONTHLY;BYMONTHDAY=31;COUNT=3',
         overrides: [
-          CalendarEventOverride(
-            originalStartDateTime: february,
-            isCancelled: cancelled,
-            title: cancelled ? null : '個別変更',
-            labelId: cancelled ? null : 'label',
-            isAllDay: cancelled ? null : true,
-            startDateTime: cancelled ? null : february,
-            endDateTime: cancelled
-                ? null
-                : february.add(const Duration(days: 1)),
-          ),
+          CalendarEventOverride(originalStartDateTime: february, isCancelled: true),
         ],
       );
       await usecase.execute(
@@ -207,48 +150,6 @@ void main() {
       });
     }
   }
-  test('個別変更のリセットは対象の上書きだけを外して元の系列へ戻す', () async {
-    await usecase.resetOverride(source, DateTime.utc(2026, 10, 4));
-    final saved = verify(
-      repository.replaceCalendarEvent(captureAny, captureAny, null),
-    ).captured;
-    expect(saved.first, CalendarEventMapper.toEntity(source));
-    final result = saved.last as CalendarEvent;
-    expect(result.overrides, [source.overrides.first]);
-    expect(result.recurrenceRule, source.recurrenceRule);
-    expect(result.startDateTime, source.startDateTime);
-    final restored = expander
-        .expand(
-          CalendarEventMapper.toDto(result),
-          DateTime.utc(2026, 10, 4),
-          DateTime.utc(2026, 10, 5),
-        )
-        .singleWhere(
-          (value) => value.originalStartDateTime == DateTime.utc(2026, 10, 4),
-        );
-    expect(restored.title, source.title);
-    expect(restored.labelId, source.labelId);
-    expect(restored.startDateTime, DateTime.utc(2026, 10, 4));
-    expect(restored.endDateTime, DateTime.utc(2026, 10, 6));
-    expect(restored.isAllDay, source.isAllDay);
-    await usecase.execute(
-      CalendarEventMapper.toDto(result),
-      DateTime.utc(2026, 10, 4),
-      CalendarChangeScope.all,
-      changes: CalendarEventMapper.toDto(result).copyWith(
-        startDateTime: DateTime.utc(2026, 10, 4),
-        endDateTime: DateTime.utc(2026, 10, 6),
-      ),
-    );
-    verify(repository.replaceCalendarEvent(any, any, null)).called(1);
-  });
-  test('個別変更のない回はリセットせず保存を拒否する', () async {
-    await expectLater(
-      usecase.resetOverride(source, DateTime.utc(2026, 10, 3)),
-      throwsA(isA<ApplicationValidationException>()),
-    );
-    verifyZeroInteractions(repository);
-  });
   test('この回だけ変更は元の取消と紐付けのない通常予定を一括保存する', () async {
     final changes = source.copyWith(
       startDateTime: DateTime.utc(2026, 12, 3),
@@ -351,85 +252,7 @@ void main() {
       DateTime.utc(2026, 10, 3),
       DateTime.utc(2026, 10, 5),
     ]);
-    expect(
-      saved.overrides.last.startDateTime,
-      source.overrides.last.startDateTime,
-    );
-    expect(saved.overrides.last.title, source.overrides.last.title);
   });
-  for (final scope in [
-    CalendarChangeScope.all,
-    CalendarChangeScope.following,
-  ]) {
-    test('繰り返し条件と終了回数を変えた系列へ保存する（$scope）', () async {
-      await usecase.execute(
-        source,
-        DateTime.utc(2026, 10, 3),
-        scope,
-        changes: source.copyWith(
-          startDateTime: DateTime.utc(2026, 10, 3),
-          endDateTime: DateTime.utc(2026, 10, 5),
-          recurrenceRule: 'FREQ=MONTHLY;BYMONTHDAY=3;COUNT=1',
-        ),
-      );
-      final saved = verify(
-        repository.replaceCalendarEvent(any, captureAny, captureAny),
-      ).captured;
-      final result =
-          (scope == CalendarChangeScope.all ? saved[0] : saved[1])
-              as CalendarEvent;
-      if (scope == CalendarChangeScope.following) {
-        expect(result.overrides, isEmpty);
-        expect(
-          expander
-              .expand(
-                CalendarEventMapper.toDto(result),
-                DateTime.utc(2026, 10),
-                DateTime.utc(2026, 12),
-              )
-              .single
-              .title,
-          source.title,
-        );
-        return;
-      }
-      expect(result.overrides.last, source.overrides.last);
-      final occurrences = expander.expand(
-        CalendarEventMapper.toDto(result),
-        DateTime.utc(2026, 10),
-        DateTime.utc(2026, 12),
-      );
-      expect(
-        occurrences.singleWhere((value) => value.title == '移動').startDateTime,
-        DateTime.utc(2026, 11, 1),
-      );
-      final savedSeries = CalendarEventMapper.toDto(result)
-          .copyWith(id: '保存済み');
-      await usecase.execute(
-        savedSeries,
-        result.overrides.last.originalStartDateTime,
-        CalendarChangeScope.only,
-        changes: savedSeries.copyWith(
-          title: '個別の再編集',
-          startDateTime: result.overrides.last.startDateTime,
-          endDateTime: result.overrides.last.endDateTime,
-        ),
-      );
-      final edited =
-          (verify(
-                    repository.replaceCalendarEvent(
-                      any,
-                      any,
-                      null,
-                      preservedEvents: captureAnyNamed('preservedEvents'),
-                    ),
-                  ).captured.single
-                  as List<CalendarEvent>)
-              .single;
-      expect(edited.title, '個別の再編集');
-      expect(edited.recurrenceRule, isNull);
-    });
-  }
   for (final scope in [
     CalendarChangeScope.all,
     CalendarChangeScope.following,
@@ -676,10 +499,6 @@ void main() {
                 .single
             as CalendarEvent;
     expect(
-      result.overrides.last.startDateTime,
-      source.overrides.last.startDateTime,
-    );
-    expect(
       result.overrides.last.originalStartDateTime,
       DateTime.utc(2026, 10, 4, 1),
     );
@@ -688,12 +507,12 @@ void main() {
       DateTime.utc(2026, 10),
       DateTime.utc(2026, 12),
     );
-    expect(occurrences, hasLength(4));
+    expect(occurrences, hasLength(3));
     expect(
       occurrences.where(
         (value) => value.originalStartDateTime == DateTime.utc(2026, 10, 4, 1),
       ),
-      hasLength(1),
+      isEmpty,
     );
   });
   test('初回からの以降変更は元系列を削除し取消を持たない別IDの系列を作成する', () async {
@@ -769,17 +588,9 @@ void main() {
     }
     verify(repository.replaceCalendarEvent(any, null, null)).called(2);
   });
-  for (final cancelled in [false, true]) {
+  for (final cancelled in [true]) {
     test('繰り返し解除で個別変更または取消し済みの初回を再生成しない（$cancelled）', () async {
-      final first = CalendarEventOverride(
-        originalStartDateTime: source.startDateTime,
-        isCancelled: cancelled,
-        title: cancelled ? null : '初回個別',
-        labelId: cancelled ? null : source.labelId,
-        isAllDay: cancelled ? null : true,
-        startDateTime: cancelled ? null : DateTime.utc(2026, 11, 10),
-        endDateTime: cancelled ? null : DateTime.utc(2026, 11, 11),
-      );
+      final first = CalendarEventOverride(originalStartDateTime: source.startDateTime, isCancelled: true);
       final series = source.copyWith(overrides: [first, ...source.overrides]);
       await usecase.execute(
         series,
@@ -795,20 +606,7 @@ void main() {
           isAllDay: true,
         ),
       );
-      final captured = verify(
-        repository.replaceCalendarEvent(
-          any,
-          captureAny,
-          null,
-          preservedEvents: captureAnyNamed('preservedEvents'),
-        ),
-      ).captured;
-      expect(captured.first, isNull);
-      final individuals = captured.last as List<CalendarEvent>;
-      expect(
-        individuals.map((value) => value.title),
-        cancelled ? ['移動'] : ['初回個別', '移動'],
-      );
+      verify(repository.replaceCalendarEvent(any, argThat(isNull), argThat(isNull))).called(1);
     });
   }
   test('終日系列を時刻付き単発へ変更して繰り返しとタイムゾーンを解除する', () async {
@@ -827,20 +625,10 @@ void main() {
       CalendarChangeScope.all,
       changes: changes,
     );
-    final captured = verify(
-      repository.replaceCalendarEvent(
-        any,
-        captureAny,
-        null,
-        preservedEvents: captureAnyNamed('preservedEvents'),
-      ),
-    ).captured;
-    final saved = captured.first as CalendarEvent;
+    final saved = verify(repository.replaceCalendarEvent(any, captureAny, null)).captured.single as CalendarEvent;
     expect(saved.recurrenceRule, isNull);
     expect(saved.timeZone, isNull);
     expect(saved.startDateTime, DateTime.utc(2026, 10, 1, 9));
-    final retained = captured.last as List<CalendarEvent>;
-    expect(retained.single.startDateTime, source.overrides.last.startDateTime);
   });
   test('夏時間で欠落した回を除いて分割後の残り回数を決める', () async {
     final timed = CalendarEventDto(

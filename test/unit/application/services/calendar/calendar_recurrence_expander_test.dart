@@ -75,15 +75,12 @@ void main() {
       );
       final invalid = expired.copyWith(
         overrides: [
-          CalendarEventOverride(
-            originalStartDateTime: DateTime.utc(
+          CalendarEventOverride(originalStartDateTime: DateTime.utc(
               2026,
               1,
               frequency == 'DAILY' ? 1 : 5,
               9,
-            ),
-            isCancelled: true,
-          ),
+            ), isCancelled: true),
         ],
       );
       expect(
@@ -176,10 +173,7 @@ void main() {
       expand(
         source.copyWith(
           overrides: [
-            CalendarEventOverride(
-              originalStartDateTime: DateTime.utc(2024, 2, 29),
-              isCancelled: true,
-            ),
+            CalendarEventOverride(originalStartDateTime: DateTime.utc(2024, 2, 29), isCancelled: true),
           ],
         ),
         from,
@@ -235,20 +229,9 @@ void main() {
       3,
     );
   });
-  test('個別回を別月に移しても元の回を表示せず取消しも反映する', () {
-    final moved = CalendarEventOverride(
-      originalStartDateTime: DateTime.utc(2026, 1, 2),
-      isCancelled: false,
-      title: '移動',
-      startDateTime: DateTime.utc(2026, 2, 5),
-      endDateTime: DateTime.utc(2026, 2, 6),
-      isAllDay: true,
-      labelId: 'label',
-    );
-    final cancelled = CalendarEventOverride(
-      originalStartDateTime: DateTime.utc(2026, 1, 3),
-      isCancelled: true,
-    );
+  test('取消した回を表示せず別月にも展開しない', () {
+    final moved = CalendarEventOverride(originalStartDateTime: DateTime.utc(2026, 1, 2), isCancelled: true);
+    final cancelled = CalendarEventOverride(originalStartDateTime: DateTime.utc(2026, 1, 3), isCancelled: true);
     final value = event(
       'FREQ=DAILY;COUNT=3',
       DateTime.utc(2026, 1, 1),
@@ -260,8 +243,7 @@ void main() {
       DateTime.utc(2026, 2),
       DateTime.utc(2026, 3),
     );
-    expect(february.single.title, '移動');
-    expect(february.single.originalStartDateTime, DateTime.utc(2026, 1, 2));
+    expect(february, isEmpty);
   });
   test('系列の現地時刻を保ち夏時間の欠落はスキップし重複は早い方を1回にする', () {
     final spring = expand(
@@ -298,10 +280,7 @@ void main() {
       'FREQ=DAILY;COUNT=2',
       DateTime.utc(2026),
       overrides: [
-        CalendarEventOverride(
-          originalStartDateTime: DateTime.utc(2026, 1, 3),
-          isCancelled: true,
-        ),
+        CalendarEventOverride(originalStartDateTime: DateTime.utc(2026, 1, 3), isCancelled: true),
       ],
     );
     expect(
@@ -363,10 +342,7 @@ void main() {
       'FREQ=DAILY;COUNT=3',
       DateTime(2026, 1, 1),
       overrides: [
-        CalendarEventOverride(
-          originalStartDateTime: DateTime(2026, 1, 2),
-          isCancelled: true,
-        ),
+        CalendarEventOverride(originalStartDateTime: DateTime(2026, 1, 2), isCancelled: true),
       ],
     );
     expect(

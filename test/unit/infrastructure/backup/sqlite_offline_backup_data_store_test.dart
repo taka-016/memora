@@ -139,6 +139,7 @@ void main() {
           'event_id': 'event',
           'group_id': 'group-1',
           'original_start_date_time': 1,
+          'original_end_date_time': 2,
           'is_cancelled': 1,
         },
       ],
@@ -489,10 +490,7 @@ void main() {
       recurrenceRule: 'FREQ=DAILY;COUNT=6',
       notificationMinutesBefore: [1440],
       overrides: [
-        CalendarEventOverride(
-          originalStartDateTime: DateTime.utc(2026, 10, 2),
-          isCancelled: true,
-        ),
+        CalendarEventOverride(originalStartDateTime: DateTime.utc(2026, 10, 2), isCancelled: true),
       ],
     );
     await repository.saveCalendarEvent(CalendarEventMapper.toEntity(value));
@@ -584,6 +582,7 @@ void main() {
       'event_id': 'series',
       'group_id': 'group-1',
       'original_start_date_time': 86400000001,
+      'original_end_date_time': 86400000002,
       'is_cancelled': 1,
     });
     final snapshot = await dataStore.exportSnapshot();
@@ -634,6 +633,7 @@ void main() {
         'event_id': 'missing',
         'group_id': 'group-1',
         'original_start_date_time': 1,
+          'original_end_date_time': 2,
         'is_cancelled': 1,
       },
     ];

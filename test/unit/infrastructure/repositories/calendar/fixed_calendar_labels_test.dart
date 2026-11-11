@@ -7,7 +7,7 @@ import 'package:memora/infrastructure/repositories/calendar/sqlite_calendar_even
 import 'package:memora/infrastructure/queries/calendar/sqlite_calendar_event_query_service.dart';
 
 void main() {
-  test('固定ラベルをDBに作らず予定と個別回の参照を保存し所属解除後も保持する', () async {
+  test('固定ラベルをDBに作らず系列と独立した予定の参照を保存し所属解除後も保持する', () async {
     final db = OfflineDatabase(NativeDatabase.memory());
     addTearDown(db.close);
     await db.insertRow('groups', {
@@ -36,26 +36,19 @@ void main() {
         isAllDay: true,
         recurrenceRule: 'FREQ=DAILY;COUNT=3',
         overrides: [
-          CalendarEventOverride(
-            originalStartDateTime: DateTime.utc(2026, 10, 2),
-            isCancelled: false,
-            title: '太郎',
-            startDateTime: DateTime.utc(2026, 10, 2),
-            endDateTime: DateTime.utc(2026, 10, 2),
-            isAllDay: true,
-            labelType: 'member',
-            memberId: 'm',
-          ),
+          CalendarEventOverride(originalStartDateTime: DateTime.utc(2026, 10, 2), isCancelled: true),
         ],
       ),
     );
+    await repository.saveCalendarEvent(CalendarEvent(id: '', groupId: 'g', labelType: 'member', memberId: 'm', title: '太郎',
+      startDateTime: DateTime.utc(2026, 10, 2), endDateTime: DateTime.utc(2026, 10, 2), isAllDay: true));
     await db.deleteRows('group_members', 'member_id', 'm');
     final saved = (await SqliteCalendarEventQueryService(
       db,
-    ).getCalendarEventsByGroupId('g')).single;
-    expect(saved.labelType, 'group');
-    expect(saved.overrides.single.memberId, 'm');
-    expect(saved.overrides.single.labelType, 'member');
+    ).getCalendarEventsByGroupId('g')).singleWhere((event) => event.recurrenceRule == null);
+    expect(saved.labelType, 'member');
+    expect(saved.memberId, 'm');
+    expect(saved.overrides, isEmpty);
     expect(await db.rows('calendar_labels'), isEmpty);
     expect((await db.rows('groups')).single['color'], '#123456');
     expect(await db.customSelect('PRAGMA foreign_key_check').get(), isEmpty);

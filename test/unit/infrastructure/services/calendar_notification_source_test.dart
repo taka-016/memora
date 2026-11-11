@@ -196,6 +196,8 @@ void main() {
     ).thenReturn(eventQuery);
     when(eventQuery.where('startDateTime', isLessThan: anyNamed('isLessThan')))
         .thenReturn(eventQuery);
+    when(eventQuery.where('recurrenceRule', isNull: true)).thenReturn(eventQuery);
+    when(eventQuery.where('recurrenceEndDateTime', isGreaterThanOrEqualTo: anyNamed('isGreaterThanOrEqualTo'))).thenReturn(eventQuery);
     when(eventQuery.where('recurrenceRule', isNull: false))
         .thenReturn(eventQuery);
     when(eventQuery.snapshots()).thenAnswer((_) => snapshots.stream);
