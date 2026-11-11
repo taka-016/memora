@@ -13,6 +13,23 @@ void main() {
     expect(migration.migrationArguments(['p', 'report.json']).apply, isFalse);
     expect(migration.migrationArguments(['p', 'report.json', '--apply']).apply, isTrue);
   });
+  test('既存旅程のグループIDは親の旅行から補完し他の項目を変更しない', () {
+    final parent = <String, dynamic>{'name': 'root/trip_entries/trip', 'updateTime': 'parent-time',
+      'fields': {'groupId': {'stringValue': 'g'}, 'version': {'integerValue': '7'}}};
+    final item = <String, dynamic>{'name': 'root/itinerary_items/item', 'updateTime': 'item-time',
+      'fields': {'tripId': {'stringValue': 'trip'}, 'name': {'stringValue': '旅程'}, 'memo': {'stringValue': '詳細'}}};
+    final writes = migration.itineraryGroupMigrationWrites(parent, [item]);
+    expect(writes, hasLength(2));
+    final child = writes.singleWhere((write) => (write['update'] as Map)['name'] == 'root/itinerary_items/item');
+    expect(child['currentDocument'], {'updateTime': 'item-time'});
+    expect(child['updateMask'], {'fieldPaths': ['groupId']});
+    expect((child['update'] as Map)['fields'], {'groupId': {'stringValue': 'g'}});
+    final head = writes.singleWhere((write) => (write['update'] as Map)['name'] == 'root/trip_entries/trip');
+    expect(head['currentDocument'], {'updateTime': 'parent-time'});
+    expect((head['update'] as Map)['fields'], {'version': {'integerValue': '8'}});
+    final migrated = {...item, 'fields': {...(item['fields'] as Map), 'groupId': {'stringValue': 'g'}}};
+    expect(migration.itineraryGroupMigrationWrites(parent, [migrated]), isEmpty);
+  });
   final parent = <String, Object?>{
     'groupId': 'g',
     'title': '系列',
