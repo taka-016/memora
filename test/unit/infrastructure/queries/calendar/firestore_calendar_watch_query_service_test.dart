@@ -79,6 +79,26 @@ void main() {
     when(query.snapshots()).thenAnswer((_) => source.stream);
     addTearDown(source.close);
   });
+  test('同じグループと期間の監視を共有し後からの購読にも受信済み予定を渡す', () async {
+    final service = FirestoreCalendarEventWatchQueryService(firestore: firestore);
+    final first = <List<dynamic>>[];
+    final second = <List<dynamic>>[];
+    final a = doc('a');
+    final sub = service.watchCalendarEventsByGroupId('g').listen(first.add);
+    emit([a], [(DocumentChangeType.added, a)]);
+    await flush();
+    final another = service.watchCalendarEventsByGroupId('g').listen(second.add);
+    await flush();
+    expect(second.single.single.id, 'a');
+    verify(query.snapshots()).called(1);
+    await sub.cancel();
+    emit([], [(DocumentChangeType.removed, a)]);
+    await flush();
+    expect(second.last, isEmpty);
+    await another.cancel();
+    expect(source.hasListener, isFalse);
+  });
+
   test('初回と追加変更削除を反映し変更のない予定の個別回は再取得しない', () async {
     final overrides = MockCollectionReference();
     final ref = MockDocumentReference();
