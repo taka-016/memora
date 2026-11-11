@@ -165,7 +165,6 @@ class DeviceCalendarNotificationSource implements CalendarNotificationSource {
         period = next;
         if (!ready.isCompleted) ready.complete();
         ready = Completer<void>();
-        final ids = groupSubscriptions.keys.toList();
         final previous = groupSubscriptions.values.expand((v) => v).toList();
         groupSubscriptions.clear();
         received.clear();
@@ -175,10 +174,7 @@ class DeviceCalendarNotificationSource implements CalendarNotificationSource {
           await sub.cancel();
         }
         if (!closed && current == revision) {
-          for (final id in ids) {
-            subscribe(id);
-          }
-          publish();
+          await updateGroups();
         }
       }
       await ready.future;
