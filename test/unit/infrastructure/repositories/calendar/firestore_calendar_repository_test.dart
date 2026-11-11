@@ -576,7 +576,7 @@ void main() {
     );
   });
 
-  test('変更前後で異なる複数ラベルを参照する系列を一括更新できる', () async {
+  test('取消を持つ系列のラベル変更でも参照数は系列1件として更新する', () async {
     final collection = firestore.collection('calendar_labels');
     for (final id in ['old', 'new1', 'new2']) {
       final ref = MockDocumentReference();
@@ -586,7 +586,7 @@ void main() {
     when(eventDoc.data()).thenReturn({
       'groupId': 'group',
       'labelId': 'label',
-      'referencedLabelIds': ['label', 'other', 'old'],
+      'referencedLabelIds': ['label'],
       'version': 1,
     });
     final value = event(id: 'event').copyWith(

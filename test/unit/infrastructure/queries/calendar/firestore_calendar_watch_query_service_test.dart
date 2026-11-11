@@ -89,11 +89,12 @@ void main() {
     when(cancellationQuery.get()).thenAnswer((_) async {
       final rows = await cancellationRows();
       final result = MockQuerySnapshot();
-      when(result.docs).thenReturn([for (final row in rows) (() {
+      final documents = [for (final row in rows) (() {
         final value = MockQueryDocumentSnapshot();
         when(value.data()).thenReturn(row);
         return value;
-      })()]);
+      })()];
+      when(result.docs).thenReturn(documents);
       return result;
     });
     addTearDown(source.close);
