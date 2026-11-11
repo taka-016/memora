@@ -153,7 +153,7 @@ void main() {
       });
     }
 
-    test('移動時は蓄積し更新成功時は置換するが取得失敗時は以前の内容を残す', () async {
+    test('移動時も周辺だけを保持し更新失敗時は以前の内容を残す', () async {
       final storage = _FakeAndroidWidgetCacheStorage()
         ..targetGroupId = 'group-1';
       final trips = _FakeTripEntryQueryService()
@@ -181,7 +181,7 @@ void main() {
         selectedItineraryDateId: 'trip_2026-05-28',
         extendCache: true,
       );
-      expect(storage.cache!.itineraryDates, hasLength(8));
+      expect(storage.cache!.itineraryDates, hasLength(6));
       await usecase.execute(
         groupId: 'group-1',
         selectedItineraryDateId: 'trip_2026-05-28',
@@ -401,7 +401,7 @@ void main() {
       final tripEntryQueryService = _FakeTripEntryQueryService()
         ..beforeReturn = (groupId) async {
           if (groupId != 'group-a') return;
-          oldReadStarted.complete();
+          if (!oldReadStarted.isCompleted) oldReadStarted.complete();
           await releaseOldRead.future;
         };
       final usecase = _buildRefreshUsecase(
