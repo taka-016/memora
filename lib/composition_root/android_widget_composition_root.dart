@@ -75,10 +75,6 @@ Future<void> withAndroidWidgetDependencies(
     }
     final AndroidWidgetCacheStorage storage =
         cacheStorage ?? container.read(androidWidgetCacheStorageProvider);
-    final trips = container.read(mapTripEntryQueryServiceProvider);
-    final items = container.read(
-      androidWidgetItineraryItemQueryServiceProvider,
-    );
     final refresh = RefreshAndroidWidgetItineraryCacheUsecase(
       groupQueryService: container.read(groupQueryServiceProvider),
       cacheStorage: storage,
@@ -98,8 +94,7 @@ Future<void> withAndroidWidgetDependencies(
     );
     final move = MoveAndroidWidgetSelectedItineraryDateUsecase(
       cacheStorage: storage,
-      tripEntryQueryService: trips,
-      itineraryItemQueryService: items,
+      queryService: container.read(androidWidgetItineraryQueryServiceProvider),
       refreshCacheUsecase: refresh,
       readTransaction: container.read(androidWidgetReadTransactionProvider),
     );

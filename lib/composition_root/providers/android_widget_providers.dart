@@ -1,3 +1,6 @@
+import 'package:memora/application/queries/android_widget/android_widget_itinerary_query_service.dart';
+import 'package:memora/infrastructure/queries/android_widget/firestore_android_widget_itinerary_query_service.dart';
+import 'package:memora/infrastructure/queries/android_widget/sqlite_android_widget_itinerary_query_service.dart';
 import 'package:memora/application/usecases/android_widget/refresh_android_widget_caches_usecase.dart';
 import 'package:memora/infrastructure/services/home_widget_installed_kinds.dart';
 import 'package:memora/infrastructure/services/home_widget_android_widget_cache_storage.dart';
@@ -86,8 +89,7 @@ final moveAndroidWidgetSelectedItineraryDateUsecaseProvider =
     Provider<MoveAndroidWidgetSelectedItineraryDateUsecase>((ref) {
       return MoveAndroidWidgetSelectedItineraryDateUsecase(
         cacheStorage: ref.watch(androidWidgetCacheStorageProvider),
-        tripEntryQueryService: ref.watch(tripEntryQueryServiceProvider),
-        itineraryItemQueryService: ref.watch(itineraryItemQueryServiceProvider),
+        queryService: ref.watch(androidWidgetItineraryQueryServiceProvider),
         refreshCacheUsecase: ref.watch(
           refreshAndroidWidgetItineraryCacheUsecaseProvider,
         ),
@@ -98,10 +100,7 @@ final moveAndroidWidgetSelectedItineraryDateUsecaseProvider =
 final getAndroidWidgetItineraryCacheUsecaseProvider =
     Provider<GetAndroidWidgetItineraryCacheUsecase>((ref) {
       return GetAndroidWidgetItineraryCacheUsecase(
-        tripEntryQueryService: ref.watch(mapTripEntryQueryServiceProvider),
-        itineraryItemQueryService: ref.watch(
-          androidWidgetItineraryItemQueryServiceProvider,
-        ),
+        queryService: ref.watch(androidWidgetItineraryQueryServiceProvider),
         clock: ref.watch(appClockProvider),
       );
     });
@@ -182,3 +181,9 @@ final refreshSelectedItineraryWidgetCacheProvider =
           .read(refreshAndroidWidgetCachesUsecaseProvider)
           .execute(kinds: const {AndroidWidgetKind.itinerary});
     });
+
+final androidWidgetItineraryQueryServiceProvider = Provider<AndroidWidgetItineraryQueryService>((ref) {
+  return ref.watch(appModeProvider) == AppMode.offline
+      ? SqliteAndroidWidgetItineraryQueryService(ref.watch(offlineDatabaseProvider))
+      : FirestoreAndroidWidgetItineraryQueryService(ref.watch(firebaseFirestoreProvider));
+});

@@ -3,9 +3,7 @@ import 'package:memora/application/dtos/android_widget/android_widget_itinerary_
 import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/models/app_mode.dart';
-import 'package:memora/application/queries/order_by.dart';
-import 'package:memora/application/queries/trip/itinerary_item_query_service.dart';
-import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
+import 'package:memora/application/queries/android_widget/android_widget_itinerary_query_service.dart';
 import 'package:memora/application/services/android_widget_cache_storage.dart';
 import 'package:memora/application/services/android_widget_update_interval_storage.dart';
 import 'package:memora/application/services/offline_backup_restore_operation_lock.dart';
@@ -192,15 +190,13 @@ class ClearAndroidWidgetTargetGroupUsecase {
 class MoveAndroidWidgetSelectedItineraryDateUsecase {
   const MoveAndroidWidgetSelectedItineraryDateUsecase({
     required this._cacheStorage,
-    required this._tripEntryQueryService,
-    required this._itineraryItemQueryService,
+    required this._queryService,
     required this._refreshCacheUsecase,
     this._readTransaction,
   });
 
   final AndroidWidgetCacheStorage _cacheStorage;
-  final TripEntryQueryService _tripEntryQueryService;
-  final ItineraryItemQueryService _itineraryItemQueryService;
+  final AndroidWidgetItineraryQueryService _queryService;
   final RefreshAndroidWidgetItineraryCacheUsecase _refreshCacheUsecase;
   final ReadTransaction? _readTransaction;
 
@@ -294,37 +290,24 @@ class MoveAndroidWidgetSelectedItineraryDateUsecase {
     AndroidWidgetItineraryCacheDto cache,
     AndroidWidgetItineraryDateMoveDirection direction,
   ) async {
-    final trips = await _tripEntryQueryService.getTripEntriesByGroupId(
-      cache.groupId,
-    );
-    trips.sort(_compareTripsByStartDate);
-    final itineraryDates = <_ItineraryDateIndex>[];
-    for (final trip in trips) {
-      final items = await _itineraryItemQueryService.getItineraryItemsByTripId(
-        trip.id,
-        orderBy: const [
-          OrderBy('startDateTime', descending: false),
-          OrderBy('endDateTime', descending: false),
-        ],
-      );
-      itineraryDates.addAll(_toItineraryDateIndexes(trip, items));
+    final selectedId = cache.selectedItineraryDateId!;
+    final date = DateTime.tryParse(selectedId.substring(selectedId.length - 10));
+    if (date == null) return null;
+    Future<List<_ItineraryDateIndex>> datesFor(DateTime day) async {
+      final trips = await _queryService.getDay(cache.groupId, day);
+      return [for (final trip in trips) ..._toItineraryDateIndexes(trip, trip.itineraryItems ?? const [])]..sort(_compareItineraryDateIndexes);
     }
-    itineraryDates.sort(_compareItineraryDateIndexes);
-
-    final selectedIndex = itineraryDates.indexWhere(
-      (itineraryDate) => itineraryDate.id == cache.selectedItineraryDateId,
-    );
-    if (selectedIndex < 0) {
-      return null;
-    }
-    final targetIndex =
-        direction == AndroidWidgetItineraryDateMoveDirection.previous
-        ? selectedIndex - 1
-        : selectedIndex + 1;
-    if (targetIndex < 0 || targetIndex >= itineraryDates.length) {
-      return null;
-    }
-    return itineraryDates[targetIndex].id;
+    final dates = await datesFor(date);
+    final index = dates.indexWhere((value) => value.id == selectedId);
+    if (index < 0) return null;
+    final before = direction == AndroidWidgetItineraryDateMoveDirection.previous;
+    final target = before ? index - 1 : index + 1;
+    if (target >= 0 && target < dates.length) return dates[target].id;
+    final boundary = before ? date : DateTime(date.year, date.month, date.day + 1);
+    final nextDay = await _queryService.findDate(cache.groupId, boundary, before: before);
+    if (nextDay == null) return null;
+    final nextDates = await datesFor(nextDay);
+    return before ? nextDates.lastOrNull?.id : nextDates.firstOrNull?.id;
   }
 
   List<_ItineraryDateIndex> _toItineraryDateIndexes(
@@ -347,21 +330,6 @@ class MoveAndroidWidgetSelectedItineraryDateUsecase {
           ),
         )
         .toList();
-  }
-
-  int _compareTripsByStartDate(TripEntryDto a, TripEntryDto b) {
-    final aStartDate = a.startDate;
-    final bStartDate = b.startDate;
-    if (aStartDate == null && bStartDate == null) {
-      return 0;
-    }
-    if (aStartDate == null) {
-      return 1;
-    }
-    if (bStartDate == null) {
-      return -1;
-    }
-    return aStartDate.compareTo(bStartDate);
   }
 
   int _compareItineraryDateIndexes(

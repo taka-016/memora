@@ -85,6 +85,8 @@ CREATE TABLE itinerary_items (
   memo TEXT
 ) AS SqliteItineraryItemRow;
 
+CREATE INDEX itinerary_items_start_idx ON itinerary_items (start_date_time);
+
 CREATE INDEX itinerary_items_trip_id_idx ON itinerary_items (trip_id, start_date_time);
 
 CREATE TABLE member_events (
