@@ -4,6 +4,12 @@ import 'package:memora/domain/entities/calendar/calendar_event.dart';
 import 'package:memora/infrastructure/mappers/calendar/firestore_calendar_event_mapper.dart';
 
 void main() {
+  test('終日の検索終了境界は入力時刻によらず暦日による期間を使う', () {
+    final event = CalendarEvent(id: 'e', groupId: 'g', labelType: 'group', title: '予定',
+      startDateTime: DateTime.utc(2026, 1, 1, 12), endDateTime: DateTime.utc(2026, 1, 3),
+      isAllDay: true, recurrenceRule: 'FREQ=DAILY;COUNT=3');
+    expect(FirestoreCalendarEventMapper.toFirestore(event)['recurrenceEndDateTime'], Timestamp.fromDate(DateTime.utc(2026, 1, 5)));
+  });
   for (final definition in [
     (rule: 'FREQ=DAILY;COUNT=3', start: DateTime.utc(2026, 1, 1), end: DateTime.utc(2026, 1, 5), allDay: true, zone: null),
     (rule: 'FREQ=MONTHLY;BYDAY=5MO;COUNT=3', start: DateTime.utc(2026, 3, 30), end: DateTime.utc(2026, 9, 2), allDay: true, zone: null),

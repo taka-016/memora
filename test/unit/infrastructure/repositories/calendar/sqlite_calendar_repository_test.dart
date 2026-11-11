@@ -1,3 +1,4 @@
+import 'package:memora/application/exceptions/application_validation_exception.dart';
 import 'package:memora/composition_root/providers/calendar_providers.dart';
 import 'package:memora/application/usecases/calendar/change_calendar_recurrence_usecase.dart';
 import 'package:memora/application/models/calendar_event_period.dart';
@@ -101,6 +102,9 @@ void main() {
     final independent = saved.singleWhere((value) => value.id != id);
     expect(independent.recurrenceRule, isNull);
     expect(independent.originalStartDateTime, isNull);
+    await expectLater(container.read(changeCalendarRecurrenceUsecaseProvider).execute(loaded, selected, CalendarChangeScope.only,
+      changes: loaded.copyWith(title: '古い編集', startDateTime: selected, endDateTime: selected.add(const Duration(days: 3)))),
+      throwsA(isA<ApplicationValidationException>()));
     await events.deleteCalendarEvent(id);
     expect((await eventQuery.getCalendarEventsByGroupId('family')).single.id, independent.id);
   });

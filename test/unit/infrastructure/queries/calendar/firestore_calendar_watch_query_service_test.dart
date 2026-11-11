@@ -24,6 +24,8 @@ void main() {
   late MockFirebaseFirestore firestore;
   late MockCollectionReference collection;
   late MockQuery query;
+  late MockQuery cancellationQuery;
+  late Future<List<Map<String, dynamic>>> Function() cancellationRows;
   late StreamController<QuerySnapshot<Map<String, dynamic>>> source;
   Future<void> flush() => Future<void>(() {});
   MockQueryDocumentSnapshot doc(
@@ -43,6 +45,7 @@ void main() {
       'startDateTime': Timestamp.fromDate(DateTime.utc(2026, 10, 1)),
       'endDateTime': Timestamp.fromDate(DateTime.utc(2026, 10, 1)),
       'overrideIds': ids,
+      'recurrenceRule': ids.isEmpty ? null : 'FREQ=DAILY',
       'name': title,
       'color': '#123ABC',
       'sortOrder': id == 'b' ? 0 : 1,
@@ -77,6 +80,22 @@ void main() {
     when(firestore.collection(any)).thenReturn(collection);
     when(collection.where('groupId', isEqualTo: 'g')).thenReturn(query);
     when(query.snapshots()).thenAnswer((_) => source.stream);
+    cancellationQuery = MockQuery();
+    cancellationRows = () async => [];
+    final cancellations = MockCollectionReference();
+    when(firestore.collection('calendar_event_overrides')).thenReturn(cancellations);
+    when(cancellations.where('eventId', isEqualTo: anyNamed('isEqualTo'))).thenReturn(cancellationQuery);
+    when(cancellationQuery.where('groupId', isEqualTo: 'g')).thenReturn(cancellationQuery);
+    when(cancellationQuery.get()).thenAnswer((_) async {
+      final rows = await cancellationRows();
+      final result = MockQuerySnapshot();
+      when(result.docs).thenReturn([for (final row in rows) (() {
+        final value = MockQueryDocumentSnapshot();
+        when(value.data()).thenReturn(row);
+        return value;
+      })()]);
+      return result;
+    });
     addTearDown(source.close);
   });
   test('共有相手の購読が残っていても監視失敗後の再試行で再接続する', () async {
@@ -138,19 +157,7 @@ void main() {
   });
 
   test('初回と追加変更削除を反映し変更のない予定の個別回は再取得しない', () async {
-    final overrides = MockCollectionReference();
-    final ref = MockDocumentReference();
-    final override = MockDocumentSnapshot();
-    when(firestore.collection('calendar_event_overrides'))
-        .thenReturn(overrides);
-    when(overrides.doc('o')).thenReturn(ref);
-    when(override.data()).thenReturn({
-      'eventId': 'a',
-      'groupId': 'g',
-      'originalStartDateTime': Timestamp.fromDate(DateTime.utc(2026, 10, 1)),
-      'isCancelled': true,
-    });
-    when(ref.get()).thenAnswer((_) async => override);
+    cancellationRows = () async => [{'originalStartDateTime': Timestamp.fromDate(DateTime.utc(2026, 10, 1)), 'isCancelled': true}];
     final values = <List<dynamic>>[];
     final sub = FirestoreCalendarEventWatchQueryService(firestore: firestore)
         .watchCalendarEventsByGroupId('g')
@@ -163,25 +170,20 @@ void main() {
     expect(values.last.single.overrides.single.isCancelled, isTrue);
     emit([a, b], [(DocumentChangeType.added, b)]);
     await flush();
-    verify(ref.get()).called(1);
+    verify(cancellationQuery.get()).called(1);
     final changed = doc('a', title: '変更', ids: ['o']);
     emit([changed, b], [(DocumentChangeType.modified, changed)]);
     await flush();
     expect(values.last.first.title, '変更');
-    verify(ref.get()).called(1);
+    verify(cancellationQuery.get()).called(1);
     emit([b], [(DocumentChangeType.removed, changed)]);
     await flush();
     expect(values.last.single.id, 'b');
     verify(query.snapshots()).called(1);
   });
   test('個別回取得の前後逆転と削除で古い結果を反映せず解除後も通知しない', () async {
-    final overrides = MockCollectionReference();
-    final ref = MockDocumentReference();
-    when(firestore.collection('calendar_event_overrides'))
-        .thenReturn(overrides);
-    when(overrides.doc('o')).thenReturn(ref);
-    final pending = Completer<DocumentSnapshot<Map<String, dynamic>>>();
-    when(ref.get()).thenAnswer((_) => pending.future);
+    final pending = Completer<List<Map<String, dynamic>>>();
+    cancellationRows = () => pending.future;
     final values = <List<dynamic>>[];
     final sub = FirestoreCalendarEventWatchQueryService(firestore: firestore)
         .watchCalendarEventsByGroupId('g')
@@ -195,14 +197,7 @@ void main() {
     expect(values.last.single.title, '新しい');
     emit([], [(DocumentChangeType.removed, newer)]);
     await flush();
-    final override = MockDocumentSnapshot();
-    when(override.data()).thenReturn({
-      'eventId': 'a',
-      'groupId': 'g',
-      'originalStartDateTime': Timestamp.fromDate(DateTime.utc(2026, 10, 1)),
-      'isCancelled': true,
-    });
-    pending.complete(override);
+    pending.complete([{'originalStartDateTime': Timestamp.fromDate(DateTime.utc(2026, 10, 1)), 'isCancelled': true}]);
     await flush();
     expect(values, hasLength(2));
     expect(values.last, isEmpty);
@@ -210,12 +205,7 @@ void main() {
     expect(source.hasListener, isFalse);
   });
   test('個別回取得失敗を通知し再購読では個別回も再取得する', () async {
-    final overrides = MockCollectionReference();
-    final ref = MockDocumentReference();
-    when(firestore.collection('calendar_event_overrides'))
-        .thenReturn(overrides);
-    when(overrides.doc('o')).thenReturn(ref);
-    when(ref.get()).thenThrow(TestException('取得失敗'));
+    cancellationRows = () async => throw TestException('取得失敗');
     final service = FirestoreCalendarEventWatchQueryService(
       firestore: firestore,
     );
@@ -230,21 +220,14 @@ void main() {
     await sub.cancel();
     await source.close();
     source = StreamController<QuerySnapshot<Map<String, dynamic>>>();
-    final override = MockDocumentSnapshot();
-    when(override.data()).thenReturn({
-      'eventId': 'a',
-      'groupId': 'g',
-      'originalStartDateTime': Timestamp.fromDate(DateTime.utc(2026, 10, 1)),
-      'isCancelled': true,
-    });
-    when(ref.get()).thenAnswer((_) async => override);
+    cancellationRows = () async => [{'originalStartDateTime': Timestamp.fromDate(DateTime.utc(2026, 10, 1)), 'isCancelled': true}];
     final values = <List<dynamic>>[];
     final retry = service.watchCalendarEventsByGroupId('g').listen(values.add);
     addTearDown(retry.cancel);
     emit([a], [(DocumentChangeType.added, a)]);
     await flush();
     expect(values.last.single.overrides, hasLength(1));
-    verify(ref.get()).called(2);
+    verify(cancellationQuery.get()).called(2);
   });
   test('色ラベルの追加変更削除と順序を反映し監視エラーを通知する', () async {
     final values = <List<dynamic>>[];

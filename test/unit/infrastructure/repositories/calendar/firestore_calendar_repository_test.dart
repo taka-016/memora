@@ -486,6 +486,14 @@ void main() {
     when(collection.where('groupId', isEqualTo: 'group')).thenReturn(query);
     when(query.get()).thenAnswer((_) async => snapshot);
     when(snapshot.docs).thenReturn([doc]);
+    final cancellationsQuery = MockQuery();
+    final cancellationsSnapshot = MockQuerySnapshot();
+    final cancellationDoc = MockQueryDocumentSnapshot();
+    when(cancellationDoc.data()).thenReturn(cancellation(recurring()));
+    when(cancellationsSnapshot.docs).thenReturn([cancellationDoc]);
+    when(overrideCollection.where('eventId', isEqualTo: 'event')).thenReturn(cancellationsQuery);
+    when(cancellationsQuery.where('groupId', isEqualTo: 'group')).thenReturn(cancellationsQuery);
+    when(cancellationsQuery.get()).thenAnswer((_) async => cancellationsSnapshot);
     final result = await FirestoreCalendarEventQueryService(
       firestore: firestore,
     ).getCalendarEventsByGroupId('group');
@@ -498,7 +506,7 @@ void main() {
     final result = await readStoredEvents();
     expect(result.single.overrides, value.overrides);
     verifyNever(firestore.runTransaction(any));
-    verify(overrideRefs['stored']!.get()).called(1);
+    verifyNever(overrideRefs['stored']!.get());
     verifyNever(transaction.get(any));
   });
 

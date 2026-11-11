@@ -63,6 +63,38 @@ void main() {
     verifyNever(base.get());
   });
 
+  test('期間内の取消だけを検索し親の個別回IDをたどって過去の取消を取得しない', () async {
+    final parent = MockQueryDocumentSnapshot();
+    when(parent.id).thenReturn('series');
+    when(parent.data()).thenReturn({
+      'groupId': 'g', 'labelType': 'group', 'title': '予定', 'isAllDay': true,
+      'startDateTime': Timestamp.fromDate(DateTime.utc(2020)),
+      'endDateTime': Timestamp.fromDate(DateTime.utc(2020, 1, 4)),
+      'recurrenceRule': 'FREQ=DAILY', 'overrideIds': ['past', 'current', 'future'],
+    });
+    final parents = MockQuerySnapshot();
+    when(parents.docs).thenReturn([parent]);
+    when(recurring.get()).thenAnswer((_) async => parents);
+    final cancellations = MockCollectionReference();
+    final query = MockQuery();
+    when(firestore.collection('calendar_event_overrides')).thenReturn(cancellations);
+    when(cancellations.where('eventId', isEqualTo: 'series')).thenReturn(query);
+    when(query.where('groupId', isEqualTo: 'g')).thenReturn(query);
+    when(query.where('originalEndDateTime', isGreaterThanOrEqualTo: Timestamp.fromDate(period.queryFrom))).thenReturn(query);
+    when(query.where('originalStartDateTime', isLessThan: Timestamp.fromDate(period.queryTo))).thenReturn(query);
+    final row = MockQueryDocumentSnapshot();
+    final key = DateTime.utc(2026, 11, 8);
+    when(row.data()).thenReturn({'originalStartDateTime': Timestamp.fromDate(key), 'isCancelled': true});
+    final rows = MockQuerySnapshot();
+    when(rows.docs).thenReturn([row]);
+    when(query.get()).thenAnswer((_) async => rows);
+    final result = await FirestoreCalendarEventQueryService(firestore: firestore).getCalendarEventsByGroupId('g', period: period);
+    expect(result.single.overrides.single.originalStartDateTime, key);
+    verify(query.where('originalEndDateTime', isGreaterThanOrEqualTo: Timestamp.fromDate(period.queryFrom))).called(1);
+    verify(query.get()).called(1);
+    verifyNever(cancellations.doc(any));
+  });
+
   test('期間指定の監視も全期間を読まず両方の初回受信を待ち解除時は両方を止める', () async {
     final normalStream =
         StreamController<QuerySnapshot<Map<String, dynamic>>>();

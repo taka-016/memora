@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/domain/entities/calendar/calendar_event.dart';
-import 'package:memora/domain/entities/calendar/calendar_event_override.dart';
 import 'package:memora/domain/exceptions/validation_exception.dart';
 
 void main() {

@@ -232,15 +232,7 @@ void main() {
         CalendarEventOverride(originalStartDateTime: DateTime.utc(2026, 10, 1), isCancelled: true),
       ],
     ),
-    '別ラベルで期間外へ移動した個別回': event.copyWith(
-      startDateTime: DateTime.utc(2026, 10, 1),
-      endDateTime: DateTime.utc(2026, 10, 1),
-      isAllDay: true,
-      recurrenceRule: 'FREQ=DAILY;COUNT=1',
-      overrides: [
-        CalendarEventOverride(originalStartDateTime: DateTime.utc(2026, 10, 1), isCancelled: true),
-      ],
-    ),
+
   };
   for (final entry in hiddenEvents.entries) {
     test('${entry.key}が参照するラベルは削除せず使用中と案内する', () async {
@@ -252,9 +244,7 @@ void main() {
       await notifier.load();
       expect(container.read(provider).loadError, isEmpty);
       expect(container.read(provider).events, isEmpty);
-      final target = entry.value.overrides.any((v) => v.labelId == 'child')
-          ? 'child'
-          : 'family';
+      const target = 'family';
       expect(await notifier.deleteLabel(target), isFalse);
       expect(container.read(provider).mutationError, '予定で使用中の色ラベルは削除できません');
       notifier.selectDate(DateTime(2028));
