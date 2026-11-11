@@ -635,7 +635,7 @@ void main() {
   test('初回からの以降変更は元系列を削除し取消を持たない別IDの系列を作成する', () async {
     await usecase.execute(source, source.startDateTime, CalendarChangeScope.following,
       changes: source.copyWith(title: '新系列'));
-    final tail = verify(repository.replaceCalendarEvent(any, null, captureAny)).captured.single as CalendarEvent;
+    final tail = verify(repository.replaceCalendarEvent(any, argThat(isNull), captureAny)).captured.single as CalendarEvent;
     expect(tail.id, isEmpty);
     expect(tail.overrides, isEmpty);
     expect(tail.recurrenceRule, source.recurrenceRule);
