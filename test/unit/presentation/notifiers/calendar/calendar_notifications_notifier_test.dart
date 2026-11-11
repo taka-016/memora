@@ -53,7 +53,9 @@ void main() {
   });
   test('通知が許可されていない間は監視せず再確認後に開始する', () async {
     when(gateway.isEnabled()).thenAnswer((_) async => false);
-    final notifier = container.read(calendarNotificationsNotifierProvider.notifier);
+    final notifier = container.read(
+      calendarNotificationsNotifierProvider.notifier,
+    );
     await container.pump();
     await Future<void>(() {});
     verifyNever(source.changes());
@@ -63,7 +65,9 @@ void main() {
   });
 
   test('保存と復帰による同期で正常な監視を張り直さない', () async {
-    final notifier = container.read(calendarNotificationsNotifierProvider.notifier);
+    final notifier = container.read(
+      calendarNotificationsNotifierProvider.notifier,
+    );
     await container.pump();
     await Future<void>(() {});
     clearInteractions(source);

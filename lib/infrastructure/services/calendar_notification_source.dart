@@ -70,9 +70,11 @@ class DeviceCalendarNotificationSource implements CalendarNotificationSource {
     Object? failure;
     var ready = Completer<void>();
     late StreamController<void> controller;
-    final watcher = watchEvents ?? WatchCalendarEventsUsecase(
-      FirestoreCalendarEventWatchQueryService(firestore: firestore!),
-    );
+    final watcher =
+        watchEvents ??
+        WatchCalendarEventsUsecase(
+          FirestoreCalendarEventWatchQueryService(firestore: firestore!),
+        );
 
     void error(Object e, StackTrace s) {
       if (closed) return;
@@ -82,9 +84,15 @@ class DeviceCalendarNotificationSource implements CalendarNotificationSource {
     }
 
     void publish() {
-      if (closed || !groupsReady ||
-          groupSubscriptions.keys.any((id) => !loadedGroups.contains(id) ||
-            (existing.contains(id) && !received.containsKey(id)))) return;
+      if (closed ||
+          !groupsReady ||
+          groupSubscriptions.keys.any(
+            (id) =>
+                !loadedGroups.contains(id) ||
+                (existing.contains(id) && !received.containsKey(id)),
+          )) {
+        return;
+      }
       failure = null;
       if (!ready.isCompleted) ready.complete();
       controller.add(null);
@@ -93,22 +101,30 @@ class DeviceCalendarNotificationSource implements CalendarNotificationSource {
     void subscribe(String id) {
       final subscriptions = <StreamSubscription<dynamic>>[];
       groupSubscriptions[id] = subscriptions;
-      subscriptions.add(firestore!.collection('groups').doc(id).snapshots().listen((doc) {
-        if (closed || !identical(groupSubscriptions[id], subscriptions)) return;
-        loadedGroups.add(id);
-        if (doc.exists) {
-          existing.add(id);
-        } else {
-          existing.remove(id);
-          received.remove(id);
-        }
-        publish();
-      }, onError: error));
-      subscriptions.add(watcher.execute(id, period: period).listen((events) {
-        if (closed || !identical(groupSubscriptions[id], subscriptions)) return;
-        received[id] = events;
-        publish();
-      }, onError: error));
+      subscriptions.add(
+        firestore!.collection('groups').doc(id).snapshots().listen((doc) {
+          if (closed || !identical(groupSubscriptions[id], subscriptions)) {
+            return;
+          }
+          loadedGroups.add(id);
+          if (doc.exists) {
+            existing.add(id);
+          } else {
+            existing.remove(id);
+            received.remove(id);
+          }
+          publish();
+        }, onError: error),
+      );
+      subscriptions.add(
+        watcher.execute(id, period: period).listen((events) {
+          if (closed || !identical(groupSubscriptions[id], subscriptions)) {
+            return;
+          }
+          received[id] = events;
+          publish();
+        }, onError: error),
+      );
     }
 
     Future<void> updateGroups() async {
@@ -122,7 +138,9 @@ class DeviceCalendarNotificationSource implements CalendarNotificationSource {
             received.remove(id);
             existing.remove(id);
             loadedGroups.remove(id);
-            for (final sub in removed) { await sub.cancel(); }
+            for (final sub in removed) {
+              await sub.cancel();
+            }
           }
         }
         for (final id in ids) {
@@ -147,9 +165,13 @@ class DeviceCalendarNotificationSource implements CalendarNotificationSource {
         received.clear();
         loadedGroups.clear();
         existing.clear();
-        for (final sub in previous) { await sub.cancel(); }
+        for (final sub in previous) {
+          await sub.cancel();
+        }
         if (!closed) {
-          for (final id in ids) { subscribe(id); }
+          for (final id in ids) {
+            subscribe(id);
+          }
           publish();
         }
       }

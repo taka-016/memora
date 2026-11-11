@@ -1,6 +1,10 @@
 import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../queries/calendar/firestore_calendar_watch_query_service_test.mocks.dart' as fs;
+
+import '../queries/calendar/firestore_calendar_watch_query_service_test.mocks.dart'
+    as fs;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
@@ -27,17 +31,21 @@ void main() {
     final events = MockGetCalendarEventsUsecase();
     const member = MemberDto(id: 'm', displayName: '本人');
     when(currentMember.execute()).thenAnswer((_) async => member);
-    when(groups.execute(member)).thenAnswer((_) async => [
-      const GroupDto(id: 'g', ownerId: 'm', name: '家族', members: []),
-    ]);
+    when(groups.execute(member)).thenAnswer(
+      (_) async => [
+        const GroupDto(id: 'g', ownerId: 'm', name: '家族', members: []),
+      ],
+    );
     final firestore = fs.MockFirebaseFirestore();
     final collection = fs.MockCollectionReference();
     final query = fs.MockQuery();
     final group = fs.MockDocumentReference();
     final groupDoc = fs.MockDocumentSnapshot();
     when(groupDoc.exists).thenReturn(true);
-    final membership = StreamController<QuerySnapshot<Map<String, dynamic>>>.broadcast();
-    final snapshots = StreamController<QuerySnapshot<Map<String, dynamic>>>.broadcast();
+    final membership =
+        StreamController<QuerySnapshot<Map<String, dynamic>>>.broadcast();
+    final snapshots =
+        StreamController<QuerySnapshot<Map<String, dynamic>>>.broadcast();
     when(firestore.collection(any)).thenReturn(collection);
     when(collection.where('memberId', isEqualTo: 'm')).thenReturn(query);
     when(collection.where('ownerId', isEqualTo: 'm')).thenReturn(query);
@@ -46,13 +54,23 @@ void main() {
     when(group.snapshots()).thenAnswer((_) => Stream.value(groupDoc));
     final eventQuery = fs.MockQuery();
     when(collection.where('groupId', isEqualTo: 'g')).thenReturn(eventQuery);
-    when(eventQuery.where('endDateTime', isGreaterThanOrEqualTo: anyNamed('isGreaterThanOrEqualTo'))).thenReturn(eventQuery);
-    when(eventQuery.where('startDateTime', isLessThan: anyNamed('isLessThan'))).thenReturn(eventQuery);
-    when(eventQuery.where('recurrenceRule', isNull: false)).thenReturn(eventQuery);
+    when(
+      eventQuery.where(
+        'endDateTime',
+        isGreaterThanOrEqualTo: anyNamed('isGreaterThanOrEqualTo'),
+      ),
+    ).thenReturn(eventQuery);
+    when(eventQuery.where('startDateTime', isLessThan: anyNamed('isLessThan')))
+        .thenReturn(eventQuery);
+    when(eventQuery.where('recurrenceRule', isNull: false))
+        .thenReturn(eventQuery);
     when(eventQuery.snapshots()).thenAnswer((_) => snapshots.stream);
     final source = DeviceCalendarNotificationSource(
-      currentMember: currentMember, groups: groups, events: events,
-      clock: FixedAppClock(DateTime(2026, 11, 10, 15)), firestore: firestore,
+      currentMember: currentMember,
+      groups: groups,
+      events: events,
+      clock: FixedAppClock(DateTime(2026, 11, 10, 15)),
+      firestore: firestore,
     );
     final sub = source.changes().listen((_) {}, onError: (Object _) {});
     await Future<void>(() {});

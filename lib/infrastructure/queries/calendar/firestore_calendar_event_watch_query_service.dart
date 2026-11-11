@@ -20,15 +20,20 @@ class FirestoreCalendarEventWatchQueryService
   _SharedEvents? _covering(String groupId, CalendarEventPeriod? period) {
     for (final entry in _active.entries) {
       final (id, range) = entry.key;
-      if (id == groupId && (range == null || (period != null &&
-          !range.queryFrom.isAfter(period.queryFrom) &&
-          !range.queryTo.isBefore(period.queryTo)))) return entry.value;
+      if (id == groupId &&
+          (range == null ||
+              (period != null &&
+                  !range.queryFrom.isAfter(period.queryFrom) &&
+                  !range.queryTo.isBefore(period.queryTo)))) {
+        return entry.value;
+      }
     }
     return null;
   }
 
   @override
-  Future<List<CalendarEventDto>> getCalendarEventsByGroupId(String groupId, {
+  Future<List<CalendarEventDto>> getCalendarEventsByGroupId(
+    String groupId, {
     CalendarEventPeriod? period,
   }) async {
     final shared = _covering(groupId, period);
@@ -38,7 +43,8 @@ class FirestoreCalendarEventWatchQueryService
   }
 
   @override
-  Stream<List<CalendarEventDto>> watchCalendarEventsByGroupId(String groupId, {
+  Stream<List<CalendarEventDto>> watchCalendarEventsByGroupId(
+    String groupId, {
     CalendarEventPeriod? period,
   }) {
     // 購読時に共有先を決め、生成しただけのStreamは保持しない。
@@ -47,11 +53,16 @@ class FirestoreCalendarEventWatchQueryService
     controller = StreamController<List<CalendarEventDto>>(
       onListen: () {
         final key = (groupId, period);
-        final shared = _covering(groupId, period) ?? (_active[key] = _SharedEvents(
-          _watch(groupId, period: period), () { _active.remove(key); },
-        ));
-        subscription = shared.stream.listen(controller.add,
-          onError: controller.addError, onDone: controller.close);
+        final shared =
+            _covering(groupId, period) ??
+            (_active[key] = _SharedEvents(_watch(groupId, period: period), () {
+              _active.remove(key);
+            }));
+        subscription = shared.stream.listen(
+          controller.add,
+          onError: controller.addError,
+          onDone: controller.close,
+        );
       },
       onCancel: () => subscription?.cancel(),
     );
@@ -150,15 +161,22 @@ class _SharedEvents {
         } else if (_latest != null) {
           controller.add(_latest!);
         }
-        _subscription ??= source.listen((events) {
-          _latest = events;
-          _error = null;
-          for (final listener in _listeners) { listener.add(events); }
-        }, onError: (Object error, StackTrace stack) {
-          _error = error;
-          _stack = stack;
-          for (final listener in _listeners) { listener.addError(error, stack); }
-        });
+        _subscription ??= source.listen(
+          (events) {
+            _latest = events;
+            _error = null;
+            for (final listener in _listeners) {
+              listener.add(events);
+            }
+          },
+          onError: (Object error, StackTrace stack) {
+            _error = error;
+            _stack = stack;
+            for (final listener in _listeners) {
+              listener.addError(error, stack);
+            }
+          },
+        );
       },
       onCancel: () async {
         _listeners.remove(controller);

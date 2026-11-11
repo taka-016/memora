@@ -104,7 +104,9 @@ class CalendarNotificationsNotifier extends _$CalendarNotificationsNotifier {
             await ref.read(calendarNotificationGatewayProvider).replace([]);
             result = CalendarNotificationStatus.ready;
           } else {
-            final enabled = await ref.read(calendarNotificationGatewayProvider).isEnabled();
+            final enabled = await ref
+                .read(calendarNotificationGatewayProvider)
+                .isEnabled();
             if (!ref.mounted) return;
             if (enabled) {
               _watch();

@@ -279,6 +279,9 @@ final calendarLabelQueryServiceProvider = Provider<CalendarLabelQueryService>(
   (ref) => QueryServiceFactory.create<CalendarLabelQueryService>(ref: ref),
 );
 
-final firestoreCalendarEventQueriesProvider = Provider<FirestoreCalendarEventWatchQueryService>(
-  (ref) => FirestoreCalendarEventWatchQueryService(firestore: ref.watch(firebaseFirestoreProvider)),
-);
+final firestoreCalendarEventQueriesProvider =
+    Provider<FirestoreCalendarEventWatchQueryService>(
+      (ref) => FirestoreCalendarEventWatchQueryService(
+        firestore: ref.watch(firebaseFirestoreProvider),
+      ),
+    );

@@ -80,14 +80,18 @@ void main() {
     addTearDown(source.close);
   });
   test('同じグループと期間の監視を共有し後からの購読にも受信済み予定を渡す', () async {
-    final service = FirestoreCalendarEventWatchQueryService(firestore: firestore);
+    final service = FirestoreCalendarEventWatchQueryService(
+      firestore: firestore,
+    );
     final first = <List<dynamic>>[];
     final second = <List<dynamic>>[];
     final a = doc('a');
     final sub = service.watchCalendarEventsByGroupId('g').listen(first.add);
     emit([a], [(DocumentChangeType.added, a)]);
     await flush();
-    final another = service.watchCalendarEventsByGroupId('g').listen(second.add);
+    final another = service
+        .watchCalendarEventsByGroupId('g')
+        .listen(second.add);
     await flush();
     expect(second.single.single.id, 'a');
     verify(query.snapshots()).called(1);
