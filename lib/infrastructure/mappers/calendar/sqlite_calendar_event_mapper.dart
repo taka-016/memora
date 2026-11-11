@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:memora/application/services/calendar/calendar_recurrence_expander.dart';
 import 'package:memora/application/mappers/calendar/calendar_event_mapper.dart';
 import 'package:memora/infrastructure/services/iana_calendar_time_zone.dart';
@@ -42,8 +43,26 @@ class SqliteCalendarEventMapper {
   );
   static Map<String, Object?> toRow(CalendarEvent value) => {
     'recurrence_rule': value.recurrenceRule,
-    'recurrence_end_date_time': CalendarRecurrenceExpander(IanaCalendarTimeZone()).seriesEndDateTime(CalendarEventMapper.toDto(value))?.microsecondsSinceEpoch,
-    'overrides_fingerprint': jsonEncode(value.overrides.map((v) => (value.isAllDay ? DateTime.utc(v.originalStartDateTime.year, v.originalStartDateTime.month, v.originalStartDateTime.day) : v.originalStartDateTime).microsecondsSinceEpoch).toList()..sort()),
+    'recurrence_end_date_time':
+        CalendarRecurrenceExpander(IanaCalendarTimeZone())
+            .seriesEndDateTime(CalendarEventMapper.toDto(value))
+            ?.microsecondsSinceEpoch,
+    'overrides_fingerprint': jsonEncode(
+      value.overrides
+          .map(
+            (v) =>
+                (value.isAllDay
+                        ? DateTime.utc(
+                            v.originalStartDateTime.year,
+                            v.originalStartDateTime.month,
+                            v.originalStartDateTime.day,
+                          )
+                        : v.originalStartDateTime)
+                    .microsecondsSinceEpoch,
+          )
+          .toList()
+        ..sort(),
+    ),
     'time_zone': value.timeZone,
     'id': value.id,
     'group_id': value.groupId,

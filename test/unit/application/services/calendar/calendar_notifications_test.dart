@@ -66,8 +66,16 @@ void main() {
   });
   test('独立した通常予定の開始日時と終日区分を通知へ渡す', () {
     final start = DateTime(2026, 11, 3, 14);
-    final source = CalendarEventDto(id: 'independent', groupId: 'g', labelType: 'group', title: '独立した予定', startDateTime: start,
-      endDateTime: start.add(const Duration(hours: 1)), isAllDay: false, notificationMinutesBefore: [60]);
+    final source = CalendarEventDto(
+      id: 'independent',
+      groupId: 'g',
+      labelType: 'group',
+      title: '独立した予定',
+      startDateTime: start,
+      endDateTime: start.add(const Duration(hours: 1)),
+      isAllDay: false,
+      notificationMinutesBefore: [60],
+    );
     final request = planner
         .plan([source], now, const CalendarNotificationPreferences())
         .single;
@@ -99,8 +107,14 @@ void main() {
       rule: 'FREQ=DAILY;COUNT=3',
       reminders: [0],
       overrides: [
-        CalendarEventOverride(originalStartDateTime: DateTime.utc(2026, 10, 30), isCancelled: true),
-        CalendarEventOverride(originalStartDateTime: DateTime.utc(2026, 10, 31), isCancelled: true),
+        CalendarEventOverride(
+          originalStartDateTime: DateTime.utc(2026, 10, 30),
+          isCancelled: true,
+        ),
+        CalendarEventOverride(
+          originalStartDateTime: DateTime.utc(2026, 10, 31),
+          isCancelled: true,
+        ),
       ],
     );
     expect(
@@ -125,7 +139,10 @@ void main() {
       )['notificationMinutesBefore'],
       [0, 1440],
     );
-    final override = CalendarEventOverride(originalStartDateTime: DateTime.utc(now.year, now.month, now.day), isCancelled: true);
+    final override = CalendarEventOverride(
+      originalStartDateTime: DateTime.utc(now.year, now.month, now.day),
+      isCancelled: true,
+    );
     expect(
       CalendarOverrideMapper.fromRow(
         CalendarOverrideMapper.toRow(override, 'event', 'group', true),

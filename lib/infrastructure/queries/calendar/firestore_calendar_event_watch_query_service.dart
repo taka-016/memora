@@ -17,7 +17,8 @@ class FirestoreCalendarEventWatchQueryService
 
   @override
   Future<CalendarEventDto?> getCalendarEventById(String eventId) =>
-      FirestoreCalendarEventQueryService(firestore: firestore).getCalendarEventById(eventId);
+      FirestoreCalendarEventQueryService(firestore: firestore)
+          .getCalendarEventById(eventId);
 
   final _active = <(String, CalendarEventPeriod?), _SharedEvents>{};
 
@@ -107,7 +108,10 @@ class FirestoreCalendarEventWatchQueryService
                     if (change.type == DocumentChangeType.removed) {
                       pending.remove(change.doc.id);
                     } else {
-                      pending[change.doc.id] = store.read(change.doc, period: period);
+                      pending[change.doc.id] = store.read(
+                        change.doc,
+                        period: period,
+                      );
                     }
                   }
                   received[bucket] = pending;

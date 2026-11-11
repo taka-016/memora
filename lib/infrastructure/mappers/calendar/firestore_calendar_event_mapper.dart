@@ -47,12 +47,14 @@ class FirestoreCalendarEventMapper {
       allDay ? value.toDate().toUtc() : value.toDate();
   static Map<String, dynamic> toFirestore(CalendarEvent value) => {
     'recurrenceRule': value.recurrenceRule,
-    'recurrenceEndDateTime': Timestamp.fromDate(CalendarRecurrenceExpander(IanaCalendarTimeZone()).seriesEndDateTime(CalendarEventMapper.toDto(value)) ?? DateTime.utc(9999, 12, 31, 23, 59, 59)),
+    'recurrenceEndDateTime': Timestamp.fromDate(
+      CalendarRecurrenceExpander(IanaCalendarTimeZone())
+              .seriesEndDateTime(CalendarEventMapper.toDto(value)) ??
+          DateTime.utc(9999, 12, 31, 23, 59, 59),
+    ),
     'timeZone': value.timeZone,
-    'referencedLabelIds': {
-      if (value.labelType == 'custom') value.labelId,
-
-    }.toList(),
+    'referencedLabelIds': {if (value.labelType == 'custom') value.labelId}
+        .toList(),
     'groupId': value.groupId,
     'labelId': value.labelType == 'custom' ? value.labelId : null,
     'labelType': value.labelType,

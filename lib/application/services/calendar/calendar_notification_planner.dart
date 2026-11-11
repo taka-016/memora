@@ -29,9 +29,7 @@ class CalendarNotificationPlanner {
     final until = now.add(const Duration(days: 28));
     final result = <CalendarNotificationRequest>[];
     for (final event in events) {
-      final offsets = [
-        ...event.notificationMinutesBefore,
-      ];
+      final offsets = [...event.notificationMinutesBefore];
       if (offsets.isEmpty) continue;
       final max = offsets.reduce((a, b) => a > b ? a : b);
       final occurrences = expander.expand(

@@ -139,7 +139,9 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('この予定とこれ以降'), findsNothing);
-    final saved = verify(harness.update.execute(captureAny)).captured.single as CalendarEventDto;
+    final saved =
+        verify(harness.update.execute(captureAny)).captured.single
+            as CalendarEventDto;
     expect(saved.id, normal.id);
     expect(saved.originalStartDateTime, isNull);
     expect(saved.recurrenceRule, isNull);
@@ -151,7 +153,10 @@ void main() {
         recurrenceRule: 'FREQ=DAILY;COUNT=3',
         timeZone: 'Asia/Tokyo',
         overrides: [
-          CalendarEventOverride(originalStartDateTime: DateTime(2026, 10, 3, 9), isCancelled: true),
+          CalendarEventOverride(
+            originalStartDateTime: DateTime(2026, 10, 3, 9),
+            isCancelled: true,
+          ),
         ],
       );
       final harness = CalendarTestHarness()..savedEvents.add(source);
@@ -169,10 +174,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
       await tester.tap(find.text('この予定とこれ以降'));
       await tester.pump();
-      expect(
-        find.textContaining('独立した通常予定は変更・削除されません。'),
-        findsOneWidget,
-      );
+      expect(find.textContaining('独立した通常予定は変更・削除されません。'), findsOneWidget);
       await tester.tap(find.text(deleting ? '削除する' : '変更する'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));

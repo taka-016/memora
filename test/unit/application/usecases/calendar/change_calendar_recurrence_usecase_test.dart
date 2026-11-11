@@ -23,8 +23,14 @@ void main() {
     isAllDay: true,
     recurrenceRule: 'FREQ=DAILY;COUNT=5',
     overrides: [
-      CalendarEventOverride(originalStartDateTime: DateTime.utc(2026, 10, 2), isCancelled: true),
-      CalendarEventOverride(originalStartDateTime: DateTime.utc(2026, 10, 4), isCancelled: true),
+      CalendarEventOverride(
+        originalStartDateTime: DateTime.utc(2026, 10, 2),
+        isCancelled: true,
+      ),
+      CalendarEventOverride(
+        originalStartDateTime: DateTime.utc(2026, 10, 4),
+        isCancelled: true,
+      ),
     ],
   );
   late MockCalendarEventRepository repository;
@@ -41,7 +47,10 @@ void main() {
         endDateTime: DateTime.utc(2026, 1, 31).add(const Duration(days: 1)),
         recurrenceRule: 'FREQ=MONTHLY;BYMONTHDAY=31;COUNT=3',
         overrides: [
-          CalendarEventOverride(originalStartDateTime: february, isCancelled: true),
+          CalendarEventOverride(
+            originalStartDateTime: february,
+            isCancelled: true,
+          ),
         ],
       );
       await usecase.execute(
@@ -590,7 +599,10 @@ void main() {
   });
   for (final cancelled in [true]) {
     test('繰り返し解除で個別変更または取消し済みの初回を再生成しない（$cancelled）', () async {
-      final first = CalendarEventOverride(originalStartDateTime: source.startDateTime, isCancelled: true);
+      final first = CalendarEventOverride(
+        originalStartDateTime: source.startDateTime,
+        isCancelled: true,
+      );
       final series = source.copyWith(overrides: [first, ...source.overrides]);
       await usecase.execute(
         series,
@@ -606,7 +618,9 @@ void main() {
           isAllDay: true,
         ),
       );
-      verify(repository.replaceCalendarEvent(any, argThat(isNull), argThat(isNull))).called(1);
+      verify(
+        repository.replaceCalendarEvent(any, argThat(isNull), argThat(isNull)),
+      ).called(1);
     });
   }
   test('終日系列を時刻付き単発へ変更して繰り返しとタイムゾーンを解除する', () async {
@@ -625,7 +639,11 @@ void main() {
       CalendarChangeScope.all,
       changes: changes,
     );
-    final saved = verify(repository.replaceCalendarEvent(any, captureAny, null)).captured.single as CalendarEvent;
+    final saved =
+        verify(repository.replaceCalendarEvent(any, captureAny, null))
+                .captured
+                .single
+            as CalendarEvent;
     expect(saved.recurrenceRule, isNull);
     expect(saved.timeZone, isNull);
     expect(saved.startDateTime, DateTime.utc(2026, 10, 1, 9));

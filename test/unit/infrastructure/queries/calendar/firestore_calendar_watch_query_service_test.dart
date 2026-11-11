@@ -83,17 +83,23 @@ void main() {
     cancellationQuery = MockQuery();
     cancellationRows = () async => [];
     final cancellations = MockCollectionReference();
-    when(firestore.collection('calendar_event_overrides')).thenReturn(cancellations);
-    when(cancellations.where('eventId', isEqualTo: anyNamed('isEqualTo'))).thenReturn(cancellationQuery);
-    when(cancellationQuery.where('groupId', isEqualTo: 'g')).thenReturn(cancellationQuery);
+    when(firestore.collection('calendar_event_overrides'))
+        .thenReturn(cancellations);
+    when(cancellations.where('eventId', isEqualTo: anyNamed('isEqualTo')))
+        .thenReturn(cancellationQuery);
+    when(cancellationQuery.where('groupId', isEqualTo: 'g'))
+        .thenReturn(cancellationQuery);
     when(cancellationQuery.get()).thenAnswer((_) async {
       final rows = await cancellationRows();
       final result = MockQuerySnapshot();
-      final documents = [for (final row in rows) (() {
-        final value = MockQueryDocumentSnapshot();
-        when(value.data()).thenReturn(row);
-        return value;
-      })()];
+      final documents = [
+        for (final row in rows)
+          (() {
+            final value = MockQueryDocumentSnapshot();
+            when(value.data()).thenReturn(row);
+            return value;
+          })(),
+      ];
       when(result.docs).thenReturn(documents);
       return result;
     });
@@ -158,7 +164,12 @@ void main() {
   });
 
   test('初回と追加変更削除を反映し変更のない予定の個別回は再取得しない', () async {
-    cancellationRows = () async => [{'originalStartDateTime': Timestamp.fromDate(DateTime.utc(2026, 10, 1)), 'isCancelled': true}];
+    cancellationRows = () async => [
+      {
+        'originalStartDateTime': Timestamp.fromDate(DateTime.utc(2026, 10, 1)),
+        'isCancelled': true,
+      },
+    ];
     final values = <List<dynamic>>[];
     final sub = FirestoreCalendarEventWatchQueryService(firestore: firestore)
         .watchCalendarEventsByGroupId('g')
@@ -198,7 +209,12 @@ void main() {
     expect(values.last.single.title, '新しい');
     emit([], [(DocumentChangeType.removed, newer)]);
     await flush();
-    pending.complete([{'originalStartDateTime': Timestamp.fromDate(DateTime.utc(2026, 10, 1)), 'isCancelled': true}]);
+    pending.complete([
+      {
+        'originalStartDateTime': Timestamp.fromDate(DateTime.utc(2026, 10, 1)),
+        'isCancelled': true,
+      },
+    ]);
     await flush();
     expect(values, hasLength(2));
     expect(values.last, isEmpty);
@@ -221,7 +237,12 @@ void main() {
     await sub.cancel();
     await source.close();
     source = StreamController<QuerySnapshot<Map<String, dynamic>>>();
-    cancellationRows = () async => [{'originalStartDateTime': Timestamp.fromDate(DateTime.utc(2026, 10, 1)), 'isCancelled': true}];
+    cancellationRows = () async => [
+      {
+        'originalStartDateTime': Timestamp.fromDate(DateTime.utc(2026, 10, 1)),
+        'isCancelled': true,
+      },
+    ];
     final values = <List<dynamic>>[];
     final retry = service.watchCalendarEventsByGroupId('g').listen(values.add);
     addTearDown(retry.cancel);

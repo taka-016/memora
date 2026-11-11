@@ -55,7 +55,6 @@ List<CalendarLabelDto> buildCalendarDisplayLabels(
         !currentMembers.contains(event.memberId)) {
       missingMembers.add(event.memberId);
     }
-
   }
   for (final memberId in missingMembers) {
     result.add(

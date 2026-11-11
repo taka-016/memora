@@ -67,7 +67,10 @@ void main() {
         .thenReturn(FirestoreCalendarEventMapper.toFirestore(event));
     final loaded = FirestoreCalendarEventMapper.fromFirestore(doc);
     expect(CalendarEventMapper.toEntity(loaded), event);
-    final individual = CalendarEventOverride(originalStartDateTime: event.startDateTime, isCancelled: true);
+    final individual = CalendarEventOverride(
+      originalStartDateTime: event.startDateTime,
+      isCancelled: true,
+    );
     expect(
       FirestoreCalendarEventOverrideMapper.fromFirestore(
         FirestoreCalendarEventOverrideMapper.toFirestore(
@@ -260,7 +263,10 @@ void main() {
       test(
         '${replace ? '系列変更' : '予定更新'}では${changeChildren ? '追加・変更・削除された個別回だけを保存する' : '未変更の個別回を書き込まない'}',
         () async {
-          CalendarEventOverride cancelled(int day) => CalendarEventOverride(originalStartDateTime: DateTime.utc(2026, 10, day), isCancelled: true);
+          CalendarEventOverride cancelled(int day) => CalendarEventOverride(
+            originalStartDateTime: DateTime.utc(2026, 10, day),
+            isCancelled: true,
+          );
           final unchanged = cancelled(2);
           final changed = cancelled(3);
           final removed = cancelled(4);
@@ -296,7 +302,10 @@ void main() {
             });
             when(transaction.get(ref)).thenAnswer((_) async => doc);
           }
-          final modified = CalendarEventOverride(originalStartDateTime: changed.originalStartDateTime, isCancelled: true);
+          final modified = CalendarEventOverride(
+            originalStartDateTime: changed.originalStartDateTime,
+            isCancelled: true,
+          );
           final added = cancelled(5);
           final replacement = expected.copyWith(
             title: '親予定の変更',
@@ -406,9 +415,12 @@ void main() {
       recurrenceRule: 'FREQ=DAILY;COUNT=3',
       timeZone: 'Asia/Tokyo',
       overrides: [
-        CalendarEventOverride(originalStartDateTime: event().startDateTime.add(
+        CalendarEventOverride(
+          originalStartDateTime: event().startDateTime.add(
             const Duration(days: 1),
-          ), isCancelled: true),
+          ),
+          isCancelled: true,
+        ),
       ],
     );
     await events.saveCalendarEvent(value);
@@ -440,9 +452,12 @@ void main() {
     recurrenceRule: 'FREQ=DAILY;COUNT=3',
     timeZone: 'Asia/Tokyo',
     overrides: [
-      CalendarEventOverride(originalStartDateTime: event().startDateTime.add(
+      CalendarEventOverride(
+        originalStartDateTime: event().startDateTime.add(
           const Duration(days: 1),
-        ), isCancelled: true),
+        ),
+        isCancelled: true,
+      ),
     ],
   );
 
@@ -491,9 +506,12 @@ void main() {
     final cancellationDoc = MockQueryDocumentSnapshot();
     when(cancellationDoc.data()).thenReturn(cancellation(recurring()));
     when(cancellationsSnapshot.docs).thenReturn([cancellationDoc]);
-    when(overrideCollection.where('eventId', isEqualTo: 'event')).thenReturn(cancellationsQuery);
-    when(cancellationsQuery.where('groupId', isEqualTo: 'group')).thenReturn(cancellationsQuery);
-    when(cancellationsQuery.get()).thenAnswer((_) async => cancellationsSnapshot);
+    when(overrideCollection.where('eventId', isEqualTo: 'event'))
+        .thenReturn(cancellationsQuery);
+    when(cancellationsQuery.where('groupId', isEqualTo: 'group'))
+        .thenReturn(cancellationsQuery);
+    when(cancellationsQuery.get())
+        .thenAnswer((_) async => cancellationsSnapshot);
     final result = await FirestoreCalendarEventQueryService(
       firestore: firestore,
     ).getCalendarEventsByGroupId('group');
@@ -595,9 +613,12 @@ void main() {
       timeZone: 'Asia/Tokyo',
       overrides: [
         for (var day = 1; day <= 2; day++)
-          CalendarEventOverride(originalStartDateTime: event().startDateTime.add(
+          CalendarEventOverride(
+            originalStartDateTime: event().startDateTime.add(
               Duration(days: day),
-            ), isCancelled: true),
+            ),
+            isCancelled: true,
+          ),
       ],
     );
     await events.updateCalendarEvent(value);
@@ -606,7 +627,8 @@ void main() {
     ).called(1);
     verify(transaction.update(labelRef, argThat(containsPair('eventCount', 0))))
         .called(1);
-    verify(transaction.update(otherRef, argThat(containsPair('eventCount', 2)))).called(1);
+    verify(transaction.update(otherRef, argThat(containsPair('eventCount', 2))))
+        .called(1);
   });
 
   test('予定の新規保存は同じグループのラベルを検証し参照数と予定を同時に保存する', () async {
@@ -683,7 +705,8 @@ void main() {
     );
     verify(transaction.update(labelRef, argThat(containsPair('eventCount', 0))))
         .called(1);
-    verify(transaction.update(otherRef, argThat(containsPair('eventCount', 2)))).called(1);
+    verify(transaction.update(otherRef, argThat(containsPair('eventCount', 2))))
+        .called(1);
     await events.deleteCalendarEvent('event', expectedVersion: 1);
     verify(transaction.delete(eventRef)).called(1);
     verify(transaction.update(labelRef, argThat(containsPair('eventCount', 0))))

@@ -97,7 +97,6 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
           ),
   );
 
-
   @override
   void initState() {
     super.initState();
@@ -233,7 +232,7 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
       if (start) {
         if (!time) {
           _end = _end.add(next.difference(_start));
-          if (              _recurrence.frequency != null &&
+          if (_recurrence.frequency != null &&
               (next.year != _start.year ||
                   next.month != _start.month ||
                   next.day != _start.day)) {
@@ -278,7 +277,7 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
     final scope = recurring ? await _chooseScope(false) : null;
     if (!mounted || recurring && scope == null) return;
     if (scope != CalendarChangeScope.only &&
-                _recurrence.until != null &&
+        _recurrence.until != null &&
         DateTime(
           _recurrence.until!.year,
           _recurrence.until!.month,
@@ -397,8 +396,8 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                       children: [
                         for (final entry in {
                           CalendarChangeScope.only: 'この予定のみ',
-                                                      CalendarChangeScope.following: 'この予定とこれ以降',
-                                                      CalendarChangeScope.all: 'すべての予定',
+                          CalendarChangeScope.following: 'この予定とこれ以降',
+                          CalendarChangeScope.all: 'すべての予定',
                         }.entries)
                           RadioListTile<CalendarChangeScope>(
                             value: entry.key,
@@ -415,7 +414,7 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                     Text(
                       deleting
                           ? '独立した通常予定は変更・削除されません。'
-                          : '独立した通常予定は変更・削除されません。新系列へ取消情報は引き継ぎません。', 
+                          : '独立した通常予定は変更・削除されません。新系列へ取消情報は引き継ぎません。',
                     ),
                   if (deleting && scope == CalendarChangeScope.only)
                     const Text('この回の取消しを保存します。'),

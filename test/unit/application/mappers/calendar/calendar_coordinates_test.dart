@@ -12,7 +12,10 @@ import 'package:memora/infrastructure/services/iana_calendar_time_zone.dart';
 
 void main() {
   test('通常予定の座標と取消情報を保存形式・競合比較・発生日への展開でも保持する', () {
-    final override = CalendarEventOverride(originalStartDateTime: DateTime.utc(2026, 11, 7), isCancelled: true);
+    final override = CalendarEventOverride(
+      originalStartDateTime: DateTime.utc(2026, 11, 7),
+      isCancelled: true,
+    );
     final dto = CalendarEventDto(
       id: 'event',
       groupId: 'group',
@@ -41,14 +44,32 @@ void main() {
       true,
     );
     expect(CalendarOverrideMapper.fromRow(overrideRow, true), override);
-    expect(overrideRow.keys, unorderedEquals(['event_id', 'group_id', 'original_start_date_time', 'original_end_date_time', 'is_cancelled']));
+    expect(
+      overrideRow.keys,
+      unorderedEquals([
+        'event_id',
+        'group_id',
+        'original_start_date_time',
+        'original_end_date_time',
+        'is_cancelled',
+      ]),
+    );
     final overrideDoc = FirestoreCalendarEventOverrideMapper.toFirestore(
       override,
       eventId: 'event',
       groupId: 'group',
       parentAllDay: true,
     );
-    expect(overrideDoc.keys, unorderedEquals(['eventId', 'groupId', 'originalStartDateTime', 'originalEndDateTime', 'isCancelled']));
+    expect(
+      overrideDoc.keys,
+      unorderedEquals([
+        'eventId',
+        'groupId',
+        'originalStartDateTime',
+        'originalEndDateTime',
+        'isCancelled',
+      ]),
+    );
     expect(
       FirestoreCalendarEventOverrideMapper.fromFirestore(
         overrideDoc,

@@ -9,13 +9,30 @@ class SqliteCalendarEventQueryService implements CalendarEventQueryService {
   SqliteCalendarEventQueryService(this.db);
   final OfflineDatabase db;
   @override
-  Future<CalendarEventDto?> getCalendarEventById(String eventId) => db.readTransaction(() async {
-    final rows = await db.rows('calendar_events', where: 'id = ?', args: [eventId]);
-    if (rows.isEmpty) return null;
-    final row = rows.single;
-    final overrides = await db.rows('calendar_event_overrides', where: 'event_id = ?', args: [eventId]);
-    return SqliteCalendarEventMapper.fromRow(row, overrides: overrides.map((v) => CalendarOverrideMapper.fromRow(v, row['is_all_day'] == 1)).toList());
-  });
+  Future<CalendarEventDto?> getCalendarEventById(String eventId) =>
+      db.readTransaction(() async {
+        final rows = await db.rows(
+          'calendar_events',
+          where: 'id = ?',
+          args: [eventId],
+        );
+        if (rows.isEmpty) return null;
+        final row = rows.single;
+        final overrides = await db.rows(
+          'calendar_event_overrides',
+          where: 'event_id = ?',
+          args: [eventId],
+        );
+        return SqliteCalendarEventMapper.fromRow(
+          row,
+          overrides: overrides
+              .map(
+                (v) =>
+                    CalendarOverrideMapper.fromRow(v, row['is_all_day'] == 1),
+              )
+              .toList(),
+        );
+      });
 
   @override
   Future<List<CalendarEventDto>> getCalendarEventsByGroupId(
@@ -41,7 +58,13 @@ class SqliteCalendarEventQueryService implements CalendarEventQueryService {
     final overrides = await db.rows(
       'calendar_event_overrides',
       where: period == null ? 'group_id = ?' : 'group_id = ? AND original_end_date_time >= ? AND original_start_date_time < ?',
-      args: [groupId, if (period != null) ...[period.queryFrom.microsecondsSinceEpoch, period.queryTo.microsecondsSinceEpoch]],
+      args: [
+        groupId,
+        if (period != null) ...[
+          period.queryFrom.microsecondsSinceEpoch,
+          period.queryTo.microsecondsSinceEpoch,
+        ],
+      ],
     );
     return events
         .map(

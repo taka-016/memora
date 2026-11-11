@@ -51,7 +51,8 @@ class CalendarEventDto extends Equatable {
   final String title;
   final DateTime startDateTime;
   final DateTime endDateTime;
-  Duration get duration => calendarEventDuration(startDateTime, endDateTime, isAllDay);
+  Duration get duration =>
+      calendarEventDuration(startDateTime, endDateTime, isAllDay);
   final bool isAllDay;
   final List<int> notificationMinutesBefore;
   final String? recurrenceRule;

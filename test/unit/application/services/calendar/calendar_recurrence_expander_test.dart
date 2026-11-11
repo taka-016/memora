@@ -75,12 +75,15 @@ void main() {
       );
       final invalid = expired.copyWith(
         overrides: [
-          CalendarEventOverride(originalStartDateTime: DateTime.utc(
+          CalendarEventOverride(
+            originalStartDateTime: DateTime.utc(
               2026,
               1,
               frequency == 'DAILY' ? 1 : 5,
               9,
-            ), isCancelled: true),
+            ),
+            isCancelled: true,
+          ),
         ],
       );
       expect(
@@ -173,7 +176,10 @@ void main() {
       expand(
         source.copyWith(
           overrides: [
-            CalendarEventOverride(originalStartDateTime: DateTime.utc(2024, 2, 29), isCancelled: true),
+            CalendarEventOverride(
+              originalStartDateTime: DateTime.utc(2024, 2, 29),
+              isCancelled: true,
+            ),
           ],
         ),
         from,
@@ -230,8 +236,14 @@ void main() {
     );
   });
   test('取消した回を表示せず別月にも展開しない', () {
-    final moved = CalendarEventOverride(originalStartDateTime: DateTime.utc(2026, 1, 2), isCancelled: true);
-    final cancelled = CalendarEventOverride(originalStartDateTime: DateTime.utc(2026, 1, 3), isCancelled: true);
+    final moved = CalendarEventOverride(
+      originalStartDateTime: DateTime.utc(2026, 1, 2),
+      isCancelled: true,
+    );
+    final cancelled = CalendarEventOverride(
+      originalStartDateTime: DateTime.utc(2026, 1, 3),
+      isCancelled: true,
+    );
     final value = event(
       'FREQ=DAILY;COUNT=3',
       DateTime.utc(2026, 1, 1),
@@ -280,7 +292,10 @@ void main() {
       'FREQ=DAILY;COUNT=2',
       DateTime.utc(2026),
       overrides: [
-        CalendarEventOverride(originalStartDateTime: DateTime.utc(2026, 1, 3), isCancelled: true),
+        CalendarEventOverride(
+          originalStartDateTime: DateTime.utc(2026, 1, 3),
+          isCancelled: true,
+        ),
       ],
     );
     expect(
@@ -342,7 +357,10 @@ void main() {
       'FREQ=DAILY;COUNT=3',
       DateTime(2026, 1, 1),
       overrides: [
-        CalendarEventOverride(originalStartDateTime: DateTime(2026, 1, 2), isCancelled: true),
+        CalendarEventOverride(
+          originalStartDateTime: DateTime(2026, 1, 2),
+          isCancelled: true,
+        ),
       ],
     );
     expect(

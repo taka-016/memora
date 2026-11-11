@@ -36,16 +36,30 @@ void main() {
         isAllDay: true,
         recurrenceRule: 'FREQ=DAILY;COUNT=3',
         overrides: [
-          CalendarEventOverride(originalStartDateTime: DateTime.utc(2026, 10, 2), isCancelled: true),
+          CalendarEventOverride(
+            originalStartDateTime: DateTime.utc(2026, 10, 2),
+            isCancelled: true,
+          ),
         ],
       ),
     );
-    await repository.saveCalendarEvent(CalendarEvent(id: '', groupId: 'g', labelType: 'member', memberId: 'm', title: '太郎',
-      startDateTime: DateTime.utc(2026, 10, 2), endDateTime: DateTime.utc(2026, 10, 2), isAllDay: true));
+    await repository.saveCalendarEvent(
+      CalendarEvent(
+        id: '',
+        groupId: 'g',
+        labelType: 'member',
+        memberId: 'm',
+        title: '太郎',
+        startDateTime: DateTime.utc(2026, 10, 2),
+        endDateTime: DateTime.utc(2026, 10, 2),
+        isAllDay: true,
+      ),
+    );
     await db.deleteRows('group_members', 'member_id', 'm');
-    final saved = (await SqliteCalendarEventQueryService(
-      db,
-    ).getCalendarEventsByGroupId('g')).singleWhere((event) => event.recurrenceRule == null);
+    final saved =
+        (await SqliteCalendarEventQueryService(db)
+                .getCalendarEventsByGroupId('g'))
+            .singleWhere((event) => event.recurrenceRule == null);
     expect(saved.labelType, 'member');
     expect(saved.memberId, 'm');
     expect(saved.overrides, isEmpty);

@@ -229,10 +229,12 @@ void main() {
       isAllDay: true,
       recurrenceRule: 'FREQ=DAILY;COUNT=1',
       overrides: [
-        CalendarEventOverride(originalStartDateTime: DateTime.utc(2026, 10, 1), isCancelled: true),
+        CalendarEventOverride(
+          originalStartDateTime: DateTime.utc(2026, 10, 1),
+          isCancelled: true,
+        ),
       ],
     ),
-
   };
   for (final entry in hiddenEvents.entries) {
     test('${entry.key}が参照するラベルは削除せず使用中と案内する', () async {

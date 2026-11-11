@@ -13,17 +13,23 @@ class CalendarRecurrenceExpander {
     final duration = event.duration;
     if (rule.until != null) return rule.until!.add(duration);
     if (rule.count == null) return null;
-    final start = event.isAllDay ? _date(event.startDateTime) : timeZone.local(event.startDateTime, event.timeZone!);
+    final start = event.isAllDay
+        ? _date(event.startDateTime)
+        : timeZone.local(event.startDateTime, event.timeZone!);
     final day = _date(start);
     final maximumDays = DateTime.utc(10000).difference(day).inDays;
     int countBefore(int days) {
       final before = day.add(Duration(days: days));
       var count = rule.candidateCountBefore(start, before);
       if (!event.isAllDay) {
-        count -= timeZone.skippedDates(start, before, event.timeZone!).where((date) => rule.matches(date, start)).length;
+        count -= timeZone
+            .skippedDates(start, before, event.timeZone!)
+            .where((date) => rule.matches(date, start))
+            .length;
       }
       return count;
     }
+
     var upper = 1;
     while (upper < maximumDays && countBefore(upper) < rule.count!) {
       upper = upper * 2 < maximumDays ? upper * 2 : maximumDays;
@@ -39,7 +45,9 @@ class CalendarRecurrenceExpander {
       }
     }
     final wall = day.add(Duration(days: upper - 1)).add(start.difference(day));
-    final instant = event.isAllDay ? wall : timeZone.resolve(wall, event.timeZone!);
+    final instant = event.isAllDay
+        ? wall
+        : timeZone.resolve(wall, event.timeZone!);
     return instant?.add(duration);
   }
 

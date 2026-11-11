@@ -44,8 +44,18 @@ void main() {
     ).thenReturn(bounded);
     when(base.where('recurrenceRule', isNull: true)).thenReturn(base);
     when(base.where('recurrenceRule', isNull: false)).thenReturn(recurring);
-    when(recurring.where('recurrenceEndDateTime', isGreaterThanOrEqualTo: Timestamp.fromDate(period.queryFrom))).thenReturn(recurring);
-    when(recurring.where('startDateTime', isLessThan: Timestamp.fromDate(period.queryTo))).thenReturn(recurring);
+    when(
+      recurring.where(
+        'recurrenceEndDateTime',
+        isGreaterThanOrEqualTo: Timestamp.fromDate(period.queryFrom),
+      ),
+    ).thenReturn(recurring);
+    when(
+      recurring.where(
+        'startDateTime',
+        isLessThan: Timestamp.fromDate(period.queryTo),
+      ),
+    ).thenReturn(recurring);
     when(empty.docs).thenReturn([]);
     when(empty.docChanges).thenReturn([]);
     when(base.get()).thenAnswer((_) async => empty);
@@ -57,7 +67,12 @@ void main() {
     await FirestoreCalendarEventQueryService(firestore: firestore)
         .getCalendarEventsByGroupId('g', period: period);
     verify(base.where('recurrenceRule', isNull: true)).called(1);
-    verify(recurring.where('recurrenceEndDateTime', isGreaterThanOrEqualTo: Timestamp.fromDate(period.queryFrom))).called(1);
+    verify(
+      recurring.where(
+        'recurrenceEndDateTime',
+        isGreaterThanOrEqualTo: Timestamp.fromDate(period.queryFrom),
+      ),
+    ).called(1);
     verify(bounded.get()).called(1);
     verify(recurring.get()).called(1);
     verifyNever(base.get());
@@ -67,30 +82,55 @@ void main() {
     final parent = MockQueryDocumentSnapshot();
     when(parent.id).thenReturn('series');
     when(parent.data()).thenReturn({
-      'groupId': 'g', 'labelType': 'group', 'title': '予定', 'isAllDay': true,
+      'groupId': 'g',
+      'labelType': 'group',
+      'title': '予定',
+      'isAllDay': true,
       'startDateTime': Timestamp.fromDate(DateTime.utc(2020)),
       'endDateTime': Timestamp.fromDate(DateTime.utc(2020, 1, 4)),
-      'recurrenceRule': 'FREQ=DAILY', 'overrideIds': ['past', 'current', 'future'],
+      'recurrenceRule': 'FREQ=DAILY',
+      'overrideIds': ['past', 'current', 'future'],
     });
     final parents = MockQuerySnapshot();
     when(parents.docs).thenReturn([parent]);
     when(recurring.get()).thenAnswer((_) async => parents);
     final cancellations = MockCollectionReference();
     final query = MockQuery();
-    when(firestore.collection('calendar_event_overrides')).thenReturn(cancellations);
+    when(firestore.collection('calendar_event_overrides'))
+        .thenReturn(cancellations);
     when(cancellations.where('eventId', isEqualTo: 'series')).thenReturn(query);
     when(query.where('groupId', isEqualTo: 'g')).thenReturn(query);
-    when(query.where('originalEndDateTime', isGreaterThanOrEqualTo: Timestamp.fromDate(period.queryFrom))).thenReturn(query);
-    when(query.where('originalStartDateTime', isLessThan: Timestamp.fromDate(period.queryTo))).thenReturn(query);
+    when(
+      query.where(
+        'originalEndDateTime',
+        isGreaterThanOrEqualTo: Timestamp.fromDate(period.queryFrom),
+      ),
+    ).thenReturn(query);
+    when(
+      query.where(
+        'originalStartDateTime',
+        isLessThan: Timestamp.fromDate(period.queryTo),
+      ),
+    ).thenReturn(query);
     final row = MockQueryDocumentSnapshot();
     final key = DateTime.utc(2026, 11, 8);
-    when(row.data()).thenReturn({'originalStartDateTime': Timestamp.fromDate(key), 'isCancelled': true});
+    when(row.data()).thenReturn({
+      'originalStartDateTime': Timestamp.fromDate(key),
+      'isCancelled': true,
+    });
     final rows = MockQuerySnapshot();
     when(rows.docs).thenReturn([row]);
     when(query.get()).thenAnswer((_) async => rows);
-    final result = await FirestoreCalendarEventQueryService(firestore: firestore).getCalendarEventsByGroupId('g', period: period);
+    final result = await FirestoreCalendarEventQueryService(
+      firestore: firestore,
+    ).getCalendarEventsByGroupId('g', period: period);
     expect(result.single.overrides.single.originalStartDateTime, key);
-    verify(query.where('originalEndDateTime', isGreaterThanOrEqualTo: Timestamp.fromDate(period.queryFrom))).called(1);
+    verify(
+      query.where(
+        'originalEndDateTime',
+        isGreaterThanOrEqualTo: Timestamp.fromDate(period.queryFrom),
+      ),
+    ).called(1);
     verify(query.get()).called(1);
     verifyNever(cancellations.doc(any));
   });

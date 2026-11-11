@@ -15,11 +15,20 @@ class CalendarOverrideMapper {
       'event_id': eventId,
       'group_id': groupId,
       'original_start_date_time': start.microsecondsSinceEpoch,
-      'original_end_date_time': start.add(parentDuration).microsecondsSinceEpoch,
+      'original_end_date_time': start
+          .add(parentDuration)
+          .microsecondsSinceEpoch,
       'is_cancelled': 1,
     };
   }
-  static CalendarEventOverride fromRow(Map<String, Object?> row, bool parentAllDay) =>
-      CalendarEventOverride(originalStartDateTime: DateTime.fromMicrosecondsSinceEpoch(
-        row['original_start_date_time'] as int, isUtc: parentAllDay));
+
+  static CalendarEventOverride fromRow(
+    Map<String, Object?> row,
+    bool parentAllDay,
+  ) => CalendarEventOverride(
+    originalStartDateTime: DateTime.fromMicrosecondsSinceEpoch(
+      row['original_start_date_time'] as int,
+      isUtc: parentAllDay,
+    ),
+  );
 }

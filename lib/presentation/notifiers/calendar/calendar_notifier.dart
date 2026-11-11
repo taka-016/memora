@@ -410,22 +410,20 @@ class CalendarNotifier extends _$CalendarNotifier {
     return success;
   }
 
-  Future<bool> deleteLabel(String id, {int? expectedVersion}) => _mutate(
-    () async {
-      if (!state.labels.any(
-        (label) => label.id == id && label.groupId == groupId,
-      )) {
-        throw const ApplicationValidationException('削除する色ラベルが見つかりません');
-      }
-      if (_series.any(
-        (event) =>
-            event.labelType == 'custom' && event.labelId == id,
-      )) {
-        throw const ApplicationValidationException('予定で使用中の色ラベルは削除できません');
-      }
-      await ref
-          .read(deleteCalendarLabelUsecaseProvider)
-          .execute(id, expectedVersion: expectedVersion);
-    },
-  );
+  Future<bool> deleteLabel(String id, {int? expectedVersion}) =>
+      _mutate(() async {
+        if (!state.labels.any(
+          (label) => label.id == id && label.groupId == groupId,
+        )) {
+          throw const ApplicationValidationException('削除する色ラベルが見つかりません');
+        }
+        if (_series.any(
+          (event) => event.labelType == 'custom' && event.labelId == id,
+        )) {
+          throw const ApplicationValidationException('予定で使用中の色ラベルは削除できません');
+        }
+        await ref
+            .read(deleteCalendarLabelUsecaseProvider)
+            .execute(id, expectedVersion: expectedVersion);
+      });
 }

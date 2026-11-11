@@ -13,7 +13,6 @@ CalendarEvent calendarEventContent(CalendarEvent value) {
                 v.originalStartDateTime,
                 value.isAllDay,
               ),
-
             ),
           )
           .toList()

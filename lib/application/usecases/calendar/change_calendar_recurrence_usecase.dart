@@ -12,7 +12,11 @@ import 'package:memora/domain/repositories/calendar/calendar_event_repository.da
 enum CalendarChangeScope { only, following, all }
 
 class ChangeCalendarRecurrenceUsecase {
-  ChangeCalendarRecurrenceUsecase(this._repository, this._expander, {CalendarEventQueryService? queryService}) : _queryService = queryService;
+  ChangeCalendarRecurrenceUsecase(
+    this._repository,
+    this._expander, {
+    this._queryService,
+  });
   final CalendarEventQueryService? _queryService;
   final CalendarEventRepository _repository;
   final CalendarRecurrenceExpander _expander;
@@ -26,12 +30,22 @@ class ChangeCalendarRecurrenceUsecase {
     try {
       if (_queryService != null) {
         final complete = await _queryService.getCalendarEventById(source.id);
-        if (complete == null) throw ValidationException('元の予定が見つかりません。再読み込みしてください');
-        final originalKeys = source.overrides.map((value) => _key(value.originalStartDateTime, source.isAllDay)).toSet();
-        source = source.copyWith(overrides: [
-          ...complete.overrides.where((value) => !originalKeys.contains(_key(value.originalStartDateTime, source.isAllDay))),
-          ...source.overrides,
-        ]);
+        if (complete == null) {
+          throw ValidationException('元の予定が見つかりません。再読み込みしてください');
+        }
+        final originalKeys = source.overrides
+            .map((value) => _key(value.originalStartDateTime, source.isAllDay))
+            .toSet();
+        source = source.copyWith(
+          overrides: [
+            ...complete.overrides.where(
+              (value) => !originalKeys.contains(
+                _key(value.originalStartDateTime, source.isAllDay),
+              ),
+            ),
+            ...source.overrides,
+          ],
+        );
       }
       if (source.recurrenceRule == null ||
           source.id.isEmpty ||
@@ -322,10 +336,7 @@ class ChangeCalendarRecurrenceUsecase {
       final key = target.isAllDay
           ? _key(wall, true)
           : _expander.resolveTime(wall, target.timeZone!);
-      return CalendarEventOverride(
-        originalStartDateTime: key,
-
-      );
+      return CalendarEventOverride(originalStartDateTime: key);
     }).toList();
   }
 

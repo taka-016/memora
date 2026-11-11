@@ -6,7 +6,7 @@ class CalendarEventMapper {
     return CalendarEvent(
       id: value.id,
       version: value.version,
-    overridesFingerprint: value.overridesFingerprint,
+      overridesFingerprint: value.overridesFingerprint,
       groupId: value.groupId,
       labelId: value.labelId,
 
@@ -33,7 +33,7 @@ class CalendarEventMapper {
     return CalendarEventDto(
       id: value.id,
       version: value.version,
-    overridesFingerprint: value.overridesFingerprint,
+      overridesFingerprint: value.overridesFingerprint,
       groupId: value.groupId,
       labelId: value.labelId,
 

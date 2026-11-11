@@ -60,7 +60,11 @@ class SqliteCalendarLabelRepository implements CalendarLabelRepository {
   @override
   Future<void> deleteCalendarLabel(String labelId, {int? expectedVersion}) =>
       db.transaction(() async {
-        if ((await db.rows('calendar_events', where: 'label_id = ?', args: [labelId])).isNotEmpty) {
+        if ((await db.rows(
+          'calendar_events',
+          where: 'label_id = ?',
+          args: [labelId],
+        )).isNotEmpty) {
           throw ValidationException('使用中の色ラベルは削除できません');
         }
         await db.deleteRows('calendar_labels', 'id', labelId);
