@@ -56,6 +56,9 @@ void main() {
         isLessThan: Timestamp.fromDate(period.queryTo),
       ),
     ).thenReturn(recurring);
+    when(bounded.orderBy('endDateTime')).thenReturn(bounded);
+    when(bounded.orderBy('startDateTime')).thenReturn(bounded);
+    for (final field in ['recurrenceEndDateTime', 'startDateTime', 'recurrenceRule']) { when(recurring.orderBy(field)).thenReturn(recurring); }
     when(empty.docs).thenReturn([]);
     when(empty.docChanges).thenReturn([]);
     when(base.get()).thenAnswer((_) async => empty);
@@ -73,6 +76,8 @@ void main() {
         isGreaterThanOrEqualTo: Timestamp.fromDate(period.queryFrom),
       ),
     ).called(1);
+    verify(recurring.orderBy('recurrenceEndDateTime')).called(1);
+    verify(bounded.orderBy('endDateTime')).called(1);
     verify(bounded.get()).called(1);
     verify(recurring.get()).called(1);
     verifyNever(base.get());
@@ -120,6 +125,8 @@ void main() {
     });
     final rows = MockQuerySnapshot();
     when(rows.docs).thenReturn([row]);
+    when(query.orderBy('originalEndDateTime')).thenReturn(query);
+    when(query.orderBy('originalStartDateTime')).thenReturn(query);
     when(query.get()).thenAnswer((_) async => rows);
     final result = await FirestoreCalendarEventQueryService(
       firestore: firestore,
@@ -131,6 +138,7 @@ void main() {
         isGreaterThanOrEqualTo: Timestamp.fromDate(period.queryFrom),
       ),
     ).called(1);
+    verify(query.orderBy('originalEndDateTime')).called(1);
     verify(query.get()).called(1);
     verifyNever(cancellations.doc(any));
   });

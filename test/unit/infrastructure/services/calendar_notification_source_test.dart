@@ -206,6 +206,7 @@ void main() {
     ).thenReturn(eventQuery);
     when(eventQuery.where('recurrenceRule', isNull: false))
         .thenReturn(eventQuery);
+    for (final field in ['endDateTime', 'startDateTime', 'recurrenceEndDateTime', 'recurrenceRule']) { when(eventQuery.orderBy(field)).thenReturn(eventQuery); }
     when(eventQuery.snapshots()).thenAnswer((_) => snapshots.stream);
     final source = DeviceCalendarNotificationSource(
       currentMember: currentMember,
