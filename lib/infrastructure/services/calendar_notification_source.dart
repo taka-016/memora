@@ -143,9 +143,8 @@ class DeviceCalendarNotificationSource implements CalendarNotificationSource {
             received.remove(id);
             existing.remove(id);
             loadedGroups.remove(id);
-            for (final sub in removed) {
-              await sub.cancel();
-            }
+            await Future.wait(removed.map((sub) => sub.cancel()));
+            if (closed || current != revision) return;
           }
         }
         if (closed || current != revision) return;
@@ -162,6 +161,7 @@ class DeviceCalendarNotificationSource implements CalendarNotificationSource {
     Future<List<CalendarEventDto>> watchedLoad() async {
       final next = CalendarEventPeriod.forNotifications(clock.now());
       if (next.from != period.from) {
+        final current = ++revision;
         period = next;
         if (!ready.isCompleted) ready.complete();
         ready = Completer<void>();
@@ -174,7 +174,7 @@ class DeviceCalendarNotificationSource implements CalendarNotificationSource {
         for (final sub in previous) {
           await sub.cancel();
         }
-        if (!closed) {
+        if (!closed && current == revision) {
           for (final id in ids) {
             subscribe(id);
           }
