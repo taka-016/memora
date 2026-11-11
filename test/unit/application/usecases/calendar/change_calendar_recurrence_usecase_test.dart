@@ -255,7 +255,7 @@ void main() {
       endDateTime: DateTime.utc(2026, 12, 4),
       title: '変更', url: 'https://example.com', memo: '詳細\n補足',
       locationName: '駅', latitude: 35.0, longitude: 139.0,
-      notificationMinutesBefore: [0, 60],
+      notificationMinutesBefore: [0, 1440],
     );
     final key = DateTime.utc(2026, 10, 3);
     await usecase.execute(source, key, CalendarChangeScope.only, changes: changes);
