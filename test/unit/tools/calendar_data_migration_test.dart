@@ -7,6 +7,12 @@ import 'package:flutter_test/flutter_test.dart';
 import '../../../scripts/firebase/migrate_calendar_events.dart' as migration;
 
 void main() {
+  test('移行適用は出力先の後に明示した--applyだけで有効になり引数不足を拒否する', () {
+    expect(() => migration.migrationArguments(['p', '--apply']), throwsFormatException);
+    expect(() => migration.migrationArguments(['p', 'report.json', 'unexpected']), throwsFormatException);
+    expect(migration.migrationArguments(['p', 'report.json']).apply, isFalse);
+    expect(migration.migrationArguments(['p', 'report.json', '--apply']).apply, isTrue);
+  });
   final parent = <String, Object?>{
     'groupId': 'g',
     'title': '系列',
