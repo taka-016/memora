@@ -31,6 +31,21 @@ import 'calendar_notification_source_test.mocks.dart';
   MockSpec<GetCalendarEventsUsecase>(),
 ])
 void main() {
+  test('所属取得中に日付が変わっても最新の所属を取得して期間を更新する', () async {
+    final fixture = _NotificationFixture();
+    addTearDown(fixture.dispose);
+    await fixture.start();
+    final pending = Completer<List<GroupDto>>();
+    when(fixture.groups.execute(any)).thenAnswer((_) => pending.future);
+    fixture.membership.add(fs.MockQuerySnapshot());
+    await fixture.flush();
+    fixture.now = DateTime(2026, 11, 11, 15);
+    final result = expectLater(fixture.source.load(), completion(isEmpty));
+    await fixture.flush();
+    pending.complete([]);
+    await result;
+  });
+
   test('複数グループ解除の待機中に確定した所属グループの監視を消さない', () async {
     final fixture = _NotificationFixture(ids: ['g', 'retained']);
     addTearDown(fixture.dispose);
