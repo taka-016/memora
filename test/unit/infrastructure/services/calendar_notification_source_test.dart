@@ -1,3 +1,4 @@
+import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/application/usecases/calendar/watch_calendar_events_usecase.dart';
 
@@ -25,10 +26,55 @@ import 'calendar_notification_source_test.mocks.dart';
 @GenerateNiceMocks([
   MockSpec<GetCurrentMemberUseCase>(),
   MockSpec<WatchCalendarEventsUsecase>(),
+  MockSpec<AppClock>(),
   MockSpec<GetGroupsWithMembersUsecase>(),
   MockSpec<GetCalendarEventsUsecase>(),
 ])
 void main() {
+  test('複数グループ解除の待機中に確定した所属グループの監視を消さない', () async {
+    final fixture = _NotificationFixture(ids: ['g', 'retained']);
+    addTearDown(fixture.dispose);
+    await fixture.start();
+    final cancellation = Completer<void>();
+    final cancelling = Completer<void>();
+    fixture.eventStreams['g']!.onCancel = () {
+      cancelling.complete();
+      return cancellation.future;
+    };
+    fixture.ids = [];
+    fixture.membership.add(fs.MockQuerySnapshot());
+    await cancelling.future;
+    fixture.ids = ['retained'];
+    fixture.membership.add(fs.MockQuerySnapshot());
+    await fixture.flush();
+    cancellation.complete();
+    await fixture.flush();
+    expect(fixture.eventStreams['retained']!.hasListener, isTrue);
+  });
+
+  test('期間更新の解除待機中に脱退したグループの監視を再開しない', () async {
+    final fixture = _NotificationFixture();
+    addTearDown(fixture.dispose);
+    await fixture.start();
+    final cancellation = Completer<void>();
+    final cancelling = Completer<void>();
+    fixture.eventStreams['g']!.onCancel = () {
+      cancelling.complete();
+      return cancellation.future;
+    };
+    clearInteractions(fixture.watcher);
+    fixture.now = DateTime(2026, 11, 11, 15);
+    final loading = fixture.source.load();
+    await cancelling.future;
+    fixture.ids = [];
+    fixture.membership.add(fs.MockQuerySnapshot());
+    await fixture.flush();
+    cancellation.complete();
+    await fixture.flush();
+    expect(await loading, isEmpty);
+    verifyNever(fixture.watcher.execute('g', period: anyNamed('period')));
+  });
+
   for (final closeDuringUpdate in [false, true]) {
     test('所属監視の遅い解除後に古い取得結果で予定監視を追加しない（終了=$closeDuringUpdate）', () async {
       final fixture = _NotificationFixture();
@@ -162,7 +208,7 @@ void main() {
 }
 
 class _NotificationFixture {
-  _NotificationFixture() {
+  _NotificationFixture({this.ids = const ['g']}) {
     const member = MemberDto(id: 'm', displayName: '本人');
     when(current.execute()).thenAnswer((_) async => member);
     when(groups.execute(member)).thenAnswer(
@@ -195,13 +241,14 @@ class _NotificationFixture {
               .putIfAbsent(id, () => StreamController<List<CalendarEventDto>>())
               .stream;
         });
+    when(clock.now()).thenAnswer((_) => now);
     source = DeviceCalendarNotificationSource(
       currentMember: current,
       groups: groups,
       events: events,
       watchEvents: watcher,
       firestore: firestore,
-      clock: FixedAppClock(DateTime(2026, 11, 10, 15)),
+      clock: clock,
     );
   }
   final current = MockGetCurrentMemberUseCase();
@@ -216,7 +263,9 @@ class _NotificationFixture {
   final groupStreams =
       <String, StreamController<DocumentSnapshot<Map<String, dynamic>>>>{};
   final eventStreams = <String, StreamController<List<CalendarEventDto>>>{};
-  var ids = ['g'];
+  List<String> ids;
+  var now = DateTime(2026, 11, 10, 15);
+  final clock = MockAppClock();
   late DeviceCalendarNotificationSource source;
   late StreamSubscription<void> subscription;
   Future<void> flush() => Future<void>(() {});
@@ -231,8 +280,10 @@ class _NotificationFixture {
     await flush();
     membership.add(fs.MockQuerySnapshot());
     await flush();
-    groupExists('g', true);
-    eventStreams['g']!.add([]);
+    for (final id in ids) {
+      groupExists(id, true);
+      eventStreams[id]!.add([]);
+    }
     await flush();
     await source.load();
   }
