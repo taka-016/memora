@@ -32,6 +32,7 @@ final calendarNotificationSourceProvider = Provider<CalendarNotificationSource>(
     groups: ref.watch(getGroupsWithMembersUsecaseProvider),
     events: ref.watch(getCalendarEventsUsecaseProvider),
     clock: ref.watch(appClockProvider),
+    watchEvents: ref.watch(watchCalendarEventsUsecaseProvider),
     database: ref.watch(appModeProvider) == AppMode.offline
         ? ref.watch(offlineDatabaseProvider)
         : null,
