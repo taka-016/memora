@@ -7,6 +7,42 @@ import 'package:memora/domain/exceptions/validation_exception.dart';
 class CalendarRecurrenceExpander {
   const CalendarRecurrenceExpander(this.timeZone);
   final CalendarTimeZone timeZone;
+  DateTime? seriesEndDateTime(CalendarEventDto event) {
+    if (event.recurrenceRule == null) return event.endDateTime;
+    final rule = CalendarRecurrenceRule.parse(event.recurrenceRule!);
+    final duration = event.endDateTime.difference(event.startDateTime);
+    if (rule.until != null) return rule.until!.add(duration);
+    if (rule.count == null) return null;
+    final start = event.isAllDay ? _date(event.startDateTime) : timeZone.local(event.startDateTime, event.timeZone!);
+    final day = _date(start);
+    final maximumDays = DateTime.utc(10000).difference(day).inDays;
+    int countBefore(int days) {
+      final before = day.add(Duration(days: days));
+      var count = rule.candidateCountBefore(start, before);
+      if (!event.isAllDay) {
+        count -= timeZone.skippedDates(start, before, event.timeZone!).where((date) => rule.matches(date, start)).length;
+      }
+      return count;
+    }
+    var upper = 1;
+    while (upper < maximumDays && countBefore(upper) < rule.count!) {
+      upper = upper * 2 < maximumDays ? upper * 2 : maximumDays;
+    }
+    if (countBefore(upper) < rule.count!) return null;
+    var lower = 0;
+    while (upper - lower > 1) {
+      final middle = (lower + upper) ~/ 2;
+      if (countBefore(middle) >= rule.count!) {
+        upper = middle;
+      } else {
+        lower = middle;
+      }
+    }
+    final wall = day.add(Duration(days: upper - 1)).add(start.difference(day));
+    final instant = event.isAllDay ? wall : timeZone.resolve(wall, event.timeZone!);
+    return instant?.add(duration);
+  }
+
   DateTime localTime(DateTime instant, String zone) {
     try {
       return timeZone.local(instant, zone);
