@@ -364,15 +364,15 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "recurrenceRule",
-          "order": "ASCENDING"
-        },
-        {
           "fieldPath": "recurrenceEndDateTime",
           "order": "ASCENDING"
         },
         {
           "fieldPath": "startDateTime",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "recurrenceRule",
           "order": "ASCENDING"
         },
         {

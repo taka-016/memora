@@ -17,13 +17,15 @@ List<Query<Map<String, dynamic>>> calendarEventQueries(
           'endDateTime',
           isGreaterThanOrEqualTo: Timestamp.fromDate(period.queryFrom),
         )
-        .where('startDateTime', isLessThan: Timestamp.fromDate(period.queryTo)),
+        .where('startDateTime', isLessThan: Timestamp.fromDate(period.queryTo))
+        .orderBy('endDateTime').orderBy('startDateTime'),
     base
         .where('recurrenceRule', isNull: false)
         .where(
           'recurrenceEndDateTime',
           isGreaterThanOrEqualTo: Timestamp.fromDate(period.queryFrom),
         )
-        .where('startDateTime', isLessThan: Timestamp.fromDate(period.queryTo)),
+        .where('startDateTime', isLessThan: Timestamp.fromDate(period.queryTo))
+        .orderBy('recurrenceEndDateTime').orderBy('startDateTime').orderBy('recurrenceRule'),
   ];
 }
