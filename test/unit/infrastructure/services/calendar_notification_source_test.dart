@@ -1,5 +1,6 @@
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/application/usecases/calendar/watch_calendar_events_usecase.dart';
+
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -58,7 +59,7 @@ void main() {
 
   test('グループが削除されたら所属文書が残っていても予定監視を解除する', () async {
     final fixture = _NotificationFixture();
-      addTearDown(fixture.dispose);
+    addTearDown(fixture.dispose);
     await fixture.start();
     fixture.groupExists('g', false);
     await fixture.flush();
@@ -164,9 +165,12 @@ class _NotificationFixture {
   _NotificationFixture() {
     const member = MemberDto(id: 'm', displayName: '本人');
     when(current.execute()).thenAnswer((_) async => member);
-    when(groups.execute(member)).thenAnswer((_) async => [
-      for (final id in ids) GroupDto(id: id, ownerId: 'other', name: id, members: []),
-    ]);
+    when(groups.execute(member)).thenAnswer(
+      (_) async => [
+        for (final id in ids)
+          GroupDto(id: id, ownerId: 'other', name: id, members: []),
+      ],
+    );
     when(firestore.collection(any)).thenReturn(collection);
     when(collection.where('memberId', isEqualTo: 'm')).thenReturn(query);
     when(collection.where('ownerId', isEqualTo: 'm')).thenReturn(query);
@@ -174,17 +178,31 @@ class _NotificationFixture {
     when(collection.doc(any)).thenAnswer((invocation) {
       final id = invocation.positionalArguments.single as String;
       final document = fs.MockDocumentReference();
-      final stream = groupStreams.putIfAbsent(id, () => StreamController<DocumentSnapshot<Map<String, dynamic>>>.broadcast());
+      final stream = groupStreams.putIfAbsent(
+        id,
+        () =>
+            StreamController<
+              DocumentSnapshot<Map<String, dynamic>>
+            >.broadcast(),
+      );
       when(document.snapshots()).thenAnswer((_) => stream.stream);
       return document;
     });
-    when(watcher.execute(any, period: anyNamed('period'))).thenAnswer((invocation) {
-      final id = invocation.positionalArguments.single as String;
-      return eventStreams.putIfAbsent(id, () => StreamController<List<CalendarEventDto>>()).stream;
-    });
-    source = DeviceCalendarNotificationSource(currentMember: current, groups: groups,
-      events: events, watchEvents: watcher, firestore: firestore,
-      clock: FixedAppClock(DateTime(2026, 11, 10, 15)));
+    when(watcher.execute(any, period: anyNamed('period')))
+        .thenAnswer((invocation) {
+          final id = invocation.positionalArguments.single as String;
+          return eventStreams
+              .putIfAbsent(id, () => StreamController<List<CalendarEventDto>>())
+              .stream;
+        });
+    source = DeviceCalendarNotificationSource(
+      currentMember: current,
+      groups: groups,
+      events: events,
+      watchEvents: watcher,
+      firestore: firestore,
+      clock: FixedAppClock(DateTime(2026, 11, 10, 15)),
+    );
   }
   final current = MockGetCurrentMemberUseCase();
   final groups = MockGetGroupsWithMembersUsecase();
@@ -193,8 +211,10 @@ class _NotificationFixture {
   final firestore = fs.MockFirebaseFirestore();
   final collection = fs.MockCollectionReference();
   final query = fs.MockQuery();
-  final membership = StreamController<QuerySnapshot<Map<String, dynamic>>>.broadcast();
-  final groupStreams = <String, StreamController<DocumentSnapshot<Map<String, dynamic>>>>{};
+  final membership =
+      StreamController<QuerySnapshot<Map<String, dynamic>>>.broadcast();
+  final groupStreams =
+      <String, StreamController<DocumentSnapshot<Map<String, dynamic>>>>{};
   final eventStreams = <String, StreamController<List<CalendarEventDto>>>{};
   var ids = ['g'];
   late DeviceCalendarNotificationSource source;
@@ -205,6 +225,7 @@ class _NotificationFixture {
     when(doc.exists).thenReturn(exists);
     groupStreams[id]!.add(doc);
   }
+
   Future<void> start() async {
     subscription = source.changes().listen((_) {}, onError: (Object _) {});
     await flush();
@@ -215,10 +236,15 @@ class _NotificationFixture {
     await flush();
     await source.load();
   }
+
   Future<void> dispose() async {
     await subscription.cancel();
     await membership.close();
-    for (final stream in groupStreams.values) { await stream.close(); }
-    for (final stream in eventStreams.values) { await stream.close(); }
+    for (final stream in groupStreams.values) {
+      await stream.close();
+    }
+    for (final stream in eventStreams.values) {
+      await stream.close();
+    }
   }
 }
