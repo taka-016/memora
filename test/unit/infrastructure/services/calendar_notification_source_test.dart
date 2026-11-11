@@ -1,3 +1,5 @@
+import '../../../helpers/test_exception.dart';
+
 import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/application/usecases/calendar/watch_calendar_events_usecase.dart';
@@ -31,6 +33,34 @@ import 'calendar_notification_source_test.mocks.dart';
   MockSpec<GetCalendarEventsUsecase>(),
 ])
 void main() {
+  test('グループごとの初回取得と失敗からの復旧後に受信済み予定を統合し変更削除を反映する', () async {
+    final fixture = _NotificationFixture(ids: ['g', 'other']);
+    addTearDown(fixture.dispose);
+    await fixture.start();
+    CalendarEventDto event(String groupId) => CalendarEventDto(
+      id: groupId,
+      groupId: groupId,
+      title: '予定',
+      startDateTime: DateTime(2026, 11, 12),
+      endDateTime: DateTime(2026, 11, 13),
+      isAllDay: true,
+    );
+    final first = event('g');
+    final second = event('other');
+    fixture.eventStreams['g']!.add([first]);
+    fixture.eventStreams['other']!.add([second]);
+    await fixture.flush();
+    expect(await fixture.source.load(), unorderedEquals([first, second]));
+    fixture.eventStreams['other']!.addError(TestException('取得失敗'));
+    await fixture.flush();
+    await expectLater(fixture.source.load(), throwsA(isA<TestException>()));
+    fixture.eventStreams['other']!.add([second.copyWith(title: '変更')]);
+    fixture.eventStreams['g']!.add([]);
+    await fixture.flush();
+    expect((await fixture.source.load()).single.title, '変更');
+    verifyNever(fixture.events.execute(any, period: anyNamed('period')));
+  });
+
   test('所属取得中に日付が変わっても最新の所属を取得して期間を更新する', () async {
     final fixture = _NotificationFixture();
     addTearDown(fixture.dispose);
