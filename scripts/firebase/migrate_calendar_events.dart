@@ -208,12 +208,20 @@ List<Map<String, Object?>> calendarMigrationWrites(
   return writes;
 }
 
+({String projectId, String reportPath, bool apply}) migrationArguments(List<String> args) {
+  if (args.length < 2 || args.length > 3 || args.take(2).any((value) => value.startsWith('--')) ||
+      (args.length == 3 && args[2] != '--apply')) {
+    throw const FormatException('プロジェクト・出力先・必要な場合だけ--applyを指定してください');
+  }
+  return (projectId: args[0], reportPath: args[1], apply: args.length == 3);
+}
+
 Future<void> main(List<String> args) async {
-  if (args.length < 2 ||
-      args.any((value) => value.startsWith('--') && value != '--apply')) {
-    stderr.writeln(
-      '使い方: dart run scripts/firebase/migrate_calendar_events.dart <projectId> <report.json> [--apply]',
-    );
+  late final ({String projectId, String reportPath, bool apply}) options;
+  try {
+    options = migrationArguments(args);
+  } on FormatException {
+    stderr.writeln('使い方: dart run scripts/firebase/migrate_calendar_events.dart <projectId> <report.json> [--apply]');
     exitCode = 1;
     return;
   }
@@ -223,13 +231,13 @@ Future<void> main(List<String> args) async {
     exitCode = 1;
     return;
   }
-  final client = FirestoreImportClient(args[0], '(default)', token);
-  final report = File(args[1]);
+  final client = FirestoreImportClient(options.projectId, '(default)', token);
+  final report = File(options.reportPath);
   final results = <Map<String, Object?>>[];
   Future<void> save() => report.writeAsString(
     jsonEncode({
       'projectId': args[0],
-      'apply': args.contains('--apply'),
+      'apply': options.apply,
       'events': results,
     }),
   );
@@ -260,7 +268,7 @@ Future<void> main(List<String> args) async {
       };
       results.add(result);
       await save();
-      if (!args.contains('--apply')) continue;
+      if (!options.apply) continue;
       final labels = <String, Map<String, dynamic>>{};
       for (final id in plan.labelDeltas.keys) {
         final label = await client.read('calendar_labels', id);
@@ -281,7 +289,7 @@ Future<void> main(List<String> args) async {
       await save();
     }
     stdout.writeln(
-      '対象=${results.length}、${args.contains('--apply') ? '適用済み' : '確認のみ'}: ${report.path}',
+      '対象=${results.length}、${options.apply ? '適用済み' : '確認のみ'}: ${report.path}',
     );
   } catch (error) {
     if (results.isNotEmpty) results.last['status'] = '失敗または結果不明';
