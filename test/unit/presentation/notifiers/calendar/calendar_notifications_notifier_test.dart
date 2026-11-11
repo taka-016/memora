@@ -32,6 +32,7 @@ void main() {
     source = MockCalendarNotificationSource();
     gateway = MockCalendarNotificationGateway();
     when(gateway.replace(any)).thenAnswer((_) async {});
+    when(gateway.isEnabled()).thenAnswer((_) async => true);
     sync = MockSynchronizeCalendarNotificationsUsecase();
     when(source.changes()).thenAnswer((_) => changes.stream);
     when(sync.execute())
@@ -50,6 +51,25 @@ void main() {
     container.dispose();
     await changes.close();
   });
+  test('通知が許可されていない間は監視せず再確認後に開始する', () async {
+    when(gateway.isEnabled()).thenAnswer((_) async => false);
+    final notifier = container.read(calendarNotificationsNotifierProvider.notifier);
+    await container.pump();
+    verifyNever(source.changes());
+    when(gateway.isEnabled()).thenAnswer((_) async => true);
+    await notifier.refresh();
+    verify(source.changes()).called(1);
+  });
+
+  test('保存と復帰による同期で正常な監視を張り直さない', () async {
+    final notifier = container.read(calendarNotificationsNotifierProvider.notifier);
+    await container.pump();
+    clearInteractions(source);
+    await notifier.refresh();
+    await notifier.refresh();
+    verifyNever(source.changes());
+  });
+
   test('スマートフォンの通知設定を開く間は処理中となり重複して開かない', () async {
     final opening = Completer<bool>();
     when(gateway.openNotificationSettings()).thenAnswer((_) => opening.future);
