@@ -7,14 +7,58 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/application/queries/calendar/calendar_event_watch_query_service.dart';
 import 'package:memora/infrastructure/services/firestore_calendar_event_store.dart';
+import 'package:memora/application/queries/calendar/calendar_event_query_service.dart';
+import 'package:memora/infrastructure/queries/calendar/firestore_calendar_event_query_service.dart';
 
 class FirestoreCalendarEventWatchQueryService
-    implements CalendarEventWatchQueryService {
+    implements CalendarEventWatchQueryService, CalendarEventQueryService {
   FirestoreCalendarEventWatchQueryService({required this.firestore});
   final FirebaseFirestore firestore;
 
+  final _active = <(String, CalendarEventPeriod?), _SharedEvents>{};
+
+  _SharedEvents? _covering(String groupId, CalendarEventPeriod? period) {
+    for (final entry in _active.entries) {
+      final (id, range) = entry.key;
+      if (id == groupId && (range == null || (period != null &&
+          !range.queryFrom.isAfter(period.queryFrom) &&
+          !range.queryTo.isBefore(period.queryTo)))) return entry.value;
+    }
+    return null;
+  }
+
   @override
-  Stream<List<CalendarEventDto>> watchCalendarEventsByGroupId(
+  Future<List<CalendarEventDto>> getCalendarEventsByGroupId(String groupId, {
+    CalendarEventPeriod? period,
+  }) async {
+    final shared = _covering(groupId, period);
+    if (shared != null) return shared.stream.first;
+    return FirestoreCalendarEventQueryService(firestore: firestore)
+        .getCalendarEventsByGroupId(groupId, period: period);
+  }
+
+  @override
+  Stream<List<CalendarEventDto>> watchCalendarEventsByGroupId(String groupId, {
+    CalendarEventPeriod? period,
+  }) {
+    // 購読時に共有先を決め、生成しただけのStreamは保持しない。
+    late StreamController<List<CalendarEventDto>> controller;
+    StreamSubscription<List<CalendarEventDto>>? subscription;
+    controller = StreamController<List<CalendarEventDto>>(
+      onListen: () {
+        final key = (groupId, period);
+        final shared = _covering(groupId, period) ?? (_active[key] = _SharedEvents(
+          _watch(groupId, period: period), () { _active.remove(key); },
+        ));
+        subscription = shared.stream.listen(controller.add,
+          onError: controller.addError, onDone: controller.close);
+      },
+      onCancel: () => subscription?.cancel(),
+    );
+    return controller.stream;
+  }
+
+  Stream<List<CalendarEventDto>> _watch(
     String groupId, {
     CalendarEventPeriod? period,
   }) {
@@ -80,6 +124,49 @@ class FirestoreCalendarEventWatchQueryService
           subscriptions.map((subscription) => subscription.cancel()),
         );
         received.clear();
+      },
+    );
+    return controller.stream;
+  }
+}
+
+class _SharedEvents {
+  _SharedEvents(this.source, this.onEmpty);
+  final Stream<List<CalendarEventDto>> source;
+  final void Function() onEmpty;
+  final _listeners = <StreamController<List<CalendarEventDto>>>{};
+  StreamSubscription<List<CalendarEventDto>>? _subscription;
+  List<CalendarEventDto>? _latest;
+  Object? _error;
+  StackTrace? _stack;
+
+  Stream<List<CalendarEventDto>> get stream {
+    late StreamController<List<CalendarEventDto>> controller;
+    controller = StreamController<List<CalendarEventDto>>(
+      onListen: () {
+        _listeners.add(controller);
+        if (_error != null) {
+          controller.addError(_error!, _stack);
+        } else if (_latest != null) {
+          controller.add(_latest!);
+        }
+        _subscription ??= source.listen((events) {
+          _latest = events;
+          _error = null;
+          for (final listener in _listeners) { listener.add(events); }
+        }, onError: (Object error, StackTrace stack) {
+          _error = error;
+          _stack = stack;
+          for (final listener in _listeners) { listener.addError(error, stack); }
+        });
+      },
+      onCancel: () async {
+        _listeners.remove(controller);
+        if (_listeners.isEmpty) {
+          onEmpty();
+          await _subscription?.cancel();
+          _latest = null;
+        }
       },
     );
     return controller.stream;

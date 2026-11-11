@@ -1,5 +1,5 @@
 import 'package:memora/infrastructure/queries/calendar/firestore_calendar_label_query_service.dart';
-import 'package:memora/infrastructure/queries/calendar/firestore_calendar_event_query_service.dart';
+import 'package:memora/infrastructure/queries/calendar/firestore_calendar_event_watch_query_service.dart';
 import 'package:memora/application/queries/calendar/calendar_label_query_service.dart';
 import 'package:memora/infrastructure/queries/calendar/sqlite_calendar_label_query_service.dart';
 import 'package:memora/application/queries/calendar/calendar_event_query_service.dart';
@@ -213,9 +213,7 @@ class QueryServiceFactory {
 
   static T _createFirestoreQueryService<T>({required Ref ref}) {
     if (T == CalendarEventQueryService) {
-      return FirestoreCalendarEventQueryService(
-        firestore: ref.watch(firebaseFirestoreProvider),
-      ) as T;
+      return ref.watch(firestoreCalendarEventQueriesProvider) as T;
     }
     if (T == CalendarLabelQueryService) {
       return FirestoreCalendarLabelQueryService(
@@ -279,4 +277,8 @@ final calendarEventQueryServiceProvider = Provider<CalendarEventQueryService>(
 
 final calendarLabelQueryServiceProvider = Provider<CalendarLabelQueryService>(
   (ref) => QueryServiceFactory.create<CalendarLabelQueryService>(ref: ref),
+);
+
+final firestoreCalendarEventQueriesProvider = Provider<FirestoreCalendarEventWatchQueryService>(
+  (ref) => FirestoreCalendarEventWatchQueryService(firestore: ref.watch(firebaseFirestoreProvider)),
 );
