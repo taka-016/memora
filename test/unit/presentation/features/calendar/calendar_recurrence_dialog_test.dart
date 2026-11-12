@@ -148,7 +148,7 @@ void main() {
     verifyZeroInteractions(harness.changeRecurrence);
   });
   for (final deleting in [false, true]) {
-    testWidgets('系列操作の確認で個別予定の維持と削除を明示する（$deleting）', (tester) async {
+    testWidgets('繰り返しの変更と削除で個別に変更した予定が残ることを伝える（$deleting）', (tester) async {
       final source = calendarTestEvent('e', '系列').copyWith(
         recurrenceRule: 'FREQ=DAILY;COUNT=3',
         timeZone: 'Asia/Tokyo',
@@ -174,7 +174,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
       await tester.tap(find.text('この予定とこれ以降'));
       await tester.pump();
-      expect(find.textContaining('独立した通常予定は変更・削除されません。'), findsOneWidget);
+      expect(find.text('以前「この予定のみ」で変更した予定は残ります。'), findsOneWidget);
       await tester.tap(find.text(deleting ? '削除する' : '変更する'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
@@ -423,7 +423,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     await tester.tap(find.text('この予定とこれ以降'));
     await tester.pump();
-    expect(find.textContaining('独立した通常予定は変更・削除されません。'), findsOneWidget);
+    expect(find.text('以前「この予定のみ」で変更した予定は残ります。'), findsOneWidget);
     await tester.tap(find.text('変更する'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
