@@ -62,7 +62,11 @@ void main() {
     await tester.pump();
     await tester.enterText(find.byType(TextField), '編集中');
     when(check.execute()).thenAnswer((_) async => AppAvailability.maintenance);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pump();
     expect(find.text('メンテナンス中です'), findsOneWidget);
