@@ -190,7 +190,9 @@ Future<void> main(List<String> arguments) async {
         'print-access-token',
       ]);
       if (result.exitCode != 0 || result.stdout.toString().trim().isEmpty) {
-        throw const FormatException('gcloud auth loginで管理用アカウントにログインしてください');
+        throw const FormatException(
+          'just setup-cloud gcloud-authで管理用アカウントにログインしてください',
+        );
       }
       token = result.stdout.toString().trim();
     }
@@ -216,7 +218,7 @@ Future<void> main(List<String> arguments) async {
     }
   } on ProcessException {
     stderr.writeln(
-      'Google Cloud CLIをインストールしてgcloud auth loginを実行するか、FIRESTORE_ACCESS_TOKENを設定してください',
+      'Google Cloud CLIをインストールしてjust setup-cloud gcloud-authを実行するか、FIRESTORE_ACCESS_TOKENを設定してください',
     );
     exitCode = 1;
   } on FileSystemException {

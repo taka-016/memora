@@ -95,11 +95,11 @@ Google Cloud ConsoleでMaps SDK for AndroidとPlaces API (New)を有効にし、
 - Identity Toolkit API
 - Token Service API
 
-必要に応じてFirestoreのセキュリティルールを設定した後、`just setup-firebase`を実行し、メニューで必要な処理を選びます。初回は「すべて実行」を選択し、画面の案内に従ってログインとプロジェクト選択を行ってください。処理を直接指定する方法は[justfile](./justfile)を参照してください。
+[Google Cloud CLI](https://cloud.google.com/sdk/docs/install)を用意し、必要に応じてFirestoreのセキュリティルールを設定した後、`just setup-cloud`を実行します。初回は「すべて実行」を選択し、画面の案内に従ってGoogle Cloud・Firebaseへのログインとプロジェクト選択を行ってください。Google Cloudの認証だけを行う場合は`just setup-cloud gcloud-auth`を使用します。認証済みなら再ログインは省略します。処理の選択肢は[justfile](./justfile)を参照してください。
 
 設定の生成・更新時は、Google Cloudの「APIとサービス → 認証情報」からFirebase用APIキーをコピーして入力してください（環境変数`FIREBASE_API_KEY`でも指定可）。指定したキーは`android/app/google-services.json`と`lib/firebase_options.dart`の両方へ反映されます。既存ファイルの削除は不要です。設定更新後はアプリを再ビルドしてください。
 
-オンライン版の採番と利用停止設定の操作には、[Google Cloud CLI](https://cloud.google.com/sdk/docs/install)を用意し、`gcloud auth login`で対象プロジェクトのFirestore読み書き権限（`roles/datastore.user`など）を持つ管理用アカウントへログインしてください。Firebase CLIとは別の認証です。コマンド実行時にアクセストークンを自動取得します。CI等では、有効なOAuthアクセストークンを環境変数`FIRESTORE_ACCESS_TOKEN`に設定する方法も使用できます。接続先は`.firebaserc`の`projects.default`です。
+Google Cloudの認証では、対象プロジェクトのFirestore読み書き権限（`roles/datastore.user`など）を持つ管理用アカウントを使用してください。Firebase CLIとは別の認証です。表示されたURLを手元のブラウザーで開き、認証コードを入力して完了できます。コマンド実行時にアクセストークンを自動取得します。CI等では、有効なOAuthアクセストークンを環境変数`FIRESTORE_ACCESS_TOKEN`に設定する方法も使用できます。接続先は`.firebaserc`の`projects.default`です。
 
 最初にリポジトリのFirestoreルールをデプロイしてください。採番カウンターと利用停止設定はコマンドから自動作成されるため、Consoleでの文書作成は不要です。既に配布したオンライン版がある場合は、初回の採番前に`pubspec.yaml`のビルド番号を過去に配布した最大値へ合わせてください。採番後にビルドが失敗した番号は欠番になります。
 
