@@ -104,7 +104,8 @@ class CalendarNotificationsNotifier extends _$CalendarNotificationsNotifier {
   }
 
   Future<void> refresh() async {
-    if (state.isSuspended || !ref.read(calendarNotificationsSupportedProvider)) {
+    if (state.isSuspended ||
+        !ref.read(calendarNotificationsSupportedProvider)) {
       return;
     }
     if (_running) {
