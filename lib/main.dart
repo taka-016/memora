@@ -125,11 +125,11 @@ class _AvailableApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     ref.listen(appAvailabilityNotifierProvider, (previous, next) {
-      if (next.canUseApp && previous?.canUseApp != true) {
-        unawaited(
-          ref.read(calendarNotificationsNotifierProvider.notifier).refresh(),
-        );
-      }
+      unawaited(
+        ref
+            .read(calendarNotificationsNotifierProvider.notifier)
+            .setSuspended(!next.canUseApp),
+      );
     });
     return const MyApp();
   }

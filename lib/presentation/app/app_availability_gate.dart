@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/models/app_availability.dart';
 import 'package:memora/presentation/notifiers/app_availability/app_availability_notifier.dart';
@@ -36,6 +37,14 @@ class _AppAvailabilityGateState extends ConsumerState<AppAvailabilityGate>
       unawaited(ref.read(appAvailabilityNotifierProvider.notifier).refresh());
     }
   }
+
+  @override
+  Future<bool> didPopRoute() async =>
+      !ref.read(appAvailabilityNotifierProvider).canUseApp;
+
+  @override
+  bool handleStartBackGesture(PredictiveBackEvent backEvent) =>
+      !ref.read(appAvailabilityNotifierProvider).canUseApp;
 
   @override
   Widget build(BuildContext context) {
