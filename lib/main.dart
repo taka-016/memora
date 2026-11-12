@@ -1,3 +1,5 @@
+import 'package:memora/presentation/notifiers/app_availability/app_availability_notifier.dart';
+import 'package:memora/presentation/app/app_availability_gate.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_notifications_notifier.dart';
 import 'package:memora/composition_root/providers/app_providers.dart';
 import 'package:memora/composition_root/app_bootstrap.dart';
@@ -15,7 +17,11 @@ import 'package:memora/presentation/notifiers/android_widget/android_widget_laun
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 Future<void> main() async {
-  await launchApp(const AppClockLifecycleSync(child: MyApp()));
+  await launchApp(
+    const AppClockLifecycleSync(
+      child: AppAvailabilityGate(child: _AvailableApp()),
+    ),
+  );
 }
 
 class AppClockLifecycleSync extends ConsumerStatefulWidget {
@@ -46,9 +52,6 @@ class _AppClockLifecycleSyncState extends ConsumerState<AppClockLifecycleSync>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       unawaited(_syncClock());
-      unawaited(
-        ref.read(calendarNotificationsNotifierProvider.notifier).refresh(),
-      );
     }
   }
 
@@ -114,4 +117,20 @@ ThemeData _buildTheme(Brightness brightness) {
           ),
     buttonTheme: const ButtonThemeData(alignedDropdown: true),
   );
+}
+
+class _AvailableApp extends ConsumerWidget {
+  const _AvailableApp();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.listen(appAvailabilityNotifierProvider, (previous, next) {
+      if (next.canUseApp && previous?.canUseApp != true) {
+        unawaited(
+          ref.read(calendarNotificationsNotifierProvider.notifier).refresh(),
+        );
+      }
+    });
+    return const MyApp();
+  }
 }

@@ -1,3 +1,4 @@
+import 'package:memora/composition_root/providers/app_availability_providers.dart';
 import 'package:memora/application/usecases/android_widget/refresh_android_widget_caches_usecase.dart';
 import 'package:memora/infrastructure/services/home_widget_android_widget_cache_storage.dart';
 
@@ -126,7 +127,9 @@ Future<void> withAndroidWidgetDependencies(
           container!.read(refreshCalendarWidgetProvider)(groupId, null),
     );
     if (database == null) {
-      await action(refresh, handler, caches);
+      await container
+          .read(checkAppAvailabilityUsecaseProvider)
+          .runIfAvailable(() => action(refresh, handler, caches));
     } else {
       final OfflineBackupRestoreOperationLock activeOperationLock =
           operationLock ??
