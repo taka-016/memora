@@ -43,3 +43,18 @@ validate_memora_app_arguments() {
     esac
   done
 }
+
+validate_memora_build_number_arguments() {
+  local app_mode="$1"
+  shift
+  if [[ "$app_mode" != online ]]; then return; fi
+  local argument
+  for argument in "$@"; do
+    case "$argument" in
+      --build-number|--build-number=*)
+        echo 'オンライン版のビルド番号はFirestoreから自動設定するため指定できません。' >&2
+        return 1
+        ;;
+    esac
+  done
+}

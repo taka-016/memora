@@ -5,29 +5,25 @@ set positional-arguments
 default:
   @just --list
 
-# アプリを実行する（online / offline）
+# アプリを実行する（online / offline、オンラインはFirestoreの現在の番号を使用）
 run mode='online' *args:
-  #!/usr/bin/env bash
-  set -euo pipefail
-  source scripts/app/app_mode_arguments.sh
-  app_mode="$(resolve_memora_app_mode "$1")"
-  shift
-  validate_memora_app_arguments "$@"
-  exec flutter run --flavor "$app_mode" "--dart-define=MEMORA_APP_MODE=$app_mode" "$@"
+  bash scripts/app/run_flutter_app.sh run "$@"
 
-# debug APKをビルドする（online / offline）
+# debug APKをビルドする（online / offline、オンラインはFirestoreの現在の番号を使用）
 build mode='online' *args:
-  #!/usr/bin/env bash
-  set -euo pipefail
-  source scripts/app/app_mode_arguments.sh
-  app_mode="$(resolve_memora_app_mode "$1")"
-  shift
-  validate_memora_app_arguments "$@"
-  exec flutter build apk --debug --flavor "$app_mode" "--dart-define=MEMORA_APP_MODE=$app_mode" "$@"
+  bash scripts/app/run_flutter_app.sh build "$@"
 
-# release APKを作成する（online / offline）
+# release APKを作成する（online / offline、オンラインは毎回Firestoreで採番）
 release mode='online' *args:
   bash scripts/app/release_android_apk.sh "$@"
+
+# 指定したビルド番号未満を利用停止にする（配布後に実行、0で解除）
+require-update number:
+  dart scripts/firebase/manage_app_release.dart require-update "$@"
+
+# メンテナンスによる利用停止を切り替える（on / off）
+maintenance state:
+  dart scripts/firebase/manage_app_release.dart maintenance "$@"
 
 # フォーマット・コード生成・解析・テストを実行する（online / offline）
 check mode='online' *args:
