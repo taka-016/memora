@@ -408,9 +408,7 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                   ),
                   if (scope == CalendarChangeScope.only)
                     Text(
-                      deleting
-                          ? 'この予定だけを削除します。'
-                          : 'この予定だけを、繰り返さない予定として保存します。',
+                      deleting ? 'この予定だけを削除します。' : 'この予定だけを、繰り返さない予定として保存します。',
                     ),
                   if (scope == CalendarChangeScope.following)
                     const Text('これより前の予定は変わりません。'),
