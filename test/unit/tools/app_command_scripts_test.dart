@@ -60,6 +60,12 @@ esac
     final flutterStub = File('${testProject.path}/bin/flutter');
     flutterStub.writeAsStringSync('''#!/usr/bin/env bash
 printf '%s\\n' "\$@" > "\$MEMORA_TEST_COMMAND_LOG"
+printf '%s' "\${MEMORA_ONLINE_BUILD_NUMBER:-}" > flutter_build_number.txt
+if [ "\${1:-}" = run ]; then
+  for argument in "\$@"; do
+    case "\$argument" in --build-number*) exit 64 ;; esac
+  done
+fi
 if [ "\${1:-}" = 'build' ] && [ "\${3:-}" = '--release' ]; then
   flavor=''
   previous=''
@@ -180,9 +186,22 @@ fi
     test('$scriptはオンライン版のビルド番号を自動設定する', () {
       final result = runScript(script, []);
       expect(result.exitCode, 0, reason: result.stderr as String);
+      if (script == 'run') {
+        expect(
+          commandLog.readAsLinesSync().any(
+            (arg) => arg.startsWith('--build-number'),
+          ),
+          isFalse,
+        );
+      } else {
+        expect(
+          commandLog.readAsLinesSync(),
+          contains('--build-number=${script == 'release' ? 17 : 16}'),
+        );
+      }
       expect(
-        commandLog.readAsLinesSync(),
-        contains('--build-number=${script == 'release' ? 17 : 16}'),
+        File('${testProject.path}/flutter_build_number.txt').readAsStringSync(),
+        '${script == 'release' ? 17 : 16}',
       );
       expect(
         File('${testProject.path}/release_operations.txt').readAsLinesSync(),
