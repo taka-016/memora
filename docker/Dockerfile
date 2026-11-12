@@ -42,17 +42,21 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   openjdk-17-jdk && \
   apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# ホストのDockerを操作するCLIとGitHub CLIを導入
+# ホストのDockerを操作するCLIとGitHub・Google Cloud CLIを導入
 RUN install -m 0755 -d /etc/apt/keyrings && \
   curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc && \
   curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg -o /etc/apt/keyrings/githubcli.gpg && \
-  chmod a+r /etc/apt/keyrings/docker.asc /etc/apt/keyrings/githubcli.gpg && \
+  curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | \
+    gpg --dearmor -o /etc/apt/keyrings/google-cloud.gpg && \
+  chmod a+r /etc/apt/keyrings/docker.asc /etc/apt/keyrings/githubcli.gpg /etc/apt/keyrings/google-cloud.gpg && \
   printf 'deb [arch=%s signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu noble stable\n' "$(dpkg --print-architecture)" \
     > /etc/apt/sources.list.d/docker.list && \
   printf 'deb [arch=%s signed-by=/etc/apt/keyrings/githubcli.gpg] https://cli.github.com/packages stable main\n' "$(dpkg --print-architecture)" \
     > /etc/apt/sources.list.d/github-cli.list && \
+  printf 'deb [signed-by=/etc/apt/keyrings/google-cloud.gpg] https://packages.cloud.google.com/apt cloud-sdk main\n' \
+    > /etc/apt/sources.list.d/google-cloud-sdk.list && \
   apt-get update && apt-get install -y --no-install-recommends \
-    docker-ce-cli docker-buildx-plugin docker-compose-plugin gh && \
+    docker-ce-cli docker-buildx-plugin docker-compose-plugin gh google-cloud-cli && \
   apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Flutter SDKのインストール
