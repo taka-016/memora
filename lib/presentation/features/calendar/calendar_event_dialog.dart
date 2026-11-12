@@ -407,17 +407,17 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                     ),
                   ),
                   if (scope == CalendarChangeScope.only)
-                    const Text('この回だけを変更します。系列の繰り返し設定は変更しません。'),
-                  if (scope == CalendarChangeScope.following)
-                    const Text('元の開始日時を境に系列を分割します。対象範囲外の回は変更しません。'),
-                  if (scope != CalendarChangeScope.only)
                     Text(
                       deleting
-                          ? '独立した通常予定は変更・削除されません。'
-                          : '独立した通常予定は変更・削除されません。新系列へ取消情報は引き継ぎません。',
+                          ? 'この予定だけを削除します。'
+                          : 'この予定だけを、繰り返さない予定として保存します。',
                     ),
-                  if (deleting && scope == CalendarChangeScope.only)
-                    const Text('この回の取消しを保存します。'),
+                  if (scope == CalendarChangeScope.following)
+                    const Text('これより前の予定は変わりません。'),
+                  if (scope != CalendarChangeScope.only)
+                    const Text('以前「この予定のみ」で変更した予定は残ります。'),
+                  if (!deleting && scope == CalendarChangeScope.following)
+                    const Text('以前削除した回も、変更後の繰り返しに含まれます。'),
                 ],
               ),
             ),
