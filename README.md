@@ -99,7 +99,11 @@ Google Cloud ConsoleでMaps SDK for AndroidとPlaces API (New)を有効にし、
 
 設定の生成・更新時は、Google Cloudの「APIとサービス → 認証情報」からFirebase用APIキーをコピーして入力してください（環境変数`FIREBASE_API_KEY`でも指定可）。指定したキーは`android/app/google-services.json`と`lib/firebase_options.dart`の両方へ反映されます。既存ファイルの削除は不要です。設定更新後はアプリを再ビルドしてください。
 
-オンライン版の更新案内・メンテナンス停止は、Firebase ConsoleでFirestoreの`app_settings/availability`文書を作成し、`minimumBuildNumber`（整数、最低対応ビルド番号）と`isMaintenance`（真偽値）を設定して切り替えます。通常利用は`minimumBuildNumber: 0`、`isMaintenance: false`です。利用再開時は両方の停止条件を解除してください。設定文書が未作成なら通常利用となりますが、取得に失敗すると再確認が必要になります。先にリポジトリのFirestoreルールをデプロイしてください。この文書はログイン前にも取得でき、アプリからは変更できません。
+オンライン版の採番と利用停止設定の操作には、[Google Cloud CLI](https://cloud.google.com/sdk/docs/install)を用意し、`gcloud auth login`で対象プロジェクトのFirestore読み書き権限（`roles/datastore.user`など）を持つ管理用アカウントへログインしてください。Firebase CLIとは別の認証です。コマンド実行時にアクセストークンを自動取得します。CI等では、有効なOAuthアクセストークンを環境変数`FIRESTORE_ACCESS_TOKEN`に設定する方法も使用できます。接続先は`.firebaserc`の`projects.default`です。
+
+最初にリポジトリのFirestoreルールをデプロイしてください。採番カウンターと利用停止設定はコマンドから自動作成されるため、Consoleでの文書作成は不要です。既に配布したオンライン版がある場合は、初回の採番前に`pubspec.yaml`のビルド番号を過去に配布した最大値へ合わせてください。採番後にビルドが失敗した番号は欠番になります。
+
+更新必須化は新版の配布後に実行してください。最低対応ビルド番号を0にすると更新必須化を解除できます。メンテナンス終了では最低対応ビルド番号を変更しないため、更新必須化も解除したい場合は別途変更してください。設定の取得に失敗すると、オンライン版ではアプリ内で再確認が必要です。
 
 ### 端末カレンダー連携
 
@@ -112,6 +116,8 @@ Androidのカレンダー権限を取り消した場合は、端末の設定か�
 `run`・`build`・`release`・`check`の第1引数は`online`または`offline`で、省略時は`online`です。両モードは同じ端末にインストールできますが、データは共有しません。機能の違いは[ユースケース図](./project_docs/usecase_diagram.md)を参照してください。
 
 テスト対象や追加オプションはモードの後ろへ指定します（例: `just check offline test/unit/`）。
+
+表示用のバージョン名は`pubspec.yaml`で管理します。オンライン版のビルド番号はリリースごとに自動採番し、デバッグ実行・ビルドでは現在の採番値を使用します。オフライン版はFirestoreに接続せず、`pubspec.yaml`のビルド番号を使用します。オンライン版への`--build-number`の指定はできません。
 
 release APKの出力先は`build/app/outputs/flutter-apk/memora-<version>-<mode>.apk`です。生成したバージョンとモードに合わせて、`adb install -r <APKのパス>`でインストールできます。
 
