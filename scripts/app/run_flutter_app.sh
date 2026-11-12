@@ -19,6 +19,9 @@ case "$action" in
 esac
 if [[ "$app_mode" == online ]]; then
   build_number="$(dart scripts/firebase/manage_app_release.dart current)"
-  flutter_arguments+=("--build-number=$build_number")
+  export MEMORA_ONLINE_BUILD_NUMBER="$build_number"
+  if [[ "$action" == build ]]; then
+    flutter_arguments+=("--build-number=$build_number")
+  fi
 fi
 exec flutter "${flutter_arguments[@]}" --flavor "$app_mode" "$@" "--dart-define=MEMORA_APP_MODE=$app_mode"

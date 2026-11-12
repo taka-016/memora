@@ -67,7 +67,11 @@ android {
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = maxOf(flutter.minSdkVersion, 23)
         targetSdk = flutter.targetSdkVersion
-        versionCode = flutter.versionCode
+        versionCode = if (resolvedAppMode == "online") {
+            System.getenv("MEMORA_ONLINE_BUILD_NUMBER")?.toInt() ?: flutter.versionCode
+        } else {
+            flutter.versionCode
+        }
         versionName = flutter.versionName
 
         manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey

@@ -180,8 +180,9 @@ Future<void> main(List<String> arguments) async {
       r'^version:\s*\S+\+(\d+)\s*$',
       multiLine: true,
     ).firstMatch(pubspec);
-    if (match == null)
+    if (match == null) {
       throw const FormatException('pubspec.yamlにビルド番号を設定してください');
+    }
     var token = Platform.environment['FIRESTORE_ACCESS_TOKEN']?.trim();
     if (token == null || token.isEmpty) {
       final result = await Process.run('gcloud', [

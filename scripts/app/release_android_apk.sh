@@ -61,6 +61,7 @@ done
 
 if [[ "$app_mode" == online ]]; then
   build_number="$(dart scripts/firebase/manage_app_release.dart next)"
+  export MEMORA_ONLINE_BUILD_NUMBER="$build_number"
   build_arguments+=("--build-number=$build_number")
   echo "ビルド番号: $build_number"
 fi
