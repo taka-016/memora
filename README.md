@@ -113,6 +113,8 @@ Androidのカレンダー権限を取り消した場合は、端末の設定か�
 
 ### アプリモードと成果物
 
+以下の実行・ビルド手順はAndroid向けです。
+
 `run`・`build`・`release`・`check`の第1引数は`online`または`offline`で、省略時は`online`です。両モードは同じ端末にインストールできますが、データは共有しません。機能の違いは[ユースケース図](./project_docs/usecase_diagram.md)を参照してください。
 
 テスト対象や追加オプションはモードの後ろへ指定します（例: `just check offline test/unit/`）。
