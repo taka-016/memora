@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:go_router/go_router.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -79,5 +81,47 @@ void main() {
     await tester.tap(find.text('再確認'));
     await tester.pump();
     expect(find.text('編集中'), findsOneWidget);
+  });
+  testWidgets('停止中の戻る操作は隠れた編集中の画面を閉じない', (tester) async {
+    final check = MockCheckAppAvailabilityUsecase();
+    when(check.execute()).thenAnswer((_) async => AppAvailability.available);
+    final router = GoRouter(
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (_, _) => const Scaffold(body: Text('一覧')),
+        ),
+        GoRoute(
+          path: '/edit',
+          builder: (_, _) => const Scaffold(body: Text('編集中の画面')),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          checkAppAvailabilityUsecaseProvider.overrideWithValue(check),
+        ],
+        child: AppAvailabilityGate(
+          child: MaterialApp.router(routerConfig: router),
+        ),
+      ),
+    );
+    await tester.pump();
+    router.push('/edit');
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    when(check.execute()).thenAnswer((_) async => AppAvailability.maintenance);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump();
+    await tester.binding.handlePopRoute();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    when(check.execute()).thenAnswer((_) async => AppAvailability.available);
+    await tester.tap(find.text('再確認'));
+    await tester.pump();
+    expect(find.text('編集中の画面'), findsOneWidget);
   });
 }

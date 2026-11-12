@@ -51,6 +51,27 @@ void main() {
     container.dispose();
     await changes.close();
   });
+  test('利用停止中は変更通知と定期再取得を開始せず解除時に監視を再開する', () async {
+    final notifier = container.read(
+      calendarNotificationsNotifierProvider.notifier,
+    );
+    await container.pump();
+    expect(changes.hasListener, isTrue);
+    await notifier.setSuspended(true);
+    expect(changes.hasListener, isFalse);
+    clearInteractions(sync);
+    changes.add(null);
+    await notifier.refresh();
+    await container.pump();
+    verifyNever(sync.execute());
+    expect(
+      container.read(calendarNotificationsNotifierProvider).isSuspended,
+      isTrue,
+    );
+    await notifier.setSuspended(false);
+    expect(changes.hasListener, isTrue);
+    verify(sync.execute()).called(1);
+  });
   test('通知が許可されていない間は監視せず再確認後に開始する', () async {
     when(gateway.isEnabled()).thenAnswer((_) async => false);
     final notifier = container.read(
