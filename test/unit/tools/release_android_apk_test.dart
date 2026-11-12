@@ -33,6 +33,24 @@ void main() {
     File('${testProject.path}/pubspec.yaml')
         .writeAsStringSync('version: 1.2.3+4\n');
 
+    final dartStub = File('${testProject.path}/bin/dart');
+    dartStub.writeAsStringSync(r'''#!/usr/bin/env bash
+set -e
+printf '%s\n' "$2" >> release_operations.txt
+case "$2" in
+  current) echo 16 ;;
+  next)
+    number=16
+    if [ -f build_counter.txt ]; then number="$(cat build_counter.txt)"; fi
+    number=$((number + 1))
+    echo "$number" > build_counter.txt
+    echo "$number"
+    ;;
+  require-update|maintenance) printf '%s\n' "$@" > management_arguments.txt ;;
+  *) exit 1 ;;
+esac
+''');
+    Process.runSync('chmod', ['+x', dartStub.path]);
     final flutterStub = File('${testProject.path}/bin/flutter');
     flutterStub.writeAsStringSync('''#!/usr/bin/env bash
 set -e
@@ -131,4 +149,20 @@ printf '%s\\n' "\$@" > flutter_arguments.txt
       );
     });
   }
+  test('リリースごとに採番してビルド失敗後も番号を再利用しない', () {
+    final flutter = File('${testProject.path}/bin/flutter');
+    final original = flutter.readAsStringSync();
+    flutter.writeAsStringSync('#!/usr/bin/env bash\nexit 1\n');
+    expect(runReleaseScript([]).exitCode, isNot(0));
+    flutter.writeAsStringSync(original);
+    expect(runReleaseScript([]).exitCode, 0);
+    expect(
+      File('${testProject.path}/flutter_arguments.txt').readAsLinesSync(),
+      contains('--build-number=18'),
+    );
+    expect(
+      File('${testProject.path}/release_operations.txt').readAsLinesSync(),
+      ['next', 'next'],
+    );
+  });
 }

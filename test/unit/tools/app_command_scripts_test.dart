@@ -29,6 +29,8 @@ void main() {
     Directory('${testProject.path}/bin').createSync(recursive: true);
     Directory('${testProject.path}/scripts/app').createSync(recursive: true);
     File('justfile').copySync('${testProject.path}/justfile');
+    File('scripts/app/run_flutter_app.sh')
+        .copySync('${testProject.path}/scripts/app/run_flutter_app.sh');
     File(_appModeArgumentsScriptPath)
         .copySync('${testProject.path}/scripts/app/app_mode_arguments.sh');
     File(_releaseScriptPath)
@@ -37,6 +39,24 @@ void main() {
         .writeAsStringSync('version: 1.2.3+4\n');
     commandLog = File('${testProject.path}/commands.log');
 
+    final dartStub = File('${testProject.path}/bin/dart');
+    dartStub.writeAsStringSync(r'''#!/usr/bin/env bash
+set -e
+printf '%s\n' "$2" >> release_operations.txt
+case "$2" in
+  current) echo 16 ;;
+  next)
+    number=16
+    if [ -f build_counter.txt ]; then number="$(cat build_counter.txt)"; fi
+    number=$((number + 1))
+    echo "$number" > build_counter.txt
+    echo "$number"
+    ;;
+  require-update|maintenance) printf '%s\n' "$@" > management_arguments.txt ;;
+  *) exit 1 ;;
+esac
+''');
+    Process.runSync('chmod', ['+x', dartStub.path]);
     final flutterStub = File('${testProject.path}/bin/flutter');
     flutterStub.writeAsStringSync('''#!/usr/bin/env bash
 printf '%s\\n' "\$@" > "\$MEMORA_TEST_COMMAND_LOG"
@@ -156,4 +176,53 @@ fi
       expect(commandLog.existsSync(), isFalse);
     });
   }
+  for (final script in ['run', 'build', 'release']) {
+    test('$scriptはオンライン版のビルド番号を自動設定する', () {
+      final result = runScript(script, []);
+      expect(result.exitCode, 0, reason: result.stderr as String);
+      expect(
+        commandLog.readAsLinesSync(),
+        contains('--build-number=${script == 'release' ? 17 : 16}'),
+      );
+      expect(
+        File('${testProject.path}/release_operations.txt').readAsLinesSync(),
+        [script == 'release' ? 'next' : 'current'],
+      );
+    });
+    test('$scriptはオフライン版では採番CLIを呼ばない', () {
+      expect(runScript(script, ['offline']).exitCode, 0);
+      expect(
+        File('${testProject.path}/release_operations.txt').existsSync(),
+        isFalse,
+      );
+    });
+    for (final override in [
+      ['--build-number', '99'],
+      ['--build-number=99'],
+    ]) {
+      test('$scriptはオンラインのビルド番号の上書きを採番前に拒否する $override', () {
+        final result = runScript(script, ['online', ...override]);
+        expect(result.exitCode, isNot(0));
+        expect(commandLog.existsSync(), isFalse);
+        expect(
+          File('${testProject.path}/release_operations.txt').existsSync(),
+          isFalse,
+        );
+      });
+    }
+  }
+  test('更新必須化とメンテナンスのjustコマンドから管理CLIへ引数を渡す', () {
+    for (final args in [
+      ['require-update', '16'],
+      ['maintenance', 'on'],
+      ['maintenance', 'off'],
+    ]) {
+      final result = runScript(args.first, args.sublist(1));
+      expect(result.exitCode, 0, reason: result.stderr as String);
+      expect(
+        File('${testProject.path}/management_arguments.txt').readAsLinesSync(),
+        ['scripts/firebase/manage_app_release.dart', ...args],
+      );
+    }
+  });
 }
