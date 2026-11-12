@@ -58,11 +58,19 @@ void main() {
   }
 
   setUp(() {
-    project = Directory.systemTemp.createTempSync('memora firebase setup ');
-    for (final dir in ['bin', 'lib', 'android/app', 'scripts/firebase']) {
+    project = Directory.systemTemp.createTempSync('memora cloud setup ');
+    for (final dir in [
+      'bin',
+      'lib',
+      'android/app',
+      'scripts/firebase',
+      'scripts/cloud',
+    ]) {
       Directory('${project.path}/$dir').createSync(recursive: true);
     }
-    for (final name in ['setup.sh', 'set_api_key.dart']) {
+    File('scripts/cloud/setup.sh')
+        .copySync('${project.path}/scripts/cloud/setup.sh');
+    for (final name in ['set_api_key.dart']) {
       final source = File('scripts/firebase/$name');
       if (source.existsSync()) {
         source.copySync('${project.path}/scripts/firebase/$name');
@@ -104,12 +112,17 @@ void main() {
               .trim();
       Link('${project.path}/bin/$name').createSync(path);
     }
-    for (final name in ['firebase', 'dart', 'npm']) {
+    for (final name in ['firebase', 'dart', 'npm', 'gcloud']) {
       executable(name, r'''#!/bin/bash
 name="${0##*/}"
 printf '%s %s\n' "$name" "$*" >> "$MEMORA_TEST_COMMAND_LOG"
 if [[ "$name $*" == "$MEMORA_TEST_FAIL_COMMAND" ]]; then exit 1; fi
 case "$name $*" in
+  'gcloud auth print-access-token')
+    if [[ "$MEMORA_TEST_GCLOUD_NEEDS_LOGIN" == true && ! -f gcloud_authenticated ]]; then exit 1; fi
+    echo test-access-token
+    ;;
+  'gcloud auth login --no-launch-browser') printf '%s' ready > gcloud_authenticated ;;
   'dart pub global list') echo flutterfire_cli ;;
   'dart pub global run flutterfire_cli:flutterfire configure'*)
     printf '%s' "$MEMORA_TEST_DART_CONFIG" > lib/firebase_options.dart
@@ -130,16 +143,19 @@ esac
     String key = _firebaseKey,
     String failCommand = '',
     bool viaJust = false,
+    bool gcloudNeedsLogin = false,
+    bool isolatedPath = false,
   }) async {
     final process = await Process.start(
       viaJust ? justPath : '/bin/bash',
-      viaJust
-          ? ['setup-firebase', ...args]
-          : ['scripts/firebase/setup.sh', ...args],
+      viaJust ? ['setup-cloud', ...args] : ['scripts/cloud/setup.sh', ...args],
       workingDirectory: project.path,
       environment: {
         ...Platform.environment,
-        'PATH': '${project.path}/bin:${Platform.environment['PATH']}',
+        'PATH': isolatedPath
+            ? '${project.path}/bin'
+            : '${project.path}/bin:${Platform.environment['PATH']}',
+        'MEMORA_TEST_GCLOUD_NEEDS_LOGIN': '$gcloudNeedsLogin',
         'FIREBASE_API_KEY': key,
         'MEMORA_TEST_COMMAND_LOG': commands.path,
         'MEMORA_TEST_FAIL_COMMAND': failCommand,
@@ -276,6 +292,7 @@ esac
     success(await runSetup(['all']));
     expectKeyUpdated();
     expect(commands.readAsLinesSync(), [
+      'gcloud auth print-access-token',
       'firebase projects:list',
       'firebase use --add',
       'dart pub global list',
@@ -343,5 +360,71 @@ esac
   test('justから指定した処理をスクリプトへ渡せる', () async {
     success(await runSetup(['api-key'], viaJust: true));
     expectKeyUpdated();
+  });
+  test('Google Cloud認証だけをjustから実行し認証済みならログインとFirebase操作を省略する', () async {
+    final original = file('lib/firebase_options.dart').readAsStringSync();
+    final result = await runSetup(['gcloud-auth'], viaJust: true);
+    success(result);
+    expect(commands.readAsLinesSync(), ['gcloud auth print-access-token']);
+    expect(file('lib/firebase_options.dart').readAsStringSync(), original);
+    expect(
+      '${result.stdout}${result.stderr}',
+      isNot(contains('test-access-token')),
+    );
+  });
+
+  test('未認証時はブラウザーのない環境でログインし取得できたトークンを出力しない', () async {
+    final result = await runSetup(['gcloud-auth'], gcloudNeedsLogin: true);
+    success(result);
+    expect(commands.readAsLinesSync(), [
+      'gcloud auth print-access-token',
+      'gcloud auth login --no-launch-browser',
+      'gcloud auth print-access-token',
+    ]);
+    expect(
+      '${result.stdout}${result.stderr}',
+      isNot(contains('test-access-token')),
+    );
+  });
+
+  test('メニューからGoogle Cloud認証だけを選択できる', () async {
+    success(await runSetup([], input: '8\n'));
+    expect(commands.readAsLinesSync(), ['gcloud auth print-access-token']);
+  });
+
+  test('Google Cloudのログイン失敗時は後続のデプロイを実行しない', () async {
+    final result = await runSetup(
+      ['gcloud-auth', 'rules'],
+      gcloudNeedsLogin: true,
+      failCommand: 'gcloud auth login --no-launch-browser',
+    );
+    expect(result.exitCode, isNot(0));
+    expect(commands.readAsLinesSync(), [
+      'gcloud auth print-access-token',
+      'gcloud auth login --no-launch-browser',
+    ]);
+    expect(result.stdout, isNot(contains('セットアップ完了')));
+  });
+
+  test('ログイン後もトークンを取得できなければ後続のデプロイを実行しない', () async {
+    final result = await runSetup([
+      'gcloud-auth',
+      'rules',
+    ], failCommand: 'gcloud auth print-access-token');
+    expect(result.exitCode, isNot(0));
+    expect(commands.readAsLinesSync(), [
+      'gcloud auth print-access-token',
+      'gcloud auth login --no-launch-browser',
+      'gcloud auth print-access-token',
+    ]);
+    expect(result.stdout, isNot(contains('セットアップ完了')));
+  });
+
+  test('Google Cloud CLI未導入なら全処理でインストールを案内し外部操作を始めない', () async {
+    file('bin/gcloud').deleteSync();
+    final result = await runSetup(['all'], isolatedPath: true);
+    expect(result.exitCode, isNot(0));
+    expect(result.stderr, contains('Google Cloud CLI'));
+    expect(commands.readAsLinesSync(), isEmpty);
   });
 }
