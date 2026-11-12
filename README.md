@@ -99,6 +99,8 @@ Google Cloud ConsoleでMaps SDK for AndroidとPlaces API (New)を有効にし、
 
 設定の生成・更新時は、Google Cloudの「APIとサービス → 認証情報」からFirebase用APIキーをコピーして入力してください（環境変数`FIREBASE_API_KEY`でも指定可）。指定したキーは`android/app/google-services.json`と`lib/firebase_options.dart`の両方へ反映されます。既存ファイルの削除は不要です。設定更新後はアプリを再ビルドしてください。
 
+オンライン版の更新案内・メンテナンス停止は、Firebase ConsoleでFirestoreの`app_settings/availability`文書を作成し、`minimumBuildNumber`（整数、最低対応ビルド番号）と`isMaintenance`（真偽値）を設定して切り替えます。通常利用は`minimumBuildNumber: 0`、`isMaintenance: false`です。利用再開時は両方の停止条件を解除してください。設定文書が未作成なら通常利用となりますが、取得に失敗すると再確認が必要になります。先にリポジトリのFirestoreルールをデプロイしてください。この文書はログイン前にも取得でき、アプリからは変更できません。
+
 ### 端末カレンダー連携
 
 Androidのオンライン版では、カレンダー画面の「端末カレンダー連携」から読み取りを許可し、アカウントごとに表示対象を選びます。Google等の予定は、あらかじめ端末のカレンダー同期を有効にしてください。端末に同期された範囲だけを表示し、予定の編集や他メンバーへの共有は行いません。選択した予定はホーム画面のカレンダーウィジェットにも表示し、ウィジェットの更新時に端末から読み直します。

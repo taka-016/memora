@@ -3,8 +3,7 @@ import 'package:memora/application/models/app_availability.dart';
 import 'package:memora/application/services/app_availability_source.dart';
 
 class FirestoreAppAvailabilitySource implements AppAvailabilitySource {
-  FirestoreAppAvailabilitySource({required FirebaseFirestore firestore})
-    : _firestore = firestore;
+  FirestoreAppAvailabilitySource({required this._firestore});
 
   final FirebaseFirestore _firestore;
 

@@ -3,10 +3,9 @@ import 'package:memora/application/services/app_availability_source.dart';
 
 class CheckAppAvailabilityUsecase {
   const CheckAppAvailabilityUsecase({
-    required AppAvailabilitySource source,
-    required Future<int> Function() loadBuildNumber,
-  }) : _source = source,
-       _loadBuildNumber = loadBuildNumber;
+    required this._source,
+    required this._loadBuildNumber,
+  });
 
   const CheckAppAvailabilityUsecase.unrestricted()
     : _source = null,
