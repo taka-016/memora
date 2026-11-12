@@ -56,6 +56,7 @@ void main() {
       calendarNotificationsNotifierProvider.notifier,
     );
     await container.pump();
+    await Future<void>(() {});
     expect(changes.hasListener, isTrue);
     await notifier.setSuspended(true);
     expect(changes.hasListener, isFalse);
