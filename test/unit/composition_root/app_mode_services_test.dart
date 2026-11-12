@@ -1,3 +1,4 @@
+import 'package:memora/composition_root/providers/android_widget_providers.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:drift/native.dart';
 import 'package:memora/infrastructure/database/offline_database.dart';
@@ -128,7 +129,7 @@ void main() {
       tripEntryQueryServiceProvider,
       mapTripEntryQueryServiceProvider,
       itineraryItemQueryServiceProvider,
-      androidWidgetItineraryItemQueryServiceProvider,
+      androidWidgetItineraryQueryServiceProvider,
       taskQueryServiceProvider,
       memberQueryServiceProvider,
       memberEventQueryServiceProvider,

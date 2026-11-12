@@ -1,3 +1,4 @@
+import 'package:memora/core/time/calendar_event_duration.dart';
 import 'package:memora/domain/entities/calendar/calendar_notifications.dart';
 import 'package:memora/domain/entities/calendar/calendar_label_reference.dart';
 import 'package:memora/domain/entities/calendar/calendar_recurrence_rule.dart';
@@ -11,6 +12,7 @@ const _UNSET_COORDINATE = Object();
 class CalendarEvent extends Equatable {
   CalendarEvent({
     this.version,
+    this.overridesFingerprint,
     required this.id,
     required this.groupId,
     this.labelId = '',
@@ -70,6 +72,7 @@ class CalendarEvent extends Equatable {
   }
 
   final int? version;
+  final String? overridesFingerprint;
   final String url;
   final String memo;
   final String locationName;
@@ -89,6 +92,8 @@ class CalendarEvent extends Equatable {
   final String title;
   final DateTime startDateTime;
   final DateTime endDateTime;
+  Duration get duration =>
+      calendarEventDuration(startDateTime, endDateTime, isAllDay);
   final bool isAllDay;
   final List<int> notificationMinutesBefore;
   final String? recurrenceRule;
@@ -97,6 +102,7 @@ class CalendarEvent extends Equatable {
 
   CalendarEvent copyWith({
     int? version,
+    String? overridesFingerprint,
     String? id,
     String? groupId,
     String? labelId,
@@ -118,6 +124,7 @@ class CalendarEvent extends Equatable {
   }) {
     return CalendarEvent(
       version: version ?? this.version,
+      overridesFingerprint: overridesFingerprint ?? this.overridesFingerprint,
       id: id ?? this.id,
       groupId: groupId ?? this.groupId,
       labelId: labelId ?? this.labelId,

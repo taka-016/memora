@@ -13,26 +13,6 @@ CalendarEvent calendarEventContent(CalendarEvent value) {
                 v.originalStartDateTime,
                 value.isAllDay,
               ),
-              isCancelled: v.isCancelled,
-              url: v.url,
-              memo: v.memo,
-              locationName: v.locationName,
-              latitude: v.latitude,
-              longitude: v.longitude,
-              title: v.title,
-              labelId: v.labelId,
-
-              labelType: v.labelType,
-
-              memberId: v.memberId,
-              notificationMinutesBefore: v.notificationMinutesBefore,
-              isAllDay: v.isAllDay,
-              startDateTime: v.startDateTime == null
-                  ? null
-                  : date(v.startDateTime!, v.isAllDay!),
-              endDateTime: v.endDateTime == null
-                  ? null
-                  : date(v.endDateTime!, v.isAllDay!),
             ),
           )
           .toList()

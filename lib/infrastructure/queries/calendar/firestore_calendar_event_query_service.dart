@@ -9,6 +9,17 @@ class FirestoreCalendarEventQueryService implements CalendarEventQueryService {
   FirestoreCalendarEventQueryService({required this._firestore});
   final FirebaseFirestore _firestore;
   @override
+  Future<CalendarEventDto?> getCalendarEventById(String eventId) async {
+    final doc = await _firestore
+        .collection('calendar_events')
+        .doc(eventId)
+        .get();
+    return doc.exists
+        ? FirestoreCalendarEventStore(_firestore).read(doc)
+        : null;
+  }
+
+  @override
   Future<List<CalendarEventDto>> getCalendarEventsByGroupId(
     String groupId, {
     CalendarEventPeriod? period,
@@ -25,6 +36,8 @@ class FirestoreCalendarEventQueryService implements CalendarEventQueryService {
         for (final doc in snapshot.docs) doc.id: doc,
     };
     final store = FirestoreCalendarEventStore(_firestore);
-    return Future.wait(docs.values.map(store.read));
+    return Future.wait(
+      docs.values.map((doc) => store.read(doc, period: period)),
+    );
   }
 }

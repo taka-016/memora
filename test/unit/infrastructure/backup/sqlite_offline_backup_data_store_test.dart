@@ -139,6 +139,7 @@ void main() {
           'event_id': 'event',
           'group_id': 'group-1',
           'original_start_date_time': 1,
+          'original_end_date_time': 2,
           'is_cancelled': 1,
         },
       ],
@@ -432,7 +433,8 @@ void main() {
     await repository.saveCalendarEvent(
       CalendarEventMapper.toEntity(groupEvent),
     );
-    final source = (await query.getCalendarEventsByGroupId('group-1')).single;
+    final source = (await query.getCalendarEventsByGroupId('group-1'))
+        .singleWhere((event) => event.recurrenceRule != null);
     await usecase.execute(
       source,
       DateTime.utc(2026, 10, 2),
@@ -445,7 +447,9 @@ void main() {
     final before = await query.getCalendarEventsByGroupId('group-1');
     final backup = await dataStore.exportSnapshot();
     await db.updateRow('groups', 'group-1', {'color': '#FFFFFF'});
-    await repository.deleteCalendarEvent(before.single.id);
+    await repository.deleteCalendarEvent(
+      before.firstWhere((event) => event.recurrenceRule != null).id,
+    );
     await dataStore.restoreSnapshot(backup);
     expect(await query.getCalendarEventsByGroupId('group-1'), before);
     expect((await db.rows('groups')).single['text_color'], '#FFFFFF');
@@ -454,9 +458,7 @@ void main() {
     expect((await db.rows('group_members')).single['color'], '#ABCDEF');
     expect(
       (await query.getCalendarEventsByGroupId('group-1'))
-          .single
-          .overrides
-          .single
+          .singleWhere((event) => event.recurrenceRule == null)
           .memberId,
       originalMember.id,
     );
@@ -495,7 +497,8 @@ void main() {
       ],
     );
     await repository.saveCalendarEvent(CalendarEventMapper.toEntity(value));
-    var source = (await query.getCalendarEventsByGroupId('group-1')).single;
+    var source = (await query.getCalendarEventsByGroupId('group-1'))
+        .singleWhere((event) => event.recurrenceRule != null);
     await usecase.execute(
       source,
       source.startDateTime,
@@ -510,7 +513,8 @@ void main() {
         endDateTime: DateTime.utc(2026, 11, 2),
       ),
     );
-    source = (await query.getCalendarEventsByGroupId('group-1')).single;
+    source = (await query.getCalendarEventsByGroupId('group-1'))
+        .singleWhere((event) => event.recurrenceRule != null);
     await usecase.execute(
       source,
       DateTime.utc(2026, 10, 3),
@@ -581,6 +585,7 @@ void main() {
       'event_id': 'series',
       'group_id': 'group-1',
       'original_start_date_time': 86400000001,
+      'original_end_date_time': 86400000002,
       'is_cancelled': 1,
     });
     final snapshot = await dataStore.exportSnapshot();
@@ -631,6 +636,7 @@ void main() {
         'event_id': 'missing',
         'group_id': 'group-1',
         'original_start_date_time': 1,
+        'original_end_date_time': 2,
         'is_cancelled': 1,
       },
     ];

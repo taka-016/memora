@@ -111,6 +111,7 @@ void main() {
           'event_id': 'event',
           'group_id': 'group',
           'original_start_date_time': 1,
+          'original_end_date_time': 2,
           'is_cancelled': 1,
         },
       ],

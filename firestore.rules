@@ -90,10 +90,10 @@ service cloud.firestore {
 
     match /calendar_event_overrides/{document} {
       allow create: if aggregateChild('calendar_events', 'eventId')
-                       && (request.resource.data.isCancelled == true || validCalendarReference(request.resource.data));
+                       && request.resource.data.isCancelled == true;
       allow update: if request.resource.data.eventId == resource.data.eventId
                        && aggregateChild('calendar_events', 'eventId')
-                       && (request.resource.data.isCancelled == true || validCalendarReference(request.resource.data));
+                       && request.resource.data.isCancelled == true;
       allow delete: if aggregateChildDelete('calendar_events', 'eventId');
     }
 

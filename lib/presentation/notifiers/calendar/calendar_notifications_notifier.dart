@@ -28,7 +28,8 @@ class CalendarNotificationsNotifier extends _$CalendarNotificationsNotifier {
       );
     }
     ref.listen(currentMemberNotifierProvider, (_, next) {
-      _watch();
+      unawaited(_subscription?.cancel());
+      _subscription = null;
       unawaited(refresh());
     });
     ref.listen(offlineBackupNotifierProvider, (previous, next) {
@@ -37,7 +38,6 @@ class CalendarNotificationsNotifier extends _$CalendarNotificationsNotifier {
       }
     });
     final timer = Timer.periodic(const Duration(hours: 1), (_) {
-      _watch();
       unawaited(refresh());
     });
     ref.onDispose(() {
@@ -46,15 +46,13 @@ class CalendarNotificationsNotifier extends _$CalendarNotificationsNotifier {
     });
     Future.microtask(() {
       if (!ref.mounted) return;
-      _watch();
       unawaited(refresh());
     });
     return const CalendarNotificationsState(isSyncing: true);
   }
 
   void _watch() {
-    unawaited(_subscription?.cancel());
-    _subscription = null;
+    if (_subscription != null) return;
     final member = ref.read(currentMemberNotifierProvider);
     if (member.status != CurrentMemberStatus.loaded || member.member == null) {
       return;
@@ -78,7 +76,8 @@ class CalendarNotificationsNotifier extends _$CalendarNotificationsNotifier {
 
   Future<void> retry() async {
     if (!ref.read(calendarNotificationsSupportedProvider)) return;
-    _watch();
+    await _subscription?.cancel();
+    _subscription = null;
     await refresh();
   }
 
@@ -105,6 +104,16 @@ class CalendarNotificationsNotifier extends _$CalendarNotificationsNotifier {
             await ref.read(calendarNotificationGatewayProvider).replace([]);
             result = CalendarNotificationStatus.ready;
           } else {
+            final enabled = await ref
+                .read(calendarNotificationGatewayProvider)
+                .isEnabled();
+            if (!ref.mounted) return;
+            if (enabled) {
+              _watch();
+            } else {
+              await _subscription?.cancel();
+              _subscription = null;
+            }
             result = await ref
                 .read(synchronizeCalendarNotificationsUsecaseProvider)
                 .execute();

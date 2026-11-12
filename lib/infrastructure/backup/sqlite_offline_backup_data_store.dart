@@ -207,12 +207,7 @@ class SqliteOfflineBackupDataStore implements OfflineBackupDataStore {
       );
       final event = CalendarEventMapper.toEntity(dto);
       validateCalendarRecurrence(event);
-      for (final labelId in {
-        if (event.labelType == 'custom') event.labelId,
-        ...event.overrides
-            .where((v) => !v.isCancelled && v.labelType == 'custom')
-            .map((v) => v.labelId!),
-      }) {
+      for (final labelId in {if (event.labelType == 'custom') event.labelId}) {
         if (!labels.any(
           (label) =>
               label['id'] == labelId && label['group_id'] == event.groupId,

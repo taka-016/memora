@@ -52,9 +52,21 @@ void main() {
         'android/app/src/main/res/layout/itinerary_widget.xml',
       ).readAsStringSync();
       expect(layout, contains('android:text="直近の旅程"'));
-      expect(source, contains('val today = LocalDate.now()'));
-      expect(source, contains('LocalDate.parse(id.takeLast(10))'));
+      expect(
+        source,
+        contains('rememberPendingNavigation(context, cache, current, action)'),
+      );
+      expect(
+        source,
+        contains('requestItineraryNavigationRefresh(context, action)'),
+      );
       expect(source, contains('ItineraryWidgetData.select(context, target)'));
+    });
+
+    test('取得済みの日付一覧の外への操作も追加取得へ接続する', () {
+      final source = File(_itineraryWidgetPath).readAsStringSync();
+      expect(source, contains('target == null || action == "recent"'));
+      expect(source, contains('applyPendingNavigation(context, cache)'));
     });
 
     test('Flutter起動時にウィジェット起動Notifierを初期化する', () {

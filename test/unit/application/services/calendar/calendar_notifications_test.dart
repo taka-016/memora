@@ -64,23 +64,17 @@ void main() {
       DateTime(2026, 10, 30, 10),
     ]);
   });
-  test('通知には系列の初日ではなく個別変更した回の開始日時と終日区分を渡す', () {
+  test('独立した通常予定の開始日時と終日区分を通知へ渡す', () {
     final start = DateTime(2026, 11, 3, 14);
-    final source = event(
-      rule: 'FREQ=DAILY;COUNT=2',
-      reminders: [],
-      overrides: [
-        CalendarEventOverride(
-          originalStartDateTime: DateTime.utc(2026, 10, 30),
-          isCancelled: false,
-          title: '移動した予定',
-          startDateTime: start,
-          endDateTime: start.add(const Duration(hours: 1)),
-          isAllDay: false,
-          labelType: 'group',
-          notificationMinutesBefore: [60],
-        ),
-      ],
+    final source = CalendarEventDto(
+      id: 'independent',
+      groupId: 'g',
+      labelType: 'group',
+      title: '独立した予定',
+      startDateTime: start,
+      endDateTime: start.add(const Duration(hours: 1)),
+      isAllDay: false,
+      notificationMinutesBefore: [60],
     );
     final request = planner
         .plan([source], now, const CalendarNotificationPreferences())
@@ -119,13 +113,7 @@ void main() {
         ),
         CalendarEventOverride(
           originalStartDateTime: DateTime.utc(2026, 10, 31),
-          isCancelled: false,
-          title: '解除',
-          startDateTime: DateTime.utc(2026, 10, 31),
-          endDateTime: DateTime.utc(2026, 10, 31),
-          isAllDay: true,
-          labelType: 'group',
-          notificationMinutesBefore: [],
+          isCancelled: true,
         ),
       ],
     );
@@ -137,7 +125,7 @@ void main() {
       DateTime(2026, 11, 1, 7),
     );
   });
-  test('予定と個別回の通知設定をSQLiteとFirestoreへ変換し解除も保持する', () {
+  test('予定の通知設定と取消をSQLiteとFirestoreへ変換する', () {
     final source = event();
     final entity = CalendarEventMapper.toEntity(source);
     expect(
@@ -152,21 +140,15 @@ void main() {
       [0, 1440],
     );
     final override = CalendarEventOverride(
-      originalStartDateTime: now,
-      isCancelled: false,
-      title: '解除',
-      startDateTime: now,
-      endDateTime: now,
-      isAllDay: true,
-      labelType: 'group',
-      notificationMinutesBefore: [],
+      originalStartDateTime: DateTime.utc(now.year, now.month, now.day),
+      isCancelled: true,
     );
     expect(
       CalendarOverrideMapper.fromRow(
         CalendarOverrideMapper.toRow(override, 'event', 'group', true),
         true,
-      ).notificationMinutesBefore,
-      isEmpty,
+      ),
+      override,
     );
     final stored = FirestoreCalendarEventOverrideMapper.toFirestore(
       override,
@@ -178,8 +160,8 @@ void main() {
       FirestoreCalendarEventOverrideMapper.fromFirestore(
         stored,
         parentAllDay: true,
-      ).notificationMinutesBefore,
-      isEmpty,
+      ),
+      override,
     );
     expect(
       () => CalendarEventMapper.toEntity(

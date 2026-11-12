@@ -107,9 +107,7 @@ void main() {
       final firestore = MockFirebaseFirestore();
       final tripsCollection = MockCollectionReference();
       final itemsCollection = MockCollectionReference();
-      final trips = MockQuery();
       final items = MockQuery();
-      final tripsSnapshot = MockQuerySnapshot();
       final itemsSnapshot = MockQuerySnapshot();
       final storage = MockAndroidWidgetCacheStorage();
       final failure = TestException('取得失敗');
@@ -122,23 +120,22 @@ void main() {
       when(groupDoc.exists).thenReturn(true);
       when(firestore.collection('trip_entries')).thenReturn(tripsCollection);
       when(firestore.collection('itinerary_items')).thenReturn(itemsCollection);
-      when(tripsCollection.where('groupId', isEqualTo: 'group'))
-          .thenReturn(trips);
-      when(itemsCollection.where('tripId', isEqualTo: anyNamed('isEqualTo')))
+      when(itemsCollection.where('groupId', isEqualTo: 'group'))
           .thenReturn(items);
-      when(items.orderBy(any, descending: anyNamed('descending')))
+      when(items.where('startDateTime', isNull: false)).thenReturn(items);
+      when(
+        items.where(
+          'startDateTime',
+          isGreaterThanOrEqualTo: anyNamed('isGreaterThanOrEqualTo'),
+        ),
+      ).thenReturn(items);
+      when(items.where('startDateTime', isLessThan: anyNamed('isLessThan')))
           .thenReturn(items);
-      final tripDocs = List.generate(2, (index) {
-        final doc = MockQueryDocumentSnapshot();
-        when(doc.id).thenReturn('trip-$index');
-        when(doc.data()).thenReturn({'groupId': 'group', 'year': 2026});
-        return doc;
-      });
-      when(tripsSnapshot.docs).thenReturn(tripDocs);
-      when(trips.get()).thenAnswer((_) async {
-        if (failTrips) throw failure;
-        return tripsSnapshot;
-      });
+      when(items.orderBy('startDateTime')).thenReturn(items);
+      when(items.limit(1)).thenReturn(items);
+      final tripRef = MockDocumentReference();
+      when(tripsCollection.doc('trip-0')).thenReturn(tripRef);
+      when(tripRef.get()).thenAnswer((_) async => throw failure);
       final item = MockQueryDocumentSnapshot();
       when(item.id).thenReturn('item');
       when(item.data()).thenReturn({
@@ -149,7 +146,7 @@ void main() {
       when(itemsSnapshot.docs).thenReturn([item]);
       var itemReads = 0;
       when(items.get()).thenAnswer((_) async {
-        if (++itemReads == 2) throw failure;
+        if (++itemReads == 2 && !failTrips) throw failure;
         return itemsSnapshot;
       });
       when(storage.getTargetGroupId()).thenAnswer((_) async => 'group');

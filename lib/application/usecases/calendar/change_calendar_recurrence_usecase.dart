@@ -1,3 +1,4 @@
+import 'package:memora/application/queries/calendar/calendar_event_query_service.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/application/exceptions/application_validation_exception.dart';
 import 'package:memora/application/mappers/calendar/calendar_event_mapper.dart';
@@ -11,7 +12,12 @@ import 'package:memora/domain/repositories/calendar/calendar_event_repository.da
 enum CalendarChangeScope { only, following, all }
 
 class ChangeCalendarRecurrenceUsecase {
-  ChangeCalendarRecurrenceUsecase(this._repository, this._expander);
+  ChangeCalendarRecurrenceUsecase(
+    this._repository,
+    this._expander, {
+    this._queryService,
+  });
+  final CalendarEventQueryService? _queryService;
   final CalendarEventRepository _repository;
   final CalendarRecurrenceExpander _expander;
 
@@ -22,6 +28,25 @@ class ChangeCalendarRecurrenceUsecase {
     CalendarEventDto? changes,
   }) async {
     try {
+      if (_queryService != null) {
+        final complete = await _queryService.getCalendarEventById(source.id);
+        if (complete == null) {
+          throw ValidationException('元の予定が見つかりません。再読み込みしてください');
+        }
+        final originalKeys = source.overrides
+            .map((value) => _key(value.originalStartDateTime, source.isAllDay))
+            .toSet();
+        source = source.copyWith(
+          overrides: [
+            ...complete.overrides.where(
+              (value) => !originalKeys.contains(
+                _key(value.originalStartDateTime, source.isAllDay),
+              ),
+            ),
+            ...source.overrides,
+          ],
+        );
+      }
       if (source.recurrenceRule == null ||
           source.id.isEmpty ||
           (changes != null &&
@@ -57,22 +82,29 @@ class ChangeCalendarRecurrenceUsecase {
       if (scope == CalendarChangeScope.only) {
         final override = CalendarEventOverride(
           originalStartDateTime: key,
-          isCancelled: changes == null,
-          url: changes?.url ?? '',
-          memo: changes?.memo ?? '',
-          locationName: changes?.locationName ?? '',
-          latitude: changes?.latitude,
-          longitude: changes?.longitude,
-          title: changes?.title,
-          startDateTime: changes?.startDateTime,
-          endDateTime: changes?.endDateTime,
-          notificationMinutesBefore:
-              changes?.notificationMinutesBefore ?? const [],
-          isAllDay: changes?.isAllDay,
-          labelId: changes?.labelId,
-          labelType: changes?.labelType ?? 'custom',
-          memberId: changes?.memberId ?? '',
+          isCancelled: true,
         );
+        if (changes != null) {
+          preservedEvents.add(
+            CalendarEvent(
+              id: '',
+              groupId: changes.groupId,
+              labelId: changes.labelId,
+              labelType: changes.labelType,
+              memberId: changes.memberId,
+              title: changes.title,
+              startDateTime: changes.startDateTime,
+              endDateTime: changes.endDateTime,
+              isAllDay: changes.isAllDay,
+              url: changes.url,
+              memo: changes.memo,
+              locationName: changes.locationName,
+              latitude: changes.latitude,
+              longitude: changes.longitude,
+              notificationMinutesBefore: changes.notificationMinutesBefore,
+            ),
+          );
+        }
         replacement = source.copyWith(
           overrides: [
             ...source.overrides.where(
@@ -81,8 +113,7 @@ class ChangeCalendarRecurrenceUsecase {
             override,
           ],
         );
-      } else if (scope == CalendarChangeScope.all ||
-          key == _key(source.startDateTime, source.isAllDay)) {
+      } else if (scope == CalendarChangeScope.all) {
         if (changes != null) {
           final oldWall = source.isAllDay
               ? _key(source.startDateTime, true)
@@ -125,9 +156,6 @@ class ChangeCalendarRecurrenceUsecase {
                   wall.second,
                 );
           if (start == null) throw ValidationException('変更後の初回の時刻が存在しません');
-          if (changes.recurrenceRule == null) {
-            preservedEvents.addAll(_individualEvents(source, source.overrides));
-          }
           final movedRule = _moveRule(
             changes.recurrenceRule,
             _sameSchedule(changes.recurrenceRule, source.recurrenceRule)
@@ -174,18 +202,20 @@ class ChangeCalendarRecurrenceUsecase {
             .split(';')
             .where((v) => !v.startsWith('COUNT=') && !v.startsWith('UNTIL='))
             .join(';');
-        replacement = _with(
-          source,
-          rule: '$rule;UNTIL=$stamp',
-          overrides: source.overrides
-              .where(
-                (v) => _key(
-                  v.originalStartDateTime,
-                  source.isAllDay,
-                ).isBefore(key),
-              )
-              .toList(),
-        );
+        replacement = key == _key(source.startDateTime, source.isAllDay)
+            ? null
+            : _with(
+                source,
+                rule: '$rule;UNTIL=$stamp',
+                overrides: source.overrides
+                    .where(
+                      (v) => _key(
+                        v.originalStartDateTime,
+                        source.isAllDay,
+                      ).isBefore(key),
+                    )
+                    .toList(),
+              );
         if (changes != null) {
           var nextRule = changes.recurrenceRule;
           final parsed = CalendarRecurrenceRule.parse(source.recurrenceRule!);
@@ -229,43 +259,7 @@ class ChangeCalendarRecurrenceUsecase {
               _wall(changes, changes.startDateTime),
             );
           }
-          if (nextRule == null) {
-            preservedEvents.addAll(
-              _individualEvents(
-                source,
-                source.overrides
-                    .where(
-                      (value) => !_key(
-                        value.originalStartDateTime,
-                        source.isAllDay,
-                      ).isBefore(key),
-                    )
-                    .toList(),
-              ),
-            );
-          }
-          following = _with(
-            changes,
-            id: '',
-            rule: nextRule,
-            overrides: nextRule == null
-                ? []
-                : _moveOverrides(
-                    source,
-                    changes,
-                    source.overrides
-                        .where(
-                          (value) => !_key(
-                            value.originalStartDateTime,
-                            source.isAllDay,
-                          ).isBefore(key),
-                        )
-                        .toList(),
-                    key,
-                    changes.startDateTime,
-                    nextRule,
-                  ),
-          );
+          following = _with(changes, id: '', rule: nextRule, overrides: []);
         }
       }
       final head = replacement == null
@@ -295,67 +289,6 @@ class ChangeCalendarRecurrenceUsecase {
       );
     }
   }
-
-  Future<void> resetOverride(CalendarEventDto source, DateTime original) async {
-    final key = _key(original, source.isAllDay);
-    if (source.id.isEmpty ||
-        source.recurrenceRule == null ||
-        !source.overrides.any(
-          (value) => _key(value.originalStartDateTime, source.isAllDay) == key,
-        )) {
-      throw const ApplicationValidationException(
-        'リセットする個別変更が見つかりません。再読み込みしてください',
-      );
-    }
-    final replacement = source.copyWith(
-      overrides: source.overrides
-          .where(
-            (value) =>
-                _key(value.originalStartDateTime, source.isAllDay) != key,
-          )
-          .toList(),
-    );
-    try {
-      await _repository.replaceCalendarEvent(
-        CalendarEventMapper.toEntity(source),
-        CalendarEventMapper.toEntity(replacement),
-        null,
-      );
-    } on ValidationException catch (e, stack) {
-      Error.throwWithStackTrace(
-        ApplicationValidationException(e.message),
-        stack,
-      );
-    }
-  }
-
-  List<CalendarEvent> _individualEvents(
-    CalendarEventDto source,
-    List<CalendarEventOverride> overrides,
-  ) => overrides
-      .where((value) => !value.isCancelled)
-      .map(
-        (value) => CalendarEvent(
-          id: '',
-          groupId: source.groupId,
-          labelId: value.labelId!,
-
-          labelType: value.labelType,
-
-          memberId: value.memberId,
-          url: value.url,
-          memo: value.memo,
-          locationName: value.locationName,
-          latitude: value.latitude,
-          longitude: value.longitude,
-          title: value.title!,
-          startDateTime: value.startDateTime!,
-          endDateTime: value.endDateTime!,
-          notificationMinutesBefore: value.notificationMinutesBefore,
-          isAllDay: value.isAllDay!,
-        ),
-      )
-      .toList();
 
   List<CalendarEventOverride> _moveOverrides(
     CalendarEventDto source,
@@ -403,25 +336,7 @@ class ChangeCalendarRecurrenceUsecase {
       final key = target.isAllDay
           ? _key(wall, true)
           : _expander.resolveTime(wall, target.timeZone!);
-      return CalendarEventOverride(
-        originalStartDateTime: key,
-        isCancelled: value.isCancelled,
-        url: value.url,
-        memo: value.memo,
-        locationName: value.locationName,
-        latitude: value.latitude,
-        longitude: value.longitude,
-        title: value.title,
-        labelId: value.labelId,
-
-        labelType: value.labelType,
-
-        memberId: value.memberId,
-        notificationMinutesBefore: value.notificationMinutesBefore,
-        isAllDay: value.isAllDay,
-        startDateTime: value.startDateTime,
-        endDateTime: value.endDateTime,
-      );
+      return CalendarEventOverride(originalStartDateTime: key);
     }).toList();
   }
 

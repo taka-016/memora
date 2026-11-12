@@ -1,3 +1,4 @@
+import 'package:memora/application/models/calendar_event_period.dart';
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
@@ -18,26 +19,55 @@ class FirestoreCalendarEventStore {
   Future<CalendarEventDto> read(
     DocumentSnapshot<Map<String, dynamic>> event, {
     Transaction? transaction,
+    CalendarEventPeriod? period,
   }) async {
     final data = event.data()!;
     final overrides = <CalendarEventOverride>[];
-    for (final id in overrideIds(data)) {
-      final ref = firestore.collection('calendar_event_overrides').doc(id);
-      final doc = transaction == null
-          ? await ref.get()
-          : await transaction.get(ref);
-      final row = doc.data();
-      if (row == null ||
-          row['eventId'] != event.id ||
-          row['groupId'] != data['groupId']) {
-        throw ValidationException('個別回の保存内容が不正です');
+    if (transaction == null && data['recurrenceRule'] != null) {
+      var query = firestore
+          .collection('calendar_event_overrides')
+          .where('eventId', isEqualTo: event.id)
+          .where('groupId', isEqualTo: data['groupId']);
+      if (period != null) {
+        query = query
+            .where(
+              'originalEndDateTime',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(period.queryFrom),
+            )
+            .where(
+              'originalStartDateTime',
+              isLessThan: Timestamp.fromDate(period.queryTo),
+            )
+            .orderBy('originalEndDateTime')
+            .orderBy('originalStartDateTime');
       }
-      overrides.add(
-        FirestoreCalendarEventOverrideMapper.fromFirestore(
-          row,
-          parentAllDay: data['isAllDay'] as bool,
+      final snapshot = await query.get();
+      overrides.addAll(
+        snapshot.docs.map(
+          (doc) => FirestoreCalendarEventOverrideMapper.fromFirestore(
+            doc.data(),
+            parentAllDay: data['isAllDay'] as bool,
+          ),
         ),
       );
+    } else if (transaction != null) {
+      for (final id in overrideIds(data)) {
+        final doc = await transaction.get(
+          firestore.collection('calendar_event_overrides').doc(id),
+        );
+        final row = doc.data();
+        if (row == null ||
+            row['eventId'] != event.id ||
+            row['groupId'] != data['groupId']) {
+          throw ValidationException('取消情報の保存内容が不正です');
+        }
+        overrides.add(
+          FirestoreCalendarEventOverrideMapper.fromFirestore(
+            row,
+            parentAllDay: data['isAllDay'] as bool,
+          ),
+        );
+      }
     }
     return FirestoreCalendarEventMapper.fromFirestore(
       event,
@@ -92,6 +122,7 @@ class FirestoreCalendarEventStore {
           eventId: eventId,
           groupId: previousEvent.groupId,
           parentAllDay: previousEvent.isAllDay,
+          parentDuration: previousEvent.duration,
         ),
     };
     for (final id in previousIdSet) {
@@ -103,6 +134,7 @@ class FirestoreCalendarEventStore {
         eventId: eventId,
         groupId: event!.groupId,
         parentAllDay: event.isAllDay,
+        parentDuration: event.duration,
       );
       final ref = collection.doc(entry.key);
       if (previousIdSet.contains(entry.key)) {

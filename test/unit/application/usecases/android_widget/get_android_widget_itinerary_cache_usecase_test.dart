@@ -1,3 +1,5 @@
+import '../../../../helpers/widget_itinerary_day_query_fixture.dart';
+
 import 'package:memora/infrastructure/time/fixed_app_clock.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
@@ -12,13 +14,17 @@ void main() {
     late _FakeTripEntryQueryService tripEntryQueryService;
     late _FakeItineraryItemQueryService itineraryItemQueryService;
     late GetAndroidWidgetItineraryCacheUsecase usecase;
+    late WidgetItineraryDayQueryFixture query;
 
     setUp(() {
       tripEntryQueryService = _FakeTripEntryQueryService();
       itineraryItemQueryService = _FakeItineraryItemQueryService();
+      query = WidgetItineraryDayQueryFixture(
+        tripEntryQueryService,
+        itineraryItemQueryService,
+      );
       usecase = GetAndroidWidgetItineraryCacheUsecase(
-        tripEntryQueryService: tripEntryQueryService,
-        itineraryItemQueryService: itineraryItemQueryService,
+        queryService: query,
         clock: FixedAppClock(DateTime(2026, 5, 24, 10)),
       );
     });
@@ -65,16 +71,8 @@ void main() {
         'future-trip-2_2026-07-01',
         'future-trip-3_2026-08-01',
       ]);
-      expect(itineraryItemQueryService.requestedTripIds, [
-        'old-trip',
-        'previous-trip',
-        'nearest-trip',
-        'future-trip-1',
-        'future-trip-2',
-        'future-trip-3',
-        'future-trip-4',
-      ]);
-      expect(tripEntryQueryService.receivedOrderBy, isNull);
+      expect(query.requestedDays, hasLength(7));
+      expect(cache.itineraryDateIds, hasLength(7));
     });
 
     test('表示中旅程日付IDを指定した場合はその日付を基準にキャッシュ範囲を作る', () async {
@@ -107,7 +105,7 @@ void main() {
       ]);
     });
 
-    test('初回は5件に絞り保持済み日付は最新内容で再取得して削除済みを除く', () async {
+    test('キャッシュと日付一覧を表示日の周囲へ絞り保持済み日付も最新内容にする', () async {
       tripEntryQueryService.trips = [_trip('trip', DateTime(2026, 5, 25))];
       itineraryItemQueryService.itemsByTripId['trip'] = [
         for (var day = 25; day <= 32; day++)
@@ -124,7 +122,7 @@ void main() {
           if (day != 26)
             _item(
               'item-$day',
-              day == 25 ? '編集後の予定' : '予定$day',
+              day == 29 ? '編集後の予定' : '予定$day',
               DateTime(2026, 5, day, 9),
               null,
             ),
@@ -135,9 +133,6 @@ void main() {
         retainedItineraryDateIds: retainedIds,
       );
       expect(refreshed.itineraryDates.map((date) => date.id), [
-        'trip_2026-05-25',
-        'trip_2026-05-27',
-        'trip_2026-05-28',
         'trip_2026-05-29',
         'trip_2026-05-30',
         'trip_2026-05-31',
@@ -147,6 +142,40 @@ void main() {
         refreshed.itineraryDates.first.itineraryItems.single.name,
         '編集後の予定',
       );
+    });
+
+    test('過去の旅行が蓄積しても表示日と前後に必要な日付だけ取得する', () async {
+      tripEntryQueryService.trips = [
+        for (var year = 2010; year < 2026; year++)
+          _trip('past-$year', DateTime(year, 1, 1)),
+        for (var day = 20; day <= 31; day++)
+          _trip('trip-$day', DateTime(2026, 5, day)),
+      ];
+      for (final trip in tripEntryQueryService.trips) {
+        itineraryItemQueryService.itemsByTripId[trip.id] = [
+          _item(
+            'item-${trip.id}',
+            trip.id,
+            trip.startDate!.add(const Duration(hours: 9)),
+            null,
+          ),
+        ];
+      }
+      final cache = await usecase.execute(groupId: 'group001');
+      expect(cache.selectedItineraryDateId, 'trip-24_2026-05-24');
+      expect(query.requestedDays.length, lessThanOrEqualTo(8));
+      expect(
+        query.requestedDays.every(
+          (day) =>
+              day.year == 2026 &&
+              day.month == 5 &&
+              day.day >= 22 &&
+              day.day <= 28,
+        ),
+        isTrue,
+      );
+      expect(cache.itineraryDates, hasLength(5));
+      expect(cache.itineraryDateIds, hasLength(7));
     });
 
     test('旅程項目は日付単位にまとめ、開始日時、終了日時の昇順に並べる', () async {

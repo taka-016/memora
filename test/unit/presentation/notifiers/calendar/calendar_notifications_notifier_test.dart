@@ -32,6 +32,7 @@ void main() {
     source = MockCalendarNotificationSource();
     gateway = MockCalendarNotificationGateway();
     when(gateway.replace(any)).thenAnswer((_) async {});
+    when(gateway.isEnabled()).thenAnswer((_) async => true);
     sync = MockSynchronizeCalendarNotificationsUsecase();
     when(source.changes()).thenAnswer((_) => changes.stream);
     when(sync.execute())
@@ -50,6 +51,31 @@ void main() {
     container.dispose();
     await changes.close();
   });
+  test('通知が許可されていない間は監視せず再確認後に開始する', () async {
+    when(gateway.isEnabled()).thenAnswer((_) async => false);
+    final notifier = container.read(
+      calendarNotificationsNotifierProvider.notifier,
+    );
+    await container.pump();
+    await Future<void>(() {});
+    verifyNever(source.changes());
+    when(gateway.isEnabled()).thenAnswer((_) async => true);
+    await notifier.refresh();
+    verify(source.changes()).called(1);
+  });
+
+  test('保存と復帰による同期で正常な監視を張り直さない', () async {
+    final notifier = container.read(
+      calendarNotificationsNotifierProvider.notifier,
+    );
+    await container.pump();
+    await Future<void>(() {});
+    clearInteractions(source);
+    await notifier.refresh();
+    await notifier.refresh();
+    verifyNever(source.changes());
+  });
+
   test('スマートフォンの通知設定を開く間は処理中となり重複して開かない', () async {
     final opening = Completer<bool>();
     when(gateway.openNotificationSettings()).thenAnswer((_) => opening.future);
@@ -57,6 +83,7 @@ void main() {
       calendarNotificationsNotifierProvider.notifier,
     );
     await container.pump();
+    await Future<void>(() {});
     final first = notifier.openNotificationSettings();
     expect(
       container.read(calendarNotificationsNotifierProvider).isSyncing,
@@ -75,11 +102,13 @@ void main() {
   test('ログアウトのloading遷移でも旧アカウントの購読と通知予約を更新する', () async {
     container.read(calendarNotificationsNotifierProvider);
     await container.pump();
+    await Future<void>(() {});
     clearInteractions(sync);
     clearInteractions(source);
     container.read(currentMemberNotifierProvider.notifier).state =
         const CurrentMemberState.loading();
     await container.pump();
+    await Future<void>(() {});
     verifyNever(source.changes());
     verifyNever(sync.execute());
     verify(gateway.replace(argThat(isEmpty))).called(1);
@@ -89,8 +118,10 @@ void main() {
       calendarNotificationsNotifierProvider.notifier,
     );
     await container.pump();
+    await Future<void>(() {});
     changes.addError(TestException('監視失敗'));
     await container.pump();
+    await Future<void>(() {});
     expect(
       container.read(calendarNotificationsNotifierProvider).status,
       CalendarNotificationStatus.failed,
@@ -98,10 +129,12 @@ void main() {
     clearInteractions(source);
     await notifier.retry();
     await container.pump();
+    await Future<void>(() {});
     verify(source.changes()).called(1);
     clearInteractions(sync);
     changes.add(null);
     await container.pump();
+    await Future<void>(() {});
     verify(sync.execute()).called(1);
   });
 }

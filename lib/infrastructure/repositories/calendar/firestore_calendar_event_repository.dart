@@ -54,8 +54,7 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
                 replacement.groupId != expected.groupId) ||
         following != null &&
             (following.id.isNotEmpty ||
-                following.groupId != expected.groupId ||
-                replacement == null)) {
+                following.groupId != expected.groupId)) {
       throw ValidationException('系列の分割対象が不正です');
     }
     if (preservedEvents.any(

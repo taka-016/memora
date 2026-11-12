@@ -11,17 +11,10 @@ import 'package:memora/infrastructure/services/calendar_event_content.dart';
 import 'package:memora/infrastructure/services/iana_calendar_time_zone.dart';
 
 void main() {
-  test('通常予定と個別回の座標を保存形式・競合比較・発生日への展開でも保持する', () {
+  test('通常予定の座標と取消情報を保存形式・競合比較・発生日への展開でも保持する', () {
     final override = CalendarEventOverride(
       originalStartDateTime: DateTime.utc(2026, 11, 7),
-      isCancelled: false,
-      title: '変更後',
-      labelId: 'label',
-      startDateTime: DateTime.utc(2026, 11, 7),
-      endDateTime: DateTime.utc(2026, 11, 8),
-      isAllDay: true,
-      latitude: 34.0,
-      longitude: 135.0,
+      isCancelled: true,
     );
     final dto = CalendarEventDto(
       id: 'event',
@@ -51,11 +44,31 @@ void main() {
       true,
     );
     expect(CalendarOverrideMapper.fromRow(overrideRow, true), override);
+    expect(
+      overrideRow.keys,
+      unorderedEquals([
+        'event_id',
+        'group_id',
+        'original_start_date_time',
+        'original_end_date_time',
+        'is_cancelled',
+      ]),
+    );
     final overrideDoc = FirestoreCalendarEventOverrideMapper.toFirestore(
       override,
       eventId: 'event',
       groupId: 'group',
       parentAllDay: true,
+    );
+    expect(
+      overrideDoc.keys,
+      unorderedEquals([
+        'eventId',
+        'groupId',
+        'originalStartDateTime',
+        'originalEndDateTime',
+        'isCancelled',
+      ]),
     );
     expect(
       FirestoreCalendarEventOverrideMapper.fromFirestore(
@@ -67,7 +80,7 @@ void main() {
     expect(calendarEventContent(entity).overrides.single, override);
     final events = CalendarRecurrenceExpander(IanaCalendarTimeZone())
         .expand(dto, DateTime.utc(2026, 11, 6), DateTime.utc(2026, 11, 8));
-    expect(events.map((v) => v.latitude), [35.0, 34.0]);
-    expect(events.map((v) => v.longitude), [139.0, 135.0]);
+    expect(events.map((v) => v.latitude), [35.0]);
+    expect(events.map((v) => v.longitude), [139.0]);
   });
 }

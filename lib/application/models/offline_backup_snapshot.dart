@@ -157,7 +157,7 @@ class OfflineBackupSnapshot extends Equatable {
     );
   }
 
-  static const currentFormatVersion = 2;
+  static const currentFormatVersion = 3;
   static const tableNames = <String>{
     'members',
     'groups',

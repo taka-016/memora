@@ -235,15 +235,10 @@ void main() {
       3,
     );
   });
-  test('個別回を別月に移しても元の回を表示せず取消しも反映する', () {
+  test('取消した回を表示せず別月にも展開しない', () {
     final moved = CalendarEventOverride(
       originalStartDateTime: DateTime.utc(2026, 1, 2),
-      isCancelled: false,
-      title: '移動',
-      startDateTime: DateTime.utc(2026, 2, 5),
-      endDateTime: DateTime.utc(2026, 2, 6),
-      isAllDay: true,
-      labelId: 'label',
+      isCancelled: true,
     );
     final cancelled = CalendarEventOverride(
       originalStartDateTime: DateTime.utc(2026, 1, 3),
@@ -260,8 +255,7 @@ void main() {
       DateTime.utc(2026, 2),
       DateTime.utc(2026, 3),
     );
-    expect(february.single.title, '移動');
-    expect(february.single.originalStartDateTime, DateTime.utc(2026, 1, 2));
+    expect(february, isEmpty);
   });
   test('系列の現地時刻を保ち夏時間の欠落はスキップし重複は早い方を1回にする', () {
     final spring = expand(

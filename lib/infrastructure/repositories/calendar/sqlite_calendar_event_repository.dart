@@ -15,12 +15,7 @@ class SqliteCalendarEventRepository implements CalendarEventRepository {
 
   Future<void> _validateLabel(CalendarEvent event) async {
     validateCalendarRecurrence(event);
-    for (final id in {
-      if (event.labelType == 'custom') event.labelId,
-      ...event.overrides
-          .where((v) => !v.isCancelled && v.labelType == 'custom')
-          .map((v) => v.labelId!),
-    }) {
+    for (final id in {if (event.labelType == 'custom') event.labelId}) {
       final labels = await db.rows(
         'calendar_labels',
         where: 'id = ? AND group_id = ?',
@@ -59,6 +54,8 @@ class SqliteCalendarEventRepository implements CalendarEventRepository {
                 .toList(),
           );
     if (current == null ||
+        (expected.overridesFingerprint != null &&
+            expected.overridesFingerprint != current.overridesFingerprint) ||
         calendarEventContent(CalendarEventMapper.toEntity(current)) !=
             calendarEventContent(expected)) {
       throw ValidationException('予定が変更されています。再読み込みしてからやり直してください');
@@ -138,6 +135,7 @@ class SqliteCalendarEventRepository implements CalendarEventRepository {
           event.id,
           event.groupId,
           event.isAllDay,
+          parentDuration: event.duration,
         ),
       );
     }

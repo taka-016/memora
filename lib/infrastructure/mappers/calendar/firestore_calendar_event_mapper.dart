@@ -1,3 +1,6 @@
+import 'package:memora/application/mappers/calendar/calendar_event_mapper.dart';
+import 'package:memora/application/services/calendar/calendar_recurrence_expander.dart';
+import 'package:memora/infrastructure/services/iana_calendar_time_zone.dart';
 import 'package:memora/domain/entities/calendar/calendar_event_override.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/domain/entities/calendar/calendar_event.dart';
@@ -43,14 +46,16 @@ class FirestoreCalendarEventMapper {
   static DateTime _date(Timestamp value, bool allDay) =>
       allDay ? value.toDate().toUtc() : value.toDate();
   static Map<String, dynamic> toFirestore(CalendarEvent value) => {
+    'calendarFormatVersion': 2,
     'recurrenceRule': value.recurrenceRule,
+    'recurrenceEndDateTime': Timestamp.fromDate(
+      CalendarRecurrenceExpander(IanaCalendarTimeZone())
+              .seriesEndDateTime(CalendarEventMapper.toDto(value)) ??
+          DateTime.utc(9999, 12, 31, 23, 59, 59),
+    ),
     'timeZone': value.timeZone,
-    'referencedLabelIds': {
-      if (value.labelType == 'custom') value.labelId,
-      ...value.overrides
-          .where((v) => !v.isCancelled && v.labelType == 'custom')
-          .map((v) => v.labelId!),
-    }.toList(),
+    'referencedLabelIds': {if (value.labelType == 'custom') value.labelId}
+        .toList(),
     'groupId': value.groupId,
     'labelId': value.labelType == 'custom' ? value.labelId : null,
     'labelType': value.labelType,

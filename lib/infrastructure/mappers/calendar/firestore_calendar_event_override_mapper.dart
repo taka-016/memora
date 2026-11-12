@@ -1,83 +1,43 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/domain/entities/calendar/calendar_event_override.dart';
+import 'package:memora/domain/exceptions/validation_exception.dart';
 
 class FirestoreCalendarEventOverrideMapper {
   static DateTime normalize(DateTime value, bool allDay) =>
       allDay ? DateTime.utc(value.year, value.month, value.day) : value.toUtc();
-
   static String documentId(
     String eventId,
     CalendarEventOverride value,
     bool parentAllDay,
   ) =>
       '${eventId}_${normalize(value.originalStartDateTime, parentAllDay).microsecondsSinceEpoch}';
-
   static Map<String, dynamic> toFirestore(
     CalendarEventOverride value, {
     required String eventId,
     required String groupId,
     required bool parentAllDay,
-  }) => {
-    'eventId': eventId,
-    'groupId': groupId,
-    'originalStartDateTime': Timestamp.fromDate(
-      normalize(value.originalStartDateTime, parentAllDay),
-    ),
-    'isCancelled': value.isCancelled,
-    'url': value.url,
-    'memo': value.memo,
-    'locationName': value.locationName,
-    'latitude': value.latitude,
-    'longitude': value.longitude,
-    'title': value.isCancelled ? null : value.title,
-    'labelId': value.isCancelled || value.labelType != 'custom'
-        ? null
-        : value.labelId,
-    'labelType': value.isCancelled ? null : value.labelType,
-    'memberId': !value.isCancelled && value.labelType == 'member'
-        ? value.memberId
-        : null,
-    'notificationMinutesBefore': value.notificationMinutesBefore,
-    'isAllDay': value.isCancelled ? null : value.isAllDay,
-    'startDateTime': value.isCancelled
-        ? null
-        : Timestamp.fromDate(normalize(value.startDateTime!, value.isAllDay!)),
-    'endDateTime': value.isCancelled
-        ? null
-        : Timestamp.fromDate(normalize(value.endDateTime!, value.isAllDay!)),
-  };
+    Duration parentDuration = Duration.zero,
+  }) {
+    final start = normalize(value.originalStartDateTime, parentAllDay);
+    return {
+      'eventId': eventId,
+      'groupId': groupId,
+      'originalStartDateTime': Timestamp.fromDate(start),
+      'originalEndDateTime': Timestamp.fromDate(start.add(parentDuration)),
+      'isCancelled': true,
+    };
+  }
 
   static CalendarEventOverride fromFirestore(
     Map<String, dynamic> data, {
     required bool parentAllDay,
   }) {
-    DateTime date(String key, bool allDay) {
-      final value = (data[key] as Timestamp).toDate();
-      return allDay ? value.toUtc() : value;
+    if (data['isCancelled'] != true) {
+      throw ValidationException('旧形式の個別変更は移行が必要です');
     }
-
-    final cancelled = data['isCancelled'] as bool;
+    final start = (data['originalStartDateTime'] as Timestamp).toDate();
     return CalendarEventOverride(
-      originalStartDateTime: date('originalStartDateTime', parentAllDay),
-      isCancelled: cancelled,
-      notificationMinutesBefore:
-          (data['notificationMinutesBefore'] as List? ?? const []).cast<int>(),
-      url: data['url'] as String? ?? '',
-      memo: data['memo'] as String? ?? '',
-      locationName: data['locationName'] as String? ?? '',
-      latitude: (data['latitude'] as num?)?.toDouble(),
-      longitude: (data['longitude'] as num?)?.toDouble(),
-      title: cancelled ? null : data['title'] as String,
-      labelId: cancelled ? null : data['labelId'] as String? ?? '',
-      labelType: cancelled ? 'custom' : data['labelType'] as String,
-      memberId: data['memberId'] as String? ?? '',
-      isAllDay: cancelled ? null : data['isAllDay'] as bool,
-      startDateTime: cancelled
-          ? null
-          : date('startDateTime', data['isAllDay'] as bool),
-      endDateTime: cancelled
-          ? null
-          : date('endDateTime', data['isAllDay'] as bool),
+      originalStartDateTime: parentAllDay ? start.toUtc() : start,
     );
   }
 }

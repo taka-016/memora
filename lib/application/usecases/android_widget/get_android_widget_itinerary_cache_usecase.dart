@@ -1,20 +1,16 @@
 import 'package:memora/application/dtos/android_widget/android_widget_itinerary_cache_dto.dart';
 import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
-import 'package:memora/application/queries/order_by.dart';
-import 'package:memora/application/queries/trip/itinerary_item_query_service.dart';
-import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
+import 'package:memora/application/queries/android_widget/android_widget_itinerary_query_service.dart';
 import 'package:memora/core/time/app_clock.dart';
 
 class GetAndroidWidgetItineraryCacheUsecase {
   const GetAndroidWidgetItineraryCacheUsecase({
-    required this._tripEntryQueryService,
-    required this._itineraryItemQueryService,
+    required this._queryService,
     required this._clock,
   });
 
-  final TripEntryQueryService _tripEntryQueryService;
-  final ItineraryItemQueryService _itineraryItemQueryService;
+  final AndroidWidgetItineraryQueryService _queryService;
   final AppClock _clock;
 
   Future<AndroidWidgetItineraryCacheDto> execute({
@@ -22,66 +18,105 @@ class GetAndroidWidgetItineraryCacheUsecase {
     String? selectedItineraryDateId,
     Set<String> retainedItineraryDateIds = const {},
   }) async {
-    final trips = await _tripEntryQueryService.getTripEntriesByGroupId(groupId);
-    final sortedTrips = [...trips]..sort(_compareTripsByStartDate);
-    final allItineraryDates = <AndroidWidgetItineraryDateCacheDto>[];
-
-    for (final trip in sortedTrips) {
-      final items = await _itineraryItemQueryService.getItineraryItemsByTripId(
-        trip.id,
-        orderBy: const [
-          OrderBy('startDateTime', descending: false),
-          OrderBy('endDateTime', descending: false),
-        ],
-      );
-      allItineraryDates.addAll(_toItineraryDateCaches(trip, items));
+    final loaded = <DateTime, List<AndroidWidgetItineraryDateCacheDto>>{};
+    Future<List<AndroidWidgetItineraryDateCacheDto>> loadDay(
+      DateTime date,
+    ) async {
+      final day = _dateOnly(date);
+      if (loaded.containsKey(day)) return loaded[day]!;
+      final trips = await _queryService.getDay(groupId, day);
+      final values = [
+        for (final trip in trips)
+          ..._toItineraryDateCaches(trip, trip.itineraryItems ?? const []),
+      ]..sort(_compareItineraryDateCaches);
+      return loaded[day] = values;
     }
 
-    allItineraryDates.sort(_compareItineraryDateCaches);
-    final selectedItineraryDate = _selectItineraryDate(
-      allItineraryDates,
-      selectedItineraryDateId,
+    final today = _dateOnly(_clock.now());
+    final next = await _queryService.findDate(groupId, today, before: false);
+    final recentDay =
+        next ?? await _queryService.findDate(groupId, today, before: true);
+    final recentValues = recentDay == null
+        ? <AndroidWidgetItineraryDateCacheDto>[]
+        : await loadDay(recentDay);
+    final recent = next != null
+        ? recentValues.firstOrNull
+        : recentValues.lastOrNull;
+    AndroidWidgetItineraryDateCacheDto? selected;
+    if (selectedItineraryDateId != null &&
+        selectedItineraryDateId.length >= 10) {
+      final date = DateTime.tryParse(
+        selectedItineraryDateId.substring(selectedItineraryDateId.length - 10),
+      );
+      if (date != null) {
+        selected = (await loadDay(date))
+            .where((value) => value.id == selectedItineraryDateId)
+            .firstOrNull;
+      }
+    }
+    selected ??= recent;
+    if (selected == null) {
+      return AndroidWidgetItineraryCacheDto(
+        version: 1,
+        groupId: groupId,
+        selectedItineraryDateId: null,
+        lastUpdatedAt: _clock.now(),
+        itineraryDates: const [],
+        itineraryDateIds: const [],
+      );
+    }
+    final allDates = [...await loadDay(selected.date)]
+      ..sort(_compareItineraryDateCaches);
+    var previousBoundary = selected.date;
+    var nextBoundary = DateTime(
+      selected.date.year,
+      selected.date.month,
+      selected.date.day + 1,
     );
-
+    int selectedIndex() =>
+        allDates.indexWhere((value) => value.id == selected!.id);
+    while (selectedIndex() < 2) {
+      final date = await _queryService.findDate(
+        groupId,
+        previousBoundary,
+        before: true,
+      );
+      if (date == null) break;
+      previousBoundary = date;
+      allDates.addAll(await loadDay(date));
+      allDates.sort(_compareItineraryDateCaches);
+    }
+    while (allDates.length - selectedIndex() - 1 < 4) {
+      final date = await _queryService.findDate(
+        groupId,
+        nextBoundary,
+        before: false,
+      );
+      if (date == null) break;
+      nextBoundary = DateTime(date.year, date.month, date.day + 1);
+      allDates.addAll(await loadDay(date));
+      allDates.sort(_compareItineraryDateCaches);
+    }
+    final index = selectedIndex();
+    final from = index > 1 ? index - 2 : 0;
+    final to = index + 5 < allDates.length ? index + 5 : allDates.length;
+    final references = allDates.sublist(from, to);
+    final referenceIds = references.map((value) => value.id).toSet();
     final includedIds = {
-      ...retainedItineraryDateIds,
-      ..._selectCacheRange(
-        allItineraryDates,
-        selectedItineraryDate,
-      ).map((date) => date.id),
+      ...retainedItineraryDateIds.where(referenceIds.contains),
+      ..._selectCacheRange(allDates, selected).map((value) => value.id),
     };
     return AndroidWidgetItineraryCacheDto(
       version: 1,
       groupId: groupId,
-      selectedItineraryDateId: selectedItineraryDate?.id,
+      selectedItineraryDateId: selected.id,
       lastUpdatedAt: _clock.now(),
-      itineraryDates: allItineraryDates
-          .where((date) => includedIds.contains(date.id))
+      itineraryDates: references
+          .where((value) => includedIds.contains(value.id))
           .toList(),
-      itineraryDateIds: allItineraryDates.map((date) => date.id).toList(),
-      recentItineraryDateId: _selectItineraryDate(allItineraryDates, null)?.id,
+      itineraryDateIds: references.map((value) => value.id).toList(),
+      recentItineraryDateId: recent?.id,
     );
-  }
-
-  AndroidWidgetItineraryDateCacheDto? _selectItineraryDate(
-    List<AndroidWidgetItineraryDateCacheDto> itineraryDates,
-    String? selectedItineraryDateId,
-  ) {
-    if (selectedItineraryDateId != null) {
-      for (final itineraryDate in itineraryDates) {
-        if (itineraryDate.id == selectedItineraryDateId) {
-          return itineraryDate;
-        }
-      }
-    }
-
-    final today = _dateOnly(_clock.now());
-    for (final itineraryDate in itineraryDates) {
-      if (!itineraryDate.date.isBefore(today)) {
-        return itineraryDate;
-      }
-    }
-    return itineraryDates.lastOrNull;
   }
 
   List<AndroidWidgetItineraryDateCacheDto> _selectCacheRange(
@@ -139,10 +174,6 @@ class GetAndroidWidgetItineraryCacheUsecase {
             .toList(),
       );
     }).toList();
-  }
-
-  int _compareTripsByStartDate(TripEntryDto a, TripEntryDto b) {
-    return _compareNullableDateTime(a.startDate, b.startDate);
   }
 
   int _compareItineraryItems(ItineraryItemDto a, ItineraryItemDto b) {
