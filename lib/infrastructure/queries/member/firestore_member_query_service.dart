@@ -9,32 +9,16 @@ import 'package:memora/application/queries/order_by.dart';
 class FirestoreMemberQueryService implements MemberQueryService {
   final FirebaseFirestore _firestore;
 
-  FirestoreMemberQueryService({FirebaseFirestore? firestore})
-    : _firestore = firestore ?? FirebaseFirestore.instance;
+  FirestoreMemberQueryService({FirebaseFirestore? firestore, FirestoreAccountPermissionsSource? permissions})
+    : _firestore = firestore ?? FirebaseFirestore.instance,
+      _permissions = permissions ?? FirestoreAccountPermissionsSource(firestore ?? FirebaseFirestore.instance);
+  final FirestoreAccountPermissionsSource _permissions;
 
   @override
   Future<List<MemberDto>> getMembers({List<OrderBy>? orderBy}) async {
-    try {
-      Query<Map<String, dynamic>> query = _firestore.collection('members');
-
-      if (orderBy != null && orderBy.isNotEmpty) {
-        for (final order in orderBy) {
-          query = query.orderBy(order.field, descending: order.descending);
-        }
-      }
-
-      final snapshot = await query.get();
-      return snapshot.docs
-          .map((doc) => FirestoreMemberMapper.fromFirestore(doc))
-          .toList();
-    } catch (e, stack) {
-      logger.e(
-        'FirestoreMemberQueryService.getMembers: ${e.toString()}',
-        error: e,
-        stackTrace: stack,
-      );
-      rethrow;
-    }
+    final current = await _permissions.current();
+    if (current == null) return [];
+    return getMembersByOwnerId(current.memberId, orderBy: orderBy);
   }
 
   @override
@@ -58,9 +42,10 @@ class FirestoreMemberQueryService implements MemberQueryService {
   @override
   Future<MemberDto?> getMemberByAccountId(String accountId) async {
     try {
-      final permissions = await FirestoreAccountPermissionsSource(_firestore).forAccount(accountId);
+      final permissions = await FirestoreAccountPermissionsSource(_firestore)
+          .forAccount(accountId);
       if (permissions == null) return null;
-      return getMemberById(permissions.memberId);
+      return await getMemberById(permissions.memberId);
     } catch (e, stack) {
       logger.e(
         'FirestoreMemberQueryService.getMemberByAccountId: ${e.toString()}',
