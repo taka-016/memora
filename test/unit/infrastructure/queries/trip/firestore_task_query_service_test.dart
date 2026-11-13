@@ -42,7 +42,8 @@ void main() {
     test('旅行IDでタスク一覧を取得しorderByを適用できる', () async {
       const tripId = 'trip001';
       final mockQuery = MockQuery<Map<String, dynamic>>();
-      when(mockQuery.where('groupId', isEqualTo: anyNamed('isEqualTo'))).thenReturn(mockQuery);
+      when(mockQuery.where('groupId', isEqualTo: anyNamed('isEqualTo')))
+          .thenReturn(mockQuery);
       final mockSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
       final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
 

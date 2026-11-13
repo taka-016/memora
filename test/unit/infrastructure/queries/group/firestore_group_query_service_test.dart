@@ -30,8 +30,6 @@ void main() {
     late MockCollectionReference<Map<String, dynamic>> mockMembersCollection;
     late MockQuery<Map<String, dynamic>> mockQuery;
     late MockQuerySnapshot<Map<String, dynamic>> mockQuerySnapshot;
-    late MockQueryDocumentSnapshot<Map<String, dynamic>>
-    mockQueryDocumentSnapshot;
     late MockDocumentReference<Map<String, dynamic>> mockDocumentReference;
     late MockDocumentSnapshot<Map<String, dynamic>> mockDocumentSnapshot;
 
@@ -43,39 +41,62 @@ void main() {
       mockMembersCollection = MockCollectionReference<Map<String, dynamic>>();
       mockQuery = MockQuery<Map<String, dynamic>>();
       mockQuerySnapshot = MockQuerySnapshot<Map<String, dynamic>>();
-      mockQueryDocumentSnapshot =
-          MockQueryDocumentSnapshot<Map<String, dynamic>>();
       mockDocumentReference = MockDocumentReference<Map<String, dynamic>>();
       mockDocumentSnapshot = MockDocumentSnapshot<Map<String, dynamic>>();
 
       permissions = MockFirestoreAccountPermissionsSource();
-      service = FirestoreGroupQueryService(firestore: mockFirestore, permissions: permissions);
+      service = FirestoreGroupQueryService(
+        firestore: mockFirestore,
+        permissions: permissions,
+      );
     });
 
     test('所属と管理グループは本人の認可文書のIDだけから取得する', () async {
-      when(permissions.current()).thenAnswer((_) async => FirestoreAccountPermissions({
-        'memberId': 'self', 'memberGroupIds': ['g'], 'managedGroupIds': ['g'],
-      }));
+      when(permissions.current()).thenAnswer(
+        (_) async => FirestoreAccountPermissions({
+          'memberId': 'self',
+          'memberGroupIds': ['g'],
+          'managedGroupIds': ['g'],
+        }),
+      );
       when(mockFirestore.collection('groups')).thenReturn(mockGroupsCollection);
       when(mockGroupsCollection.doc('g')).thenReturn(mockDocumentReference);
-      when(mockDocumentReference.get()).thenAnswer((_) async => mockDocumentSnapshot);
+      when(mockDocumentReference.get())
+          .thenAnswer((_) async => mockDocumentSnapshot);
       when(mockDocumentSnapshot.exists).thenReturn(true);
       when(mockDocumentSnapshot.id).thenReturn('g');
       when(mockDocumentSnapshot.data()).thenReturn({'name': '所属先'});
-      when(mockFirestore.collection('group_members')).thenReturn(mockGroupMembersCollection);
-      when(mockGroupMembersCollection.where('groupId', isEqualTo: 'g')).thenReturn(mockQuery);
+      when(mockFirestore.collection('group_members'))
+          .thenReturn(mockGroupMembersCollection);
+      when(mockGroupMembersCollection.where('groupId', isEqualTo: 'g'))
+          .thenReturn(mockQuery);
       when(mockQuery.get()).thenAnswer((_) async => mockQuerySnapshot);
       when(mockQuerySnapshot.docs).thenReturn([]);
-      expect((await service.getGroupsWithMembersByMemberId('self')).single.id, 'g');
-      expect((await service.getManagedGroupsWithMembersByOwnerId('self')).single.id, 'g');
-      verifyNever(mockGroupsCollection.where('ownerId', isEqualTo: anyNamed('isEqualTo')));
+      expect(
+        (await service.getGroupsWithMembersByMemberId('self')).single.id,
+        'g',
+      );
+      expect(
+        (await service.getManagedGroupsWithMembersByOwnerId('self')).single.id,
+        'g',
+      );
+      verifyNever(
+        mockGroupsCollection.where('ownerId', isEqualTo: anyNamed('isEqualTo')),
+      );
     });
 
     test('画面から別人IDを渡しても本人以外の所属を取得しない', () async {
-      when(permissions.current()).thenAnswer((_) async => FirestoreAccountPermissions({
-        'memberId': 'self', 'memberGroupIds': <String>[], 'managedGroupIds': <String>[],
-      }));
-      await expectLater(service.getGroupsWithMembersByMemberId('other'), throwsA(isA<FirebaseException>()));
+      when(permissions.current()).thenAnswer(
+        (_) async => FirestoreAccountPermissions({
+          'memberId': 'self',
+          'memberGroupIds': <String>[],
+          'managedGroupIds': <String>[],
+        }),
+      );
+      await expectLater(
+        service.getGroupsWithMembersByMemberId('other'),
+        throwsA(isA<FirebaseException>()),
+      );
       verifyZeroInteractions(mockFirestore);
     });
 

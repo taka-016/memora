@@ -29,7 +29,10 @@ void main() {
           MockCollectionReference<Map<String, dynamic>>();
       when(mockFirestore.collection('member_invitations'))
           .thenReturn(mockInvitationCollection);
-      service = FirestoreMemberInvitationQueryService(firestore: mockFirestore, accountId: () => 'uid');
+      service = FirestoreMemberInvitationQueryService(
+        firestore: mockFirestore,
+        accountId: () => 'uid',
+      );
     });
 
     test('同じ対象の全招待をIDと期待バージョン付きで返す', () async {
@@ -114,13 +117,24 @@ void main() {
       when(ref.get()).thenAnswer((_) async => doc);
       when(doc.exists).thenReturn(true);
       when(doc.id).thenReturn('CODE');
-      when(doc.data()).thenReturn({'inviteeId': 'm', 'inviterId': 'owner', 'invitationCode': 'CODE', 'version': 2});
-      when(mockFirestore.collection('member_invitation_claims')).thenReturn(claims);
+      when(doc.data()).thenReturn({
+        'inviteeId': 'm',
+        'inviterId': 'owner',
+        'invitationCode': 'CODE',
+        'version': 2,
+      });
+      when(mockFirestore.collection('member_invitation_claims'))
+          .thenReturn(claims);
       when(claims.doc('uid')).thenReturn(claim);
       when(claim.set(any)).thenAnswer((_) async {});
       expect((await service.getByInvitationCode('CODE'))?.inviteeId, 'm');
       verify(claim.set({'code': 'CODE'})).called(1);
-      verifyNever(mockInvitationCollection.where('invitationCode', isEqualTo: anyNamed('isEqualTo')));
+      verifyNever(
+        mockInvitationCollection.where(
+          'invitationCode',
+          isEqualTo: anyNamed('isEqualTo'),
+        ),
+      );
     });
 
     test('招待コードが存在しなければ受理処理へ紐付けない', () async {

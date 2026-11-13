@@ -23,18 +23,37 @@ class FirestoreAndroidWidgetItineraryQueryService
     for (final parent in await _parents(groupId)) {
       final base = _items(groupId, parent.id);
       final query = before
-          ? base.where('startDateTime', isLessThan: Timestamp.fromDate(boundary))
-          : base.where('startDateTime', isGreaterThanOrEqualTo: Timestamp.fromDate(boundary));
-      final rows = await query.orderBy('startDateTime', descending: before).limit(1).get();
+          ? base.where(
+              'startDateTime',
+              isLessThan: Timestamp.fromDate(boundary),
+            )
+          : base.where(
+              'startDateTime',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(boundary),
+            );
+      final rows = await query
+          .orderBy('startDateTime', descending: before)
+          .limit(1)
+          .get();
       if (rows.docs.isEmpty) continue;
-      final date = (rows.docs.single.data()['startDateTime'] as Timestamp).toDate();
-      if (found == null || (before ? date.isAfter(found) : date.isBefore(found))) found = date;
+      final date = (rows.docs.single.data()['startDateTime'] as Timestamp)
+          .toDate();
+      if (found == null ||
+          (before ? date.isAfter(found) : date.isBefore(found))) {
+        found = date;
+      }
     }
     return found == null ? null : DateTime(found.year, found.month, found.day);
   }
 
-  Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> _parents(String groupId) async =>
-      (await firestore.collection('trip_entries').where('groupId', isEqualTo: groupId).get()).docs;
+  Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> _parents(
+    String groupId,
+  ) async =>
+      (await firestore
+              .collection('trip_entries')
+              .where('groupId', isEqualTo: groupId)
+              .get())
+          .docs;
 
   @override
   Future<List<TripEntryDto>> getDay(String groupId, DateTime day) async {
@@ -43,13 +62,23 @@ class FirestoreAndroidWidgetItineraryQueryService
     final trips = <TripEntryDto>[];
     for (final parent in await _parents(groupId)) {
       final rows = await _items(groupId, parent.id)
-          .where('startDateTime', isGreaterThanOrEqualTo: Timestamp.fromDate(from))
+          .where(
+            'startDateTime',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(from),
+          )
           .where('startDateTime', isLessThan: Timestamp.fromDate(to))
-          .orderBy('startDateTime').get();
+          .orderBy('startDateTime')
+          .get();
       if (rows.docs.isEmpty) continue;
-      trips.add(FirestoreTripEntryMapper.fromFirestore(parent,
-        fallbackTripYear: day.year,
-        itineraryItems: rows.docs.map(FirestoreItineraryItemMapper.fromFirestore).toList()));
+      trips.add(
+        FirestoreTripEntryMapper.fromFirestore(
+          parent,
+          fallbackTripYear: day.year,
+          itineraryItems: rows.docs
+              .map(FirestoreItineraryItemMapper.fromFirestore)
+              .toList(),
+        ),
+      );
     }
     return trips;
   }

@@ -20,7 +20,13 @@ class FirestoreDvcLimitedPointQueryService
     String? contractId,
   }) async {
     try {
-      final docs = await firestoreDvcChildren(_firestore, 'dvc_limited_points', groupId, contractId: contractId, orderBy: orderBy);
+      final docs = await firestoreDvcChildren(
+        _firestore,
+        'dvc_limited_points',
+        groupId,
+        contractId: contractId,
+        orderBy: orderBy,
+      );
       return docs.map(FirestoreDvcLimitedPointMapper.fromFirestore).toList();
     } catch (e, stack) {
       logger.e(

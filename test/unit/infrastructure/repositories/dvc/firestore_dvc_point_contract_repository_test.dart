@@ -153,9 +153,10 @@ void main() {
   test('削除前の子の照合も契約と保存先グループの両方に限定する', () async {
     store.rows['dvc_point_contracts/c1'] = {'groupId': 'g1', 'version': 3};
     await repository.deleteDvcPointContract('c1', expectedVersion: 3);
-    final filters = store.queryFilters.where((filter) => filter.containsKey('contractId')).toList();
+    final filters = store.queryFilters
+        .where((filter) => filter.containsKey('contractId'))
+        .toList();
     expect(filters, hasLength(2));
     expect(filters, everyElement(containsPair('groupId', 'g1')));
   });
-
 }

@@ -63,7 +63,10 @@ class FirestoreGroupRepository implements GroupRepository {
   Future<void> updateGroup(Group group) async {
     final before = {for (final m in group.originalMembers) m.memberId: m};
     final after = {for (final m in group.members) m.memberId: m};
-    if (before.containsKey(group.ownerId) && !after.containsKey(group.ownerId)) throw StateError('所有者の所属は解除できません');
+    if (before.containsKey(group.ownerId) &&
+        !after.containsKey(group.ownerId)) {
+      throw StateError('所有者の所属は解除できません');
+    }
     final ids = {...before.keys, ...after.keys};
     await _firestore.runTransaction<void>((tx) async {
       final ref = _firestore.collection('groups').doc(group.id);

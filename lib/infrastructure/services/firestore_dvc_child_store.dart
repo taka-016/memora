@@ -45,7 +45,11 @@ class FirestoreDvcChildStore {
   }
 
   Future<void> deleteByGroupId(String groupId) async {
-    final children = await firestoreDvcChildren(_firestore, _collection, groupId);
+    final children = await firestoreDvcChildren(
+      _firestore,
+      _collection,
+      groupId,
+    );
     final contractIds = children
         .map((child) => child.data()['contractId'] as String)
         .toSet();

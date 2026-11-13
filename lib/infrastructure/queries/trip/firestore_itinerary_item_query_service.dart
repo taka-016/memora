@@ -20,7 +20,11 @@ class FirestoreItineraryItemQueryService implements ItineraryItemQueryService {
     List<OrderBy>? orderBy,
   }) async {
     try {
-      final groupId = await firestoreParentGroupId(_firestore, 'trip_entries', tripId);
+      final groupId = await firestoreParentGroupId(
+        _firestore,
+        'trip_entries',
+        tripId,
+      );
       if (groupId == null) return [];
       Query<Map<String, dynamic>> query = _firestore
           .collection('itinerary_items')

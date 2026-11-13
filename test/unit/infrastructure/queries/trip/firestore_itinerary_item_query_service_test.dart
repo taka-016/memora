@@ -45,7 +45,8 @@ void main() {
     test('旅行IDで旅程項目一覧を取得しorderByを複数適用できる', () async {
       const tripId = 'trip001';
       final mockQuery = MockQuery<Map<String, dynamic>>();
-      when(mockQuery.where('groupId', isEqualTo: anyNamed('isEqualTo'))).thenReturn(mockQuery);
+      when(mockQuery.where('groupId', isEqualTo: anyNamed('isEqualTo')))
+          .thenReturn(mockQuery);
       final mockSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
       final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
 
@@ -87,7 +88,8 @@ void main() {
       const tripId = 'trip001';
       const locationId = 'location001';
       final mockQuery = MockQuery<Map<String, dynamic>>();
-      when(mockQuery.where('groupId', isEqualTo: anyNamed('isEqualTo'))).thenReturn(mockQuery);
+      when(mockQuery.where('groupId', isEqualTo: anyNamed('isEqualTo')))
+          .thenReturn(mockQuery);
       final mockSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
       final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
       final mockLocationsCollection =

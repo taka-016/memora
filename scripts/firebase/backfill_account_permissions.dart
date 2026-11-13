@@ -3,7 +3,7 @@ import 'dart:io';
 
 import '../timetree/import_timetree.dart' show FirestoreImportClient;
 import 'migrate_firestore_read_models.dart'
-    show encode, fields, migrationArguments, itineraryGroupMigrationWrites;
+    show encode, fields, migrationArguments, tripChildrenGroupMigrationWrites;
 
 class AccountPermissionsPlan {
   const AccountPermissionsPlan(
@@ -222,21 +222,30 @@ List<List<Map<String, Object?>>> authorizationStorageWrites(
       ]);
     }
   }
-  for (final parent in collections['trip_entries'] ?? <Map<String, dynamic>>[]) {
+  for (final parent
+      in collections['trip_entries'] ?? <Map<String, dynamic>>[]) {
     final id = (parent['name'] as String).split('/').last;
-    final children = (collections['tasks'] ?? <Map<String, dynamic>>[]).where((doc) => fields(doc)['tripId'] == id).toList();
+    final children = (collections['tasks'] ?? <Map<String, dynamic>>[])
+        .where((doc) => fields(doc)['tripId'] == id)
+        .toList();
     if (children.isEmpty) continue;
     final data = fields(parent);
     final groupId = data['groupId'];
-    if (groupId is! String || groupId.isEmpty) throw FormatException('旅行の保存先を確認してください: $id');
+    if (groupId is! String || groupId.isEmpty) {
+      throw FormatException('旅行の保存先を確認してください: $id');
+    }
     for (final child in children) {
       final scope = fields(child)['groupId'];
-      if (scope != null && scope != groupId) throw FormatException('タスクと親旅行の保存先が不一致です: ${child['name']}');
+      if (scope != null && scope != groupId) {
+        throw FormatException('タスクと親旅行の保存先が不一致です: ${child['name']}');
+      }
     }
     if (children.every((doc) => fields(doc)['groupId'] == groupId)) continue;
     final version = data['version'];
-    if (version is! int || version < 1) throw FormatException('旅行のバージョンを確認してください: $id');
-    units.add(itineraryGroupMigrationWrites(parent, children));
+    if (version is! int || version < 1) {
+      throw FormatException('旅行のバージョンを確認してください: $id');
+    }
+    units.add(tripChildrenGroupMigrationWrites(parent, children));
   }
   return units;
 }
@@ -316,8 +325,15 @@ Future<void> main(List<String> args) async {
     ];
     report['memberDocuments'] = plan.memberDocuments;
     report['writeUnits'] = units.length;
-    final tripIds = {for (final parent in sources['trip_entries']!) (parent['name'] as String).split('/').last};
-    report['retainedTaskIds'] = [for (final task in sources['tasks']!) if (!tripIds.contains(fields(task)['tripId'])) (task['name'] as String).split('/').last];
+    final tripIds = {
+      for (final parent in sources['trip_entries']!)
+        (parent['name'] as String).split('/').last,
+    };
+    report['retainedTaskIds'] = [
+      for (final task in sources['tasks']!)
+        if (!tripIds.contains(fields(task)['tripId']))
+          (task['name'] as String).split('/').last,
+    ];
     await saveReport();
     if (options.apply) {
       for (final unit in units) {

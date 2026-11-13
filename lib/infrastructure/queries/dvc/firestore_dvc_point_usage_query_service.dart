@@ -19,7 +19,13 @@ class FirestoreDvcPointUsageQueryService implements DvcPointUsageQueryService {
     String? contractId,
   }) async {
     try {
-      final docs = await firestoreDvcChildren(_firestore, 'dvc_point_usages', groupId, contractId: contractId, orderBy: orderBy);
+      final docs = await firestoreDvcChildren(
+        _firestore,
+        'dvc_point_usages',
+        groupId,
+        contractId: contractId,
+        orderBy: orderBy,
+      );
       return docs.map(FirestoreDvcPointUsageMapper.fromFirestore).toList();
     } catch (e, stack) {
       logger.e(

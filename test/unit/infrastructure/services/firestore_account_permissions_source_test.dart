@@ -19,7 +19,10 @@ void main() {
       'memberGroupIds': ['g1', 'g2'],
       'managedGroupIds': ['g2'],
     });
-    final source = FirestoreAccountPermissionsSource(db, accountId: () => 'uid');
+    final source = FirestoreAccountPermissionsSource(
+      db,
+      accountId: () => 'uid',
+    );
     final result = await source.current();
     expect(result?.memberId, 'm');
     expect(result?.memberGroupIds, ['g1', 'g2']);

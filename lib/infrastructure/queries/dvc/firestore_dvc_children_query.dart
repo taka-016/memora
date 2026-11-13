@@ -10,10 +10,19 @@ Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> firestoreDvcChildren(
 }) async {
   final ids = contractId != null
       ? [contractId]
-      : (await firestore.collection('dvc_point_contracts').where('groupId', isEqualTo: groupId).get()).docs.map((doc) => doc.id).toList();
+      : (await firestore
+                .collection('dvc_point_contracts')
+                .where('groupId', isEqualTo: groupId)
+                .get())
+            .docs
+            .map((doc) => doc.id)
+            .toList();
   final docs = <QueryDocumentSnapshot<Map<String, dynamic>>>[];
   for (final id in ids) {
-    var query = firestore.collection(collection).where('groupId', isEqualTo: groupId).where('contractId', isEqualTo: id);
+    var query = firestore
+        .collection(collection)
+        .where('groupId', isEqualTo: groupId)
+        .where('contractId', isEqualTo: id);
     for (final order in orderBy ?? const <OrderBy>[]) {
       query = query.orderBy(order.field, descending: order.descending);
     }
@@ -22,7 +31,9 @@ Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> firestoreDvcChildren(
   if (orderBy != null) {
     docs.sort((a, b) {
       for (final order in orderBy) {
-        final value = (a.data()[order.field] as Comparable).compareTo(b.data()[order.field]);
+        final value = (a.data()[order.field] as Comparable).compareTo(
+          b.data()[order.field],
+        );
         if (value != 0) return order.descending ? -value : value;
       }
       return 0;

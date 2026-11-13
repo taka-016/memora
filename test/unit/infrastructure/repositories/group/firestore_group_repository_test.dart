@@ -158,23 +158,64 @@ void main() {
   });
   test('所有者が削除済みでも既存の管理者はグループ情報を更新できる', () async {
     store.rows['groups/g'] = {'version': 3, 'ownerId': 'deleted'};
-    const admin = GroupMember(groupId: 'g', memberId: 'self', isAdministrator: true);
-    await repo.updateGroup(Group(id: 'g', ownerId: 'deleted', name: '家族', version: 3, originalMembers: const [admin], members: const [admin]));
+    const admin = GroupMember(
+      groupId: 'g',
+      memberId: 'self',
+      isAdministrator: true,
+    );
+    await repo.updateGroup(
+      Group(
+        id: 'g',
+        ownerId: 'deleted',
+        name: '家族',
+        version: 3,
+        originalMembers: const [admin],
+        members: const [admin],
+      ),
+    );
     expect(store.rows['groups/g']!['version'], 4);
   });
 
   test('別グループの所属更新と競合した再試行でも更新済みの所属を上書きしない', () async {
     store.rows['groups/g'] = {'version': 3, 'ownerId': 'self'};
-    store.rows['members/other'] = {'version': 4, 'accountId': 'otherUid', 'groupIds': ['else'], 'managedGroupIds': <String>[]};
-    store.rows['account_permissions/otherUid'] = {'memberId': 'other', 'memberGroupIds': ['else'], 'managedGroupIds': <String>[]};
+    store.rows['members/other'] = {
+      'version': 4,
+      'accountId': 'otherUid',
+      'groupIds': ['else'],
+      'managedGroupIds': <String>[],
+    };
+    store.rows['account_permissions/otherUid'] = {
+      'memberId': 'other',
+      'memberGroupIds': ['else'],
+      'managedGroupIds': <String>[],
+    };
     store.beforeRetry = () {
-      store.rows['members/other']!.addAll({'version': 5, 'groupIds': ['else', 'concurrent']});
-      store.rows['account_permissions/otherUid']!['memberGroupIds'] = ['else', 'concurrent'];
+      store.rows['members/other']!.addAll({
+        'version': 5,
+        'groupIds': ['else', 'concurrent'],
+      });
+      store.rows['account_permissions/otherUid']!['memberGroupIds'] = [
+        'else',
+        'concurrent',
+      ];
     };
     const self = GroupMember(groupId: 'g', memberId: 'self');
     const other = GroupMember(groupId: 'g', memberId: 'other');
-    await repo.updateGroup(Group(id: 'g', ownerId: 'self', name: '家族', version: 3, originalMembers: const [self], members: const [self, other]));
-    expect(store.rows['account_permissions/otherUid']!['memberGroupIds'], ['else', 'concurrent', 'g']);
+    await repo.updateGroup(
+      Group(
+        id: 'g',
+        ownerId: 'self',
+        name: '家族',
+        version: 3,
+        originalMembers: const [self],
+        members: const [self, other],
+      ),
+    );
+    expect(store.rows['account_permissions/otherUid']!['memberGroupIds'], [
+      'else',
+      'concurrent',
+      'g',
+    ]);
     expect(store.rows['members/other']!['version'], 6);
   });
 
@@ -188,5 +229,4 @@ void main() {
     expect(store.rows['members/self']!['groupIds'], isEmpty);
     expect(store.rows['account_permissions/uid']!['memberGroupIds'], isEmpty);
   });
-
 }

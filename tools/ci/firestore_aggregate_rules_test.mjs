@@ -1,115 +1,49 @@
 import assert from 'node:assert/strict';
-
-const host = process.env.FIRESTORE_EMULATOR_HOST;
-assert.ok(host, 'Firestore Emulator上で実行してください');
-const root = `http://${host}/v1/projects/demo-memora/databases/(default)/documents`;
-const encode = value => Buffer.from(JSON.stringify(value)).toString('base64url');
-const token = `${encode({ alg: 'none', typ: 'JWT' })}.${encode({
-  iss: 'https://securetoken.google.com/demo-memora', aud: 'demo-memora',
-  sub: 'tester', user_id: 'tester', iat: Math.floor(Date.now() / 1000),
-  exp: Math.floor(Date.now() / 1000) + 3600, email_verified: true,
-  firebase: { sign_in_provider: 'password' },
-})}.`;
-const integer = value => ({ integerValue: String(value) });
-const string = value => ({ stringValue: value });
-const write = (path, fields) => ({ update: { name: `${root.split('/v1/')[1]}/${path}`, fields: { ...(path.startsWith('calendar_events/') ? { labelType: string('group'), memberId: { nullValue: null }, labelId: { nullValue: null } } : path.startsWith('calendar_event_overrides/') ? { isCancelled: { booleanValue: true } } : {}), ...fields } } });
-const remove = path => ({ delete: `${root.split('/v1/')[1]}/${path}` });
-async function commit(writes, bearer = token) {
-  return fetch(`${root}:commit`, {
-    method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${bearer}` },
-    body: JSON.stringify({ writes }),
-  });
+import {fixture,write,remove,expectCommit,commit,archivedDelete,root,token} from './firestore_rules_fixture.mjs';
+const group='aggregate-managed-group';
+const f=await fixture('aggregates',[group]);
+const cases=[['trip_entries','locations','tripId'],['trip_entries','tasks','tripId'],['trip_entries','itinerary_items','tripId'],['calendar_events','calendar_event_overrides','eventId'],['dvc_point_contracts','dvc_point_usages','contractId'],['dvc_point_contracts','dvc_limited_points','contractId']];
+for(const [parents,children,key] of cases) {
+  const id=`aggregate-${children}`,parent=`${parents}/${id}`,child=`${children}/${id}`,other=`${parents}/${id}-other`;
+  const parentData=version=>({version,groupId:f.group,...(parents==='calendar_events'?{labelType:'group',memberId:null,labelId:null}:{})});
+  const childData={[key]:id,groupId:f.group,name:'変更前',...(children==='calendar_event_overrides'?{isCancelled:true}:{})};
+  await expectCommit('owner',[remove(parent),remove(child),remove(other),remove(`${child}-a`),remove(`${child}-b`)],200,'親子を初期化');
+  await expectCommit(f.uid,[write(child,childData)],403,`${children}の親なし作成`);
+  await expectCommit(f.uid,[write(parent,parentData(1)),write(child,childData)],200,`${children}の親子作成`);
+  for(const operation of [write(child,{...childData,name:'変更'}),remove(child),write(`${child}-new`,childData)]) await expectCommit(f.uid,[operation],403,`${children}の親更新なしの保存拒否`);
+  await expectCommit(f.uid,[write(parent,parentData(2)),write(child,{...childData,name:'変更'})],200,`${children}の親子更新`);
+  const concurrent=await Promise.all([commit(f.uid,[write(parent,parentData(3)),write(`${child}-a`,childData)]),commit(f.uid,[write(parent,parentData(3)),write(`${child}-b`,childData)])]);
+  assert.deepEqual(concurrent.map(v=>v[0]).sort(),[200,403],`${children}の集約競合`);
+  await expectCommit(f.uid,[write(parent,parentData(3)),remove(child)],403,'古い親バージョンの再試行を拒否');
+  await expectCommit(f.uid,[write(parent,parentData(4)),write(other,parentData(1)),write(child,{...childData,[key]:`${id}-other`})],403,'親の付け替えを拒否');
+  await expectCommit(f.uid,[write(parent,parentData(4)),remove(child)],200,'親更新と子削除');
+  await expectCommit(f.uid,[write(parent,parentData(5)),write(child,childData)],200,'子の再追加');
+  await expectCommit(f.uid,[write(parent,parentData(5)),remove(child),write(`${child}-replacement`,childData)],403,'古い親による全件置換を拒否');
+  await expectCommit(f.uid,[remove(parent),remove(child)],200,'親子を同時削除');
+  await expectCommit(f.uid,[remove(`${child}-a`)],403,'削除後の親を権限に使わない');
+  await expectCommit(f.uid,[remove(`${child}-b`)],403,'削除後の親を権限に使わない');
 }
-async function expectCommit(writes, status, message) {
-  const result = await commit(writes);
-  const body = await result.text();
-  assert.equal(result.status, status, `${message}: ${body}`);
-}
-const cases = [
-  ['trip_entries', 'locations', 'tripId'],
-  ['trip_entries', 'tasks', 'tripId'],
-  ['trip_entries', 'itinerary_items', 'tripId'],
-  ['groups', 'group_members', 'groupId'],
-  ['calendar_events', 'calendar_event_overrides', 'eventId'],
-  ['dvc_point_contracts', 'dvc_point_usages', 'contractId'],
-  ['dvc_point_contracts', 'dvc_limited_points', 'contractId'],
-];
-for (const [parents, children, foreignKey] of cases) {
-  const id = `aggregate-${children}`;
-  const parent = `${parents}/${id}`;
-  const child = `${children}/${id}`;
-  const otherParent = `${parents}/${id}-other`;
-  const parentFields = version => ({ version: integer(version) });
-  const childFields = { [foreignKey]: string(id), name: string('編集前') };
-  await commit([remove(child), remove(parent), remove(otherParent)], 'owner');
-  await expectCommit([write(child, childFields)], 403, `${children}: 親のない追加`);
-  await expectCommit([write(parent, parentFields(1)), write(child, childFields)], 200, `${children}: 親子の初回作成`);
-  for (const operation of [write(child, { ...childFields, name: string('変更') }), remove(child), write(`${child}-new`, childFields)]) {
-    await expectCommit([operation], 403, `${children}: 親更新なしの追加変更削除`);
-  }
-  await expectCommit([write(parent, parentFields(2)), write(child, { ...childFields, name: string('変更') })], 200, `${children}: 親子の更新`);
-  const concurrent = await Promise.all([
-    commit([write(parent, parentFields(3)), write(`${child}-a`, childFields)]),
-    commit([write(parent, parentFields(3)), write(`${child}-b`, childFields)]),
-  ]);
-  assert.deepEqual(concurrent.map(value => value.status).sort(), [200, 403], `${children}: 異なる子の同時編集`);
-  await expectCommit([write(parent, parentFields(3)), remove(child)], 403, `${children}: 古い期待値の再試行`);
-  await expectCommit([write(parent, parentFields(4)), write(otherParent, parentFields(1)), write(child, { ...childFields, [foreignKey]: string(`${id}-other`) })], 403, `${children}: 親参照付け替えの迂回`);
-  await expectCommit([write(parent, parentFields(4)), remove(child)], 200, `${children}: 親更新と子の削除`);
-  await expectCommit([write(parent, parentFields(5)), write(child, childFields)], 200, `${children}: 子の再追加`);
-  // 親の更新が不正な場合、子の全件置換も反映されない。
-  await expectCommit([write(parent, parentFields(5)), remove(child), write(`${child}-replacement`, childFields)], 403, `${children}: 置換全体の拒否`);
-  await expectCommit([remove(parent), remove(child)], 200, `${children}: 親子の物理削除`);
-  await expectCommit([remove(`${child}-a`)], 403, `${children}: 既に親がない子の直接削除`);
-  await expectCommit([remove(`${child}-b`)], 403, `${children}: 既に親がない子の直接削除`);
-}
-// DVCはグループと別の競合単位で、契約ごとに独立する。
-await commit([remove('groups/independent'), remove('dvc_point_contracts/independent')], 'owner');
-await expectCommit([write('groups/independent', { version: integer(1) }), write('dvc_point_contracts/independent', { version: integer(1) })], 200, 'グループとDVC契約の初回作成');
-const independent = await Promise.all([
-  commit([write('groups/independent', { version: integer(2) })]),
-  commit([write('dvc_point_contracts/independent', { version: integer(2) }), write('dvc_point_usages/independent', { contractId: string('independent') })]),
-]);
-assert.deepEqual(independent.map(value => value.status), [200, 200], 'グループ編集とDVC契約編集の独立性');
-console.log('旅行・グループ・DVCの親子の原子性・競合・直接更新と付け替え拒否を確認しました');
-
-// 親ごとに最大3参照（getAfter・exists・get）。6親でも保守的に18参照以内。
-// 同じ親を持つ子の参照はキャッシュされ、ラベル更新自体に追加参照はない。
-const mixed = [
-  ['trip_entries', 'tasks', 'tripId'],
-  ['trip_entries', 'itinerary_items', 'tripId'],
-  ['groups', 'group_members', 'groupId'],
-  ['groups', 'group_members', 'groupId'],
-  ['calendar_events', 'calendar_event_overrides', 'eventId'],
-  ['calendar_events', 'calendar_event_overrides', 'eventId'],
-];
-const mixedWrites = version => mixed.flatMap(([parents, children, key], index) => {
-  const id = `mixed-limit-${index}`;
-  return [
-    write(`${parents}/${id}`, { version: integer(version) }),
-    ...Array.from({ length: 3 }, (_, child) => write(`${children}/${id}-${child}`, {
-      [key]: string(id), name: string(`更新${version}`),
-    })),
-  ];
-});
-await commit(mixedWrites(1), 'owner');
-const labelWrites = Array.from({ length: 5 }, (_, index) => write(`calendar_labels/mixed-limit-${index}`, {
-  version: integer(1), eventCount: integer(0), name: string('ラベル'),
-}));
-await commit(labelWrites, 'owner');
-const countWrites = labelWrites.map(value => ({ ...value, update: {
-  ...value.update, fields: { ...value.update.fields, eventCount: integer(1) },
-} }));
-await expectCommit([...mixedWrites(2), ...countWrites], 200, '複数旅行・グループ・予定・ラベルを一括保存しアクセス回数制限内で成功');
-console.log('個別回の親更新条件と複数集約・ラベルのアクセス回数制限内での保存を確認しました');
-const begun = await fetch(`${root}:beginTransaction`, {
-  method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-  body: JSON.stringify({ options: { readWrite: {} } }),
-});
-assert.equal(begun.status, 200, '複数集約を保存するトランザクションの開始');
-const { transaction } = await begun.json();
-const committed = await fetch(`${root}:commit`, {
-  method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-  body: JSON.stringify({ writes: mixedWrites(3), transaction }),
-});
-assert.equal(committed.status, 200, `トランザクションもアクセス回数制限内で成功: ${await committed.text()}`);
+const membership=`group_members/${group}:${f.invitee}`;
+await expectCommit('owner',[remove(`deleted_groups/${group}`),write(`groups/${group}`,{version:1,ownerId:f.member}),write(`members/${f.invitee}`,{version:1,accountId:null,ownerId:f.member,groupIds:[group],managedGroupIds:[]}),remove(membership)],200,'所属集約を準備');
+const link={groupId:group,memberId:f.invitee,isAdministrator:false};
+await expectCommit(f.uid,[write(membership,link)],403,'所属だけの作成を拒否');
+await expectCommit(f.uid,[write(`groups/${group}`,{version:2,ownerId:f.member}),write(membership,link)],200,'親更新と所属作成');
+await expectCommit(f.uid,[write(`groups/${group}`,{version:3,ownerId:f.member}),write(membership,{...link,isAdministrator:true})],403,'役割と認可一覧の不一致を拒否');
+await expectCommit(f.uid,[write(`groups/${group}`,{version:3,ownerId:f.member}),write(membership,{...link,isAdministrator:true}),write(`members/${f.invitee}`,{version:2,accountId:null,ownerId:f.member,groupIds:[group],managedGroupIds:[group],changedGroupId:group})],200,'親更新と管理者変更と認可一覧を同時保存');
+assert.equal((await archivedDelete(f.uid,'groups',group))[0],200,'所属を保持してグループを退避');
+await expectCommit(f.uid,[remove(membership)],403,'退避した親に残る所属は操作の根拠にならない');
+await expectCommit('owner',[write('dvc_point_contracts/independent',{version:1,groupId:f.group})],200,'独立した契約を準備');
+const independent=await Promise.all([commit(f.uid,[write(`groups/${f.group}`,{version:2,ownerId:f.member})]),commit(f.uid,[write('dvc_point_contracts/independent',{version:2,groupId:f.group}),write('dvc_point_usages/independent',{contractId:'independent',groupId:f.group})])]);
+assert.deepEqual(independent.map(v=>v[0]),[200,200],'グループとDVC契約の競合単位は独立する');
+const mixed=version=>Array.from({length:4},(_,i)=>[
+  write(`trip_entries/mixed-${i}`,{version,groupId:f.group}),
+  ...Array.from({length:3},(_,j)=>write(`tasks/mixed-${i}-${j}`,{tripId:`mixed-${i}`,groupId:f.group,name:'準備'})),
+]).flat();
+await expectCommit('owner',mixed(1),200,'複数集約を準備');
+await expectCommit(f.uid,mixed(2),200,'4親と12子を参照上限内で保存');
+const begun=await fetch(`${root}:beginTransaction`,{method:'POST',headers:{Authorization:`Bearer ${token(f.uid)}`,'Content-Type':'application/json'},body:JSON.stringify({options:{readWrite:{}}})});
+assert.equal(begun.status,200);
+const {transaction}=await begun.json();
+const saved=await fetch(`${root}:commit`,{method:'POST',headers:{Authorization:`Bearer ${token(f.uid)}`,'Content-Type':'application/json'},body:JSON.stringify({writes:mixed(3),transaction})});
+assert.equal(saved.status,200,await saved.text());
+console.log('集約の原子性・競合・直接更新と親の付け替え拒否・参照上限内の保存を確認しました');

@@ -4,8 +4,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 class FirestoreAccountPermissions {
   FirestoreAccountPermissions(Map<String, dynamic> data)
     : memberId = data['memberId'] as String,
-      memberGroupIds = List<String>.unmodifiable(data['memberGroupIds'] as List),
-      managedGroupIds = List<String>.unmodifiable(data['managedGroupIds'] as List);
+      memberGroupIds = List<String>.unmodifiable(
+        data['memberGroupIds'] as List,
+      ),
+      managedGroupIds = List<String>.unmodifiable(
+        data['managedGroupIds'] as List,
+      );
 
   final String memberId;
   final List<String> memberGroupIds;
@@ -28,7 +32,10 @@ class FirestoreAccountPermissionsSource {
   }
 
   Future<FirestoreAccountPermissions?> forAccount(String accountId) async {
-    final doc = await firestore.collection('account_permissions').doc(accountId).get();
+    final doc = await firestore
+        .collection('account_permissions')
+        .doc(accountId)
+        .get();
     return doc.exists ? FirestoreAccountPermissions(doc.data()!) : null;
   }
 }

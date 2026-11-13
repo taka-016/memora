@@ -9,9 +9,11 @@ class FirestoreMemberInvitationQueryService
     implements MemberInvitationQueryService {
   final FirebaseFirestore _firestore;
 
-  FirestoreMemberInvitationQueryService({FirebaseFirestore? firestore, String? Function()? accountId})
-    : _firestore = firestore ?? FirebaseFirestore.instance,
-      _accountId = accountId ?? (() => FirebaseAuth.instance.currentUser?.uid);
+  FirestoreMemberInvitationQueryService({
+    FirebaseFirestore? firestore,
+    String? Function()? accountId,
+  }) : _firestore = firestore ?? FirebaseFirestore.instance,
+       _accountId = accountId ?? (() => FirebaseAuth.instance.currentUser?.uid);
   final String? Function() _accountId;
 
   @override
@@ -55,11 +57,16 @@ class FirestoreMemberInvitationQueryService
     String invitationCode,
   ) async {
     try {
-      final doc = await _firestore.collection('member_invitations').doc(invitationCode).get();
+      final doc = await _firestore
+          .collection('member_invitations')
+          .doc(invitationCode)
+          .get();
       if (!doc.exists) return null;
       final uid = _accountId();
       if (uid == null) throw StateError('ログインが必要です');
-      await _firestore.collection('member_invitation_claims').doc(uid).set({'code': invitationCode});
+      await _firestore.collection('member_invitation_claims').doc(uid).set({
+        'code': invitationCode,
+      });
       return FirestoreMemberInvitationMapper.fromFirestore(doc);
     } catch (e, stack) {
       logger.e(

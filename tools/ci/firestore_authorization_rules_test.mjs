@@ -147,64 +147,64 @@ await get('auth-owner','member_invitations/auth-not-created',404,'新規招待�
 const queryResponse=await fetch(`${root}:runQuery`,{method:'POST',headers:{Authorization:`Bearer ${token('auth-owner')}`,'Content-Type':'application/json'},body:JSON.stringify({structuredQuery:{from:[{collectionId:'member_invitations'}],where:{fieldFilter:{field:{fieldPath:'inviteeId'},op:'EQUAL',value:encode('auth-invitee')}}}})});
 assert.equal(queryResponse.status,200,`管理対象の招待一覧: ${await queryResponse.text()}`);
 for(const [collection,key,value] of [['members','ownerId','auth-owner'],['group_members','groupId','auth-g'],['calendar_events','groupId','auth-g'],['dvc_point_contracts','groupId','auth-g'],['tasks','tripId','auth-parent']]) {
- const r=await fetch(`${root}:runQuery`,{method:'POST',headers:{Authorization:`Bearer ${token('auth-owner')}`,'Content-Type':'application/json'},body:JSON.stringify({structuredQuery:{from:[{collectionId:collection}],where:collection==='tasks'?{compositeFilter:{op:'AND',filters:[{fieldFilter:{field:{fieldPath:key},op:'EQUAL',value:encode(value)}},{fieldFilter:{field:{fieldPath:'groupId'},op:'EQUAL',value:encode('auth-g')}}]}}:{fieldFilter:{field:{fieldPath:key},op:'EQUAL',value:encode(value)}}}})});
- assert.equal(r.status,200,`${collection}の正規一覧を許可: ${await r.text()}`);
+  const r=await fetch(`${root}:runQuery`,{method:'POST',headers:{Authorization:`Bearer ${token('auth-owner')}`,'Content-Type':'application/json'},body:JSON.stringify({structuredQuery:{from:[{collectionId:collection}],where:collection==='tasks'?{compositeFilter:{op:'AND',filters:[{fieldFilter:{field:{fieldPath:key},op:'EQUAL',value:encode(value)}},{fieldFilter:{field:{fieldPath:'groupId'},op:'EQUAL',value:encode('auth-g')}}]}}:{fieldFilter:{field:{fieldPath:key},op:'EQUAL',value:encode(value)}}}})});
+  assert.equal(r.status,200,`${collection}の正規一覧を許可: ${await r.text()}`);
 }
 await expectCommit('owner',[
- write('groups/auth-g:alias',{version:1,ownerId:'auth-outside'}),
- write('members/auth-outside',{...member('auth-outside',['auth-g:alias'],['auth-g:alias'])}),
- write('account_permissions/auth-outside',permissions('auth-outside',['auth-g:alias'],['auth-g:alias'])),
- write('members/alias:auth-outside',{...member(null,['auth-g']),ownerId:'auth-owner'}),
- write('group_members/auth-g:alias:auth-outside',{groupId:'auth-g',memberId:'alias:auth-outside',isAdministrator:false}),
+  write('groups/auth-g:alias',{version:1,ownerId:'auth-outside'}),
+  write('members/auth-outside',{...member('auth-outside',['auth-g:alias'],['auth-g:alias'])}),
+  write('account_permissions/auth-outside',permissions('auth-outside',['auth-g:alias'],['auth-g:alias'])),
+  write('members/alias:auth-outside',{...member(null,['auth-g']),ownerId:'auth-owner'}),
+  write('group_members/auth-g:alias:auth-outside',{groupId:'auth-g',memberId:'alias:auth-outside',isAdministrator:false}),
 ],200,'所属参照の衝突を準備');
 await expectCommit('auth-outside',[
- write('groups/auth-g:alias',{version:2,ownerId:'auth-outside'}),
- write('group_members/auth-g:alias:auth-outside',{groupId:'auth-g:alias',memberId:'auth-outside',isAdministrator:false}),
+  write('groups/auth-g:alias',{version:2,ownerId:'auth-outside'}),
+  write('group_members/auth-g:alias:auth-outside',{groupId:'auth-g:alias',memberId:'auth-outside',isAdministrator:false}),
 ],403,'別グループの所属文書を参照IDの衝突で上書きすることを拒否');
 await expectCommit('owner',[
- remove('account_permissions/auth-stale-accept'),remove('member_invitation_claims/auth-stale-accept'),
- write('members/auth-stale-invitee',{...member(null,['auth-g']),ownerId:'auth-owner'}),
- write('group_members/auth-g:auth-stale-invitee',{groupId:'auth-g',memberId:'auth-stale-invitee',isAdministrator:false}),
- write('member_invitations/auth-stale-first',{version:1,inviteeId:'auth-stale-invitee',inviterId:'auth-owner',invitationCode:'auth-stale-first'}),
- write('member_invitations/auth-stale-later',{version:1,inviteeId:'auth-stale-invitee',inviterId:'auth-owner',invitationCode:'auth-stale-later'}),
+  remove('account_permissions/auth-stale-accept'),remove('member_invitation_claims/auth-stale-accept'),
+  write('members/auth-stale-invitee',{...member(null,['auth-g']),ownerId:'auth-owner'}),
+  write('group_members/auth-g:auth-stale-invitee',{groupId:'auth-g',memberId:'auth-stale-invitee',isAdministrator:false}),
+  write('member_invitations/auth-stale-first',{version:1,inviteeId:'auth-stale-invitee',inviterId:'auth-owner',invitationCode:'auth-stale-first'}),
+  write('member_invitations/auth-stale-later',{version:1,inviteeId:'auth-stale-invitee',inviterId:'auth-owner',invitationCode:'auth-stale-later'}),
 ],200,'一覧取得後に追加された招待が残る状況を準備');
 await expectCommit('auth-stale-accept',[write('member_invitation_claims/auth-stale-accept',{code:'auth-stale-first'})],200,'先に取得した招待を受理する');
 await expectCommit('auth-stale-accept',[
- write('members/auth-stale-invitee',{...member('auth-stale-accept',['auth-g']),ownerId:'auth-owner',version:2}),
- write('account_permissions/auth-stale-accept',permissions('auth-stale-invitee',['auth-g'])),
- remove('member_invitations/auth-stale-first'),remove('member_invitation_claims/auth-stale-accept'),
+  write('members/auth-stale-invitee',{...member('auth-stale-accept',['auth-g']),ownerId:'auth-owner',version:2}),
+  write('account_permissions/auth-stale-accept',permissions('auth-stale-invitee',['auth-g'])),
+  remove('member_invitations/auth-stale-first'),remove('member_invitation_claims/auth-stale-accept'),
 ],200,'取得済みの招待だけを削除して紐付けを確定する');
 await get('auth-stale-outsider','member_invitations/auth-stale-later',403,'紐付け済みメンバーの残存招待を別人の閲覧権限にしない');
 await expectCommit('auth-stale-outsider',[write('member_invitation_claims/auth-stale-outsider',{code:'auth-stale-later'})],403,'残存招待による別人の閲覧申請も拒否');
 
 await expectCommit('owner',[
- remove('account_permissions/auth-expiration-accept'),remove('member_invitation_claims/auth-expiration-accept'),
- write('members/auth-expiration-invitee',{...member(null,['auth-g']),ownerId:'auth-owner'}),
- write('group_members/auth-g:auth-expiration-invitee',{groupId:'auth-g',memberId:'auth-expiration-invitee',isAdministrator:false}),
- write('member_invitations/auth-exp-active',{version:1,inviteeId:'auth-expiration-invitee',inviterId:'auth-owner',invitationCode:'auth-exp-active'}),
- write('member_invitations/auth-exp-old',{version:1,inviteeId:'auth-expiration-invitee',inviterId:'auth-owner',invitationCode:'auth-exp-old',createdAt:new Date('2000-01-01T00:00:00Z')}),
+  remove('account_permissions/auth-expiration-accept'),remove('member_invitation_claims/auth-expiration-accept'),
+  write('members/auth-expiration-invitee',{...member(null,['auth-g']),ownerId:'auth-owner'}),
+  write('group_members/auth-g:auth-expiration-invitee',{groupId:'auth-g',memberId:'auth-expiration-invitee',isAdministrator:false}),
+  write('member_invitations/auth-exp-active',{version:1,inviteeId:'auth-expiration-invitee',inviterId:'auth-owner',invitationCode:'auth-exp-active'}),
+  write('member_invitations/auth-exp-old',{version:1,inviteeId:'auth-expiration-invitee',inviterId:'auth-owner',invitationCode:'auth-exp-old',createdAt:new Date('2000-01-01T00:00:00Z')}),
 ],200,'有効な招待と期限切れの招待を準備');
 await get('auth-expiration-outsider','member_invitations/auth-exp-old',403,'期限切れのコードだけでは取得できない');
 await get('auth-owner','member_invitations/auth-exp-old',200,'招待管理者は期限切れの招待を再発行・削除するため取得できる');
 await expectCommit('auth-expiration-accept',[write('member_invitation_claims/auth-expiration-accept',{code:'auth-exp-active'})],200,'有効な招待を持つ本人を確認');
 await get('auth-expiration-accept','member_invitations/auth-exp-old',200,'有効な招待を持つ本人は同じ対象の期限切れ招待も競合確認できる');
 await expectCommit('auth-expiration-accept',[
- write('members/auth-expiration-invitee',{...member('auth-expiration-accept',['auth-g']),ownerId:'auth-owner',version:2}),
- write('account_permissions/auth-expiration-accept',permissions('auth-expiration-invitee',['auth-g'])),
- remove('member_invitations/auth-exp-active'),remove('member_invitations/auth-exp-old'),remove('member_invitation_claims/auth-expiration-accept'),
+  write('members/auth-expiration-invitee',{...member('auth-expiration-accept',['auth-g']),ownerId:'auth-owner',version:2}),
+  write('account_permissions/auth-expiration-accept',permissions('auth-expiration-invitee',['auth-g'])),
+  remove('member_invitations/auth-exp-active'),remove('member_invitations/auth-exp-old'),remove('member_invitation_claims/auth-expiration-accept'),
 ],200,'同じ対象の取得済み招待を期限切れも含めて受理時に削除できる');
 
 await expectCommit('owner',[
- write('members/auth-origin-self',member('auth-origin-user',['auth-origin-group'],['auth-origin-group'])),
- write('account_permissions/auth-origin-user',permissions('auth-origin-self',['auth-origin-group'],['auth-origin-group'])),
- write('groups/auth-origin-group',{version:1,ownerId:'auth-origin-self'}),
- write('group_members/auth-origin-group:auth-origin-self',{groupId:'auth-origin-group',memberId:'auth-origin-self',isAdministrator:false}),
- write('trip_entries/auth-reused-trip',{version:1,groupId:'auth-origin-group'}),
- write('dvc_point_contracts/auth-reused-contract',{version:1,groupId:'auth-origin-group'}),
- write('calendar_events/auth-reused-event',{version:1,groupId:'auth-origin-group',labelType:'group',memberId:null,labelId:null}),
+  write('members/auth-origin-self',member('auth-origin-user',['auth-origin-group'],['auth-origin-group'])),
+  write('account_permissions/auth-origin-user',permissions('auth-origin-self',['auth-origin-group'],['auth-origin-group'])),
+  write('groups/auth-origin-group',{version:1,ownerId:'auth-origin-self'}),
+  write('group_members/auth-origin-group:auth-origin-self',{groupId:'auth-origin-group',memberId:'auth-origin-self',isAdministrator:false}),
+  write('trip_entries/auth-reused-trip',{version:1,groupId:'auth-origin-group'}),
+  write('dvc_point_contracts/auth-reused-contract',{version:1,groupId:'auth-origin-group'}),
+  write('calendar_events/auth-reused-event',{version:1,groupId:'auth-origin-group',labelType:'group',memberId:null,labelId:null}),
 ],200,'削除済みの親IDが別グループで再利用された状態を準備');
 for(const [table,key,parent] of [['locations','tripId','auth-reused-trip'],['tasks','tripId','auth-reused-trip'],['itinerary_items','tripId','auth-reused-trip'],['dvc_limited_points','contractId','auth-reused-contract'],['dvc_point_usages','contractId','auth-reused-contract'],['calendar_event_overrides','eventId','auth-reused-event']]) {
- await expectCommit('owner',[write(`${table}/auth-retained-child`,{[key]:parent,groupId:'auth-g',isCancelled:true})],200,'元のグループの子を保持');
- await get('auth-origin-user',`${table}/auth-retained-child`,403,`${table}は再利用された親IDを根拠に公開しない`);
+  await expectCommit('owner',[write(`${table}/auth-retained-child`,{[key]:parent,groupId:'auth-g',isCancelled:true})],200,'元のグループの子を保持');
+  await get('auth-origin-user',`${table}/auth-retained-child`,403,`${table}は再利用された親IDを根拠に公開しない`);
 }
 for(const table of ['trip_entries','dvc_point_contracts','calendar_events']) await get('auth-owner',`${table}/auth-missing`,404,'不存在の親は欠損として取得できる');

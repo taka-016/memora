@@ -33,9 +33,22 @@ void main() {
       when(mockFirestore.collection('members'))
           .thenReturn(mockMembersCollection);
       permissions = MockFirestoreAccountPermissionsSource();
-      when(permissions.forAccount(any)).thenAnswer((call) => FirestoreAccountPermissionsSource(mockFirestore).forAccount(call.positionalArguments.single as String));
-      when(permissions.current()).thenAnswer((_) async => FirestoreAccountPermissions({'memberId': 'self', 'memberGroupIds': <String>[], 'managedGroupIds': <String>[]}));
-      service = FirestoreMemberQueryService(firestore: mockFirestore, permissions: permissions);
+      when(permissions.forAccount(any)).thenAnswer(
+        (call) =>
+            FirestoreAccountPermissionsSource(mockFirestore)
+                .forAccount(call.positionalArguments.single as String),
+      );
+      when(permissions.current()).thenAnswer(
+        (_) async => FirestoreAccountPermissions({
+          'memberId': 'self',
+          'memberGroupIds': <String>[],
+          'managedGroupIds': <String>[],
+        }),
+      );
+      service = FirestoreMemberQueryService(
+        firestore: mockFirestore,
+        permissions: permissions,
+      );
     });
 
     test('メンバー一覧を取得しorderByを適用する', () async {
@@ -43,7 +56,8 @@ void main() {
       final mockSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
       final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
 
-      when(mockMembersCollection.where('ownerId', isEqualTo: 'self')).thenReturn(mockQuery);
+      when(mockMembersCollection.where('ownerId', isEqualTo: 'self'))
+          .thenReturn(mockQuery);
       when(mockQuery.orderBy('displayName', descending: false))
           .thenReturn(mockQuery);
       when(mockQuery.get()).thenAnswer((_) async => mockSnapshot);
@@ -57,9 +71,9 @@ void main() {
 
       expect(result, hasLength(1));
       expect(result.first.displayName, '山田太郎');
-      verify(mockMembersCollection.where('ownerId', isEqualTo: 'self')).called(1);
-      verify(mockQuery.orderBy('displayName', descending: false))
+      verify(mockMembersCollection.where('ownerId', isEqualTo: 'self'))
           .called(1);
+      verify(mockQuery.orderBy('displayName', descending: false)).called(1);
     });
 
     test('メンバー一覧取得で例外が発生した場合は取得失敗を伝える', () async {

@@ -145,7 +145,9 @@ class FirestoreTransactionStore {
       }),
     );
     when(query.get(any)).thenAnswer((invocation) async {
-      querySources.add((invocation.positionalArguments.single as GetOptions?)?.source);
+      querySources.add(
+        (invocation.positionalArguments.single as GetOptions?)?.source,
+      );
       queryFilters.add(Map.of(filters));
       final snapshot = MockQuerySnapshot();
       final docs = <QueryDocumentSnapshot<Map<String, dynamic>>>[];

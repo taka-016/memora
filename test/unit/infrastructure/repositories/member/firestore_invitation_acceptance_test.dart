@@ -158,9 +158,14 @@ void main() {
   });
   test('招待受理は紐付けとバージョンだけを変更しプロフィールを上書きしない', () async {
     final keys = store.rows['members/m']!.keys.toSet();
-    await repo.acceptInvitation(member.copyWith(displayName: '上書きしない'), invitations);
+    await repo.acceptInvitation(
+      member.copyWith(displayName: '上書きしない'),
+      invitations,
+    );
     expect(store.rows['members/m']!['displayName'], '本人');
-    expect(store.rows['members/m']!.keys, unorderedEquals({...keys, 'accountId', 'updatedAt'}));
+    expect(
+      store.rows['members/m']!.keys,
+      unorderedEquals({...keys, 'accountId', 'updatedAt'}),
+    );
   });
-
 }

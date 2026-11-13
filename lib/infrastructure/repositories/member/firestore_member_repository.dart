@@ -18,12 +18,18 @@ class FirestoreMemberRepository implements MemberRepository {
     final ref = _firestore.collection('members').doc();
     batch.set(ref, {
       ...FirestoreMemberMapper.toCreateFirestore(member),
-      'groupIds': <String>[], 'managedGroupIds': <String>[],
+      'groupIds': <String>[],
+      'managedGroupIds': <String>[],
     });
     if (member.accountId != null) {
-      batch.set(_firestore.collection('account_permissions').doc(member.accountId), {
-        'memberId': ref.id, 'memberGroupIds': <String>[], 'managedGroupIds': <String>[],
-      });
+      batch.set(
+        _firestore.collection('account_permissions').doc(member.accountId),
+        {
+          'memberId': ref.id,
+          'memberGroupIds': <String>[],
+          'managedGroupIds': <String>[],
+        },
+      );
     }
     await batch.commit();
   }
@@ -50,7 +56,11 @@ class FirestoreMemberRepository implements MemberRepository {
       FirestoreDeletedParentStore(context).saveMember(memberId, data!);
       context.delete(source);
       final accountId = data['accountId'] as String?;
-      if (accountId != null) context.delete(_firestore.collection('account_permissions').doc(accountId));
+      if (accountId != null) {
+        context.delete(
+          _firestore.collection('account_permissions').doc(accountId),
+        );
+      }
       await context.commit();
     });
   }

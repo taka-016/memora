@@ -99,30 +99,88 @@ void main() {
   });
   test('既存タスクの保存先は親旅行から補完し同じ単位で親バージョンも進める', () {
     const root = 'projects/p/databases/(default)/documents';
-    final units = authorizationStorageWrites(const AccountPermissionsPlan({}, []), {
-      'trip_entries': [
-        {'name': '$root/trip_entries/t', 'updateTime': 'parentTime', 'fields': {'groupId': {'stringValue': 'g'}, 'version': {'integerValue': '3'}}},
-      ],
-      'tasks': [
-        {'name': '$root/tasks/task', 'updateTime': 'childTime', 'fields': {'tripId': {'stringValue': 't'}}},
-      ],
-    });
+    final units = authorizationStorageWrites(
+      const AccountPermissionsPlan({}, []),
+      {
+        'trip_entries': [
+          {
+            'name': '$root/trip_entries/t',
+            'updateTime': 'parentTime',
+            'fields': {
+              'groupId': {'stringValue': 'g'},
+              'version': {'integerValue': '3'},
+            },
+          },
+        ],
+        'tasks': [
+          {
+            'name': '$root/tasks/task',
+            'updateTime': 'childTime',
+            'fields': {
+              'tripId': {'stringValue': 't'},
+            },
+          },
+        ],
+      },
+    );
     expect(units, hasLength(1));
     expect(units.single, hasLength(2));
-    final updates = {for (final write in units.single) (write['update'] as Map)['name']: write};
-    expect(((updates['$root/tasks/task']!['update'] as Map)['fields'] as Map)['groupId'], {'stringValue': 'g'});
-    expect(((updates['$root/trip_entries/t']!['update'] as Map)['fields'] as Map)['version'], {'integerValue': '4'});
-    expect(updates['$root/trip_entries/t']!['currentDocument'], {'updateTime': 'parentTime'});
+    final updates = {
+      for (final write in units.single) (write['update'] as Map)['name']: write,
+    };
+    expect(
+      ((updates['$root/tasks/task']!['update'] as Map)['fields']
+          as Map)['groupId'],
+      {'stringValue': 'g'},
+    );
+    expect(
+      ((updates['$root/trip_entries/t']!['update'] as Map)['fields']
+          as Map)['version'],
+      {'integerValue': '4'},
+    );
+    expect(updates['$root/trip_entries/t']!['currentDocument'], {
+      'updateTime': 'parentTime',
+    });
   });
 
   test('親のないタスクを補完のために削除・再作成せず不一致も自動修正しない', () {
     const root = 'projects/p/databases/(default)/documents';
-    final orphan = {'name': '$root/tasks/orphan', 'updateTime': 'c', 'fields': {'tripId': {'stringValue': 'missing'}}};
-    expect(authorizationStorageWrites(const AccountPermissionsPlan({}, []), {'tasks': [orphan]}), isEmpty);
-    expect(() => authorizationStorageWrites(const AccountPermissionsPlan({}, []), {
-      'trip_entries': [{'name': '$root/trip_entries/missing', 'updateTime': 'p', 'fields': {'groupId': {'stringValue': 'g'}, 'version': {'integerValue': '3'}}}],
-      'tasks': [{...orphan, 'fields': {'tripId': {'stringValue': 'missing'}, 'groupId': {'stringValue': 'other'}}}],
-    }), throwsFormatException);
+    final orphan = {
+      'name': '$root/tasks/orphan',
+      'updateTime': 'c',
+      'fields': {
+        'tripId': {'stringValue': 'missing'},
+      },
+    };
+    expect(
+      authorizationStorageWrites(const AccountPermissionsPlan({}, []), {
+        'tasks': [orphan],
+      }),
+      isEmpty,
+    );
+    expect(
+      () => authorizationStorageWrites(const AccountPermissionsPlan({}, []), {
+        'trip_entries': [
+          {
+            'name': '$root/trip_entries/missing',
+            'updateTime': 'p',
+            'fields': {
+              'groupId': {'stringValue': 'g'},
+              'version': {'integerValue': '3'},
+            },
+          },
+        ],
+        'tasks': [
+          {
+            ...orphan,
+            'fields': {
+              'tripId': {'stringValue': 'missing'},
+              'groupId': {'stringValue': 'other'},
+            },
+          },
+        ],
+      }),
+      throwsFormatException,
+    );
   });
-
 }

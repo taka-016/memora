@@ -9,9 +9,15 @@ import 'package:memora/application/queries/order_by.dart';
 class FirestoreMemberQueryService implements MemberQueryService {
   final FirebaseFirestore _firestore;
 
-  FirestoreMemberQueryService({FirebaseFirestore? firestore, FirestoreAccountPermissionsSource? permissions})
-    : _firestore = firestore ?? FirebaseFirestore.instance,
-      _permissions = permissions ?? FirestoreAccountPermissionsSource(firestore ?? FirebaseFirestore.instance);
+  FirestoreMemberQueryService({
+    FirebaseFirestore? firestore,
+    FirestoreAccountPermissionsSource? permissions,
+  }) : _firestore = firestore ?? FirebaseFirestore.instance,
+       _permissions =
+           permissions ??
+           FirestoreAccountPermissionsSource(
+             firestore ?? FirebaseFirestore.instance,
+           );
   final FirestoreAccountPermissionsSource _permissions;
 
   @override
@@ -42,8 +48,7 @@ class FirestoreMemberQueryService implements MemberQueryService {
   @override
   Future<MemberDto?> getMemberByAccountId(String accountId) async {
     try {
-      final permissions = await FirestoreAccountPermissionsSource(_firestore)
-          .forAccount(accountId);
+      final permissions = await _permissions.forAccount(accountId);
       if (permissions == null) return null;
       return await getMemberById(permissions.memberId);
     } catch (e, stack) {

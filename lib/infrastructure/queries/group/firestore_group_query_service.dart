@@ -11,9 +11,15 @@ import 'package:memora/infrastructure/mappers/group/firestore_group_member_mappe
 class FirestoreGroupQueryService implements GroupQueryService {
   final FirebaseFirestore _firestore;
 
-  FirestoreGroupQueryService({FirebaseFirestore? firestore, FirestoreAccountPermissionsSource? permissions})
-    : _firestore = firestore ?? FirebaseFirestore.instance,
-      _permissions = permissions ?? FirestoreAccountPermissionsSource(firestore ?? FirebaseFirestore.instance);
+  FirestoreGroupQueryService({
+    FirebaseFirestore? firestore,
+    FirestoreAccountPermissionsSource? permissions,
+  }) : _firestore = firestore ?? FirebaseFirestore.instance,
+       _permissions =
+           permissions ??
+           FirestoreAccountPermissionsSource(
+             firestore ?? FirebaseFirestore.instance,
+           );
 
   final FirestoreAccountPermissionsSource _permissions;
 
@@ -53,7 +59,10 @@ class FirestoreGroupQueryService implements GroupQueryService {
     List<OrderBy>? membersOrderBy,
   }) async {
     try {
-      final managedGroups = _sortGroups(await _groupsForCurrentMember(ownerId, managed: true), groupsOrderBy);
+      final managedGroups = _sortGroups(
+        await _groupsForCurrentMember(ownerId, managed: true),
+        groupsOrderBy,
+      );
       return await _addMembersToGroups(
         managedGroups,
         membersOrderBy: membersOrderBy,
@@ -103,13 +112,22 @@ class FirestoreGroupQueryService implements GroupQueryService {
     }
   }
 
-  Future<List<GroupDto>> _groupsForCurrentMember(String memberId, {required bool managed}) async {
+  Future<List<GroupDto>> _groupsForCurrentMember(
+    String memberId, {
+    required bool managed,
+  }) async {
     final permissions = await _permissions.current();
     if (permissions == null) return [];
     if (permissions.memberId != memberId) {
-      throw FirebaseException(plugin: 'cloud_firestore', code: 'permission-denied', message: '本人以外の所属は取得できません');
+      throw FirebaseException(
+        plugin: 'cloud_firestore',
+        code: 'permission-denied',
+        message: '本人以外の所属は取得できません',
+      );
     }
-    final ids = managed ? permissions.managedGroupIds : permissions.memberGroupIds;
+    final ids = managed
+        ? permissions.managedGroupIds
+        : permissions.memberGroupIds;
     final groups = <GroupDto>[];
     for (final id in ids) {
       final doc = await _firestore.collection('groups').doc(id).get();

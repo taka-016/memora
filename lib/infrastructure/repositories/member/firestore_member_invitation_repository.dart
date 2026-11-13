@@ -28,14 +28,11 @@ class FirestoreMemberInvitationRepository
         );
         FirestoreVersionCheck.requireMatch(current.data(), invitation.version);
       }
-      transaction.update(
-        memberRef,
-        {
-          'accountId': member.accountId,
-          'version': member.version! + 1,
-          'updatedAt': FieldValue.serverTimestamp(),
-        },
-      );
+      transaction.update(memberRef, {
+        'accountId': member.accountId,
+        'version': member.version! + 1,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
       final data = currentMember.data()!;
       transaction.set(
         _firestore.collection('account_permissions').doc(member.accountId),

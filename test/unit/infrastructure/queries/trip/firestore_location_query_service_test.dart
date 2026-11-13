@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/infrastructure/queries/trip/firestore_location_query_service.dart';
+
 import '../member/firestore_member_query_service_test.mocks.dart';
 
 void main() {
@@ -23,7 +24,11 @@ void main() {
     when(childQuery.where('tripId', isEqualTo: 'trip')).thenReturn(childQuery);
     when(childQuery.get()).thenAnswer((_) async => childSnapshot);
     when(childSnapshot.docs).thenReturn([]);
-    expect(await FirestoreLocationQueryService(firestore: db).getLocationsByGroupId('g'), isEmpty);
+    expect(
+      await FirestoreLocationQueryService(firestore: db)
+          .getLocationsByGroupId('g'),
+      isEmpty,
+    );
     verify(childQuery.where('tripId', isEqualTo: 'trip')).called(1);
   });
 }

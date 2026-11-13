@@ -85,7 +85,13 @@ class FirestoreDvcPointContractRepository
   }
 
   Future<void> _ensureDeletable(String contractId, {String? groupId}) async {
-    final scope = groupId ?? await firestoreParentGroupId(_firestore, 'dvc_point_contracts', contractId);
+    final scope =
+        groupId ??
+        await firestoreParentGroupId(
+          _firestore,
+          'dvc_point_contracts',
+          contractId,
+        );
     if (scope == null) return;
     for (final name in ['dvc_point_usages', 'dvc_limited_points']) {
       final children = await _firestore

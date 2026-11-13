@@ -189,9 +189,15 @@ class DeviceCalendarNotificationSource implements CalendarNotificationSource {
         if (closed || member == null) return;
         final uid = member.accountId;
         if (uid == null) return;
-        subscriptions.add(firestore!.collection('account_permissions').doc(uid).snapshots().listen((_) {
-          unawaited(updateGroups());
-        }, onError: error));
+        subscriptions.add(
+          firestore!
+              .collection('account_permissions')
+              .doc(uid)
+              .snapshots()
+              .listen((_) {
+                unawaited(updateGroups());
+              }, onError: error),
+        );
       } catch (e, s) {
         error(e, s);
       }
