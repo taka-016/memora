@@ -144,19 +144,66 @@ service cloud.firestore {
              && memberPermissionsMatch(memberId, after);
     }
 
-    function readableMember(data) {
+    function readableSharedMember(data) {
       let shared = data.groupIds.removeAll(data.groupIds.removeAll(permissions().memberGroupIds));
-      return data.accountId == request.auth.uid || data.ownerId == ownMember()
-             || (shared.size() > 0 && belongs(shared[0]));
+      return data.ownerId == ownMember() || (shared.size() > 0 && belongs(shared[0]));
+    }
+
+    function validInvitation(code) {
+      let path = /databases/$(database)/documents/member_invitations/$(code);
+      let data = get(path).data;
+      let issued = data.get('updatedAt', data.get('createdAt', null));
+      return exists(path) && data.invitationCode == code
+             && (issued == null || request.time <= issued + duration.value(24, 'h'));
+    }
+
+    function hasClaim(memberId) {
+      let path = /databases/$(database)/documents/member_invitation_claims/$(request.auth.uid);
+      let code = get(path).data.code;
+      return exists(path) && validInvitation(code)
+             && get(/databases/$(database)/documents/member_invitations/$(code)).data.inviteeId == memberId;
+    }
+
+    function readableMember(data, memberId) {
+      return data.accountId == request.auth.uid || hasClaim(memberId)
+             || (exists(/databases/$(database)/documents/account_permissions/$(request.auth.uid))
+                 && readableSharedMember(data));
+    }
+
+    match /member_invitation_claims/{uid} {
+      allow get, delete: if isVerifiedUser() && uid == request.auth.uid;
+      allow create, update: if isVerifiedUser() && uid == request.auth.uid
+                       && request.resource.data.keys().hasOnly(['code'])
+                       && validInvitation(request.resource.data.code);
+    }
+
+    function invitationManager(data) {
+      return exists(/databases/$(database)/documents/account_permissions/$(request.auth.uid))
+             && data.inviterId == ownMember()
+             && get(memberPath(data.inviteeId)).data.ownerId == ownMember();
+    }
+
+    match /member_invitations/{code} {
+      allow get: if isVerifiedUser() && validInvitation(code);
+      allow list: if isVerifiedUser() && (hasClaim(resource.data.inviteeId) || invitationManager(resource.data));
+      allow create: if isVerifiedUser() && isInitialVersion()
+                       && request.resource.data.invitationCode == code
+                       && invitationManager(request.resource.data)
+                       && get(memberPath(request.resource.data.inviteeId)).data.accountId == null;
+      allow delete: if isVerifiedUser()
+                       && (invitationManager(resource.data)
+                           || (hasClaim(resource.data.inviteeId)
+                               && getAfter(memberPath(resource.data.inviteeId)).data.accountId == request.auth.uid
+                               && memberPermissionsMatch(resource.data.inviteeId, getAfter(memberPath(resource.data.inviteeId)).data)));
     }
 
     match /account_permissions/{accountId} {
       allow get: if isVerifiedUser() && accountId == request.auth.uid;
       allow create: if isVerifiedUser() && accountId == request.auth.uid
                        && validLists(request.resource.data, 'memberGroupIds')
-                       && request.resource.data.memberGroupIds.size() == 0
+                       && (request.resource.data.memberGroupIds.size() == 0 || hasClaim(request.resource.data.memberId))
                        && matchingPermissions(accountId, request.resource.data.memberId, request.resource.data)
-                       && !exists(memberPath(request.resource.data.memberId));
+                       && (!exists(memberPath(request.resource.data.memberId)) || hasClaim(request.resource.data.memberId));
       allow update: if isVerifiedUser()
                        && request.resource.data.memberId == resource.data.memberId
                        && request.resource.data.diff(resource.data).affectedKeys()
@@ -178,7 +225,7 @@ service cloud.firestore {
     }
 
     match /members/{memberId} {
-      allow get, list: if isVerifiedUser() && readableMember(resource.data);
+      allow get, list: if isVerifiedUser() && readableMember(resource.data, memberId);
       allow create: if isVerifiedUser() && isInitialVersion()
                        && validLists(request.resource.data, 'groupIds')
                        && request.resource.data.groupIds.size() == 0
@@ -188,6 +235,11 @@ service cloud.firestore {
                               && request.resource.data.ownerId == ownMember());
       allow update: if isVerifiedUser() && isNextVersion()
                        && (membershipEdit(memberId)
+                           || (hasClaim(memberId) && resource.data.accountId == null
+                               && request.resource.data.accountId == request.auth.uid
+                               && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['accountId', 'version', 'updatedAt'])
+                               && memberPermissionsMatch(memberId, request.resource.data)
+                               && !existsAfter(/databases/$(database)/documents/member_invitations/$(get(/databases/$(database)/documents/member_invitation_claims/$(request.auth.uid)).data.code)))
                            || ((resource.data.accountId == request.auth.uid || resource.data.ownerId == ownMember())
                                && request.resource.data.accountId == resource.data.accountId
                                && request.resource.data.ownerId == resource.data.ownerId
