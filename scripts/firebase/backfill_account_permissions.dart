@@ -1,3 +1,5 @@
+import 'migrate_firestore_read_models.dart' show encode;
+
 class AccountPermissionsPlan {
   const AccountPermissionsPlan(this.documents, this.issues);
 
@@ -86,4 +88,27 @@ bool _samePermissions(
     }
   }
   return true;
+}
+
+List<Map<String, Object?>> accountPermissionsWrites(
+  AccountPermissionsPlan plan,
+  Map<String, Map<String, Object?>> existing,
+  String documentRoot,
+) {
+  if (plan.issues.isNotEmpty) {
+    throw const FormatException('不整合を解消してから認可情報を補完してください');
+  }
+  return [
+    for (final entry in plan.documents.entries)
+      if (!existing.containsKey(entry.key))
+        {
+          'update': {
+            'name': '$documentRoot/account_permissions/${entry.key}',
+            'fields': entry.value.map(
+              (key, value) => MapEntry(key, encode(value)),
+            ),
+          },
+          'currentDocument': {'exists': false},
+        },
+  ];
 }
