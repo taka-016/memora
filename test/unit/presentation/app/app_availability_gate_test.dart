@@ -8,6 +8,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/models/app_availability.dart';
+import 'package:memora/application/models/app_theme_mode.dart';
+import 'package:memora/application/services/app_theme_mode_storage.dart';
+import 'package:memora/composition_root/providers/theme_providers.dart';
 import 'package:memora/application/usecases/app_availability/check_app_availability_usecase.dart';
 import 'package:memora/composition_root/providers/app_availability_providers.dart';
 import 'package:memora/presentation/app/app_availability_gate.dart';
@@ -15,8 +18,104 @@ import 'package:memora/presentation/app/app_availability_gate.dart';
 import '../../../helpers/test_exception.dart';
 import 'app_availability_gate_test.mocks.dart';
 
-@GenerateMocks([CheckAppAvailabilityUsecase])
+@GenerateMocks([CheckAppAvailabilityUsecase, AppThemeModeStorage])
 void main() {
+  late MockAppThemeModeStorage themeStorage;
+  setUp(() {
+    themeStorage = MockAppThemeModeStorage();
+    when(themeStorage.load()).thenAnswer((_) async => AppThemeMode.system);
+  });
+
+  Widget createGate(
+    CheckAppAvailabilityUsecase check, {
+    Widget child = const SizedBox.shrink(),
+  }) => ProviderScope(
+    overrides: [
+      checkAppAvailabilityUsecaseProvider.overrideWithValue(check),
+      appThemeModeStorageProvider.overrideWithValue(themeStorage),
+    ],
+    child: AppAvailabilityGate(child: child),
+  );
+
+  for (final entry in [
+    (AppThemeMode.dark, Brightness.light, Brightness.dark),
+    (AppThemeMode.light, Brightness.dark, Brightness.light),
+    (AppThemeMode.system, Brightness.dark, Brightness.dark),
+  ]) {
+    testWidgets(
+      '待機中と停止案内は保存テーマ${entry.$1.name}と端末${entry.$2.name}から${entry.$3.name}で表示する',
+      (tester) async {
+        tester.binding.resetFirstFrameSent();
+        final platform = tester.binding.platformDispatcher;
+        platform.platformBrightnessTestValue = entry.$2;
+        addTearDown(platform.clearPlatformBrightnessTestValue);
+        when(themeStorage.load()).thenAnswer((_) async => entry.$1);
+        final pending = Completer<AppAvailability>();
+        final check = MockCheckAppAvailabilityUsecase();
+        when(check.execute()).thenAnswer((_) => pending.future);
+        await tester.pumpWidget(createGate(check));
+        await tester.pump();
+        expect(
+          Theme.of(tester.element(find.byType(Scaffold))).brightness,
+          entry.$3,
+        );
+        expect(tester.binding.sendFramesToEngine, isFalse);
+        pending.complete(AppAvailability.maintenance);
+        await tester.pump();
+        expect(find.text('メンテナンス中です'), findsOneWidget);
+        expect(
+          Theme.of(tester.element(find.byType(Scaffold))).brightness,
+          entry.$3,
+        );
+        expect(tester.binding.sendFramesToEngine, isTrue);
+      },
+    );
+  }
+
+  testWidgets('テーマと利用可否が揃うまで初回の描画と本体の開始を待つ', (tester) async {
+    tester.binding.resetFirstFrameSent();
+    final themeReady = Completer<AppThemeMode>();
+    when(themeStorage.load()).thenAnswer((_) => themeReady.future);
+    final pending = Completer<AppAvailability>();
+    final check = MockCheckAppAvailabilityUsecase();
+    when(check.execute()).thenAnswer((_) => pending.future);
+    var built = false;
+    await tester.pumpWidget(
+      createGate(
+        check,
+        child: Builder(
+          builder: (_) {
+            built = true;
+            return const SizedBox.shrink();
+          },
+        ),
+      ),
+    );
+    expect(tester.binding.sendFramesToEngine, isFalse);
+    pending.complete(AppAvailability.available);
+    await tester.pump();
+    expect(tester.binding.sendFramesToEngine, isFalse);
+    expect(built, isFalse);
+    themeReady.complete(AppThemeMode.dark);
+    await tester.pump();
+    expect(tester.binding.sendFramesToEngine, isTrue);
+    expect(built, isTrue);
+  });
+
+  testWidgets('初回の取得に失敗してもスプラッシュを終了し再確認できる', (tester) async {
+    tester.binding.resetFirstFrameSent();
+    final check = MockCheckAppAvailabilityUsecase();
+    when(check.execute()).thenThrow(TestException('通信失敗'));
+    await tester.pumpWidget(createGate(check));
+    await tester.pump();
+    expect(tester.binding.sendFramesToEngine, isTrue);
+    expect(find.text('利用状況を確認できませんでした'), findsOneWidget);
+    when(check.execute()).thenAnswer((_) async => AppAvailability.available);
+    await tester.tap(find.text('再確認'));
+    await tester.pump();
+    expect(find.text('利用状況を確認できませんでした'), findsNothing);
+  });
+
   testWidgets('起動確認中は機能を開始せず更新案内から再確認して再開する', (tester) async {
     final check = MockCheckAppAvailabilityUsecase();
     final pending = Completer<AppAvailability>();
@@ -26,6 +125,7 @@ void main() {
       ProviderScope(
         overrides: [
           checkAppAvailabilityUsecaseProvider.overrideWithValue(check),
+          appThemeModeStorageProvider.overrideWithValue(themeStorage),
         ],
         child: AppAvailabilityGate(
           child: Builder(
@@ -57,6 +157,7 @@ void main() {
       ProviderScope(
         overrides: [
           checkAppAvailabilityUsecaseProvider.overrideWithValue(check),
+          appThemeModeStorageProvider.overrideWithValue(themeStorage),
         ],
         child: const AppAvailabilityGate(
           child: MaterialApp(home: Scaffold(body: TextField())),
@@ -92,6 +193,7 @@ void main() {
       ProviderScope(
         overrides: [
           checkAppAvailabilityUsecaseProvider.overrideWithValue(check),
+          appThemeModeStorageProvider.overrideWithValue(themeStorage),
         ],
         child: AppAvailabilityGate(
           child: MaterialApp(
@@ -147,6 +249,7 @@ void main() {
       ProviderScope(
         overrides: [
           checkAppAvailabilityUsecaseProvider.overrideWithValue(check),
+          appThemeModeStorageProvider.overrideWithValue(themeStorage),
         ],
         child: AppAvailabilityGate(
           child: MaterialApp.router(routerConfig: router),
