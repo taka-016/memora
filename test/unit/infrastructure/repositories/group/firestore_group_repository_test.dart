@@ -1,155 +1,74 @@
-import 'package:memora/domain/entities/group/group_member.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:memora/infrastructure/repositories/group/firestore_group_repository.dart';
 import 'package:memora/domain/entities/group/group.dart';
+import 'package:memora/domain/entities/group/group_member.dart';
+import 'package:memora/infrastructure/repositories/group/firestore_group_repository.dart';
+import 'package:memora/infrastructure/services/firestore_account_permissions_source.dart';
 
-@GenerateMocks([
-  FirebaseFirestore,
-  CollectionReference,
-  DocumentReference,
-  QuerySnapshot,
-  QueryDocumentSnapshot,
-  DocumentSnapshot,
-  Query,
-  WriteBatch,
-  FirestoreGroupRepository,
-])
+import '../../../../helpers/firestore_transaction_store.dart';
+import '../../../../helpers/test_exception.dart';
 import 'firestore_group_repository_test.mocks.dart';
 
+@GenerateMocks([FirestoreAccountPermissionsSource, FirestoreGroupRepository])
 void main() {
-  group('FirestoreGroupRepository', () {
-    late MockFirebaseFirestore mockFirestore;
-    late MockCollectionReference<Map<String, dynamic>> mockCollection;
-    late FirestoreGroupRepository repository;
+  late FirestoreTransactionStore store;
+  late FirestoreGroupRepository repo;
+  late MockFirestoreAccountPermissionsSource permissions;
+  setUp(() {
+    store = FirestoreTransactionStore();
+    permissions = MockFirestoreAccountPermissionsSource();
+    when(permissions.current()).thenAnswer((_) async => FirestoreAccountPermissions({
+      'memberId': 'self', 'memberGroupIds': <String>[], 'managedGroupIds': <String>[],
+    }));
+    repo = FirestoreGroupRepository(firestore: store.firestore, permissions: permissions);
+    store.rows['members/self'] = {'version': 1, 'accountId': 'uid', 'groupIds': <String>[], 'managedGroupIds': <String>[]};
+    store.rows['account_permissions/uid'] = {'memberId': 'self', 'memberGroupIds': <String>[], 'managedGroupIds': <String>[]};
+  });
 
-    setUp(() {
-      mockFirestore = MockFirebaseFirestore();
-      mockCollection = MockCollectionReference<Map<String, dynamic>>();
-      when(mockFirestore.collection('groups')).thenReturn(mockCollection);
-      repository = FirestoreGroupRepository(firestore: mockFirestore);
-    });
+  test('作成者を本人の認可から所有者かつ所属者にして同時保存する', () async {
+    final id = await repo.saveGroup(Group(id: '', ownerId: '偽の所有者', name: '家族'));
+    expect(store.rows['groups/$id']!['ownerId'], 'self');
+    expect(store.rows['group_members/$id:self']!['memberId'], 'self');
+    expect(store.rows['members/self']!['groupIds'], [id]);
+    expect(store.rows['account_permissions/uid']!['managedGroupIds'], [id]);
+    expect(store.commits, 1);
+  });
 
-    test('saveGroupがgroups collectionにグループ情報を追加し、自動採番IDを返す', () async {
-      final group = Group(
-        id: '',
-        ownerId: 'admin001',
-        name: 'テストグループ',
-        memo: 'テストメモ',
-      );
+  test('所属追加・管理者変更とプロフィールの所属一覧と認可を同時に保存する', () async {
+    store.rows['groups/g'] = {'version': 3, 'ownerId': 'self'};
+    const self = GroupMember(groupId: 'g', memberId: 'self');
+    const added = GroupMember(groupId: 'g', memberId: 'other', isAdministrator: true);
+    store.rows['members/other'] = {'version': 4, 'accountId': 'otherUid', 'groupIds': ['else'], 'managedGroupIds': <String>[]};
+    store.rows['account_permissions/otherUid'] = {'memberId': 'other', 'memberGroupIds': ['else'], 'managedGroupIds': <String>[]};
+    await repo.updateGroup(Group(id: 'g', ownerId: 'self', name: '家族', version: 3, originalMembers: const [self], members: const [self, added]));
+    expect(store.rows['groups/g']!['version'], 4);
+    expect(store.rows['group_members/g:other']!['isAdministrator'], true);
+    expect(store.rows['members/other']!['groupIds'], ['else', 'g']);
+    expect(store.rows['members/other']!['version'], 5);
+    expect(store.rows['account_permissions/otherUid']!['managedGroupIds'], ['g']);
+    expect(store.commits, 1);
+  });
 
-      final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
-      final mockBatch = MockWriteBatch();
+  test('所属色だけの変更ではプロフィールと認可を更新しない', () async {
+    store.rows['groups/g'] = {'version': 3, 'ownerId': 'self'};
+    const before = GroupMember(groupId: 'g', memberId: 'self');
+    await repo.updateGroup(Group(id: 'g', ownerId: 'self', name: '家族', version: 3, originalMembers: const [before], members: [before.copyWith(color: '#FF0000')]));
+    expect(store.rows['group_members/g:self']!['color'], '#FF0000');
+    expect(store.rows['members/self']!['version'], 1);
+  });
 
-      when(mockFirestore.batch()).thenReturn(mockBatch);
-      when(mockCollection.doc()).thenReturn(mockDocRef);
-      when(mockDocRef.id).thenReturn('auto_generated_id');
-      when(mockBatch.set(any, any)).thenReturn(null);
-      when(mockBatch.commit()).thenAnswer((_) async {});
-
-      final result = await repository.saveGroup(group);
-
-      expect(result, 'auto_generated_id');
-      verify(mockFirestore.batch()).called(1);
-      verify(mockCollection.doc()).called(1);
-      verify(
-        mockBatch.set(
-          mockDocRef,
-          argThat(
-            allOf([
-              containsPair('ownerId', 'admin001'),
-              containsPair('name', 'テストグループ'),
-              containsPair('memo', 'テストメモ'),
-              contains('createdAt'),
-              contains('updatedAt'),
-            ]),
-          ),
-        ),
-      ).called(1);
-      verify(mockBatch.commit()).called(1);
-    });
-
-    test('所属色だけの変更も既存所属を更新する', () async {
-      const before = GroupMember(groupId: 'g', memberId: 'm');
-      final group = Group(
-        id: 'g',
-        ownerId: 'o',
-        name: '家族',
-        originalMembers: const [before],
-        members: [before.copyWith(color: '#FF0000', textColor: '#FFFFFF')],
-      );
-      final parent = MockDocumentReference<Map<String, dynamic>>();
-      final membership = MockDocumentReference<Map<String, dynamic>>();
-      final batch = MockWriteBatch();
-      final collection = MockCollectionReference<Map<String, dynamic>>();
-      final query = MockQuery<Map<String, dynamic>>();
-      final snapshot = MockQuerySnapshot<Map<String, dynamic>>();
-      final doc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
-      when(mockFirestore.batch()).thenReturn(batch);
-      when(mockCollection.doc('g')).thenReturn(parent);
-      when(mockFirestore.collection('group_members')).thenReturn(collection);
-      when(collection.where('groupId', isEqualTo: 'g')).thenReturn(query);
-      when(query.get()).thenAnswer((_) async => snapshot);
-      when(snapshot.docs).thenReturn([doc]);
-      when(doc.data()).thenReturn({'memberId': 'm'});
-      when(doc.reference).thenReturn(membership);
-      when(batch.commit()).thenAnswer((_) async {});
-      await repository.updateGroup(group);
-      verify(
-        batch.update(
-          membership,
-          argThat(
-            allOf(
-              containsPair('color', '#FF0000'),
-              containsPair('textColor', '#FFFFFF'),
-            ),
-          ),
-        ),
-      ).called(1);
-    });
-
-    test('updateGroupがgroups collectionの該当ドキュメントを差分更新する', () async {
-      final group = Group(id: 'group001', ownerId: 'admin001', name: '更新後グループ');
-      final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
-      final mockBatch = MockWriteBatch();
-      final mockGroupMembersCollection =
-          MockCollectionReference<Map<String, dynamic>>();
-      final mockGroupMembersQuery = MockQuery<Map<String, dynamic>>();
-      final mockGroupMembersSnapshot =
-          MockQuerySnapshot<Map<String, dynamic>>();
-
-      when(mockFirestore.batch()).thenReturn(mockBatch);
-      when(mockCollection.doc('group001')).thenReturn(mockDocRef);
-      when(mockFirestore.collection('group_members'))
-          .thenReturn(mockGroupMembersCollection);
-      when(mockGroupMembersCollection.where('groupId', isEqualTo: 'group001'))
-          .thenReturn(mockGroupMembersQuery);
-      when(mockGroupMembersQuery.get())
-          .thenAnswer((_) async => mockGroupMembersSnapshot);
-      when(mockGroupMembersSnapshot.docs).thenReturn([]);
-      when(mockBatch.commit()).thenAnswer((_) async {});
-
-      await repository.updateGroup(group);
-
-      verify(
-        mockBatch.update(
-          mockDocRef,
-          argThat(
-            allOf([
-              containsPair('ownerId', 'admin001'),
-              containsPair('name', '更新後グループ'),
-              contains('updatedAt'),
-              predicate<Map<String, dynamic>>(
-                (data) => !data.containsKey('createdAt'),
-                'createdAtを含まない',
-              ),
-            ]),
-          ),
-        ),
-      ).called(1);
-      verify(mockBatch.commit()).called(1);
-    });
+  test('競合と保存拒否では所属と認可を一部だけ変更しない', () async {
+    store.rows['groups/g'] = {'version': 3, 'ownerId': 'self'};
+    store.commitError = TestException();
+    const self = GroupMember(groupId: 'g', memberId: 'self');
+    await expectLater(repo.updateGroup(Group(id: 'g', ownerId: 'self', name: '家族', version: 3, originalMembers: const [], members: const [self])), throwsA(isA<TestException>()));
+    expect(store.rows['groups/g']!['version'], 3);
+    expect(store.rows.containsKey('group_members/g:self'), false);
+    expect(store.rows['members/self']!['version'], 1);
+    store.commitError = null;
+    await expectLater(repo.updateGroup(Group(id: 'g', ownerId: 'self', name: '家族', version: 2, members: const [self])), throwsA(isA<FirebaseException>()));
+    expect(store.commits, 0);
   });
 }
