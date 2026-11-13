@@ -8,6 +8,7 @@ function token(uid) {
   return `${enc({alg:'none',typ:'JWT'})}.${enc({sub:uid,user_id:uid,aud:'demo-memora',iss:'https://securetoken.google.com/demo-memora',iat:Math.floor(Date.now()/1000),exp:Math.floor(Date.now()/1000)+3600,email_verified:true,firebase:{sign_in_provider:'password'}})}.`;
 }
 function encode(value) {
+  if (value instanceof Date) return {timestampValue:value.toISOString()};
   if (value === null) return {nullValue:null};
   if (Array.isArray(value)) return {arrayValue:{values:value.map(encode)}};
   if (typeof value === 'number') return {integerValue:String(value)};
@@ -175,3 +176,20 @@ await expectCommit('auth-stale-accept',[
 ],200,'取得済みの招待だけを削除して紐付けを確定する');
 await get('auth-stale-outsider','member_invitations/auth-stale-later',403,'紐付け済みメンバーの残存招待を別人の閲覧権限にしない');
 await expectCommit('auth-stale-outsider',[write('member_invitation_claims/auth-stale-outsider',{code:'auth-stale-later'})],403,'残存招待による別人の閲覧申請も拒否');
+
+await expectCommit('owner',[
+ remove('account_permissions/auth-expiration-accept'),remove('member_invitation_claims/auth-expiration-accept'),
+ write('members/auth-expiration-invitee',{...member(null,['auth-g']),ownerId:'auth-owner'}),
+ write('group_members/auth-g:auth-expiration-invitee',{groupId:'auth-g',memberId:'auth-expiration-invitee',isAdministrator:false}),
+ write('member_invitations/auth-exp-active',{version:1,inviteeId:'auth-expiration-invitee',inviterId:'auth-owner',invitationCode:'auth-exp-active'}),
+ write('member_invitations/auth-exp-old',{version:1,inviteeId:'auth-expiration-invitee',inviterId:'auth-owner',invitationCode:'auth-exp-old',createdAt:new Date('2000-01-01T00:00:00Z')}),
+],200,'有効な招待と期限切れの招待を準備');
+await get('auth-expiration-outsider','member_invitations/auth-exp-old',403,'期限切れのコードだけでは取得できない');
+await get('auth-owner','member_invitations/auth-exp-old',200,'招待管理者は期限切れの招待を再発行・削除するため取得できる');
+await expectCommit('auth-expiration-accept',[write('member_invitation_claims/auth-expiration-accept',{code:'auth-exp-active'})],200,'有効な招待を持つ本人を確認');
+await get('auth-expiration-accept','member_invitations/auth-exp-old',200,'有効な招待を持つ本人は同じ対象の期限切れ招待も競合確認できる');
+await expectCommit('auth-expiration-accept',[
+ write('members/auth-expiration-invitee',{...member('auth-expiration-accept',['auth-g']),ownerId:'auth-owner',version:2}),
+ write('account_permissions/auth-expiration-accept',permissions('auth-expiration-invitee',['auth-g'])),
+ remove('member_invitations/auth-exp-active'),remove('member_invitations/auth-exp-old'),remove('member_invitation_claims/auth-expiration-accept'),
+],200,'同じ対象の取得済み招待を期限切れも含めて受理時に削除できる');
