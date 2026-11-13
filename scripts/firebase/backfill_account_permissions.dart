@@ -6,7 +6,9 @@ import 'migrate_firestore_read_models.dart'
     show encode, fields, migrationArguments;
 
 class AccountPermissionsPlan {
-  const AccountPermissionsPlan(this.documents, this.issues);
+  const AccountPermissionsPlan(this.documents, this.issues, {this.memberDocuments = const {}});
+
+  final Map<String, Map<String, Object?>> memberDocuments;
 
   final Map<String, Map<String, Object?>> documents;
   final List<String> issues;
@@ -75,7 +77,28 @@ AccountPermissionsPlan buildAccountPermissionsPlan({
       issues.add('認可文書に対応する本人が存在しない: $accountId');
     }
   }
-  return AccountPermissionsPlan(documents, issues);
+  final profiles = <String, Map<String, Object?>>{};
+  for (final entry in members.entries) {
+    final account = existing[entry.value['accountId']];
+    final groups = (memberGroups[entry.key] ?? {}).toList()..sort();
+    final managed = (managedGroups[entry.key] ?? {}).toList()..sort();
+    final expected = {'memberId': entry.key, 'memberGroupIds': groups, 'managedGroupIds': managed};
+    final useExisting = account != null && _samePermissions(account, expected);
+    profiles[entry.key] = {
+      'groupIds': useExisting ? account['memberGroupIds'] : groups,
+      'managedGroupIds': useExisting ? account['managedGroupIds'] : managed,
+    };
+    final data = entry.value;
+    if (data.containsKey('groupIds') || data.containsKey('managedGroupIds')) {
+      if (!_samePermissions({'memberId': entry.key, 'memberGroupIds': data['groupIds'], 'managedGroupIds': data['managedGroupIds']}, expected)) {
+        issues.add('メンバーの所属一覧と不一致: ${entry.key}');
+      }
+    }
+  }
+  for (final id in [...groups.keys, ...members.keys]) {
+    if (id.contains(':')) issues.add('所属参照IDの区切り文字を含むID: $id');
+  }
+  return AccountPermissionsPlan(documents, issues, memberDocuments: profiles);
 }
 
 bool _samePermissions(
@@ -118,6 +141,57 @@ List<Map<String, Object?>> accountPermissionsWrites(
   ];
 }
 
+List<List<Map<String, Object?>>> authorizationStorageWrites(
+  AccountPermissionsPlan plan,
+  Map<String, List<Map<String, dynamic>>> collections,
+) {
+  if (plan.issues.isNotEmpty) throw const FormatException('不整合を解消してから補完してください');
+  final units = <List<Map<String, Object?>>>[];
+  for (final doc in collections['members'] ?? <Map<String, dynamic>>[]) {
+    final name = doc['name'] as String;
+    final id = name.split('/').last;
+    final desired = plan.memberDocuments[id]!;
+    final data = fields(doc);
+    if (jsonEncode(data['groupIds']) == jsonEncode(desired['groupIds']) &&
+        jsonEncode(data['managedGroupIds']) == jsonEncode(desired['managedGroupIds'])) continue;
+    final version = data['version'];
+    if (version is! int || version < 1) throw FormatException('メンバーのバージョンを確認してください: $id');
+    units.add([{
+      'update': {'name': name, 'fields': {
+        ...desired.map((key, value) => MapEntry(key, encode(value))),
+        'version': encode(version + 1),
+      }},
+      'updateMask': {'fieldPaths': ['groupIds', 'managedGroupIds', 'version']},
+      'currentDocument': {'updateTime': doc['updateTime']},
+    }]);
+  }
+  final invitationCodes = <String>{};
+  for (final collection in ['group_members', 'member_invitations']) {
+    for (final doc in collections[collection] ?? <Map<String, dynamic>>[]) {
+      final name = doc['name'] as String;
+      final data = fields(doc);
+      late final String id;
+      if (collection == 'group_members') {
+        final member = plan.memberDocuments[data['memberId']];
+        if (member == null || !(member['groupIds']! as List).contains(data['groupId'])) continue;
+        id = '${data['groupId']}:${data['memberId']}';
+      } else {
+        id = data['invitationCode'] as String;
+        if (id.isEmpty || id.contains('/') || !invitationCodes.add(id)) {
+          throw const FormatException('招待コードの重複または形式を確認してください');
+        }
+      }
+      final target = '${name.substring(0, name.lastIndexOf('/'))}/$id';
+      if (target == name) continue;
+      units.add([
+        {'update': {'name': target, 'fields': doc['fields']}, 'currentDocument': {'exists': false}},
+        {'delete': name, 'currentDocument': {'updateTime': doc['updateTime']}},
+      ]);
+    }
+  }
+  return units;
+}
+
 Future<void> main(List<String> args) async {
   late final ({String projectId, String reportPath, bool apply}) options;
   try {
@@ -140,22 +214,25 @@ Future<void> main(List<String> args) async {
     'projectId': options.projectId,
     'apply': options.apply,
     'status': '確認中',
-    'appliedAccountIds': <String>[],
+    'appliedDocuments': <String>[],
   };
   Future<void> saveReport() async {
     await File(options.reportPath)
         .writeAsString(const JsonEncoder.withIndent('  ').convert(report));
   }
 
-  Future<Map<String, Map<String, Object?>>> load(String collection) async => {
-    for (final doc in await client.queryDocuments(collection))
-      (doc['name'] as String).split('/').last: fields(doc),
-  };
+  final sources = <String, List<Map<String, dynamic>>>{};
+  Future<Map<String, Map<String, Object?>>> load(String collection) async {
+    final docs = await client.queryDocuments(collection);
+    sources[collection] = docs;
+    return {for (final doc in docs) (doc['name'] as String).split('/').last: fields(doc)};
+  }
   try {
     final members = await load('members');
     final groups = await load('groups');
     final memberships = await load('group_members');
     final existing = await load('account_permissions');
+    await load('member_invitations');
     final plan = buildAccountPermissionsPlan(
       members: members,
       groups: groups,
@@ -173,26 +250,22 @@ Future<void> main(List<String> args) async {
       exitCode = 1;
       return;
     }
+    final units = [
+      for (final write in accountPermissionsWrites(plan, existing, client.documentRoot)) [write],
+      ...authorizationStorageWrites(plan, sources),
+    ];
+    report['memberDocuments'] = plan.memberDocuments;
+    report['writeUnits'] = units.length;
+    await saveReport();
     if (options.apply) {
-      final writes = accountPermissionsWrites(
-        plan,
-        existing,
-        client.documentRoot,
-      );
-      for (var start = 0; start < writes.length; start += 500) {
-        final end = start + 500 < writes.length ? start + 500 : writes.length;
-        final batch = writes.sublist(start, end);
+      for (final unit in units) {
+        final paths = [for (final write in unit) (write['update'] as Map?)?['name'] ?? write['delete']];
         report['status'] = '適用中';
-        report['pendingAccountIds'] = [
-          for (final write in batch)
-            ((write['update'] as Map)['name'] as String).split('/').last,
-        ];
+        report['pendingDocuments'] = paths;
         await saveReport();
-        await client.commit(batch);
-        (report['appliedAccountIds']! as List<String>).addAll(
-          report['pendingAccountIds']! as List<String>,
-        );
-        report.remove('pendingAccountIds');
+        await client.commit(unit);
+        (report['appliedDocuments']! as List<String>).addAll(paths.cast<String>());
+        report.remove('pendingDocuments');
         await saveReport();
       }
       report['status'] = '適用済み';
