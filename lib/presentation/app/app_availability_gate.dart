@@ -50,28 +50,35 @@ class _AppAvailabilityGateState extends ConsumerState<AppAvailabilityGate>
   Widget build(BuildContext context) {
     final state = ref.watch(appAvailabilityNotifierProvider);
     if (state.canUseApp) _started = true;
+    final isCheckingAvailableApp =
+        _started &&
+        state.isChecking &&
+        state.availability == AppAvailability.available;
     final message = state.hasError
         ? '利用状況を確認できませんでした'
         : switch (state.availability) {
             AppAvailability.updateRequired => 'アプリの更新が必要です',
             AppAvailability.maintenance => 'メンテナンス中です',
-            _ => '利用状況を確認しています',
+            _ => null,
           };
     return Stack(
       textDirection: TextDirection.ltr,
       children: [
         if (_started)
           Offstage(
-            offstage: !state.canUseApp,
-            child: TickerMode(
-              enabled: state.canUseApp,
-              child: ExcludeFocus(
-                excluding: !state.canUseApp,
-                child: widget.child,
+            offstage: !state.canUseApp && !isCheckingAvailableApp,
+            child: AbsorbPointer(
+              absorbing: !state.canUseApp,
+              child: TickerMode(
+                enabled: state.canUseApp,
+                child: ExcludeFocus(
+                  excluding: !state.canUseApp,
+                  child: widget.child,
+                ),
               ),
             ),
           ),
-        if (!state.canUseApp)
+        if (!state.canUseApp && !isCheckingAvailableApp)
           MaterialApp(
             home: Scaffold(
               body: SafeArea(
@@ -81,12 +88,14 @@ class _AppAvailabilityGateState extends ConsumerState<AppAvailabilityGate>
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(
-                          message,
-                          style: const TextStyle(fontSize: 22),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 16),
+                        if (message != null) ...[
+                          Text(
+                            message,
+                            style: const TextStyle(fontSize: 22),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 16),
+                        ],
                         if (state.availability ==
                             AppAvailability.updateRequired)
                           const Text(
@@ -103,7 +112,7 @@ class _AppAvailabilityGateState extends ConsumerState<AppAvailabilityGate>
                             '通信環境を確認して再確認してください。',
                             textAlign: TextAlign.center,
                           ),
-                        const SizedBox(height: 16),
+                        if (message != null) const SizedBox(height: 16),
                         if (state.isChecking)
                           const CircularProgressIndicator()
                         else
