@@ -17,9 +17,9 @@ void main() {
     store = FirestoreTransactionStore();
     store.rows.addAll({
       'trip_entries/t1': {'version': 3, 'groupId': 'g1'},
-      'locations/l1': {'tripId': 't1'},
-      'tasks/k1': {'tripId': 't1'},
-      'itinerary_items/i1': {'tripId': 't1'},
+      'locations/l1': {'tripId': 't1', 'groupId': 'g1'},
+      'tasks/k1': {'tripId': 't1', 'groupId': 'g1'},
+      'itinerary_items/i1': {'tripId': 't1', 'groupId': 'g1'},
       'groups/g1': {'version': 3, 'name': '家族'},
       'group_members/m1': {'groupId': 'g1', 'memberId': 'm1'},
       'dvc_point_contracts/c1': {'version': 3, 'groupId': 'g1'},

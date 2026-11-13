@@ -56,12 +56,15 @@ void main() {
       final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
       final mockDocSnapshot = MockDocumentSnapshot<Map<String, dynamic>>();
       final mockLocationsQuery = MockQuery<Map<String, dynamic>>();
+      when(mockLocationsQuery.where('groupId', isEqualTo: anyNamed('isEqualTo'))).thenReturn(mockLocationsQuery);
       final mockLocationsSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
       final mockLocationDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
       final mockTasksQuery = MockQuery<Map<String, dynamic>>();
+      when(mockTasksQuery.where('groupId', isEqualTo: anyNamed('isEqualTo'))).thenReturn(mockTasksQuery);
       final mockTasksSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
       final mockTaskDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
       final mockItineraryItemsQuery = MockQuery<Map<String, dynamic>>();
+      when(mockItineraryItemsQuery.where('groupId', isEqualTo: anyNamed('isEqualTo'))).thenReturn(mockItineraryItemsQuery);
       final mockItineraryItemsSnapshot =
           MockQuerySnapshot<Map<String, dynamic>>();
       final mockItineraryItemDoc =
@@ -176,10 +179,13 @@ void main() {
       final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
       final mockDocSnapshot = MockDocumentSnapshot<Map<String, dynamic>>();
       final mockTasksQuery = MockQuery<Map<String, dynamic>>();
+      when(mockTasksQuery.where('groupId', isEqualTo: anyNamed('isEqualTo'))).thenReturn(mockTasksQuery);
       final mockTasksSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
       final mockLocationsQuery = MockQuery<Map<String, dynamic>>();
+      when(mockLocationsQuery.where('groupId', isEqualTo: anyNamed('isEqualTo'))).thenReturn(mockLocationsQuery);
       final mockLocationsSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
       final mockItineraryItemsQuery = MockQuery<Map<String, dynamic>>();
+      when(mockItineraryItemsQuery.where('groupId', isEqualTo: anyNamed('isEqualTo'))).thenReturn(mockItineraryItemsQuery);
       final mockItineraryItemsSnapshot =
           MockQuerySnapshot<Map<String, dynamic>>();
 

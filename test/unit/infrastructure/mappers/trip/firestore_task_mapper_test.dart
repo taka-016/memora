@@ -69,9 +69,10 @@ void main() {
         assignedMemberId: 'member001',
       );
 
-      final map = firestore_mapper.FirestoreTaskMapper.toCreateFirestore(task);
+      final map = firestore_mapper.FirestoreTaskMapper.toCreateFirestore(task, groupId: 'group001');
 
       expect(map['tripId'], 'trip001');
+      expect(map['groupId'], 'group001');
       expect(map['orderIndex'], 0);
       expect(map['parentTaskId'], 'task-parent');
       expect(map['name'], '準備');
