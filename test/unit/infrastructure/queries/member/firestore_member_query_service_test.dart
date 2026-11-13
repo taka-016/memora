@@ -1,3 +1,4 @@
+import 'package:memora/infrastructure/services/firestore_account_permissions_source.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
@@ -10,6 +11,7 @@ import '../../../../helpers/test_exception.dart';
 import 'firestore_member_query_service_test.mocks.dart';
 
 @GenerateMocks([
+  FirestoreAccountPermissionsSource,
   FirebaseFirestore,
   CollectionReference,
   Query,
@@ -23,13 +25,17 @@ void main() {
     late MockFirebaseFirestore mockFirestore;
     late MockCollectionReference<Map<String, dynamic>> mockMembersCollection;
     late FirestoreMemberQueryService service;
+    late MockFirestoreAccountPermissionsSource permissions;
 
     setUp(() {
       mockFirestore = MockFirebaseFirestore();
       mockMembersCollection = MockCollectionReference<Map<String, dynamic>>();
       when(mockFirestore.collection('members'))
           .thenReturn(mockMembersCollection);
-      service = FirestoreMemberQueryService(firestore: mockFirestore);
+      permissions = MockFirestoreAccountPermissionsSource();
+      when(permissions.forAccount(any)).thenAnswer((call) => FirestoreAccountPermissionsSource(mockFirestore).forAccount(call.positionalArguments.single as String));
+      when(permissions.current()).thenAnswer((_) async => FirestoreAccountPermissions({'memberId': 'self', 'memberGroupIds': <String>[], 'managedGroupIds': <String>[]}));
+      service = FirestoreMemberQueryService(firestore: mockFirestore, permissions: permissions);
     });
 
     test('メンバー一覧を取得しorderByを適用する', () async {
@@ -37,7 +43,8 @@ void main() {
       final mockSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
       final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
 
-      when(mockMembersCollection.orderBy('displayName', descending: false))
+      when(mockMembersCollection.where('ownerId', isEqualTo: 'self')).thenReturn(mockQuery);
+      when(mockQuery.orderBy('displayName', descending: false))
           .thenReturn(mockQuery);
       when(mockQuery.get()).thenAnswer((_) async => mockSnapshot);
       when(mockSnapshot.docs).thenReturn([mockDoc]);
@@ -50,12 +57,13 @@ void main() {
 
       expect(result, hasLength(1));
       expect(result.first.displayName, '山田太郎');
-      verify(mockMembersCollection.orderBy('displayName', descending: false))
+      verify(mockMembersCollection.where('ownerId', isEqualTo: 'self')).called(1);
+      verify(mockQuery.orderBy('displayName', descending: false))
           .called(1);
     });
 
     test('メンバー一覧取得で例外が発生した場合は取得失敗を伝える', () async {
-      when(mockMembersCollection.get())
+      when(mockMembersCollection.where('ownerId', isEqualTo: 'self'))
           .thenThrow(TestException('Firestore error'));
 
       await expectLater(service.getMembers(), throwsA(isA<TestException>()));
@@ -109,30 +117,43 @@ void main() {
       final permission = MockDocumentSnapshot<Map<String, dynamic>>();
       final memberRef = MockDocumentReference<Map<String, dynamic>>();
       final member = MockDocumentSnapshot<Map<String, dynamic>>();
-      when(mockFirestore.collection('account_permissions')).thenReturn(permissions);
+      when(mockFirestore.collection('account_permissions'))
+          .thenReturn(permissions);
       when(permissions.doc('account001')).thenReturn(permissionRef);
       when(permissionRef.get()).thenAnswer((_) async => permission);
       when(permission.exists).thenReturn(true);
       when(permission.data()).thenReturn({
-        'memberId': 'member001', 'memberGroupIds': <String>[], 'managedGroupIds': <String>[],
+        'memberId': 'member001',
+        'memberGroupIds': <String>[],
+        'managedGroupIds': <String>[],
       });
       when(mockMembersCollection.doc('member001')).thenReturn(memberRef);
       when(memberRef.get()).thenAnswer((_) async => member);
       when(member.exists).thenReturn(true);
       when(member.id).thenReturn('member001');
       when(member.data()).thenReturn({'displayName': '田中一郎'});
-      expect((await service.getMemberByAccountId('account001'))?.displayName, '田中一郎');
-      verifyNever(mockMembersCollection.where('accountId', isEqualTo: anyNamed('isEqualTo')));
+      expect(
+        (await service.getMemberByAccountId('account001'))?.displayName,
+        '田中一郎',
+      );
+      verifyNever(
+        mockMembersCollection.where(
+          'accountId',
+          isEqualTo: anyNamed('isEqualTo'),
+        ),
+      );
     });
 
     test('認可文書がなければ未登録として扱う', () async {
       final permissions = MockCollectionReference<Map<String, dynamic>>();
       final ref = MockDocumentReference<Map<String, dynamic>>();
       final doc = MockDocumentSnapshot<Map<String, dynamic>>();
-      when(mockFirestore.collection('account_permissions')).thenReturn(permissions);
+      when(mockFirestore.collection('account_permissions'))
+          .thenReturn(permissions);
       when(permissions.doc('missing')).thenReturn(ref);
       when(ref.get()).thenAnswer((_) async => doc);
       when(doc.exists).thenReturn(false);
+      when(permissions.forAccount('missing')).thenAnswer((_) => FirestoreAccountPermissionsSource(mockFirestore).forAccount('missing'));
       expect(await service.getMemberByAccountId('missing'), isNull);
     });
 
