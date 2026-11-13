@@ -103,48 +103,37 @@ void main() {
       );
     });
 
-    test('アカウントIDでメンバーを取得する', () async {
-      const accountId = 'account001';
-      final mockQuery = MockQuery<Map<String, dynamic>>();
-      final mockSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
-      final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
-
-      when(mockMembersCollection.where('accountId', isEqualTo: accountId))
-          .thenReturn(mockQuery);
-      when(mockQuery.get()).thenAnswer((_) async => mockSnapshot);
-      when(mockSnapshot.docs).thenReturn([mockDoc]);
-      when(mockDoc.id).thenReturn('member001');
-      when(mockDoc.data()).thenReturn({'displayName': '田中一郎'});
-
-      final result = await service.getMemberByAccountId(accountId);
-
-      expect(result, isNotNull);
-      expect(result!.displayName, '田中一郎');
+    test('本人を認可文書の対応から取得する', () async {
+      final permissions = MockCollectionReference<Map<String, dynamic>>();
+      final permissionRef = MockDocumentReference<Map<String, dynamic>>();
+      final permission = MockDocumentSnapshot<Map<String, dynamic>>();
+      final memberRef = MockDocumentReference<Map<String, dynamic>>();
+      final member = MockDocumentSnapshot<Map<String, dynamic>>();
+      when(mockFirestore.collection('account_permissions')).thenReturn(permissions);
+      when(permissions.doc('account001')).thenReturn(permissionRef);
+      when(permissionRef.get()).thenAnswer((_) async => permission);
+      when(permission.exists).thenReturn(true);
+      when(permission.data()).thenReturn({
+        'memberId': 'member001', 'memberGroupIds': <String>[], 'managedGroupIds': <String>[],
+      });
+      when(mockMembersCollection.doc('member001')).thenReturn(memberRef);
+      when(memberRef.get()).thenAnswer((_) async => member);
+      when(member.exists).thenReturn(true);
+      when(member.id).thenReturn('member001');
+      when(member.data()).thenReturn({'displayName': '田中一郎'});
+      expect((await service.getMemberByAccountId('account001'))?.displayName, '田中一郎');
+      verifyNever(mockMembersCollection.where('accountId', isEqualTo: anyNamed('isEqualTo')));
     });
 
-    test('アカウントIDで取得時に該当しない場合はnullを返す', () async {
-      const accountId = 'account404';
-      final mockQuery = MockQuery<Map<String, dynamic>>();
-      final mockSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
-
-      when(mockMembersCollection.where('accountId', isEqualTo: accountId))
-          .thenReturn(mockQuery);
-      when(mockQuery.get()).thenAnswer((_) async => mockSnapshot);
-      when(mockSnapshot.docs).thenReturn([]);
-
-      final result = await service.getMemberByAccountId(accountId);
-
-      expect(result, isNull);
-    });
-
-    test('アカウントIDで取得時に例外が発生した場合は取得失敗を伝える', () async {
-      when(mockMembersCollection.where(any, isEqualTo: anyNamed('isEqualTo')))
-          .thenThrow(TestException('Firestore error'));
-
-      await expectLater(
-        service.getMemberByAccountId('account001'),
-        throwsA(isA<TestException>()),
-      );
+    test('認可文書がなければ未登録として扱う', () async {
+      final permissions = MockCollectionReference<Map<String, dynamic>>();
+      final ref = MockDocumentReference<Map<String, dynamic>>();
+      final doc = MockDocumentSnapshot<Map<String, dynamic>>();
+      when(mockFirestore.collection('account_permissions')).thenReturn(permissions);
+      when(permissions.doc('missing')).thenReturn(ref);
+      when(ref.get()).thenAnswer((_) async => doc);
+      when(doc.exists).thenReturn(false);
+      expect(await service.getMemberByAccountId('missing'), isNull);
     });
 
     test('オーナーIDでメンバー一覧を取得する', () async {
