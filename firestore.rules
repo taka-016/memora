@@ -138,7 +138,7 @@ service cloud.firestore {
              && (manages(groupId)
                  || (!exists(/databases/$(database)/documents/groups/$(groupId))
                      && getAfter(/databases/$(database)/documents/groups/$(groupId)).data.ownerId == ownMember()
-                     && memberId == ownMember()))
+                     ))
              && (parentAdvanced('groups', groupId) || parentDeleted('groups', groupId))
              && membershipMatches(memberId, groupId, after)
              && memberPermissionsMatch(memberId, after);
@@ -227,6 +227,7 @@ service cloud.firestore {
     match /members/{memberId} {
       allow get, list: if isVerifiedUser() && readableMember(resource.data, memberId);
       allow create: if isVerifiedUser() && isInitialVersion()
+                       && !exists(/databases/$(database)/documents/deleted_members/$(memberId))
                        && validLists(request.resource.data, 'groupIds')
                        && request.resource.data.groupIds.size() == 0
                        && (request.resource.data.accountId == request.auth.uid
@@ -255,6 +256,7 @@ service cloud.firestore {
     match /groups/{groupId} {
       allow read: if belongs(groupId);
       allow create: if isVerifiedUser() && isInitialVersion() && validColor(request.resource.data)
+                       && !exists(/databases/$(database)/documents/deleted_groups/$(groupId))
                        && request.resource.data.ownerId == ownMember()
                        && membershipMatches(ownMember(), groupId, getAfter(memberPath(ownMember())).data)
                        && groupId in getAfter(memberPath(ownMember())).data.managedGroupIds;
@@ -334,17 +336,22 @@ service cloud.firestore {
 
     function childScope(collection, data) {
       let parent = get(/databases/$(database)/documents/$(parentCollection(collection))/$(data[parentKey(collection)])).data;
-      return belongs(data.groupId) && parent.groupId == data.groupId;
+      return belongs(parent.groupId);
+    }
+
+    function childWriteScope(collection, data) {
+      let parent = getAfter(/databases/$(database)/documents/$(parentCollection(collection))/$(data[parentKey(collection)])).data;
+      return belongs(parent.groupId) && (!('groupId' in data) || data.groupId == parent.groupId);
     }
 
     match /{collection}/{document} {
       allow read: if childCollection(collection) && childScope(collection, resource.data);
-      allow create: if childCollection(collection) && childScope(collection, request.resource.data)
+      allow create: if childCollection(collection) && childWriteScope(collection, request.resource.data)
                        && parentAdvanced(parentCollection(collection), request.resource.data[parentKey(collection)])
                        && (collection != 'calendar_event_overrides' || request.resource.data.isCancelled == true);
       allow update: if childCollection(collection) && childScope(collection, resource.data)
                        && request.resource.data[parentKey(collection)] == resource.data[parentKey(collection)]
-                       && childScope(collection, request.resource.data)
+                       && childWriteScope(collection, request.resource.data)
                        && parentAdvanced(parentCollection(collection), request.resource.data[parentKey(collection)])
                        && (collection != 'calendar_event_overrides' || request.resource.data.isCancelled == true);
       allow delete: if childCollection(collection) && childScope(collection, resource.data)
