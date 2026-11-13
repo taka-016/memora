@@ -20,9 +20,10 @@ class FirestoreTaskMapper {
     );
   }
 
-  static Map<String, dynamic> toCreateFirestore(Task task) {
+  static Map<String, dynamic> toCreateFirestore(Task task, {required String groupId}) {
     final data = <String, dynamic>{
       'tripId': task.tripId,
+      'groupId': groupId,
       'orderIndex': task.orderIndex,
       'parentTaskId': task.parentTaskId,
       'name': task.name,
