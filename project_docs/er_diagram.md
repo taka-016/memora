@@ -1,6 +1,6 @@
 # ER図
 
-`account_permissions`と`member_events.groupId`は実装予定の構造を示す。対応範囲と移行作業は[todo](todo.md)を参照。
+オンラインの認可文書・所属一覧の補完と切替は[専用手順](../scripts/firebase/backfill_account_permissions.md)を参照。
 
 ```mermaid
 erDiagram
@@ -27,6 +27,7 @@ erDiagram
         number longitude "NOT NULL"
     }
     tasks {
+        string groupId "オンライン専用・親旅行と同じ保存先"
         string id PK
         string tripId FK "NOT NULL"
         number orderIndex "NOT NULL"
@@ -66,7 +67,7 @@ erDiagram
     group_members {
         string textColor "#RRGGBB、未指定時は自動判定"
         string color "NOT NULL、#RRGGBB、所属単位"
-        string id PK
+        string id PK "FirestoreはgroupId:memberId"
         string groupId FK "NOT NULL"
         string memberId FK "NOT NULL"
         boolean isAdministrator "NOT NULL"
@@ -82,6 +83,8 @@ erDiagram
         string id PK
         string accountId
         string ownerId FK
+        string[] groupIds "オンライン専用・所属先"
+        string[] managedGroupIds "オンライン専用・所有者と管理者の対象"
         string hiraganaFirstName
         string hiraganaLastName
         string kanjiFirstName
@@ -126,10 +129,14 @@ erDiagram
         string memo "NOT NULL"
     }
     member_invitations {
-        string id PK
+        string id PK "Firestoreは招待コードと同値"
         string inviteeId FK "NOT NULL"
         string inviterId FK "NOT NULL"
         string invitationCode "NOT NULL"
+    }
+    member_invitation_claims {
+        string accountId PK "認証UID・Firestore文書ID・オンライン専用"
+        string code FK "受理に使用する招待コード"
     }
     dvc_point_contracts {
         string id PK
@@ -221,6 +228,8 @@ erDiagram
     calendar_events ||--o{ calendar_event_overrides : "id → eventId"
     externally_managed_accounts ||--|| members : "id → accountId"
     externally_managed_accounts ||--o| account_permissions : "id → accountId"
+    externally_managed_accounts ||--o| member_invitation_claims : "id → accountId"
+    member_invitations ||--o{ member_invitation_claims : "invitationCode → code"
 ```
 
 ## 図の補足
@@ -244,3 +253,5 @@ erDiagram
 - 旅程ウィジェットは所属グループと旅程の開始日時で表示日と前後の日付を取得し、旅行の登録年・旅行期間に依存しない。Firestoreの旅程は検索用の`groupId`を親旅行と同じ保存単位で更新する。SQLiteは親旅行と結合してグループを絞る。ウィジェット用の取得では場所の詳細を取得しない。
 
 - オンラインの`members`には認可参照用の`groupIds`と`managedGroupIds`を保持する。所属・役割と認可文書と同じ原子的な更新に含め、通常のプロフィール編集では変更しない。SQLite・オフラインバックアップには含めない。プロフィールと所属更新は同じ文書のバージョンで競合し、プロフィールの閲覧者に全所属グループIDが見えることを許容する。
+
+- `member_invitation_claims`はオンラインの招待受理に使う本人専用の文書で、有効な招待コードに限定して対象メンバーの取得を許可する。受理時にはアカウントの紐付け・認可文書の作成・対象の招待削除と同じトランザクションで削除する。
