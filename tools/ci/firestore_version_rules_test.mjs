@@ -1,86 +1,44 @@
 import assert from 'node:assert/strict';
-
-const host = process.env.FIRESTORE_EMULATOR_HOST;
-assert.ok(host, 'Firestore Emulator上で実行してください');
-const root = `http://${host}/v1/projects/demo-memora/databases/(default)/documents`;
-function token(verified) {
-  const encode = value => Buffer.from(JSON.stringify(value)).toString('base64url');
-  return `${encode({ alg: 'none', typ: 'JWT' })}.${encode({
-    iss: 'https://securetoken.google.com/demo-memora', aud: 'demo-memora',
-    sub: 'tester', user_id: 'tester', iat: Math.floor(Date.now() / 1000),
-    exp: Math.floor(Date.now() / 1000) + 3600, email_verified: verified,
-    firebase: { sign_in_provider: 'password' },
-  })}.`;
-}
-async function request(path, method, bearer, body) {
-  return fetch(`${root}${path}`, {
-    method, headers: { 'Content-Type': 'application/json', ...(bearer ? { Authorization: `Bearer ${bearer}` } : {}) },
-    ...(body ? { body: JSON.stringify(body) } : {}),
-  });
-}
-const collections = ['members', 'member_invitations', 'group_events', 'member_events',
-  'trip_entries', 'groups', 'calendar_events', 'dvc_point_contracts', 'calendar_labels'];
-const version = value => ({ integerValue: String(value) });
-const verified = token(true);
-const invalidStoredVersions = [undefined, { nullValue: null }, { stringValue: '1' },
-  { doubleValue: 1.0 }, version(0), version(-1)];
-for (const collection of collections) {
-  const path = `/${collection}/version-test`;
-  const write = (fields, bearer = verified) => request(path, 'PATCH', bearer, { fields });
-  const seed = fields => write(fields, 'owner');
-  const valid = { ...(collection === 'calendar_events' ? { labelType: { stringValue: 'group' }, memberId: { nullValue: null }, labelId: { nullValue: null } } : {}), version: version(1), name: { stringValue: '編集前' } };
-  await request(path, 'DELETE', 'owner');
-  assert.equal((await write(valid)).status, 200, `${collection}: 初回作成`);
-  const next = { ...valid, version: version(2), name: { stringValue: '編集後' } };
-  const concurrent = await Promise.all([write(next), write(next)]);
-  assert.deepEqual(concurrent.map(value => value.status).sort(), [200, 403], `${collection}: 同時更新`);
-  assert.equal((await write(next)).status, 403, `${collection}: 古い期待値`);
-  for (const invalid of [undefined, { doubleValue: 3.0 }, { stringValue: '3' }, { nullValue: null }, version(2), version(4)]) {
-    const fields = { ...next, version: invalid };
-    if (invalid === undefined) delete fields.version;
-    assert.equal((await write(fields)).status, 403, `${collection}: 不正な更新値 ${JSON.stringify(invalid)}`);
+import {fixture,write,remove,expectCommit,commit,archivedDelete,raw,token} from './firestore_rules_fixture.mjs';
+const f=await fixture('versions',['version-groups']);
+const invalidStored=[undefined,null,'1',raw({doubleValue:1}),0,-1];
+for(const collection of ['members','member_invitations','group_events','member_events','trip_entries','groups','calendar_events','dvc_point_contracts','calendar_labels']) {
+  const id=`version-${collection}`, path=`${collection}/${id}`;
+  const base={version:1,groupId:f.group,name:'編集前',...(collection==='members'?{accountId:null,ownerId:f.member,groupIds:[],managedGroupIds:[]}:{}),...(collection==='groups'?{ownerId:f.member}:{}),...(collection==='member_invitations'?{inviterId:f.member,inviteeId:f.invitee,invitationCode:id}:{}),...(collection==='calendar_events'?{labelType:'group',memberId:null,labelId:null}:{}),...(collection==='calendar_labels'?{eventCount:0}: {})};
+  await expectCommit('owner',[remove(path),remove(`deleted_${collection}/${id}`)],200,'初期化');
+  await expectCommit(f.uid,[write(path,base)],200,`${collection}の初期作成`);
+  const next={...base,version:2,name:'編集後'};
+  if(collection==='member_invitations') {
+    await expectCommit(f.uid,[write(path,next)],403,'招待の同コード更新は拒否し再発行で置換する');
+  } else {
+    const concurrent=await Promise.all([commit(f.uid,[write(path,next)]),commit(f.uid,[write(path,next)])]);
+    assert.deepEqual(concurrent.map(v=>v[0]).sort(),[200,403],`${collection}の競合`);
+    await expectCommit(f.uid,[write(path,next)],403,`${collection}の古い期待値`);
+    for(const invalid of [undefined,null,'3',raw({doubleValue:3}),2,4]) await expectCommit(f.uid,[write(path,{...next,version:invalid})],403,`${collection}の不正な更新値`);
   }
-  for (const invalid of [undefined, { stringValue: '1' }, { doubleValue: 1.0 }, version(0), version(2)]) {
-    await request(path, 'DELETE', 'owner');
-    const fields = { ...valid, version: invalid };
-    if (invalid === undefined) delete fields.version;
-    assert.equal((await write(fields)).status, 403, `${collection}: 不正な初期値`);
-    await seed(fields);
-    assert.equal((await write(next)).status, 403, `${collection}: 不正な既存値`);
+  for(const invalid of invalidStored) {
+    await expectCommit('owner',[write(path,{...base,version:invalid})],200,'不正な保存値を準備');
+    const result=collection==='members'||collection==='groups'?await archivedDelete(f.uid,collection,id):await commit(f.uid,[remove(path)]);
+    assert.equal(result[0],403,`${collection}の不正バージョン削除拒否: ${result[1]}`);
   }
-  for (const invalid of invalidStoredVersions) {
-    const fields = { ...valid, version: invalid };
-    if (invalid === undefined) delete fields.version;
-    await seed(fields);
-    assert.equal((await request(path, 'DELETE', verified)).status, 403, `${collection}: 未初期化・不正バージョンの削除拒否`);
+  await expectCommit('owner',[write(path,base)],200,'初期値へ戻す');
+  const deleted=collection==='members'||collection==='groups'?await archivedDelete(f.uid,collection,id):await commit(f.uid,[remove(path)]);
+  assert.equal(deleted[0],200,`${collection}の正規削除: ${deleted[1]}`);
+  for(const bearer of [null,token(f.uid,false)]) {
+    await expectCommit(bearer,[write(path,base)],403,`${collection}の未認証・未確認の作成拒否`);
+    await expectCommit('owner',[write(path,base)],200,'認証検証の準備');
+    await expectCommit(bearer,[write(path,next)],403,`${collection}の未認証・未確認の更新拒否`);
+    await expectCommit(bearer,[remove(path)],403,`${collection}の未認証・未確認の削除拒否`);
+    await expectCommit('owner',[remove(path)],200,'認証検証の後片付け');
   }
-  await seed(valid);
-  assert.equal((await request(path, 'DELETE', verified)).status, 200, `${collection}: 初期化済みの削除`);
-  for (const bearer of [null, token(false)]) {
-    await request(path, 'DELETE', 'owner');
-    assert.equal((await write(valid, bearer)).status, 403, `${collection}: 認証なしの作成`);
-    await seed(valid);
-    assert.equal((await write(next, bearer)).status, 403, `${collection}: 認証なしの更新`);
-    assert.equal((await request(path, 'DELETE', bearer)).status, 403, `${collection}: 認証なしの削除`);
-  }
-  assert.equal((await request(`${path}/nested/doc`, 'PATCH', verified, { fields: valid })).status, 403, `${collection}: 再帰ルールの迂回`);
+  await expectCommit(f.uid,[write(`${path}/nested/doc`,base)],403,'再帰ルールの迂回を拒否');
 }
-assert.equal((await request('/unknown/doc', 'PATCH', verified, { fields: {} })).status, 403, '未知のコレクションの迂回');
-console.log('全対象のバージョン・同時更新・認証・迂回拒否を確認しました');
-
-const labelPath = '/calendar_labels/count-test';
-const seedLabel = { version: version(7), name: { stringValue: '家族' }, color: { stringValue: '#112233' }, sortOrder: version(0), eventCount: version(1) };
-await request(labelPath, 'PATCH', 'owner', { fields: seedLabel });
-assert.equal((await request(labelPath, 'PATCH', verified, { fields: { ...seedLabel, eventCount: version(2) } })).status, 200, '内部件数だけの更新');
-for (const field of ['version', 'name', 'color', 'sortOrder']) {
-  const changed = { ...seedLabel, eventCount: version(3), [field]: field === 'version' || field === 'sortOrder' ? version(7) : { stringValue: '変更' } };
-  if (field === 'version') changed.version = version(6);
-  assert.equal((await request(labelPath, 'PATCH', verified, { fields: changed })).status, 403, `内部件数ルールによる${field}の迂回`);
+const label={version:7,groupId:f.group,name:'ラベル',eventCount:1};
+await expectCommit('owner',[write('calendar_labels/version-count',label)],200,'件数検証の準備');
+await expectCommit(f.uid,[write('calendar_labels/version-count',{...label,eventCount:2})],200,'件数だけの更新');
+for(const invalid of invalidStored) {
+  await expectCommit('owner',[write('calendar_labels/version-count',{...label,version:invalid})],200,'不正な件数用バージョンを準備');
+  await expectCommit(f.uid,[write('calendar_labels/version-count',{...label,version:invalid,eventCount:2})],403,'不正な既存バージョンの件数更新を拒否');
 }
-
-for (const invalid of invalidStoredVersions) {
-  const fields = { ...seedLabel, version: invalid };
-  if (invalid === undefined) delete fields.version;
-  await request(labelPath, 'PATCH', 'owner', { fields });
-  assert.equal((await request(labelPath, 'PATCH', verified, { fields: { ...fields, eventCount: version(2) } })).status, 403, '未初期化・不正バージョンのラベル内部更新拒否');
-}
+await expectCommit(f.uid,[write('unknown/doc',{})],403,'未知のコレクションを拒否');
+console.log('認可済み利用者のバージョン・同時更新・認証・迂回拒否を確認しました');
