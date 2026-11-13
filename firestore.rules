@@ -151,6 +151,8 @@ service cloud.firestore {
       let data = get(path).data;
       let issued = data.get('updatedAt', data.get('createdAt', null));
       return exists(path) && data.invitationCode == code
+             && exists(memberPath(data.inviteeId))
+             && get(memberPath(data.inviteeId)).data.accountId == null
              && (issued == null || request.time <= issued + duration.value(24, 'h'));
     }
 
