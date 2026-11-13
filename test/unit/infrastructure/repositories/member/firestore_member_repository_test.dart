@@ -1,3 +1,4 @@
+import '../../../../helpers/firestore_transaction_store.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
@@ -29,48 +30,35 @@ void main() {
       repository = FirestoreMemberRepository(firestore: mockFirestore);
     });
 
-    test('saveMemberがmembers collectionにメンバー情報をaddする', () async {
-      final member = Member(
-        id: '',
-        hiraganaFirstName: 'たろう',
-        hiraganaLastName: 'やまだ',
-        kanjiFirstName: '太郎',
-        kanjiLastName: '山田',
-        firstName: 'Taro',
-        lastName: 'Yamada',
-        displayName: 'たろちゃん',
-        type: '一般',
-        birthday: DateTime(2000, 1, 1),
-        gender: 'male',
-        email: 'taro@example.com',
-      );
+    test('本人登録ではメンバーと空の認可文書を同じバッチで作成する', () async {
+      final store = FirestoreTransactionStore();
+      final repository = FirestoreMemberRepository(firestore: store.firestore);
+      await repository.saveMember(const Member(id: '', accountId: 'uid', displayName: '本人'));
+      final entry = store.rows.entries.singleWhere((entry) => entry.key.startsWith('members/'));
+      expect(entry.value['groupIds'], isEmpty);
+      expect(store.rows['account_permissions/uid'], {
+        'memberId': entry.key.split('/').last,
+        'memberGroupIds': <String>[], 'managedGroupIds': <String>[],
+      });
+      expect(store.commits, 1);
+    });
 
-      final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
-      when(mockCollection.add(any)).thenAnswer((_) async => mockDocRef);
+    test('未連携の管理メンバーには認可文書を作成しない', () async {
+      final store = FirestoreTransactionStore();
+      await FirestoreMemberRepository(firestore: store.firestore).saveMember(const Member(id: '', ownerId: 'self', displayName: '家族'));
+      expect(store.rows.length, 1);
+      expect(store.rows.values.single['managedGroupIds'], isEmpty);
+    });
 
-      await repository.saveMember(member);
-
-      verify(
-        mockCollection.add(
-          argThat(
-            allOf([
-              containsPair('hiraganaFirstName', 'たろう'),
-              containsPair('hiraganaLastName', 'やまだ'),
-              containsPair('kanjiFirstName', '太郎'),
-              containsPair('kanjiLastName', '山田'),
-              containsPair('firstName', 'Taro'),
-              containsPair('lastName', 'Yamada'),
-              containsPair('displayName', 'たろちゃん'),
-              containsPair('type', '一般'),
-              containsPair('gender', 'male'),
-              containsPair('email', 'taro@example.com'),
-              contains('birthday'),
-              contains('createdAt'),
-              contains('updatedAt'),
-            ]),
-          ),
-        ),
-      ).called(1);
+    test('本人の退避と削除では認可文書も同じトランザクションで削除する', () async {
+      final store = FirestoreTransactionStore();
+      store.rows['members/m'] = {'version': 2, 'accountId': 'uid', 'groupIds': ['g'], 'managedGroupIds': ['g']};
+      store.rows['account_permissions/uid'] = {'memberId': 'm', 'memberGroupIds': ['g'], 'managedGroupIds': ['g']};
+      await FirestoreMemberRepository(firestore: store.firestore).deleteMember('m', expectedVersion: 2);
+      expect(store.rows.containsKey('members/m'), false);
+      expect(store.rows.containsKey('account_permissions/uid'), false);
+      expect(store.rows['deleted_members/m']!['version'], 2);
+      expect(store.commits, 1);
     });
 
     test('updateMemberがmembers collectionの該当ドキュメントを差分更新する', () async {
