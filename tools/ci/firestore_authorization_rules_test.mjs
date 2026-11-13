@@ -140,3 +140,8 @@ await expectCommit('auth-owner',[
   write('trip_entries/auth-parent',{groupId:'auth-g',version:1}),
   write('tasks/auth-new-child',{tripId:'auth-parent',name:'準備'}),
 ],200,'旅行とタスクを同時作成できる');
+await get('auth-member','members/auth-missing',404,'不存在メンバーを欠損として扱える');
+await get('auth-member','groups/auth-missing',404,'不存在グループを欠損として扱える');
+await get('auth-owner','member_invitations/auth-not-created',404,'新規招待コードの未使用を確認できる');
+const queryResponse=await fetch(`${root}:runQuery`,{method:'POST',headers:{Authorization:`Bearer ${token('auth-owner')}`,'Content-Type':'application/json'},body:JSON.stringify({structuredQuery:{from:[{collectionId:'member_invitations'}],where:{fieldFilter:{field:{fieldPath:'inviteeId'},op:'EQUAL',value:encode('auth-invitee')}}}})});
+assert.equal(queryResponse.status,200,`管理対象の招待一覧: ${await queryResponse.text()}`);
