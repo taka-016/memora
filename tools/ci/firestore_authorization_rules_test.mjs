@@ -28,6 +28,7 @@ async function get(uid,path,status,label) {
   const r=await fetch(`${root}/${path}`,{headers:{Authorization:`Bearer ${token(uid)}`}});
   assert.equal(r.status,status,`${label}: ${await r.text()}`);
 }
+await commit('owner',['group_events','member_events','trip_entries','dvc_point_contracts'].map(table=>remove(`${table}/auth-record`)));
 const permissions=(memberId,memberGroupIds,managedGroupIds=[])=>({memberId,memberGroupIds,managedGroupIds});
 const member=(accountId,groupIds,managedGroupIds=[])=>({version:1,accountId,ownerId:null,displayName:'本人',groupIds,managedGroupIds});
 await expectCommit('owner',[
@@ -94,3 +95,18 @@ for(const table of ['groups','calendar_events','members','account_permissions'])
   const r=await fetch(`${root}:runQuery`,{method:'POST',headers:{Authorization:`Bearer ${token('auth-outside')}`,'Content-Type':'application/json'},body:JSON.stringify({structuredQuery:{from:[{collectionId:table}]}})});
   assert.equal(r.status,403,`${table}の無条件一覧を拒否: ${await r.text()}`);
 }
+await expectCommit('owner',[
+  remove('account_permissions/auth-joiner'),remove('member_invitation_claims/auth-joiner'),
+  write('members/auth-invitee',{...member(null,['auth-g']),ownerId:'auth-owner'}),
+  write('member_invitations/auth-secret',{version:1,inviteeId:'auth-invitee',inviterId:'auth-owner',invitationCode:'auth-secret'}),
+],200,'招待対象を準備');
+await get('auth-joiner','members/auth-invitee',403,'招待コードを持たない利用者にはプロフィールを公開しない');
+await get('auth-joiner','member_invitations/auth-secret',200,'招待コードを知る利用者は有効な招待を取得できる');
+await expectCommit('auth-joiner',[write('member_invitation_claims/auth-joiner',{code:'auth-secret'})],200,'有効な招待コードを本人の受理処理へ紐付ける');
+await get('auth-joiner','members/auth-invitee',200,'有効な招待を持つ本人だけが対象プロフィールを取得できる');
+await expectCommit('auth-joiner',[
+  write('members/auth-invitee',{...member('auth-joiner',['auth-g']),ownerId:'auth-owner',version:2}),
+  write('account_permissions/auth-joiner',permissions('auth-invitee',['auth-g'])),
+  remove('member_invitations/auth-secret'),remove('member_invitation_claims/auth-joiner'),
+],200,'招待受理では紐付けと既存所属の認可と招待削除を同時保存する');
+await get('auth-joiner','groups/auth-g',200,'招待受理後は既存所属の記録を閲覧できる');
