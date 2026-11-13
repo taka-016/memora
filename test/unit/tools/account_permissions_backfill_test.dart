@@ -3,6 +3,49 @@ import 'package:flutter_test/flutter_test.dart';
 import '../../../scripts/firebase/backfill_account_permissions.dart';
 
 void main() {
+  test('不整合がある計画は保存要求に変換しない', () {
+    expect(
+      () => accountPermissionsWrites(
+        const AccountPermissionsPlan({}, ['不一致']),
+        const {},
+        'projects/p/databases/(default)/documents',
+      ),
+      throwsFormatException,
+    );
+  });
+
+  test('未作成の認可文書だけを作成条件付きで保存し既存文書を上書きしない', () {
+    const desired = {
+      'memberId': 'm',
+      'memberGroupIds': ['g'],
+      'managedGroupIds': <String>[],
+    };
+    final writes = accountPermissionsWrites(
+      const AccountPermissionsPlan({'new': desired, 'existing': desired}, []),
+      const {'existing': desired},
+      'projects/p/databases/(default)/documents',
+    );
+    expect(writes, [
+      {
+        'update': {
+          'name': 'projects/p/databases/(default)/documents/account_permissions/new',
+          'fields': {
+            'memberId': {'stringValue': 'm'},
+            'memberGroupIds': {
+              'arrayValue': {
+                'values': [
+                  {'stringValue': 'g'},
+                ],
+              },
+            },
+            'managedGroupIds': {'arrayValue': {'values': <Object>[]}},
+          },
+        },
+        'currentDocument': {'exists': false},
+      },
+    ]);
+  });
+
   test('本人・所属・所有者と管理者の役割から認可文書を生成する', () {
     final plan = buildAccountPermissionsPlan(
       members: {
