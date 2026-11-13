@@ -38,6 +38,8 @@ void main() {
       ),
     );
     expect(built, isFalse);
+    expect(find.text('利用状況を確認しています'), findsNothing);
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
     pending.complete(AppAvailability.updateRequired);
     await tester.pump();
     expect(find.text('アプリの更新が必要です'), findsOneWidget);
@@ -82,6 +84,49 @@ void main() {
     await tester.pump();
     expect(find.text('編集中'), findsOneWidget);
   });
+  testWidgets('復帰確認中は元の画面を表示したまま操作を止める', (tester) async {
+    final check = MockCheckAppAvailabilityUsecase();
+    when(check.execute()).thenAnswer((_) async => AppAvailability.available);
+    var operations = 0;
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          checkAppAvailabilityUsecaseProvider.overrideWithValue(check),
+        ],
+        child: AppAvailabilityGate(
+          child: MaterialApp(
+            home: Scaffold(
+              body: Column(
+                children: [
+                  const Text('表示中の画面'),
+                  TextButton(
+                    onPressed: () => operations++,
+                    child: const Text('操作'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    final pending = Completer<AppAvailability>();
+    when(check.execute()).thenAnswer((_) => pending.future);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump();
+    expect(find.text('表示中の画面'), findsOneWidget);
+    expect(find.text('利用状況を確認しています'), findsNothing);
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+    await tester.tap(find.text('操作'), warnIfMissed: false);
+    expect(operations, 0);
+    pending.complete(AppAvailability.available);
+    await tester.pump();
+    await tester.tap(find.text('操作'));
+    expect(operations, 1);
+  });
+
   testWidgets('停止中の戻る操作は隠れた編集中の画面を閉じない', (tester) async {
     final check = MockCheckAppAvailabilityUsecase();
     when(check.execute()).thenAnswer((_) async => AppAvailability.available);
