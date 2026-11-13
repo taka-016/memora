@@ -59,7 +59,7 @@ void main() {
           Theme.of(tester.element(find.byType(Scaffold))).brightness,
           entry.$3,
         );
-        expect(tester.binding.sendFramesToEngine, entry.$2 != entry.$3);
+        expect(tester.binding.sendFramesToEngine, isFalse);
         pending.complete(AppAvailability.maintenance);
         await tester.pump();
         expect(find.text('メンテナンス中です'), findsOneWidget);
@@ -71,29 +71,6 @@ void main() {
       },
     );
   }
-
-  testWidgets('起動待機中に端末設定と保存テーマが異なったら保存テーマの背景を表示する', (tester) async {
-    tester.binding.resetFirstFrameSent();
-    final platform = tester.binding.platformDispatcher;
-    platform.platformBrightnessTestValue = Brightness.dark;
-    addTearDown(platform.clearPlatformBrightnessTestValue);
-    when(themeStorage.load()).thenAnswer((_) async => AppThemeMode.dark);
-    final pending = Completer<AppAvailability>();
-    final check = MockCheckAppAvailabilityUsecase();
-    when(check.execute()).thenAnswer((_) => pending.future);
-    await tester.pumpWidget(createGate(check));
-    await tester.pump();
-    expect(tester.binding.sendFramesToEngine, isFalse);
-    platform.platformBrightnessTestValue = Brightness.light;
-    await tester.pump();
-    expect(tester.binding.sendFramesToEngine, isTrue);
-    expect(
-      Theme.of(tester.element(find.byType(Scaffold))).brightness,
-      Brightness.dark,
-    );
-    pending.complete(AppAvailability.available);
-    await tester.pump();
-  });
 
   testWidgets('テーマと利用可否が揃うまで初回の描画と本体の開始を待つ', (tester) async {
     tester.binding.resetFirstFrameSent();

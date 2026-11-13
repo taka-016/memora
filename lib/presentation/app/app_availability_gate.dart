@@ -47,17 +47,8 @@ class _AppAvailabilityGateState extends ConsumerState<AppAvailabilityGate>
 
   void _maybeAllowFirstFrame() {
     if (!_firstFrameDeferred || !mounted) return;
-    final themeState = ref.read(themeSettingsNotifierProvider);
-    if (themeState.isLoading) return;
-    final mode = resolveAppThemeMode(themeState.value?.mode);
-    final platformBrightness =
-        WidgetsBinding.instance.platformDispatcher.platformBrightness;
-    final matchesPlatformTheme =
-        mode == ThemeMode.system ||
-        (mode == ThemeMode.dark) == (platformBrightness == Brightness.dark);
-    // 端末の起動背景と保存テーマが違う場合は、テーマに合う待機画面を描く。
-    if (ref.read(appAvailabilityNotifierProvider).isChecking &&
-        matchesPlatformTheme) {
+    if (ref.read(appAvailabilityNotifierProvider).isChecking ||
+        ref.read(themeSettingsNotifierProvider).isLoading) {
       return;
     }
     _allowFirstFrame();
@@ -68,9 +59,6 @@ class _AppAvailabilityGateState extends ConsumerState<AppAvailabilityGate>
     _firstFrameDeferred = false;
     WidgetsBinding.instance.allowFirstFrame();
   }
-
-  @override
-  void didChangePlatformBrightness() => _maybeAllowFirstFrame();
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
