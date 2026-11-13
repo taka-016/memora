@@ -113,7 +113,7 @@ class FirestoreGroupRepository implements GroupRepository {
     final links = await _firestore
         .collection('group_members')
         .where('groupId', isEqualTo: groupId)
-        .get();
+        .get(const GetOptions(source: Source.server));
     final ids = links.docs
         .map((doc) => doc.data()['memberId'] as String)
         .toSet();
