@@ -178,4 +178,15 @@ void main() {
     expect(store.rows['members/other']!['version'], 6);
   });
 
+  test('グループ退避では認可を解除する全所属をサーバーから取得し関連データを保持する', () async {
+    final id = await repo.saveGroup(Group(id: '', ownerId: 'self', name: '家族'));
+    await repo.deleteGroup(id, expectedVersion: 1);
+    expect(store.querySources, [Source.server]);
+    expect(store.rows.containsKey('groups/$id'), false);
+    expect(store.rows['deleted_groups/$id']!['name'], '家族');
+    expect(store.rows.containsKey('group_members/$id:self'), true);
+    expect(store.rows['members/self']!['groupIds'], isEmpty);
+    expect(store.rows['account_permissions/uid']!['memberGroupIds'], isEmpty);
+  });
+
 }

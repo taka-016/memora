@@ -1,3 +1,4 @@
+import 'package:memora/infrastructure/services/firestore_account_permissions_source.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
@@ -13,23 +14,25 @@ import 'calendar/firestore_calendar_repository_test.mocks.dart';
 void main() {
   test('メンバー退避後の再取得と所属差分の繰り返し保存で退避済み所属を保持する', () async {
     final store = _Store();
-    store.rows['groups/g'] = {'ownerId': 'a', 'name': '家族'};
+    store.rows['groups/g'] = {'ownerId': 'a', 'name': '家族', 'version': 3};
     for (final id in ['a', 'b', 'c', 'd']) {
-      store.rows['members/$id'] = {'displayName': id, 'version': 3};
+      store.rows['members/$id'] = {'displayName': id, 'version': 3, 'accountId': id == 'a' ? 'uid' : null, 'groupIds': id == 'd' ? <String>[] : ['g'], 'managedGroupIds': ['a', 'b'].contains(id) ? ['g'] : <String>[]};
     }
     for (final id in ['a', 'b', 'c']) {
-      store.rows['group_members/$id'] = {
+      store.rows['group_members/g:$id'] = {
         'groupId': 'g',
         'memberId': id,
         'isAdministrator': id == 'b',
         'orderIndex': id.codeUnitAt(0),
       };
     }
+    store.rows['account_permissions/uid'] = {'memberId': 'a', 'memberGroupIds': ['g'], 'managedGroupIds': ['g']};
+    final deleted = Map.of(store.rows['members/b']!);
     await FirestoreMemberRepository(firestore: store.firestore)
         .deleteMember('b', expectedVersion: 3);
-    expect(store.rows['deleted_members/b'], {'displayName': 'b', 'version': 3});
-    final hidden = Map.of(store.rows['group_members/b']!);
-    final query = FirestoreGroupQueryService(firestore: store.firestore);
+    expect(store.rows['deleted_members/b'], deleted);
+    final hidden = Map.of(store.rows['group_members/g:b']!);
+    final query = FirestoreGroupQueryService(firestore: store.firestore, permissions: FirestoreAccountPermissionsSource(store.firestore, accountId: () => 'uid'));
     final repo = FirestoreGroupRepository(firestore: store.firestore);
     var group = (await query.getManagedGroupsWithMembersByOwnerId('a')).single;
     expect(group.members.map((m) => m.memberId), ['a', 'c']);
@@ -49,8 +52,9 @@ void main() {
       ],
     );
     await repo.updateGroup(GroupMapper.toEntity(edited));
-    await repo.updateGroup(GroupMapper.toEntity(edited));
-    expect(store.rows['group_members/b'], hidden);
+    group = (await query.getGroupWithMembersById('g'))!;
+    await repo.updateGroup(GroupMapper.toEntity(group));
+    expect(store.rows['group_members/g:b'], hidden);
     final result = (await query.getGroupWithMembersById('g'))!;
     expect(result.members.map((m) => m.memberId), ['a', 'd']);
     expect(result.members.first.isAdministrator, isTrue);
@@ -62,7 +66,7 @@ void main() {
     store.commitError = TestException('所属保存失敗');
     await expectLater(
       repo.updateGroup(
-        GroupMapper.toEntity(result.copyWith(name: '失敗', members: [])),
+        GroupMapper.toEntity(result.copyWith(name: '失敗', members: [result.members.first])),
       ),
       throwsA(isA<TestException>()),
     );
@@ -77,6 +81,8 @@ void main() {
         'ownerId': 'owner',
         'updatedAt': Timestamp(1, 0),
         'version': 3,
+        if (table == 'members') 'groupIds': <String>[],
+        if (table == 'members') 'managedGroupIds': <String>[],
       };
       for (final collection in [
         'group_members',
@@ -138,7 +144,7 @@ class _Store {
       final ref = MockDocumentReference();
       when(ref.id).thenReturn(path.split('/').last);
       when(ref.path).thenReturn(path);
-      when(ref.get()).thenAnswer((_) async => document(path));
+      when(ref.get()).thenAnswer((_) async => rows.containsKey(path) ? document(path) : missing());
       return ref;
     }
 
@@ -154,7 +160,7 @@ class _Store {
         when(collection.where(any, isEqualTo: anyNamed('isEqualTo')))
             .thenAnswer((call) {
               final query = MockQuery();
-              when(query.get()).thenAnswer((_) async {
+              when(query.get(any)).thenAnswer((_) async {
                 final snapshot = MockQuerySnapshot();
                 final documents = [
                   for (final e in rows.entries)
@@ -220,11 +226,10 @@ class _Store {
       final tx = MockTransaction();
       final pending = <void Function()>[];
       configure(tx, pending);
-      when(tx.get(any)).thenAnswer(
-        (call) async => document(
-          (call.positionalArguments.single as DocumentReference).path,
-        ),
-      );
+      when(tx.get(any)).thenAnswer((call) async {
+        final path = (call.positionalArguments.single as DocumentReference).path;
+        return rows.containsKey(path) ? document(path) : missing();
+      });
       await (call.positionalArguments.single as TransactionHandler<void>)(tx);
       if (commitError case final error?) throw error;
       for (final action in pending) {
@@ -232,7 +237,13 @@ class _Store {
       }
     });
   }
-  MockQueryDocumentSnapshot document(String path) {
+  DocumentSnapshot<Map<String, dynamic>> missing() {
+    final doc = MockDocumentSnapshot();
+    when(doc.exists).thenReturn(false);
+    when(doc.data()).thenReturn(null);
+    return doc;
+  }
+  QueryDocumentSnapshot<Map<String, dynamic>> document(String path) {
     final doc = MockQueryDocumentSnapshot();
     when(doc.id).thenReturn(path.split('/').last);
     when(doc.exists).thenReturn(rows.containsKey(path));
