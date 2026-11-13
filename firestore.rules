@@ -183,7 +183,7 @@ service cloud.firestore {
 
     match /member_invitations/{code} {
       allow get: if isVerifiedUser() && (!exists(/databases/$(database)/documents/member_invitations/$(code))
-                       || invitationManager(resource.data) || validInvitation(code));
+                       || invitationManager(resource.data) || hasClaim(resource.data.inviteeId) || validInvitation(code));
       allow list: if isVerifiedUser() && (hasClaim(resource.data.inviteeId) || invitationManager(resource.data));
       allow create: if isVerifiedUser() && isInitialVersion()
                        && request.resource.data.invitationCode == code

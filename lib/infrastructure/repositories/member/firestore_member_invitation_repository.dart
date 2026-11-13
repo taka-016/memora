@@ -1,5 +1,4 @@
 import 'package:memora/domain/entities/member/member.dart';
-import 'package:memora/infrastructure/mappers/member/firestore_member_mapper.dart';
 import 'package:memora/infrastructure/services/firestore_version_check.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/domain/entities/member/member_invitation.dart';
@@ -31,15 +30,24 @@ class FirestoreMemberInvitationRepository
       }
       transaction.update(
         memberRef,
-        FirestoreMemberMapper.toUpdateFirestore(member),
+        {
+          'accountId': member.accountId,
+          'version': member.version! + 1,
+          'updatedAt': FieldValue.serverTimestamp(),
+        },
       );
       final data = currentMember.data()!;
-      transaction.set(_firestore.collection('account_permissions').doc(member.accountId), {
-        'memberId': member.id,
-        'memberGroupIds': List<String>.from(data['groupIds'] as List),
-        'managedGroupIds': List<String>.from(data['managedGroupIds'] as List),
-      });
-      transaction.delete(_firestore.collection('member_invitation_claims').doc(member.accountId));
+      transaction.set(
+        _firestore.collection('account_permissions').doc(member.accountId),
+        {
+          'memberId': member.id,
+          'memberGroupIds': List<String>.from(data['groupIds'] as List),
+          'managedGroupIds': List<String>.from(data['managedGroupIds'] as List),
+        },
+      );
+      transaction.delete(
+        _firestore.collection('member_invitation_claims').doc(member.accountId),
+      );
       for (final invitation in targets) {
         transaction.delete(
           _firestore.collection('member_invitations').doc(invitation.id),
@@ -50,22 +58,37 @@ class FirestoreMemberInvitationRepository
 
   @override
   Future<void> saveMemberInvitation(MemberInvitation memberInvitation) async {
-    final ref = _firestore.collection('member_invitations').doc(memberInvitation.invitationCode);
+    final ref = _firestore
+        .collection('member_invitations')
+        .doc(memberInvitation.invitationCode);
     await _firestore.runTransaction<void>((tx) async {
       FirestoreVersionCheck.requireAbsent((await tx.get(ref)).data());
-      tx.set(ref, FirestoreMemberInvitationMapper.toCreateFirestore(memberInvitation));
+      tx.set(
+        ref,
+        FirestoreMemberInvitationMapper.toCreateFirestore(memberInvitation),
+      );
     });
   }
 
   @override
   Future<void> updateMemberInvitation(MemberInvitation memberInvitation) async {
-    final old = _firestore.collection('member_invitations').doc(memberInvitation.id);
-    final replacement = _firestore.collection('member_invitations').doc(memberInvitation.invitationCode);
+    final old = _firestore
+        .collection('member_invitations')
+        .doc(memberInvitation.id);
+    final replacement = _firestore
+        .collection('member_invitations')
+        .doc(memberInvitation.invitationCode);
     await _firestore.runTransaction<void>((tx) async {
-      FirestoreVersionCheck.requireMatch((await tx.get(old)).data(), memberInvitation.version);
+      FirestoreVersionCheck.requireMatch(
+        (await tx.get(old)).data(),
+        memberInvitation.version,
+      );
       FirestoreVersionCheck.requireAbsent((await tx.get(replacement)).data());
       tx.delete(old);
-      tx.set(replacement, FirestoreMemberInvitationMapper.toCreateFirestore(memberInvitation));
+      tx.set(
+        replacement,
+        FirestoreMemberInvitationMapper.toCreateFirestore(memberInvitation),
+      );
     });
   }
 
