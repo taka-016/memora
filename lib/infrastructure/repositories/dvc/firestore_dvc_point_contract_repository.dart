@@ -1,3 +1,4 @@
+import 'package:memora/infrastructure/services/firestore_parent_group_id.dart';
 import 'package:memora/infrastructure/services/firestore_version_check.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/domain/entities/dvc/dvc_point_contract.dart';
@@ -50,7 +51,7 @@ class FirestoreDvcPointContractRepository
         .where((v) => !retainedIds.contains(v.id))
         .toList();
     for (final doc in deleted) {
-      await _ensureDeletable(doc.id);
+      await _ensureDeletable(doc.id, groupId: groupId);
     }
     await _firestore.runTransaction<void>((transaction) async {
       for (final doc in deleted) {
@@ -83,11 +84,14 @@ class FirestoreDvcPointContractRepository
     });
   }
 
-  Future<void> _ensureDeletable(String contractId) async {
+  Future<void> _ensureDeletable(String contractId, {String? groupId}) async {
+    final scope = groupId ?? await firestoreParentGroupId(_firestore, 'dvc_point_contracts', contractId);
+    if (scope == null) return;
     for (final name in ['dvc_point_usages', 'dvc_limited_points']) {
       final children = await _firestore
           .collection(name)
           .where('contractId', isEqualTo: contractId)
+          .where('groupId', isEqualTo: scope)
           .limit(1)
           .get();
       if (children.docs.isNotEmpty) {
