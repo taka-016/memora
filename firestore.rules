@@ -179,15 +179,16 @@ service cloud.firestore {
 
     function invitationManager(data) {
       return exists(/databases/$(database)/documents/account_permissions/$(request.auth.uid))
-             && data.inviterId == ownMember()
              && get(memberPath(data.inviteeId)).data.ownerId == ownMember();
     }
 
     match /member_invitations/{code} {
-      allow get: if isVerifiedUser() && validInvitation(code);
+      allow get: if isVerifiedUser() && (!exists(/databases/$(database)/documents/member_invitations/$(code))
+                       || invitationManager(resource.data) || validInvitation(code));
       allow list: if isVerifiedUser() && (hasClaim(resource.data.inviteeId) || invitationManager(resource.data));
       allow create: if isVerifiedUser() && isInitialVersion()
                        && request.resource.data.invitationCode == code
+                       && request.resource.data.inviterId == ownMember()
                        && invitationManager(request.resource.data)
                        && get(memberPath(request.resource.data.inviteeId)).data.accountId == null;
       allow delete: if isVerifiedUser()
@@ -225,7 +226,8 @@ service cloud.firestore {
     }
 
     match /members/{memberId} {
-      allow get, list: if isVerifiedUser() && readableMember(resource.data, memberId);
+      allow get: if isVerifiedUser() && (!exists(memberPath(memberId)) || readableMember(resource.data, memberId));
+      allow list: if isVerifiedUser() && readableMember(resource.data, memberId);
       allow create: if isVerifiedUser() && isInitialVersion()
                        && !exists(/databases/$(database)/documents/deleted_members/$(memberId))
                        && validLists(request.resource.data, 'groupIds')
@@ -254,7 +256,8 @@ service cloud.firestore {
     }
 
     match /groups/{groupId} {
-      allow read: if belongs(groupId);
+      allow get: if isVerifiedUser() && (!exists(/databases/$(database)/documents/groups/$(groupId)) || belongs(groupId));
+      allow list: if belongs(groupId);
       allow create: if isVerifiedUser() && isInitialVersion() && validColor(request.resource.data)
                        && !exists(/databases/$(database)/documents/deleted_groups/$(groupId))
                        && request.resource.data.ownerId == ownMember()
