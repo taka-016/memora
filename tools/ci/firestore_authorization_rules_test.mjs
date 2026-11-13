@@ -110,3 +110,33 @@ await expectCommit('auth-joiner',[
   remove('member_invitations/auth-secret'),remove('member_invitation_claims/auth-joiner'),
 ],200,'招待受理では紐付けと既存所属の認可と招待削除を同時保存する');
 await get('auth-joiner','groups/auth-g',200,'招待受理後は既存所属の記録を閲覧できる');
+await expectCommit('owner',[
+  write('deleted_groups/auth-archived',{version:1,ownerId:'old'}),
+  write('deleted_members/auth-archived-member',{version:1}),
+  remove('groups/auth-archived'),remove('members/auth-archived-member'),
+],200,'退避済み親を準備');
+await expectCommit('auth-owner',[
+  write('groups/auth-archived',{version:1,ownerId:'auth-owner'}),
+  write('group_members/auth-archived:auth-owner',{groupId:'auth-archived',memberId:'auth-owner',isAdministrator:false}),
+  write('members/auth-owner',{...member('auth-owner',['auth-g','auth-archived'],['auth-g','auth-archived']),version:2,changedGroupId:'auth-archived'}),
+  write('account_permissions/auth-owner',{...permissions('auth-owner',['auth-g','auth-archived'],['auth-g','auth-archived']),changedGroupId:'auth-archived'}),
+],403,'退避済みグループIDの再利用による旧記録へのアクセスを拒否');
+await expectCommit('auth-unregistered',[
+  write('members/auth-archived-member',member('auth-unregistered',[])),
+  write('account_permissions/auth-unregistered',permissions('auth-archived-member',[])),
+],403,'退避済みメンバーIDの再利用を拒否');
+await expectCommit('owner',[remove('groups/auth-created'),remove('group_members/auth-created:auth-owner'),remove('group_members/auth-created:auth-invitee')],200,'新規グループを初期化');
+await expectCommit('auth-owner',[
+  write('groups/auth-created',{version:1,ownerId:'auth-owner'}),
+  write('group_members/auth-created:auth-owner',{groupId:'auth-created',memberId:'auth-owner',isAdministrator:false}),
+  write('group_members/auth-created:auth-invitee',{groupId:'auth-created',memberId:'auth-invitee',isAdministrator:false}),
+  write('members/auth-owner',{...member('auth-owner',['auth-g','auth-created'],['auth-g','auth-created']),version:2,changedGroupId:'auth-created'}),
+  write('account_permissions/auth-owner',{...permissions('auth-owner',['auth-g','auth-created'],['auth-g','auth-created']),changedGroupId:'auth-created'}),
+  write('members/auth-invitee',{...member('auth-joiner',['auth-g','auth-created']),ownerId:'auth-owner',version:3,changedGroupId:'auth-created'}),
+  write('account_permissions/auth-joiner',{...permissions('auth-invitee',['auth-g','auth-created']),changedGroupId:'auth-created'}),
+],200,'所有者以外のメンバーを含むグループを作成できる');
+await expectCommit('owner',[remove('trip_entries/auth-parent'),remove('tasks/auth-new-child')],200,'新規旅行を初期化');
+await expectCommit('auth-owner',[
+  write('trip_entries/auth-parent',{groupId:'auth-g',version:1}),
+  write('tasks/auth-new-child',{tripId:'auth-parent',name:'準備'}),
+],200,'旅行とタスクを同時作成できる');
