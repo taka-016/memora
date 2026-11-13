@@ -5,7 +5,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT_DIR"
 
 show_usage() {
-  echo 'Firebaseセットアップ: all / configure / api-key / project / rules / indexes / sync-indexes'
+  echo 'クラウド設定: all / gcloud-auth / configure / api-key / project / rules / indexes / sync-indexes'
 }
 
 if [[ "${1:-}" == '--help' ]]; then
@@ -22,6 +22,7 @@ if [[ "$#" -eq 0 ]]; then
   echo '5: Firestoreルールのデプロイ'
   echo '6: Firestoreインデックスのデプロイ'
   echo '7: Firestoreインデックスの取得'
+  echo '8: Google Cloud CLIの認証'
   read -r -a selections || exit 1
   if [[ "${#selections[@]}" -eq 0 ]]; then exit 1; fi
   set -- "${selections[@]}"
@@ -30,13 +31,14 @@ fi
 actions=()
 for action in "$@"; do
   case "$action" in
-    1|all) actions+=(project configure rules indexes sync-indexes) ;;
+    1|all) actions+=(gcloud-auth project configure rules indexes sync-indexes) ;;
     2|configure) actions+=(configure) ;;
     3|api-key) actions+=(api-key) ;;
     4|project) actions+=(project) ;;
     5|rules) actions+=(rules) ;;
     6|indexes) actions+=(indexes) ;;
     7|sync-indexes) actions+=(sync-indexes) ;;
+    8|gcloud-auth) actions+=(gcloud-auth) ;;
     *) echo "不明な処理です: $action" >&2; show_usage; exit 1 ;;
   esac
 done
@@ -58,6 +60,22 @@ ensure_firebase() {
     firebase login --no-localhost
   fi
   firebase_ready=true
+}
+
+authenticate_gcloud() {
+  if ! command -v gcloud > /dev/null; then
+    echo 'Google Cloud CLIをインストールしてから再実行してください。' >&2
+    return 1
+  fi
+  if gcloud auth print-access-token > /dev/null 2>&1; then
+    return
+  fi
+  echo 'Firestoreの読み書き権限を持つ管理用アカウントでGoogle Cloudにログインしてください。'
+  gcloud auth login --no-launch-browser
+  if ! gcloud auth print-access-token > /dev/null 2>&1; then
+    echo 'Google Cloudの認証を確認できませんでした。' >&2
+    return 1
+  fi
 }
 
 read_api_key() {
@@ -111,6 +129,7 @@ sync_indexes() {
 
 for action in "${actions[@]}"; do
   case "$action" in
+    gcloud-auth) authenticate_gcloud ;;
     configure) configure ;;
     api-key)
       read_api_key

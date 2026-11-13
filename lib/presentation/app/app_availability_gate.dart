@@ -1,0 +1,169 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:memora/application/models/app_availability.dart';
+import 'package:memora/presentation/app/app_theme.dart';
+import 'package:memora/presentation/notifiers/setting/theme_settings_notifier.dart';
+import 'package:memora/presentation/notifiers/app_availability/app_availability_notifier.dart';
+
+class AppAvailabilityGate extends ConsumerStatefulWidget {
+  const AppAvailabilityGate({super.key, required this.child});
+  final Widget child;
+
+  @override
+  ConsumerState<AppAvailabilityGate> createState() =>
+      _AppAvailabilityGateState();
+}
+
+class _AppAvailabilityGateState extends ConsumerState<AppAvailabilityGate>
+    with WidgetsBindingObserver {
+  bool _started = false;
+  bool _firstFrameDeferred = true;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.deferFirstFrame();
+    ref.listenManual(
+      appAvailabilityNotifierProvider,
+      (_, _) => _maybeAllowFirstFrame(),
+    );
+    ref.listenManual(
+      themeSettingsNotifierProvider,
+      (_, _) => _maybeAllowFirstFrame(),
+    );
+    _maybeAllowFirstFrame();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _allowFirstFrame();
+    super.dispose();
+  }
+
+  void _maybeAllowFirstFrame() {
+    if (!_firstFrameDeferred || !mounted) return;
+    if (ref.read(appAvailabilityNotifierProvider).isChecking ||
+        ref.read(themeSettingsNotifierProvider).isLoading) {
+      return;
+    }
+    _allowFirstFrame();
+  }
+
+  void _allowFirstFrame() {
+    if (!_firstFrameDeferred) return;
+    _firstFrameDeferred = false;
+    WidgetsBinding.instance.allowFirstFrame();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      unawaited(ref.read(appAvailabilityNotifierProvider.notifier).refresh());
+    }
+  }
+
+  @override
+  Future<bool> didPopRoute() async =>
+      !ref.read(appAvailabilityNotifierProvider).canUseApp;
+
+  @override
+  bool handleStartBackGesture(PredictiveBackEvent backEvent) =>
+      !ref.read(appAvailabilityNotifierProvider).canUseApp;
+
+  @override
+  Widget build(BuildContext context) {
+    final state = ref.watch(appAvailabilityNotifierProvider);
+    final themeState = ref.watch(themeSettingsNotifierProvider);
+    if (state.canUseApp && !themeState.isLoading) _started = true;
+    final isCheckingAvailableApp =
+        _started &&
+        state.isChecking &&
+        state.availability == AppAvailability.available;
+    final message = state.hasError
+        ? '利用状況を確認できませんでした'
+        : switch (state.availability) {
+            AppAvailability.updateRequired => 'アプリの更新が必要です',
+            AppAvailability.maintenance => 'メンテナンス中です',
+            _ => null,
+          };
+    return Stack(
+      textDirection: TextDirection.ltr,
+      children: [
+        if (_started)
+          Offstage(
+            offstage: !state.canUseApp && !isCheckingAvailableApp,
+            child: AbsorbPointer(
+              absorbing: !state.canUseApp,
+              child: TickerMode(
+                enabled: state.canUseApp,
+                child: ExcludeFocus(
+                  excluding: !state.canUseApp,
+                  child: widget.child,
+                ),
+              ),
+            ),
+          ),
+        if (!_started || (!state.canUseApp && !isCheckingAvailableApp))
+          MaterialApp(
+            theme: buildAppTheme(Brightness.light),
+            darkTheme: buildAppTheme(Brightness.dark),
+            themeMode: resolveAppThemeMode(themeState.value?.mode),
+            themeAnimationDuration: Duration.zero,
+            home: Scaffold(
+              body: SafeArea(
+                child: Center(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (message != null) ...[
+                          Text(
+                            message,
+                            style: const TextStyle(fontSize: 22),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 16),
+                        ],
+                        if (state.availability ==
+                            AppAvailability.updateRequired)
+                          const Text(
+                            '配布元から最新版に更新してください。',
+                            textAlign: TextAlign.center,
+                          ),
+                        if (state.availability == AppAvailability.maintenance)
+                          const Text(
+                            'しばらく待ってから再確認してください。',
+                            textAlign: TextAlign.center,
+                          ),
+                        if (state.hasError)
+                          const Text(
+                            '通信環境を確認して再確認してください。',
+                            textAlign: TextAlign.center,
+                          ),
+                        if (message != null) const SizedBox(height: 16),
+                        if (state.isChecking || themeState.isLoading)
+                          const CircularProgressIndicator()
+                        else
+                          FilledButton(
+                            onPressed: () => ref
+                                .read(appAvailabilityNotifierProvider.notifier)
+                                .refresh(),
+                            child: const Text('再確認'),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}

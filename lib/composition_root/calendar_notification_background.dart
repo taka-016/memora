@@ -1,3 +1,5 @@
+import 'package:memora/composition_root/providers/app_availability_providers.dart';
+
 import 'dart:io';
 
 import 'package:workmanager/workmanager.dart';
@@ -52,7 +54,15 @@ Future<bool> _refreshCalendarNotificationsInBackground() async {
             .read(synchronizeCalendarNotificationsUsecaseProvider)
             .execute() !=
         CalendarNotificationStatus.failed;
-    if (mode == AppMode.online) return await synchronize();
+    if (mode == AppMode.online) {
+      var succeeded = true;
+      await container.read(checkAppAvailabilityUsecaseProvider).runIfAvailable(
+        () async {
+          succeeded = await synchronize();
+        },
+      );
+      return succeeded;
+    }
     final database = container.read(offlineDatabaseProvider);
     await database.initialize();
     await recoverPendingOfflineBackupRestore(database: database);

@@ -2,6 +2,10 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    match /app_settings/availability {
+      allow get: if true;
+    }
+
     function isVerifiedUser() {
       return request.auth != null
              && request.auth.token.email_verified == true;

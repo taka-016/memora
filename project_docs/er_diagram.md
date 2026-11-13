@@ -4,6 +4,11 @@
 
 ```mermaid
 erDiagram
+    app_settings {
+        string id PK "Firestore文書ID、availability固定"
+        integer minimumBuildNumber "最低対応ビルド番号、0は制限なし"
+        boolean isMaintenance "メンテナンス中ならtrue"
+    }
     trip_entries {
         string id PK
         string groupId FK "NOT NULL"
@@ -221,6 +226,7 @@ erDiagram
 ## 図の補足
 
 - 図は共通の業務モデルを示す。SQLiteの物理定義・制約・インデックスは[`offline_schema.drift`](../lib/infrastructure/database/offline_schema.drift)を参照。
+- `app_settings/availability`はオンライン専用の利用停止設定。文書が未作成なら`minimumBuildNumber: 0`・`isMaintenance: false`として扱う。SQLiteやオフラインバックアップには含めない。
 - `account_permissions`はオンライン専用の認可コレクションで、認証UIDごとに1文書を持つ。`memberGroupIds`と`managedGroupIds`はグループIDの重複を持たない一覧で、管理対象は所属先の一部とする。所有者のグループも管理対象に含める。SQLiteやオフラインバックアップには含めない。
 - `member_events`はグループとメンバーの両方に属し、`groupId`・`memberId`・`year`の組ごとに1件のメモを持つ。同じメンバー・同じ年でもグループごとに別の記録を保持する。
 - `deleted_groups`・`deleted_members`はFirestoreの専用コレクションとSQLiteの専用テーブルに対応する。親の退避時は、元のドキュメントID・行IDをそのまま主キーにし、親の全フィールドを保存する。Firestoreでは取得データをそのまま保存し、`createdAt`・`updatedAt`やオンラインの`version`を含むフィールドを欠落させない。通常テーブルの親は残さず、退避保存と元データ削除を原子的に行う。

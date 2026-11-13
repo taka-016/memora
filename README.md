@@ -95,9 +95,13 @@ Google Cloud ConsoleでMaps SDK for AndroidとPlaces API (New)を有効にし、
 - Identity Toolkit API
 - Token Service API
 
-必要に応じてFirestoreのセキュリティルールを設定した後、`just setup-firebase`を実行し、メニューで必要な処理を選びます。初回は「すべて実行」を選択し、画面の案内に従ってログインとプロジェクト選択を行ってください。処理を直接指定する方法は[justfile](./justfile)を参照してください。
+[Google Cloud CLI](https://cloud.google.com/sdk/docs/install)を用意し、必要に応じてFirestoreのセキュリティルールを設定した後、`just setup-cloud`を実行します。初回は「すべて実行」を選択し、画面の案内に従ってGoogle Cloud・Firebaseへのログインとプロジェクト選択を行ってください。Google Cloudの認証だけを行う場合は`just setup-cloud gcloud-auth`を使用します。認証済みなら再ログインは省略します。処理の選択肢は[justfile](./justfile)を参照してください。
 
 設定の生成・更新時は、Google Cloudの「APIとサービス → 認証情報」からFirebase用APIキーをコピーして入力してください（環境変数`FIREBASE_API_KEY`でも指定可）。指定したキーは`android/app/google-services.json`と`lib/firebase_options.dart`の両方へ反映されます。既存ファイルの削除は不要です。設定更新後はアプリを再ビルドしてください。
+
+Google Cloudの認証では、対象プロジェクトのFirestore読み書き権限（`roles/datastore.user`など）を持つ管理用アカウントを使用してください。Firebase CLIとは別の認証です。表示されたURLを手元のブラウザーで開き、認証コードを入力して完了できます。コマンド実行時にアクセストークンを自動取得します。CI等では、有効なOAuthアクセストークンを環境変数`FIRESTORE_ACCESS_TOKEN`に設定する方法も使用できます。接続先は`.firebaserc`の`projects.default`です。
+
+初回はビルド番号の変更やFirestoreへの文書登録は不要です。`just release`で自動採番されます。最低対応ビルド番号は、配布後に旧版を利用停止にしたいときだけ設定してください。
 
 ### 端末カレンダー連携
 
@@ -107,9 +111,13 @@ Androidのカレンダー権限を取り消した場合は、端末の設定か�
 
 ### アプリモードと成果物
 
+以下の実行・ビルド手順はAndroid向けです。
+
 `run`・`build`・`release`・`check`の第1引数は`online`または`offline`で、省略時は`online`です。両モードは同じ端末にインストールできますが、データは共有しません。機能の違いは[ユースケース図](./project_docs/usecase_diagram.md)を参照してください。
 
 テスト対象や追加オプションはモードの後ろへ指定します（例: `just check offline test/unit/`）。
+
+表示用のバージョン名は`pubspec.yaml`で管理します。オンライン版のビルド番号はリリースごとに自動採番し、デバッグ実行・ビルドでは現在の採番値を使用します。オフライン版はFirestoreに接続せず、`pubspec.yaml`のビルド番号を使用します。オンライン版への`--build-number`の指定はできません。
 
 release APKの出力先は`build/app/outputs/flutter-apk/memora-<version>-<mode>.apk`です。生成したバージョンとモードに合わせて、`adb install -r <APKのパス>`でインストールできます。
 

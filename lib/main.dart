@@ -1,3 +1,5 @@
+import 'package:memora/presentation/notifiers/app_availability/app_availability_notifier.dart';
+import 'package:memora/presentation/app/app_availability_gate.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_notifications_notifier.dart';
 import 'package:memora/composition_root/providers/app_providers.dart';
 import 'package:memora/composition_root/app_bootstrap.dart';
@@ -5,7 +7,7 @@ import 'package:memora/composition_root/app_bootstrap.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:memora/application/models/app_theme_mode.dart';
+import 'package:memora/presentation/app/app_theme.dart';
 import 'package:memora/presentation/notifiers/setting/theme_settings_notifier.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/core/app_logger.dart';
@@ -15,7 +17,11 @@ import 'package:memora/presentation/notifiers/android_widget/android_widget_laun
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 Future<void> main() async {
-  await launchApp(const AppClockLifecycleSync(child: MyApp()));
+  await launchApp(
+    const AppClockLifecycleSync(
+      child: AppAvailabilityGate(child: _AvailableApp()),
+    ),
+  );
 }
 
 class AppClockLifecycleSync extends ConsumerStatefulWidget {
@@ -46,9 +52,6 @@ class _AppClockLifecycleSyncState extends ConsumerState<AppClockLifecycleSync>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       unawaited(_syncClock());
-      unawaited(
-        ref.read(calendarNotificationsNotifierProvider.notifier).refresh(),
-      );
     }
   }
 
@@ -76,15 +79,13 @@ class MyApp extends ConsumerWidget {
     return MaterialApp.router(
       routerConfig: ref.watch(appRouterConfigProvider),
       title: ref.watch(appDisplayNameProvider),
-      theme: _buildTheme(Brightness.light),
-      darkTheme: _buildTheme(Brightness.dark),
-      themeMode: switch (ref.watch(
-        themeSettingsNotifierProvider.select((value) => value.value?.mode),
-      )) {
-        AppThemeMode.light => ThemeMode.light,
-        AppThemeMode.dark => ThemeMode.dark,
-        _ => ThemeMode.system,
-      },
+      theme: buildAppTheme(Brightness.light),
+      darkTheme: buildAppTheme(Brightness.dark),
+      themeMode: resolveAppThemeMode(
+        ref.watch(
+          themeSettingsNotifierProvider.select((value) => value.value?.mode),
+        ),
+      ),
       locale: const Locale('ja'),
       supportedLocales: const [Locale('ja'), Locale('en')],
       localizationsDelegates: const [
@@ -96,22 +97,18 @@ class MyApp extends ConsumerWidget {
   }
 }
 
-ThemeData _buildTheme(Brightness brightness) {
-  final scheme = ColorScheme.fromSeed(
-    seedColor: Colors.lightBlue,
-    brightness: brightness,
-  );
-  return ThemeData(
-    colorScheme: scheme,
-    appBarTheme: brightness == Brightness.light
-        ? const AppBarTheme(
-            backgroundColor: Colors.lightBlue,
-            foregroundColor: Colors.white,
-          )
-        : AppBarTheme(
-            backgroundColor: scheme.primaryContainer,
-            foregroundColor: scheme.onPrimaryContainer,
-          ),
-    buttonTheme: const ButtonThemeData(alignedDropdown: true),
-  );
+class _AvailableApp extends ConsumerWidget {
+  const _AvailableApp();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.listen(appAvailabilityNotifierProvider, (previous, next) {
+      unawaited(
+        ref
+            .read(calendarNotificationsNotifierProvider.notifier)
+            .setSuspended(!next.canUseApp),
+      );
+    });
+    return const MyApp();
+  }
 }
