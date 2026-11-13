@@ -37,6 +37,7 @@ void main() {
     final fixture = _NotificationFixture(ids: ['g', 'other']);
     addTearDown(fixture.dispose);
     await fixture.start();
+    verify(fixture.firestore.collection('account_permissions')).called(1);
     CalendarEventDto event(String groupId) => CalendarEventDto(
       id: groupId,
       groupId: groupId,
@@ -67,7 +68,7 @@ void main() {
     await fixture.start();
     final pending = Completer<List<GroupDto>>();
     when(fixture.groups.execute(any)).thenAnswer((_) => pending.future);
-    fixture.membership.add(fs.MockQuerySnapshot());
+    fixture.membership.add(fs.MockDocumentSnapshot());
     await fixture.flush();
     fixture.now = DateTime(2026, 11, 11, 15);
     final result = expectLater(fixture.source.load(), completion(isEmpty));
@@ -87,10 +88,10 @@ void main() {
       return cancellation.future;
     };
     fixture.ids = [];
-    fixture.membership.add(fs.MockQuerySnapshot());
+    fixture.membership.add(fs.MockDocumentSnapshot());
     await cancelling.future;
     fixture.ids = ['retained'];
-    fixture.membership.add(fs.MockQuerySnapshot());
+    fixture.membership.add(fs.MockDocumentSnapshot());
     await fixture.flush();
     cancellation.complete();
     await fixture.flush();
@@ -112,7 +113,7 @@ void main() {
     final loading = fixture.source.load();
     await cancelling.future;
     fixture.ids = [];
-    fixture.membership.add(fs.MockQuerySnapshot());
+    fixture.membership.add(fs.MockDocumentSnapshot());
     await fixture.flush();
     cancellation.complete();
     await fixture.flush();
@@ -132,13 +133,13 @@ void main() {
         return cancellation.future;
       };
       fixture.ids = ['old'];
-      fixture.membership.add(fs.MockQuerySnapshot());
+      fixture.membership.add(fs.MockDocumentSnapshot());
       await cancelling.future;
       if (closeDuringUpdate) {
         await fixture.subscription.cancel();
       } else {
         fixture.ids = ['new'];
-        fixture.membership.add(fs.MockQuerySnapshot());
+        fixture.membership.add(fs.MockDocumentSnapshot());
         await fixture.flush();
       }
       cancellation.complete();
@@ -163,7 +164,7 @@ void main() {
     final currentMember = MockGetCurrentMemberUseCase();
     final groups = MockGetGroupsWithMembersUsecase();
     final events = MockGetCalendarEventsUsecase();
-    const member = MemberDto(id: 'm', displayName: '本人');
+    const member = MemberDto(id: 'm', accountId: 'uid', displayName: '本人');
     when(currentMember.execute()).thenAnswer((_) async => member);
     when(groups.execute(member)).thenAnswer(
       (_) async => [
@@ -177,13 +178,15 @@ void main() {
     final groupDoc = fs.MockDocumentSnapshot();
     when(groupDoc.exists).thenReturn(true);
     final membership =
-        StreamController<QuerySnapshot<Map<String, dynamic>>>.broadcast();
+        StreamController<DocumentSnapshot<Map<String, dynamic>>>.broadcast();
     final snapshots =
         StreamController<QuerySnapshot<Map<String, dynamic>>>.broadcast();
     when(firestore.collection(any)).thenReturn(collection);
     when(collection.where('memberId', isEqualTo: 'm')).thenReturn(query);
     when(collection.where('ownerId', isEqualTo: 'm')).thenReturn(query);
-    when(query.snapshots()).thenAnswer((_) => membership.stream);
+    final permission = fs.MockDocumentReference();
+    when(collection.doc('uid')).thenReturn(permission);
+    when(permission.snapshots()).thenAnswer((_) => membership.stream);
     when(collection.doc('g')).thenReturn(group);
     when(group.snapshots()).thenAnswer((_) => Stream.value(groupDoc));
     final eventQuery = fs.MockQuery();
@@ -224,7 +227,7 @@ void main() {
     );
     final sub = source.changes().listen((_) {}, onError: (Object _) {});
     await Future<void>(() {});
-    membership.add(fs.MockQuerySnapshot());
+    membership.add(fs.MockDocumentSnapshot());
     await Future<void>(() {});
     final empty = fs.MockQuerySnapshot();
     when(empty.docs).thenReturn([]);
@@ -245,7 +248,7 @@ void main() {
     final currentMember = MockGetCurrentMemberUseCase();
     final groups = MockGetGroupsWithMembersUsecase();
     final events = MockGetCalendarEventsUsecase();
-    const member = MemberDto(id: 'm', displayName: '本人');
+    const member = MemberDto(id: 'm', accountId: 'uid', displayName: '本人');
     when(currentMember.execute()).thenAnswer((_) async => member);
     when(groups.execute(member)).thenAnswer(
       (_) async => [
@@ -270,7 +273,7 @@ void main() {
 
 class _NotificationFixture {
   _NotificationFixture({this.ids = const ['g']}) {
-    const member = MemberDto(id: 'm', displayName: '本人');
+    const member = MemberDto(id: 'm', accountId: 'uid', displayName: '本人');
     when(current.execute()).thenAnswer((_) async => member);
     when(groups.execute(member)).thenAnswer(
       (_) async => [
@@ -281,10 +284,14 @@ class _NotificationFixture {
     when(firestore.collection(any)).thenReturn(collection);
     when(collection.where('memberId', isEqualTo: 'm')).thenReturn(query);
     when(collection.where('ownerId', isEqualTo: 'm')).thenReturn(query);
-    when(query.snapshots()).thenAnswer((_) => membership.stream);
+
     when(collection.doc(any)).thenAnswer((invocation) {
       final id = invocation.positionalArguments.single as String;
       final document = fs.MockDocumentReference();
+      if (id == 'uid') {
+        when(document.snapshots()).thenAnswer((_) => membership.stream);
+        return document;
+      }
       final stream = groupStreams.putIfAbsent(
         id,
         () =>
@@ -320,7 +327,7 @@ class _NotificationFixture {
   final collection = fs.MockCollectionReference();
   final query = fs.MockQuery();
   final membership =
-      StreamController<QuerySnapshot<Map<String, dynamic>>>.broadcast();
+      StreamController<DocumentSnapshot<Map<String, dynamic>>>.broadcast();
   final groupStreams =
       <String, StreamController<DocumentSnapshot<Map<String, dynamic>>>>{};
   final eventStreams = <String, StreamController<List<CalendarEventDto>>>{};
@@ -339,7 +346,7 @@ class _NotificationFixture {
   Future<void> start() async {
     subscription = source.changes().listen((_) {}, onError: (Object _) {});
     await flush();
-    membership.add(fs.MockQuerySnapshot());
+    membership.add(fs.MockDocumentSnapshot());
     await flush();
     for (final id in ids) {
       groupExists(id, true);
