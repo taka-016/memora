@@ -64,3 +64,33 @@ await expectCommit('auth-owner',[
 ],200,'所属と認可を同時に解除');
 await get('auth-member','calendar_events/auth-event',403,'所属解除後のサーバー取得を拒否');
 console.log('所属外のアクセス・不正な権限変更・解除後のアクセス拒否を確認しました');
+// 所属・認可のいずれか片方だけの変更も拒否する。
+await expectCommit('auth-owner',[
+  write('groups/auth-g',{version:3,ownerId:'auth-owner',name:'グループ'}),
+  write('group_members/auth-g:auth-member',{groupId:'auth-g',memberId:'auth-member',isAdministrator:true}),
+],403,'所属側だけの追加と管理者変更を拒否');
+await expectCommit('auth-owner',[
+  write('groups/auth-g',{version:3,ownerId:'auth-owner',name:'グループ'}),
+  write('group_members/auth-g:auth-member',{groupId:'auth-g',memberId:'auth-member',isAdministrator:true}),
+  write('members/auth-member',{...member('auth-member',['auth-g'],['auth-g']),version:3,changedGroupId:'auth-g'}),
+  write('account_permissions/auth-member',{...permissions('auth-member',['auth-g'],['auth-g']),changedGroupId:'auth-g'}),
+],200,'所属と役割と認可の同時追加を許可');
+for (const table of ['group_events','member_events','trip_entries','dvc_point_contracts']) {
+  await expectCommit('auth-member',[write(`${table}/auth-record`,{version:1,groupId:'auth-g',memberId:'auth-member'})],200,`${table}は所属メンバーが作成できる`);
+  await get('auth-outside',`${table}/auth-record`,403,`${table}の所属外取得を拒否`);
+}
+for (const [table,key,id] of [['locations','tripId','auth-record'],['tasks','tripId','auth-record'],['itinerary_items','tripId','auth-record'],['dvc_limited_points','contractId','auth-record'],['dvc_point_usages','contractId','auth-record'],['calendar_event_overrides','eventId','auth-event']]) {
+  await expectCommit('owner',[write(`${table}/auth-child`,{[key]:id,groupId:'auth-g',isCancelled:true})],200,'子の初期データ');
+  await get('auth-outside',`${table}/auth-child`,403,`${table}の所属外取得を拒否`);
+}
+await expectCommit('owner',[remove('members/auth-new'),remove('account_permissions/auth-new')],200,'本人登録データを初期化');
+await expectCommit('auth-outside',[write('members/auth-new',member('auth-outside',[]))],403,'認可文書なしの本人登録を拒否');
+await expectCommit('auth-new',[
+  write('members/auth-new',member('auth-new',[])),
+  write('account_permissions/auth-new',permissions('auth-new',[])),
+],200,'本人と空の認可文書を同時登録できる');
+await expectCommit('auth-new',[write('members/auth-new',{...member('auth-new',['auth-g']),version:2})],403,'プロフィール編集からの所属偽装を拒否');
+for(const table of ['groups','calendar_events','members','account_permissions']) {
+  const r=await fetch(`${root}:runQuery`,{method:'POST',headers:{Authorization:`Bearer ${token('auth-outside')}`,'Content-Type':'application/json'},body:JSON.stringify({structuredQuery:{from:[{collectionId:table}]}})});
+  assert.equal(r.status,403,`${table}の無条件一覧を拒否: ${await r.text()}`);
+}
