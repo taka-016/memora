@@ -124,7 +124,7 @@ void main() {
   for (final collection in ['dvc_point_usages', 'dvc_limited_points']) {
     test('$collectionがある契約の削除を拒否する', () async {
       store.rows['dvc_point_contracts/c1'] = {'groupId': 'g1', 'version': 3};
-      store.rows['$collection/child'] = {'contractId': 'c1'};
+      store.rows['$collection/child'] = {'contractId': 'c1', 'groupId': 'g1'};
       await expectLater(
         repository.saveDvcPointContracts('g1', [], expectedVersions: {'c1': 3}),
         throwsA(isA<StateError>()),
@@ -150,4 +150,12 @@ void main() {
     expect(store.rows.keys, isNot(contains('dvc_point_contracts/c1')));
     expect(store.rows.keys, contains('dvc_point_contracts/deleted'));
   });
+  test('削除前の子の照合も契約と保存先グループの両方に限定する', () async {
+    store.rows['dvc_point_contracts/c1'] = {'groupId': 'g1', 'version': 3};
+    await repository.deleteDvcPointContract('c1', expectedVersion: 3);
+    final filters = store.queryFilters.where((filter) => filter.containsKey('contractId')).toList();
+    expect(filters, hasLength(2));
+    expect(filters, everyElement(containsPair('groupId', 'g1')));
+  });
+
 }

@@ -13,6 +13,7 @@ class FirestoreTransactionStore {
   int _nextId = 0;
   final reads = <String>[];
   final querySources = <Source?>[];
+  final queryFilters = <Map<String, dynamic>>[];
 
   FirestoreTransactionStore() {
     when(firestore.batch()).thenAnswer((_) {
@@ -145,6 +146,7 @@ class FirestoreTransactionStore {
     );
     when(query.get(any)).thenAnswer((invocation) async {
       querySources.add((invocation.positionalArguments.single as GetOptions?)?.source);
+      queryFilters.add(Map.of(filters));
       final snapshot = MockQuerySnapshot();
       final docs = <QueryDocumentSnapshot<Map<String, dynamic>>>[];
       for (final entry in rows.entries) {
