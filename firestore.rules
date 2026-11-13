@@ -305,7 +305,9 @@ service cloud.firestore {
     }
 
     match /{collection}/{document} {
-      allow read: if scopedCollection(collection) && belongs(resource.data.groupId);
+      allow get: if scopedCollection(collection) && isVerifiedUser()
+                    && (!exists(/databases/$(database)/documents/$(collection)/$(document)) || belongs(resource.data.groupId));
+      allow list: if scopedCollection(collection) && belongs(resource.data.groupId);
       allow create: if scopedCollection(collection) && belongs(request.resource.data.groupId)
                        && isInitialVersion() && validVersionedData(collection);
       allow update: if scopedCollection(collection) && belongs(resource.data.groupId)
@@ -345,12 +347,12 @@ service cloud.firestore {
 
     function childScope(collection, data) {
       let parent = get(/databases/$(database)/documents/$(parentCollection(collection))/$(data[parentKey(collection)])).data;
-      return belongs(parent.groupId);
+      return belongs(data.groupId) && parent.groupId == data.groupId;
     }
 
     function childWriteScope(collection, data) {
       let parent = getAfter(/databases/$(database)/documents/$(parentCollection(collection))/$(data[parentKey(collection)])).data;
-      return belongs(parent.groupId) && (!('groupId' in data) || data.groupId == parent.groupId);
+      return belongs(data.groupId) && data.groupId == parent.groupId;
     }
 
     match /{collection}/{document} {
