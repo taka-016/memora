@@ -139,7 +139,7 @@ await expectCommit('auth-owner',[
 await expectCommit('owner',[remove('trip_entries/auth-parent'),remove('tasks/auth-new-child')],200,'新規旅行を初期化');
 await expectCommit('auth-owner',[
   write('trip_entries/auth-parent',{groupId:'auth-g',version:1}),
-  write('tasks/auth-new-child',{tripId:'auth-parent',name:'準備'}),
+  write('tasks/auth-new-child',{tripId:'auth-parent',groupId:'auth-g',name:'準備'}),
 ],200,'旅行とタスクを同時作成できる');
 await get('auth-member','members/auth-missing',404,'不存在メンバーを欠損として扱える');
 await get('auth-member','groups/auth-missing',404,'不存在グループを欠損として扱える');
@@ -147,7 +147,7 @@ await get('auth-owner','member_invitations/auth-not-created',404,'新規招待�
 const queryResponse=await fetch(`${root}:runQuery`,{method:'POST',headers:{Authorization:`Bearer ${token('auth-owner')}`,'Content-Type':'application/json'},body:JSON.stringify({structuredQuery:{from:[{collectionId:'member_invitations'}],where:{fieldFilter:{field:{fieldPath:'inviteeId'},op:'EQUAL',value:encode('auth-invitee')}}}})});
 assert.equal(queryResponse.status,200,`管理対象の招待一覧: ${await queryResponse.text()}`);
 for(const [collection,key,value] of [['members','ownerId','auth-owner'],['group_members','groupId','auth-g'],['calendar_events','groupId','auth-g'],['dvc_point_contracts','groupId','auth-g'],['tasks','tripId','auth-parent']]) {
- const r=await fetch(`${root}:runQuery`,{method:'POST',headers:{Authorization:`Bearer ${token('auth-owner')}`,'Content-Type':'application/json'},body:JSON.stringify({structuredQuery:{from:[{collectionId:collection}],where:{fieldFilter:{field:{fieldPath:key},op:'EQUAL',value:encode(value)}}}})});
+ const r=await fetch(`${root}:runQuery`,{method:'POST',headers:{Authorization:`Bearer ${token('auth-owner')}`,'Content-Type':'application/json'},body:JSON.stringify({structuredQuery:{from:[{collectionId:collection}],where:collection==='tasks'?{compositeFilter:{op:'AND',filters:[{fieldFilter:{field:{fieldPath:key},op:'EQUAL',value:encode(value)}},{fieldFilter:{field:{fieldPath:'groupId'},op:'EQUAL',value:encode('auth-g')}}]}}:{fieldFilter:{field:{fieldPath:key},op:'EQUAL',value:encode(value)}}}})});
  assert.equal(r.status,200,`${collection}の正規一覧を許可: ${await r.text()}`);
 }
 await expectCommit('owner',[
@@ -193,3 +193,18 @@ await expectCommit('auth-expiration-accept',[
  write('account_permissions/auth-expiration-accept',permissions('auth-expiration-invitee',['auth-g'])),
  remove('member_invitations/auth-exp-active'),remove('member_invitations/auth-exp-old'),remove('member_invitation_claims/auth-expiration-accept'),
 ],200,'同じ対象の取得済み招待を期限切れも含めて受理時に削除できる');
+
+await expectCommit('owner',[
+ write('members/auth-origin-self',member('auth-origin-user',['auth-origin-group'],['auth-origin-group'])),
+ write('account_permissions/auth-origin-user',permissions('auth-origin-self',['auth-origin-group'],['auth-origin-group'])),
+ write('groups/auth-origin-group',{version:1,ownerId:'auth-origin-self'}),
+ write('group_members/auth-origin-group:auth-origin-self',{groupId:'auth-origin-group',memberId:'auth-origin-self',isAdministrator:false}),
+ write('trip_entries/auth-reused-trip',{version:1,groupId:'auth-origin-group'}),
+ write('dvc_point_contracts/auth-reused-contract',{version:1,groupId:'auth-origin-group'}),
+ write('calendar_events/auth-reused-event',{version:1,groupId:'auth-origin-group',labelType:'group',memberId:null,labelId:null}),
+],200,'削除済みの親IDが別グループで再利用された状態を準備');
+for(const [table,key,parent] of [['locations','tripId','auth-reused-trip'],['tasks','tripId','auth-reused-trip'],['itinerary_items','tripId','auth-reused-trip'],['dvc_limited_points','contractId','auth-reused-contract'],['dvc_point_usages','contractId','auth-reused-contract'],['calendar_event_overrides','eventId','auth-reused-event']]) {
+ await expectCommit('owner',[write(`${table}/auth-retained-child`,{[key]:parent,groupId:'auth-g',isCancelled:true})],200,'元のグループの子を保持');
+ await get('auth-origin-user',`${table}/auth-retained-child`,403,`${table}は再利用された親IDを根拠に公開しない`);
+}
+for(const table of ['trip_entries','dvc_point_contracts','calendar_events']) await get('auth-owner',`${table}/auth-missing`,404,'不存在の親は欠損として取得できる');
