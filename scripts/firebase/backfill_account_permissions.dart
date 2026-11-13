@@ -3,10 +3,14 @@ import 'dart:io';
 
 import '../timetree/import_timetree.dart' show FirestoreImportClient;
 import 'migrate_firestore_read_models.dart'
-    show encode, fields, migrationArguments;
+    show encode, fields, migrationArguments, itineraryGroupMigrationWrites;
 
 class AccountPermissionsPlan {
-  const AccountPermissionsPlan(this.documents, this.issues, {this.memberDocuments = const {}});
+  const AccountPermissionsPlan(
+    this.documents,
+    this.issues, {
+    this.memberDocuments = const {},
+  });
 
   final Map<String, Map<String, Object?>> memberDocuments;
 
@@ -82,7 +86,11 @@ AccountPermissionsPlan buildAccountPermissionsPlan({
     final account = existing[entry.value['accountId']];
     final groups = (memberGroups[entry.key] ?? {}).toList()..sort();
     final managed = (managedGroups[entry.key] ?? {}).toList()..sort();
-    final expected = {'memberId': entry.key, 'memberGroupIds': groups, 'managedGroupIds': managed};
+    final expected = {
+      'memberId': entry.key,
+      'memberGroupIds': groups,
+      'managedGroupIds': managed,
+    };
     final useExisting = account != null && _samePermissions(account, expected);
     profiles[entry.key] = {
       'groupIds': useExisting ? account['memberGroupIds'] : groups,
@@ -90,7 +98,11 @@ AccountPermissionsPlan buildAccountPermissionsPlan({
     };
     final data = entry.value;
     if (data.containsKey('groupIds') || data.containsKey('managedGroupIds')) {
-      if (!_samePermissions({'memberId': entry.key, 'memberGroupIds': data['groupIds'], 'managedGroupIds': data['managedGroupIds']}, expected)) {
+      if (!_samePermissions({
+        'memberId': entry.key,
+        'memberGroupIds': data['groupIds'],
+        'managedGroupIds': data['managedGroupIds'],
+      }, expected)) {
         issues.add('メンバーの所属一覧と不一致: ${entry.key}');
       }
     }
@@ -153,17 +165,29 @@ List<List<Map<String, Object?>>> authorizationStorageWrites(
     final desired = plan.memberDocuments[id]!;
     final data = fields(doc);
     if (jsonEncode(data['groupIds']) == jsonEncode(desired['groupIds']) &&
-        jsonEncode(data['managedGroupIds']) == jsonEncode(desired['managedGroupIds'])) continue;
+        jsonEncode(data['managedGroupIds']) ==
+            jsonEncode(desired['managedGroupIds'])) {
+      continue;
+    }
     final version = data['version'];
-    if (version is! int || version < 1) throw FormatException('メンバーのバージョンを確認してください: $id');
-    units.add([{
-      'update': {'name': name, 'fields': {
-        ...desired.map((key, value) => MapEntry(key, encode(value))),
-        'version': encode(version + 1),
-      }},
-      'updateMask': {'fieldPaths': ['groupIds', 'managedGroupIds', 'version']},
-      'currentDocument': {'updateTime': doc['updateTime']},
-    }]);
+    if (version is! int || version < 1) {
+      throw FormatException('メンバーのバージョンを確認してください: $id');
+    }
+    units.add([
+      {
+        'update': {
+          'name': name,
+          'fields': {
+            ...desired.map((key, value) => MapEntry(key, encode(value))),
+            'version': encode(version + 1),
+          },
+        },
+        'updateMask': {
+          'fieldPaths': ['groupIds', 'managedGroupIds', 'version'],
+        },
+        'currentDocument': {'updateTime': doc['updateTime']},
+      },
+    ]);
   }
   final invitationCodes = <String>{};
   for (final collection in ['group_members', 'member_invitations']) {
@@ -173,7 +197,10 @@ List<List<Map<String, Object?>>> authorizationStorageWrites(
       late final String id;
       if (collection == 'group_members') {
         final member = plan.memberDocuments[data['memberId']];
-        if (member == null || !(member['groupIds']! as List).contains(data['groupId'])) continue;
+        if (member == null ||
+            !(member['groupIds']! as List).contains(data['groupId'])) {
+          continue;
+        }
         id = '${data['groupId']}:${data['memberId']}';
       } else {
         id = data['invitationCode'] as String;
@@ -184,10 +211,32 @@ List<List<Map<String, Object?>>> authorizationStorageWrites(
       final target = '${name.substring(0, name.lastIndexOf('/'))}/$id';
       if (target == name) continue;
       units.add([
-        {'update': {'name': target, 'fields': doc['fields']}, 'currentDocument': {'exists': false}},
-        {'delete': name, 'currentDocument': {'updateTime': doc['updateTime']}},
+        {
+          'update': {'name': target, 'fields': doc['fields']},
+          'currentDocument': {'exists': false},
+        },
+        {
+          'delete': name,
+          'currentDocument': {'updateTime': doc['updateTime']},
+        },
       ]);
     }
+  }
+  for (final parent in collections['trip_entries'] ?? <Map<String, dynamic>>[]) {
+    final id = (parent['name'] as String).split('/').last;
+    final children = (collections['tasks'] ?? <Map<String, dynamic>>[]).where((doc) => fields(doc)['tripId'] == id).toList();
+    if (children.isEmpty) continue;
+    final data = fields(parent);
+    final groupId = data['groupId'];
+    if (groupId is! String || groupId.isEmpty) throw FormatException('旅行の保存先を確認してください: $id');
+    for (final child in children) {
+      final scope = fields(child)['groupId'];
+      if (scope != null && scope != groupId) throw FormatException('タスクと親旅行の保存先が不一致です: ${child['name']}');
+    }
+    if (children.every((doc) => fields(doc)['groupId'] == groupId)) continue;
+    final version = data['version'];
+    if (version is! int || version < 1) throw FormatException('旅行のバージョンを確認してください: $id');
+    units.add(itineraryGroupMigrationWrites(parent, children));
   }
   return units;
 }
@@ -225,14 +274,20 @@ Future<void> main(List<String> args) async {
   Future<Map<String, Map<String, Object?>>> load(String collection) async {
     final docs = await client.queryDocuments(collection);
     sources[collection] = docs;
-    return {for (final doc in docs) (doc['name'] as String).split('/').last: fields(doc)};
+    return {
+      for (final doc in docs)
+        (doc['name'] as String).split('/').last: fields(doc),
+    };
   }
+
   try {
     final members = await load('members');
     final groups = await load('groups');
     final memberships = await load('group_members');
     final existing = await load('account_permissions');
     await load('member_invitations');
+    await load('trip_entries');
+    await load('tasks');
     final plan = buildAccountPermissionsPlan(
       members: members,
       groups: groups,
@@ -251,20 +306,32 @@ Future<void> main(List<String> args) async {
       return;
     }
     final units = [
-      for (final write in accountPermissionsWrites(plan, existing, client.documentRoot)) [write],
+      for (final write in accountPermissionsWrites(
+        plan,
+        existing,
+        client.documentRoot,
+      ))
+        [write],
       ...authorizationStorageWrites(plan, sources),
     ];
     report['memberDocuments'] = plan.memberDocuments;
     report['writeUnits'] = units.length;
+    final tripIds = {for (final parent in sources['trip_entries']!) (parent['name'] as String).split('/').last};
+    report['retainedTaskIds'] = [for (final task in sources['tasks']!) if (!tripIds.contains(fields(task)['tripId'])) (task['name'] as String).split('/').last];
     await saveReport();
     if (options.apply) {
       for (final unit in units) {
-        final paths = [for (final write in unit) (write['update'] as Map?)?['name'] ?? write['delete']];
+        final paths = [
+          for (final write in unit)
+            (write['update'] as Map?)?['name'] ?? write['delete'],
+        ];
         report['status'] = '適用中';
         report['pendingDocuments'] = paths;
         await saveReport();
         await client.commit(unit);
-        (report['appliedDocuments']! as List<String>).addAll(paths.cast<String>());
+        (report['appliedDocuments']! as List<String>).addAll(
+          paths.cast<String>(),
+        );
         report.remove('pendingDocuments');
         await saveReport();
       }
@@ -274,6 +341,7 @@ Future<void> main(List<String> args) async {
     stdout.writeln('対象=${plan.documents.length}: ${options.reportPath}');
   } catch (error) {
     report['status'] = '失敗または結果不明';
+    report['error'] = error.toString();
     await saveReport();
     stderr.writeln(error);
     exitCode = 1;
