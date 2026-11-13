@@ -277,7 +277,8 @@ service cloud.firestore {
 
     match /group_members/{document} {
       allow read: if belongs(resource.data.groupId);
-      allow create, update: if isVerifiedUser()
+      function validMembershipWrite() {
+        return isVerifiedUser()
                        && document == request.resource.data.groupId + ':' + request.resource.data.memberId
                        && validColor(request.resource.data)
                        && (manages(request.resource.data.groupId)
@@ -285,6 +286,11 @@ service cloud.firestore {
                                && getAfter(/databases/$(database)/documents/groups/$(request.resource.data.groupId)).data.ownerId == ownMember()))
                        && parentAdvanced('groups', request.resource.data.groupId)
                        && membershipDataMatches(request.resource.data);
+      }
+      allow create: if validMembershipWrite();
+      allow update: if request.resource.data.groupId == resource.data.groupId
+                       && request.resource.data.memberId == resource.data.memberId
+                       && validMembershipWrite();
       allow delete: if manages(resource.data.groupId)
                        && parentAdvanced('groups', resource.data.groupId)
                        && !(resource.data.groupId in getAfter(memberPath(resource.data.memberId)).data.groupIds)
