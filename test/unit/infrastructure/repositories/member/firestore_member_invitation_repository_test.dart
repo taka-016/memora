@@ -1,102 +1,25 @@
-import 'package:flutter_test/flutter_test.dart';
-import 'package:mockito/annotations.dart';
-import 'package:mockito/mockito.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:memora/infrastructure/repositories/member/firestore_member_invitation_repository.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/domain/entities/member/member_invitation.dart';
-
-@GenerateMocks([
-  FirebaseFirestore,
-  CollectionReference,
-  DocumentReference,
-  QuerySnapshot,
-  QueryDocumentSnapshot,
-  Query,
-])
-import 'firestore_member_invitation_repository_test.mocks.dart';
+import 'package:memora/infrastructure/repositories/member/firestore_member_invitation_repository.dart';
+import '../../../../helpers/firestore_transaction_store.dart';
 
 void main() {
-  group('FirestoreMemberInvitationRepository', () {
-    late MockFirebaseFirestore mockFirestore;
-    late MockCollectionReference<Map<String, dynamic>> mockCollection;
-    late FirestoreMemberInvitationRepository repository;
-
-    setUp(() {
-      mockFirestore = MockFirebaseFirestore();
-      mockCollection = MockCollectionReference<Map<String, dynamic>>();
-      when(mockFirestore.collection('member_invitations'))
-          .thenReturn(mockCollection);
-      repository = FirestoreMemberInvitationRepository(
-        firestore: mockFirestore,
-      );
-    });
-
-    test(
-      'saveMemberInvitationがmember_invitations collectionにメンバー招待情報をaddする（新規作成）',
-      () async {
-        final memberInvitation = MemberInvitation(
-          id: '',
-          inviterId: 'inviter001',
-          inviteeId: 'invitee001',
-          invitationCode: 'CODE123',
-        );
-
-        when(mockCollection.add(any)).thenAnswer(
-          (_) async => MockDocumentReference<Map<String, dynamic>>(),
-        );
-
-        await repository.saveMemberInvitation(memberInvitation);
-
-        verify(
-          mockCollection.add(
-            argThat(
-              allOf([
-                containsPair('inviterId', 'inviter001'),
-                containsPair('inviteeId', 'invitee001'),
-                containsPair('invitationCode', 'CODE123'),
-                contains('createdAt'),
-                contains('updatedAt'),
-              ]),
-            ),
-          ),
-        ).called(1);
-      },
-    );
-
-    test(
-      'updateMemberInvitationがmember_invitations collectionのドキュメントを更新する（更新）',
-      () async {
-        final memberInvitation = MemberInvitation(
-          id: 'invitation001',
-          inviterId: 'inviter001',
-          inviteeId: 'invitee001',
-          invitationCode: 'CODE123',
-        );
-
-        final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
-        when(mockCollection.doc('invitation001')).thenReturn(mockDocRef);
-        when(mockDocRef.update(any)).thenAnswer((_) async {});
-
-        await repository.updateMemberInvitation(memberInvitation);
-
-        verify(mockCollection.doc('invitation001')).called(1);
-        verify(
-          mockDocRef.update(
-            argThat(
-              allOf([
-                containsPair('inviterId', 'inviter001'),
-                containsPair('inviteeId', 'invitee001'),
-                containsPair('invitationCode', 'CODE123'),
-                contains('updatedAt'),
-                predicate<Map<String, dynamic>>(
-                  (data) => !data.containsKey('createdAt'),
-                  'createdAtを含まない',
-                ),
-              ]),
-            ),
-          ),
-        ).called(1);
-      },
-    );
+  test('招待はコードを文書IDとして初回作成する', () async {
+    final store = FirestoreTransactionStore();
+    final repo = FirestoreMemberInvitationRepository(firestore: store.firestore);
+    await repo.saveMemberInvitation(const MemberInvitation(id: '', inviterId: 'owner', inviteeId: 'm', invitationCode: 'CODE'));
+    expect(store.rows['member_invitations/CODE']!['version'], 1);
+  });
+  test('再発行は旧招待の競合を確認して新コードと入れ替える', () async {
+    final store = FirestoreTransactionStore();
+    store.rows['member_invitations/OLD'] = {'version': 2, 'inviteeId': 'm', 'invitationCode': 'OLD'};
+    final repo = FirestoreMemberInvitationRepository(firestore: store.firestore);
+    const updated = MemberInvitation(id: 'OLD', version: 2, inviterId: 'owner', inviteeId: 'm', invitationCode: 'NEW');
+    await repo.updateMemberInvitation(updated);
+    expect(store.rows.containsKey('member_invitations/OLD'), false);
+    expect(store.rows['member_invitations/NEW']!['version'], 1);
+    await expectLater(repo.updateMemberInvitation(updated), throwsA(isA<FirebaseException>()));
+    expect(store.commits, 1);
   });
 }
