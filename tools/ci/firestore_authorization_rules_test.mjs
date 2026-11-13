@@ -145,3 +145,18 @@ await get('auth-member','groups/auth-missing',404,'不存在グループを欠�
 await get('auth-owner','member_invitations/auth-not-created',404,'新規招待コードの未使用を確認できる');
 const queryResponse=await fetch(`${root}:runQuery`,{method:'POST',headers:{Authorization:`Bearer ${token('auth-owner')}`,'Content-Type':'application/json'},body:JSON.stringify({structuredQuery:{from:[{collectionId:'member_invitations'}],where:{fieldFilter:{field:{fieldPath:'inviteeId'},op:'EQUAL',value:encode('auth-invitee')}}}})});
 assert.equal(queryResponse.status,200,`管理対象の招待一覧: ${await queryResponse.text()}`);
+for(const [collection,key,value] of [['members','ownerId','auth-owner'],['group_members','groupId','auth-g'],['calendar_events','groupId','auth-g'],['dvc_point_contracts','groupId','auth-g'],['tasks','tripId','auth-parent']]) {
+ const r=await fetch(`${root}:runQuery`,{method:'POST',headers:{Authorization:`Bearer ${token('auth-owner')}`,'Content-Type':'application/json'},body:JSON.stringify({structuredQuery:{from:[{collectionId:collection}],where:{fieldFilter:{field:{fieldPath:key},op:'EQUAL',value:encode(value)}}}})});
+ assert.equal(r.status,200,`${collection}の正規一覧を許可: ${await r.text()}`);
+}
+await expectCommit('owner',[
+ write('groups/auth-g:alias',{version:1,ownerId:'auth-outside'}),
+ write('members/auth-outside',{...member('auth-outside',['auth-g:alias'],['auth-g:alias'])}),
+ write('account_permissions/auth-outside',permissions('auth-outside',['auth-g:alias'],['auth-g:alias'])),
+ write('members/alias:auth-outside',{...member(null,['auth-g']),ownerId:'auth-owner'}),
+ write('group_members/auth-g:alias:auth-outside',{groupId:'auth-g',memberId:'alias:auth-outside',isAdministrator:false}),
+],200,'所属参照の衝突を準備');
+await expectCommit('auth-outside',[
+ write('groups/auth-g:alias',{version:2,ownerId:'auth-outside'}),
+ write('group_members/auth-g:alias:auth-outside',{groupId:'auth-g:alias',memberId:'auth-outside',isAdministrator:false}),
+],403,'別グループの所属文書を参照IDの衝突で上書きすることを拒否');
