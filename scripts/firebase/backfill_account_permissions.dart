@@ -1,4 +1,9 @@
-import 'migrate_firestore_read_models.dart' show encode;
+import 'dart:convert';
+import 'dart:io';
+
+import '../timetree/import_timetree.dart' show FirestoreImportClient;
+import 'migrate_firestore_read_models.dart'
+    show encode, fields, migrationArguments;
 
 class AccountPermissionsPlan {
   const AccountPermissionsPlan(this.documents, this.issues);
@@ -111,4 +116,91 @@ List<Map<String, Object?>> accountPermissionsWrites(
           'currentDocument': {'exists': false},
         },
   ];
+}
+
+Future<void> main(List<String> args) async {
+  late final ({String projectId, String reportPath, bool apply}) options;
+  try {
+    options = migrationArguments(args);
+  } on FormatException {
+    stderr.writeln(
+      '使い方: dart run scripts/firebase/backfill_account_permissions.dart <projectId> <report.json> [--apply]',
+    );
+    exitCode = 64;
+    return;
+  }
+  final token = Platform.environment['FIRESTORE_ACCESS_TOKEN'];
+  if (token == null || token.isEmpty) {
+    stderr.writeln('FIRESTORE_ACCESS_TOKENにOAuthアクセストークンを設定してください');
+    exitCode = 1;
+    return;
+  }
+  final client = FirestoreImportClient(options.projectId, '(default)', token);
+  final report = <String, Object?>{
+    'projectId': options.projectId,
+    'apply': options.apply,
+    'status': '確認中',
+    'appliedAccountIds': <String>[],
+  };
+  Future<void> saveReport() async {
+    await File(options.reportPath).writeAsString(
+      const JsonEncoder.withIndent('  ').convert(report),
+    );
+  }
+  Future<Map<String, Map<String, Object?>>> load(String collection) async => {
+    for (final doc in await client.queryDocuments(collection))
+      (doc['name'] as String).split('/').last: fields(doc),
+  };
+  try {
+    final members = await load('members');
+    final groups = await load('groups');
+    final memberships = await load('group_members');
+    final existing = await load('account_permissions');
+    final plan = buildAccountPermissionsPlan(
+      members: members,
+      groups: groups,
+      memberships: memberships,
+      existing: existing,
+    );
+    report['documents'] = plan.documents;
+    report['issues'] = plan.issues;
+    report['status'] = '確認のみ';
+    await saveReport();
+    if (plan.issues.isNotEmpty) {
+      report['status'] = '不整合あり・適用不可';
+      await saveReport();
+      stderr.writeln('不整合が${plan.issues.length}件あります。レポートを確認してください');
+      exitCode = 1;
+      return;
+    }
+    if (options.apply) {
+      final writes = accountPermissionsWrites(plan, existing, client.documentRoot);
+      for (var start = 0; start < writes.length; start += 500) {
+        final end = start + 500 < writes.length ? start + 500 : writes.length;
+        final batch = writes.sublist(start, end);
+        report['status'] = '適用中';
+        report['pendingAccountIds'] = [
+          for (final write in batch)
+            ((write['update'] as Map)['name'] as String).split('/').last,
+        ];
+        await saveReport();
+        await client.commit(batch);
+        (report['appliedAccountIds']! as List<String>).addAll(
+          report['pendingAccountIds']! as List<String>,
+        );
+        report.remove('pendingAccountIds');
+        await saveReport();
+      }
+      report['status'] = '適用済み';
+      await saveReport();
+    }
+    stdout.writeln('対象=${plan.documents.length}: ${options.reportPath}');
+  } catch (error) {
+    report['status'] = '失敗または結果不明';
+    await saveReport();
+    stderr.writeln(error);
+    exitCode = 1;
+  } finally {
+    client.close();
+  }
 }
