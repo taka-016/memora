@@ -153,7 +153,6 @@ void main() {
       when(permissions.doc('missing')).thenReturn(ref);
       when(ref.get()).thenAnswer((_) async => doc);
       when(doc.exists).thenReturn(false);
-      when(permissions.forAccount('missing')).thenAnswer((_) => FirestoreAccountPermissionsSource(mockFirestore).forAccount('missing'));
       expect(await service.getMemberByAccountId('missing'), isNull);
     });
 
