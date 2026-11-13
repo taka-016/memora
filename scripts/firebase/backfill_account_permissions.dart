@@ -143,10 +143,10 @@ Future<void> main(List<String> args) async {
     'appliedAccountIds': <String>[],
   };
   Future<void> saveReport() async {
-    await File(options.reportPath).writeAsString(
-      const JsonEncoder.withIndent('  ').convert(report),
-    );
+    await File(options.reportPath)
+        .writeAsString(const JsonEncoder.withIndent('  ').convert(report));
   }
+
   Future<Map<String, Map<String, Object?>>> load(String collection) async => {
     for (final doc in await client.queryDocuments(collection))
       (doc['name'] as String).split('/').last: fields(doc),
@@ -174,7 +174,11 @@ Future<void> main(List<String> args) async {
       return;
     }
     if (options.apply) {
-      final writes = accountPermissionsWrites(plan, existing, client.documentRoot);
+      final writes = accountPermissionsWrites(
+        plan,
+        existing,
+        client.documentRoot,
+      );
       for (var start = 0; start < writes.length; start += 500) {
         final end = start + 500 < writes.length ? start + 500 : writes.length;
         final batch = writes.sublist(start, end);
