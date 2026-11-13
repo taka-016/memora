@@ -7,7 +7,7 @@ import 'package:memora/composition_root/app_bootstrap.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:memora/application/models/app_theme_mode.dart';
+import 'package:memora/presentation/app/app_theme.dart';
 import 'package:memora/presentation/notifiers/setting/theme_settings_notifier.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/core/app_logger.dart';
@@ -79,15 +79,13 @@ class MyApp extends ConsumerWidget {
     return MaterialApp.router(
       routerConfig: ref.watch(appRouterConfigProvider),
       title: ref.watch(appDisplayNameProvider),
-      theme: _buildTheme(Brightness.light),
-      darkTheme: _buildTheme(Brightness.dark),
-      themeMode: switch (ref.watch(
-        themeSettingsNotifierProvider.select((value) => value.value?.mode),
-      )) {
-        AppThemeMode.light => ThemeMode.light,
-        AppThemeMode.dark => ThemeMode.dark,
-        _ => ThemeMode.system,
-      },
+      theme: buildAppTheme(Brightness.light),
+      darkTheme: buildAppTheme(Brightness.dark),
+      themeMode: resolveAppThemeMode(
+        ref.watch(
+          themeSettingsNotifierProvider.select((value) => value.value?.mode),
+        ),
+      ),
       locale: const Locale('ja'),
       supportedLocales: const [Locale('ja'), Locale('en')],
       localizationsDelegates: const [
@@ -97,26 +95,6 @@ class MyApp extends ConsumerWidget {
       ],
     );
   }
-}
-
-ThemeData _buildTheme(Brightness brightness) {
-  final scheme = ColorScheme.fromSeed(
-    seedColor: Colors.lightBlue,
-    brightness: brightness,
-  );
-  return ThemeData(
-    colorScheme: scheme,
-    appBarTheme: brightness == Brightness.light
-        ? const AppBarTheme(
-            backgroundColor: Colors.lightBlue,
-            foregroundColor: Colors.white,
-          )
-        : AppBarTheme(
-            backgroundColor: scheme.primaryContainer,
-            foregroundColor: scheme.onPrimaryContainer,
-          ),
-    buttonTheme: const ButtonThemeData(alignedDropdown: true),
-  );
 }
 
 class _AvailableApp extends ConsumerWidget {

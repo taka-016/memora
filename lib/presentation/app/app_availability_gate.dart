@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/models/app_availability.dart';
+import 'package:memora/presentation/app/app_theme.dart';
+import 'package:memora/presentation/notifiers/setting/theme_settings_notifier.dart';
 import 'package:memora/presentation/notifiers/app_availability/app_availability_notifier.dart';
 
 class AppAvailabilityGate extends ConsumerStatefulWidget {
@@ -18,17 +20,44 @@ class AppAvailabilityGate extends ConsumerStatefulWidget {
 class _AppAvailabilityGateState extends ConsumerState<AppAvailabilityGate>
     with WidgetsBindingObserver {
   bool _started = false;
+  bool _firstFrameDeferred = true;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.deferFirstFrame();
+    ref.listenManual(
+      appAvailabilityNotifierProvider,
+      (_, _) => _maybeAllowFirstFrame(),
+    );
+    ref.listenManual(
+      themeSettingsNotifierProvider,
+      (_, _) => _maybeAllowFirstFrame(),
+    );
+    _maybeAllowFirstFrame();
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _allowFirstFrame();
     super.dispose();
+  }
+
+  void _maybeAllowFirstFrame() {
+    if (!_firstFrameDeferred || !mounted) return;
+    if (ref.read(appAvailabilityNotifierProvider).isChecking ||
+        ref.read(themeSettingsNotifierProvider).isLoading) {
+      return;
+    }
+    _allowFirstFrame();
+  }
+
+  void _allowFirstFrame() {
+    if (!_firstFrameDeferred) return;
+    _firstFrameDeferred = false;
+    WidgetsBinding.instance.allowFirstFrame();
   }
 
   @override
@@ -49,7 +78,8 @@ class _AppAvailabilityGateState extends ConsumerState<AppAvailabilityGate>
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(appAvailabilityNotifierProvider);
-    if (state.canUseApp) _started = true;
+    final themeState = ref.watch(themeSettingsNotifierProvider);
+    if (state.canUseApp && !themeState.isLoading) _started = true;
     final isCheckingAvailableApp =
         _started &&
         state.isChecking &&
@@ -78,8 +108,12 @@ class _AppAvailabilityGateState extends ConsumerState<AppAvailabilityGate>
               ),
             ),
           ),
-        if (!state.canUseApp && !isCheckingAvailableApp)
+        if (!_started || (!state.canUseApp && !isCheckingAvailableApp))
           MaterialApp(
+            theme: buildAppTheme(Brightness.light),
+            darkTheme: buildAppTheme(Brightness.dark),
+            themeMode: resolveAppThemeMode(themeState.value?.mode),
+            themeAnimationDuration: Duration.zero,
             home: Scaffold(
               body: SafeArea(
                 child: Center(
@@ -113,7 +147,7 @@ class _AppAvailabilityGateState extends ConsumerState<AppAvailabilityGate>
                             textAlign: TextAlign.center,
                           ),
                         if (message != null) const SizedBox(height: 16),
-                        if (state.isChecking)
+                        if (state.isChecking || themeState.isLoading)
                           const CircularProgressIndicator()
                         else
                           FilledButton(
