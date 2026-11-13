@@ -1,3 +1,4 @@
+import 'package:memora/infrastructure/services/firestore_account_permissions_source.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/queries/member/member_query_service.dart';
@@ -57,15 +58,9 @@ class FirestoreMemberQueryService implements MemberQueryService {
   @override
   Future<MemberDto?> getMemberByAccountId(String accountId) async {
     try {
-      final querySnapshot = await _firestore
-          .collection('members')
-          .where('accountId', isEqualTo: accountId)
-          .get();
-
-      if (querySnapshot.docs.isNotEmpty) {
-        return FirestoreMemberMapper.fromFirestore(querySnapshot.docs.first);
-      }
-      return null;
+      final permissions = await FirestoreAccountPermissionsSource(_firestore).forAccount(accountId);
+      if (permissions == null) return null;
+      return getMemberById(permissions.memberId);
     } catch (e, stack) {
       logger.e(
         'FirestoreMemberQueryService.getMemberByAccountId: ${e.toString()}',

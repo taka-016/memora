@@ -1,3 +1,4 @@
+import 'package:memora/infrastructure/services/firestore_account_permissions_source.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/queries/group/group_query_service.dart';
@@ -10,8 +11,11 @@ import 'package:memora/infrastructure/mappers/group/firestore_group_member_mappe
 class FirestoreGroupQueryService implements GroupQueryService {
   final FirebaseFirestore _firestore;
 
-  FirestoreGroupQueryService({FirebaseFirestore? firestore})
-    : _firestore = firestore ?? FirebaseFirestore.instance;
+  FirestoreGroupQueryService({FirebaseFirestore? firestore, FirestoreAccountPermissionsSource? permissions})
+    : _firestore = firestore ?? FirebaseFirestore.instance,
+      _permissions = permissions ?? FirestoreAccountPermissionsSource(firestore ?? FirebaseFirestore.instance);
+
+  final FirestoreAccountPermissionsSource _permissions;
 
   @override
   Future<bool> groupExists(String groupId) async =>
@@ -24,9 +28,7 @@ class FirestoreGroupQueryService implements GroupQueryService {
     List<OrderBy>? membersOrderBy,
   }) async {
     try {
-      final adminGroups = await _getGroupsWhereUserIsOwner(memberId);
-      final memberGroups = await _getGroupsWhereUserIsMember(memberId);
-      final allGroups = _mergeUniqueGroups(adminGroups, memberGroups);
+      final allGroups = await _groupsForCurrentMember(memberId, managed: false);
       final sortedGroups = _sortGroups(allGroups, groupsOrderBy);
 
       return await _addMembersToGroups(
@@ -34,6 +36,7 @@ class FirestoreGroupQueryService implements GroupQueryService {
         membersOrderBy: membersOrderBy,
       );
     } catch (e, stack) {
+      if (e is FirebaseException && e.code == 'permission-denied') rethrow;
       logger.e(
         'FirestoreGroupQueryService.getGroupsWithMembersByMemberId: ${e.toString()}',
         error: e,
@@ -50,15 +53,13 @@ class FirestoreGroupQueryService implements GroupQueryService {
     List<OrderBy>? membersOrderBy,
   }) async {
     try {
-      final managedGroups = await _getGroupsWhereUserIsOwner(
-        ownerId,
-        orderBy: groupsOrderBy,
-      );
+      final managedGroups = _sortGroups(await _groupsForCurrentMember(ownerId, managed: true), groupsOrderBy);
       return await _addMembersToGroups(
         managedGroups,
         membersOrderBy: membersOrderBy,
       );
     } catch (e, stack) {
+      if (e is FirebaseException && e.code == 'permission-denied') rethrow;
       logger.e(
         'FirestoreGroupQueryService.getManagedGroupsWithMembersByOwnerId: ${e.toString()}',
         error: e,
@@ -92,6 +93,7 @@ class FirestoreGroupQueryService implements GroupQueryService {
         members: members,
       );
     } catch (e, stack) {
+      if (e is FirebaseException && e.code == 'permission-denied') rethrow;
       logger.e(
         'FirestoreGroupQueryService.getGroupWithMembersById: ${e.toString()}',
         error: e,
@@ -101,76 +103,19 @@ class FirestoreGroupQueryService implements GroupQueryService {
     }
   }
 
-  Future<List<GroupDto>> _getGroupsWhereUserIsOwner(
-    String memberId, {
-    List<OrderBy>? orderBy,
-  }) async {
-    Query<Map<String, dynamic>> query = _firestore
-        .collection('groups')
-        .where('ownerId', isEqualTo: memberId);
-
-    if (orderBy != null) {
-      for (final order in orderBy) {
-        query = query.orderBy(order.field, descending: order.descending);
-      }
+  Future<List<GroupDto>> _groupsForCurrentMember(String memberId, {required bool managed}) async {
+    final permissions = await _permissions.current();
+    if (permissions == null) return [];
+    if (permissions.memberId != memberId) {
+      throw FirebaseException(plugin: 'cloud_firestore', code: 'permission-denied', message: '本人以外の所属は取得できません');
     }
-
-    final snapshot = await query.get();
-
-    return snapshot.docs.map((doc) {
-      final members = const <GroupMemberDto>[];
-      return FirestoreGroupMapper.fromFirestore(doc, members: members);
-    }).toList();
-  }
-
-  Future<List<GroupDto>> _getGroupsWhereUserIsMember(String memberId) async {
-    final groupMembersSnapshot = await _firestore
-        .collection('group_members')
-        .where('memberId', isEqualTo: memberId)
-        .get();
-
-    final List<GroupDto> groups = [];
-
-    for (final doc in groupMembersSnapshot.docs) {
-      final groupId = doc.data()['groupId'] as String;
-      final groupSnapshot = await _firestore
-          .collection('groups')
-          .doc(groupId)
-          .get();
-
-      if (groupSnapshot.exists) {
-        final members = const <GroupMemberDto>[];
-        groups.add(
-          FirestoreGroupMapper.fromFirestore(groupSnapshot, members: members),
-        );
-      }
+    final ids = managed ? permissions.managedGroupIds : permissions.memberGroupIds;
+    final groups = <GroupDto>[];
+    for (final id in ids) {
+      final doc = await _firestore.collection('groups').doc(id).get();
+      if (doc.exists) groups.add(FirestoreGroupMapper.fromFirestore(doc));
     }
-
     return groups;
-  }
-
-  List<GroupDto> _mergeUniqueGroups(
-    List<GroupDto> adminGroups,
-    List<GroupDto> memberGroups,
-  ) {
-    final Set<String> groupIds = {};
-    final List<GroupDto> uniqueGroups = [];
-
-    for (final group in adminGroups) {
-      if (!groupIds.contains(group.id)) {
-        groupIds.add(group.id);
-        uniqueGroups.add(group);
-      }
-    }
-
-    for (final group in memberGroups) {
-      if (!groupIds.contains(group.id)) {
-        groupIds.add(group.id);
-        uniqueGroups.add(group);
-      }
-    }
-
-    return uniqueGroups;
   }
 
   List<GroupDto> _sortGroups(List<GroupDto> groups, List<OrderBy>? orderBy) {
