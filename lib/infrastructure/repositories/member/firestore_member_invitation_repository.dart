@@ -50,21 +50,23 @@ class FirestoreMemberInvitationRepository
 
   @override
   Future<void> saveMemberInvitation(MemberInvitation memberInvitation) async {
-    final data = FirestoreMemberInvitationMapper.toCreateFirestore(
-      memberInvitation,
-    );
-    await _firestore.collection('member_invitations').add(data);
+    final ref = _firestore.collection('member_invitations').doc(memberInvitation.invitationCode);
+    await _firestore.runTransaction<void>((tx) async {
+      FirestoreVersionCheck.requireAbsent((await tx.get(ref)).data());
+      tx.set(ref, FirestoreMemberInvitationMapper.toCreateFirestore(memberInvitation));
+    });
   }
 
   @override
   Future<void> updateMemberInvitation(MemberInvitation memberInvitation) async {
-    final data = FirestoreMemberInvitationMapper.toUpdateFirestore(
-      memberInvitation,
-    );
-    await _firestore
-        .collection('member_invitations')
-        .doc(memberInvitation.id)
-        .update(data);
+    final old = _firestore.collection('member_invitations').doc(memberInvitation.id);
+    final replacement = _firestore.collection('member_invitations').doc(memberInvitation.invitationCode);
+    await _firestore.runTransaction<void>((tx) async {
+      FirestoreVersionCheck.requireMatch((await tx.get(old)).data(), memberInvitation.version);
+      FirestoreVersionCheck.requireAbsent((await tx.get(replacement)).data());
+      tx.delete(old);
+      tx.set(replacement, FirestoreMemberInvitationMapper.toCreateFirestore(memberInvitation));
+    });
   }
 
   @override
