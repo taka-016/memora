@@ -1,8 +1,19 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../scripts/firebase/backfill_account_permissions.dart';
 
 void main() {
+  test('引数不足では補完を実行せず使用方法を案内する', () async {
+    final result = await Process.run('dart', [
+      'run',
+      'scripts/firebase/backfill_account_permissions.dart',
+    ]);
+    expect(result.exitCode, 64);
+    expect(result.stderr, contains('使い方:'));
+  });
+
   test('不整合がある計画は保存要求に変換しない', () {
     expect(
       () => accountPermissionsWrites(
@@ -38,7 +49,9 @@ void main() {
                 ],
               },
             },
-            'managedGroupIds': {'arrayValue': {'values': <Object>[]}},
+            'managedGroupIds': {
+              'arrayValue': {'values': <Object>[]},
+            },
           },
         },
         'currentDocument': {'exists': false},
@@ -123,7 +136,7 @@ void main() {
     expect(plan.issues, contains(contains('不一致')));
   });
 
-  test('所属なしの本人は空の権限を持ち既存の配列順序の違いは不一致にしない', () {
+  test('所属なしの本人は空の権限を持ち削除済み本人の認可を報告する', () {
     final plan = buildAccountPermissionsPlan(
       members: {
         'm': {'accountId': 'u'},
