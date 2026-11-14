@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:memora/presentation/notifiers/backup/offline_backup_notifier.dart';
 import 'package:flutter/foundation.dart';
 import 'package:memora/core/app_logger.dart';
 
@@ -72,6 +74,9 @@ class CalendarGroupSettingsNotifier extends _$CalendarGroupSettingsNotifier {
       }
       unawaited(_refreshWidget());
     });
+    ref.listen(offlineBackupNotifierProvider, (_, next) {
+      if (next.isRestoring) _skipInitialSelection = true;
+    });
     final generation = ++_generation;
     _owner = ref.watch(calendarSettingsOwnerProvider);
     final memberId = ref.watch(calendarSettingsMemberIdProvider);
@@ -125,6 +130,13 @@ class CalendarGroupSettingsNotifier extends _$CalendarGroupSettingsNotifier {
 
   Future<void> _refreshWidget() async {
     try {
+      final owner = _owner;
+      final scope = owner == null ? null : jsonEncode([
+        owner.split(':').first, owner,
+        state.effectiveSettings.visibleGroupIds.toList()..sort(),
+      ]);
+      await ref.read(calendarWidgetScopeChangedProvider)(scope);
+      if (!ref.mounted) return;
       await ref.read(calendarWidgetGroupsChangedProvider)();
     } catch (error, stack) {
       logger.w('表示設定変更後のウィジェット更新に失敗しました', error: error, stackTrace: stack);

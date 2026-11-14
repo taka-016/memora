@@ -1,3 +1,4 @@
+import 'package:memora/infrastructure/services/home_widget_calendar_cache_storage.dart';
 import 'dart:io';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/services/calendar_group_initialization_policy.dart';
@@ -47,3 +48,7 @@ final calendarMembershipChangesProvider = Provider<Stream<void> Function(String)
   },
 );
 final reloadCalendarMembershipsProvider = Provider<Future<List<GroupDto>> Function(String)>((ref) => (memberId) => ref.read(groupQueryServiceProvider).getGroupsWithMembersByMemberId(memberId));
+
+final calendarWidgetScopeChangedProvider = Provider<Future<void> Function(String?)>((ref) => (scope) async {
+  if (Platform.isAndroid) await const HomeWidgetCalendarCacheStorage().setScope(scope);
+});

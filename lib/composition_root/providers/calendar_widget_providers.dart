@@ -47,9 +47,9 @@ final refreshCalendarWidgetProvider =
         }
         final request = ++generation;
         final storage = ref.read(calendarWidgetCacheStorageProvider);
-        await storage.setScope(null);
         Future<void> refresh() async {
           if (!ref.mounted || request != generation) return;
+          final previousScope = await storage.loadScope();
           final selectionUsecase = ref.read(
             getCalendarWidgetSelectionUsecaseProvider,
           );
@@ -60,6 +60,9 @@ final refreshCalendarWidgetProvider =
             await storage.update();
             return;
           }
+          if (await storage.loadScope() != previousScope) return;
+          await storage.setScope(selection.cacheScope);
+          if (!ref.mounted || request != generation) return;
           final usecase = ref.read(getAndroidWidgetCalendarCacheUsecaseProvider);
           final clock = ref.read(appClockProvider);
           final month =
@@ -74,18 +77,19 @@ final refreshCalendarWidgetProvider =
               ownerId: selection.ownerId,
             );
             final latest = await selectionUsecase.execute();
-            if (!ref.mounted ||
-                request != generation ||
-                latest?.cacheScope != selection.cacheScope) {
+            if (!ref.mounted || request != generation) return;
+            if (latest?.cacheScope != selection.cacheScope) {
+              if (await storage.loadScope() == selection.cacheScope) {
+                await storage.setScope(latest?.cacheScope);
+              }
               return;
             }
+            if (await storage.loadScope() != selection.cacheScope) return;
             if (cache == null) return;
             await storage.save({
               ...cache,
               'lastUpdatedAt': clock.now().toIso8601String(),
             }, merge: date != null);
-            if (!ref.mounted || request != generation) return;
-            await storage.setScope(selection.cacheScope);
           });
         }
 
@@ -94,7 +98,7 @@ final refreshCalendarWidgetProvider =
           try {
             await previous;
           } catch (_) {}
-          await refresh();
+          await storage.synchronize(refresh);
         }
 
         final result = run();

@@ -10,6 +10,30 @@ import 'package:path_provider/path_provider.dart';
 class HomeWidgetCalendarCacheStorage {
   const HomeWidgetCalendarCacheStorage();
 
+  static Future<void> _pending = Future.value();
+
+  Future<void> synchronize(Future<void> Function() action) {
+    final previous = _pending;
+    Future<void> run() async {
+      try { await previous; } catch (_) {}
+      final directory = await getApplicationSupportDirectory();
+      await directory.create(recursive: true);
+      final handle = await File('${directory.path}/calendar_widget_refresh.lock').open(mode: FileMode.append);
+      try {
+        await handle.lock(FileLock.exclusive);
+        await action();
+      } finally {
+        await handle.unlock();
+        await handle.close();
+      }
+    }
+    final result = run();
+    _pending = result;
+    return result;
+  }
+
+  Future<String?> loadScope() => HomeWidget.getWidgetData<String>(scopeKey);
+
   static const cacheKey = 'memora_widget_calendar_cache';
   static const scopeKey = 'memora_widget_calendar_scope';
 

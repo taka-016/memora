@@ -36,8 +36,8 @@ class GetCalendarWidgetSelectionUsecase {
     final id = mode == AppMode.online ? member.accountId : member.id;
     if (id == null) return null;
     final ownerId = '${mode.name}:$id';
-    final settings = await storage.load(ownerId);
     final memberships = await groups.execute(member);
+    final settings = await storage.load(ownerId);
     return CalendarWidgetSelection(
       mode: mode,
       ownerId: ownerId,
