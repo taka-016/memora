@@ -21,6 +21,11 @@ const _buildGradlePath = 'android/app/build.gradle.kts';
 
 void main() {
   group('AndroidWidgetPeriodicUpdate', () {
+    test('旅程未設定でもカレンダーの利用者があれば定期更新を回復する', () {
+      final source = File(_fallbackSchedulerPath).readAsStringSync();
+      expect(source, contains('memora_widget_calendar_scope'));
+      expect(source, contains('targetGroupId.isEmpty() && calendarScope.isEmpty()'));
+    });
     test('workmanagerを依存関係に追加している', () {
       final pubspec = File(_pubspecPath).readAsStringSync();
 

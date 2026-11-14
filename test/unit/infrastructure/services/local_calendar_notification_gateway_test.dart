@@ -27,6 +27,25 @@ void main() {
     PathProviderPlatform.instance = previous;
     await directory.delete(recursive: true);
   });
+  test('通知タップとコールド起動から元グループ・予定・個別回・表示日を渡す', () async {
+    final plugin = MockFlutterLocalNotificationsPlugin();
+    final occurrence = DateTime.utc(2026, 11, 2);
+    final payload = 'calendar:${jsonEncode(['g/e/${occurrence.microsecondsSinceEpoch}/0', '予定', '2026-11-01T09:00:00.000Z', occurrence.toIso8601String(), true])}';
+    final response = NotificationResponse(notificationResponseType: NotificationResponseType.selectedNotification, payload: payload);
+    when(plugin.getNotificationAppLaunchDetails()).thenAnswer((_) async => NotificationAppLaunchDetails(true, notificationResponse: response));
+    final gateway = LocalCalendarNotificationGateway(plugin: plugin, isAndroid: true);
+    final uri = await gateway.getInitialUri();
+    expect(uri!.host.toLowerCase(), 'opencalendar');
+    expect(uri.queryParameters, containsPair('groupId', 'g'));
+    expect(uri.queryParameters, containsPair('eventId', 'e'));
+    expect(uri.queryParameters, containsPair('date', '2026-11-02'));
+    expect(DateTime.parse(uri.queryParameters['occurrence']!), occurrence);
+    final callback = verify(plugin.initialize(settings: anyNamed('settings'), onDidReceiveNotificationResponse: captureAnyNamed('onDidReceiveNotificationResponse'))).captured.single as void Function(NotificationResponse);
+    final clicked = gateway.clickedUris.first;
+    callback(response);
+    expect(await clicked, uri);
+  });
+
   for (final (exact, isAllDay, expectedBody) in [
     (true, false, '2026/10/30 14:00'),
     (false, true, '2026/10/30（終日）'),
@@ -43,14 +62,14 @@ void main() {
       when(android.canScheduleExactNotifications())
           .thenAnswer((_) async => exact);
       final request = CalendarNotificationRequest(
-        key: 'event/0',
+        key: 'group/event/1793368800000000/0',
         title: '予定',
         at: DateTime.utc(2026, 10, 29, 7),
         startDateTime: DateTime(2026, 10, 30, 14),
         isAllDay: isAllDay,
       );
       final payload =
-          'calendar:${jsonEncode([request.key, request.title, request.at.toUtc().toIso8601String()])}';
+          'calendar:${jsonEncode([request.key, request.title, request.at.toUtc().toIso8601String(), request.startDateTime.toIso8601String(), request.isAllDay])}';
       when(plugin.pendingNotificationRequests()).thenAnswer(
         (_) async => [
           PendingNotificationRequest(7, request.title, '', payload),
