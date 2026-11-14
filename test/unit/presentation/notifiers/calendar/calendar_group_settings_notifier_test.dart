@@ -41,6 +41,7 @@ void main() {
   );
   test('設定取得失敗では保存できず読み直してから操作を再開する', () async {
     storage.failLoad = true;
+    await container.read(calendarGroupSettingsNotifierProvider.notifier).reload();
     await flush();
     groups(['a', 'b']);
     expect(container.read(calendarGroupSettingsNotifierProvider).canUseSettings, isFalse);
