@@ -35,10 +35,13 @@ class _Storage implements CalendarGroupSettingsStorage {
 void main() {
   late ProviderContainer container;
   late _Storage storage;
+  var widgetUpdates = 0;
   setUp(() {
     storage = _Storage();
+    widgetUpdates = 0;
     container = ProviderContainer(
       overrides: [
+        calendarWidgetGroupsChangedProvider.overrideWithValue(() async { widgetUpdates++; }),
         calendarSettingsOwnerProvider.overrideWithValue('online:self'),
         calendarSettingsMemberIdProvider.overrideWithValue('self'),
         calendarGroupSettingsStorageProvider.overrideWithValue(storage),
@@ -57,6 +60,31 @@ void main() {
             GroupDto(id: id, ownerId: 'self', name: id, members: const []),
         ],
       );
+  test('復元後の再読込は未保存でも復元された単独グループを自動選択しない', () async {
+    await flush();
+    storage.value = CalendarGroupSettings(hasSavedSettings: false);
+    await container.read(calendarGroupSettingsNotifierProvider.notifier).reload(afterRestore: true);
+    groups(['restored']);
+    await flush();
+    final value = container.read(calendarGroupSettingsNotifierProvider);
+    expect(value.effectiveSettings.visibleGroupIds, isEmpty);
+    expect(value.effectiveSettings.defaultGroupId, isNull);
+    expect(storage.value.hasSavedSettings, isFalse);
+  });
+
+  test('表示選択と有効な所属の変更でウィジェットを更新する', () async {
+    groups(['a', 'b']);
+    await flush();
+    final before = widgetUpdates;
+    await container.read(calendarGroupSettingsNotifierProvider.notifier).setVisibleGroups({'b'});
+    await flush();
+    expect(widgetUpdates, greaterThan(before));
+    final selected = widgetUpdates;
+    groups(['a']);
+    await flush();
+    expect(widgetUpdates, greaterThan(selected));
+  });
+
   for (final membershipsFirst in [true, false]) {
     test('保存設定がなく所属1件なら表示対象と既定グループを自動保存する（所属が先: $membershipsFirst）', () async {
       await flush();

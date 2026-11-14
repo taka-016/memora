@@ -146,6 +146,15 @@ void main() {
     expect(values[key], isNull);
   });
 
+  test('旅程だけの設定解除はカレンダーのキャッシュと表示対象を保持する', () async {
+    const storage = HomeWidgetAndroidWidgetCacheStorage();
+    values[HomeWidgetCalendarCacheStorage.cacheKey] = '/calendar.json';
+    values[HomeWidgetCalendarCacheStorage.scopeKey] = 'calendar-owner';
+    await storage.clearItinerary();
+    expect(values[HomeWidgetCalendarCacheStorage.cacheKey], '/calendar.json');
+    expect(values[HomeWidgetCalendarCacheStorage.scopeKey], 'calendar-owner');
+  });
+
   test('カレンダーの月と全予定をファイルで公開し対象解除時に削除する', () async {
     const calendar = HomeWidgetCalendarCacheStorage();
     final data = <String, Object?>{
