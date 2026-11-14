@@ -50,7 +50,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(CalendarEventDialog), findsNothing);
     expect(tester.widget<FloatingActionButton>(find.byType(FloatingActionButton)).onPressed, isNull);
-    expect(tester.widget<IconButton>(find.byTooltip('表示グループの選択')).onPressed, isNull);
+    expect(tester.widget<IconButton>(find.byWidgetPredicate((w) => w is IconButton && w.tooltip == '表示グループの選択')).onPressed, isNull);
     settings.finish();
     await tester.pumpAndSettle();
     expect(find.byType(CalendarEventDialog), findsOneWidget);
