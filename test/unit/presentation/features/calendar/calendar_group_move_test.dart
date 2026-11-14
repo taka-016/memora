@@ -11,6 +11,28 @@ import '../../../../helpers/test_exception.dart';
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
+  testWidgets('展開回からの移動は系列全体だけを確認し日時・ラベルを固定する', (tester) async {
+    tester.view.physicalSize = const Size(1000, 1800); tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize); addTearDown(tester.view.resetDevicePixelRatio);
+    final move = MockMoveCalendarEventUsecase();
+    final source = calendarTestEvent('series', '予定').copyWith(recurrenceRule: 'FREQ=DAILY;COUNT=5', timeZone: 'Asia/Tokyo');
+    final harness = CalendarTestHarness()..savedEvents.add(source);
+    await harness.pump(tester, move: move);
+    await openEvent(tester);
+    await tester.tap(find.byWidgetPredicate((w) => w is DropdownButtonFormField<String> && w.decoration.labelText == '保存先グループ'));
+    await tester.pumpAndSettle(); await tester.tap(find.text('友人').last); await tester.pumpAndSettle();
+    final recurrenceTile = tester.widget<ListTile>(find.widgetWithText(ListTile, '繰り返し'));
+    expect(recurrenceTile.onTap, isNull);
+    expect(tester.widget<TextButton>(find.widgetWithText(TextButton, '開始日: 2026/10/2')).onPressed, isNull);
+    await tester.ensureVisible(find.text('保存')); await tester.tap(find.text('保存')); await tester.pumpAndSettle();
+    expect(find.textContaining('系列全体を移動'), findsOneWidget);
+    expect(find.text('この予定のみ'), findsNothing);
+    await tester.tap(find.text('保存する')); await tester.pumpAndSettle();
+    final arguments = verify(move.execute(captureAny, captureAny, any)).captured.cast<CalendarEventDto>();
+    expect(arguments.first.originalStartDateTime, isNull);
+    expect(arguments.first.startDateTime, source.startDateTime);
+    expect(arguments.last.groupId, 'g2');
+  });
   testWidgets('非表示グループへの移動を確認しキャンセルと失敗では入力を保持する', (tester) async {
     tester.view.physicalSize = const Size(1000, 1800); tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize); addTearDown(tester.view.resetDevicePixelRatio);
