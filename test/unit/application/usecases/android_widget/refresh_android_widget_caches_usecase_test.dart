@@ -39,15 +39,17 @@ void main() {
     }
   }
 
-  test('対象グループ未設定ならデータ取得しない', () async {
+  test('旅程用グループ未設定でもカレンダーを更新する', () async {
     final storage = MockAndroidWidgetCacheStorage();
+    var updated = false;
     final usecase = RefreshAndroidWidgetCachesUsecase(
       loadTargetGroupId: storage.getTargetGroupId,
       loadInstalledKinds: () async => AndroidWidgetKind.values.toSet(),
       refreshItinerary: (_) async => fail('旅程を取得しない'),
-      refreshCalendar: (_) async => fail('カレンダーを取得しない'),
+      refreshCalendar: (_) async { updated = true; },
     );
     await usecase.execute();
+    expect(updated, isTrue);
   });
 
   test('旅程取得が失敗してもカレンダーを更新し次の呼び出しで旅程を再試行できる', () async {

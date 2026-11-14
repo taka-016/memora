@@ -204,6 +204,21 @@ void main() {
     expect(await storage.loadSelectedDate(), DateTime(2026, 7, 1));
   });
 
+  test('利用者や表示対象が変わったら以前の月を結合しない', () async {
+    const storage = HomeWidgetCalendarCacheStorage();
+    for (final scope in ['online:a:g1', 'online:a:g2', 'online:b:g2']) {
+      await storage.save({
+        'cacheScope': scope,
+        'sourceMode': 'online',
+        'month': scope == 'online:a:g1' ? '2026-05-01' : '2026-11-01',
+        'months': {if (scope == 'online:a:g1') '2026-05-01': {} else '2026-11-01': {}},
+      });
+      final path = values[HomeWidgetCalendarCacheStorage.cacheKey] as String;
+      final saved = jsonDecode(await File(path).readAsString()) as Map;
+      if (scope != 'online:a:g1') expect((saved['months'] as Map).keys, ['2026-11-01']);
+    }
+  });
+
   test('カレンダー更新は既存月を置き換え設定と選択日を維持する', () async {
     const storage = HomeWidgetCalendarCacheStorage();
     values[HomeWidgetCalendarCacheStorage.selectedDateKey] = '2026-11-03';

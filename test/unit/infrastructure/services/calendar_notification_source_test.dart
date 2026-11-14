@@ -1,4 +1,6 @@
 import '../../../helpers/test_exception.dart';
+import 'package:drift/native.dart';
+import 'package:memora/infrastructure/database/offline_database.dart';
 
 import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
@@ -33,6 +35,32 @@ import 'calendar_notification_source_test.mocks.dart';
   MockSpec<GetCalendarEventsUsecase>(),
 ])
 void main() {
+  test('オフライン通知も現在の利用者の所属だけを取得する', () async {
+    final database = OfflineDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    await database.initialize();
+    await database.customStatement("INSERT INTO groups (id, owner_id, name, color) VALUES ('outside', 'other', '別の利用者', '#4CAF50')");
+    final member = MockGetCurrentMemberUseCase();
+    final groups = MockGetGroupsWithMembersUsecase();
+    final events = MockGetCalendarEventsUsecase();
+    const current = MemberDto(id: 'me', displayName: '本人');
+    when(member.execute()).thenAnswer((_) async => current);
+    when(groups.execute(current)).thenAnswer((_) async => [
+      const GroupDto(id: 'mine', ownerId: 'me', name: '自分', members: []),
+    ]);
+    final source = DeviceCalendarNotificationSource(
+      currentMember: member, groups: groups, events: events,
+      clock: FixedAppClock(DateTime(2026, 11, 1)), database: database,
+    );
+    await source.load();
+    verify(events.execute('mine', period: anyNamed('period'))).called(1);
+    verifyNever(events.execute('outside', period: anyNamed('period')));
+    when(member.execute()).thenAnswer((_) async => null);
+    clearInteractions(events);
+    expect(await source.load(), isEmpty);
+    verifyZeroInteractions(events);
+  });
+
   test('グループごとの初回取得と失敗からの復旧後に受信済み予定を統合し変更削除を反映する', () async {
     final fixture = _NotificationFixture(ids: ['g', 'other']);
     addTearDown(fixture.dispose);
