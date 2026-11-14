@@ -220,11 +220,15 @@ void main() {
         'cacheScope': scope,
         'sourceMode': 'online',
         'month': scope == 'online:a:g1' ? '2026-05-01' : '2026-11-01',
-        'months': {if (scope == 'online:a:g1') '2026-05-01': {} else '2026-11-01': {}},
+        'months': {
+          if (scope == 'online:a:g1') '2026-05-01': {} else '2026-11-01': {},
+        },
       });
       final path = values[HomeWidgetCalendarCacheStorage.cacheKey] as String;
       final saved = jsonDecode(await File(path).readAsString()) as Map;
-      if (scope != 'online:a:g1') expect((saved['months'] as Map).keys, ['2026-11-01']);
+      if (scope != 'online:a:g1') {
+        expect((saved['months'] as Map).keys, ['2026-11-01']);
+      }
     }
   });
 

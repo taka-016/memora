@@ -6,16 +6,25 @@ import 'package:memora/application/usecases/group/get_groups_with_members_usecas
 import 'package:memora/application/usecases/member/get_current_member_usecase.dart';
 
 class CalendarWidgetSelection {
-  CalendarWidgetSelection({required this.mode, required this.ownerId, required Set<String> visibleGroupIds})
-    : visibleGroupIds = Set.unmodifiable(visibleGroupIds);
+  CalendarWidgetSelection({
+    required this.mode,
+    required this.ownerId,
+    required Set<String> visibleGroupIds,
+  }) : visibleGroupIds = Set.unmodifiable(visibleGroupIds);
   final AppMode mode;
   final String ownerId;
   final Set<String> visibleGroupIds;
-  String get cacheScope => jsonEncode([mode.name, ownerId, visibleGroupIds.toList()..sort()]);
+  String get cacheScope =>
+      jsonEncode([mode.name, ownerId, visibleGroupIds.toList()..sort()]);
 }
 
 class GetCalendarWidgetSelectionUsecase {
-  const GetCalendarWidgetSelectionUsecase({required this.mode, required this.currentMember, required this.groups, required this.storage});
+  const GetCalendarWidgetSelectionUsecase({
+    required this.mode,
+    required this.currentMember,
+    required this.groups,
+    required this.storage,
+  });
   final AppMode mode;
   final GetCurrentMemberUseCase currentMember;
   final GetGroupsWithMembersUsecase groups;
@@ -29,8 +38,12 @@ class GetCalendarWidgetSelectionUsecase {
     final ownerId = '${mode.name}:$id';
     final settings = await storage.load(ownerId);
     final memberships = await groups.execute(member);
-    return CalendarWidgetSelection(mode: mode, ownerId: ownerId,
-      visibleGroupIds: settings.retainGroups(memberships.map((g) => g.id).toSet()).visibleGroupIds,
+    return CalendarWidgetSelection(
+      mode: mode,
+      ownerId: ownerId,
+      visibleGroupIds: settings
+          .retainGroups(memberships.map((g) => g.id).toSet())
+          .visibleGroupIds,
     );
   }
 }

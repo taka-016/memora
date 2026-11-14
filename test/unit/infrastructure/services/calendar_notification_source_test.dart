@@ -1,4 +1,5 @@
 import '../../../helpers/test_exception.dart';
+
 import 'package:drift/native.dart';
 import 'package:memora/infrastructure/database/offline_database.dart';
 
@@ -39,18 +40,25 @@ void main() {
     final database = OfflineDatabase(NativeDatabase.memory());
     addTearDown(database.close);
     await database.initialize();
-    await database.customStatement("INSERT INTO groups (id, owner_id, name, color) VALUES ('outside', 'other', '別の利用者', '#4CAF50')");
+    await database.customStatement(
+      "INSERT INTO groups (id, owner_id, name, color) VALUES ('outside', 'other', '別の利用者', '#4CAF50')",
+    );
     final member = MockGetCurrentMemberUseCase();
     final groups = MockGetGroupsWithMembersUsecase();
     final events = MockGetCalendarEventsUsecase();
     const current = MemberDto(id: 'me', displayName: '本人');
     when(member.execute()).thenAnswer((_) async => current);
-    when(groups.execute(current)).thenAnswer((_) async => [
-      const GroupDto(id: 'mine', ownerId: 'me', name: '自分', members: []),
-    ]);
+    when(groups.execute(current)).thenAnswer(
+      (_) async => [
+        const GroupDto(id: 'mine', ownerId: 'me', name: '自分', members: []),
+      ],
+    );
     final source = DeviceCalendarNotificationSource(
-      currentMember: member, groups: groups, events: events,
-      clock: FixedAppClock(DateTime(2026, 11, 1)), database: database,
+      currentMember: member,
+      groups: groups,
+      events: events,
+      clock: FixedAppClock(DateTime(2026, 11, 1)),
+      database: database,
     );
     await source.load();
     verify(events.execute('mine', period: anyNamed('period'))).called(1);

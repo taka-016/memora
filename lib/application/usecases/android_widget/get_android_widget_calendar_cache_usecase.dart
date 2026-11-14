@@ -29,7 +29,11 @@ class GetAndroidWidgetCalendarCacheUsecase {
   final AppMode mode;
   final CurrentUserService? currentUser;
 
-  Future<Map<String, Object?>?> execute(Set<String> groupIds, DateTime month, {String? ownerId}) async {
+  Future<Map<String, Object?>?> execute(
+    Set<String> groupIds,
+    DateTime month, {
+    String? ownerId,
+  }) async {
     DateTime gridStart(DateTime value) {
       final first = DateTime(value.year, value.month);
       return DateTime(first.year, first.month, 1 - 6);
@@ -55,12 +59,17 @@ class GetAndroidWidgetCalendarCacheUsecase {
       if (group == null) continue;
       visibleIds.add(groupId);
       final groupEvents = await events.getCalendarEventsByGroupId(
-        groupId, period: CalendarEventPeriod(from: from, to: to),
+        groupId,
+        period: CalendarEventPeriod(from: from, to: to),
       );
       source.addAll(groupEvents);
-      displayLabels.addAll(buildCalendarDisplayLabels(
-        group, await labels.getCalendarLabelsByGroupId(groupId), events: groupEvents,
-      ));
+      displayLabels.addAll(
+        buildCalendarDisplayLabels(
+          group,
+          await labels.getCalendarLabelsByGroupId(groupId),
+          events: groupEvents,
+        ),
+      );
     }
     final occurrences =
         [for (final event in source) ...expander.expand(event, from, to)]
@@ -118,7 +127,8 @@ class GetAndroidWidgetCalendarCacheUsecase {
       for (final value in months) dayFormat(value): monthData(value),
     };
     final deviceOwner = mode == AppMode.online
-        ? (await currentUser?.getCurrentUser())?.id : null;
+        ? (await currentUser?.getCurrentUser())?.id
+        : null;
     return {
       'cacheScope': jsonEncode([mode.name, ownerId ?? deviceOwner, visibleIds]),
       'visibleGroupIds': visibleIds,

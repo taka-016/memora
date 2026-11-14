@@ -60,11 +60,7 @@ void main() {
             refreshAndroidWidgetItineraryCacheUsecaseProvider.overrideWithValue(
               itinerary,
             ),
-            refreshCalendarWidgetProvider.overrideWithValue((
-              group,
-              date,
-            ) async {
-              expect(group, 'group');
+            refreshCalendarWidgetProvider.overrideWithValue((date) async {
               expect(date, isNull);
               calendarCalls++;
             }),
@@ -97,7 +93,7 @@ void main() {
     final container = ProviderContainer();
     addTearDown(container.dispose);
     await expectLater(
-      container.read(refreshCalendarWidgetProvider)('group', null),
+      container.read(refreshCalendarWidgetProvider)(null),
       completes,
     );
   });

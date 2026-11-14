@@ -29,13 +29,20 @@ void main() {
         loadTargetGroupId: () async => null,
         loadSelectedItineraryDateId: () async => null,
         targetGroupExists: (_, _) async => false,
-        clearWidgetCache: () async { if (fail) throw TestException('旅程更新失敗'); },
+        clearWidgetCache: () async {
+          if (fail) throw TestException('旅程更新失敗');
+        },
         refreshWidgetCache: (_, _) async {},
-        refreshCalendarCache: () async { calendar++; },
+        refreshCalendarCache: () async {
+          calendar++;
+        },
         registerPeriodicUpdateTask: (_) async {},
       );
       if (fail) {
-        await expectLater(usecase.execute(snapshot), throwsA(isA<TestException>()));
+        await expectLater(
+          usecase.execute(snapshot),
+          throwsA(isA<TestException>()),
+        );
       } else {
         await usecase.execute(snapshot);
       }

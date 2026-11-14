@@ -157,8 +157,7 @@ final refreshAndroidWidgetCachesUsecaseProvider =
                     .getSelectedItineraryDateId(),
               );
         },
-        refreshCalendar: (groupId) =>
-            ref.read(refreshCalendarWidgetProvider)(groupId, null),
+        refreshCalendar: () => ref.read(refreshCalendarWidgetProvider)(null),
       );
     });
 

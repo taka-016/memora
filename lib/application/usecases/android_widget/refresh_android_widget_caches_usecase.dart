@@ -11,7 +11,7 @@ class RefreshAndroidWidgetCachesUsecase {
   final Future<String?> Function() loadTargetGroupId;
   final Future<Set<AndroidWidgetKind>> Function() loadInstalledKinds;
   final Future<void> Function(String groupId) refreshItinerary;
-  final Future<void> Function(String groupId) refreshCalendar;
+  final Future<void> Function() refreshCalendar;
 
   Future<void> execute({
     Set<AndroidWidgetKind> kinds = const {
@@ -31,7 +31,7 @@ class RefreshAndroidWidgetCachesUsecase {
       try {
         await (kind == AndroidWidgetKind.itinerary
             ? refreshItinerary(groupId!)
-            : refreshCalendar(groupId ?? ''));
+            : refreshCalendar());
       } catch (error, stack) {
         failure ??= error;
         failureStack ??= stack;

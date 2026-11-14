@@ -41,7 +41,9 @@ void main() {
     widgetUpdates = 0;
     container = ProviderContainer(
       overrides: [
-        calendarWidgetGroupsChangedProvider.overrideWithValue(() async { widgetUpdates++; }),
+        calendarWidgetGroupsChangedProvider.overrideWithValue(() async {
+          widgetUpdates++;
+        }),
         calendarSettingsOwnerProvider.overrideWithValue('online:self'),
         calendarSettingsMemberIdProvider.overrideWithValue('self'),
         calendarGroupSettingsStorageProvider.overrideWithValue(storage),
@@ -63,7 +65,9 @@ void main() {
   test('復元後の再読込は未保存でも復元された単独グループを自動選択しない', () async {
     await flush();
     storage.value = CalendarGroupSettings(hasSavedSettings: false);
-    await container.read(calendarGroupSettingsNotifierProvider.notifier).reload(afterRestore: true);
+    await container
+        .read(calendarGroupSettingsNotifierProvider.notifier)
+        .reload(afterRestore: true);
     groups(['restored']);
     await flush();
     final value = container.read(calendarGroupSettingsNotifierProvider);
@@ -76,7 +80,9 @@ void main() {
     groups(['a', 'b']);
     await flush();
     final before = widgetUpdates;
-    await container.read(calendarGroupSettingsNotifierProvider.notifier).setVisibleGroups({'b'});
+    await container
+        .read(calendarGroupSettingsNotifierProvider.notifier)
+        .setVisibleGroups({'b'});
     await flush();
     expect(widgetUpdates, greaterThan(before));
     final selected = widgetUpdates;
@@ -311,7 +317,9 @@ void main() {
     storage.pending = old;
     await flush();
     container.updateOverrides([
-      calendarWidgetGroupsChangedProvider.overrideWithValue(() async { widgetUpdates++; }),
+      calendarWidgetGroupsChangedProvider.overrideWithValue(() async {
+        widgetUpdates++;
+      }),
       calendarSettingsOwnerProvider.overrideWithValue('online:other'),
       calendarSettingsMemberIdProvider.overrideWithValue('other'),
       calendarGroupSettingsStorageProvider.overrideWithValue(storage),

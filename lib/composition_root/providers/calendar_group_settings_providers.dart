@@ -22,4 +22,6 @@ final calendarSettingsOwnerProvider = Provider<String?>((ref) {
   return id == null ? null : '${mode.name}:$id';
 });
 
-final calendarWidgetGroupsChangedProvider = Provider<Future<void> Function()>((ref) => ref.read(refreshSelectedCalendarWidgetCacheProvider));
+final calendarWidgetGroupsChangedProvider = Provider<Future<void> Function()>(
+  (ref) => ref.read(refreshSelectedCalendarWidgetCacheProvider),
+);

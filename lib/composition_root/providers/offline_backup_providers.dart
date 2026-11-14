@@ -103,13 +103,16 @@ final synchronizeOfflineBackupRestoreUsecaseProvider =
           await storage.clearItinerary();
           await storage.updateWidget();
         },
-        refreshWidgetCache: (groupId, selectedItineraryDateId) =>
-            ref.read(refreshAndroidWidgetCachesUsecaseProvider).execute(kinds: const {AndroidWidgetKind.itinerary}),
+        refreshWidgetCache: (groupId, selectedItineraryDateId) => ref
+            .read(refreshAndroidWidgetCachesUsecaseProvider)
+            .execute(kinds: const {AndroidWidgetKind.itinerary}),
         refreshCalendarCache: () async {
           ref.invalidate(currentMemberNotifierProvider);
           ref.invalidate(groupTimelineGroupSelectionNotifierProvider);
           ref.invalidate(calendarDisplaySettingsNotifierProvider);
-          final settings = ref.read(calendarGroupSettingsNotifierProvider.notifier);
+          final settings = ref.read(
+            calendarGroupSettingsNotifierProvider.notifier,
+          );
           await settings.reload(afterRestore: true);
           await ref.read(refreshSelectedCalendarWidgetCacheProvider)();
         },

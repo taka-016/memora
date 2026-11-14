@@ -28,8 +28,7 @@ void main() {
             expect(group, 'group');
             fetched.add(AndroidWidgetKind.itinerary);
           },
-          refreshCalendar: (group) async {
-            expect(group, 'group');
+          refreshCalendar: () async {
             fetched.add(AndroidWidgetKind.calendar);
           },
         );
@@ -46,7 +45,9 @@ void main() {
       loadTargetGroupId: storage.getTargetGroupId,
       loadInstalledKinds: () async => AndroidWidgetKind.values.toSet(),
       refreshItinerary: (_) async => fail('旅程を取得しない'),
-      refreshCalendar: (_) async { updated = true; },
+      refreshCalendar: () async {
+        updated = true;
+      },
     );
     await usecase.execute();
     expect(updated, isTrue);
@@ -63,7 +64,7 @@ void main() {
       refreshItinerary: (_) async {
         if (++attempts == 1) throw TestException('取得失敗');
       },
-      refreshCalendar: (_) async {
+      refreshCalendar: () async {
         calendarUpdates++;
       },
     );

@@ -169,16 +169,18 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final eventId = _pendingInitialEventId;
     final deviceRequest = eventId?.startsWith('device:') == true;
     final targetGroupId = widget.initialEventGroupId;
-    if (eventId != null && !deviceRequest && targetGroupId != null &&
+    if (eventId != null &&
+        !deviceRequest &&
+        targetGroupId != null &&
         settings.groups.any((group) => group.id == targetGroupId) &&
         !settings.effectiveSettings.visibleGroupIds.contains(targetGroupId)) {
       _pendingInitialEventId = null;
       final version = _initialRequestVersion;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted || version != _initialRequestVersion) return;
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('指定された予定のグループは非表示です。表示対象を設定から変更できます'),
-        ));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('指定された予定のグループは非表示です。表示対象を設定から変更できます')),
+        );
       });
       WidgetsBinding.instance.ensureVisualUpdate();
       return;

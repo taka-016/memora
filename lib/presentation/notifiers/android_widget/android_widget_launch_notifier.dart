@@ -293,7 +293,9 @@ class AndroidWidgetLaunchNotifier extends Notifier<AndroidWidgetLaunchState> {
             .read(getGroupsWithMembersUsecaseProvider)
             .execute(member);
         final groupId = calendarUri.queryParameters['groupId'];
-        if (groupId == null || groupId.isEmpty || groups.any((group) => group.id == groupId)) {
+        if (groupId == null ||
+            groupId.isEmpty ||
+            groups.any((group) => group.id == groupId)) {
           resolution = AndroidWidgetCalendarLaunchDestination(
             requestId: version,
             memberId: member.id,

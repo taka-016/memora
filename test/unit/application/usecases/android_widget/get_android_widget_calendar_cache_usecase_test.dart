@@ -278,28 +278,59 @@ void main() {
   test('複数グループの同じ予定IDと固定ラベルを元グループ付きで保存する', () async {
     when(groups.getGroupWithMembersById('other')).thenAnswer(
       (_) async => const GroupDto(
-        id: 'other', ownerId: 'owner', name: '友人', members: [], color: '#FF0000',
+        id: 'other',
+        ownerId: 'owner',
+        name: '友人',
+        members: [],
+        color: '#FF0000',
       ),
     );
     for (final id in ['group', 'other']) {
       when(events.getCalendarEventsByGroupId(id, period: anyNamed('period')))
-          .thenAnswer((_) async => [event('同じID', DateTime.utc(2026, 11, 2), DateTime.utc(2026, 11, 3)).copyWith(groupId: id)]);
+          .thenAnswer(
+            (_) async => [
+              event(
+                '同じID',
+                DateTime.utc(2026, 11, 2),
+                DateTime.utc(2026, 11, 3),
+              ).copyWith(groupId: id),
+            ],
+          );
     }
-    final cache = (await usecase.execute({'group', 'other'}, DateTime(2026, 11)))!;
-    final day = (cache['days'] as List).firstWhere((day) => day['date'] == '2026-11-02');
-    expect((day['events'] as List).map((e) => e['groupId']), ['group', 'other']);
-    expect((day['events'] as List).map((e) => e['color']), ['#4CAF50', '#FF0000']);
+    final cache = (await usecase.execute({
+      'group',
+      'other',
+    }, DateTime(2026, 11)))!;
+    final day = (cache['days'] as List).firstWhere(
+      (day) => day['date'] == '2026-11-02',
+    );
+    expect((day['events'] as List).map((e) => e['groupId']), [
+      'group',
+      'other',
+    ]);
+    expect((day['events'] as List).map((e) => e['color']), [
+      '#4CAF50',
+      '#FF0000',
+    ]);
   });
 
   test('未選択や削除済みでも日付・祝日・六曜を保持して予定を取得しない', () async {
-    when(groups.getGroupWithMembersById('removed')).thenAnswer((_) async => null);
-    for (final ids in <Set<String>>[{}, {'removed'}]) {
+    when(groups.getGroupWithMembersById('removed'))
+        .thenAnswer((_) async => null);
+    for (final ids in <Set<String>>[
+      {},
+      {'removed'},
+    ]) {
       final cache = (await usecase.execute(ids, DateTime(2026, 11)))!;
-      final day = (cache['days'] as List).firstWhere((day) => day['date'] == '2026-11-03');
+      final day = (cache['days'] as List).firstWhere(
+        (day) => day['date'] == '2026-11-03',
+      );
       expect(day['holidayName'], '文化の日');
       expect(day['rokuyo'], isNotEmpty);
       expect(day['events'], isEmpty);
     }
-    verifyNever(events.getCalendarEventsByGroupId(any, period: anyNamed('period')));
+    verifyNever(
+      events.getCalendarEventsByGroupId(any, period: anyNamed('period')),
+    );
   });
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:memora/core/app_logger.dart';
+
 import 'dart:async';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -63,8 +64,13 @@ class CalendarGroupSettingsNotifier extends _$CalendarGroupSettingsNotifier {
     listenSelf((previous, next) {
       if (!next.canUseSettings) return;
       if (previous?.canUseSettings == true &&
-          setEquals(previous!.effectiveSettings.visibleGroupIds, next.effectiveSettings.visibleGroupIds) &&
-          listEquals(previous.groups, next.groups)) return;
+          setEquals(
+            previous!.effectiveSettings.visibleGroupIds,
+            next.effectiveSettings.visibleGroupIds,
+          ) &&
+          listEquals(previous.groups, next.groups)) {
+        return;
+      }
       unawaited(_refreshWidget());
     });
     final generation = ++_generation;
