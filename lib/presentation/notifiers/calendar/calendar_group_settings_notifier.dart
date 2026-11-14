@@ -60,7 +60,6 @@ class CalendarGroupSettingsNotifier extends _$CalendarGroupSettingsNotifier {
   bool _skipInitialSelection = false;
   @override
   CalendarGroupSettingsState build() {
-    _skipInitialSelection = false;
     listenSelf((previous, next) {
       if (!next.canUseSettings) return;
       if (previous?.canUseSettings == true &&
@@ -76,6 +75,23 @@ class CalendarGroupSettingsNotifier extends _$CalendarGroupSettingsNotifier {
     final generation = ++_generation;
     _owner = ref.watch(calendarSettingsOwnerProvider);
     final memberId = ref.watch(calendarSettingsMemberIdProvider);
+    final changes = ref.watch(calendarMembershipChangesProvider);
+    if (_owner != null && memberId != null && changes != null) {
+      var membershipRequest = 0;
+      final subscription = changes(_owner!).listen((_) async {
+        final request = ++membershipRequest;
+        try {
+          final groups = await ref.read(reloadCalendarMembershipsProvider)(memberId);
+          if (!ref.mounted || generation != _generation || request != membershipRequest) return;
+          ref.read(groupTimelineGroupSelectionNotifierProvider.notifier).setLoadedGroups(memberId: memberId, groups: groups);
+        } catch (error, stack) {
+          if (ref.mounted && generation == _generation) logger.w('所属変更後のグループ取得に失敗しました', error: error, stackTrace: stack);
+        }
+      }, onError: (Object error, StackTrace stack) {
+        if (ref.mounted) logger.w('グループの所属監視に失敗しました', error: error, stackTrace: stack);
+      });
+      ref.onDispose(() => unawaited(subscription.cancel()));
+    }
     ref.onDispose(() => _generation++);
     void receive(GroupTimelineGroupSelectionState selection) {
       if (!ref.mounted ||
@@ -126,11 +142,14 @@ class CalendarGroupSettingsNotifier extends _$CalendarGroupSettingsNotifier {
       final settings = await ref
           .read(calendarGroupSettingsStorageProvider)
           .load(owner);
+      final allowed = !owner.startsWith('offline:') ||
+          await ref.read(calendarGroupInitializationAllowedProvider)(owner);
       if (!ref.mounted ||
           generation != _generation ||
           request != _loadRequest) {
         return;
       }
+      if (!allowed) _skipInitialSelection = true;
       await _applyLoaded(
         state.copyWith(settings: settings, isLoading: false, loadFailed: false),
       );

@@ -1,3 +1,4 @@
+import 'package:memora/composition_root/providers/calendar_group_settings_providers.dart';
 import 'package:memora/application/usecases/android_widget/refresh_android_widget_caches_usecase.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_group_settings_notifier.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_display_settings_notifier.dart';
@@ -107,6 +108,8 @@ final synchronizeOfflineBackupRestoreUsecaseProvider =
             .read(refreshAndroidWidgetCachesUsecaseProvider)
             .execute(kinds: const {AndroidWidgetKind.itinerary}),
         refreshCalendarCache: () async {
+          final member = await ref.read(offlineBackupCurrentMemberStorageProvider).load();
+          await ref.read(calendarGroupInitializationPolicyProvider).markRestored('offline:${member.id}');
           ref.invalidate(currentMemberNotifierProvider);
           ref.invalidate(groupTimelineGroupSelectionNotifierProvider);
           ref.invalidate(calendarDisplaySettingsNotifierProvider);

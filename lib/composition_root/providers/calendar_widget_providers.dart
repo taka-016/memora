@@ -26,19 +26,27 @@ final getCalendarWidgetSelectionUsecaseProvider =
       ),
     );
 
+final calendarWidgetSupportedProvider = Provider<bool>((ref) => Platform.isAndroid);
+final calendarWidgetCacheStorageProvider = Provider<HomeWidgetCalendarCacheStorage>((ref) => const HomeWidgetCalendarCacheStorage());
+final getAndroidWidgetCalendarCacheUsecaseProvider = Provider<GetAndroidWidgetCalendarCacheUsecase>((ref) => GetAndroidWidgetCalendarCacheUsecase(
+  events: ref.watch(calendarEventQueryServiceProvider), labels: ref.watch(calendarLabelQueryServiceProvider),
+  groups: ref.watch(groupQueryServiceProvider), expander: ref.watch(calendarRecurrenceExpanderProvider),
+  mode: ref.watch(appModeProvider), currentUser: ref.watch(appModeProvider) == AppMode.online ? ref.watch(authServiceProvider) : null,
+));
+
 final refreshCalendarWidgetProvider =
     Provider<Future<void> Function(DateTime?)>((ref) {
       var generation = 0;
       Future<void> pending = Future.value();
       return (date) async {
-        if (!Platform.isAndroid) return;
+        if (!ref.read(calendarWidgetSupportedProvider)) return;
         if (!(await ref.read(
           loadInstalledAndroidWidgetKindsProvider,
         )()).contains(AndroidWidgetKind.calendar)) {
           return;
         }
         final request = ++generation;
-        const storage = HomeWidgetCalendarCacheStorage();
+        final storage = ref.read(calendarWidgetCacheStorageProvider);
         await storage.setScope(null);
         Future<void> refresh() async {
           if (!ref.mounted || request != generation) return;
@@ -52,17 +60,7 @@ final refreshCalendarWidgetProvider =
             await storage.update();
             return;
           }
-          await storage.setScope(selection.cacheScope);
-          final usecase = GetAndroidWidgetCalendarCacheUsecase(
-            events: ref.read(calendarEventQueryServiceProvider),
-            labels: ref.read(calendarLabelQueryServiceProvider),
-            groups: ref.read(groupQueryServiceProvider),
-            expander: ref.read(calendarRecurrenceExpanderProvider),
-            mode: ref.read(appModeProvider),
-            currentUser: ref.read(appModeProvider) == AppMode.online
-                ? ref.read(authServiceProvider)
-                : null,
-          );
+          final usecase = ref.read(getAndroidWidgetCalendarCacheUsecaseProvider);
           final clock = ref.read(appClockProvider);
           final month =
               date ??
@@ -86,6 +84,8 @@ final refreshCalendarWidgetProvider =
               ...cache,
               'lastUpdatedAt': clock.now().toIso8601String(),
             }, merge: date != null);
+            if (!ref.mounted || request != generation) return;
+            await storage.setScope(selection.cacheScope);
           });
         }
 

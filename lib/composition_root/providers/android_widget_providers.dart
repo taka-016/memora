@@ -1,3 +1,5 @@
+import 'package:memora/application/services/combined_android_widget_launch_uri_source.dart';
+import 'package:memora/composition_root/providers/calendar_notification_providers.dart';
 import 'package:memora/application/queries/android_widget/android_widget_itinerary_query_service.dart';
 import 'package:memora/infrastructure/queries/android_widget/firestore_android_widget_itinerary_query_service.dart';
 import 'package:memora/infrastructure/queries/android_widget/sqlite_android_widget_itinerary_query_service.dart';
@@ -131,8 +133,11 @@ final updateAndroidWidgetIntervalUsecaseProvider =
 
 final watchAndroidWidgetLaunchUriUsecaseProvider =
     Provider<WatchAndroidWidgetLaunchUriUsecase>((ref) {
-      return const WatchAndroidWidgetLaunchUriUsecase(
-        HomeWidgetAndroidWidgetLaunchUriSource(),
+      return WatchAndroidWidgetLaunchUriUsecase(
+        CombinedAndroidWidgetLaunchUriSource([
+          const HomeWidgetAndroidWidgetLaunchUriSource(),
+          ref.watch(localCalendarNotificationGatewayProvider),
+        ]),
       );
     });
 
