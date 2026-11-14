@@ -72,8 +72,8 @@ class CalendarNotifier extends _$CalendarNotifier {
         events: monthChanged ? _expand(_series, day) : null,
       );
     }
-    if (monthChanged && state.isWatching && _loadVersion > 0) {
-      unawaited(_watchEvents(_loadVersion));
+    if (monthChanged && state.isWatching && _months.isNotEmpty) {
+      unawaited(_watchEvents());
     }
   }
 
@@ -151,7 +151,7 @@ class CalendarNotifier extends _$CalendarNotifier {
       );
     }
 
-    await _watchEvents(version, restart: true);
+    await _watchEvents(restart: true);
     if (!active()) return;
     try {
       _labelsSubscription = ref
@@ -206,7 +206,7 @@ class CalendarNotifier extends _$CalendarNotifier {
     }
   }
 
-  Future<void> _watchEvents(int version, {bool restart = false}) async {
+  Future<void> _watchEvents({bool restart = false}) async {
     final month = state.month;
     final previous = _months[month];
     if (previous != null && !restart) return;
@@ -216,7 +216,7 @@ class CalendarNotifier extends _$CalendarNotifier {
     _months[month] = cached;
     bool active() => ref.mounted && identical(_months[month], cached);
     if (previous != null) await previous.subscription?.cancel();
-    if (!active() || version != _loadVersion) return;
+    if (!active()) return;
 
     void publish() {
       if (!active() || state.month != month) return;
