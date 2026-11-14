@@ -25,7 +25,7 @@ class CalendarState {
   final GroupDto? group;
   final String groupLoadError;
   List<CalendarLabelDto> get displayLabels => group == null
-      ? const []
+      ? labels
       : buildCalendarDisplayLabels(group!, labels, events: events);
   final DateTime selectedDate;
   DateTime get month => DateTime(selectedDate.year, selectedDate.month);
