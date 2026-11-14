@@ -26,22 +26,49 @@ class SqliteCalendarEventRepository implements CalendarEventRepository {
   }
 
   @override
-  Future<void> moveCalendarEvent(CalendarEvent expected, CalendarEvent replacement) => db.transaction(() async {
-    final rows = await db.rows('calendar_events', where: 'id = ?', args: [expected.id]);
-    final overrides = await db.rows('calendar_event_overrides', where: 'event_id = ?', args: [expected.id]);
-    if (rows.isEmpty || replacement.id != expected.id || replacement.groupId == expected.groupId) {
+  Future<void> moveCalendarEvent(
+    CalendarEvent expected,
+    CalendarEvent replacement,
+  ) => db.transaction(() async {
+    final rows = await db.rows(
+      'calendar_events',
+      where: 'id = ?',
+      args: [expected.id],
+    );
+    final overrides = await db.rows(
+      'calendar_event_overrides',
+      where: 'event_id = ?',
+      args: [expected.id],
+    );
+    if (rows.isEmpty ||
+        replacement.id != expected.id ||
+        replacement.groupId == expected.groupId) {
       throw ValidationException('予定が変更されています。再読み込みしてからやり直してください');
     }
-    final current = CalendarEventMapper.toEntity(SqliteCalendarEventMapper.fromRow(rows.single,
-      overrides: overrides.map((row) => CalendarOverrideMapper.fromRow(row, expected.isAllDay)).toList()));
-    if ((expected.overridesFingerprint != null && expected.overridesFingerprint != current.overridesFingerprint) ||
-      calendarEventContent(current.copyWith(overrides: const [])) != calendarEventContent(expected.copyWith(overrides: const []))) {
+    final current = CalendarEventMapper.toEntity(
+      SqliteCalendarEventMapper.fromRow(
+        rows.single,
+        overrides: overrides
+            .map(
+              (row) => CalendarOverrideMapper.fromRow(row, expected.isAllDay),
+            )
+            .toList(),
+      ),
+    );
+    if ((expected.overridesFingerprint != null &&
+            expected.overridesFingerprint != current.overridesFingerprint) ||
+        calendarEventContent(current.copyWith(overrides: const [])) !=
+            calendarEventContent(expected.copyWith(overrides: const []))) {
       throw ValidationException('予定が変更されています。再読み込みしてからやり直してください');
     }
     final moved = replacement.copyWith(overrides: current.overrides);
     await _validateLabel(moved);
     await db.deleteRows('calendar_event_overrides', 'event_id', expected.id);
-    await db.updateRow('calendar_events', expected.id, SqliteCalendarEventMapper.toRow(moved));
+    await db.updateRow(
+      'calendar_events',
+      expected.id,
+      SqliteCalendarEventMapper.toRow(moved),
+    );
     await _saveOverrides(moved);
   });
 

@@ -470,7 +470,10 @@ class _CalendarEventPreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final label = state.displayLabels
-        .where((label) => label.id == event.labelKey && label.groupId == event.groupId)
+        .where(
+          (label) =>
+              label.id == event.labelKey && label.groupId == event.groupId,
+        )
         .firstOrNull;
     final scheme = Theme.of(context).colorScheme;
     final color = label == null

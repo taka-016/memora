@@ -111,8 +111,10 @@ class MultiGroupCalendarNotifier extends _$MultiGroupCalendarNotifier {
         isSaving: _groups.values.any((g) => g.isSaving),
         isWatching: _groups.values.every((g) => g.isWatching),
         loadError: errors.join('\n'),
-        hasLoadedEvents: _initialized && _groups.values.every((g) => g.hasLoadedEvents),
-        hasLoadedLabels: _initialized && _groups.values.every((g) => g.hasLoadedLabels),
+        hasLoadedEvents:
+            _initialized && _groups.values.every((g) => g.hasLoadedEvents),
+        hasLoadedLabels:
+            _initialized && _groups.values.every((g) => g.hasLoadedLabels),
       ),
     );
   }

@@ -12,10 +12,17 @@ void main() {
     expect(value.defaultGroupId, isNull);
   });
   test('表示対象と非表示の既定グループを利用者・モードごとに分けて保存する', () async {
-    await storage.save('online:a', CalendarGroupSettings(
-      visibleGroupIds: {'family', 'friends'}, defaultGroupId: 'private',
-    ));
-    await storage.save('offline:a', CalendarGroupSettings(visibleGroupIds: {'local'}));
+    await storage.save(
+      'online:a',
+      CalendarGroupSettings(
+        visibleGroupIds: {'family', 'friends'},
+        defaultGroupId: 'private',
+      ),
+    );
+    await storage.save(
+      'offline:a',
+      CalendarGroupSettings(visibleGroupIds: {'local'}),
+    );
     final value = await storage.load('online:a');
     expect(value.visibleGroupIds, {'family', 'friends'});
     expect(value.defaultGroupId, 'private');

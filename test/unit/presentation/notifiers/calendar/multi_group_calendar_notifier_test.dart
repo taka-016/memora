@@ -11,69 +11,143 @@ import 'package:memora/presentation/notifiers/calendar/multi_group_calendar_noti
 
 class _Settings extends CalendarGroupSettingsNotifier {
   @override
-  CalendarGroupSettingsState build() => CalendarGroupSettingsState(settings: CalendarGroupSettings(visibleGroupIds: {'a', 'b'}), groups: const [
-    GroupDto(id: 'a', ownerId: 'self', name: '家族', color: '#FF0000', members: []),
-    GroupDto(id: 'b', ownerId: 'self', name: '友人', color: '#0000FF', members: []),
-  ], groupsReady: true, isLoading: false);
-  void select(Set<String> ids) => state = state.copyWith(settings: CalendarGroupSettings(visibleGroupIds: ids));
+  CalendarGroupSettingsState build() => CalendarGroupSettingsState(
+    settings: CalendarGroupSettings(visibleGroupIds: {'a', 'b'}),
+    groups: const [
+      GroupDto(
+        id: 'a',
+        ownerId: 'self',
+        name: '家族',
+        color: '#FF0000',
+        members: [],
+      ),
+      GroupDto(
+        id: 'b',
+        ownerId: 'self',
+        name: '友人',
+        color: '#0000FF',
+        members: [],
+      ),
+    ],
+    groupsReady: true,
+    isLoading: false,
+  );
+  void select(Set<String> ids) => state = state.copyWith(
+    settings: CalendarGroupSettings(visibleGroupIds: ids),
+  );
 }
+
 class _Calendar extends CalendarNotifier {
   int loads = 0;
   @override
-  CalendarState build(String groupId) => CalendarState(selectedDate: DateTime(2026, 11, 14), group: GroupDto(id: groupId, ownerId: 'self', name: groupId, members: const []));
+  CalendarState build(String groupId) => CalendarState(
+    selectedDate: DateTime(2026, 11, 14),
+    group: GroupDto(
+      id: groupId,
+      ownerId: 'self',
+      name: groupId,
+      members: const [],
+    ),
+  );
   @override
-  Future<void> load() async { loads++; }
+  Future<void> load() async {
+    loads++;
+  }
+
   @override
   void selectDate(DateTime date) => state = state.copyWith(selectedDate: date);
-  void receive({String error = ''}) => state = state.copyWith(loadError: error, events: [CalendarEventDto(id: 'same', groupId: groupId, labelType: 'group', title: groupId, startDateTime: DateTime(2026, 11, 14), endDateTime: DateTime(2026, 11, 15), isAllDay: true)]);
+  void receive({String error = ''}) => state = state.copyWith(
+    loadError: error,
+    events: [
+      CalendarEventDto(
+        id: 'same',
+        groupId: groupId,
+        labelType: 'group',
+        title: groupId,
+        startDateTime: DateTime(2026, 11, 14),
+        endDateTime: DateTime(2026, 11, 15),
+        isAllDay: true,
+      ),
+    ],
+  );
 }
+
 final _ownerProvider = NotifierProvider<_Owner, String>(_Owner.new);
+
 class _Owner extends Notifier<String> {
   @override
   String build() => 'online:old';
   void select(String owner) => state = owner;
 }
+
 void main() {
   test('利用者切替時は保持されている同じグループの子状態も破棄する', () async {
-    final container = ProviderContainer(overrides: [
-      calendarSettingsOwnerProvider.overrideWith((ref) => ref.watch(_ownerProvider)),
-      calendarGroupSettingsNotifierProvider.overrideWith(_Settings.new),
-      calendarNotifierProvider('a').overrideWith(_Calendar.new),
-      calendarNotifierProvider('b').overrideWith(_Calendar.new),
-    ]);
+    final container = ProviderContainer(
+      overrides: [
+        calendarSettingsOwnerProvider.overrideWith(
+          (ref) => ref.watch(_ownerProvider),
+        ),
+        calendarGroupSettingsNotifierProvider.overrideWith(_Settings.new),
+        calendarNotifierProvider('a').overrideWith(_Calendar.new),
+        calendarNotifierProvider('b').overrideWith(_Calendar.new),
+      ],
+    );
     addTearDown(container.dispose);
     container.listen(calendarNotifierProvider('a'), (_, _) {});
     container.listen(multiGroupCalendarNotifierProvider, (_, _) {});
     await container.pump();
-    (container.read(calendarNotifierProvider('a').notifier) as _Calendar).receive();
-    expect(container.read(multiGroupCalendarNotifierProvider).calendar.events, isNotEmpty);
+    (container.read(calendarNotifierProvider('a').notifier) as _Calendar)
+        .receive();
+    expect(
+      container.read(multiGroupCalendarNotifierProvider).calendar.events,
+      isNotEmpty,
+    );
     container.read(_ownerProvider.notifier).select('online:new');
     container.read(multiGroupCalendarNotifierProvider);
     await container.pump();
-    expect(container.read(multiGroupCalendarNotifierProvider).groups.keys.toSet(), {'a', 'b'});
-    expect(container.read(multiGroupCalendarNotifierProvider).calendar.events, isEmpty);
+    expect(
+      container.read(multiGroupCalendarNotifierProvider).groups.keys.toSet(),
+      {'a', 'b'},
+    );
+    expect(
+      container.read(multiGroupCalendarNotifierProvider).calendar.events,
+      isEmpty,
+    );
   });
   test('グループごとに取得・ラベルを区別し一部失敗と解除で他の予定を失わない', () async {
     final a = _Calendar();
     final b = _Calendar();
-    final container = ProviderContainer(overrides: [
-      calendarSettingsOwnerProvider.overrideWithValue('online:self'),
-      calendarGroupSettingsNotifierProvider.overrideWith(_Settings.new),
-      calendarNotifierProvider('a').overrideWith(() => a),
-      calendarNotifierProvider('b').overrideWith(() => b),
-    ]);
+    final container = ProviderContainer(
+      overrides: [
+        calendarSettingsOwnerProvider.overrideWithValue('online:self'),
+        calendarGroupSettingsNotifierProvider.overrideWith(_Settings.new),
+        calendarNotifierProvider('a').overrideWith(() => a),
+        calendarNotifierProvider('b').overrideWith(() => b),
+      ],
+    );
     addTearDown(container.dispose);
     container.listen(multiGroupCalendarNotifierProvider, (_, _) {});
     await container.pump();
-    a.receive(); b.receive(error: '取得失敗');
+    a.receive();
+    b.receive(error: '取得失敗');
     var state = container.read(multiGroupCalendarNotifierProvider);
     expect(state.calendar.events.map((e) => e.groupId), ['a', 'b']);
-    expect(state.calendar.displayLabels.map((l) => (l.groupId, l.id)).toSet().length, 2);
+    expect(
+      state.calendar.displayLabels.map((l) => (l.groupId, l.id)).toSet().length,
+      2,
+    );
     expect(state.failedGroupIds, {'b'});
-    final notifier = container.read(multiGroupCalendarNotifierProvider.notifier);
+    final notifier = container.read(
+      multiGroupCalendarNotifierProvider.notifier,
+    );
     notifier.selectDate(DateTime(2026, 12, 1));
-    expect(container.read(calendarNotifierProvider('a')).month, DateTime(2026, 12));
-    (container.read(calendarGroupSettingsNotifierProvider.notifier) as _Settings).select({'a'});
+    expect(
+      container.read(calendarNotifierProvider('a')).month,
+      DateTime(2026, 12),
+    );
+    (container.read(
+      calendarGroupSettingsNotifierProvider.notifier,
+    ) as _Settings).select({'a'});
     await container.pump();
     state = container.read(multiGroupCalendarNotifierProvider);
     expect(state.calendar.events.map((e) => e.groupId), ['a']);

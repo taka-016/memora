@@ -1,8 +1,11 @@
+import 'package:memora/presentation/features/calendar/calendar_event_dialog.dart';
 import 'package:mockito/annotations.dart';
 import 'package:memora/application/usecases/calendar/calendar_label_management_usecase.dart';
+
 import 'calendar_test_support.mocks.dart';
 import '../../../../helpers/calendar_group_settings_test_support.dart';
 import '../../../../helpers/fake_current_member_notifier.dart';
+
 import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/presentation/notifiers/member/current_member_notifier.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_group_settings_notifier.dart';
@@ -31,6 +34,22 @@ import 'package:memora/infrastructure/time/fixed_app_clock.dart';
 import 'package:memora/presentation/features/calendar/calendar_screen.dart';
 
 import '../../notifiers/calendar/calendar_notifier_test.mocks.dart';
+
+Future<void> calendarTapVisible(WidgetTester tester, Finder target) async {
+  if (find
+      .ancestor(of: target, matching: find.byType(CalendarEventDialog))
+      .evaluate()
+      .isNotEmpty) {
+    await tester.ensureVisible(target);
+  }
+  await tester.tap(target);
+}
+
+Finder calendarLabelDropdown() => find.byWidgetPredicate(
+  (widget) =>
+      widget is DropdownButtonFormField<String> &&
+      widget.decoration.labelText == '色ラベル',
+);
 
 const calendarTestDay2 = Key('calendar_day_2026_10_2');
 const calendarTestFamily = CalendarLabelDto(
@@ -66,7 +85,10 @@ class CalendarTestHarness {
 
   Future<void> openLabels(WidgetTester tester) async {
     final context = tester.element(find.byType(CalendarScreen));
-    showDialog<void>(context: context, builder: (_) => const CalendarLabelsDialog(groupId: 'g1'));
+    showDialog<void>(
+      context: context,
+      builder: (_) => const CalendarLabelsDialog(groupId: 'g1'),
+    );
   }
 
   Future<void> pump(
@@ -80,8 +102,22 @@ class CalendarTestHarness {
     DateTime? now,
     MoveCalendarEventUsecase? move,
   }) async {
-    when(management.save(any, any)).thenAnswer((call) async { await saveLabel.execute(call.positionalArguments[0] as CalendarLabelDto); });
-    when(management.reorder(any, any, any, expectedVersions: anyNamed('expectedVersions'))).thenAnswer((call) async { await reorder.execute(call.positionalArguments[0] as String, call.positionalArguments[1] as List<String>); });
+    when(management.save(any, any)).thenAnswer((call) async {
+      await saveLabel.execute(call.positionalArguments[0] as CalendarLabelDto);
+    });
+    when(
+      management.reorder(
+        any,
+        any,
+        any,
+        expectedVersions: anyNamed('expectedVersions'),
+      ),
+    ).thenAnswer((call) async {
+      await reorder.execute(
+        call.positionalArguments[0] as String,
+        call.positionalArguments[1] as List<String>,
+      );
+    });
     when(events.execute('g1', period: anyNamed('period')))
         .thenAnswer((_) async => List.of(savedEvents));
     when(labels.execute('g2')).thenAnswer((_) async => []);
@@ -131,9 +167,16 @@ class CalendarTestHarness {
       ProviderScope(
         overrides: [
           calendarSettingsOwnerProvider.overrideWithValue('online:owner'),
-          calendarGroupSettingsNotifierProvider.overrideWith(() => TestCalendarGroupSettingsNotifier()),
-          currentMemberNotifierProvider.overrideWith(() => FakeCurrentMemberNotifier.loaded(const MemberDto(id: 'owner', displayName: '本人'))),
-          if (move != null) moveCalendarEventUsecaseProvider.overrideWithValue(move),
+          calendarGroupSettingsNotifierProvider.overrideWith(
+            () => TestCalendarGroupSettingsNotifier(),
+          ),
+          currentMemberNotifierProvider.overrideWith(
+            () => FakeCurrentMemberNotifier.loaded(
+              const MemberDto(id: 'owner', displayName: '本人'),
+            ),
+          ),
+          if (move != null)
+            moveCalendarEventUsecaseProvider.overrideWithValue(move),
           calendarLabelManagementUsecaseProvider.overrideWithValue(management),
           externalCalendarOwnerProvider.overrideWithValue(null),
           if (externalCalendar != null)
@@ -172,9 +215,7 @@ class CalendarTestHarness {
                 .copyWith(textScaler: TextScaler.linear(textScale)),
             child: child!,
           ),
-          home: Scaffold(
-            body: CalendarScreen(groupId: 'g1', groupName: '家族', onBack: () {}),
-          ),
+          home: Scaffold(body: const CalendarScreen()),
         ),
       ),
     );

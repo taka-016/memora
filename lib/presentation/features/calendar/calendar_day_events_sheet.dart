@@ -16,12 +16,10 @@ import 'package:memora/presentation/features/calendar/calendar_swipe_pager.dart'
 class CalendarDayEventsSheet extends ConsumerStatefulWidget {
   const CalendarDayEventsSheet({
     super.key,
-    this.groupId,
     required this.date,
     required this.onEdit,
     required this.onAdd,
   });
-  final String? groupId;
   final DateTime date;
   final ValueChanged<CalendarEventDto> onEdit;
   final VoidCallback onAdd;
@@ -67,7 +65,8 @@ class _CalendarDayEventsSheetState
         ? state
         : overlayExternalCalendar(state, external);
     final canEdit =
-        !state.isSaving && ref.watch(calendarGroupSettingsNotifierProvider).canUseSettings;
+        !state.isSaving &&
+        ref.watch(calendarGroupSettingsNotifierProvider).canUseSettings;
     return PopScope(
       canPop: !state.isSaving,
       child: FractionallySizedBox(
@@ -135,7 +134,9 @@ class _CalendarDayEventsSheetState
                                   final scheme = Theme.of(context).colorScheme;
                                   final label = displayState.displayLabels
                                       .where(
-                                        (label) => label.id == event.labelKey && label.groupId == event.groupId,
+                                        (label) =>
+                                            label.id == event.labelKey &&
+                                            label.groupId == event.groupId,
                                       )
                                       .firstOrNull;
                                   final source = external?.events

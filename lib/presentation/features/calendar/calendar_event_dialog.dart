@@ -1,5 +1,7 @@
 import 'package:memora/presentation/notifiers/calendar/calendar_mutation_coordinator.dart';
+
 import 'dart:async';
+
 import 'package:memora/presentation/notifiers/calendar/calendar_state.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_group_settings_notifier.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_event_input_notifier.dart';
@@ -39,13 +41,7 @@ String calendarPeriodText(CalendarEventDto event) {
 }
 
 class CalendarEventDialog extends ConsumerStatefulWidget {
-  const CalendarEventDialog({
-    super.key,
-    this.groupId,
-    required this.date,
-    this.event,
-  });
-  final String? groupId;
+  const CalendarEventDialog({super.key, required this.date, this.event});
   final DateTime date;
   final CalendarEventDto? event;
 
@@ -110,14 +106,29 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
   void initState() {
     super.initState();
     final event = widget.event;
-    _groupId = event?.groupId ?? ref.read(calendarGroupSettingsNotifierProvider).effectiveSettings.defaultGroupId;
+    _groupId =
+        event?.groupId ??
+        ref
+            .read(calendarGroupSettingsNotifierProvider)
+            .effectiveSettings
+            .defaultGroupId;
     Future.microtask(() {
-      if (mounted) unawaited(ref.read(calendarEventInputNotifierProvider(_session).notifier).selectGroup(_groupId, original: event));
+      if (mounted) {
+        unawaited(
+          ref
+              .read(calendarEventInputNotifierProvider(_session).notifier)
+              .selectGroup(_groupId, original: event),
+        );
+      }
     });
     _seriesAtOpen = event == null
         ? null
         : ref
-              .read(calendarNotifierProvider(widget.event?.groupId ?? _groupId ?? '').notifier)
+              .read(
+                calendarNotifierProvider(
+                  widget.event?.groupId ?? _groupId ?? '',
+                ).notifier,
+              )
               .seriesForEvent(event.id);
     _notifications = event?.notificationMinutesBefore;
     _initialNotifications = _notifications == null
@@ -151,7 +162,11 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
     _seriesAllDay = event == null
         ? null
         : ref
-                  .read(calendarNotifierProvider(widget.event?.groupId ?? _groupId ?? '').notifier)
+                  .read(
+                    calendarNotifierProvider(
+                      widget.event?.groupId ?? _groupId ?? '',
+                    ).notifier,
+                  )
                   .seriesForEvent(event.id)
                   ?.isAllDay ??
               event.isAllDay;
@@ -286,19 +301,36 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
     final scope = recurring && !moving ? await _chooseScope(false) : null;
     if (!mounted || recurring && !moving && scope == null) return;
     final groups = ref.read(calendarGroupSettingsNotifierProvider);
-    if (!groups.groupsReady || !groups.groups.any((g) => g.id == _groupId)) return;
+    if (!groups.groupsReady || !groups.groups.any((g) => g.id == _groupId)) {
+      return;
+    }
     final hidden = !groups.effectiveSettings.visibleGroupIds.contains(_groupId);
     if (moving || hidden) {
       final target = groups.groups.firstWhere((g) => g.id == _groupId);
-      final confirmed = await showDialog<bool>(context: context, builder: (context) => AlertDialog(
-        title: const Text('保存先の確認'),
-        content: Text([
-          '「${target.name}」のメンバーと予定を共有します。',
-          if (moving && widget.event!.recurrenceRule != null) '系列全体を移動し、ラベルを変更先の「グループの予定」に戻します。繰り返し条件・日時・取消情報は保持します。',
-          if (hidden) 'このグループは非表示のため、保存した予定は表示から外れます。',
-        ].join('\n')),
-        actions: [TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('キャンセル')), FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('保存する'))],
-      ));
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('保存先の確認'),
+          content: Text(
+            [
+              '「${target.name}」のメンバーと予定を共有します。',
+              if (moving && widget.event!.recurrenceRule != null)
+                '系列全体を移動し、ラベルを変更先の「グループの予定」に戻します。繰り返し条件・日時・取消情報は保持します。',
+              if (hidden) 'このグループは非表示のため、保存した予定は表示から外れます。',
+            ].join('\n'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('キャンセル'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('保存する'),
+            ),
+          ],
+        ),
+      );
       if (!mounted || confirmed != true) return;
     }
     if (scope != CalendarChangeScope.only &&
@@ -311,7 +343,10 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
       setState(() => _error = '繰り返しの終了日は開始日以降にしてください');
       return;
     }
-    setState(() { _saving = true; _error = ''; });
+    setState(() {
+      _saving = true;
+      _error = '';
+    });
     try {
       final expander = ref.read(calendarRecurrenceExpanderProvider);
       final original = widget.event?.originalStartDateTime;
@@ -373,7 +408,14 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
         recurrenceRule: rule,
         timeZone: rule != null && !_allDay ? _zone : null,
       );
-      await ref.read(calendarMutationCoordinatorProvider).save(input, expected: widget.event, expectedSeries: recurring ? _seriesAtOpen : null, scope: scope);
+      await ref
+          .read(calendarMutationCoordinatorProvider)
+          .save(
+            input,
+            expected: widget.event,
+            expectedSeries: recurring ? _seriesAtOpen : null,
+            scope: scope,
+          );
       if (mounted) Navigator.of(context).pop();
     } on ApplicationValidationException catch (error) {
       if (mounted) setState(() => _error = error.message);
@@ -446,18 +488,37 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
 
   Future<void> _delete() async {
     final event = widget.event!;
-    final scope = event.originalStartDateTime != null ? await _chooseScope(true) : null;
-    if (!mounted || event.originalStartDateTime != null && scope == null) return;
+    final scope = event.originalStartDateTime != null
+        ? await _chooseScope(true)
+        : null;
+    if (!mounted || event.originalStartDateTime != null && scope == null) {
+      return;
+    }
     if (event.originalStartDateTime == null) {
-      final confirmed = await showDialog<bool>(context: context, builder: (context) => AlertDialog(
-        title: const Text('予定を削除'), content: const Text('この予定を削除しますか？'),
-        actions: [TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('キャンセル')), TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('削除する'))],
-      ));
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('予定を削除'),
+          content: const Text('この予定を削除しますか？'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('キャンセル'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('削除する'),
+            ),
+          ],
+        ),
+      );
       if (!mounted || confirmed != true) return;
     }
     setState(() => _saving = true);
     try {
-      await ref.read(calendarMutationCoordinatorProvider).delete(event, expectedSeries: _seriesAtOpen, scope: scope);
+      await ref
+          .read(calendarMutationCoordinatorProvider)
+          .delete(event, expectedSeries: _seriesAtOpen, scope: scope);
       if (mounted) Navigator.of(context).pop();
     } on ApplicationValidationException catch (error) {
       if (mounted) setState(() => _error = error.message);
@@ -490,7 +551,9 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
       );
       _initialNotifications = List.of(_notifications!);
     }
-    final movingSeries = widget.event?.recurrenceRule != null && _groupId != widget.event?.groupId;
+    final movingSeries =
+        widget.event?.recurrenceRule != null &&
+        _groupId != widget.event?.groupId;
     final dateInputStyle = TextButton.styleFrom(
       alignment: Alignment.centerLeft,
       foregroundColor: Theme.of(context).colorScheme.onSurface,
@@ -525,7 +588,10 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                  if (widget.event != null) Text('保存先: ${groups.groups.where((g) => g.id == widget.event!.groupId).firstOrNull?.name ?? widget.event!.groupId}'),
+                  if (widget.event != null)
+                    Text(
+                      '保存先: ${groups.groups.where((g) => g.id == widget.event!.groupId).firstOrNull?.name ?? widget.event!.groupId}',
+                    ),
                   const SizedBox(height: 16),
                   Expanded(
                     child: SingleChildScrollView(
@@ -541,18 +607,60 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                           children: [
                             DropdownButtonFormField<String>(
                               key: ValueKey(('calendar_event_group', _groupId)),
-                              initialValue: groups.groups.any((g) => g.id == _groupId) ? _groupId : null,
+                              initialValue:
+                                  groups.groups.any((g) => g.id == _groupId)
+                                  ? _groupId
+                                  : null,
                               isExpanded: true,
-                              decoration: const InputDecoration(labelText: '保存先グループ', border: OutlineInputBorder()),
-                              items: [for (final group in groups.groups) DropdownMenuItem(value: group.id, child: Text(group.name))],
-                              onChanged: state.isSaving || !groups.groupsReady ? null : (id) {
-                                setState(() { _groupId = id; _labelId = 'group:'; });
-                                unawaited(ref.read(calendarEventInputNotifierProvider(_session).notifier).selectGroup(id));
-                              },
+                              decoration: const InputDecoration(
+                                labelText: '保存先グループ',
+                                border: OutlineInputBorder(),
+                              ),
+                              items: [
+                                for (final group in groups.groups)
+                                  DropdownMenuItem(
+                                    value: group.id,
+                                    child: Text(group.name),
+                                  ),
+                              ],
+                              onChanged: state.isSaving || !groups.groupsReady
+                                  ? null
+                                  : (id) {
+                                      setState(() {
+                                        _groupId = id;
+                                        _labelId = 'group:';
+                                      });
+                                      unawaited(
+                                        ref
+                                            .read(
+                                              calendarEventInputNotifierProvider(
+                                                _session,
+                                              ).notifier,
+                                            )
+                                            .selectGroup(id),
+                                      );
+                                    },
                             ),
-                            if (groups.groupsReady && groups.groups.isEmpty) const Text('グループを作成するか、グループに参加してください'),
-                            if (inputState.isLoading) const LinearProgressIndicator(),
-                            if (inputState.error.isNotEmpty) Column(children: [Text(inputState.error), TextButton(onPressed: () => ref.read(calendarEventInputNotifierProvider(_session).notifier).retry(), child: const Text('再試行'))]),
+                            if (groups.groupsReady && groups.groups.isEmpty)
+                              const Text('グループを作成するか、グループに参加してください'),
+                            if (inputState.isLoading)
+                              const LinearProgressIndicator(),
+                            if (inputState.error.isNotEmpty)
+                              Column(
+                                children: [
+                                  Text(inputState.error),
+                                  TextButton(
+                                    onPressed: () => ref
+                                        .read(
+                                          calendarEventInputNotifierProvider(
+                                            _session,
+                                          ).notifier,
+                                        )
+                                        .retry(),
+                                    child: const Text('再試行'),
+                                  ),
+                                ],
+                              ),
                             TextFormField(
                               controller: _title,
                               onChanged: (_) => setState(() {}),
@@ -567,7 +675,11 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                                   : null,
                             ),
                             DropdownButtonFormField<String>(
-                              key: ValueKey(('calendar_event_label', _groupId, inputState.isLoading)),
+                              key: ValueKey((
+                                'calendar_event_label',
+                                _groupId,
+                                inputState.isLoading,
+                              )),
                               initialValue:
                                   labels.any((label) => label.id == _labelId)
                                   ? _labelId
@@ -614,9 +726,24 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                                     ),
                                   )
                                   .toList(),
-                              onChanged: state.isSaving || movingSeries || _groupId == null || inputState.isLoading || inputState.error.isNotEmpty
+                              onChanged:
+                                  state.isSaving ||
+                                      movingSeries ||
+                                      _groupId == null ||
+                                      inputState.isLoading ||
+                                      inputState.error.isNotEmpty
                                   ? null
-                                  : (value) { if (value != null) ref.read(calendarEventInputNotifierProvider(_session).notifier).selectLabel(value); },
+                                  : (value) {
+                                      if (value != null) {
+                                        ref
+                                            .read(
+                                              calendarEventInputNotifierProvider(
+                                                _session,
+                                              ).notifier,
+                                            )
+                                            .selectLabel(value);
+                                      }
+                                    },
                               validator: (value) =>
                                   value == null ? '色ラベルを指定してください' : null,
                             ),
@@ -625,7 +752,14 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                               title: const Text('終日'),
                               value: _allDay,
                               onChanged:
-                                  state.isSaving || movingSeries || notificationSettings == null || _groupId == null || inputState.isLoading || inputState.error.isNotEmpty || inputState.group == null || !groups.groupsReady
+                                  state.isSaving ||
+                                      movingSeries ||
+                                      notificationSettings == null ||
+                                      _groupId == null ||
+                                      inputState.isLoading ||
+                                      inputState.error.isNotEmpty ||
+                                      inputState.group == null ||
+                                      !groups.groupsReady
                                   ? null
                                   : (value) => setState(() {
                                       _allDay = value;
@@ -670,7 +804,8 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                                           'calendar_${start ? 'start' : 'end'}_time',
                                         ),
                                         onPressed:
-                                            state.isSaving || movingSeries ||
+                                            state.isSaving ||
+                                                movingSeries ||
                                                 (start &&
                                                     preferences.value == null)
                                             ? null
@@ -684,7 +819,8 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                                     ),
                                 ],
                               ),
-                            if (movingSeries) const Text('系列全体の日時・繰り返し・取消情報を保持して移動します'),
+                            if (movingSeries)
+                              const Text('系列全体の日時・繰り返し・取消情報を保持して移動します'),
                             ListTile(
                               contentPadding: EdgeInsets.zero,
                               title: const Text('繰り返し'),
@@ -802,7 +938,13 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                       ),
                       ElevatedButton(
                         onPressed:
-                            state.isSaving || notificationSettings == null || _groupId == null || inputState.isLoading || inputState.error.isNotEmpty || inputState.group == null || !groups.groupsReady
+                            state.isSaving ||
+                                notificationSettings == null ||
+                                _groupId == null ||
+                                inputState.isLoading ||
+                                inputState.error.isNotEmpty ||
+                                inputState.group == null ||
+                                !groups.groupsReady
                             ? null
                             : _save,
                         child: Text(state.isSaving ? '保存中' : '保存'),

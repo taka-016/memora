@@ -136,6 +136,7 @@ void main() {
         currentMember: createCurrentMember(),
       ),
     );
+    await tester.ensureVisible(find.byKey(const Key('add_member_button')));
     await tester.tap(find.byKey(const Key('add_member_button')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('追加する人'));
@@ -577,6 +578,7 @@ void main() {
         await tester.pumpAndSettle();
       } else if (action == '追加') {
         await tester.ensureVisible(find.byKey(const Key('add_member_button')));
+        await tester.ensureVisible(find.byKey(const Key('add_member_button')));
         await tester.tap(find.byKey(const Key('add_member_button')));
         await tester.pumpAndSettle();
         await tester.tap(find.text('追加候補'));
@@ -932,6 +934,7 @@ void main() {
       );
 
       await tester.ensureVisible(find.byKey(const Key('add_member_button')));
+      await tester.ensureVisible(find.byKey(const Key('add_member_button')));
       await tester.tap(find.byKey(const Key('add_member_button')));
       await tester.pumpAndSettle();
 
@@ -1191,6 +1194,7 @@ void main() {
         ),
       );
 
+      await tester.ensureVisible(find.byKey(const Key('add_member_button')));
       await tester.ensureVisible(find.byKey(const Key('add_member_button')));
       await tester.tap(find.byKey(const Key('add_member_button')));
       await tester.pumpAndSettle();

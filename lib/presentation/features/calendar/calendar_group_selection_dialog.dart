@@ -14,10 +14,7 @@ class CalendarGroupSelectionDialog extends ConsumerStatefulWidget {
 class _CalendarGroupSelectionDialogState
     extends ConsumerState<CalendarGroupSelectionDialog> {
   late final Set<String> _selected = {
-    ...ref
-        .read(calendarGroupSettingsNotifierProvider)
-        .settings
-        .visibleGroupIds,
+    ...ref.read(calendarGroupSettingsNotifierProvider).settings.visibleGroupIds,
   };
   @override
   Widget build(BuildContext context) {

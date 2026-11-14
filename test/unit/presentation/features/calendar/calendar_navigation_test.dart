@@ -94,10 +94,13 @@ void main() {
   Future<void> select(WidgetTester tester, List<String> names) async {
     await tester.tap(find.byTooltip('表示グループの選択'));
     await tester.pumpAndSettle();
-    for (final name in names) { await tester.tap(find.text(name)); }
+    for (final name in names) {
+      await tester.tap(find.text(name));
+    }
     await tester.tap(find.text('確定'));
     await tester.pumpAndSettle();
   }
+
   testWidgets('カレンダーの入口は保存先グループを必要としない', (tester) async {
     expect(const CalendarRoute().location, '/calendar');
     final events = await pump(tester);
@@ -109,7 +112,11 @@ void main() {
     expect(find.byTooltip('グループ選択へ戻る'), findsNothing);
   });
   testWidgets('所属1件でも自動選択せずURLのグループで表示設定を上書きしない', (tester) async {
-    final events = await pump(tester, count: 1, location: const CalendarRoute(groupId: 'other').location);
+    final events = await pump(
+      tester,
+      count: 1,
+      location: const CalendarRoute(groupId: 'other').location,
+    );
     expect(find.text('表示するグループを選択してください'), findsOneWidget);
     verifyZeroInteractions(events);
   });

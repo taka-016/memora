@@ -166,100 +166,104 @@ void main() {
   }
 
   for (final fail in [false, true]) {
-    testWidgets(
-      'ウィジェットの追加要求は入力先の読込${fail ? '失敗から再試行する' : '成功後に保存して再実行できる'}',
-      (tester) async {
-        final group = Completer<GroupDto?>();
-        const loadedGroup = GroupDto(
-          id: 'g1',
-          ownerId: 'owner',
-          name: '家族',
-          members: [],
-        );
-        final loader = calendarTestGroupLoader();
-        when(loader.execute('g1')).thenAnswer((_) => group.future);
-        final events = MockGetCalendarEventsUsecase();
-        final labels = MockGetCalendarLabelsUsecase();
-        final create = MockCreateCalendarEventUsecase();
-        final saved = <CalendarEventDto>[];
-        when(events.execute('g1', period: anyNamed('period')))
-            .thenAnswer((_) async => []);
-        when(labels.execute('g1')).thenAnswer((_) async => []);
-        when(create.execute(any)).thenAnswer((call) async {
-          saved.add(call.positionalArguments.single as CalendarEventDto);
-          return 'new';
-        });
-        final request = ValueNotifier(1);
-        addTearDown(request.dispose);
-        await tester.pumpWidget(
-          ProviderScope(
-            overrides: [
-              calendarSettingsOwnerProvider.overrideWithValue('online:owner'),
-              calendarGroupSettingsNotifierProvider.overrideWith(
-                () => TestCalendarGroupSettingsNotifier(),
-              ),
-              externalCalendarOwnerProvider.overrideWithValue(null),
-              appClockProvider.overrideWithValue(
-                FixedAppClock(DateTime(2026, 10, 1)),
-              ),
-              getGroupWithMembersByIdUsecaseProvider.overrideWithValue(loader),
-              getCalendarEventsUsecaseProvider.overrideWithValue(events),
-              getCalendarLabelsUsecaseProvider.overrideWithValue(labels),
-              createCalendarEventUsecaseProvider.overrideWithValue(create),
-              watchCalendarGroupUsecaseProvider.overrideWithValue(null),
-              watchCalendarEventsUsecaseProvider.overrideWithValue(null),
-              watchCalendarLabelsUsecaseProvider.overrideWithValue(null),
-            ],
-            child: MaterialApp(
-              home: Scaffold(
-                body: ValueListenableBuilder<int>(
-                  valueListenable: request,
-                  builder: (context, value, child) => CalendarScreen(
-                    initialEventGroupId: 'g1',
-                    initialDate: DateTime(2026, 11, 2),
-                    createEvent: true,
-                    initialRequest: value,
-                  ),
+    testWidgets('ウィジェットの追加要求は入力先の読込${fail ? '失敗から再試行する' : '成功後に保存して再実行できる'}', (
+      tester,
+    ) async {
+      final group = Completer<GroupDto?>();
+      const loadedGroup = GroupDto(
+        id: 'g1',
+        ownerId: 'owner',
+        name: '家族',
+        members: [],
+      );
+      final loader = calendarTestGroupLoader();
+      when(loader.execute('g1')).thenAnswer((_) => group.future);
+      final events = MockGetCalendarEventsUsecase();
+      final labels = MockGetCalendarLabelsUsecase();
+      final create = MockCreateCalendarEventUsecase();
+      final saved = <CalendarEventDto>[];
+      when(events.execute('g1', period: anyNamed('period')))
+          .thenAnswer((_) async => []);
+      when(labels.execute('g1')).thenAnswer((_) async => []);
+      when(create.execute(any)).thenAnswer((call) async {
+        saved.add(call.positionalArguments.single as CalendarEventDto);
+        return 'new';
+      });
+      final request = ValueNotifier(1);
+      addTearDown(request.dispose);
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            calendarSettingsOwnerProvider.overrideWithValue('online:owner'),
+            calendarGroupSettingsNotifierProvider.overrideWith(
+              () => TestCalendarGroupSettingsNotifier(),
+            ),
+            externalCalendarOwnerProvider.overrideWithValue(null),
+            appClockProvider.overrideWithValue(
+              FixedAppClock(DateTime(2026, 10, 1)),
+            ),
+            getGroupWithMembersByIdUsecaseProvider.overrideWithValue(loader),
+            getCalendarEventsUsecaseProvider.overrideWithValue(events),
+            getCalendarLabelsUsecaseProvider.overrideWithValue(labels),
+            createCalendarEventUsecaseProvider.overrideWithValue(create),
+            watchCalendarGroupUsecaseProvider.overrideWithValue(null),
+            watchCalendarEventsUsecaseProvider.overrideWithValue(null),
+            watchCalendarLabelsUsecaseProvider.overrideWithValue(null),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: ValueListenableBuilder<int>(
+                valueListenable: request,
+                builder: (context, value, child) => CalendarScreen(
+                  initialEventGroupId: 'g1',
+                  initialDate: DateTime(2026, 11, 2),
+                  createEvent: true,
+                  initialRequest: value,
                 ),
               ),
             ),
           ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump();
+      expect(find.byType(CalendarEventDialog), findsOneWidget);
+      if (fail) {
+        group.completeError(TestException('読込失敗'));
+        await tester.pump();
+        await tester.pump();
+        expect(find.byType(CalendarEventDialog), findsOneWidget);
+        when(loader.execute('g1')).thenAnswer((_) async => loadedGroup);
+        await tester.tap(
+          find.descendant(
+            of: find.byType(CalendarEventDialog),
+            matching: find.text('再試行'),
+          ),
         );
-        await tester.pump();
-        await tester.pump();
-        expect(find.byType(CalendarEventDialog), findsOneWidget);
-        if (fail) {
-          group.completeError(TestException('読込失敗'));
-          await tester.pump();
-          await tester.pump();
-          expect(find.byType(CalendarEventDialog), findsOneWidget);
-          when(loader.execute('g1')).thenAnswer((_) async => loadedGroup);
-          await tester.tap(find.descendant(of: find.byType(CalendarEventDialog), matching: find.text('再試行')));
-        } else {
-          group.complete(loadedGroup);
-        }
-        await tester.pump();
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 300));
-        expect(find.byType(CalendarEventDialog), findsOneWidget);
-        expect(find.text('家族の予定'), findsOneWidget);
-        await tester.enterText(
-          find.widgetWithText(TextFormField, 'タイトル'),
-          '家族旅行',
-        );
-        await tester.tap(find.text('保存'));
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 300));
-        expect(saved.single.startDateTime, DateTime.utc(2026, 11, 2));
-        expect(saved.single.labelType, 'group');
-        expect(find.byType(CalendarEventDialog), findsNothing);
-        request.value++;
-        await tester.pump();
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 300));
-        expect(find.byType(CalendarEventDialog), findsOneWidget);
-      },
-    );
+      } else {
+        group.complete(loadedGroup);
+      }
+      await tester.pump();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.byType(CalendarEventDialog), findsOneWidget);
+      expect(find.text('家族の予定'), findsOneWidget);
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'タイトル'),
+        '家族旅行',
+      );
+      await tester.tap(find.text('保存'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(saved.single.startDateTime, DateTime.utc(2026, 11, 2));
+      expect(saved.single.labelType, 'group');
+      expect(find.byType(CalendarEventDialog), findsNothing);
+      request.value++;
+      await tester.pump();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.byType(CalendarEventDialog), findsOneWidget);
+    });
   }
   for (final missing in [false, true]) {
     testWidgets(

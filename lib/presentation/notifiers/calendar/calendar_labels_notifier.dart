@@ -106,7 +106,9 @@ class CalendarLabelsNotifier extends _$CalendarLabelsNotifier {
     try {
       await action(memberId);
       if (!ref.mounted || generation != _generation) return true;
-      await ref.read(calendarMutationCoordinatorProvider).labelsChanged(groupId);
+      await ref
+          .read(calendarMutationCoordinatorProvider)
+          .labelsChanged(groupId);
       if (!ref.mounted || generation != _generation) return true;
       await load();
       if (ref.mounted && generation == _generation) {

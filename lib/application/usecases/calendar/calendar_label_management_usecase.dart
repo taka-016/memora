@@ -12,20 +12,39 @@ class CalendarLabelManagementUsecase {
   final GetGroupWithMembersByIdUsecase _groups;
   Future<void> _authorize(String groupId, String memberId) async {
     final group = await _groups.execute(groupId);
-    if (group == null || (group.ownerId != memberId && !group.members.any((m) => m.memberId == memberId && m.isAdministrator))) {
+    if (group == null ||
+        (group.ownerId != memberId &&
+            !group.members.any(
+              (m) => m.memberId == memberId && m.isAdministrator,
+            ))) {
       throw const ApplicationValidationException('色ラベルを管理できるのは所有者と管理者だけです');
     }
   }
+
   Future<void> save(CalendarLabelDto label, String memberId) async {
     await _authorize(label.groupId, memberId);
     await SaveCalendarLabelUsecase(_repository).execute(label);
   }
-  Future<void> delete(String groupId, String id, String memberId, {int? expectedVersion}) async {
+
+  Future<void> delete(
+    String groupId,
+    String id,
+    String memberId, {
+    int? expectedVersion,
+  }) async {
     await _authorize(groupId, memberId);
-    await DeleteCalendarLabelUsecase(_repository).execute(id, expectedVersion: expectedVersion);
+    await DeleteCalendarLabelUsecase(_repository)
+        .execute(id, expectedVersion: expectedVersion);
   }
-  Future<void> reorder(String groupId, List<String> ids, String memberId, {Map<String, int> expectedVersions = const {}}) async {
+
+  Future<void> reorder(
+    String groupId,
+    List<String> ids,
+    String memberId, {
+    Map<String, int> expectedVersions = const {},
+  }) async {
     await _authorize(groupId, memberId);
-    await ReorderCalendarLabelsUsecase(_repository).execute(groupId, ids, expectedVersions: expectedVersions);
+    await ReorderCalendarLabelsUsecase(_repository)
+        .execute(groupId, ids, expectedVersions: expectedVersions);
   }
 }

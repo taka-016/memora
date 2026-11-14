@@ -113,5 +113,16 @@ final watchCalendarGroupUsecaseProvider = Provider<WatchCalendarGroupUsecase?>((
   );
 });
 
-final moveCalendarEventUsecaseProvider = Provider<MoveCalendarEventUsecase>((ref) => MoveCalendarEventUsecase(ref.watch(calendarEventRepositoryProvider), ref.watch(getGroupsWithMembersUsecaseProvider)));
-final calendarLabelManagementUsecaseProvider = Provider<CalendarLabelManagementUsecase>((ref) => CalendarLabelManagementUsecase(ref.watch(calendarLabelRepositoryProvider), ref.watch(getGroupWithMembersByIdUsecaseProvider)));
+final moveCalendarEventUsecaseProvider = Provider<MoveCalendarEventUsecase>(
+  (ref) => MoveCalendarEventUsecase(
+    ref.watch(calendarEventRepositoryProvider),
+    ref.watch(getGroupsWithMembersUsecaseProvider),
+  ),
+);
+final calendarLabelManagementUsecaseProvider =
+    Provider<CalendarLabelManagementUsecase>(
+      (ref) => CalendarLabelManagementUsecase(
+        ref.watch(calendarLabelRepositoryProvider),
+        ref.watch(getGroupWithMembersByIdUsecaseProvider),
+      ),
+    );

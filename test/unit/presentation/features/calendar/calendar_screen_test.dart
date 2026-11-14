@@ -61,9 +61,9 @@ void main() {
       await tester.drag(grid, const Offset(0, -150));
       await tester.pumpAndSettle();
       expect(tester.getRect(last), before);
-      await tester.tap(last);
+      await calendarTapVisible(tester, last);
       await tester.pump();
-      await tester.tap(last);
+      await calendarTapVisible(tester, last);
       await tester.pumpAndSettle();
       expect(find.text('2026/11/30の予定'), findsOneWidget);
       expect(tester.takeException(), isNull);
@@ -87,9 +87,9 @@ void main() {
         ),
       );
     await harness.pump(tester);
-    await tester.tap(find.byType(FloatingActionButton));
+    await calendarTapVisible(tester, find.byType(FloatingActionButton));
     await tester.pumpAndSettle();
-    await tester.tap(find.byType(DropdownButtonFormField<String>));
+    await calendarTapVisible(tester, calendarLabelDropdown());
     await tester.pumpAndSettle();
     final suffix = find.text('の予定').last;
     expect(suffix, findsOneWidget);
@@ -100,12 +100,12 @@ void main() {
       tester.getRect(suffix).left,
       lessThan(tester.getRect(find.byType(Dialog).last).right),
     );
-    await tester.tap(suffix);
+    await calendarTapVisible(tester, suffix);
     await tester.pumpAndSettle();
     expect(find.text('の予定'), findsOneWidget);
     expect(tester.takeException(), isNull);
     await tester.enterText(find.byType(TextFormField).first, '個人の予定');
-    await tester.tap(find.text('保存'));
+    await calendarTapVisible(tester, find.text('保存'));
     await tester.pumpAndSettle();
     expect(harness.savedEvents.single.memberId, 'long');
   });
@@ -113,11 +113,11 @@ void main() {
   testWidgets('任意ラベル未登録でもグループ固定ラベルを初期選択して登録できる', (tester) async {
     final harness = CalendarTestHarness()..savedLabels.clear();
     await harness.pump(tester);
-    await tester.tap(find.byType(FloatingActionButton));
+    await calendarTapVisible(tester, find.byType(FloatingActionButton));
     await tester.pumpAndSettle();
     expect(find.text('家族の予定'), findsOneWidget);
     await tester.enterText(find.byType(TextFormField).first, '家族旅行');
-    await tester.tap(find.text('保存'));
+    await calendarTapVisible(tester, find.text('保存'));
     await tester.pumpAndSettle();
     expect(harness.savedEvents.single.labelType, 'group');
     expect(harness.savedEvents.single.labelId, isEmpty);
@@ -132,15 +132,18 @@ void main() {
         ).copyWith(labelType: 'member', memberId: 'removed', labelId: ''),
       );
     await harness.pump(tester);
-    await tester.tap(find.byKey(calendarTestDay2));
+    await calendarTapVisible(tester, find.byKey(calendarTestDay2));
     await tester.pump();
-    await tester.tap(find.byKey(calendarTestDay2));
+    await calendarTapVisible(tester, find.byKey(calendarTestDay2));
     await tester.pumpAndSettle();
     expect(find.text('所属解除・削除済みメンバーの予定'), findsOneWidget);
-    await tester.tap(find.widgetWithText(ListTile, '本人の予定'));
+    await calendarTapVisible(tester, find.widgetWithText(ListTile, '本人の予定'));
     await tester.pumpAndSettle();
     final dropdown = tester.widget<DropdownButton<String>>(
-      find.byType(DropdownButton<String>),
+      find.descendant(
+        of: calendarLabelDropdown(),
+        matching: find.byType(DropdownButton<String>),
+      ),
     );
     expect(
       dropdown.items!
@@ -152,7 +155,7 @@ void main() {
       find.widgetWithText(TextFormField, 'タイトル'),
       '予定名だけ変更',
     );
-    await tester.tap(find.text('保存'));
+    await calendarTapVisible(tester, find.text('保存'));
     await tester.pumpAndSettle();
     expect(harness.savedEvents.single.memberId, 'removed');
     expect(harness.savedEvents.single.title, '予定名だけ変更');
@@ -164,11 +167,11 @@ void main() {
     await harness.openLabels(tester);
     await tester.pumpAndSettle();
     expect(find.text('家族の名前や「家族全員」などのラベルを追加してください'), findsNothing);
-    await tester.tap(find.text('ラベルを追加'));
+    await calendarTapVisible(tester, find.text('ラベルを追加'));
     await tester.pumpAndSettle();
     expect(find.text('グループ・メンバーの色は「グループ管理」で設定できます。'), findsOneWidget);
     await tester.enterText(find.widgetWithText(TextFormField, '名前'), '仕事');
-    await tester.tap(find.text('保存'));
+    await calendarTapVisible(tester, find.text('保存'));
     await tester.pumpAndSettle();
     expect(harness.savedLabels.single.name, '仕事');
     expect(harness.savedLabels.single.labelType, 'custom');
@@ -196,10 +199,10 @@ void main() {
       expect(find.text('+1'), count == 6 ? findsOneWidget : findsNothing);
       expect(find.text('他1件'), findsNothing);
       expect(find.text('2026/10/2の予定'), findsNothing);
-      await tester.tap(cell);
+      await calendarTapVisible(tester, cell);
       await tester.pump();
       expect(find.text('2026/10/2の予定'), findsNothing);
-      await tester.tap(cell);
+      await calendarTapVisible(tester, cell);
       await tester.pumpAndSettle();
       expect(find.text('2026/10/2の予定'), findsOneWidget);
       expect(find.widgetWithText(ListTile, '予定$count'), findsOneWidget);
@@ -235,9 +238,9 @@ void main() {
       );
     }
     final cell = find.byKey(const Key('calendar_day_2026_10_6'));
-    await tester.tap(cell);
+    await calendarTapVisible(tester, cell);
     await tester.pump();
-    await tester.tap(cell);
+    await calendarTapVisible(tester, cell);
     await tester.pumpAndSettle();
     expect(find.widgetWithText(ListTile, '週の帯'), findsOneWidget);
     expect(tester.takeException(), isNull);
@@ -271,13 +274,16 @@ void main() {
     await tester.drag(grid, Offset(width * .8, 0));
     await tester.pumpAndSettle();
     expect(find.text('2026年10月'), findsOneWidget);
-    await tester.tap(find.byTooltip('前の月'));
+    await calendarTapVisible(tester, find.byTooltip('前の月'));
     await tester.pump();
     expect(find.text('2026年9月'), findsOneWidget);
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('calendar_day_2026_9_2')));
+    await calendarTapVisible(
+      tester,
+      find.byKey(const Key('calendar_day_2026_9_2')),
+    );
     await tester.pump();
-    await tester.tap(find.byTooltip('次の月'));
+    await calendarTapVisible(tester, find.byTooltip('次の月'));
     await tester.pump();
     expect(find.text('2026年10月'), findsOneWidget);
   });
@@ -286,13 +292,13 @@ void main() {
     final harness = CalendarTestHarness();
     await harness.pump(tester);
     expect(find.text('この日の予定はありません'), findsNothing);
-    await tester.tap(find.byKey(calendarTestDay2));
+    await calendarTapVisible(tester, find.byKey(calendarTestDay2));
     await tester.pump();
-    await tester.tap(find.byTooltip('予定を追加'));
+    await calendarTapVisible(tester, find.byTooltip('予定を追加'));
     await tester.pumpAndSettle();
     expect(find.text('開始日: 2026/10/2'), findsOneWidget);
     await tester.enterText(find.widgetWithText(TextFormField, 'タイトル'), '家族旅行');
-    await tester.tap(find.text('保存'));
+    await calendarTapVisible(tester, find.text('保存'));
     await tester.pumpAndSettle();
     expect(
       find.descendant(
@@ -301,22 +307,22 @@ void main() {
       ),
       findsOneWidget,
     );
-    await tester.tap(find.byKey(calendarTestDay2));
+    await calendarTapVisible(tester, find.byKey(calendarTestDay2));
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(ListTile, '家族旅行'));
+    await calendarTapVisible(tester, find.widgetWithText(ListTile, '家族旅行'));
     await tester.pumpAndSettle();
     await tester.enterText(find.widgetWithText(TextFormField, 'タイトル'), '運動会');
-    await tester.tap(find.text('保存'));
+    await calendarTapVisible(tester, find.text('保存'));
     await tester.pumpAndSettle();
     expect(find.widgetWithText(ListTile, '運動会'), findsOneWidget);
-    await tester.tap(find.widgetWithText(ListTile, '運動会'));
+    await calendarTapVisible(tester, find.widgetWithText(ListTile, '運動会'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('削除'));
+    await calendarTapVisible(tester, find.text('削除'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('削除する'));
+    await calendarTapVisible(tester, find.text('削除する'));
     await tester.pumpAndSettle();
     expect(find.text('この日の予定はありません'), findsOneWidget);
-    await tester.tap(find.byTooltip('予定一覧を閉じる'));
+    await calendarTapVisible(tester, find.byTooltip('予定一覧を閉じる'));
     await tester.pumpAndSettle();
     expect(find.text('運動会'), findsNothing);
     expect(tester.takeException(), isNull);
@@ -327,42 +333,42 @@ void main() {
     await harness.pump(tester);
     await harness.openLabels(tester);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('ラベルを追加'));
+    await calendarTapVisible(tester, find.text('ラベルを追加'));
     await tester.pumpAndSettle();
     await tester.enterText(find.widgetWithText(TextFormField, '名前'), '家族全員');
     expect(find.widgetWithText(TextFormField, '色（#RRGGBB）'), findsNothing);
-    await tester.tap(find.byTooltip('赤'));
+    await calendarTapVisible(tester, find.byTooltip('赤'));
     await tester.pump();
-    await tester.tap(find.text('保存'));
+    await calendarTapVisible(tester, find.text('保存'));
     await tester.pumpAndSettle();
     final saved =
         verify(harness.saveLabel.execute(captureAny)).captured.single
             as CalendarLabelDto;
     expect(saved.color, '#F44336');
-    await tester.tap(find.text('家族全員'));
+    await calendarTapVisible(tester, find.text('家族全員'));
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('16進数で指定'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('16進数で指定'));
+    await calendarTapVisible(tester, find.text('16進数で指定'));
     await tester.pump();
     await tester.enterText(
       find.widgetWithText(TextFormField, '色（#RRGGBB）'),
       '赤',
     );
-    await tester.tap(find.text('保存'));
+    await calendarTapVisible(tester, find.text('保存'));
     await tester.pump();
     expect(find.text('#RRGGBB形式で入力してください'), findsOneWidget);
     await tester.ensureVisible(find.byTooltip('青'));
     await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('青'));
+    await calendarTapVisible(tester, find.byTooltip('青'));
     await tester.pump();
-    await tester.tap(find.text('保存'));
+    await calendarTapVisible(tester, find.text('保存'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('閉じる'));
+    await calendarTapVisible(tester, find.text('閉じる'));
     await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('予定を追加'));
+    await calendarTapVisible(tester, find.byTooltip('予定を追加'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('保存'));
+    await calendarTapVisible(tester, find.text('保存'));
     await tester.pump();
     expect(find.text('タイトルを入力してください'), findsOneWidget);
     verifyZeroInteractions(harness.create);
@@ -379,7 +385,7 @@ void main() {
     await harness.pump(tester);
     await harness.openLabels(tester);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('家族全員'));
+    await calendarTapVisible(tester, find.text('家族全員'));
     await tester.pumpAndSettle();
     final preview = find.byKey(const Key('calendar_label_preview'));
     Text previewText() => tester.widget<Text>(
@@ -387,11 +393,11 @@ void main() {
     );
     expect(previewText().style!.color, Colors.white);
     await tester.ensureVisible(find.text('黒'));
-    await tester.tap(find.text('黒'));
+    await calendarTapVisible(tester, find.text('黒'));
     await tester.pump();
     expect(previewText().style!.color, Colors.black);
     await tester.ensureVisible(find.byTooltip('赤'));
-    await tester.tap(find.byTooltip('赤'));
+    await calendarTapVisible(tester, find.byTooltip('赤'));
     await tester.pump();
     expect(
       tester.widget<Container>(preview).decoration,
@@ -404,22 +410,22 @@ void main() {
     await tester.enterText(find.widgetWithText(TextFormField, '名前'), '全員');
     await tester.pump();
     expect(previewText().data, '全員');
-    await tester.tap(find.text('保存'));
+    await calendarTapVisible(tester, find.text('保存'));
     await tester.pumpAndSettle();
     expect(harness.savedLabels.single.textColor, '#000000');
     expect(tester.widget<Text>(find.text('全員')).style!.color, Colors.black);
-    await tester.tap(find.text('閉じる'));
+    await calendarTapVisible(tester, find.text('閉じる'));
     await tester.pumpAndSettle();
     expect(tester.widget<Text>(find.text('予定')).style!.color, Colors.black);
     await harness.openLabels(tester);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('全員'));
+    await calendarTapVisible(tester, find.text('全員'));
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('白'));
-    await tester.tap(find.text('白'));
+    await calendarTapVisible(tester, find.text('白'));
     await tester.pump();
     expect(previewText().style!.color, Colors.white);
-    await tester.tap(find.text('保存'));
+    await calendarTapVisible(tester, find.text('保存'));
     await tester.pumpAndSettle();
     expect(harness.savedLabels.single.textColor, '#FFFFFF');
     expect(tester.takeException(), isNull);
@@ -441,10 +447,10 @@ void main() {
     );
     await harness.openLabels(tester);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('家族全員'));
+    await calendarTapVisible(tester, find.text('家族全員'));
     await tester.pumpAndSettle();
     await tester.enterText(find.widgetWithText(TextFormField, '名前'), '全員');
-    await tester.tap(find.text('保存'));
+    await calendarTapVisible(tester, find.text('保存'));
     await tester.pumpAndSettle();
     expect(harness.savedLabels.single.textColor, '#Ab12Cd');
   });
@@ -483,9 +489,9 @@ void main() {
       (titleContainer(title).decoration as BoxDecoration).color,
       Colors.transparent,
     );
-    await tester.tap(find.byKey(calendarTestDay2));
+    await calendarTapVisible(tester, find.byKey(calendarTestDay2));
     await tester.pump();
-    await tester.tap(find.byKey(calendarTestDay2));
+    await calendarTapVisible(tester, find.byKey(calendarTestDay2));
     await tester.pumpAndSettle();
     expect(
       tester.widget<Text>(find.text(title).last).style!.color,
@@ -526,9 +532,9 @@ void main() {
         }
 
         expectReadableTitle(find.text('読みやすい予定名'));
-        await tester.tap(find.byKey(calendarTestDay2));
+        await calendarTapVisible(tester, find.byKey(calendarTestDay2));
         await tester.pump();
-        await tester.tap(find.byKey(calendarTestDay2));
+        await calendarTapVisible(tester, find.byKey(calendarTestDay2));
         await tester.pumpAndSettle();
         expectReadableTitle(
           find.descendant(
@@ -568,9 +574,9 @@ void main() {
       );
       expect(title.style!.color, Colors.white);
     }
-    await tester.tap(find.byKey(calendarTestDay2));
+    await calendarTapVisible(tester, find.byKey(calendarTestDay2));
     await tester.pump();
-    await tester.tap(find.byKey(calendarTestDay2));
+    await calendarTapVisible(tester, find.byKey(calendarTestDay2));
     await tester.pumpAndSettle();
     expect(find.text('宿泊の予定'), findsNWidgets(3));
     expect(tester.takeException(), isNull);
@@ -612,26 +618,26 @@ void main() {
   testWidgets('日別一覧は画面上部まで開き一覧の追加ボタンでその日の予定を登録する', (tester) async {
     final harness = CalendarTestHarness();
     await harness.pump(tester);
-    await tester.tap(find.byKey(calendarTestDay2));
+    await calendarTapVisible(tester, find.byKey(calendarTestDay2));
     await tester.pump();
-    await tester.tap(find.byKey(calendarTestDay2));
+    await calendarTapVisible(tester, find.byKey(calendarTestDay2));
     await tester.pumpAndSettle();
     final screenHeight =
         tester.view.physicalSize.height / tester.view.devicePixelRatio;
     final bounds = tester.getRect(find.byType(BottomSheet));
     expect(bounds.top, lessThan(screenHeight * .1));
-    await tester.tap(find.byTooltip('この日に予定を追加'));
+    await calendarTapVisible(tester, find.byTooltip('この日に予定を追加'));
     await tester.pumpAndSettle();
     expect(find.text('開始日: 2026/10/2'), findsOneWidget);
     await tester.enterText(
       find.widgetWithText(TextFormField, 'タイトル'),
       '一覧から追加',
     );
-    await tester.tap(find.text('保存'));
+    await calendarTapVisible(tester, find.text('保存'));
     await tester.pumpAndSettle();
     expect(find.widgetWithText(ListTile, '一覧から追加'), findsOneWidget);
     expect(harness.savedEvents.single.startDateTime, DateTime.utc(2026, 10, 2));
-    await tester.tap(find.byTooltip('予定一覧を閉じる'));
+    await calendarTapVisible(tester, find.byTooltip('予定一覧を閉じる'));
     await tester.pumpAndSettle();
     expect(
       find.descendant(
@@ -649,11 +655,11 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     await CalendarTestHarness().pump(tester, textScale: 1.5);
-    await tester.tap(find.byTooltip('予定を追加'));
+    await calendarTapVisible(tester, find.byTooltip('予定を追加'));
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.widgetWithText(SwitchListTile, '終日'));
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(SwitchListTile, '終日'));
+    await calendarTapVisible(tester, find.widgetWithText(SwitchListTile, '終日'));
     await tester.pump();
     for (final prefix in ['開始', '終了']) {
       final date = find.widgetWithText(TextButton, '$prefix日: 2026/10/1');
@@ -664,10 +670,11 @@ void main() {
       await tester.pumpAndSettle();
       expect(tester.getCenter(date).dy, tester.getCenter(time).dy);
       expect(tester.getCenter(date).dx, lessThan(tester.getCenter(time).dx));
-      await tester.tap(time);
+      await calendarTapVisible(tester, time);
       await tester.pumpAndSettle();
       expect(find.byType(TimePickerDialog), findsOneWidget);
-      await tester.tap(
+      await calendarTapVisible(
+        tester,
         find.descendant(
           of: find.byType(TimePickerDialog),
           matching: find.text('キャンセル'),
@@ -677,7 +684,7 @@ void main() {
     }
     await tester.ensureVisible(find.widgetWithText(SwitchListTile, '終日'));
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(SwitchListTile, '終日'));
+    await calendarTapVisible(tester, find.widgetWithText(SwitchListTile, '終日'));
     await tester.pump();
     expect(find.byKey(const Key('calendar_start_time')), findsNothing);
     expect(tester.takeException(), isNull);
@@ -694,8 +701,8 @@ void main() {
     await harness.pump(tester);
     expect(find.text('家族旅行'), findsNWidgets(2));
     for (final key in [
-      'calendar_event_trip_2026_9_27',
-      'calendar_event_trip_2026_10_4',
+      'calendar_event_g1_trip_null_2026_9_27',
+      'calendar_event_g1_trip_null_2026_10_4',
     ]) {
       final span = find.byKey(Key(key));
       final text = find.descendant(of: span, matching: find.text('家族旅行'));
@@ -706,9 +713,9 @@ void main() {
       );
     }
     final day3 = find.byKey(const Key('calendar_day_2026_10_3'));
-    await tester.tap(day3);
+    await calendarTapVisible(tester, day3);
     await tester.pump();
-    await tester.tap(day3);
+    await calendarTapVisible(tester, day3);
     await tester.pumpAndSettle();
     expect(find.widgetWithText(ListTile, '家族旅行'), findsOneWidget);
     expect(tester.takeException(), isNull);
@@ -719,7 +726,7 @@ void main() {
     await harness.pump(tester);
     await harness.openLabels(tester);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('家族全員'));
+    await calendarTapVisible(tester, find.text('家族全員'));
     await tester.pumpAndSettle();
     expect(find.text('終日'), findsOneWidget);
     expect(find.text('時間指定'), findsOneWidget);
@@ -757,7 +764,7 @@ void main() {
                 .decoration
             as BoxDecoration;
     expect((decoration.border! as Border).left.color, const Color(0xFF123ABC));
-    await tester.tap(find.text('保存'));
+    await calendarTapVisible(tester, find.text('保存'));
     await tester.pumpAndSettle();
     expect(harness.savedLabels.single.sortOrder, calendarTestFamily.sortOrder);
   });
@@ -798,7 +805,7 @@ void main() {
       ]);
       verify(harness.reorder.execute('g1', ['child', 'parent', 'family']))
           .called(1);
-      await tester.tap(find.text('閉じる'));
+      await calendarTapVisible(tester, find.text('閉じる'));
       await tester.pumpAndSettle();
       await harness.openLabels(tester);
       await tester.pumpAndSettle();
@@ -806,12 +813,15 @@ void main() {
         tester.getCenter(find.text('子供')).dy,
         lessThan(tester.getCenter(find.text('家族全員')).dy),
       );
-      await tester.tap(find.text('閉じる'));
+      await calendarTapVisible(tester, find.text('閉じる'));
       await tester.pumpAndSettle();
-      await tester.tap(find.byTooltip('予定を追加'));
+      await calendarTapVisible(tester, find.byTooltip('予定を追加'));
       await tester.pumpAndSettle();
       final dropdown = tester.widget<DropdownButton<String>>(
-        find.byType(DropdownButton<String>),
+        find.descendant(
+          of: calendarLabelDropdown(),
+          matching: find.byType(DropdownButton<String>),
+        ),
       );
       expect(dropdown.items!.map((item) => item.value), [
         'group:',
@@ -834,9 +844,9 @@ void main() {
           ),
         );
         await tester.pumpAndSettle();
-        await tester.tap(find.byType(DropdownButton<int>));
+        await calendarTapVisible(tester, find.byType(DropdownButton<int>));
         await tester.pumpAndSettle();
-        await tester.tap(find.text('その他').last);
+        await calendarTapVisible(tester, find.text('その他').last);
         await tester.pumpAndSettle();
         await tester.enterText(find.byType(TextField), '$minutes');
         await tester.pumpAndSettle();
@@ -845,24 +855,30 @@ void main() {
       await tester.pump();
       final harness = CalendarTestHarness();
       await harness.pump(tester);
-      await tester.tap(find.byKey(calendarTestDay2));
+      await calendarTapVisible(tester, find.byKey(calendarTestDay2));
       await tester.pump();
-      await tester.tap(find.byTooltip('予定を追加'));
+      await calendarTapVisible(tester, find.byTooltip('予定を追加'));
       await tester.pumpAndSettle();
       await tester.enterText(
         find.widgetWithText(TextFormField, 'タイトル'),
         '自動終了',
       );
-      await tester.tap(find.widgetWithText(SwitchListTile, '終日'));
+      await calendarTapVisible(
+        tester,
+        find.widgetWithText(SwitchListTile, '終日'),
+      );
       await tester.pump();
-      await tester.tap(find.byKey(const Key('calendar_start_time')));
+      await calendarTapVisible(
+        tester,
+        find.byKey(const Key('calendar_start_time')),
+      );
       await tester.pumpAndSettle();
       final pickerContext = tester.element(find.byType(TimePickerDialog));
       Navigator.of(pickerContext).pop(const TimeOfDay(hour: 23, minute: 30));
       await tester.pumpAndSettle();
       expect(find.text('開始時刻: 23:30'), findsNothing);
       expect(find.text('終了日: 2026/10/3'), findsOneWidget);
-      await tester.tap(find.text('保存'));
+      await calendarTapVisible(tester, find.text('保存'));
       await tester.pumpAndSettle();
       expect(
         harness.savedEvents.single.endDateTime,
@@ -880,14 +896,14 @@ void main() {
     await harness.pump(tester, textScale: 1.5);
     await harness.openLabels(tester);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('家族全員'));
+    await calendarTapVisible(tester, find.text('家族全員'));
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('黒'));
-    await tester.tap(find.text('黒'));
+    await calendarTapVisible(tester, find.text('黒'));
     await tester.pump();
     await tester.ensureVisible(find.byKey(const Key('calendar_label_preview')));
     await tester.pump();
-    await tester.tap(find.text('保存'));
+    await calendarTapVisible(tester, find.text('保存'));
     await tester.pumpAndSettle();
     expect(harness.savedLabels.single.textColor, '#000000');
     expect(tester.takeException(), isNull);
@@ -903,9 +919,9 @@ void main() {
         for (var i = 1; i <= 5; i++) calendarTestEvent('e$i', '長い予定のタイトル$i'),
       ]);
     await harness.pump(tester, textScale: 1.5);
-    await tester.tap(find.byKey(calendarTestDay2));
+    await calendarTapVisible(tester, find.byKey(calendarTestDay2));
     await tester.pump();
-    await tester.tap(find.byKey(calendarTestDay2));
+    await calendarTapVisible(tester, find.byKey(calendarTestDay2));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
       find.widgetWithText(ListTile, '長い予定のタイトル5'),
@@ -921,7 +937,10 @@ void main() {
           )
           .first,
     );
-    await tester.tap(find.widgetWithText(ListTile, '長い予定のタイトル5'));
+    await calendarTapVisible(
+      tester,
+      find.widgetWithText(ListTile, '長い予定のタイトル5'),
+    );
     await tester.pumpAndSettle();
     expect(find.text('予定を編集'), findsOneWidget);
     expect(tester.takeException(), isNull);

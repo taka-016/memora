@@ -16,7 +16,10 @@ class CalendarLabelsDialog extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(calendarLabelsNotifierProvider(groupId));
     final canReorder =
-        state.canManage && !state.isSaving && !state.isLoading && state.loadError.isEmpty;
+        state.canManage &&
+        !state.isSaving &&
+        !state.isLoading &&
+        state.loadError.isEmpty;
     Future<void> edit([CalendarLabelDto? label]) async {
       await showDialog<void>(
         context: context,
@@ -42,14 +45,23 @@ class CalendarLabelsDialog extends ConsumerWidget {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(
-                      ref.read(calendarLabelsNotifierProvider(groupId)).mutationError,
+                      ref
+                          .read(calendarLabelsNotifierProvider(groupId))
+                          .mutationError,
                     ),
                   ),
                 );
               }
             },
             children: [
-              if (state.loadError.isNotEmpty) TextButton(key: const Key('calendar_labels_retry'), onPressed: () => ref.read(calendarLabelsNotifierProvider(groupId).notifier).load(), child: const Text('色ラベルを再取得')),
+              if (state.loadError.isNotEmpty)
+                TextButton(
+                  key: const Key('calendar_labels_retry'),
+                  onPressed: () => ref
+                      .read(calendarLabelsNotifierProvider(groupId).notifier)
+                      .load(),
+                  child: const Text('色ラベルを再取得'),
+                ),
               if (state.labels.isEmpty)
                 const Text(
                   '用途に合わせたラベルを追加できます。',
@@ -131,7 +143,8 @@ class CalendarLabelsDialog extends ConsumerWidget {
                             if (confirmed != true) return;
                             final success = await ref
                                 .read(
-                                  calendarLabelsNotifierProvider(groupId).notifier,
+                                  calendarLabelsNotifierProvider(groupId)
+                                      .notifier,
                                 )
                                 .deleteLabel(
                                   label.id,
@@ -142,7 +155,11 @@ class CalendarLabelsDialog extends ConsumerWidget {
                                 SnackBar(
                                   content: Text(
                                     ref
-                                        .read(calendarLabelsNotifierProvider(groupId))
+                                        .read(
+                                          calendarLabelsNotifierProvider(
+                                            groupId,
+                                          ),
+                                        )
                                         .mutationError,
                                   ),
                                 ),
@@ -190,7 +207,9 @@ class _LabelEditDialogState extends ConsumerState<_LabelEditDialog> {
   void initState() {
     super.initState();
     _name = TextEditingController(text: widget.label?.name ?? '');
-    final labels = ref.read(calendarLabelsNotifierProvider(widget.groupId)).labels;
+    final labels = ref
+        .read(calendarLabelsNotifierProvider(widget.groupId))
+        .labels;
     final nextOrder =
         labels.fold(
           0,
@@ -266,7 +285,10 @@ class _LabelEditDialogState extends ConsumerState<_LabelEditDialog> {
                 : () async {
                     if (!_form.currentState!.validate()) return;
                     final success = await ref
-                        .read(calendarLabelsNotifierProvider(widget.groupId).notifier)
+                        .read(
+                          calendarLabelsNotifierProvider(widget.groupId)
+                              .notifier,
+                        )
                         .saveLabel(
                           CalendarLabelDto(
                             version: widget.label?.version,
@@ -284,7 +306,9 @@ class _LabelEditDialogState extends ConsumerState<_LabelEditDialog> {
                     } else {
                       setState(
                         () => _error = ref
-                            .read(calendarLabelsNotifierProvider(widget.groupId))
+                            .read(
+                              calendarLabelsNotifierProvider(widget.groupId),
+                            )
                             .mutationError,
                       );
                     }

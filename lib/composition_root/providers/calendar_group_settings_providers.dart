@@ -6,12 +6,17 @@ import 'package:memora/infrastructure/services/shared_preferences_calendar_group
 import 'package:memora/presentation/notifiers/auth/auth_notifier.dart';
 import 'package:memora/presentation/notifiers/member/current_member_notifier.dart';
 
-final calendarGroupSettingsStorageProvider = Provider<CalendarGroupSettingsStorage>((ref) => const SharedPreferencesCalendarGroupSettingsStorage());
-final calendarSettingsMemberIdProvider = Provider<String?>((ref) => ref.watch(currentMemberNotifierProvider).member?.id);
+final calendarGroupSettingsStorageProvider =
+    Provider<CalendarGroupSettingsStorage>(
+      (ref) => const SharedPreferencesCalendarGroupSettingsStorage(),
+    );
+final calendarSettingsMemberIdProvider = Provider<String?>(
+  (ref) => ref.watch(currentMemberNotifierProvider).member?.id,
+);
 final calendarSettingsOwnerProvider = Provider<String?>((ref) {
   final mode = ref.watch(appModeProvider);
   final id = mode == AppMode.online
-    ? ref.watch(authNotifierProvider).user?.id
-    : ref.watch(calendarSettingsMemberIdProvider);
+      ? ref.watch(authNotifierProvider).user?.id
+      : ref.watch(calendarSettingsMemberIdProvider);
   return id == null ? null : '${mode.name}:$id';
 });

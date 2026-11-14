@@ -117,8 +117,12 @@ void main() {
     addTearDown(container.dispose);
   });
   test('再構築後の月移動で取得前の内部キャッシュを再表示しない', () async {
-    final old = event.copyWith(startDateTime: DateTime(2026, 11, 1), endDateTime: DateTime(2026, 11, 2));
-    when(events.execute(any, period: anyNamed('period'))).thenAnswer((_) async => [old]);
+    final old = event.copyWith(
+      startDateTime: DateTime(2026, 11, 1),
+      endDateTime: DateTime(2026, 11, 2),
+    );
+    when(events.execute(any, period: anyNamed('period')))
+        .thenAnswer((_) async => [old]);
     await container.read(provider.notifier).load();
     container.invalidate(provider);
     container.read(provider.notifier).selectDate(DateTime(2026, 11, 1));

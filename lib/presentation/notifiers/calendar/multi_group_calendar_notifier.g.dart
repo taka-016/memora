@@ -44,7 +44,7 @@ final class MultiGroupCalendarNotifierProvider
 }
 
 String _$multiGroupCalendarNotifierHash() =>
-    r'47d17d8de632bbde8e886686605a68e3ba5570b8';
+    r'0a3af2cf6ef1289cf5ca8241f2a93940027cb071';
 
 abstract class _$MultiGroupCalendarNotifier
     extends $Notifier<MultiGroupCalendarState> {

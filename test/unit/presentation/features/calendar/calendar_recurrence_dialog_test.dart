@@ -36,11 +36,11 @@ void main() {
           ),
         ),
       );
-      await tester.tap(find.text('設定'));
+      await calendarTapVisible(tester, find.text('設定'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
       expect(find.text('平日（月〜金）'), isWeekday ? findsOneWidget : findsNothing);
-      await tester.tap(find.text(isWeekday ? '平日（月〜金）' : '毎日'));
+      await calendarTapVisible(tester, find.text(isWeekday ? '平日（月〜金）' : '毎日'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
       expect(
@@ -58,32 +58,32 @@ void main() {
   testWidgets('予定入力からカスタムの複数曜日・間隔・回数を確認して保存できる', (tester) async {
     final harness = CalendarTestHarness();
     await harness.pump(tester);
-    await tester.tap(find.byTooltip('予定を追加'));
+    await calendarTapVisible(tester, find.byTooltip('予定を追加'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     await tester.enterText(find.widgetWithText(TextFormField, 'タイトル'), '定例');
     await tester.ensureVisible(find.text('繰り返さない'));
-    await tester.tap(find.text('繰り返さない'));
+    await calendarTapVisible(tester, find.text('繰り返さない'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-    await tester.tap(find.text('カスタム').last);
+    await calendarTapVisible(tester, find.text('カスタム').last);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     await tester.enterText(find.widgetWithText(TextFormField, '間隔'), '2');
-    await tester.tap(find.widgetWithText(FilterChip, '木'));
-    await tester.tap(find.widgetWithText(FilterChip, '土'));
-    await tester.tap(find.text('終了しない'));
+    await calendarTapVisible(tester, find.widgetWithText(FilterChip, '木'));
+    await calendarTapVisible(tester, find.widgetWithText(FilterChip, '土'));
+    await calendarTapVisible(tester, find.text('終了しない'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-    await tester.tap(find.text('回数指定').last);
+    await calendarTapVisible(tester, find.text('回数指定').last);
     await tester.pump();
     await tester.enterText(find.widgetWithText(TextFormField, '回数'), '10');
     await tester.ensureVisible(find.text('決定').last);
-    await tester.tap(find.text('決定').last);
+    await calendarTapVisible(tester, find.text('決定').last);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('2週間ごとの木・土曜日、10回'), findsOneWidget);
-    await tester.tap(find.text('保存'));
+    await calendarTapVisible(tester, find.text('保存'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     final saved =
@@ -96,23 +96,23 @@ void main() {
     final harness = CalendarTestHarness()
       ..savedEvents.add(calendarTestEvent('e', '予定'));
     await harness.pump(tester);
-    await tester.tap(find.byKey(calendarTestDay2));
+    await calendarTapVisible(tester, find.byKey(calendarTestDay2));
     await tester.pump();
-    await tester.tap(find.byKey(calendarTestDay2));
+    await calendarTapVisible(tester, find.byKey(calendarTestDay2));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-    await tester.tap(find.widgetWithText(ListTile, '予定'));
+    await calendarTapVisible(tester, find.widgetWithText(ListTile, '予定'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     await tester.ensureVisible(find.text('繰り返さない'));
-    await tester.tap(find.text('繰り返さない'));
+    await calendarTapVisible(tester, find.text('繰り返さない'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-    await tester.tap(find.text('毎日').last);
+    await calendarTapVisible(tester, find.text('毎日').last);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.widgetWithText(TextFormField, 'タイムゾーン'), findsNothing);
-    await tester.tap(find.text('保存'));
+    await calendarTapVisible(tester, find.text('保存'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     final saved =
@@ -125,17 +125,17 @@ void main() {
     final normal = calendarTestEvent('normal', '独立した予定');
     final harness = CalendarTestHarness()..savedEvents.add(normal);
     await harness.pump(tester);
-    await tester.tap(find.byKey(calendarTestDay2));
+    await calendarTapVisible(tester, find.byKey(calendarTestDay2));
     await tester.pump();
-    await tester.tap(find.byKey(calendarTestDay2));
+    await calendarTapVisible(tester, find.byKey(calendarTestDay2));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-    await tester.tap(find.widgetWithText(ListTile, '独立した予定'));
+    await calendarTapVisible(tester, find.widgetWithText(ListTile, '独立した予定'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('個別変更をリセット'), findsNothing);
     await tester.enterText(find.widgetWithText(TextFormField, 'タイトル'), '通常編集');
-    await tester.tap(find.text('保存'));
+    await calendarTapVisible(tester, find.text('保存'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('この予定とこれ以降'), findsNothing);
@@ -161,21 +161,21 @@ void main() {
       );
       final harness = CalendarTestHarness()..savedEvents.add(source);
       await harness.pump(tester);
-      await tester.tap(find.byKey(calendarTestDay2));
+      await calendarTapVisible(tester, find.byKey(calendarTestDay2));
       await tester.pump();
-      await tester.tap(find.byKey(calendarTestDay2));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
-      await tester.tap(find.widgetWithText(ListTile, '系列'));
+      await calendarTapVisible(tester, find.byKey(calendarTestDay2));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
-      await tester.tap(find.text(deleting ? '削除' : '保存'));
+      await calendarTapVisible(tester, find.widgetWithText(ListTile, '系列'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
-      await tester.tap(find.text('この予定とこれ以降'));
+      await calendarTapVisible(tester, find.text(deleting ? '削除' : '保存'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await calendarTapVisible(tester, find.text('この予定とこれ以降'));
       await tester.pump();
       expect(find.text('以前「この予定のみ」で変更した予定は残ります。'), findsOneWidget);
-      await tester.tap(find.text(deleting ? '削除する' : '変更する'));
+      await calendarTapVisible(tester, find.text(deleting ? '削除する' : '変更する'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
       verify(
@@ -211,34 +211,35 @@ void main() {
             ),
           );
         await harness.pump(tester);
-        await tester.tap(find.byKey(calendarTestDay2));
+        await calendarTapVisible(tester, find.byKey(calendarTestDay2));
         await tester.pump();
-        await tester.tap(find.byKey(calendarTestDay2));
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 300));
-        await tester.tap(find.widgetWithText(ListTile, '週の系列'));
+        await calendarTapVisible(tester, find.byKey(calendarTestDay2));
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 300));
-        await tester.tap(find.text('開始日: 2026/10/2'));
+        await calendarTapVisible(tester, find.widgetWithText(ListTile, '週の系列'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        await calendarTapVisible(tester, find.text('開始日: 2026/10/2'));
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 300));
         expect(find.byType(CustomDatePickerDialog), findsOneWidget);
-        await tester.tap(find.byKey(const Key('date_header')));
+        await calendarTapVisible(tester, find.byKey(const Key('date_header')));
         await tester.pump();
         await tester.enterText(find.byKey(const Key('date_field')), '20261003');
-        await tester.tap(find.text('確定'));
+        await calendarTapVisible(tester, find.text('確定'));
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 300));
-        await tester.tap(find.text('終日'));
+        await calendarTapVisible(tester, find.text('終日'));
         await tester.pump();
-        await tester.tap(find.text('保存'));
+        await calendarTapVisible(tester, find.text('保存'));
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 300));
-        await tester.tap(
+        await calendarTapVisible(
+          tester,
           find.text(scope == CalendarChangeScope.all ? 'すべての予定' : 'この予定とこれ以降'),
         );
         await tester.pump();
-        await tester.tap(find.text('変更する'));
+        await calendarTapVisible(tester, find.text('変更する'));
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 300));
         final saved =
@@ -274,21 +275,21 @@ void main() {
       );
       final harness = CalendarTestHarness()..savedEvents.add(source);
       await harness.pump(tester);
-      await tester.tap(find.byKey(calendarTestDay2));
+      await calendarTapVisible(tester, find.byKey(calendarTestDay2));
       await tester.pump();
-      await tester.tap(find.byKey(calendarTestDay2));
+      await calendarTapVisible(tester, find.byKey(calendarTestDay2));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
-      await tester.tap(find.widgetWithText(ListTile, '夜の予定'));
+      await calendarTapVisible(tester, find.widgetWithText(ListTile, '夜の予定'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
       if (until) {
         final summary = find.text('毎日、2026/10/5まで');
         await tester.ensureVisible(summary);
-        await tester.tap(summary);
+        await calendarTapVisible(tester, summary);
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 300));
-        await tester.tap(find.text('カスタム').last);
+        await calendarTapVisible(tester, find.text('カスタム').last);
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 300));
       }
@@ -299,7 +300,7 @@ void main() {
             )
           : find.text('終了日: 2026/10/2');
       await tester.ensureVisible(date);
-      await tester.tap(date);
+      await calendarTapVisible(tester, date);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
       expect(find.byType(CustomDatePickerDialog), findsOneWidget);
@@ -307,28 +308,28 @@ void main() {
         find.text(until ? '2026年10月5日 (月)' : '2026年10月2日 (金)'),
         findsOneWidget,
       );
-      await tester.tap(find.byKey(const Key('date_header')));
+      await calendarTapVisible(tester, find.byKey(const Key('date_header')));
       await tester.pump();
       final input = tester.widget<TextField>(
         find.byKey(const Key('date_field')),
       );
       expect(input.controller!.text, until ? '2026/10/05' : '2026/10/02');
-      await tester.tap(find.text('確定'));
+      await calendarTapVisible(tester, find.text('確定'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
       if (until) {
         await tester.ensureVisible(find.text('決定').last);
-        await tester.tap(find.text('決定').last);
+        await calendarTapVisible(tester, find.text('決定').last);
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 300));
       }
-      await tester.tap(find.text('保存'));
+      await calendarTapVisible(tester, find.text('保存'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
       if (until) {
-        await tester.tap(find.text('すべての予定'));
+        await calendarTapVisible(tester, find.text('すべての予定'));
         await tester.pump();
-        await tester.tap(find.text('変更する'));
+        await calendarTapVisible(tester, find.text('変更する'));
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 300));
         final saved =
@@ -354,44 +355,44 @@ void main() {
   testWidgets('繰り返しの終了日も共通の日付直接入力で設定して保存できる', (tester) async {
     final harness = CalendarTestHarness();
     await harness.pump(tester);
-    await tester.tap(find.byTooltip('予定を追加'));
+    await calendarTapVisible(tester, find.byTooltip('予定を追加'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     await tester.enterText(find.widgetWithText(TextFormField, 'タイトル'), '期日付き');
     await tester.ensureVisible(find.text('繰り返さない'));
-    await tester.tap(find.text('繰り返さない'));
+    await calendarTapVisible(tester, find.text('繰り返さない'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-    await tester.tap(find.text('カスタム').last);
+    await calendarTapVisible(tester, find.text('カスタム').last);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-    await tester.tap(find.widgetWithText(FilterChip, '木'));
+    await calendarTapVisible(tester, find.widgetWithText(FilterChip, '木'));
     await tester.ensureVisible(find.text('終了しない'));
-    await tester.tap(find.text('終了しない'));
+    await calendarTapVisible(tester, find.text('終了しない'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-    await tester.tap(find.text('終了日指定').last);
+    await calendarTapVisible(tester, find.text('終了日指定').last);
     await tester.pump();
     final until = find.descendant(
       of: find.widgetWithText(AlertDialog, 'カスタムの繰り返し'),
       matching: find.textContaining('終了日:'),
     );
     await tester.ensureVisible(until);
-    await tester.tap(until);
+    await calendarTapVisible(tester, until);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.byType(CustomDatePickerDialog), findsOneWidget);
-    await tester.tap(find.byKey(const Key('date_header')));
+    await calendarTapVisible(tester, find.byKey(const Key('date_header')));
     await tester.pump();
     await tester.enterText(find.byKey(const Key('date_field')), '20261031');
-    await tester.tap(find.text('確定'));
+    await calendarTapVisible(tester, find.text('確定'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     await tester.ensureVisible(find.text('決定').last);
-    await tester.tap(find.text('決定').last);
+    await calendarTapVisible(tester, find.text('決定').last);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-    await tester.tap(find.text('保存'));
+    await calendarTapVisible(tester, find.text('保存'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     final saved =
@@ -409,22 +410,22 @@ void main() {
         ),
       );
     await harness.pump(tester);
-    await tester.tap(find.byKey(calendarTestDay2));
+    await calendarTapVisible(tester, find.byKey(calendarTestDay2));
     await tester.pump();
-    await tester.tap(find.byKey(calendarTestDay2));
+    await calendarTapVisible(tester, find.byKey(calendarTestDay2));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-    await tester.tap(find.widgetWithText(ListTile, '定例'));
+    await calendarTapVisible(tester, find.widgetWithText(ListTile, '定例'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     await tester.enterText(find.widgetWithText(TextFormField, 'タイトル'), '変更');
-    await tester.tap(find.text('保存'));
+    await calendarTapVisible(tester, find.text('保存'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-    await tester.tap(find.text('この予定とこれ以降'));
+    await calendarTapVisible(tester, find.text('この予定とこれ以降'));
     await tester.pump();
     expect(find.text('以前「この予定のみ」で変更した予定は残ります。'), findsOneWidget);
-    await tester.tap(find.text('変更する'));
+    await calendarTapVisible(tester, find.text('変更する'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     verify(
@@ -435,15 +436,15 @@ void main() {
         changes: anyNamed('changes'),
       ),
     ).called(1);
-    await tester.tap(find.widgetWithText(ListTile, '定例'));
+    await calendarTapVisible(tester, find.widgetWithText(ListTile, '定例'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-    await tester.tap(find.text('削除'));
+    await calendarTapVisible(tester, find.text('削除'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-    await tester.tap(find.text('この予定のみ'));
+    await calendarTapVisible(tester, find.text('この予定のみ'));
     await tester.pump();
-    await tester.tap(find.text('削除する'));
+    await calendarTapVisible(tester, find.text('削除する'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     verify(harness.changeRecurrence.execute(any, any, CalendarChangeScope.only))

@@ -10,22 +10,49 @@ import 'package:memora/presentation/notifiers/calendar/calendar_labels_notifier.
 
 class _Labels extends CalendarLabelsNotifier {
   @override
-  CalendarLabelsState build(String groupId) => CalendarLabelsState(canManage: true);
+  CalendarLabelsState build(String groupId) =>
+      CalendarLabelsState(canManage: true);
 }
+
 void main() {
   for (final role in ['owner', 'admin', 'member']) {
     testWidgets('既存グループの任意ラベル管理への入口を役割に合わせる（$role）', (tester) async {
-      await tester.pumpWidget(ProviderScope(overrides: [calendarLabelsNotifierProvider('g').overrideWith(_Labels.new)], child: MaterialApp(home: GroupEditModal(
-        group: const GroupDto(id: 'g', ownerId: 'owner', name: '家族', members: [GroupMemberDto(memberId: 'admin', groupId: 'g', displayName: '管理者', isAdministrator: true)]),
-        currentMember: MemberDto(id: role, displayName: role), availableMembers: const [], onSave: (_) async => true,
-      ))));
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            calendarLabelsNotifierProvider('g').overrideWith(_Labels.new),
+          ],
+          child: MaterialApp(
+            home: GroupEditModal(
+              group: const GroupDto(
+                id: 'g',
+                ownerId: 'owner',
+                name: '家族',
+                members: [
+                  GroupMemberDto(
+                    memberId: 'admin',
+                    groupId: 'g',
+                    displayName: '管理者',
+                    isAdministrator: true,
+                  ),
+                ],
+              ),
+              currentMember: MemberDto(id: role, displayName: role),
+              availableMembers: const [],
+              onSave: (_) async => true,
+            ),
+          ),
+        ),
+      );
       if (role == 'member') {
         expect(find.text('色ラベルの設定'), findsNothing);
       } else {
         await tester.ensureVisible(find.text('色ラベルの設定'));
-        await tester.tap(find.text('色ラベルの設定')); await tester.pumpAndSettle();
+        await tester.tap(find.text('色ラベルの設定'));
+        await tester.pumpAndSettle();
         expect(find.byType(CalendarLabelsDialog), findsOneWidget);
-        await tester.tap(find.text('閉じる')); await tester.pumpAndSettle();
+        await tester.tap(find.text('閉じる'));
+        await tester.pumpAndSettle();
         expect(find.byType(CalendarLabelsDialog), findsNothing);
       }
     });
