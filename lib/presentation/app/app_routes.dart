@@ -43,8 +43,8 @@ class AppRootRoute extends GoRouteData with $AppRootRoute {
 }
 
 AppNavigationItem appNavigationItemForLocation(String location) {
-  if (location == const CalendarGroupListRoute().location ||
-      location.startsWith('${const CalendarGroupListRoute().location}/')) {
+  if (location == const CalendarRoute().location ||
+      location.startsWith('${const CalendarRoute().location}/')) {
     return AppNavigationItem.calendar;
   }
   if (location == const MapRoute().location) {
@@ -123,12 +123,7 @@ class MemberSetupRoute extends GoRouteData with $MemberSetupRoute {
         ),
       ],
     ),
-    TypedGoRoute<CalendarGroupListRoute>(
-      path: '/calendar',
-      routes: <TypedRoute<RouteData>>[
-        TypedGoRoute<CalendarRoute>(path: ':groupId'),
-      ],
-    ),
+    TypedGoRoute<CalendarRoute>(path: '/calendar'),
     TypedGoRoute<MapRoute>(path: '/map'),
     TypedGoRoute<MemberManagementRoute>(path: '/members'),
     TypedGoRoute<GroupManagementRoute>(path: '/group-management'),
@@ -215,23 +210,16 @@ class DvcPointCalculationRoute extends GoRouteData
   }
 }
 
-class CalendarGroupListRoute extends GoRouteData with $CalendarGroupListRoute {
-  const CalendarGroupListRoute();
-  @override
-  Widget build(BuildContext context, GoRouterState state) =>
-      const Material(child: CalendarNavigationView());
-}
-
 class CalendarRoute extends GoRouteData with $CalendarRoute {
   const CalendarRoute({
-    required this.groupId,
+    this.groupId,
     this.date,
     this.create = false,
     this.request = 0,
     this.eventId,
     this.occurrence,
   });
-  final String groupId;
+  final String? groupId;
   final String? date;
   final bool create;
   final int request;

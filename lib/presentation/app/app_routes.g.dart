@@ -176,14 +176,7 @@ RouteBase get $appShellRoute => ShellRouteData.$route(
     GoRouteData.$route(
       path: '/calendar',
       hasOverriddenOnExit: false,
-      factory: $CalendarGroupListRoute._fromState,
-      routes: [
-        GoRouteData.$route(
-          path: ':groupId',
-          hasOverriddenOnExit: false,
-          factory: $CalendarRoute._fromState,
-        ),
-      ],
+      factory: $CalendarRoute._fromState,
     ),
     GoRouteData.$route(
       path: '/map',
@@ -318,30 +311,9 @@ mixin $DvcPointCalculationRoute on GoRouteData {
   void replace(BuildContext context) => context.replace(location);
 }
 
-mixin $CalendarGroupListRoute on GoRouteData {
-  static CalendarGroupListRoute _fromState(GoRouterState state) =>
-      const CalendarGroupListRoute();
-
-  @override
-  String get location => GoRouteData.$location('/calendar');
-
-  @override
-  void go(BuildContext context) => context.go(location);
-
-  @override
-  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
-
-  @override
-  void pushReplacement(BuildContext context) =>
-      context.pushReplacement(location);
-
-  @override
-  void replace(BuildContext context) => context.replace(location);
-}
-
 mixin $CalendarRoute on GoRouteData {
   static CalendarRoute _fromState(GoRouterState state) => CalendarRoute(
-    groupId: state.pathParameters['groupId']!,
+    groupId: state.uri.queryParameters['group-id'],
     date: state.uri.queryParameters['date'],
     create:
         _$convertMapValue(
@@ -360,8 +332,9 @@ mixin $CalendarRoute on GoRouteData {
 
   @override
   String get location => GoRouteData.$location(
-    '/calendar/${Uri.encodeComponent(_self.groupId)}',
+    '/calendar',
     queryParams: {
+      if (_self.groupId != null) 'group-id': _self.groupId,
       if (_self.date != null) 'date': _self.date,
       if (_self.create != false) 'create': _self.create.toString(),
       if (_self.request != 0) 'request': _self.request.toString(),

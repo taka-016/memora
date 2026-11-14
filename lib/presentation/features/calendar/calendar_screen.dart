@@ -71,7 +71,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       _pendingInitialCreate = widget.createEvent;
       _pendingInitialEventId = widget.initialEventId;
       _loadingInitialExternal = true;
-
+      _openInitialRequest();
       unawaited(_loadExternal());
     });
   }
@@ -217,6 +217,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         unawaited(_edit(event));
       }
     });
+    WidgetsBinding.instance.ensureVisualUpdate();
   }
 
   @override

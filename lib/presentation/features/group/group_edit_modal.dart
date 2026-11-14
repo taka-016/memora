@@ -1,3 +1,4 @@
+import 'package:memora/presentation/features/calendar/calendar_labels_dialog.dart';
 import 'package:memora/application/services/calendar/calendar_display_labels.dart';
 import 'package:memora/presentation/shared/inputs/label_color_settings.dart';
 import 'package:flutter/material.dart';
@@ -732,6 +733,8 @@ class GroupEditModal extends HookConsumerWidget {
                 ],
               ),
               const SizedBox(height: 16),
+              if (group.id.isNotEmpty && (group.ownerId == currentMember.id || group.members.any((m) => m.memberId == currentMember.id && m.isAdministrator)))
+                TextButton.icon(icon: const Icon(Icons.palette_outlined), label: const Text('色ラベルの設定'), onPressed: isSaving.value ? null : () => showDialog<void>(context: context, builder: (_) => CalendarLabelsDialog(groupId: group.id))),
               buildMemoField(),
               const SizedBox(height: 16),
               buildMemberManagementSection(),
