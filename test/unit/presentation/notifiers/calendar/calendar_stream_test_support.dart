@@ -15,6 +15,7 @@ class EventSource implements CalendarEventWatchQueryService {
   final groups = <String>[];
   final periods = <CalendarEventPeriod?>[];
   int cancelled = 0;
+  Future<void>? cancelWait;
   @override
   Stream<List<CalendarEventDto>> watchCalendarEventsByGroupId(
     String groupId, {
@@ -25,6 +26,7 @@ class EventSource implements CalendarEventWatchQueryService {
     final stream = StreamController<List<CalendarEventDto>>(
       onCancel: () {
         cancelled++;
+        return cancelWait;
       },
     );
     streams.add(stream);
