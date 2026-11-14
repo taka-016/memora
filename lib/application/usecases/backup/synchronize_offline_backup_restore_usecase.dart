@@ -23,8 +23,10 @@ class SynchronizeOfflineBackupRestoreUsecase {
     required this.clearWidgetCache,
     required this.refreshWidgetCache,
     required this.registerPeriodicUpdateTask,
+    this.refreshCalendarCache,
   });
 
+  final Future<void> Function()? refreshCalendarCache;
   final LoadOfflineWidgetValue loadTargetGroupId;
   final LoadOfflineWidgetValue loadSelectedItineraryDateId;
   final OfflineTargetGroupExists targetGroupExists;
@@ -67,6 +69,12 @@ class SynchronizeOfflineBackupRestoreUsecase {
     } catch (error, stackTrace) {
       cacheError = error;
       cacheStackTrace = stackTrace;
+    }
+    try {
+      await refreshCalendarCache?.call();
+    } catch (error, stackTrace) {
+      cacheError ??= error;
+      cacheStackTrace ??= stackTrace;
     }
     try {
       await registerPeriodicUpdateTask(interval.duration);

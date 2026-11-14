@@ -22,9 +22,18 @@ final calendarNotificationStorageProvider =
     Provider<CalendarNotificationStorage>(
       (ref) => const SharedPreferencesCalendarNotificationStorage(),
     );
+final localCalendarNotificationGatewayProvider =
+    Provider<LocalCalendarNotificationGateway>((ref) {
+      final gateway = LocalCalendarNotificationGateway();
+      ref.onDispose(() {
+        gateway.dispose();
+      });
+      return gateway;
+    });
+
 final calendarNotificationGatewayProvider =
     Provider<CalendarNotificationGateway>(
-      (ref) => LocalCalendarNotificationGateway(),
+      (ref) => ref.watch(localCalendarNotificationGatewayProvider),
     );
 final calendarNotificationSourceProvider = Provider<CalendarNotificationSource>(
   (ref) => DeviceCalendarNotificationSource(

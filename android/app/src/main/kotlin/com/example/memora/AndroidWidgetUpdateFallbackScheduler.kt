@@ -60,7 +60,8 @@ object AndroidWidgetUpdateFallbackScheduler {
         val targetGroupId = preferences
             .getString(TARGET_GROUP_ID_KEY, null)
             .orEmpty()
-        if (targetGroupId.isEmpty()) {
+        val calendarScope = preferences.getString("memora_widget_calendar_scope", null).orEmpty()
+        if (targetGroupId.isEmpty() && calendarScope.isEmpty()) {
             return
         }
 

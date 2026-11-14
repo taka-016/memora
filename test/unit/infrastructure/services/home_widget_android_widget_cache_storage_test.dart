@@ -49,6 +49,40 @@ void main() {
     await directory.delete(recursive: true);
   });
 
+  test('新しい表示対象を先行する取得の公開で上書きしない', () async {
+    const storage = HomeWidgetCalendarCacheStorage();
+    await storage.setScope('old');
+    await storage.setScope('new');
+    expect(await storage.setScopeIfCurrent('old', 'old'), isFalse);
+    expect(await storage.loadScope(), 'new');
+    expect(await storage.setScopeIfCurrent('new', 'latest'), isTrue);
+    expect(await storage.loadScope(), 'latest');
+  });
+
+  test('別Container相当のキャッシュ更新も直列に実行し失敗後に再開する', () async {
+    const firstStorage = HomeWidgetCalendarCacheStorage();
+    const secondStorage = HomeWidgetCalendarCacheStorage();
+    final started = Completer<void>();
+    final release = Completer<void>();
+    final order = <String>[];
+    final first = firstStorage.synchronize(() async {
+      order.add('先行');
+      started.complete();
+      await release.future;
+      throw TestException('取得失敗');
+    });
+    final failure = expectLater(first, throwsA(isA<TestException>()));
+    await started.future;
+    final second = secondStorage.synchronize(() async {
+      order.add('後続');
+    });
+    expect(order, ['先行']);
+    release.complete();
+    await failure;
+    await second;
+    expect(order, ['先行', '後続']);
+  });
+
   test('旅程取得中と失敗を選択日ごとに公開し再試行成功で解除する', () async {
     const storage = HomeWidgetAndroidWidgetCacheStorage();
     const selected = 'trip_2026-11-08';
@@ -146,6 +180,15 @@ void main() {
     expect(values[key], isNull);
   });
 
+  test('旅程だけの設定解除はカレンダーのキャッシュと表示対象を保持する', () async {
+    const storage = HomeWidgetAndroidWidgetCacheStorage();
+    values[HomeWidgetCalendarCacheStorage.cacheKey] = '/calendar.json';
+    values[HomeWidgetCalendarCacheStorage.scopeKey] = 'calendar-owner';
+    await storage.clearItinerary();
+    expect(values[HomeWidgetCalendarCacheStorage.cacheKey], '/calendar.json');
+    expect(values[HomeWidgetCalendarCacheStorage.scopeKey], 'calendar-owner');
+  });
+
   test('カレンダーの月と全予定をファイルで公開し対象解除時に削除する', () async {
     const calendar = HomeWidgetCalendarCacheStorage();
     final data = <String, Object?>{
@@ -202,6 +245,25 @@ void main() {
         '2026-${month.toString().padLeft(2, '0')}-01',
     });
     expect(await storage.loadSelectedDate(), DateTime(2026, 7, 1));
+  });
+
+  test('利用者や表示対象が変わったら以前の月を結合しない', () async {
+    const storage = HomeWidgetCalendarCacheStorage();
+    for (final scope in ['online:a:g1', 'online:a:g2', 'online:b:g2']) {
+      await storage.save({
+        'cacheScope': scope,
+        'sourceMode': 'online',
+        'month': scope == 'online:a:g1' ? '2026-05-01' : '2026-11-01',
+        'months': {
+          if (scope == 'online:a:g1') '2026-05-01': {} else '2026-11-01': {},
+        },
+      });
+      final path = values[HomeWidgetCalendarCacheStorage.cacheKey] as String;
+      final saved = jsonDecode(await File(path).readAsString()) as Map;
+      if (scope != 'online:a:g1') {
+        expect((saved['months'] as Map).keys, ['2026-11-01']);
+      }
+    }
   });
 
   test('カレンダー更新は既存月を置き換え設定と選択日を維持する', () async {

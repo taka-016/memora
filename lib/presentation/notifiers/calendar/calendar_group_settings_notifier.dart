@@ -1,3 +1,9 @@
+import 'dart:convert';
+
+import 'package:memora/presentation/notifiers/backup/offline_backup_notifier.dart';
+import 'package:flutter/foundation.dart';
+import 'package:memora/core/app_logger.dart';
+
 import 'dart:async';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -54,11 +60,59 @@ class CalendarGroupSettingsNotifier extends _$CalendarGroupSettingsNotifier {
   int _generation = 0;
   int _loadRequest = 0;
   String? _owner;
+  bool _skipInitialSelection = false;
   @override
   CalendarGroupSettingsState build() {
+    listenSelf((previous, next) {
+      if (!next.canUseSettings) return;
+      if (previous?.canUseSettings == true &&
+          setEquals(
+            previous!.effectiveSettings.visibleGroupIds,
+            next.effectiveSettings.visibleGroupIds,
+          ) &&
+          listEquals(previous.groups, next.groups)) {
+        return;
+      }
+      unawaited(_refreshWidget());
+    });
+    ref.listen(offlineBackupNotifierProvider, (_, next) {
+      if (next.isRestoring) _skipInitialSelection = true;
+    });
     final generation = ++_generation;
     _owner = ref.watch(calendarSettingsOwnerProvider);
     final memberId = ref.watch(calendarSettingsMemberIdProvider);
+    final changes = ref.watch(calendarMembershipChangesProvider);
+    if (_owner != null && memberId != null && changes != null) {
+      var membershipRequest = 0;
+      final subscription = changes(_owner!).listen(
+        (_) async {
+          final request = ++membershipRequest;
+          try {
+            final groups = await ref.read(reloadCalendarMembershipsProvider)(
+              memberId,
+            );
+            if (!ref.mounted ||
+                generation != _generation ||
+                request != membershipRequest) {
+              return;
+            }
+            ref
+                .read(groupTimelineGroupSelectionNotifierProvider.notifier)
+                .setLoadedGroups(memberId: memberId, groups: groups);
+          } catch (error, stack) {
+            if (ref.mounted && generation == _generation) {
+              logger.w('所属変更後のグループ取得に失敗しました', error: error, stackTrace: stack);
+            }
+          }
+        },
+        onError: (Object error, StackTrace stack) {
+          if (ref.mounted) {
+            logger.w('グループの所属監視に失敗しました', error: error, stackTrace: stack);
+          }
+        },
+      );
+      ref.onDispose(() => unawaited(subscription.cancel()));
+    }
     ref.onDispose(() => _generation++);
     void receive(GroupTimelineGroupSelectionState selection) {
       if (!ref.mounted ||
@@ -90,7 +144,26 @@ class CalendarGroupSettingsNotifier extends _$CalendarGroupSettingsNotifier {
     return CalendarGroupSettingsState();
   }
 
-  Future<void> reload() async {
+  Future<void> _refreshWidget() async {
+    try {
+      final owner = _owner;
+      final scope = owner == null
+          ? null
+          : jsonEncode([
+              owner.split(':').first,
+              owner,
+              state.effectiveSettings.visibleGroupIds.toList()..sort(),
+            ]);
+      await ref.read(calendarWidgetScopeChangedProvider)(scope);
+      if (!ref.mounted) return;
+      await ref.read(calendarWidgetGroupsChangedProvider)();
+    } catch (error, stack) {
+      logger.w('表示設定変更後のウィジェット更新に失敗しました', error: error, stackTrace: stack);
+    }
+  }
+
+  Future<void> reload({bool afterRestore = false}) async {
+    if (afterRestore) _skipInitialSelection = true;
     final owner = _owner;
     if (owner == null || state.isSaving) return;
     final generation = _generation;
@@ -100,11 +173,15 @@ class CalendarGroupSettingsNotifier extends _$CalendarGroupSettingsNotifier {
       final settings = await ref
           .read(calendarGroupSettingsStorageProvider)
           .load(owner);
+      final allowed =
+          !owner.startsWith('offline:') ||
+          await ref.read(calendarGroupInitializationAllowedProvider)(owner);
       if (!ref.mounted ||
           generation != _generation ||
           request != _loadRequest) {
         return;
       }
+      if (!allowed) _skipInitialSelection = true;
       await _applyLoaded(
         state.copyWith(settings: settings, isLoading: false, loadFailed: false),
       );
@@ -123,7 +200,8 @@ class CalendarGroupSettingsNotifier extends _$CalendarGroupSettingsNotifier {
   }
 
   Future<void> _applyLoaded(CalendarGroupSettingsState next) async {
-    if (!next.canUseSettings ||
+    if (_skipInitialSelection ||
+        !next.canUseSettings ||
         next.settings.hasSavedSettings ||
         next.groups.length != 1) {
       state = next;

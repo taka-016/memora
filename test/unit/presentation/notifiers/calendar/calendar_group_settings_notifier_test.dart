@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:memora/presentation/notifiers/backup/offline_backup_notifier.dart';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/models/calendar_group_settings.dart';
@@ -32,13 +34,26 @@ class _Storage implements CalendarGroupSettingsStorage {
   }
 }
 
+class _RestoringBackup extends OfflineBackupNotifier {
+  @override
+  OfflineBackupState build() => const OfflineBackupState();
+  void begin() {
+    state = const OfflineBackupState(isWorking: true, isRestoring: true);
+  }
+}
+
 void main() {
   late ProviderContainer container;
   late _Storage storage;
+  var widgetUpdates = 0;
   setUp(() {
     storage = _Storage();
+    widgetUpdates = 0;
     container = ProviderContainer(
       overrides: [
+        calendarWidgetGroupsChangedProvider.overrideWithValue(() async {
+          widgetUpdates++;
+        }),
         calendarSettingsOwnerProvider.overrideWithValue('online:self'),
         calendarSettingsMemberIdProvider.overrideWithValue('self'),
         calendarGroupSettingsStorageProvider.overrideWithValue(storage),
@@ -57,6 +72,171 @@ void main() {
             GroupDto(id: id, ownerId: 'self', name: id, members: const []),
         ],
       );
+  test('復元反映直後に所属が届いても端末設定を自動保存しない', () async {
+    container.dispose();
+    storage.value = CalendarGroupSettings(hasSavedSettings: false);
+    final backup = _RestoringBackup();
+    container = ProviderContainer(
+      overrides: [
+        calendarSettingsOwnerProvider.overrideWithValue('online:self'),
+        calendarSettingsMemberIdProvider.overrideWithValue('self'),
+        calendarGroupSettingsStorageProvider.overrideWithValue(storage),
+        calendarWidgetGroupsChangedProvider.overrideWithValue(() async {}),
+        offlineBackupNotifierProvider.overrideWith(() => backup),
+      ],
+    );
+    container.listen(calendarGroupSettingsNotifierProvider, (_, _) {});
+    await pumpEventQueue();
+    container.read(offlineBackupNotifierProvider);
+    backup.begin();
+    groups(['restored']);
+    await flush();
+    expect(
+      container
+          .read(calendarGroupSettingsNotifierProvider)
+          .effectiveSettings
+          .visibleGroupIds,
+      isEmpty,
+    );
+    expect(storage.value.hasSavedSettings, isFalse);
+    container.dispose();
+  });
+
+  test('復元後の再読込は未保存でも復元された単独グループを自動選択しない', () async {
+    await flush();
+    storage.value = CalendarGroupSettings(hasSavedSettings: false);
+    await container
+        .read(calendarGroupSettingsNotifierProvider.notifier)
+        .reload(afterRestore: true);
+    groups(['restored']);
+    await flush();
+    final value = container.read(calendarGroupSettingsNotifierProvider);
+    expect(value.effectiveSettings.visibleGroupIds, isEmpty);
+    expect(value.effectiveSettings.defaultGroupId, isNull);
+    expect(storage.value.hasSavedSettings, isFalse);
+  });
+
+  test('復元履歴が残る別Containerでは未保存の単独グループを初期選択しない', () async {
+    container.dispose();
+    storage.value = CalendarGroupSettings(hasSavedSettings: false);
+    container = ProviderContainer(
+      overrides: [
+        calendarSettingsOwnerProvider.overrideWithValue('offline:restored'),
+        calendarSettingsMemberIdProvider.overrideWithValue('self'),
+        calendarGroupSettingsStorageProvider.overrideWithValue(storage),
+        calendarWidgetGroupsChangedProvider.overrideWithValue(() async {}),
+        calendarGroupInitializationAllowedProvider.overrideWithValue(
+          (_) async => false,
+        ),
+      ],
+    );
+    container.listen(calendarGroupSettingsNotifierProvider, (_, _) {});
+    groups(['only']);
+    await flush();
+    expect(
+      container
+          .read(calendarGroupSettingsNotifierProvider)
+          .effectiveSettings
+          .visibleGroupIds,
+      isEmpty,
+    );
+    expect(storage.value.hasSavedSettings, isFalse);
+  });
+
+  test('復元中に利用者のProviderが再構築されても初期選択を復活させない', () async {
+    await flush();
+    storage.value = CalendarGroupSettings(hasSavedSettings: false);
+    await container
+        .read(calendarGroupSettingsNotifierProvider.notifier)
+        .reload(afterRestore: true);
+    container.updateOverrides([
+      calendarWidgetGroupsChangedProvider.overrideWithValue(() async {
+        widgetUpdates++;
+      }),
+      calendarSettingsOwnerProvider.overrideWithValue('online:restored'),
+      calendarSettingsMemberIdProvider.overrideWithValue('restored'),
+      calendarGroupSettingsStorageProvider.overrideWithValue(storage),
+    ]);
+    await flush();
+    container
+        .read(groupTimelineGroupSelectionNotifierProvider.notifier)
+        .setLoadedGroups(
+          memberId: 'restored',
+          groups: [
+            const GroupDto(
+              id: 'only',
+              ownerId: 'restored',
+              name: '復元データ',
+              members: [],
+            ),
+          ],
+        );
+    await flush();
+    expect(
+      container
+          .read(calendarGroupSettingsNotifierProvider)
+          .effectiveSettings
+          .visibleGroupIds,
+      isEmpty,
+    );
+  });
+
+  test('通知とは独立した所属変更を受信して表示対象を照合する', () async {
+    final changes = StreamController<void>();
+    addTearDown(changes.close);
+    container.dispose();
+    container = ProviderContainer(
+      overrides: [
+        calendarSettingsOwnerProvider.overrideWithValue('online:self'),
+        calendarSettingsMemberIdProvider.overrideWithValue('self'),
+        calendarGroupSettingsStorageProvider.overrideWithValue(storage),
+        calendarWidgetGroupsChangedProvider.overrideWithValue(() async {
+          widgetUpdates++;
+        }),
+        calendarMembershipChangesProvider.overrideWithValue(
+          (_) => changes.stream,
+        ),
+        reloadCalendarMembershipsProvider.overrideWithValue((_) async => []),
+      ],
+    );
+    container.listen(calendarGroupSettingsNotifierProvider, (_, _) {});
+    await pumpEventQueue();
+    groups(['a']);
+    await flush();
+    expect(
+      container
+          .read(calendarGroupSettingsNotifierProvider)
+          .effectiveSettings
+          .visibleGroupIds,
+      {'a'},
+    );
+    changes.add(null);
+    await pumpEventQueue();
+    expect(
+      container
+          .read(calendarGroupSettingsNotifierProvider)
+          .effectiveSettings
+          .visibleGroupIds,
+      isEmpty,
+    );
+    container.dispose();
+  });
+
+  test('表示選択と有効な所属の変更でウィジェットを更新する', () async {
+    groups(['a', 'b']);
+    await flush();
+    final before = widgetUpdates;
+    await container
+        .read(calendarGroupSettingsNotifierProvider.notifier)
+        .setVisibleGroups({'b'});
+    await flush();
+    expect(widgetUpdates, greaterThan(before));
+    final selected = widgetUpdates;
+    groups(['a']);
+    await flush();
+    expect(widgetUpdates, greaterThan(selected));
+  });
+
   for (final membershipsFirst in [true, false]) {
     test('保存設定がなく所属1件なら表示対象と既定グループを自動保存する（所属が先: $membershipsFirst）', () async {
       await flush();
@@ -283,6 +463,9 @@ void main() {
     storage.pending = old;
     await flush();
     container.updateOverrides([
+      calendarWidgetGroupsChangedProvider.overrideWithValue(() async {
+        widgetUpdates++;
+      }),
       calendarSettingsOwnerProvider.overrideWithValue('online:other'),
       calendarSettingsMemberIdProvider.overrideWithValue('other'),
       calendarGroupSettingsStorageProvider.overrideWithValue(storage),

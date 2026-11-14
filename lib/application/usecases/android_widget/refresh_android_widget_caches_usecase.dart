@@ -11,7 +11,7 @@ class RefreshAndroidWidgetCachesUsecase {
   final Future<String?> Function() loadTargetGroupId;
   final Future<Set<AndroidWidgetKind>> Function() loadInstalledKinds;
   final Future<void> Function(String groupId) refreshItinerary;
-  final Future<void> Function(String groupId) refreshCalendar;
+  final Future<void> Function() refreshCalendar;
 
   Future<void> execute({
     Set<AndroidWidgetKind> kinds = const {
@@ -23,14 +23,15 @@ class RefreshAndroidWidgetCachesUsecase {
     final targets = installed.intersection(kinds);
     if (targets.isEmpty) return;
     final groupId = await loadTargetGroupId();
-    if (groupId == null) return;
+
     Object? failure;
     StackTrace? failureStack;
     for (final kind in targets) {
+      if (kind == AndroidWidgetKind.itinerary && groupId == null) continue;
       try {
         await (kind == AndroidWidgetKind.itinerary
-            ? refreshItinerary(groupId)
-            : refreshCalendar(groupId));
+            ? refreshItinerary(groupId!)
+            : refreshCalendar());
       } catch (error, stack) {
         failure ??= error;
         failureStack ??= stack;
