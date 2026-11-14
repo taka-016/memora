@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:memora/presentation/app/top_page.dart';
-import 'package:memora/presentation/features/calendar/calendar_navigation_view.dart';
+import 'package:memora/presentation/features/calendar/calendar_screen.dart';
 import 'package:memora/presentation/features/account_setting/account_settings.dart';
 import 'package:memora/presentation/features/auth/auth_guard.dart';
 import 'package:memora/presentation/features/auth/auth_initialization_view.dart';
@@ -227,8 +227,8 @@ class CalendarRoute extends GoRouteData with $CalendarRoute {
   final String? occurrence;
   @override
   Widget build(BuildContext context, GoRouterState state) => Material(
-    child: CalendarNavigationView(
-      groupId: groupId,
+    child: CalendarScreen(
+      initialEventGroupId: groupId,
       initialDate: DateTime.tryParse(date ?? ''),
       createEvent: create,
       initialRequest: request,

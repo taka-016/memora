@@ -1,3 +1,5 @@
+import 'package:memora/presentation/notifiers/member/current_member_notifier.dart';
+import 'package:memora/presentation/notifiers/timeline/group_timeline_group_selection_notifier.dart';
 import 'package:memora/application/models/calendar_display_settings.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_display_settings_notifier.dart';
 import 'package:memora/presentation/features/calendar/calendar_date_color.dart';
@@ -23,18 +25,14 @@ import 'package:memora/presentation/features/calendar/calendar_month_grid.dart';
 class CalendarScreen extends ConsumerStatefulWidget {
   const CalendarScreen({
     super.key,
-    this.groupId,
-    this.groupName,
-    this.onBack,
+    this.initialEventGroupId,
     this.initialDate,
     this.createEvent = false,
     this.initialRequest = 0,
     this.initialEventId,
     this.initialOccurrence,
   });
-  final String? groupId;
-  final String? groupName;
-  final VoidCallback? onBack;
+  final String? initialEventGroupId;
   final DateTime? initialDate;
   final bool createEvent;
   final int initialRequest;
@@ -62,9 +60,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     _pendingInitialEventId = null;
     Future.microtask(() {
       if (!mounted || version != _initialRequestVersion) return;
-      final notifier = ref.read(
-        multiGroupCalendarNotifierProvider.notifier,
-      );
+      final notifier = ref.read(multiGroupCalendarNotifierProvider.notifier);
       if (widget.initialDate != null) {
         notifier.selectDate(widget.initialDate!);
       }
@@ -82,7 +78,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       if (!ref.read(externalCalendarSupportedProvider)) return;
       final external = ref.read(externalCalendarNotifierProvider.notifier);
       final date = ref
-          .read(multiGroupCalendarNotifierProvider).calendar
+          .read(multiGroupCalendarNotifierProvider)
+          .calendar
           .selectedDate;
       await external.setPeriod(date);
       if (mounted) await external.initialize();
@@ -97,7 +94,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   @override
   void didUpdateWidget(covariant CalendarScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.groupId != widget.groupId ||
+    if (oldWidget.initialEventGroupId != widget.initialEventGroupId ||
         oldWidget.initialDate != widget.initialDate ||
         oldWidget.createEvent != widget.createEvent ||
         oldWidget.initialEventId != widget.initialEventId ||
@@ -165,13 +162,12 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     if (!ref.read(calendarGroupSettingsNotifierProvider).canUseSettings) return;
     final next = ref.read(multiGroupCalendarNotifierProvider).calendar;
     if ((!_pendingInitialCreate && _pendingInitialEventId == null) ||
-        next.isLoading ||
-        next.isSaving ||
-        next.loadError.isNotEmpty) {
+        next.isSaving) {
       return;
     }
     final eventId = _pendingInitialEventId;
     final deviceRequest = eventId?.startsWith('device:') == true;
+    if (eventId != null && !deviceRequest && (next.isLoading || next.loadError.isNotEmpty || !next.hasLoadedEvents)) return;
     final external =
         deviceRequest && ref.read(externalCalendarSupportedProvider)
         ? ref.read(externalCalendarNotifierProvider)
@@ -191,7 +187,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         ? null
         : next.events.where((event) {
             return event.id == eventId &&
-                (widget.groupId == null || event.groupId == widget.groupId) &&
+                (widget.initialEventGroupId == null ||
+                    event.groupId == widget.initialEventGroupId) &&
                 (event.originalStartDateTime == null ||
                     occurrence == null ||
                     event.originalStartDateTime!.isAtSameMomentAs(occurrence));
@@ -241,7 +238,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       }
     });
     ref.listen(provider, (_, _) => _openInitialRequest());
-    ref.listen(calendarGroupSettingsNotifierProvider, (_, _) => _openInitialRequest());
+    ref.listen(
+      calendarGroupSettingsNotifierProvider,
+      (_, _) => _openInitialRequest(),
+    );
     if (externalSupported) {
       ref.listen(
         externalCalendarNotifierProvider,
@@ -266,7 +266,12 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 children: [
                   Row(
                     children: [
-                      Expanded(child: Text('カレンダー', style: Theme.of(context).textTheme.titleMedium)),
+                      Expanded(
+                        child: Text(
+                          'カレンダー',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                      ),
                       if (!state.isWatching)
                         IconButton(
                           tooltip: '再読み込み',
@@ -287,7 +292,13 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                         ),
                       IconButton(
                         tooltip: '表示グループの選択',
-                        onPressed: !groupSettings.canUseSettings ? null : () => showDialog<void>(context: context, builder: (_) => const CalendarGroupSelectionDialog()),
+                        onPressed: !groupSettings.canUseSettings
+                            ? null
+                            : () => showDialog<void>(
+                                context: context,
+                                builder: (_) =>
+                                    const CalendarGroupSelectionDialog(),
+                              ),
                         icon: const Icon(Icons.groups_outlined),
                       ),
                     ],
@@ -332,9 +343,29 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                       ),
                     ],
                   ),
-                  if (groupSettings.loadFailed) TextButton(onPressed: () => ref.read(calendarGroupSettingsNotifierProvider.notifier).reload(), child: Text(groupSettings.error)),
+                  if (!groupSettings.groupsReady)
+                    TextButton(onPressed: () {
+                      final member = ref.read(currentMemberNotifierProvider).member;
+                      if (member != null) ref.read(groupTimelineGroupSelectionNotifierProvider.notifier).load(member);
+                    }, child: const Text('所属グループを再取得')),
+                  if (groupSettings.loadFailed)
+                    TextButton(
+                      onPressed: () => ref
+                          .read(calendarGroupSettingsNotifierProvider.notifier)
+                          .reload(),
+                      child: Text(groupSettings.error),
+                    ),
                   if (groupSettings.effectiveSettings.visibleGroupIds.isEmpty)
-                    TextButton(onPressed: !groupSettings.canUseSettings ? null : () => showDialog<void>(context: context, builder: (_) => const CalendarGroupSelectionDialog()), child: const Text('表示するグループを選択してください')),
+                    TextButton(
+                      onPressed: !groupSettings.canUseSettings
+                          ? null
+                          : () => showDialog<void>(
+                              context: context,
+                              builder: (_) =>
+                                  const CalendarGroupSelectionDialog(),
+                            ),
+                      child: const Text('表示するグループを選択してください'),
+                    ),
                   if (state.isLoading) const LinearProgressIndicator(),
                   if (state.loadError.isNotEmpty)
                     Padding(
