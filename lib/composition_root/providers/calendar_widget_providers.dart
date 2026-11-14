@@ -60,8 +60,7 @@ final refreshCalendarWidgetProvider =
             await storage.update();
             return;
           }
-          if (await storage.loadScope() != previousScope) return;
-          await storage.setScope(selection.cacheScope);
+          if (!await storage.setScopeIfCurrent(previousScope, selection.cacheScope)) return;
           if (!ref.mounted || request != generation) return;
           final usecase = ref.read(getAndroidWidgetCalendarCacheUsecaseProvider);
           final clock = ref.read(appClockProvider);
@@ -79,9 +78,7 @@ final refreshCalendarWidgetProvider =
             final latest = await selectionUsecase.execute();
             if (!ref.mounted || request != generation) return;
             if (latest?.cacheScope != selection.cacheScope) {
-              if (await storage.loadScope() == selection.cacheScope) {
-                await storage.setScope(latest?.cacheScope);
-              }
+              await storage.setScopeIfCurrent(selection.cacheScope, latest?.cacheScope);
               return;
             }
             if (await storage.loadScope() != selection.cacheScope) return;

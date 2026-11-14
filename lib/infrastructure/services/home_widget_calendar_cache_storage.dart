@@ -37,9 +37,41 @@ class HomeWidgetCalendarCacheStorage {
   static const cacheKey = 'memora_widget_calendar_cache';
   static const scopeKey = 'memora_widget_calendar_scope';
 
+  static Future<void> _scopePending = Future.value();
+
+  Future<T> _synchronizeScope<T>(Future<T> Function() action) {
+    final previous = _scopePending;
+    Future<T> run() async {
+      await previous;
+      final directory = await getApplicationSupportDirectory();
+      await directory.create(recursive: true);
+      final handle = await File('${directory.path}/calendar_widget_scope.lock').open(mode: FileMode.append);
+      try {
+        await handle.lock(FileLock.exclusive);
+        return await action();
+      } finally {
+        await handle.unlock(); await handle.close();
+      }
+    }
+    final result = run();
+    Future<void> waitForResult() async { try { await result; } catch (_) {} }
+    _scopePending = waitForResult();
+    return result;
+  }
+
   Future<void> setScope(String? scope) async {
-    await HomeWidget.saveWidgetData<String>(scopeKey, scope);
+    await _synchronizeScope(() => HomeWidget.saveWidgetData<String>(scopeKey, scope));
     await update();
+  }
+
+  Future<bool> setScopeIfCurrent(String? expected, String? scope) async {
+    final changed = await _synchronizeScope(() async {
+      if (await loadScope() != expected) return false;
+      await HomeWidget.saveWidgetData<String>(scopeKey, scope);
+      return true;
+    });
+    if (changed) await update();
+    return changed;
   }
 
   static const selectedDateKey = 'memora_widget_calendar_selected_date';
@@ -137,7 +169,7 @@ class HomeWidgetCalendarCacheStorage {
   }
 
   Future<void> clear() async {
-    await HomeWidget.saveWidgetData<String>(scopeKey, null);
+    await _synchronizeScope(() => HomeWidget.saveWidgetData<String>(scopeKey, null));
     await HomeWidget.saveWidgetData<String>(cacheKey, null);
     await HomeWidget.saveWidgetData<String>(selectedDateKey, null);
   }
