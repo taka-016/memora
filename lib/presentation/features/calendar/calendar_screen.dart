@@ -159,7 +159,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   }
 
   void _openInitialRequest() {
-    if (!ref.read(calendarGroupSettingsNotifierProvider).canUseSettings) return;
+    final settings = ref.read(calendarGroupSettingsNotifierProvider);
+    if (!settings.canUseSettings) return;
     final next = ref.read(multiGroupCalendarNotifierProvider).calendar;
     if ((!_pendingInitialCreate && _pendingInitialEventId == null) ||
         next.isSaving) {
@@ -167,7 +168,24 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     }
     final eventId = _pendingInitialEventId;
     final deviceRequest = eventId?.startsWith('device:') == true;
-    if (eventId != null && !deviceRequest && (next.isLoading || next.loadError.isNotEmpty || !next.hasLoadedEvents)) return;
+    if (eventId != null && !deviceRequest) {
+      final groups = ref.read(multiGroupCalendarNotifierProvider).groups;
+      final ids = settings.effectiveSettings.visibleGroupIds;
+      final targetId =
+          widget.initialEventGroupId ??
+          next.events
+              .where((event) => event.id == eventId)
+              .firstOrNull
+              ?.groupId;
+      if (targetId != null) {
+        final target = groups[targetId];
+        if (target == null && ids.contains(targetId)) return;
+        if (target != null && !target.hasLoadedEvents) return;
+      } else if (groups.length < ids.length ||
+          groups.values.any((group) => !group.hasLoadedEvents)) {
+        return;
+      }
+    }
     final external =
         deviceRequest && ref.read(externalCalendarSupportedProvider)
         ? ref.read(externalCalendarNotifierProvider)
@@ -344,10 +362,22 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                     ],
                   ),
                   if (!groupSettings.groupsReady)
-                    TextButton(onPressed: () {
-                      final member = ref.read(currentMemberNotifierProvider).member;
-                      if (member != null) ref.read(groupTimelineGroupSelectionNotifierProvider.notifier).load(member);
-                    }, child: const Text('所属グループを再取得')),
+                    TextButton(
+                      onPressed: () {
+                        final member = ref
+                            .read(currentMemberNotifierProvider)
+                            .member;
+                        if (member != null) {
+                          ref
+                              .read(
+                                groupTimelineGroupSelectionNotifierProvider
+                                    .notifier,
+                              )
+                              .load(member);
+                        }
+                      },
+                      child: const Text('所属グループを再取得'),
+                    ),
                   if (groupSettings.loadFailed)
                     TextButton(
                       onPressed: () => ref
