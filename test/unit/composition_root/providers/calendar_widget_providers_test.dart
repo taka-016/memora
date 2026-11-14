@@ -25,6 +25,8 @@ void main() {
     selection = MockGetCalendarWidgetSelectionUsecase(); cache = MockGetAndroidWidgetCalendarCacheUsecase(); storage = MockHomeWidgetCalendarCacheStorage();
     current = CalendarWidgetSelection(mode: AppMode.online, ownerId: 'online:a', visibleGroupIds: {'a'});
     when(selection.execute()).thenAnswer((_) async => current);
+    when(storage.synchronize(any)).thenAnswer((call) async => (call.positionalArguments[0] as Future<void> Function())());
+    when(storage.loadScope()).thenAnswer((_) async => current.cacheScope);
     when(storage.refresh(any, any, any)).thenAnswer((call) async => (call.positionalArguments[2] as Future<void> Function())());
     when(cache.execute(any, any, ownerId: anyNamed('ownerId'))).thenAnswer((_) async => {'cacheScope': current.cacheScope, 'month': '2026-11-01', 'months': <String,Object?>{}});
     container = ProviderContainer(overrides: [
@@ -42,6 +44,7 @@ void main() {
     when(cache.execute(any, any, ownerId: anyNamed('ownerId'))).thenAnswer((_) { started.complete(); return done.future; });
     final refresh = container.read(refreshCalendarWidgetProvider)(month);
     await started.future;
+    clearInteractions(storage);
     current = CalendarWidgetSelection(mode: AppMode.online, ownerId: 'online:b', visibleGroupIds: {});
     done.complete({'cacheScope': old.cacheScope, 'month': '2026-11-01', 'months': <String,Object?>{}});
     await refresh;
@@ -54,6 +57,7 @@ void main() {
     when(cache.execute(any, any, ownerId: anyNamed('ownerId'))).thenAnswer((_) async => {'cacheScope': current.cacheScope, 'month': '2026-11-01', 'months': <String,Object?>{}});
     await container.read(refreshCalendarWidgetProvider)(month);
     verify(storage.save(any, merge: true)).called(1);
-    verify(storage.setScope(current.cacheScope)).called(1);
+    verify(storage.setScope(current.cacheScope)).called(2);
+    verifyNever(storage.setScope(null));
   });
 }

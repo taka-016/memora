@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:memora/presentation/notifiers/backup/offline_backup_notifier.dart';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -32,6 +33,12 @@ class _Storage implements CalendarGroupSettingsStorage {
   }
 }
 
+class _RestoringBackup extends OfflineBackupNotifier {
+  @override
+  OfflineBackupState build() => const OfflineBackupState();
+  void begin() { state = const OfflineBackupState(isWorking: true, isRestoring: true); }
+}
+
 void main() {
   late ProviderContainer container;
   late _Storage storage;
@@ -62,6 +69,27 @@ void main() {
             GroupDto(id: id, ownerId: 'self', name: id, members: const []),
         ],
       );
+  test('復元反映直後に所属が届いても端末設定を自動保存しない', () async {
+    container.dispose();
+    storage.value = CalendarGroupSettings(hasSavedSettings: false);
+    final backup = _RestoringBackup();
+    container = ProviderContainer(overrides: [
+      calendarSettingsOwnerProvider.overrideWithValue('online:self'),
+      calendarSettingsMemberIdProvider.overrideWithValue('self'),
+      calendarGroupSettingsStorageProvider.overrideWithValue(storage),
+      calendarWidgetGroupsChangedProvider.overrideWithValue(() async {}),
+      offlineBackupNotifierProvider.overrideWith(() => backup),
+    ]);
+    container.listen(calendarGroupSettingsNotifierProvider, (_, _) {});
+    await pumpEventQueue();
+    backup.begin();
+    groups(['restored']);
+    await flush();
+    expect(container.read(calendarGroupSettingsNotifierProvider).effectiveSettings.visibleGroupIds, isEmpty);
+    expect(storage.value.hasSavedSettings, isFalse);
+    container.dispose();
+  });
+
   test('復元後の再読込は未保存でも復元された単独グループを自動選択しない', () async {
     await flush();
     storage.value = CalendarGroupSettings(hasSavedSettings: false);
@@ -122,12 +150,14 @@ void main() {
       reloadCalendarMembershipsProvider.overrideWithValue((_) async => []),
     ]);
     container.listen(calendarGroupSettingsNotifierProvider, (_, _) {});
+    await pumpEventQueue();
     groups(['a']);
     await flush();
     expect(container.read(calendarGroupSettingsNotifierProvider).effectiveSettings.visibleGroupIds, {'a'});
     changes.add(null);
     await flush();
     expect(container.read(calendarGroupSettingsNotifierProvider).effectiveSettings.visibleGroupIds, isEmpty);
+    container.dispose();
   });
 
   test('表示選択と有効な所属の変更でウィジェットを更新する', () async {

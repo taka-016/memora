@@ -49,6 +49,25 @@ void main() {
     await directory.delete(recursive: true);
   });
 
+  test('別Container相当のキャッシュ更新も直列に実行し失敗後に再開する', () async {
+    const firstStorage = HomeWidgetCalendarCacheStorage();
+    const secondStorage = HomeWidgetCalendarCacheStorage();
+    final started = Completer<void>();
+    final release = Completer<void>();
+    final order = <String>[];
+    final first = firstStorage.synchronize(() async {
+      order.add('先行'); started.complete(); await release.future;
+      throw TestException('取得失敗');
+    });
+    final failure = expectLater(first, throwsA(isA<TestException>()));
+    await started.future;
+    final second = secondStorage.synchronize(() async { order.add('後続'); });
+    expect(order, ['先行']);
+    release.complete();
+    await failure; await second;
+    expect(order, ['先行', '後続']);
+  });
+
   test('旅程取得中と失敗を選択日ごとに公開し再試行成功で解除する', () async {
     const storage = HomeWidgetAndroidWidgetCacheStorage();
     const selected = 'trip_2026-11-08';
