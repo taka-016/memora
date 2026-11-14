@@ -1,3 +1,4 @@
+import 'package:memora/presentation/notifiers/calendar/calendar_mutation_coordinator.dart';
 import 'dart:async';
 import 'package:memora/presentation/notifiers/calendar/calendar_state.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_group_settings_notifier.dart';
@@ -279,9 +280,27 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
 
   Future<void> _save() async {
     if (!_form.currentState!.validate()) return;
+    if (_saving || _groupId == null) return;
+    final moving = widget.event != null && widget.event!.groupId != _groupId;
     final recurring = widget.event?.originalStartDateTime != null;
-    final scope = recurring ? await _chooseScope(false) : null;
-    if (!mounted || recurring && scope == null) return;
+    final scope = recurring && !moving ? await _chooseScope(false) : null;
+    if (!mounted || recurring && !moving && scope == null) return;
+    final groups = ref.read(calendarGroupSettingsNotifierProvider);
+    if (!groups.groupsReady || !groups.groups.any((g) => g.id == _groupId)) return;
+    final hidden = !groups.effectiveSettings.visibleGroupIds.contains(_groupId);
+    if (moving || hidden) {
+      final target = groups.groups.firstWhere((g) => g.id == _groupId);
+      final confirmed = await showDialog<bool>(context: context, builder: (context) => AlertDialog(
+        title: const Text('保存先の確認'),
+        content: Text([
+          '「${target.name}」のメンバーと予定を共有します。',
+          if (moving && widget.event!.recurrenceRule != null) '系列全体を移動し、ラベルを変更先の「グループの予定」に戻します。繰り返し条件・日時・取消情報は保持します。',
+          if (hidden) 'このグループは非表示のため、保存した予定は表示から外れます。',
+        ].join('\n')),
+        actions: [TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('キャンセル')), FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('保存する'))],
+      ));
+      if (!mounted || confirmed != true) return;
+    }
     if (scope != CalendarChangeScope.only &&
         _recurrence.until != null &&
         DateTime(
@@ -292,7 +311,7 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
       setState(() => _error = '繰り返しの終了日は開始日以降にしてください');
       return;
     }
-    bool success;
+    setState(() { _saving = true; _error = ''; });
     try {
       final expander = ref.read(calendarRecurrenceExpanderProvider);
       final original = widget.event?.originalStartDateTime;
@@ -354,30 +373,14 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
         recurrenceRule: rule,
         timeZone: rule != null && !_allDay ? _zone : null,
       );
-      final notifier = ref.read(
-        calendarNotifierProvider(widget.event?.groupId ?? _groupId ?? '').notifier,
-      );
-      success = recurring
-          ? await notifier.changeRecurringEvent(
-              widget.event!,
-              scope!,
-              changes: input,
-              expectedSeries: _seriesAtOpen,
-            )
-          : await notifier.saveEvent(input);
-    } on ApplicationValidationException catch (e) {
-      if (mounted) setState(() => _error = e.message);
-      return;
-    }
-    if (!mounted) return;
-    if (success) {
-      Navigator.of(context).pop();
-    } else {
-      setState(
-        () => _error = ref
-            .read(calendarNotifierProvider(widget.event?.groupId ?? _groupId ?? ''))
-            .mutationError,
-      );
+      await ref.read(calendarMutationCoordinatorProvider).save(input, expected: widget.event, expectedSeries: recurring ? _seriesAtOpen : null, scope: scope);
+      if (mounted) Navigator.of(context).pop();
+    } on ApplicationValidationException catch (error) {
+      if (mounted) setState(() => _error = error.message);
+    } catch (_) {
+      if (mounted) setState(() => _error = '保存できませんでした。再読み込みしてから再試行してください');
+    } finally {
+      if (mounted) setState(() => _saving = false);
     }
   }
 
@@ -442,58 +445,26 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
   }
 
   Future<void> _delete() async {
-    if (widget.event!.originalStartDateTime != null) {
-      final scope = await _chooseScope(true);
-      if (!mounted || scope == null) return;
-      final success = await ref
-          .read(calendarNotifierProvider(widget.event?.groupId ?? _groupId ?? '').notifier)
-          .changeRecurringEvent(
-            widget.event!,
-            scope,
-            expectedSeries: _seriesAtOpen,
-          );
-      if (!mounted) return;
-      if (success) {
-        Navigator.pop(context);
-      } else {
-        setState(
-          () => _error = ref
-              .read(calendarNotifierProvider(widget.event?.groupId ?? _groupId ?? ''))
-              .mutationError,
-        );
-      }
-      return;
+    final event = widget.event!;
+    final scope = event.originalStartDateTime != null ? await _chooseScope(true) : null;
+    if (!mounted || event.originalStartDateTime != null && scope == null) return;
+    if (event.originalStartDateTime == null) {
+      final confirmed = await showDialog<bool>(context: context, builder: (context) => AlertDialog(
+        title: const Text('予定を削除'), content: const Text('この予定を削除しますか？'),
+        actions: [TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('キャンセル')), TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('削除する'))],
+      ));
+      if (!mounted || confirmed != true) return;
     }
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('予定を削除'),
-        content: const Text('この予定を削除しますか？'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('キャンセル'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('削除する'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true || !mounted) return;
-    final success = await ref
-        .read(calendarNotifierProvider(widget.event?.groupId ?? _groupId ?? '').notifier)
-        .deleteEvent(widget.event!.id, expectedVersion: widget.event!.version);
-    if (!mounted) return;
-    if (success) {
-      Navigator.of(context).pop();
-    } else {
-      setState(
-        () => _error = ref
-            .read(calendarNotifierProvider(widget.event?.groupId ?? _groupId ?? ''))
-            .mutationError,
-      );
+    setState(() => _saving = true);
+    try {
+      await ref.read(calendarMutationCoordinatorProvider).delete(event, expectedSeries: _seriesAtOpen, scope: scope);
+      if (mounted) Navigator.of(context).pop();
+    } on ApplicationValidationException catch (error) {
+      if (mounted) setState(() => _error = error.message);
+    } catch (_) {
+      if (mounted) setState(() => _error = '削除できませんでした。再読み込みしてから再試行してください');
+    } finally {
+      if (mounted) setState(() => _saving = false);
     }
   }
 
@@ -519,6 +490,7 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
       );
       _initialNotifications = List.of(_notifications!);
     }
+    final movingSeries = widget.event?.recurrenceRule != null && _groupId != widget.event?.groupId;
     final dateInputStyle = TextButton.styleFrom(
       alignment: Alignment.centerLeft,
       foregroundColor: Theme.of(context).colorScheme.onSurface,
@@ -553,6 +525,7 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                       fontWeight: FontWeight.w500,
                     ),
                   ),
+                  if (widget.event != null) Text('保存先: ${groups.groups.where((g) => g.id == widget.event!.groupId).firstOrNull?.name ?? widget.event!.groupId}'),
                   const SizedBox(height: 16),
                   Expanded(
                     child: SingleChildScrollView(
