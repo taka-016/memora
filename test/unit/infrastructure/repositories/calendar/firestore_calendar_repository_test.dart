@@ -216,6 +216,77 @@ void main() {
     isAllDay: false,
   );
 
+  test('移動は元ラベルの件数と系列・取消のグループを同一トランザクションで更新する', () async {
+    final source = event(id: 'event').copyWith(
+      recurrenceRule: 'FREQ=DAILY;COUNT=10',
+      timeZone: 'Asia/Tokyo',
+      overrides: [
+        CalendarEventOverride(
+          originalStartDateTime: DateTime.utc(
+            2026,
+            10,
+            2,
+            12,
+            34,
+            56,
+            123,
+            456,
+          ),
+        ),
+      ],
+    );
+    final overrideId = FirestoreCalendarEventOverrideMapper.documentId(
+      'event',
+      source.overrides.single,
+      false,
+    );
+    when(eventDoc.id).thenReturn('event');
+    when(eventDoc.data()).thenReturn({
+      ...FirestoreCalendarEventMapper.toFirestore(source),
+      'version': 1,
+      'overrideIds': [overrideId],
+    });
+    final overrideDoc = MockDocumentSnapshot();
+    when(overrideDoc.exists).thenReturn(true);
+    when(overrideDoc.data()).thenReturn(
+      FirestoreCalendarEventOverrideMapper.toFirestore(
+        source.overrides.single,
+        eventId: 'event',
+        groupId: 'group',
+        parentAllDay: false,
+        parentDuration: source.duration,
+      ),
+    );
+    final overrideRef = overrideRefs.putIfAbsent(
+      overrideId,
+      () => MockDocumentReference(),
+    );
+    when(transaction.get(overrideRef)).thenAnswer((_) async => overrideDoc);
+    await events.moveCalendarEvent(
+      source,
+      source.copyWith(groupId: 'destination', labelType: 'group', labelId: ''),
+    );
+    final data =
+        verify(transaction.update(eventRef, captureAny)).captured.single
+            as Map<String, dynamic>;
+    expect(data['groupId'], 'destination');
+    expect(data['version'], 2);
+    expect(data['overrideIds'], [overrideId]);
+    expect(data['referencedLabelIds'], isEmpty);
+    expect(
+      (verify(transaction.update(overrideRef, captureAny)).captured.single
+          as Map)['groupId'],
+      'destination',
+    );
+    expect(
+      (verify(transaction.update(labelRef, captureAny)).captured.single
+          as Map)['eventCount'],
+      0,
+    );
+    verifyNever(transaction.delete(eventRef));
+    verifyNever(transaction.set(eventRef, any));
+  });
+
   test('固定ラベルの予定は任意ラベルの利用件数を更新せず保存する', () async {
     await events.saveCalendarEvent(
       event().copyWith(labelType: 'member', memberId: 'm', labelId: ''),

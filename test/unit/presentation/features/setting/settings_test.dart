@@ -1,3 +1,6 @@
+import '../../../../helpers/calendar_group_settings_test_support.dart';
+
+import 'package:memora/presentation/notifiers/calendar/calendar_group_settings_notifier.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'dart:async';
@@ -63,10 +66,18 @@ void main() {
         ),
         '表示': find.byKey(const Key('theme_mode_setting')),
       }.entries) {
+        await tester.scrollUntilVisible(
+          entry.value,
+          160,
+          scrollable: find.byType(Scrollable).first,
+        );
+        await tester.pumpAndSettle();
         expect(entry.value.hitTestable(), findsOneWidget);
+        await tester.ensureVisible(find.bySemanticsLabel(entry.key));
         await tester.tap(find.bySemanticsLabel(entry.key));
         await tester.pumpAndSettle();
         expect(entry.value.hitTestable(), findsNothing);
+        await tester.ensureVisible(find.bySemanticsLabel(entry.key));
         await tester.tap(find.bySemanticsLabel(entry.key));
         await tester.pumpAndSettle();
         expect(entry.value.hitTestable(), findsOneWidget);
@@ -79,6 +90,12 @@ void main() {
         groups: const [],
       );
       await tester.pumpWidget(app());
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('theme_mode_setting')),
+        160,
+        scrollable: find.byType(Scrollable).first,
+      );
       await tester.pumpAndSettle();
       await tester.scrollUntilVisible(
         find.byKey(const Key('theme_mode_setting')),
@@ -151,6 +168,12 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text('バックアップから復元'),
+        160,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
 
       await tester.tap(find.text('バックアップから復元'));
       await tester.pumpAndSettle();
@@ -209,6 +232,12 @@ void main() {
           prepareRestoreUsecase: _FakePrepareOfflineRestoreUsecase(snapshot),
           restoreUsecase: restoreUsecase,
         ),
+      );
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('Androidウィジェット')),
+        160,
+        scrollable: find.byType(Scrollable).first,
       );
       await tester.pumpAndSettle();
       await tester.tap(find.text('バックアップから復元'));
@@ -282,6 +311,12 @@ void main() {
       );
       await tester.tap(find.text('設定を開く'));
       await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text('バックアップから復元'),
+        160,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
       await tester.tap(find.text('バックアップから復元'));
       await tester.pumpAndSettle();
       await tester.enterText(
@@ -329,6 +364,12 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('Androidウィジェット')),
+        160,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
 
       expect(_selectedDropdownValue(tester), 'group-a');
 
@@ -372,6 +413,12 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('Androidウィジェット')),
+        160,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
 
       expect(_selectedDropdownValue(tester), 'group-a');
 
@@ -402,6 +449,12 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('Androidウィジェット')),
+        160,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
 
       expect(_selectedDropdownValue(tester), 'group-a');
       expect(find.text('表示対象を解除'), findsNothing);
@@ -421,6 +474,12 @@ void main() {
 
       await tester.pumpWidget(
         _buildTestApp(storage: storage, groups: const []),
+      );
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('Androidウィジェット')),
+        160,
+        scrollable: find.byType(Scrollable).first,
       );
       await tester.pumpAndSettle();
 
@@ -445,6 +504,12 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('Androidウィジェット')),
+        160,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
 
       expect(find.text('更新間隔'), findsOneWidget);
       expect(find.text('24時間'), findsOneWidget);
@@ -457,6 +522,12 @@ void main() {
           intervalStorage: _FakeAndroidWidgetUpdateIntervalStorage(),
           groups: const [],
         ),
+      );
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('Androidウィジェット')),
+        160,
+        scrollable: find.byType(Scrollable).first,
       );
       await tester.pumpAndSettle();
 
@@ -483,6 +554,12 @@ void main() {
           },
           groups: const [],
         ),
+      );
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('Androidウィジェット')),
+        160,
+        scrollable: find.byType(Scrollable).first,
       );
       await tester.pumpAndSettle();
 
@@ -513,6 +590,12 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('Androidウィジェット')),
+        160,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
 
       expect(find.text('ウィジェット表示対象を取得できませんでした'), findsOneWidget);
 
@@ -534,6 +617,12 @@ void main() {
           intervalStorage: intervalStorage,
           groups: const [],
         ),
+      );
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('Androidウィジェット')),
+        160,
+        scrollable: find.byType(Scrollable).first,
       );
       await tester.pumpAndSettle();
 
@@ -572,6 +661,12 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('Androidウィジェット')),
+        160,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
 
       await tester.tap(find.byType(DropdownButtonFormField<String>));
       await tester.pumpAndSettle();
@@ -593,6 +688,12 @@ void main() {
           intervalStorage: intervalStorage,
           groups: const [],
         ),
+      );
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('Androidウィジェット')),
+        160,
+        scrollable: find.byType(Scrollable).first,
       );
       await tester.pumpAndSettle();
 
@@ -624,6 +725,13 @@ Widget _buildTestApp({
 
   return ProviderScope(
     overrides: [
+      calendarGroupSettingsNotifierProvider.overrideWith(
+        () => TestCalendarGroupSettingsNotifier(
+          visible: const {},
+          defaultGroupId: null,
+          groups: groups,
+        ),
+      ),
       appModeProvider.overrideWithValue(mode),
       currentMemberNotifierProvider.overrideWith(
         () => FakeCurrentMemberNotifier.loaded(member),

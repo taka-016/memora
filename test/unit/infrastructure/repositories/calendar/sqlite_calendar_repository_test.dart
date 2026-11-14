@@ -84,6 +84,78 @@ void main() {
         isAllDay: allDay,
       );
 
+  test('系列移動はID・取消対象・繰り返しを保ち独立予定を元グループに残す', () async {
+    final labelId = await labels.saveCalendarLabel(label());
+    final source = CalendarEvent(
+      id: '',
+      groupId: 'family',
+      labelId: labelId,
+      title: '系列',
+      startDateTime: DateTime.utc(2026, 11, 1),
+      endDateTime: DateTime.utc(2026, 11, 2),
+      isAllDay: true,
+      recurrenceRule: 'FREQ=DAILY;COUNT=10',
+      overrides: [
+        CalendarEventOverride(originalStartDateTime: DateTime.utc(2026, 11, 3)),
+      ],
+    );
+    final id = await events.saveCalendarEvent(source);
+    await events.saveCalendarEvent(event(labelId));
+    final expected = CalendarEventMapper.toEntity(
+      (await eventQuery.getCalendarEventsByGroupId('family'))
+          .firstWhere((e) => e.id == id),
+    );
+    await events.moveCalendarEvent(
+      expected,
+      expected.copyWith(groupId: 'friends', labelType: 'group', labelId: ''),
+    );
+    final moved = (await eventQuery.getCalendarEventsByGroupId('friends'))
+        .single;
+    expect(moved.id, id);
+    expect(moved.recurrenceRule, source.recurrenceRule);
+    expect(
+      moved.overrides.single.originalStartDateTime,
+      DateTime.utc(2026, 11, 3),
+    );
+    expect(
+      (await db.rows('calendar_event_overrides')).single['group_id'],
+      'friends',
+    );
+    expect(
+      (await eventQuery.getCalendarEventsByGroupId('family'))
+          .single
+          .recurrenceRule,
+      isNull,
+    );
+    await expectLater(
+      events.moveCalendarEvent(
+        expected,
+        expected.copyWith(groupId: 'friends', labelType: 'group', labelId: ''),
+      ),
+      throwsA(isA<ValidationException>()),
+    );
+    expect(
+      (await eventQuery.getCalendarEventsByGroupId('friends')).single.id,
+      id,
+    );
+  });
+  test('移動先に属さないラベルでは移動前の予定と取消を保持する', () async {
+    final labelId = await labels.saveCalendarLabel(label());
+    final id = await events.saveCalendarEvent(event(labelId));
+    final expected = CalendarEventMapper.toEntity(
+      (await eventQuery.getCalendarEventsByGroupId('family')).single,
+    );
+    await expectLater(
+      events.moveCalendarEvent(expected, expected.copyWith(groupId: 'friends')),
+      throwsA(isA<ValidationException>()),
+    );
+    expect(
+      (await eventQuery.getCalendarEventsByGroupId('family')).single.id,
+      id,
+    );
+    expect(await eventQuery.getCalendarEventsByGroupId('friends'), isEmpty);
+  });
+
   test('取消は表示期間と重なる回だけ取得し保存時は未取得の過去と未来の取消を保持する', () async {
     final labelId = await labels.saveCalendarLabel(label());
     final keys = [

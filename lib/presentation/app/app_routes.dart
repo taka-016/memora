@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:memora/presentation/app/top_page.dart';
-import 'package:memora/presentation/features/calendar/calendar_navigation_view.dart';
+import 'package:memora/presentation/features/calendar/calendar_screen.dart';
 import 'package:memora/presentation/features/account_setting/account_settings.dart';
 import 'package:memora/presentation/features/auth/auth_guard.dart';
 import 'package:memora/presentation/features/auth/auth_initialization_view.dart';
@@ -43,8 +43,8 @@ class AppRootRoute extends GoRouteData with $AppRootRoute {
 }
 
 AppNavigationItem appNavigationItemForLocation(String location) {
-  if (location == const CalendarGroupListRoute().location ||
-      location.startsWith('${const CalendarGroupListRoute().location}/')) {
+  if (location == const CalendarRoute().location ||
+      location.startsWith('${const CalendarRoute().location}/')) {
     return AppNavigationItem.calendar;
   }
   if (location == const MapRoute().location) {
@@ -123,12 +123,7 @@ class MemberSetupRoute extends GoRouteData with $MemberSetupRoute {
         ),
       ],
     ),
-    TypedGoRoute<CalendarGroupListRoute>(
-      path: '/calendar',
-      routes: <TypedRoute<RouteData>>[
-        TypedGoRoute<CalendarRoute>(path: ':groupId'),
-      ],
-    ),
+    TypedGoRoute<CalendarRoute>(path: '/calendar'),
     TypedGoRoute<MapRoute>(path: '/map'),
     TypedGoRoute<MemberManagementRoute>(path: '/members'),
     TypedGoRoute<GroupManagementRoute>(path: '/group-management'),
@@ -215,23 +210,16 @@ class DvcPointCalculationRoute extends GoRouteData
   }
 }
 
-class CalendarGroupListRoute extends GoRouteData with $CalendarGroupListRoute {
-  const CalendarGroupListRoute();
-  @override
-  Widget build(BuildContext context, GoRouterState state) =>
-      const Material(child: CalendarNavigationView());
-}
-
 class CalendarRoute extends GoRouteData with $CalendarRoute {
   const CalendarRoute({
-    required this.groupId,
+    this.groupId,
     this.date,
     this.create = false,
     this.request = 0,
     this.eventId,
     this.occurrence,
   });
-  final String groupId;
+  final String? groupId;
   final String? date;
   final bool create;
   final int request;
@@ -239,8 +227,8 @@ class CalendarRoute extends GoRouteData with $CalendarRoute {
   final String? occurrence;
   @override
   Widget build(BuildContext context, GoRouterState state) => Material(
-    child: CalendarNavigationView(
-      groupId: groupId,
+    child: CalendarScreen(
+      initialEventGroupId: groupId,
       initialDate: DateTime.tryParse(date ?? ''),
       createEvent: create,
       initialRequest: request,

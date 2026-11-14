@@ -34,6 +34,9 @@ class CalendarNotifier extends _$CalendarNotifier {
 
   @override
   CalendarState build(String groupId) {
+    _series = const [];
+    _receivedLabels = null;
+    _reordering = false;
     ref.onDispose(() {
       _loadVersion++;
       _eventsVersion++;

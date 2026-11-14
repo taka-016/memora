@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/presentation/shared/inputs/label_color_settings.dart';
 import 'package:memora/application/dtos/calendar/calendar_label_dto.dart';
-import 'package:memora/presentation/notifiers/calendar/calendar_notifier.dart';
+import 'package:memora/presentation/notifiers/calendar/calendar_labels_notifier.dart';
 
 Color calendarLabelColor(String color) =>
     Color(0xFF000000 | int.parse(color.substring(1), radix: 16));
@@ -14,9 +14,12 @@ class CalendarLabelsDialog extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(calendarNotifierProvider(groupId));
+    final state = ref.watch(calendarLabelsNotifierProvider(groupId));
     final canReorder =
-        !state.isSaving && !state.isLoading && state.loadError.isEmpty;
+        state.canManage &&
+        !state.isSaving &&
+        !state.isLoading &&
+        state.loadError.isEmpty;
     Future<void> edit([CalendarLabelDto? label]) async {
       await showDialog<void>(
         context: context,
@@ -36,19 +39,29 @@ class CalendarLabelsDialog extends ConsumerWidget {
             onReorderItem: (oldIndex, newIndex) async {
               if (!canReorder) return;
               final success = await ref
-                  .read(calendarNotifierProvider(groupId).notifier)
+                  .read(calendarLabelsNotifierProvider(groupId).notifier)
                   .reorderLabels(oldIndex, newIndex);
               if (!success && context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(
-                      ref.read(calendarNotifierProvider(groupId)).mutationError,
+                      ref
+                          .read(calendarLabelsNotifierProvider(groupId))
+                          .mutationError,
                     ),
                   ),
                 );
               }
             },
             children: [
+              if (state.loadError.isNotEmpty)
+                TextButton(
+                  key: const Key('calendar_labels_retry'),
+                  onPressed: () => ref
+                      .read(calendarLabelsNotifierProvider(groupId).notifier)
+                      .load(),
+                  child: const Text('色ラベルを再取得'),
+                ),
               if (state.labels.isEmpty)
                 const Text(
                   '用途に合わせたラベルを追加できます。',
@@ -101,11 +114,11 @@ class CalendarLabelsDialog extends ConsumerWidget {
                       ),
                     ),
                   ),
-                  onTap: state.isSaving ? null : () => edit(label),
+                  onTap: !canReorder ? null : () => edit(label),
                   trailing: IconButton(
                     tooltip: '色ラベルを削除',
                     icon: const Icon(Icons.delete_outline),
-                    onPressed: state.isSaving
+                    onPressed: !canReorder
                         ? null
                         : () async {
                             final confirmed = await showDialog<bool>(
@@ -130,7 +143,8 @@ class CalendarLabelsDialog extends ConsumerWidget {
                             if (confirmed != true) return;
                             final success = await ref
                                 .read(
-                                  calendarNotifierProvider(groupId).notifier,
+                                  calendarLabelsNotifierProvider(groupId)
+                                      .notifier,
                                 )
                                 .deleteLabel(
                                   label.id,
@@ -141,7 +155,11 @@ class CalendarLabelsDialog extends ConsumerWidget {
                                 SnackBar(
                                   content: Text(
                                     ref
-                                        .read(calendarNotifierProvider(groupId))
+                                        .read(
+                                          calendarLabelsNotifierProvider(
+                                            groupId,
+                                          ),
+                                        )
                                         .mutationError,
                                   ),
                                 ),
@@ -155,7 +173,7 @@ class CalendarLabelsDialog extends ConsumerWidget {
         ),
         actions: [
           TextButton(
-            onPressed: state.isSaving ? null : () => edit(),
+            onPressed: !canReorder ? null : () => edit(),
             child: const Text('ラベルを追加'),
           ),
           TextButton(
@@ -189,7 +207,9 @@ class _LabelEditDialogState extends ConsumerState<_LabelEditDialog> {
   void initState() {
     super.initState();
     _name = TextEditingController(text: widget.label?.name ?? '');
-    final labels = ref.read(calendarNotifierProvider(widget.groupId)).labels;
+    final labels = ref
+        .read(calendarLabelsNotifierProvider(widget.groupId))
+        .labels;
     final nextOrder =
         labels.fold(
           0,
@@ -210,7 +230,8 @@ class _LabelEditDialogState extends ConsumerState<_LabelEditDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final saving = ref.watch(calendarNotifierProvider(widget.groupId)).isSaving;
+    final state = ref.watch(calendarLabelsNotifierProvider(widget.groupId));
+    final saving = state.isSaving;
     return EditDiscardScope(
       isSaving: saving,
       isDirty: _editValues != _initialValues,
@@ -259,12 +280,15 @@ class _LabelEditDialogState extends ConsumerState<_LabelEditDialog> {
             child: const Text('キャンセル'),
           ),
           FilledButton(
-            onPressed: saving
+            onPressed: saving || !state.canManage
                 ? null
                 : () async {
                     if (!_form.currentState!.validate()) return;
                     final success = await ref
-                        .read(calendarNotifierProvider(widget.groupId).notifier)
+                        .read(
+                          calendarLabelsNotifierProvider(widget.groupId)
+                              .notifier,
+                        )
                         .saveLabel(
                           CalendarLabelDto(
                             version: widget.label?.version,
@@ -282,7 +306,9 @@ class _LabelEditDialogState extends ConsumerState<_LabelEditDialog> {
                     } else {
                       setState(
                         () => _error = ref
-                            .read(calendarNotifierProvider(widget.groupId))
+                            .read(
+                              calendarLabelsNotifierProvider(widget.groupId),
+                            )
                             .mutationError,
                       );
                     }

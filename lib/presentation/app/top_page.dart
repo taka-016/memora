@@ -347,7 +347,7 @@ class TopPage extends HookConsumerWidget {
       }
 
       if (item == AppNavigationItem.calendar) {
-        const CalendarGroupListRoute().go(context);
+        const CalendarRoute().go(context);
       } else {
         const GroupListRoute().go(context);
       }

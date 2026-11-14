@@ -19,7 +19,7 @@ extension TopPageNavigationTests on TopPageTestContext {
       expect(navigation.showUnselectedLabels, isTrue);
       await tester.tap(find.text('カレンダー'));
       await tester.pumpAndSettle();
-      expect(find.text('グループを選択'), findsOneWidget);
+      expect(find.byKey(const Key('calendar_screen')), findsOneWidget);
       expect(
         tester
             .widget<BottomNavigationBar>(find.byType(BottomNavigationBar))

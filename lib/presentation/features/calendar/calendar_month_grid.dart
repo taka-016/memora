@@ -230,7 +230,7 @@ class _CalendarWeekRow extends StatelessWidget {
                 child: IgnorePointer(
                   child: _CalendarEventPreview(
                     key: Key(
-                      'calendar_event_${entry.event.id}_${weekStart.year}_${weekStart.month}_${weekStart.day}',
+                      'calendar_event_${entry.event.groupId}_${entry.event.id}_${entry.event.originalStartDateTime?.microsecondsSinceEpoch}_${weekStart.year}_${weekStart.month}_${weekStart.day}',
                     ),
                     state: state,
                     event: entry.event,
@@ -470,7 +470,10 @@ class _CalendarEventPreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final label = state.displayLabels
-        .where((label) => label.id == event.labelKey)
+        .where(
+          (label) =>
+              label.id == event.labelKey && label.groupId == event.groupId,
+        )
         .firstOrNull;
     final scheme = Theme.of(context).colorScheme;
     final color = label == null

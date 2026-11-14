@@ -20,7 +20,7 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     final harness = CalendarTestHarness();
     await harness.pump(tester);
-    await tester.tap(find.byTooltip('予定を追加'));
+    await calendarTapVisible(tester, find.byTooltip('予定を追加'));
     await pumpDialog(tester);
     return harness;
   }
@@ -35,7 +35,7 @@ void main() {
       await tester.pump();
       switch (exit) {
         case 'キャンセル':
-          await tester.tap(find.text('キャンセル'));
+          await calendarTapVisible(tester, find.text('キャンセル'));
         case '戻る':
           await tester.binding.handlePopRoute();
         case '外側':
@@ -43,12 +43,12 @@ void main() {
       }
       await pumpDialog(tester);
       expect(find.text('変更内容の確認'), findsOneWidget);
-      await tester.tap(find.text('編集を続ける'));
+      await calendarTapVisible(tester, find.text('編集を続ける'));
       await pumpDialog(tester);
       expect(find.widgetWithText(TextFormField, '編集中の予定'), findsOneWidget);
-      await tester.tap(find.text('キャンセル'));
+      await calendarTapVisible(tester, find.text('キャンセル'));
       await pumpDialog(tester);
-      await tester.tap(find.text('破棄する'));
+      await calendarTapVisible(tester, find.text('破棄する'));
       await pumpDialog(tester);
       expect(find.text('予定を追加'), findsNothing);
       expect(harness.savedEvents, isEmpty);
@@ -63,7 +63,7 @@ void main() {
     await tester.pump();
     await tester.enterText(find.widgetWithText(TextFormField, 'タイトル'), '');
     await tester.pump();
-    await tester.tap(find.text('キャンセル'));
+    await calendarTapVisible(tester, find.text('キャンセル'));
     await pumpDialog(tester);
     expect(find.text('変更内容の確認'), findsNothing);
     expect(find.text('予定を追加'), findsNothing);
@@ -71,25 +71,25 @@ void main() {
   testWidgets('通知だけの変更も破棄確認し保存では確認せず保存できる', (tester) async {
     final harness = await openEvent(tester);
     await tester.ensureVisible(find.widgetWithText(ListTile, '通知'));
-    await tester.tap(find.widgetWithText(ListTile, '通知'));
+    await calendarTapVisible(tester, find.widgetWithText(ListTile, '通知'));
     await pumpDialog(tester);
-    await tester.tap(find.text('通知なし'));
+    await calendarTapVisible(tester, find.text('通知なし'));
     await tester.pump();
-    await tester.tap(find.text('予定の開始時'));
+    await calendarTapVisible(tester, find.text('予定の開始時'));
     await tester.pump();
-    await tester.tap(find.text('決定'));
+    await calendarTapVisible(tester, find.text('決定'));
     await pumpDialog(tester);
-    await tester.tap(find.text('キャンセル'));
+    await calendarTapVisible(tester, find.text('キャンセル'));
     await pumpDialog(tester);
     expect(find.text('変更内容の確認'), findsOneWidget);
-    await tester.tap(find.text('編集を続ける'));
+    await calendarTapVisible(tester, find.text('編集を続ける'));
     await pumpDialog(tester);
     await tester.ensureVisible(find.widgetWithText(TextFormField, 'タイトル'));
     await tester.enterText(
       find.widgetWithText(TextFormField, 'タイトル'),
       '保存する予定',
     );
-    await tester.tap(find.text('保存'));
+    await calendarTapVisible(tester, find.text('保存'));
     await pumpDialog(tester);
     expect(find.text('変更内容の確認'), findsNothing);
     expect(harness.savedEvents.single.notificationMinutesBefore, [0]);
@@ -98,42 +98,42 @@ void main() {
     await openEvent(tester);
     await tester.enterText(find.widgetWithText(TextFormField, 'タイトル'), '親の変更');
     await tester.ensureVisible(find.text('繰り返さない'));
-    await tester.tap(find.text('繰り返さない'));
+    await calendarTapVisible(tester, find.text('繰り返さない'));
     await pumpDialog(tester);
-    await tester.tap(find.text('カスタム'));
+    await calendarTapVisible(tester, find.text('カスタム'));
     await pumpDialog(tester);
     await tester.enterText(find.widgetWithText(TextFormField, '間隔'), '2');
     await tester.pump();
-    await tester.tap(find.text('キャンセル').last);
+    await calendarTapVisible(tester, find.text('キャンセル').last);
     await pumpDialog(tester);
     expect(find.text('変更内容の確認'), findsOneWidget);
-    await tester.tap(find.text('破棄する'));
+    await calendarTapVisible(tester, find.text('破棄する'));
     await pumpDialog(tester);
     expect(find.text('カスタムの繰り返し'), findsNothing);
-    await tester.tap(find.text('キャンセル'));
+    await calendarTapVisible(tester, find.text('キャンセル'));
     await pumpDialog(tester);
     expect(find.text('変更内容の確認'), findsOneWidget);
-    await tester.tap(find.text('編集を続ける'));
+    await calendarTapVisible(tester, find.text('編集を続ける'));
     await pumpDialog(tester);
     expect(find.widgetWithText(TextFormField, '親の変更'), findsOneWidget);
   });
   testWidgets('色ラベルは名前や色の変更を破棄確認し元に戻せば確認しない', (tester) async {
     final harness = CalendarTestHarness();
     await harness.pump(tester);
-    await tester.tap(find.byTooltip('色ラベルの設定'));
+    await harness.openLabels(tester);
     await pumpDialog(tester);
-    await tester.tap(find.text('ラベルを追加'));
+    await calendarTapVisible(tester, find.text('ラベルを追加'));
     await pumpDialog(tester);
     await tester.enterText(find.widgetWithText(TextFormField, '名前'), '一時的なラベル');
     await tester.pump();
-    await tester.tap(find.text('キャンセル'));
+    await calendarTapVisible(tester, find.text('キャンセル'));
     await pumpDialog(tester);
     expect(find.text('変更内容の確認'), findsOneWidget);
-    await tester.tap(find.text('編集を続ける'));
+    await calendarTapVisible(tester, find.text('編集を続ける'));
     await pumpDialog(tester);
     await tester.enterText(find.widgetWithText(TextFormField, '名前'), '');
     await tester.pump();
-    await tester.tap(find.text('キャンセル'));
+    await calendarTapVisible(tester, find.text('キャンセル'));
     await pumpDialog(tester);
     expect(find.text('ラベルを追加'), findsOneWidget);
     expect(find.text('変更内容の確認'), findsNothing);

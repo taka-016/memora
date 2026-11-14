@@ -1,3 +1,5 @@
+import 'package:memora/presentation/notifiers/member/current_member_notifier.dart';
+import 'package:memora/presentation/notifiers/timeline/group_timeline_group_selection_notifier.dart';
 import 'package:memora/application/models/calendar_display_settings.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_display_settings_notifier.dart';
 import 'package:memora/presentation/features/calendar/calendar_date_color.dart';
@@ -14,26 +16,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/presentation/features/calendar/calendar_event_dialog.dart';
-import 'package:memora/presentation/features/calendar/calendar_labels_dialog.dart';
+import 'package:memora/presentation/notifiers/calendar/multi_group_calendar_notifier.dart';
+import 'package:memora/presentation/notifiers/calendar/calendar_group_settings_notifier.dart';
+import 'package:memora/presentation/features/calendar/calendar_group_selection_dialog.dart';
 import 'package:memora/presentation/features/calendar/calendar_day_events_sheet.dart';
 import 'package:memora/presentation/features/calendar/calendar_month_grid.dart';
-import 'package:memora/presentation/notifiers/calendar/calendar_notifier.dart';
 
 class CalendarScreen extends ConsumerStatefulWidget {
   const CalendarScreen({
     super.key,
-    required this.groupId,
-    required this.groupName,
-    required this.onBack,
+    this.initialEventGroupId,
     this.initialDate,
     this.createEvent = false,
     this.initialRequest = 0,
     this.initialEventId,
     this.initialOccurrence,
   });
-  final String groupId;
-  final String groupName;
-  final VoidCallback onBack;
+  final String? initialEventGroupId;
   final DateTime? initialDate;
   final bool createEvent;
   final int initialRequest;
@@ -61,16 +60,14 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     _pendingInitialEventId = null;
     Future.microtask(() {
       if (!mounted || version != _initialRequestVersion) return;
-      final notifier = ref.read(
-        calendarNotifierProvider(widget.groupId).notifier,
-      );
+      final notifier = ref.read(multiGroupCalendarNotifierProvider.notifier);
       if (widget.initialDate != null) {
         notifier.selectDate(widget.initialDate!);
       }
       _pendingInitialCreate = widget.createEvent;
       _pendingInitialEventId = widget.initialEventId;
       _loadingInitialExternal = true;
-      unawaited(notifier.load());
+      _openInitialRequest();
       unawaited(_loadExternal());
     });
   }
@@ -81,7 +78,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       if (!ref.read(externalCalendarSupportedProvider)) return;
       final external = ref.read(externalCalendarNotifierProvider.notifier);
       final date = ref
-          .read(calendarNotifierProvider(widget.groupId))
+          .read(multiGroupCalendarNotifierProvider)
+          .calendar
           .selectedDate;
       await external.setPeriod(date);
       if (mounted) await external.initialize();
@@ -96,7 +94,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   @override
   void didUpdateWidget(covariant CalendarScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.groupId != widget.groupId ||
+    if (oldWidget.initialEventGroupId != widget.initialEventGroupId ||
         oldWidget.initialDate != widget.initialDate ||
         oldWidget.createEvent != widget.createEvent ||
         oldWidget.initialEventId != widget.initialEventId ||
@@ -107,8 +105,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   }
 
   void _moveMonth(int offset) {
-    final provider = calendarNotifierProvider(widget.groupId);
-    final month = ref.read(provider).month;
+    final provider = multiGroupCalendarNotifierProvider;
+    final month = ref.read(provider).calendar.month;
     if ((offset < 0 && month.year == 1 && month.month == 1) ||
         (offset > 0 && month.year == 9999 && month.month == 12)) {
       return;
@@ -119,32 +117,31 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   }
 
   Future<void> _selectMonth() async {
-    final provider = calendarNotifierProvider(widget.groupId);
+    final provider = multiGroupCalendarNotifierProvider;
     final month = await showDialog<DateTime>(
       context: context,
       builder: (_) =>
-          CalendarMonthPickerDialog(month: ref.read(provider).month),
+          CalendarMonthPickerDialog(month: ref.read(provider).calendar.month),
     );
     if (!mounted || month == null) return;
     ref.read(provider.notifier).selectDate(month);
   }
 
   Future<void> _edit([CalendarEventDto? event]) async {
-    final provider = calendarNotifierProvider(widget.groupId);
+    final provider = multiGroupCalendarNotifierProvider;
     if (!mounted) return;
     await showDialog<void>(
       context: context,
       builder: (context) => CalendarEventDialog(
-        groupId: widget.groupId,
-        date: ref.read(provider).selectedDate,
+        date: ref.read(provider).calendar.selectedDate,
         event: event,
       ),
     );
   }
 
   Future<void> _selectDay(DateTime date) async {
-    final provider = calendarNotifierProvider(widget.groupId);
-    final state = ref.read(provider);
+    final provider = multiGroupCalendarNotifierProvider;
+    final state = ref.read(provider).calendar;
     if (state.selectedDate != date) {
       ref.read(provider.notifier).selectDate(date);
       return;
@@ -154,7 +151,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       isScrollControlled: true,
       useSafeArea: true,
       builder: (context) => CalendarDayEventsSheet(
-        groupId: widget.groupId,
         date: date,
         onEdit: (event) => _edit(event),
         onAdd: () => _edit(),
@@ -163,17 +159,33 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   }
 
   void _openInitialRequest() {
-    final next = ref.read(calendarNotifierProvider(widget.groupId));
+    final settings = ref.read(calendarGroupSettingsNotifierProvider);
+    if (!settings.canUseSettings) return;
+    final next = ref.read(multiGroupCalendarNotifierProvider).calendar;
     if ((!_pendingInitialCreate && _pendingInitialEventId == null) ||
-        next.isLoading ||
-        next.isSaving ||
-        next.loadError.isNotEmpty ||
-        !next.hasLoadedLabels ||
-        next.group == null) {
+        next.isSaving) {
       return;
     }
     final eventId = _pendingInitialEventId;
     final deviceRequest = eventId?.startsWith('device:') == true;
+    if (eventId != null && !deviceRequest) {
+      final groups = ref.read(multiGroupCalendarNotifierProvider).groups;
+      final ids = settings.effectiveSettings.visibleGroupIds;
+      final targetId =
+          widget.initialEventGroupId ??
+          next.events
+              .where((event) => event.id == eventId)
+              .firstOrNull
+              ?.groupId;
+      if (targetId != null) {
+        final target = groups[targetId];
+        if (target == null && ids.contains(targetId)) return;
+        if (target != null && !target.hasLoadedEvents) return;
+      } else if (groups.length < ids.length ||
+          groups.values.any((group) => !group.hasLoadedEvents)) {
+        return;
+      }
+    }
     final external =
         deviceRequest && ref.read(externalCalendarSupportedProvider)
         ? ref.read(externalCalendarNotifierProvider)
@@ -193,6 +205,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         ? null
         : next.events.where((event) {
             return event.id == eventId &&
+                (widget.initialEventGroupId == null ||
+                    event.groupId == widget.initialEventGroupId) &&
                 (event.originalStartDateTime == null ||
                     occurrence == null ||
                     event.originalStartDateTime!.isAtSameMomentAs(occurrence));
@@ -219,12 +233,13 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         unawaited(_edit(event));
       }
     });
+    WidgetsBinding.instance.ensureVisualUpdate();
   }
 
   @override
   Widget build(BuildContext context) {
-    final provider = calendarNotifierProvider(widget.groupId);
-    final state = ref.watch(provider);
+    final provider = multiGroupCalendarNotifierProvider;
+    final state = ref.watch(provider).calendar;
     final notifier = ref.read(provider.notifier);
     final externalSupported = ref.watch(externalCalendarSupportedProvider);
     final external = externalSupported
@@ -233,7 +248,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final displayState = external == null
         ? state
         : overlayExternalCalendar(state, external);
-    ref.listen(provider.select((value) => value.month), (_, month) {
+    ref.listen(provider.select((value) => value.calendar.month), (_, month) {
       if (externalSupported) {
         unawaited(
           ref.read(externalCalendarNotifierProvider.notifier).setPeriod(month),
@@ -241,6 +256,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       }
     });
     ref.listen(provider, (_, _) => _openInitialRequest());
+    ref.listen(
+      calendarGroupSettingsNotifierProvider,
+      (_, _) => _openInitialRequest(),
+    );
     if (externalSupported) {
       ref.listen(
         externalCalendarNotifierProvider,
@@ -251,8 +270,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         ref.watch(calendarDisplaySettingsNotifierProvider).value?.settings ??
         const CalendarDisplaySettings();
     final month = state.month;
-    final canEdit =
-        !state.isSaving && !state.isLoading && state.loadError.isEmpty;
+    final groupSettings = ref.watch(calendarGroupSettingsNotifierProvider);
+    final canEdit = !state.isSaving && groupSettings.canUseSettings;
     return PopScope(
       canPop: !state.isSaving,
       child: SafeArea(
@@ -265,16 +284,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 children: [
                   Row(
                     children: [
-                      IconButton(
-                        tooltip: 'グループ選択へ戻る',
-                        onPressed: state.isSaving ? null : widget.onBack,
-                        icon: const Icon(Icons.arrow_back),
-                      ),
                       Expanded(
                         child: Text(
-                          '${widget.groupName}のカレンダー',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                          'カレンダー',
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                       ),
@@ -297,16 +309,15 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                           ),
                         ),
                       IconButton(
-                        tooltip: '色ラベルの設定',
-                        onPressed: canEdit
-                            ? () => showDialog<void>(
+                        tooltip: '表示グループの選択',
+                        onPressed: !groupSettings.canUseSettings
+                            ? null
+                            : () => showDialog<void>(
                                 context: context,
-                                builder: (context) => CalendarLabelsDialog(
-                                  groupId: widget.groupId,
-                                ),
-                              )
-                            : null,
-                        icon: const Icon(Icons.palette_outlined),
+                                builder: (_) =>
+                                    const CalendarGroupSelectionDialog(),
+                              ),
+                        icon: const Icon(Icons.groups_outlined),
                       ),
                     ],
                   ),
@@ -350,6 +361,41 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                       ),
                     ],
                   ),
+                  if (!groupSettings.groupsReady)
+                    TextButton(
+                      onPressed: () {
+                        final member = ref
+                            .read(currentMemberNotifierProvider)
+                            .member;
+                        if (member != null) {
+                          ref
+                              .read(
+                                groupTimelineGroupSelectionNotifierProvider
+                                    .notifier,
+                              )
+                              .load(member);
+                        }
+                      },
+                      child: const Text('所属グループを再取得'),
+                    ),
+                  if (groupSettings.loadFailed)
+                    TextButton(
+                      onPressed: () => ref
+                          .read(calendarGroupSettingsNotifierProvider.notifier)
+                          .reload(),
+                      child: Text(groupSettings.error),
+                    ),
+                  if (groupSettings.effectiveSettings.visibleGroupIds.isEmpty)
+                    TextButton(
+                      onPressed: !groupSettings.canUseSettings
+                          ? null
+                          : () => showDialog<void>(
+                              context: context,
+                              builder: (_) =>
+                                  const CalendarGroupSelectionDialog(),
+                            ),
+                      child: const Text('表示するグループを選択してください'),
+                    ),
                   if (state.isLoading) const LinearProgressIndicator(),
                   if (state.loadError.isNotEmpty)
                     Padding(

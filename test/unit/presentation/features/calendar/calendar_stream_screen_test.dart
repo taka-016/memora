@@ -1,3 +1,7 @@
+import '../../../../helpers/calendar_group_settings_test_support.dart';
+
+import 'package:memora/presentation/notifiers/calendar/calendar_group_settings_notifier.dart';
+import 'package:memora/composition_root/providers/calendar_group_settings_providers.dart';
 import 'package:memora/composition_root/providers/external_calendar_providers.dart';
 import 'package:memora/composition_root/providers/group_providers.dart';
 
@@ -28,9 +32,16 @@ void main() {
     final events = EventSource();
     final labels = LabelSource();
     final update = MockUpdateCalendarEventUsecase();
+    final inputLabels = MockGetCalendarLabelsUsecase();
+    when(inputLabels.execute('g1'))
+        .thenAnswer((_) async => [calendarTestFamily]);
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          calendarSettingsOwnerProvider.overrideWithValue('online:owner'),
+          calendarGroupSettingsNotifierProvider.overrideWith(
+            () => TestCalendarGroupSettingsNotifier(),
+          ),
           externalCalendarOwnerProvider.overrideWithValue(null),
           getGroupWithMembersByIdUsecaseProvider.overrideWithValue(
             calendarTestGroupLoader(),
@@ -46,12 +57,9 @@ void main() {
             WatchCalendarLabelsUsecase(labels),
           ),
           updateCalendarEventUsecaseProvider.overrideWithValue(update),
+          getCalendarLabelsUsecaseProvider.overrideWithValue(inputLabels),
         ],
-        child: MaterialApp(
-          home: Scaffold(
-            body: CalendarScreen(groupId: 'g1', groupName: '家族', onBack: () {}),
-          ),
-        ),
+        child: MaterialApp(home: Scaffold(body: const CalendarScreen())),
       ),
     );
     await tester.pump();
@@ -65,7 +73,7 @@ void main() {
       tester
           .widget<FloatingActionButton>(find.byType(FloatingActionButton))
           .onPressed,
-      isNull,
+      isNotNull,
     );
     await tester.tap(find.text('再試行'));
     await tester.runAsync(() => Future<void>(() {}));
