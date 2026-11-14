@@ -106,7 +106,7 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
           return;
         }
         if (cache == null) {
-          await _cacheStorage.clear();
+          await _cacheStorage.clearItinerary();
           return;
         }
         final selectedNow = await _cacheStorage.getSelectedItineraryDateId();
@@ -166,7 +166,7 @@ class SelectAndroidWidgetTargetGroupUsecase {
   }
 
   Future<void> _execute(String groupId) async {
-    await _cacheStorage.clear();
+    await _cacheStorage.clearItinerary();
     await _cacheStorage.saveTargetGroupId(groupId);
     final updateInterval = await _updateIntervalStorage.load();
     await _registerPeriodicUpdateTask(updateInterval.duration);
@@ -189,7 +189,7 @@ class ClearAndroidWidgetTargetGroupUsecase {
   }
 
   Future<void> _execute() async {
-    await _cacheStorage.clear();
+    await _cacheStorage.clearItinerary();
     await _cacheStorage.updateWidget();
   }
 }

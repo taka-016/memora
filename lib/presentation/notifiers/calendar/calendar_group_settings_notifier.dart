@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+import 'package:memora/core/app_logger.dart';
 import 'dart:async';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -54,8 +56,17 @@ class CalendarGroupSettingsNotifier extends _$CalendarGroupSettingsNotifier {
   int _generation = 0;
   int _loadRequest = 0;
   String? _owner;
+  bool _skipInitialSelection = false;
   @override
   CalendarGroupSettingsState build() {
+    _skipInitialSelection = false;
+    listenSelf((previous, next) {
+      if (!next.canUseSettings) return;
+      if (previous?.canUseSettings == true &&
+          setEquals(previous!.effectiveSettings.visibleGroupIds, next.effectiveSettings.visibleGroupIds) &&
+          listEquals(previous.groups, next.groups)) return;
+      unawaited(_refreshWidget());
+    });
     final generation = ++_generation;
     _owner = ref.watch(calendarSettingsOwnerProvider);
     final memberId = ref.watch(calendarSettingsMemberIdProvider);
@@ -90,7 +101,16 @@ class CalendarGroupSettingsNotifier extends _$CalendarGroupSettingsNotifier {
     return CalendarGroupSettingsState();
   }
 
-  Future<void> reload() async {
+  Future<void> _refreshWidget() async {
+    try {
+      await ref.read(calendarWidgetGroupsChangedProvider)();
+    } catch (error, stack) {
+      logger.w('表示設定変更後のウィジェット更新に失敗しました', error: error, stackTrace: stack);
+    }
+  }
+
+  Future<void> reload({bool afterRestore = false}) async {
+    if (afterRestore) _skipInitialSelection = true;
     final owner = _owner;
     if (owner == null || state.isSaving) return;
     final generation = _generation;
@@ -123,7 +143,8 @@ class CalendarGroupSettingsNotifier extends _$CalendarGroupSettingsNotifier {
   }
 
   Future<void> _applyLoaded(CalendarGroupSettingsState next) async {
-    if (!next.canUseSettings ||
+    if (_skipInitialSelection ||
+        !next.canUseSettings ||
         next.settings.hasSavedSettings ||
         next.groups.length != 1) {
       state = next;

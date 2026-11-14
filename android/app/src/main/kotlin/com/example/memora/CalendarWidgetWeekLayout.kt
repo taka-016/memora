@@ -16,8 +16,8 @@ internal class CalendarWidgetWeekLayout(
     month: LocalDate,
     maxLines: Int,
 ) {
-    private data class EventKey(val id: String, val occurrence: String?, val startMillis: Long)
-    private fun key(event: CalendarWidgetEvent) = EventKey(event.id, event.occurrence, event.startMillis)
+    private data class EventKey(val groupId: String?, val id: String, val occurrence: String?, val startMillis: Long)
+    private fun key(event: CalendarWidgetEvent) = EventKey(event.groupId, event.id, event.occurrence, event.startMillis)
 
     val entries = mutableListOf<CalendarWidgetWeekEntry>()
     val remainingCounts: List<Int>

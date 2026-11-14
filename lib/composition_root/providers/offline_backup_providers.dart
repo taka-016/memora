@@ -1,3 +1,6 @@
+import 'package:memora/application/usecases/android_widget/refresh_android_widget_caches_usecase.dart';
+import 'package:memora/presentation/notifiers/calendar/calendar_group_settings_notifier.dart';
+import 'package:memora/presentation/notifiers/calendar/calendar_display_settings_notifier.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/models/app_mode.dart';
 import 'package:memora/application/services/offline_backup_codec.dart';
@@ -97,11 +100,19 @@ final synchronizeOfflineBackupRestoreUsecaseProvider =
         },
         clearWidgetCache: () async {
           final storage = ref.read(androidWidgetCacheStorageProvider);
-          await storage.clear();
+          await storage.clearItinerary();
           await storage.updateWidget();
         },
         refreshWidgetCache: (groupId, selectedItineraryDateId) =>
-            ref.read(refreshAndroidWidgetCachesUsecaseProvider).execute(),
+            ref.read(refreshAndroidWidgetCachesUsecaseProvider).execute(kinds: const {AndroidWidgetKind.itinerary}),
+        refreshCalendarCache: () async {
+          ref.invalidate(currentMemberNotifierProvider);
+          ref.invalidate(groupTimelineGroupSelectionNotifierProvider);
+          ref.invalidate(calendarDisplaySettingsNotifierProvider);
+          final settings = ref.read(calendarGroupSettingsNotifierProvider.notifier);
+          await settings.reload(afterRestore: true);
+          await ref.read(refreshSelectedCalendarWidgetCacheProvider)();
+        },
         registerPeriodicUpdateTask: ref.watch(
           androidWidgetPeriodicUpdateRegistrarProvider,
         ),

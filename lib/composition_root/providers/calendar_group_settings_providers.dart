@@ -1,3 +1,4 @@
+import 'package:memora/composition_root/providers/android_widget_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/models/app_mode.dart';
 import 'package:memora/application/services/calendar_group_settings_storage.dart';
@@ -20,3 +21,5 @@ final calendarSettingsOwnerProvider = Provider<String?>((ref) {
       : ref.watch(calendarSettingsMemberIdProvider);
   return id == null ? null : '${mode.name}:$id';
 });
+
+final calendarWidgetGroupsChangedProvider = Provider<Future<void> Function()>((ref) => ref.read(refreshSelectedCalendarWidgetCacheProvider));

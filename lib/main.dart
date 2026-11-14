@@ -1,3 +1,4 @@
+import 'package:memora/presentation/notifiers/calendar/calendar_group_settings_notifier.dart';
 import 'package:memora/presentation/notifiers/app_availability/app_availability_notifier.dart';
 import 'package:memora/presentation/app/app_availability_gate.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_notifications_notifier.dart';
@@ -76,6 +77,7 @@ class MyApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(androidWidgetLaunchNotifierProvider);
     ref.watch(calendarNotificationsNotifierProvider);
+    ref.watch(calendarGroupSettingsNotifierProvider);
     return MaterialApp.router(
       routerConfig: ref.watch(appRouterConfigProvider),
       title: ref.watch(appDisplayNameProvider),
