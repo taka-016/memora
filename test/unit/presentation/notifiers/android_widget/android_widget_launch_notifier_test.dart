@@ -67,6 +67,21 @@ void main() {
   }
 
   group('AndroidWidgetLaunchNotifier', () {
+    test('グループのない日付・追加URIもカレンダーへ渡す', () async {
+      final source = _FakeAndroidWidgetLaunchUriSource(initialUri: Uri.parse('memoraWidget://openCalendar?date=2026-11-02&create=true'));
+      final container = createContainer(source);
+      addTearDown(() async { container.dispose(); await source.controller.close(); });
+      when(getGroupsUsecase.execute(member)).thenAnswer((_) async => [testGroup]);
+      container.read(androidWidgetLaunchNotifierProvider);
+      await pumpEventQueue();
+      final notifier = container.read(androidWidgetLaunchNotifierProvider.notifier);
+      await notifier.resolvePendingLaunch(member);
+      final resolution = notifier.takeResolution(member.id) as AndroidWidgetCalendarLaunchDestination;
+      expect(resolution.date, DateTime(2026, 11, 2));
+      expect(resolution.create, isTrue);
+      expect(resolution.groupId, isNull);
+    });
+
     test('カレンダー起動で所属を確認し選択日と予定追加の要求を渡す', () async {
       final source = _FakeAndroidWidgetLaunchUriSource(
         initialUri: Uri.parse(

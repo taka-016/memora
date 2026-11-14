@@ -22,6 +22,27 @@ void main() {
     tables: {},
   );
 
+  for (final fail in [false, true]) {
+    test('旅程用グループ未設定・旅程更新失敗=$failでもカレンダーを独立して再構築する', () async {
+      var calendar = 0;
+      final usecase = SynchronizeOfflineBackupRestoreUsecase(
+        loadTargetGroupId: () async => null,
+        loadSelectedItineraryDateId: () async => null,
+        targetGroupExists: (_, _) async => false,
+        clearWidgetCache: () async { if (fail) throw TestException('旅程更新失敗'); },
+        refreshWidgetCache: (_, _) async {},
+        refreshCalendarCache: () async { calendar++; },
+        registerPeriodicUpdateTask: (_) async {},
+      );
+      if (fail) {
+        await expectLater(usecase.execute(snapshot), throwsA(isA<TestException>()));
+      } else {
+        await usecase.execute(snapshot);
+      }
+      expect(calendar, 1);
+    });
+  }
+
   test('復元後も対象グループが存在する場合は選択日を検証してキャッシュを再生成する', () async {
     String? refreshedGroupId;
     String? refreshedDateId;
