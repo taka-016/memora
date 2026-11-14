@@ -21,10 +21,9 @@ part 'calendar_notifier.g.dart';
 @riverpod
 class CalendarNotifier extends _$CalendarNotifier {
   int _loadVersion = 0;
-  int _eventsVersion = 0;
   StreamSubscription<GroupDto?>? _groupSubscription;
   bool _groupWaiting = false;
-  StreamSubscription<List<CalendarEventDto>>? _eventsSubscription;
+  final _months = <DateTime, _MonthEvents>{};
   StreamSubscription<List<CalendarLabelDto>>? _labelsSubscription;
   List<CalendarLabelDto>? _receivedLabels;
   bool _reordering = false;
@@ -35,13 +34,16 @@ class CalendarNotifier extends _$CalendarNotifier {
   @override
   CalendarState build(String groupId) {
     _series = const [];
+    _months.clear();
     _receivedLabels = null;
     _reordering = false;
     ref.onDispose(() {
       _loadVersion++;
-      _eventsVersion++;
       unawaited(_groupSubscription?.cancel());
-      unawaited(_eventsSubscription?.cancel());
+      for (final month in _months.values) {
+        unawaited(month.subscription?.cancel());
+      }
+      _months.clear();
       unawaited(_labelsSubscription?.cancel());
     });
     final watching = ref.watch(watchCalendarEventsUsecaseProvider) != null;
@@ -54,13 +56,23 @@ class CalendarNotifier extends _$CalendarNotifier {
 
   void selectDate(DateTime day) {
     final monthChanged = state.month != DateTime(day.year, day.month);
-    state = state.copyWith(
-      selectedDate: DateTime(day.year, day.month, day.day),
-      events: monthChanged ? _expand(_series, day) : null,
-    );
-    if (monthChanged &&
-        state.isWatching &&
-        (state.isLoading || state.hasLoadedEvents)) {
+    if (monthChanged && state.isWatching) {
+      final cached = _months[DateTime(day.year, day.month)];
+      _series = cached?.series ?? const [];
+      _eventsWaiting = cached?.waiting ?? false;
+      state = state.copyWith(
+        selectedDate: DateTime(day.year, day.month, day.day),
+        events: _expand(_series, day),
+        hasLoadedEvents: cached?.series != null,
+      );
+      _receiveStatus(events: true, error: cached?.error ?? '');
+    } else {
+      state = state.copyWith(
+        selectedDate: DateTime(day.year, day.month, day.day),
+        events: monthChanged ? _expand(_series, day) : null,
+      );
+    }
+    if (monthChanged && state.isWatching && _loadVersion > 0) {
       unawaited(_watchEvents(_loadVersion));
     }
   }
@@ -139,7 +151,7 @@ class CalendarNotifier extends _$CalendarNotifier {
       );
     }
 
-    await _watchEvents(version);
+    await _watchEvents(version, restart: true);
     if (!active()) return;
     try {
       _labelsSubscription = ref
@@ -194,42 +206,49 @@ class CalendarNotifier extends _$CalendarNotifier {
     }
   }
 
-  Future<void> _watchEvents(int version) async {
-    final eventVersion = ++_eventsVersion;
-    bool active() =>
-        ref.mounted &&
-        version == _loadVersion &&
-        eventVersion == _eventsVersion;
-    await _eventsSubscription?.cancel();
-    if (!active()) return;
-    _eventsWaiting = true;
-    state = state.copyWith(isLoading: true);
-    void failure() {
-      if (!active()) return;
-      _eventsWaiting = false;
-      _receiveStatus(
-        events: true,
-        error: state.hasLoadedEvents
-            ? '予定を自動更新できませんでした。再試行してください'
-            : '予定はまだ取得できていません。再試行してください',
+  Future<void> _watchEvents(int version, {bool restart = false}) async {
+    final month = state.month;
+    final previous = _months[month];
+    if (previous != null && !restart) return;
+    final cached = _MonthEvents()..series = previous?.series;
+    _months[month] = cached;
+    bool active() => ref.mounted && identical(_months[month], cached);
+    if (previous != null) await previous.subscription?.cancel();
+    if (!active() || version != _loadVersion) return;
+
+    void publish() {
+      if (!active() || state.month != month) return;
+      _series = cached.series ?? const [];
+      _eventsWaiting = cached.waiting;
+      state = state.copyWith(
+        events: _expand(_series, month),
+        hasLoadedEvents: cached.series != null,
       );
+      _receiveStatus(events: true, error: cached.error);
     }
 
+    void failure() {
+      if (!active()) return;
+      cached.waiting = false;
+      cached.error = cached.series != null
+          ? '予定を自動更新できませんでした。再試行してください'
+          : '予定はまだ取得できていません。再試行してください';
+      publish();
+    }
+
+    publish();
     try {
-      _eventsSubscription = ref
+      cached.subscription = ref
           .read(watchCalendarEventsUsecaseProvider)!
-          .execute(
-            groupId,
-            period: CalendarEventPeriod.forMonth(state.selectedDate),
-          )
+          .execute(groupId, period: CalendarEventPeriod.forMonth(month))
           .listen((series) {
             if (!active()) return;
             try {
-              final expanded = _expand(series, state.selectedDate);
-              _series = series;
-              _eventsWaiting = false;
-              state = state.copyWith(events: expanded, hasLoadedEvents: true);
-              _receiveStatus(events: true);
+              _expand(series, month);
+              cached.series = series;
+              cached.waiting = false;
+              cached.error = '';
+              publish();
             } catch (_) {
               failure();
             }
@@ -429,4 +448,11 @@ class CalendarNotifier extends _$CalendarNotifier {
             .read(deleteCalendarLabelUsecaseProvider)
             .execute(id, expectedVersion: expectedVersion);
       });
+}
+
+class _MonthEvents {
+  StreamSubscription<List<CalendarEventDto>>? subscription;
+  List<CalendarEventDto>? series;
+  bool waiting = true;
+  String error = '';
 }
