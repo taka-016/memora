@@ -9,18 +9,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/presentation/features/calendar/calendar_event_dialog.dart';
 import 'package:memora/presentation/features/calendar/calendar_labels_dialog.dart';
-import 'package:memora/presentation/notifiers/calendar/calendar_notifier.dart';
+import 'package:memora/presentation/notifiers/calendar/multi_group_calendar_notifier.dart';
 import 'package:memora/presentation/features/calendar/calendar_swipe_pager.dart';
 
 class CalendarDayEventsSheet extends ConsumerStatefulWidget {
   const CalendarDayEventsSheet({
     super.key,
-    required this.groupId,
+    this.groupId,
     required this.date,
     required this.onEdit,
     required this.onAdd,
   });
-  final String groupId;
+  final String? groupId;
   final DateTime date;
   final ValueChanged<CalendarEventDto> onEdit;
   final VoidCallback onAdd;
@@ -57,7 +57,7 @@ class _CalendarDayEventsSheetState
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(calendarNotifierProvider(widget.groupId));
+    final state = ref.watch(multiGroupCalendarNotifierProvider).calendar;
     final externalSupported = ref.watch(externalCalendarSupportedProvider);
     final external = externalSupported
         ? ref.watch(externalCalendarNotifierProvider)
@@ -66,7 +66,7 @@ class _CalendarDayEventsSheetState
         ? state
         : overlayExternalCalendar(state, external);
     final canEdit =
-        !state.isSaving && !state.isLoading && state.loadError.isEmpty;
+        !state.isSaving;
     return PopScope(
       canPop: !state.isSaving,
       child: FractionallySizedBox(
@@ -80,7 +80,7 @@ class _CalendarDayEventsSheetState
                 controller: _pageController,
                 itemCount: _dayCount,
                 onPageChanged: (index) => ref
-                    .read(calendarNotifierProvider(widget.groupId).notifier)
+                    .read(multiGroupCalendarNotifierProvider.notifier)
                     .selectDate(_dateForIndex(index)),
                 itemBuilder: (context, index) {
                   final date = _dateForIndex(index);
@@ -134,7 +134,7 @@ class _CalendarDayEventsSheetState
                                   final scheme = Theme.of(context).colorScheme;
                                   final label = displayState.displayLabels
                                       .where(
-                                        (label) => label.id == event.labelKey,
+                                        (label) => label.id == event.labelKey && label.groupId == event.groupId,
                                       )
                                       .firstOrNull;
                                   final source = external?.events
