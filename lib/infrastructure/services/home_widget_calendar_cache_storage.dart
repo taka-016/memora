@@ -56,7 +56,8 @@ class HomeWidgetCalendarCacheStorage {
     final previousMonths = previous?['months'] as Map<String, dynamic>?;
     final incomingMonths = cache['months'] as Map<String, Object?>?;
     final months = <String, Object?>{
-      if (previous?['groupId'] == cache['groupId'] &&
+      if (previous?['cacheScope'] == cache['cacheScope'] &&
+          previous?['groupId'] == cache['groupId'] &&
           previous?['sourceMode'] == cache['sourceMode'])
         ...?previousMonths,
       ...?incomingMonths,
