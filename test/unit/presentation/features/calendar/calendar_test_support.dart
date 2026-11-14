@@ -1,3 +1,14 @@
+import 'package:mockito/annotations.dart';
+import 'package:memora/application/usecases/calendar/calendar_label_management_usecase.dart';
+import 'calendar_test_support.mocks.dart';
+import '../../../../helpers/calendar_group_settings_test_support.dart';
+import '../../../../helpers/fake_current_member_notifier.dart';
+import 'package:memora/application/dtos/member/member_dto.dart';
+import 'package:memora/presentation/notifiers/member/current_member_notifier.dart';
+import 'package:memora/presentation/notifiers/calendar/calendar_group_settings_notifier.dart';
+import 'package:memora/composition_root/providers/calendar_group_settings_providers.dart';
+import 'package:memora/application/usecases/calendar/move_calendar_event_usecase.dart';
+import 'package:memora/presentation/features/calendar/calendar_labels_dialog.dart';
 import 'package:memora/composition_root/providers/external_calendar_providers.dart';
 import 'package:memora/presentation/notifiers/calendar/external_calendar_notifier.dart';
 import 'package:memora/application/models/app_capabilities.dart';
@@ -39,7 +50,9 @@ CalendarEventDto calendarTestEvent(String id, String title) => CalendarEventDto(
   isAllDay: false,
 );
 
+@GenerateMocks([CalendarLabelManagementUsecase])
 class CalendarTestHarness {
+  final management = MockCalendarLabelManagementUsecase();
   final events = MockGetCalendarEventsUsecase();
   final labels = MockGetCalendarLabelsUsecase();
   final create = MockCreateCalendarEventUsecase();
@@ -51,6 +64,11 @@ class CalendarTestHarness {
   final savedEvents = <CalendarEventDto>[];
   final savedLabels = <CalendarLabelDto>[calendarTestFamily];
 
+  Future<void> openLabels(WidgetTester tester) async {
+    final context = tester.element(find.byType(CalendarScreen));
+    showDialog<void>(context: context, builder: (_) => const CalendarLabelsDialog(groupId: 'g1'));
+  }
+
   Future<void> pump(
     WidgetTester tester, {
     AppCapabilities? capabilities,
@@ -60,9 +78,13 @@ class CalendarTestHarness {
     double textScale = 1,
     Brightness? brightness,
     DateTime? now,
+    MoveCalendarEventUsecase? move,
   }) async {
+    when(management.save(any, any)).thenAnswer((call) async { await saveLabel.execute(call.positionalArguments[0] as CalendarLabelDto); });
+    when(management.reorder(any, any, any, expectedVersions: anyNamed('expectedVersions'))).thenAnswer((call) async { await reorder.execute(call.positionalArguments[0] as String, call.positionalArguments[1] as List<String>); });
     when(events.execute('g1', period: anyNamed('period')))
         .thenAnswer((_) async => List.of(savedEvents));
+    when(labels.execute('g2')).thenAnswer((_) async => []);
     when(labels.execute('g1')).thenAnswer((_) async => List.of(savedLabels));
     when(reorder.execute('g1', any)).thenAnswer((call) async {
       final ids = call.positionalArguments[1] as List<String>;
@@ -108,6 +130,11 @@ class CalendarTestHarness {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          calendarSettingsOwnerProvider.overrideWithValue('online:owner'),
+          calendarGroupSettingsNotifierProvider.overrideWith(() => TestCalendarGroupSettingsNotifier()),
+          currentMemberNotifierProvider.overrideWith(() => FakeCurrentMemberNotifier.loaded(const MemberDto(id: 'owner', displayName: '本人'))),
+          if (move != null) moveCalendarEventUsecaseProvider.overrideWithValue(move),
+          calendarLabelManagementUsecaseProvider.overrideWithValue(management),
           externalCalendarOwnerProvider.overrideWithValue(null),
           if (externalCalendar != null)
             externalCalendarNotifierProvider.overrideWith(

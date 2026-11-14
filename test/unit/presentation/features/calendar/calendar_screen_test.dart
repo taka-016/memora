@@ -161,7 +161,7 @@ void main() {
   testWidgets('ラベル追加でグループ管理への案内を示して任意ラベルを保存する', (tester) async {
     final harness = CalendarTestHarness()..savedLabels.clear();
     await harness.pump(tester);
-    await tester.tap(find.byTooltip('色ラベルの設定'));
+    await harness.openLabels(tester);
     await tester.pumpAndSettle();
     expect(find.text('家族の名前や「家族全員」などのラベルを追加してください'), findsNothing);
     await tester.tap(find.text('ラベルを追加'));
@@ -325,7 +325,7 @@ void main() {
   testWidgets('ラベルの色を見た目で選択して保存し16進数入力は必要なときだけ開く', (tester) async {
     final harness = CalendarTestHarness()..savedLabels.clear();
     await harness.pump(tester);
-    await tester.tap(find.byTooltip('色ラベルの設定'));
+    await harness.openLabels(tester);
     await tester.pumpAndSettle();
     await tester.tap(find.text('ラベルを追加'));
     await tester.pumpAndSettle();
@@ -377,7 +377,7 @@ void main() {
         ).copyWith(isAllDay: true, endDateTime: DateTime(2026, 10, 3)),
       );
     await harness.pump(tester);
-    await tester.tap(find.byTooltip('色ラベルの設定'));
+    await harness.openLabels(tester);
     await tester.pumpAndSettle();
     await tester.tap(find.text('家族全員'));
     await tester.pumpAndSettle();
@@ -411,7 +411,7 @@ void main() {
     await tester.tap(find.text('閉じる'));
     await tester.pumpAndSettle();
     expect(tester.widget<Text>(find.text('予定')).style!.color, Colors.black);
-    await tester.tap(find.byTooltip('色ラベルの設定'));
+    await harness.openLabels(tester);
     await tester.pumpAndSettle();
     await tester.tap(find.text('全員'));
     await tester.pumpAndSettle();
@@ -439,7 +439,7 @@ void main() {
       tester.widget<Text>(find.text('予定')).style!.color,
       const Color(0xFFAB12CD),
     );
-    await tester.tap(find.byTooltip('色ラベルの設定'));
+    await harness.openLabels(tester);
     await tester.pumpAndSettle();
     await tester.tap(find.text('家族全員'));
     await tester.pumpAndSettle();
@@ -717,7 +717,7 @@ void main() {
   testWidgets('番号入力を表示せず終日・時刻指定のプレビューを横並びで表示する', (tester) async {
     final harness = CalendarTestHarness();
     await harness.pump(tester);
-    await tester.tap(find.byTooltip('色ラベルの設定'));
+    await harness.openLabels(tester);
     await tester.pumpAndSettle();
     await tester.tap(find.text('家族全員'));
     await tester.pumpAndSettle();
@@ -772,7 +772,7 @@ void main() {
           calendarTestFamily.copyWith(id: 'parent', name: '親', sortOrder: 2),
         ]);
       await harness.pump(tester);
-      await tester.tap(find.byTooltip('色ラベルの設定'));
+      await harness.openLabels(tester);
       await tester.pumpAndSettle();
       final firstHandle = find.byKey(const Key('calendar_label_drag_family'));
       final last = tester.getRect(find.widgetWithText(ListTile, '親'));
@@ -800,7 +800,7 @@ void main() {
           .called(1);
       await tester.tap(find.text('閉じる'));
       await tester.pumpAndSettle();
-      await tester.tap(find.byTooltip('色ラベルの設定'));
+      await harness.openLabels(tester);
       await tester.pumpAndSettle();
       expect(
         tester.getCenter(find.text('子供')).dy,
@@ -878,7 +878,7 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     final harness = CalendarTestHarness();
     await harness.pump(tester, textScale: 1.5);
-    await tester.tap(find.byTooltip('色ラベルの設定'));
+    await harness.openLabels(tester);
     await tester.pumpAndSettle();
     await tester.tap(find.text('家族全員'));
     await tester.pumpAndSettle();
