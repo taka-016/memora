@@ -35,6 +35,15 @@ void main() {
             invocation.positionalArguments.single as TransactionHandler<void>;
         await action(transaction);
       });
+      if (isGroup) {
+        final links = MockCollectionReference();
+        final query = MockQuery();
+        final snapshot = MockQuerySnapshot();
+        when(firestore.collection('group_members')).thenReturn(links);
+        when(links.where('groupId', isEqualTo: 'id')).thenReturn(query);
+        when(query.get(any)).thenAnswer((_) async => snapshot);
+        when(snapshot.docs).thenReturn([]);
+      }
       Future<void> remove() => isGroup
           ? FirestoreGroupRepository(firestore: firestore)
                 .deleteGroup('id', expectedVersion: 3)

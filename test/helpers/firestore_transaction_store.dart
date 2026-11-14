@@ -10,7 +10,10 @@ class FirestoreTransactionStore {
   Object? commitError;
   Future<void> Function()? beforeCommit;
   int commits = 0;
+  int _nextId = 0;
   final reads = <String>[];
+  final querySources = <Source?>[];
+  final queryFilters = <Map<String, dynamic>>[];
 
   FirestoreTransactionStore() {
     when(firestore.batch()).thenAnswer((_) {
@@ -48,7 +51,9 @@ class FirestoreTransactionStore {
       final name = call.positionalArguments.single as String;
       final collection = MockCollectionReference();
       when(collection.doc(any)).thenAnswer(
-        (call) => reference('$name/${call.positionalArguments.single}'),
+        (call) => reference(
+          '$name/${call.positionalArguments.single ?? 'generated-${_nextId++}'}',
+        ),
       );
       when(collection.where(any, isEqualTo: anyNamed('isEqualTo'))).thenAnswer(
         (call) => query(name, {
@@ -118,6 +123,14 @@ class FirestoreTransactionStore {
     final ref = MockDocumentReference();
     when(ref.path).thenReturn(path);
     when(ref.id).thenReturn(path.split('/').last);
+    when(ref.get()).thenAnswer((_) async {
+      final doc = MockDocumentSnapshot();
+      when(doc.id).thenReturn(path.split('/').last);
+      when(doc.exists).thenReturn(rows.containsKey(path));
+      when(doc.data())
+          .thenReturn(rows[path] == null ? null : Map.of(rows[path]!));
+      return doc;
+    });
     return ref;
   }
 
@@ -131,7 +144,11 @@ class FirestoreTransactionStore {
             call.namedArguments[#isEqualTo],
       }),
     );
-    when(query.get()).thenAnswer((_) async {
+    when(query.get(any)).thenAnswer((invocation) async {
+      querySources.add(
+        (invocation.positionalArguments.single as GetOptions?)?.source,
+      );
+      queryFilters.add(Map.of(filters));
       final snapshot = MockQuerySnapshot();
       final docs = <QueryDocumentSnapshot<Map<String, dynamic>>>[];
       for (final entry in rows.entries) {

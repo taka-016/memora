@@ -13,11 +13,20 @@ class FirestoreLocationQueryService implements LocationQueryService {
   @override
   Future<List<LocationDto>> getLocationsByGroupId(String groupId) async {
     try {
-      final snapshot = await _firestore
-          .collection('locations')
+      final parents = await _firestore
+          .collection('trip_entries')
           .where('groupId', isEqualTo: groupId)
           .get();
-      return snapshot.docs.map(FirestoreLocationMapper.fromFirestore).toList();
+      final result = <LocationDto>[];
+      for (final parent in parents.docs) {
+        final snapshot = await _firestore
+            .collection('locations')
+            .where('groupId', isEqualTo: groupId)
+            .where('tripId', isEqualTo: parent.id)
+            .get();
+        result.addAll(snapshot.docs.map(FirestoreLocationMapper.fromFirestore));
+      }
+      return result;
     } catch (e, stack) {
       logger.e(
         'FirestoreLocationQueryService.getLocationsByGroupId: ${e.toString()}',

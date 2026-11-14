@@ -43,17 +43,25 @@ void main() {
     when(query.get()).thenAnswer((_) async => snapshot);
     final trips = MockCollectionReference();
     final reference = MockDocumentReference();
-    final parent = MockDocumentSnapshot();
+    final parent = MockQueryDocumentSnapshot();
     when(parent.exists).thenReturn(true);
     when(parent.id).thenReturn('trip');
     when(parent.data())
         .thenReturn({'groupId': 'g', 'name': '旅行', 'year': 2020});
     when(firestore.collection('trip_entries')).thenReturn(trips);
+    final parentQuery = MockQuery();
+    final parentSnapshot = MockQuerySnapshot();
+    when(trips.where('groupId', isEqualTo: 'g')).thenReturn(parentQuery);
+    when(parentQuery.get()).thenAnswer((_) async => parentSnapshot);
+    when(parentSnapshot.docs).thenReturn([parent]);
+    when(query.where('tripId', isEqualTo: 'trip')).thenReturn(query);
+
     when(trips.doc('trip')).thenReturn(reference);
     when(reference.get()).thenAnswer((_) async => parent);
     final result = await FirestoreAndroidWidgetItineraryQueryService(firestore)
         .getDay('g', day);
     expect(result.single.name, '旅行');
+    verify(query.where('tripId', isEqualTo: 'trip')).called(1);
     expect(result.single.itineraryItems!.single.name, '移動');
     expect(result.single.itineraryItems!.single.location, isNull);
     verifyNever(firestore.collection('locations'));

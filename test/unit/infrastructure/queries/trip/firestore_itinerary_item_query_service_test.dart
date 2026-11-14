@@ -31,12 +31,22 @@ void main() {
           MockCollectionReference<Map<String, dynamic>>();
       when(mockFirestore.collection('itinerary_items'))
           .thenReturn(mockItineraryItemsCollection);
+      final parents = MockCollectionReference<Map<String, dynamic>>();
+      final parentRef = MockDocumentReference<Map<String, dynamic>>();
+      final parent = MockDocumentSnapshot<Map<String, dynamic>>();
+      when(mockFirestore.collection('trip_entries')).thenReturn(parents);
+      when(parents.doc(any)).thenReturn(parentRef);
+      when(parentRef.get()).thenAnswer((_) async => parent);
+      when(parent.exists).thenReturn(true);
+      when(parent.data()).thenReturn({'groupId': 'g'});
       service = FirestoreItineraryItemQueryService(firestore: mockFirestore);
     });
 
     test('旅行IDで旅程項目一覧を取得しorderByを複数適用できる', () async {
       const tripId = 'trip001';
       final mockQuery = MockQuery<Map<String, dynamic>>();
+      when(mockQuery.where('groupId', isEqualTo: anyNamed('isEqualTo')))
+          .thenReturn(mockQuery);
       final mockSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
       final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
 
@@ -64,6 +74,7 @@ void main() {
           OrderBy('endDateTime', descending: false),
         ],
       );
+      verify(mockQuery.where('groupId', isEqualTo: 'g')).called(1);
 
       expect(result, hasLength(1));
       expect(result.first, isA<ItineraryItemDto>());
@@ -77,6 +88,8 @@ void main() {
       const tripId = 'trip001';
       const locationId = 'location001';
       final mockQuery = MockQuery<Map<String, dynamic>>();
+      when(mockQuery.where('groupId', isEqualTo: anyNamed('isEqualTo')))
+          .thenReturn(mockQuery);
       final mockSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
       final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
       final mockLocationsCollection =

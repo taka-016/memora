@@ -1,3 +1,4 @@
+import 'package:memora/infrastructure/queries/dvc/firestore_dvc_children_query.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/dvc/dvc_point_usage_dto.dart';
 import 'package:memora/application/queries/dvc/dvc_point_usage_query_service.dart';
@@ -18,24 +19,14 @@ class FirestoreDvcPointUsageQueryService implements DvcPointUsageQueryService {
     String? contractId,
   }) async {
     try {
-      Query<Map<String, dynamic>> query = _firestore
-          .collection('dvc_point_usages')
-          .where('groupId', isEqualTo: groupId);
-
-      if (contractId != null) {
-        query = query.where('contractId', isEqualTo: contractId);
-      }
-
-      if (orderBy != null && orderBy.isNotEmpty) {
-        for (final order in orderBy) {
-          query = query.orderBy(order.field, descending: order.descending);
-        }
-      }
-
-      final snapshot = await query.get();
-      return snapshot.docs
-          .map(FirestoreDvcPointUsageMapper.fromFirestore)
-          .toList();
+      final docs = await firestoreDvcChildren(
+        _firestore,
+        'dvc_point_usages',
+        groupId,
+        contractId: contractId,
+        orderBy: orderBy,
+      );
+      return docs.map(FirestoreDvcPointUsageMapper.fromFirestore).toList();
     } catch (e, stack) {
       logger.e(
         'FirestoreDvcPointUsageQueryService.getDvcPointUsagesByGroupId: ${e.toString()}',

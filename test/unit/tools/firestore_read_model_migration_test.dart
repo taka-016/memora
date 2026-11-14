@@ -41,7 +41,7 @@ void main() {
         'memo': {'stringValue': '詳細'},
       },
     };
-    final writes = migration.itineraryGroupMigrationWrites(parent, [item]);
+    final writes = migration.tripChildrenGroupMigrationWrites(parent, [item]);
     expect(writes, hasLength(2));
     final child = writes.singleWhere(
       (write) =>
@@ -69,7 +69,7 @@ void main() {
       },
     };
     expect(
-      migration.itineraryGroupMigrationWrites(parent, [migrated]),
+      migration.tripChildrenGroupMigrationWrites(parent, [migrated]),
       isEmpty,
     );
   });

@@ -41,11 +41,8 @@ service cloud.firestore {
              && request.resource.data.version == resource.data.version + 1;
     }
 
-    function isVersionedCollection(collection) {
-      return collection in ['members', 'member_invitations', 'group_events',
-                            'member_events', 'trip_entries', 'groups',
-                            'calendar_events', 'dvc_point_contracts',
-                            'calendar_labels'];
+    function isStoredVersion() {
+      return resource.data.version is int && resource.data.version >= 1;
     }
 
     function parentAdvanced(parentCollection, parentId) {
@@ -63,90 +60,324 @@ service cloud.firestore {
       return exists(path) && !existsAfter(path);
     }
 
-    function aggregateChild(parentCollection, key) {
+    function permissions() {
+      return get(/databases/$(database)/documents/account_permissions/$(request.auth.uid)).data;
+    }
+
+    function ownMember() {
+      return permissions().memberId;
+    }
+
+    function belongs(groupId) {
       return isVerifiedUser()
-             && request.resource.data[key] is string
-             && parentAdvanced(parentCollection, request.resource.data[key]);
+             && groupId in permissions().memberGroupIds
+             && exists(/databases/$(database)/documents/groups/$(groupId))
+             && exists(/databases/$(database)/documents/members/$(ownMember()));
     }
 
-    function aggregateChildDelete(parentCollection, key) {
-      return isVerifiedUser()
-             && (parentDeleted(parentCollection, resource.data[key])
-                 || parentAdvanced(parentCollection, resource.data[key]));
+    function manages(groupId) {
+      return belongs(groupId) && groupId in permissions().managedGroupIds;
     }
 
-    match /{collection}/{document} {
-      allow read: if isVerifiedUser()
-                     && collection in ['locations', 'tasks', 'itinerary_items',
-                                       'group_members', 'dvc_limited_points', 'dvc_point_usages',
-                                       'calendar_event_overrides'];
+    function memberPath(memberId) {
+      return /databases/$(database)/documents/members/$(memberId);
     }
 
-    match /{collection}/{document} {
-      allow create: if collection in ['locations', 'tasks', 'itinerary_items']
-                       && aggregateChild('trip_entries', 'tripId');
-      allow update: if collection in ['locations', 'tasks', 'itinerary_items']
-                       && request.resource.data.tripId == resource.data.tripId
-                       && aggregateChild('trip_entries', 'tripId');
-      allow delete: if collection in ['locations', 'tasks', 'itinerary_items']
-                       && aggregateChildDelete('trip_entries', 'tripId');
+    function membershipPath(groupId, memberId) {
+      return /databases/$(database)/documents/group_members/$(groupId + ':' + memberId);
     }
 
-    match /calendar_event_overrides/{document} {
-      allow create: if aggregateChild('calendar_events', 'eventId')
-                       && request.resource.data.isCancelled == true;
-      allow update: if request.resource.data.eventId == resource.data.eventId
-                       && aggregateChild('calendar_events', 'eventId')
-                       && request.resource.data.isCancelled == true;
-      allow delete: if aggregateChildDelete('calendar_events', 'eventId');
+    function matchingPermissions(accountId, memberId, data) {
+      let member = getAfter(memberPath(memberId)).data;
+      return member.accountId == accountId
+             && data.memberId == memberId
+             && data.memberGroupIds == member.groupIds
+             && data.managedGroupIds == member.managedGroupIds;
+    }
+
+    function validLists(data, memberKey) {
+      return data[memberKey] is list && data.managedGroupIds is list
+             && data[memberKey].size() == data[memberKey].toSet().size()
+             && data.managedGroupIds.size() == data.managedGroupIds.toSet().size()
+             && data[memberKey].hasAll(data.managedGroupIds);
+    }
+
+    function onlyGroupChanged(before, after, key, groupId) {
+      return before[key].toSet().difference([groupId].toSet())
+             == after[key].toSet().difference([groupId].toSet());
+    }
+
+    function membershipMatches(memberId, groupId, data) {
+      let path = membershipPath(groupId, memberId);
+      let active = existsAfter(/databases/$(database)/documents/groups/$(groupId))
+                   && existsAfter(path);
+      return (groupId in data.groupIds) == active
+             && (groupId in data.managedGroupIds)
+                == (active && (getAfter(path).data.isAdministrator == true
+                    || getAfter(/databases/$(database)/documents/groups/$(groupId)).data.ownerId == memberId));
+    }
+
+    function memberPermissionsMatch(memberId, data) {
+      return data.accountId == null
+             || matchingPermissions(data.accountId, memberId,
+                  getAfter(/databases/$(database)/documents/account_permissions/$(data.accountId)).data);
+    }
+
+    function membershipEdit(memberId) {
+      let before = resource.data;
+      let after = request.resource.data;
+      let groupId = after.changedGroupId;
+      return after.diff(before).affectedKeys().hasOnly([
+               'groupIds', 'managedGroupIds', 'changedGroupId', 'version', 'updatedAt'])
+             && validLists(after, 'groupIds')
+             && onlyGroupChanged(before, after, 'groupIds', groupId)
+             && onlyGroupChanged(before, after, 'managedGroupIds', groupId)
+             && (manages(groupId)
+                 || (!exists(/databases/$(database)/documents/groups/$(groupId))
+                     && getAfter(/databases/$(database)/documents/groups/$(groupId)).data.ownerId == ownMember()
+                     ))
+             && (parentAdvanced('groups', groupId) || parentDeleted('groups', groupId))
+             && membershipMatches(memberId, groupId, after)
+             && memberPermissionsMatch(memberId, after);
+    }
+
+    function readableSharedMember(data) {
+      let shared = data.groupIds.removeAll(data.groupIds.removeAll(permissions().memberGroupIds));
+      return data.ownerId == ownMember() || (shared.size() > 0 && belongs(shared[0]));
+    }
+
+    function validInvitation(code) {
+      let path = /databases/$(database)/documents/member_invitations/$(code);
+      let data = get(path).data;
+      let issued = data.get('updatedAt', data.get('createdAt', null));
+      return exists(path) && data.invitationCode == code
+             && exists(memberPath(data.inviteeId))
+             && get(memberPath(data.inviteeId)).data.accountId == null
+             && (issued == null || request.time <= issued + duration.value(24, 'h'));
+    }
+
+    function hasClaim(memberId) {
+      let path = /databases/$(database)/documents/member_invitation_claims/$(request.auth.uid);
+      let code = get(path).data.code;
+      return exists(path) && validInvitation(code)
+             && get(/databases/$(database)/documents/member_invitations/$(code)).data.inviteeId == memberId;
+    }
+
+    function readableMember(data, memberId) {
+      return data.accountId == request.auth.uid || hasClaim(memberId)
+             || (exists(/databases/$(database)/documents/account_permissions/$(request.auth.uid))
+                 && readableSharedMember(data));
+    }
+
+    match /member_invitation_claims/{uid} {
+      allow get, delete: if isVerifiedUser() && uid == request.auth.uid;
+      allow create, update: if isVerifiedUser() && uid == request.auth.uid
+                       && request.resource.data.keys().hasOnly(['code'])
+                       && validInvitation(request.resource.data.code);
+    }
+
+    function invitationManager(data) {
+      return exists(/databases/$(database)/documents/account_permissions/$(request.auth.uid))
+             && get(memberPath(data.inviteeId)).data.ownerId == ownMember();
+    }
+
+    match /member_invitations/{code} {
+      allow get: if isVerifiedUser() && (!exists(/databases/$(database)/documents/member_invitations/$(code))
+                       || invitationManager(resource.data) || hasClaim(resource.data.inviteeId) || validInvitation(code));
+      allow list: if isVerifiedUser() && (hasClaim(resource.data.inviteeId) || invitationManager(resource.data));
+      allow create: if isVerifiedUser() && isInitialVersion()
+                       && request.resource.data.invitationCode == code
+                       && request.resource.data.inviterId == ownMember()
+                       && invitationManager(request.resource.data)
+                       && get(memberPath(request.resource.data.inviteeId)).data.accountId == null;
+      allow delete: if isStoredVersion() && isVerifiedUser()
+                       && (invitationManager(resource.data)
+                           || (hasClaim(resource.data.inviteeId)
+                               && getAfter(memberPath(resource.data.inviteeId)).data.accountId == request.auth.uid
+                               && memberPermissionsMatch(resource.data.inviteeId, getAfter(memberPath(resource.data.inviteeId)).data)));
+    }
+
+    match /account_permissions/{accountId} {
+      allow get: if isVerifiedUser() && accountId == request.auth.uid;
+      allow create: if isVerifiedUser() && accountId == request.auth.uid
+                       && validLists(request.resource.data, 'memberGroupIds')
+                       && (request.resource.data.memberGroupIds.size() == 0 || hasClaim(request.resource.data.memberId))
+                       && matchingPermissions(accountId, request.resource.data.memberId, request.resource.data)
+                       && (!exists(memberPath(request.resource.data.memberId)) || hasClaim(request.resource.data.memberId));
+      allow update: if isVerifiedUser()
+                       && request.resource.data.memberId == resource.data.memberId
+                       && request.resource.data.diff(resource.data).affectedKeys()
+                          .hasOnly(['memberGroupIds', 'managedGroupIds', 'changedGroupId'])
+                       && validLists(request.resource.data, 'memberGroupIds')
+                       && onlyGroupChanged(resource.data, request.resource.data,
+                            'memberGroupIds', request.resource.data.changedGroupId)
+                       && onlyGroupChanged(resource.data, request.resource.data,
+                            'managedGroupIds', request.resource.data.changedGroupId)
+                       && matchingPermissions(accountId, resource.data.memberId, request.resource.data)
+                       && get(memberPath(resource.data.memberId)).data.version
+                          < getAfter(memberPath(resource.data.memberId)).data.version
+                       && getAfter(memberPath(resource.data.memberId)).data.changedGroupId
+                          == request.resource.data.changedGroupId;
+      allow delete: if isVerifiedUser()
+                       && !existsAfter(memberPath(resource.data.memberId))
+                       && (resource.data.memberId == ownMember()
+                           || get(memberPath(resource.data.memberId)).data.ownerId == ownMember());
+    }
+
+    match /members/{memberId} {
+      allow get: if isVerifiedUser() && (!exists(memberPath(memberId)) || readableMember(resource.data, memberId));
+      allow list: if isVerifiedUser() && readableMember(resource.data, memberId);
+      allow create: if isVerifiedUser() && isInitialVersion()
+                       && !exists(/databases/$(database)/documents/deleted_members/$(memberId))
+                       && validLists(request.resource.data, 'groupIds')
+                       && request.resource.data.groupIds.size() == 0
+                       && (request.resource.data.accountId == request.auth.uid
+                           && memberPermissionsMatch(memberId, request.resource.data)
+                           || request.resource.data.accountId == null
+                              && request.resource.data.ownerId == ownMember());
+      allow update: if isVerifiedUser() && isNextVersion()
+                       && (membershipEdit(memberId)
+                           || (hasClaim(memberId) && resource.data.accountId == null
+                               && request.resource.data.accountId == request.auth.uid
+                               && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['accountId', 'version', 'updatedAt'])
+                               && memberPermissionsMatch(memberId, request.resource.data)
+                               && !existsAfter(/databases/$(database)/documents/member_invitations/$(get(/databases/$(database)/documents/member_invitation_claims/$(request.auth.uid)).data.code)))
+                           || ((resource.data.accountId == request.auth.uid || resource.data.ownerId == ownMember())
+                               && request.resource.data.accountId == resource.data.accountId
+                               && request.resource.data.ownerId == resource.data.ownerId
+                               && request.resource.data.groupIds == resource.data.groupIds
+                               && request.resource.data.managedGroupIds == resource.data.managedGroupIds));
+      allow delete: if isStoredVersion() && isVerifiedUser()
+                       && (resource.data.accountId == request.auth.uid || resource.data.ownerId == ownMember())
+                       && getAfter(/databases/$(database)/documents/deleted_members/$(memberId)).data == resource.data
+                       && (resource.data.accountId == null
+                           || !existsAfter(/databases/$(database)/documents/account_permissions/$(resource.data.accountId)));
+    }
+
+    match /groups/{groupId} {
+      allow get: if isVerifiedUser() && (!exists(/databases/$(database)/documents/groups/$(groupId)) || belongs(groupId));
+      allow list: if belongs(groupId);
+      allow create: if isVerifiedUser() && isInitialVersion() && validColor(request.resource.data)
+                       && !exists(/databases/$(database)/documents/deleted_groups/$(groupId))
+                       && request.resource.data.ownerId == ownMember()
+                       && membershipMatches(ownMember(), groupId, getAfter(memberPath(ownMember())).data)
+                       && groupId in getAfter(memberPath(ownMember())).data.managedGroupIds;
+      allow update: if manages(groupId) && isNextVersion() && validColor(request.resource.data)
+                       && request.resource.data.ownerId == resource.data.ownerId;
+      allow delete: if isStoredVersion() && manages(groupId)
+                       && getAfter(/databases/$(database)/documents/deleted_groups/$(groupId)).data == resource.data;
+    }
+
+    function membershipDataMatches(data) {
+      let member = getAfter(memberPath(data.memberId)).data;
+      let group = getAfter(/databases/$(database)/documents/groups/$(data.groupId)).data;
+      return data.groupId in member.groupIds
+             && (data.groupId in member.managedGroupIds)
+                == (data.isAdministrator == true || group.ownerId == data.memberId)
+             && memberPermissionsMatch(data.memberId, member);
     }
 
     match /group_members/{document} {
-      allow create: if aggregateChild('groups', 'groupId') && validColor(request.resource.data);
+      allow read: if belongs(resource.data.groupId);
+      function validMembershipWrite() {
+        return isVerifiedUser()
+                       && document == request.resource.data.groupId + ':' + request.resource.data.memberId
+                       && validColor(request.resource.data)
+                       && (manages(request.resource.data.groupId)
+                           || (!exists(/databases/$(database)/documents/groups/$(request.resource.data.groupId))
+                               && getAfter(/databases/$(database)/documents/groups/$(request.resource.data.groupId)).data.ownerId == ownMember()))
+                       && parentAdvanced('groups', request.resource.data.groupId)
+                       && membershipDataMatches(request.resource.data);
+      }
+      allow create: if validMembershipWrite();
       allow update: if request.resource.data.groupId == resource.data.groupId
-                       && aggregateChild('groups', 'groupId') && validColor(request.resource.data);
-      allow delete: if aggregateChildDelete('groups', 'groupId');
+                       && request.resource.data.memberId == resource.data.memberId
+                       && validMembershipWrite();
+      allow delete: if manages(resource.data.groupId)
+                       && parentAdvanced('groups', resource.data.groupId)
+                       && !(resource.data.groupId in getAfter(memberPath(resource.data.memberId)).data.groupIds)
+                       && memberPermissionsMatch(resource.data.memberId, getAfter(memberPath(resource.data.memberId)).data);
+    }
+
+    function scopedCollection(collection) {
+      return collection in ['group_events', 'member_events', 'trip_entries',
+                            'calendar_events', 'dvc_point_contracts'];
     }
 
     match /{collection}/{document} {
-      allow create: if collection in ['dvc_limited_points', 'dvc_point_usages']
-                       && aggregateChild('dvc_point_contracts', 'contractId');
-      allow update: if collection in ['dvc_limited_points', 'dvc_point_usages']
-                       && request.resource.data.contractId == resource.data.contractId
-                       && aggregateChild('dvc_point_contracts', 'contractId');
-      allow delete: if collection in ['dvc_limited_points', 'dvc_point_usages']
-                       && aggregateChildDelete('dvc_point_contracts', 'contractId');
-    }
-
-    match /{collection}/{document} {
-      allow read: if isVerifiedUser() && isVersionedCollection(collection);
-      allow delete: if isVerifiedUser()
-                       && isVersionedCollection(collection)
-                       && resource.data.version is int
-                       && resource.data.version >= 1;
-      allow create: if isVerifiedUser()
-                       && isVersionedCollection(collection)
-                       && isInitialVersion()
-                       && validVersionedData(collection);
-      allow update: if isVerifiedUser()
-                       && isVersionedCollection(collection)
-                       && isNextVersion()
-                       && validVersionedData(collection);
+      allow get: if scopedCollection(collection) && isVerifiedUser()
+                    && (!exists(/databases/$(database)/documents/$(collection)/$(document)) || belongs(resource.data.groupId));
+      allow list: if scopedCollection(collection) && belongs(resource.data.groupId);
+      allow create: if scopedCollection(collection) && belongs(request.resource.data.groupId)
+                       && isInitialVersion() && validVersionedData(collection);
+      allow update: if scopedCollection(collection) && belongs(resource.data.groupId)
+                       && belongs(request.resource.data.groupId)
+                       && isNextVersion() && validVersionedData(collection)
+                       && (collection == 'calendar_events' || request.resource.data.groupId == resource.data.groupId);
+      allow delete: if scopedCollection(collection) && belongs(resource.data.groupId)
+                       && resource.data.version is int && resource.data.version >= 1;
     }
 
     match /calendar_labels/{document} {
-      allow update: if isVerifiedUser()
-                       && resource.data.version is int
-                       && resource.data.version >= 1
-                       && request.resource.data.diff(resource.data)
-                            .affectedKeys().hasOnly(['eventCount'])
-                       && request.resource.data.eventCount is int
-                       && request.resource.data.eventCount >= 0;
+      allow read: if belongs(resource.data.groupId);
+      allow create: if manages(request.resource.data.groupId) && isInitialVersion();
+      allow update: if belongs(resource.data.groupId)
+                       && request.resource.data.groupId == resource.data.groupId
+                       && ((manages(resource.data.groupId) && isNextVersion())
+                           || (isStoredVersion() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['eventCount'])
+                               && request.resource.data.diff(resource.data).affectedKeys().hasAll(['eventCount'])
+                               && request.resource.data.eventCount is int && request.resource.data.eventCount >= 0));
+      allow delete: if isStoredVersion() && manages(resource.data.groupId) && resource.data.eventCount == 0;
+    }
+
+    function childCollection(collection) {
+      return collection in ['locations', 'tasks', 'itinerary_items',
+                            'dvc_limited_points', 'dvc_point_usages', 'calendar_event_overrides'];
+    }
+
+    function parentCollection(collection) {
+      return collection in ['locations', 'tasks', 'itinerary_items'] ? 'trip_entries'
+             : collection == 'calendar_event_overrides' ? 'calendar_events' : 'dvc_point_contracts';
+    }
+
+    function parentKey(collection) {
+      return collection in ['locations', 'tasks', 'itinerary_items'] ? 'tripId'
+             : collection == 'calendar_event_overrides' ? 'eventId' : 'contractId';
+    }
+
+    function childScope(collection, data) {
+      let parent = get(/databases/$(database)/documents/$(parentCollection(collection))/$(data[parentKey(collection)])).data;
+      return belongs(data.groupId) && parent.groupId == data.groupId;
+    }
+
+    function childWriteScope(collection, data) {
+      let parent = getAfter(/databases/$(database)/documents/$(parentCollection(collection))/$(data[parentKey(collection)])).data;
+      return belongs(data.groupId) && data.groupId == parent.groupId;
     }
 
     match /{collection}/{document} {
-      allow read, write: if isVerifiedUser()
-                           && collection in ['deleted_groups', 'deleted_members'];
+      allow read: if childCollection(collection) && childScope(collection, resource.data);
+      allow create: if childCollection(collection) && childWriteScope(collection, request.resource.data)
+                       && parentAdvanced(parentCollection(collection), request.resource.data[parentKey(collection)])
+                       && (collection != 'calendar_event_overrides' || request.resource.data.isCancelled == true);
+      allow update: if childCollection(collection) && childScope(collection, resource.data)
+                       && request.resource.data[parentKey(collection)] == resource.data[parentKey(collection)]
+                       && childWriteScope(collection, request.resource.data)
+                       && parentAdvanced(parentCollection(collection), request.resource.data[parentKey(collection)])
+                       && (collection != 'calendar_event_overrides' || request.resource.data.isCancelled == true);
+      allow delete: if childCollection(collection) && childScope(collection, resource.data)
+                       && (parentAdvanced(parentCollection(collection), resource.data[parentKey(collection)])
+                           || parentDeleted(parentCollection(collection), resource.data[parentKey(collection)]));
+    }
+
+    match /deleted_groups/{id} {
+      allow create: if manages(id) && !existsAfter(/databases/$(database)/documents/groups/$(id))
+                       && request.resource.data == get(/databases/$(database)/documents/groups/$(id)).data;
+    }
+    match /deleted_members/{id} {
+      allow create: if isVerifiedUser() && !existsAfter(memberPath(id))
+                       && request.resource.data == get(memberPath(id)).data
+                       && (request.resource.data.accountId == request.auth.uid || request.resource.data.ownerId == ownMember());
     }
   }
 }

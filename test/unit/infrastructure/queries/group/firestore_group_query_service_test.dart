@@ -1,3 +1,4 @@
+import 'package:memora/infrastructure/services/firestore_account_permissions_source.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
@@ -9,6 +10,7 @@ import '../../../../helpers/test_exception.dart';
 import 'firestore_group_query_service_test.mocks.dart';
 
 @GenerateMocks([
+  FirestoreAccountPermissionsSource,
   FirebaseFirestore,
   CollectionReference,
   Query,
@@ -20,6 +22,7 @@ import 'firestore_group_query_service_test.mocks.dart';
 void main() {
   group('FirestoreGroupQueryService', () {
     late FirestoreGroupQueryService service;
+    late MockFirestoreAccountPermissionsSource permissions;
     late MockFirebaseFirestore mockFirestore;
     late MockCollectionReference<Map<String, dynamic>> mockGroupsCollection;
     late MockCollectionReference<Map<String, dynamic>>
@@ -27,8 +30,6 @@ void main() {
     late MockCollectionReference<Map<String, dynamic>> mockMembersCollection;
     late MockQuery<Map<String, dynamic>> mockQuery;
     late MockQuerySnapshot<Map<String, dynamic>> mockQuerySnapshot;
-    late MockQueryDocumentSnapshot<Map<String, dynamic>>
-    mockQueryDocumentSnapshot;
     late MockDocumentReference<Map<String, dynamic>> mockDocumentReference;
     late MockDocumentSnapshot<Map<String, dynamic>> mockDocumentSnapshot;
 
@@ -40,403 +41,69 @@ void main() {
       mockMembersCollection = MockCollectionReference<Map<String, dynamic>>();
       mockQuery = MockQuery<Map<String, dynamic>>();
       mockQuerySnapshot = MockQuerySnapshot<Map<String, dynamic>>();
-      mockQueryDocumentSnapshot =
-          MockQueryDocumentSnapshot<Map<String, dynamic>>();
       mockDocumentReference = MockDocumentReference<Map<String, dynamic>>();
       mockDocumentSnapshot = MockDocumentSnapshot<Map<String, dynamic>>();
 
-      service = FirestoreGroupQueryService(firestore: mockFirestore);
-    });
-
-    test('管理者グループとメンバーグループを正常に取得する', () async {
-      const memberId = 'member123';
-
-      // 管理者として参加しているグループのモック設定
-      when(mockFirestore.collection('groups')).thenReturn(mockGroupsCollection);
-      when(mockGroupsCollection.where('ownerId', isEqualTo: memberId))
-          .thenReturn(mockQuery);
-      when(mockQuery.get()).thenAnswer((_) async => mockQuerySnapshot);
-      when(mockQuerySnapshot.docs).thenReturn([mockQueryDocumentSnapshot]);
-      when(mockQueryDocumentSnapshot.id).thenReturn('group1');
-      when(
-        mockQueryDocumentSnapshot.data(),
-      ).thenReturn({'name': '管理者グループ', 'ownerId': memberId, 'memo': '管理者メモ'});
-
-      // メンバーとして参加しているグループのモック設定
-      final mockGroupMemberQuery1 = MockQuery<Map<String, dynamic>>();
-      final mockGroupMemberSnapshot1 =
-          MockQuerySnapshot<Map<String, dynamic>>();
-      final mockGroupMemberDoc1 =
-          MockQueryDocumentSnapshot<Map<String, dynamic>>();
-
-      when(mockFirestore.collection('group_members'))
-          .thenReturn(mockGroupMembersCollection);
-      when(mockGroupMembersCollection.where('memberId', isEqualTo: memberId))
-          .thenReturn(mockGroupMemberQuery1);
-      when(mockGroupMemberQuery1.get())
-          .thenAnswer((_) async => mockGroupMemberSnapshot1);
-      when(mockGroupMemberSnapshot1.docs).thenReturn([mockGroupMemberDoc1]);
-      when(mockGroupMemberDoc1.data()).thenReturn({'groupId': 'group2'});
-
-      final mockGroupDoc = MockDocumentSnapshot<Map<String, dynamic>>();
-      when(mockGroupsCollection.doc('group2'))
-          .thenReturn(mockDocumentReference);
-      when(mockDocumentReference.get()).thenAnswer((_) async => mockGroupDoc);
-      when(mockGroupDoc.exists).thenReturn(true);
-      when(mockGroupDoc.id).thenReturn('group2');
-      when(mockGroupDoc.data()).thenReturn({
-        'name': 'メンバーグループ',
-        'ownerId': 'other_owner',
-        'memo': 'メンバーメモ',
-      });
-
-      // グループのメンバー取得（group1）
-      final mockGroupMemberQuery2 = MockQuery<Map<String, dynamic>>();
-      final mockGroupMemberSnapshot2 =
-          MockQuerySnapshot<Map<String, dynamic>>();
-      final mockGroupMemberDoc2a =
-          MockQueryDocumentSnapshot<Map<String, dynamic>>();
-      final mockGroupMemberDoc2b =
-          MockQueryDocumentSnapshot<Map<String, dynamic>>();
-
-      when(mockGroupMembersCollection.where('groupId', isEqualTo: 'group1'))
-          .thenReturn(mockGroupMemberQuery2);
-      when(mockGroupMemberQuery2.get())
-          .thenAnswer((_) async => mockGroupMemberSnapshot2);
-      when(mockGroupMemberSnapshot2.docs)
-          .thenReturn([mockGroupMemberDoc2a, mockGroupMemberDoc2b]);
-      when(mockGroupMemberDoc2a.data()).thenReturn({
-        'memberId': 'member1',
-        'groupId': 'group1',
-        'orderIndex': 1,
-      });
-      when(mockGroupMemberDoc2b.data()).thenReturn({
-        'memberId': 'member3',
-        'groupId': 'group1',
-        'orderIndex': 0,
-      });
-
-      // グループのメンバー取得（group2）
-      final mockGroupMemberQuery3 = MockQuery<Map<String, dynamic>>();
-      final mockGroupMemberSnapshot3 =
-          MockQuerySnapshot<Map<String, dynamic>>();
-      final mockGroupMemberDoc3 =
-          MockQueryDocumentSnapshot<Map<String, dynamic>>();
-
-      when(mockGroupMembersCollection.where('groupId', isEqualTo: 'group2'))
-          .thenReturn(mockGroupMemberQuery3);
-      when(mockGroupMemberQuery3.get())
-          .thenAnswer((_) async => mockGroupMemberSnapshot3);
-      when(mockGroupMemberSnapshot3.docs).thenReturn([mockGroupMemberDoc3]);
-      when(mockGroupMemberDoc3.data()).thenReturn({
-        'memberId': 'member2',
-        'groupId': 'group2',
-        'orderIndex': 0,
-      });
-
-      // メンバー詳細の取得
-      when(mockFirestore.collection('members'))
-          .thenReturn(mockMembersCollection);
-
-      final mockMemberDocRef1 = MockDocumentReference<Map<String, dynamic>>();
-      final mockMemberSnapshot1 = MockDocumentSnapshot<Map<String, dynamic>>();
-      when(mockMembersCollection.doc('member1')).thenReturn(mockMemberDocRef1);
-      when(mockMemberDocRef1.get())
-          .thenAnswer((_) async => mockMemberSnapshot1);
-      when(mockMemberSnapshot1.exists).thenReturn(true);
-      when(mockMemberSnapshot1.id).thenReturn('member1');
-      when(mockMemberSnapshot1.data()).thenReturn({'displayName': 'メンバー1'});
-
-      final mockMemberDocRef2 = MockDocumentReference<Map<String, dynamic>>();
-      final mockMemberSnapshot2 = MockDocumentSnapshot<Map<String, dynamic>>();
-      when(mockMembersCollection.doc('member2')).thenReturn(mockMemberDocRef2);
-      when(mockMemberDocRef2.get())
-          .thenAnswer((_) async => mockMemberSnapshot2);
-      when(mockMemberSnapshot2.exists).thenReturn(true);
-      when(mockMemberSnapshot2.id).thenReturn('member2');
-      when(mockMemberSnapshot2.data()).thenReturn({'displayName': 'メンバー2'});
-
-      final mockMemberDocRef3 = MockDocumentReference<Map<String, dynamic>>();
-      final mockMemberSnapshot3 = MockDocumentSnapshot<Map<String, dynamic>>();
-      when(mockMembersCollection.doc('member3')).thenReturn(mockMemberDocRef3);
-      when(mockMemberDocRef3.get())
-          .thenAnswer((_) async => mockMemberSnapshot3);
-      when(mockMemberSnapshot3.exists).thenReturn(true);
-      when(mockMemberSnapshot3.id).thenReturn('member3');
-      when(mockMemberSnapshot3.data()).thenReturn({'displayName': 'メンバー3'});
-
-      final result = await service.getGroupsWithMembersByMemberId(memberId);
-
-      expect(result, hasLength(2));
-      expect(result[0].id, 'group1');
-      expect(result[0].name, '管理者グループ');
-      expect(result[0].memo, '管理者メモ');
-      expect(result[1].id, 'group2');
-      expect(result[1].name, 'メンバーグループ');
-      expect(result[1].memo, 'メンバーメモ');
-    });
-
-    test('例外が発生した場合、取得失敗を伝える', () async {
-      const memberId = 'member123';
-
-      when(mockFirestore.collection('groups')).thenReturn(mockGroupsCollection);
-      when(mockGroupsCollection.where('ownerId', isEqualTo: memberId))
-          .thenThrow(TestException('Firestore error'));
-
-      await expectLater(
-        service.getGroupsWithMembersByMemberId(memberId),
-        throwsA(isA<TestException>()),
+      permissions = MockFirestoreAccountPermissionsSource();
+      service = FirestoreGroupQueryService(
+        firestore: mockFirestore,
+        permissions: permissions,
       );
     });
 
-    test('指定されたオーナーIDで管理しているグループとメンバー情報を正常に取得する', () async {
-      const ownerId = 'owner123';
-
-      // 管理者として参加しているグループのモック設定
+    test('所属と管理グループは本人の認可文書のIDだけから取得する', () async {
+      when(permissions.current()).thenAnswer(
+        (_) async => FirestoreAccountPermissions({
+          'memberId': 'self',
+          'memberGroupIds': ['g'],
+          'managedGroupIds': ['g'],
+        }),
+      );
       when(mockFirestore.collection('groups')).thenReturn(mockGroupsCollection);
-      when(mockGroupsCollection.where('ownerId', isEqualTo: ownerId))
-          .thenReturn(mockQuery);
-      when(mockQuery.get()).thenAnswer((_) async => mockQuerySnapshot);
-      when(mockQuerySnapshot.docs).thenReturn([mockQueryDocumentSnapshot]);
-      when(mockQueryDocumentSnapshot.id).thenReturn('group1');
-      when(mockQueryDocumentSnapshot.data()).thenReturn({
-        'name': '管理者グループ',
-        'ownerId': ownerId,
-        'memo': '管理者グループのメモ',
-      });
-
-      // グループのメンバー取得
-      final mockGroupMemberQuery = MockQuery<Map<String, dynamic>>();
-      final mockGroupMemberSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
-      final mockGroupMemberDoc =
-          MockQueryDocumentSnapshot<Map<String, dynamic>>();
-
-      when(mockFirestore.collection('group_members'))
-          .thenReturn(mockGroupMembersCollection);
-      when(mockGroupMembersCollection.where('groupId', isEqualTo: 'group1'))
-          .thenReturn(mockGroupMemberQuery);
-      when(mockGroupMemberQuery.get())
-          .thenAnswer((_) async => mockGroupMemberSnapshot);
-      when(mockGroupMemberSnapshot.docs).thenReturn([mockGroupMemberDoc]);
-      when(mockGroupMemberDoc.data())
-          .thenReturn({'memberId': 'member1', 'groupId': 'group1'});
-
-      // メンバー詳細の取得
-      when(mockFirestore.collection('members'))
-          .thenReturn(mockMembersCollection);
-      when(mockMembersCollection.doc('member1'))
-          .thenReturn(mockDocumentReference);
+      when(mockGroupsCollection.doc('g')).thenReturn(mockDocumentReference);
       when(mockDocumentReference.get())
           .thenAnswer((_) async => mockDocumentSnapshot);
       when(mockDocumentSnapshot.exists).thenReturn(true);
-      when(mockDocumentSnapshot.id).thenReturn('member1');
-      when(mockDocumentSnapshot.data()).thenReturn({'displayName': 'テストメンバー'});
-
-      final result = await service.getManagedGroupsWithMembersByOwnerId(
-        ownerId,
-      );
-
-      expect(result, hasLength(1));
-      expect(result[0].id, 'group1');
-      expect(result[0].name, '管理者グループ');
-      expect(result[0].memo, '管理者グループのメモ');
-      expect(result[0].members, hasLength(1));
-      expect(result[0].members[0].displayName, 'テストメンバー');
-    });
-
-    test('例外が発生した場合、取得失敗を伝える', () async {
-      const ownerId = 'owner123';
-
-      when(mockFirestore.collection('groups')).thenReturn(mockGroupsCollection);
-      when(mockGroupsCollection.where('ownerId', isEqualTo: ownerId))
-          .thenThrow(TestException('Firestore error'));
-
-      await expectLater(
-        service.getManagedGroupsWithMembersByOwnerId(ownerId),
-        throwsA(isA<TestException>()),
-      );
-    });
-
-    test('groupsOrderByとmembersOrderByを指定してグループとメンバーをソート順で取得する', () async {
-      const memberId = 'member123';
-
-      // 管理者として参加しているグループのモック設定
-      when(mockFirestore.collection('groups')).thenReturn(mockGroupsCollection);
-
-      // 2つのグループを返す（名前降順：Bグループ、Aグループ）
-      when(mockGroupsCollection.where('ownerId', isEqualTo: memberId))
+      when(mockDocumentSnapshot.id).thenReturn('g');
+      when(mockDocumentSnapshot.data()).thenReturn({'name': '所属先'});
+      when(mockFirestore.collection('group_members'))
+          .thenReturn(mockGroupMembersCollection);
+      when(mockGroupMembersCollection.where('groupId', isEqualTo: 'g'))
           .thenReturn(mockQuery);
       when(mockQuery.get()).thenAnswer((_) async => mockQuerySnapshot);
-
-      final mockGroupDoc1 = MockQueryDocumentSnapshot<Map<String, dynamic>>();
-      final mockGroupDoc2 = MockQueryDocumentSnapshot<Map<String, dynamic>>();
-      when(mockQuerySnapshot.docs).thenReturn([mockGroupDoc1, mockGroupDoc2]);
-      when(mockGroupDoc1.id).thenReturn('group2');
-      when(mockGroupDoc1.data())
-          .thenReturn({'name': 'Bグループ', 'ownerId': memberId});
-      when(mockGroupDoc2.id).thenReturn('group1');
-      when(mockGroupDoc2.data())
-          .thenReturn({'name': 'Aグループ', 'ownerId': memberId});
-
-      // メンバーとして参加しているグループはなし
-      final mockGroupMemberQuery1 = MockQuery<Map<String, dynamic>>();
-      final mockGroupMemberSnapshot1 =
-          MockQuerySnapshot<Map<String, dynamic>>();
-
-      when(mockFirestore.collection('group_members'))
-          .thenReturn(mockGroupMembersCollection);
-      when(mockGroupMembersCollection.where('memberId', isEqualTo: memberId))
-          .thenReturn(mockGroupMemberQuery1);
-      when(mockGroupMemberQuery1.get())
-          .thenAnswer((_) async => mockGroupMemberSnapshot1);
-      when(mockGroupMemberSnapshot1.docs).thenReturn([]);
-
-      // グループのメンバー取得（group1）
-      final mockGroupMemberQuery2 = MockQuery<Map<String, dynamic>>();
-      final mockGroupMemberSnapshot2 =
-          MockQuerySnapshot<Map<String, dynamic>>();
-      final mockGroupMemberDoc2a =
-          MockQueryDocumentSnapshot<Map<String, dynamic>>();
-      final mockGroupMemberDoc2b =
-          MockQueryDocumentSnapshot<Map<String, dynamic>>();
-
-      when(mockGroupMembersCollection.where('groupId', isEqualTo: 'group1'))
-          .thenReturn(mockGroupMemberQuery2);
-      when(mockGroupMemberQuery2.get())
-          .thenAnswer((_) async => mockGroupMemberSnapshot2);
-      when(mockGroupMemberSnapshot2.docs)
-          .thenReturn([mockGroupMemberDoc2a, mockGroupMemberDoc2b]);
-      when(mockGroupMemberDoc2a.data()).thenReturn({
-        'memberId': 'member1',
-        'groupId': 'group1',
-        'orderIndex': 1,
-      });
-      when(mockGroupMemberDoc2b.data()).thenReturn({
-        'memberId': 'member2',
-        'groupId': 'group1',
-        'orderIndex': 0,
-      });
-
-      // グループのメンバー取得（group2）
-      final mockGroupMemberQuery3 = MockQuery<Map<String, dynamic>>();
-      final mockGroupMemberSnapshot3 =
-          MockQuerySnapshot<Map<String, dynamic>>();
-      final mockGroupMemberDoc3 =
-          MockQueryDocumentSnapshot<Map<String, dynamic>>();
-
-      when(mockGroupMembersCollection.where('groupId', isEqualTo: 'group2'))
-          .thenReturn(mockGroupMemberQuery3);
-      when(mockGroupMemberQuery3.get())
-          .thenAnswer((_) async => mockGroupMemberSnapshot3);
-      when(mockGroupMemberSnapshot3.docs).thenReturn([mockGroupMemberDoc3]);
-      when(mockGroupMemberDoc3.data()).thenReturn({
-        'memberId': 'member2',
-        'groupId': 'group2',
-        'orderIndex': 0,
-      });
-
-      // メンバー詳細の取得
-      when(mockFirestore.collection('members'))
-          .thenReturn(mockMembersCollection);
-
-      final mockMemberDocRef1 = MockDocumentReference<Map<String, dynamic>>();
-      final mockMemberSnapshot1 = MockDocumentSnapshot<Map<String, dynamic>>();
-      when(mockMembersCollection.doc('member1')).thenReturn(mockMemberDocRef1);
-      when(mockMemberDocRef1.get())
-          .thenAnswer((_) async => mockMemberSnapshot1);
-      when(mockMemberSnapshot1.exists).thenReturn(true);
-      when(mockMemberSnapshot1.id).thenReturn('member1');
-      when(mockMemberSnapshot1.data()).thenReturn({'displayName': 'Aメンバー'});
-
-      final mockMemberDocRef2 = MockDocumentReference<Map<String, dynamic>>();
-      final mockMemberSnapshot2 = MockDocumentSnapshot<Map<String, dynamic>>();
-      when(mockMembersCollection.doc('member2')).thenReturn(mockMemberDocRef2);
-      when(mockMemberDocRef2.get())
-          .thenAnswer((_) async => mockMemberSnapshot2);
-      when(mockMemberSnapshot2.exists).thenReturn(true);
-      when(mockMemberSnapshot2.id).thenReturn('member2');
-      when(mockMemberSnapshot2.data()).thenReturn({'displayName': 'Bメンバー'});
-
-      final result = await service.getGroupsWithMembersByMemberId(
-        memberId,
-        groupsOrderBy: [const OrderBy('name', descending: false)],
-        membersOrderBy: [const OrderBy('orderIndex', descending: false)],
+      when(mockQuerySnapshot.docs).thenReturn([]);
+      expect(
+        (await service.getGroupsWithMembersByMemberId('self')).single.id,
+        'g',
       );
-
-      expect(result, hasLength(2));
-      // メモリ内ソートでAグループ、Bグループの順になることを確認
-      expect(result[0].id, 'group1');
-      expect(result[0].name, 'Aグループ');
-      expect(result[0].members, hasLength(2));
-      expect(result[0].members[0].memberId, 'member2');
-      expect(result[0].members[1].memberId, 'member1');
-      expect(result[1].id, 'group2');
-      expect(result[1].name, 'Bグループ');
-      expect(result[1].members, hasLength(1));
-      expect(result[1].members[0].memberId, 'member2');
+      expect(
+        (await service.getManagedGroupsWithMembersByOwnerId('self')).single.id,
+        'g',
+      );
+      verifyNever(
+        mockGroupsCollection.where('ownerId', isEqualTo: anyNamed('isEqualTo')),
+      );
     });
 
-    test('groupsOrderByとmembersOrderByを指定して管理グループとメンバーをソート順で取得する', () async {
-      const ownerId = 'owner123';
-
-      // 管理者として参加しているグループのモック設定
-      when(mockFirestore.collection('groups')).thenReturn(mockGroupsCollection);
-
-      final mockOwnerQuery = MockQuery<Map<String, dynamic>>();
-      final mockOwnerQueryOrderBy = MockQuery<Map<String, dynamic>>();
-
-      when(mockGroupsCollection.where('ownerId', isEqualTo: ownerId))
-          .thenReturn(mockOwnerQuery);
-      when(mockOwnerQuery.orderBy('name', descending: false))
-          .thenReturn(mockOwnerQueryOrderBy);
-      when(mockOwnerQueryOrderBy.get())
-          .thenAnswer((_) async => mockQuerySnapshot);
-      when(mockQuerySnapshot.docs).thenReturn([mockQueryDocumentSnapshot]);
-      when(mockQueryDocumentSnapshot.id).thenReturn('group1');
-      when(mockQueryDocumentSnapshot.data())
-          .thenReturn({'name': '管理者グループ', 'ownerId': ownerId});
-
-      // グループのメンバー取得
-      final mockGroupMemberQuery = MockQuery<Map<String, dynamic>>();
-      final mockGroupMemberSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
-      final mockGroupMemberDoc =
-          MockQueryDocumentSnapshot<Map<String, dynamic>>();
-
-      when(mockFirestore.collection('group_members'))
-          .thenReturn(mockGroupMembersCollection);
-      when(mockGroupMembersCollection.where('groupId', isEqualTo: 'group1'))
-          .thenReturn(mockGroupMemberQuery);
-      when(mockGroupMemberQuery.get())
-          .thenAnswer((_) async => mockGroupMemberSnapshot);
-      when(mockGroupMemberSnapshot.docs).thenReturn([mockGroupMemberDoc]);
-      when(mockGroupMemberDoc.data())
-          .thenReturn({'memberId': 'member1', 'groupId': 'group1'});
-
-      // メンバー詳細の取得
-      when(mockFirestore.collection('members'))
-          .thenReturn(mockMembersCollection);
-      when(mockMembersCollection.doc('member1'))
-          .thenReturn(mockDocumentReference);
-      when(mockDocumentReference.get())
-          .thenAnswer((_) async => mockDocumentSnapshot);
-      when(mockDocumentSnapshot.exists).thenReturn(true);
-      when(mockDocumentSnapshot.id).thenReturn('member1');
-      when(mockDocumentSnapshot.data()).thenReturn({'displayName': 'テストメンバー'});
-
-      final result = await service.getManagedGroupsWithMembersByOwnerId(
-        ownerId,
-        groupsOrderBy: [const OrderBy('name', descending: false)],
-        membersOrderBy: [const OrderBy('orderIndex', descending: true)],
+    test('画面から別人IDを渡しても本人以外の所属を取得しない', () async {
+      when(permissions.current()).thenAnswer(
+        (_) async => FirestoreAccountPermissions({
+          'memberId': 'self',
+          'memberGroupIds': <String>[],
+          'managedGroupIds': <String>[],
+        }),
       );
+      await expectLater(
+        service.getGroupsWithMembersByMemberId('other'),
+        throwsA(isA<FirebaseException>()),
+      );
+      verifyZeroInteractions(mockFirestore);
+    });
 
-      expect(result, hasLength(1));
-      expect(result[0].id, 'group1');
-      expect(result[0].name, '管理者グループ');
-      expect(result[0].members, hasLength(1));
-      expect(result[0].members[0].displayName, 'テストメンバー');
-
-      // groupsOrderByで'name'の昇順でソートされることを確認
-      verify(mockOwnerQuery.orderBy('name', descending: false)).called(1);
+    test('未ログインでは所属一覧を取得しない', () async {
+      when(permissions.current()).thenAnswer((_) async => null);
+      expect(await service.getGroupsWithMembersByMemberId('self'), isEmpty);
+      verifyZeroInteractions(mockFirestore);
     });
 
     test('グループIDでグループとメンバーを正常に取得する', () async {

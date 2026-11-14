@@ -119,6 +119,21 @@ void main() {
       when(groupRef.get()).thenAnswer((_) async => groupDoc);
       when(groupDoc.exists).thenReturn(true);
       when(firestore.collection('trip_entries')).thenReturn(tripsCollection);
+      final tripQuery = MockQuery();
+      final tripSnapshot = MockQuerySnapshot();
+      final trip = MockQueryDocumentSnapshot();
+      when(trip.id).thenReturn('trip-0');
+      when(trip.data()).thenReturn({'groupId': 'group', 'name': '旅行'});
+      when(tripSnapshot.docs).thenReturn([trip]);
+      when(tripsCollection.where('groupId', isEqualTo: 'group'))
+          .thenReturn(tripQuery);
+      when(tripQuery.get()).thenAnswer((_) async {
+        if (failTrips) throw failure;
+        return tripSnapshot;
+      });
+      when(items.where('tripId', isEqualTo: 'trip-0')).thenReturn(items);
+      when(items.orderBy('startDateTime', descending: true)).thenReturn(items);
+
       when(firestore.collection('itinerary_items')).thenReturn(itemsCollection);
       when(itemsCollection.where('groupId', isEqualTo: 'group'))
           .thenReturn(items);

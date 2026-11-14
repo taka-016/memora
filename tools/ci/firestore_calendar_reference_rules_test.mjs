@@ -1,48 +1,23 @@
-import assert from 'node:assert/strict';
-
-const host = process.env.FIRESTORE_EMULATOR_HOST;
-assert.ok(host, 'Firestore Emulator上で実行してください');
-const root = `http://${host}/v1/projects/demo-memora/databases/(default)/documents`;
-const encode = value => Buffer.from(JSON.stringify(value)).toString('base64url');
-const token = `${encode({ alg: 'none', typ: 'JWT' })}.${encode({
-  iss: 'https://securetoken.google.com/demo-memora', aud: 'demo-memora',
-  sub: 'tester', user_id: 'tester', iat: Math.floor(Date.now() / 1000),
-  exp: Math.floor(Date.now() / 1000) + 3600, email_verified: true,
-  firebase: { sign_in_provider: 'password' },
-})}.`;
-const string = value => ({ stringValue: value });
-const integer = value => ({ integerValue: String(value) });
-const nil = { nullValue: null };
-const reference = (type, member = nil, label = nil) => ({ labelType: string(type), memberId: member, labelId: label });
-async function put(path, fields) {
-  const response = await fetch(`${root}/${path}`, {
-    method: 'PATCH', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ fields }),
-  });
-  return [response.status, await response.text()];
-}
-for (const [name, fields, status] of [
-  ['group', reference('group'), 200],
-  ['member', reference('member', string('m')), 200],
-  ['custom', reference('custom', nil, string('l')), 200],
-  ['unknown', reference('invalid'), 403],
-  ['missing-member', reference('member'), 403],
-  ['extra-label', reference('group', nil, string('l')), 403],
-  ['missing-label', reference('custom'), 403],
+import {fixture,write,remove,expectCommit} from './firestore_rules_fixture.mjs';
+const f=await fixture('references');
+for(const [id,reference,status] of [
+  ['group',{labelType:'group',memberId:null,labelId:null},200],
+  ['member',{labelType:'member',memberId:'m',labelId:null},200],
+  ['custom',{labelType:'custom',memberId:null,labelId:'l'},200],
+  ['unknown',{labelType:'invalid',memberId:null,labelId:null},403],
+  ['missing-member',{labelType:'member',memberId:null,labelId:null},403],
+  ['extra-label',{labelType:'group',memberId:null,labelId:'l'},403],
+  ['missing-label',{labelType:'custom',memberId:null,labelId:null},403],
 ]) {
-  const [actual, body] = await put(`calendar_events/reference-${name}`, { ...fields, version: integer(1) });
-  assert.equal(actual, status, `${name}: ${body}`);
+  const path=`calendar_events/reference-${id}`;
+  await expectCommit('owner',[remove(path)],200,'初期化');
+  await expectCommit(f.uid,[write(path,{groupId:f.group,version:1,...reference})],status,id);
 }
-// 個別回も親の競合検出と参照種別を同じ書き込みで検証する。
-const documentRoot = root.split('/v1/')[1];
-const parent = `${documentRoot}/calendar_events/reference-parent`;
-const child = `${documentRoot}/calendar_event_overrides/reference-child`;
-const response = await fetch(`${root}:commit`, {
-  method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-  body: JSON.stringify({ writes: [
-    { update: { name: parent, fields: { ...reference('group'), version: integer(1) } } },
-    { update: { name: child, fields: { ...reference('member', string('m')), eventId: string('reference-parent'), isCancelled: { booleanValue: false } } } },
-  ] }),
-});
-assert.equal(response.status, 200, await response.text());
+await expectCommit('owner',[remove('calendar_events/reference-parent'),remove('calendar_event_overrides/reference-child')],200,'個別回を初期化');
+for(const cancelled of [false,true]) {
+  await expectCommit(f.uid,[
+  write('calendar_events/reference-parent',{version:1,groupId:f.group,labelType:'group',memberId:null,labelId:null}),
+  write('calendar_event_overrides/reference-child',{eventId:'reference-parent',groupId:f.group,isCancelled:cancelled}),
+  ],cancelled?200:403,'個別回は親と同時に取消情報として保存する');
+}
 console.log('固定・任意ラベルの参照種別と個別回の保存を確認しました');

@@ -1,3 +1,4 @@
+import 'package:memora/infrastructure/queries/dvc/firestore_dvc_children_query.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/dvc/dvc_limited_point_dto.dart';
 import 'package:memora/application/queries/dvc/dvc_limited_point_query_service.dart';
@@ -19,24 +20,14 @@ class FirestoreDvcLimitedPointQueryService
     String? contractId,
   }) async {
     try {
-      Query<Map<String, dynamic>> query = _firestore
-          .collection('dvc_limited_points')
-          .where('groupId', isEqualTo: groupId);
-
-      if (contractId != null) {
-        query = query.where('contractId', isEqualTo: contractId);
-      }
-
-      if (orderBy != null && orderBy.isNotEmpty) {
-        for (final order in orderBy) {
-          query = query.orderBy(order.field, descending: order.descending);
-        }
-      }
-
-      final snapshot = await query.get();
-      return snapshot.docs
-          .map(FirestoreDvcLimitedPointMapper.fromFirestore)
-          .toList();
+      final docs = await firestoreDvcChildren(
+        _firestore,
+        'dvc_limited_points',
+        groupId,
+        contractId: contractId,
+        orderBy: orderBy,
+      );
+      return docs.map(FirestoreDvcLimitedPointMapper.fromFirestore).toList();
     } catch (e, stack) {
       logger.e(
         'FirestoreDvcLimitedPointQueryService.getDvcLimitedPointsByGroupId: ${e.toString()}',

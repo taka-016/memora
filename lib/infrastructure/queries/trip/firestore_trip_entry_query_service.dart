@@ -32,9 +32,11 @@ class FirestoreTripEntryQueryService implements TripEntryQueryService {
         return null;
       }
 
+      final groupId = doc.data()!['groupId'] as String;
       final locationsSnapshot = await _firestore
           .collection('locations')
           .where('tripId', isEqualTo: tripId)
+          .where('groupId', isEqualTo: groupId)
           .get();
       final locations = locationsSnapshot.docs
           .map(FirestoreLocationMapper.fromFirestore)
@@ -42,7 +44,8 @@ class FirestoreTripEntryQueryService implements TripEntryQueryService {
 
       Query<Map<String, dynamic>> tasksQuery = _firestore
           .collection('tasks')
-          .where('tripId', isEqualTo: tripId);
+          .where('tripId', isEqualTo: tripId)
+          .where('groupId', isEqualTo: groupId);
 
       if (tasksOrderBy != null && tasksOrderBy.isNotEmpty) {
         for (final order in tasksOrderBy) {
@@ -60,7 +63,8 @@ class FirestoreTripEntryQueryService implements TripEntryQueryService {
 
       Query<Map<String, dynamic>> itineraryItemsQuery = _firestore
           .collection('itinerary_items')
-          .where('tripId', isEqualTo: tripId);
+          .where('tripId', isEqualTo: tripId)
+          .where('groupId', isEqualTo: groupId);
 
       final effectiveItineraryItemsOrderBy =
           itineraryItemsOrderBy ??

@@ -1,3 +1,4 @@
+import 'package:memora/infrastructure/queries/dvc/firestore_dvc_children_query.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/infrastructure/mappers/firestore_write_metadata.dart';
 import 'package:memora/infrastructure/services/firestore_version_check.dart';
@@ -44,11 +45,12 @@ class FirestoreDvcChildStore {
   }
 
   Future<void> deleteByGroupId(String groupId) async {
-    final children = await _firestore
-        .collection(_collection)
-        .where('groupId', isEqualTo: groupId)
-        .get();
-    final contractIds = children.docs
+    final children = await firestoreDvcChildren(
+      _firestore,
+      _collection,
+      groupId,
+    );
+    final contractIds = children
         .map((child) => child.data()['contractId'] as String)
         .toSet();
     final expected = <String, int?>{};
@@ -64,7 +66,7 @@ class FirestoreDvcChildStore {
       for (final entry in expected.entries) {
         transaction.update(_contract(entry.key), _nextVersion(entry.value));
       }
-      for (final child in children.docs) {
+      for (final child in children) {
         transaction.delete(child.reference);
       }
     });

@@ -208,7 +208,7 @@ List<Map<String, Object?>> calendarMigrationWrites(
   return writes;
 }
 
-List<Map<String, Object?>> itineraryGroupMigrationWrites(
+List<Map<String, Object?>> tripChildrenGroupMigrationWrites(
   Map<String, dynamic> parent,
   List<Map<String, dynamic>> children,
 ) {
@@ -344,7 +344,7 @@ Future<void> main(List<String> args) async {
         field: 'tripId',
         value: id,
       );
-      final writes = itineraryGroupMigrationWrites(trip, children);
+      final writes = tripChildrenGroupMigrationWrites(trip, children);
       if (writes.isEmpty) continue;
       final result = <String, Object?>{
         'tripId': id,

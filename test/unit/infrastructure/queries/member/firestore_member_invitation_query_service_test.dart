@@ -9,6 +9,8 @@ import '../../../../helpers/test_exception.dart';
 import 'firestore_member_invitation_query_service_test.mocks.dart';
 
 @GenerateMocks([
+  DocumentReference,
+  DocumentSnapshot,
   FirebaseFirestore,
   CollectionReference,
   Query,
@@ -27,7 +29,10 @@ void main() {
           MockCollectionReference<Map<String, dynamic>>();
       when(mockFirestore.collection('member_invitations'))
           .thenReturn(mockInvitationCollection);
-      service = FirestoreMemberInvitationQueryService(firestore: mockFirestore);
+      service = FirestoreMemberInvitationQueryService(
+        firestore: mockFirestore,
+        accountId: () => 'uid',
+      );
     });
 
     test('同じ対象の全招待をIDと期待バージョン付きで返す', () async {
@@ -103,61 +108,43 @@ void main() {
       );
     });
 
-    test('招待コードで招待情報を取得する', () async {
-      const invitationCode = 'CODE999';
-      final mockQuery = MockQuery<Map<String, dynamic>>();
-      final mockSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
-      final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
-
-      when(
-        mockInvitationCollection.where(
-          'invitationCode',
-          isEqualTo: invitationCode,
-        ),
-      ).thenReturn(mockQuery);
-      when(mockQuery.get()).thenAnswer((_) async => mockSnapshot);
-      when(mockSnapshot.docs).thenReturn([mockDoc]);
-      when(mockDoc.id).thenReturn('invitation789');
-      when(mockDoc.data()).thenReturn({
-        'inviteeId': 'invitee777',
-        'inviterId': 'inviter888',
-        'invitationCode': invitationCode,
+    test('招待コードの文書を単一取得し本人の受理処理へ紐付ける', () async {
+      final ref = MockDocumentReference<Map<String, dynamic>>();
+      final doc = MockDocumentSnapshot<Map<String, dynamic>>();
+      final claims = MockCollectionReference<Map<String, dynamic>>();
+      final claim = MockDocumentReference<Map<String, dynamic>>();
+      when(mockInvitationCollection.doc('CODE')).thenReturn(ref);
+      when(ref.get()).thenAnswer((_) async => doc);
+      when(doc.exists).thenReturn(true);
+      when(doc.id).thenReturn('CODE');
+      when(doc.data()).thenReturn({
+        'inviteeId': 'm',
+        'inviterId': 'owner',
+        'invitationCode': 'CODE',
+        'version': 2,
       });
-
-      final result = await service.getByInvitationCode(invitationCode);
-
-      expect(result, isNotNull);
-      expect(result!.inviterId, 'inviter888');
-    });
-
-    test('招待コードで該当なしの場合はnullを返す', () async {
-      const invitationCode = 'CODE000';
-      final mockQuery = MockQuery<Map<String, dynamic>>();
-      final mockSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
-
-      when(
+      when(mockFirestore.collection('member_invitation_claims'))
+          .thenReturn(claims);
+      when(claims.doc('uid')).thenReturn(claim);
+      when(claim.set(any)).thenAnswer((_) async {});
+      expect((await service.getByInvitationCode('CODE'))?.inviteeId, 'm');
+      verify(claim.set({'code': 'CODE'})).called(1);
+      verifyNever(
         mockInvitationCollection.where(
           'invitationCode',
-          isEqualTo: invitationCode,
+          isEqualTo: anyNamed('isEqualTo'),
         ),
-      ).thenReturn(mockQuery);
-      when(mockQuery.get()).thenAnswer((_) async => mockSnapshot);
-      when(mockSnapshot.docs).thenReturn([]);
-
-      final result = await service.getByInvitationCode(invitationCode);
-
-      expect(result, isNull);
+      );
     });
 
-    test('招待コード取得時に例外が発生した場合は取得失敗を伝える', () async {
-      when(
-        mockInvitationCollection.where(any, isEqualTo: anyNamed('isEqualTo')),
-      ).thenThrow(TestException('Firestore error'));
-
-      await expectLater(
-        service.getByInvitationCode('CODE123'),
-        throwsA(isA<TestException>()),
-      );
+    test('招待コードが存在しなければ受理処理へ紐付けない', () async {
+      final ref = MockDocumentReference<Map<String, dynamic>>();
+      final doc = MockDocumentSnapshot<Map<String, dynamic>>();
+      when(mockInvitationCollection.doc('missing')).thenReturn(ref);
+      when(ref.get()).thenAnswer((_) async => doc);
+      when(doc.exists).thenReturn(false);
+      expect(await service.getByInvitationCode('missing'), isNull);
+      verifyNever(mockFirestore.collection('member_invitation_claims'));
     });
   });
 }

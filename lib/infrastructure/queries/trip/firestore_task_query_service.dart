@@ -1,3 +1,4 @@
+import 'package:memora/infrastructure/services/firestore_parent_group_id.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/trip/task_dto.dart';
 import 'package:memora/application/queries/trip/task_query_service.dart';
@@ -17,9 +18,16 @@ class FirestoreTaskQueryService implements TaskQueryService {
     List<OrderBy>? orderBy,
   }) async {
     try {
+      final groupId = await firestoreParentGroupId(
+        _firestore,
+        'trip_entries',
+        tripId,
+      );
+      if (groupId == null) return [];
       Query<Map<String, dynamic>> query = _firestore
           .collection('tasks')
-          .where('tripId', isEqualTo: tripId);
+          .where('tripId', isEqualTo: tripId)
+          .where('groupId', isEqualTo: groupId);
 
       if (orderBy != null && orderBy.isNotEmpty) {
         for (final order in orderBy) {

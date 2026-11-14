@@ -27,7 +27,29 @@ void main() {
       mockCollection = MockCollectionReference<Map<String, dynamic>>();
       when(mockFirestore.collection('dvc_limited_points'))
           .thenReturn(mockCollection);
+      final contracts = MockCollectionReference<Map<String, dynamic>>();
+      final query = MockQuery<Map<String, dynamic>>();
+      final snapshot = MockQuerySnapshot<Map<String, dynamic>>();
+      final doc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
+      when(mockFirestore.collection('dvc_point_contracts'))
+          .thenReturn(contracts);
+      when(contracts.where('groupId', isEqualTo: anyNamed('isEqualTo')))
+          .thenReturn(query);
+      when(query.get()).thenAnswer((_) async => snapshot);
+      when(snapshot.docs).thenReturn([doc]);
+      when(doc.id).thenReturn('c1');
       service = FirestoreDvcLimitedPointQueryService(firestore: mockFirestore);
+    });
+
+    test('契約を指定しない取得でも各契約IDへ問い合わせを限定する', () async {
+      final query = MockQuery<Map<String, dynamic>>();
+      final snapshot = MockQuerySnapshot<Map<String, dynamic>>();
+      when(mockCollection.where('groupId', isEqualTo: 'g')).thenReturn(query);
+      when(query.where('contractId', isEqualTo: 'c1')).thenReturn(query);
+      when(query.get()).thenAnswer((_) async => snapshot);
+      when(snapshot.docs).thenReturn([]);
+      await service.getDvcLimitedPointsByGroupId('g');
+      verify(query.where('contractId', isEqualTo: 'c1')).called(1);
     });
 
     test('契約IDで取得範囲を絞り込める', () async {
@@ -44,6 +66,8 @@ void main() {
     test('groupIdで一覧を取得しorderByを適用できる', () async {
       const groupId = 'group001';
       final mockQuery = MockQuery<Map<String, dynamic>>();
+      when(mockQuery.where('contractId', isEqualTo: 'c1'))
+          .thenReturn(mockQuery);
       final mockSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
       final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
 
