@@ -26,13 +26,15 @@ void main() {
   test('任意ラベルの保存後に表示中のオフライン予定とウィジェットを更新する', () async {
     final labels = MockGetCalendarLabelsUsecase();
     when(labels.execute(any)).thenAnswer((_) async => []);
+    final management = MockCalendarLabelManagementUsecase();
+    when(management.save(any, any)).thenAnswer((_) async {});
     final calendar = _Calendar();
     int widgetUpdates = 0;
     final container = ProviderContainer(overrides: [
       currentMemberNotifierProvider.overrideWith(() => FakeCurrentMemberNotifier.loaded(const MemberDto(id: 'owner', displayName: '本人'))),
       getGroupWithMembersByIdUsecaseProvider.overrideWithValue(calendarTestGroupLoader()),
       getCalendarLabelsUsecaseProvider.overrideWithValue(labels),
-      calendarLabelManagementUsecaseProvider.overrideWithValue(MockCalendarLabelManagementUsecase()),
+      calendarLabelManagementUsecaseProvider.overrideWithValue(management),
       calendarNotifierProvider('g1').overrideWith(() => calendar),
       refreshSelectedCalendarWidgetCacheProvider.overrideWithValue(() async { widgetUpdates++; }),
     ]);
@@ -40,6 +42,7 @@ void main() {
     container.listen(calendarNotifierProvider('g1'), (_, _) {});
     container.listen(calendarLabelsNotifierProvider('g1'), (_, _) {});
     await container.pump();
+    await container.read(calendarLabelsNotifierProvider('g1').notifier).load();
     expect(await container.read(calendarLabelsNotifierProvider('g1').notifier).saveLabel(const CalendarLabelDto(id: 'label', groupId: 'g1', name: '家族', color: '#123456')), isTrue);
     expect(calendar.loads, 1);
     expect(widgetUpdates, 1);
