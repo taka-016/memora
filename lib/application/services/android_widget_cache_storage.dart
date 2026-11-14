@@ -15,5 +15,7 @@ abstract interface class AndroidWidgetCacheStorage {
 
   Future<void> clear();
 
+  Future<void> clearItinerary();
+
   Future<void> updateWidget();
 }

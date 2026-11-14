@@ -33,11 +33,6 @@ class DeviceCalendarNotificationSource implements CalendarNotificationSource {
   final FirebaseFirestore? firestore;
 
   Future<List<String>> _groupIds() async {
-    if (database != null) {
-      return (await database!.rows('groups'))
-          .map((v) => v['id'] as String)
-          .toList();
-    }
     final member = await currentMember.execute();
     if (member == null) return [];
     return (await groups.execute(member)).map((v) => v.id).toList();

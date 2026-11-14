@@ -166,6 +166,9 @@ class _FakeAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
   String? targetGroupId;
 
   @override
+  Future<void> clearItinerary() => clear();
+
+  @override
   Future<void> clear() async {
     targetGroupId = null;
   }

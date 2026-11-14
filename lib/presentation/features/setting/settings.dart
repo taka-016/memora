@@ -626,7 +626,7 @@ class Settings extends ConsumerWidget {
       initialValue: setting.selectedGroupId,
       isExpanded: true,
       decoration: const InputDecoration(
-        labelText: '表示対象グループ',
+        labelText: '旅程ウィジェットの表示対象グループ',
         border: OutlineInputBorder(),
       ),
       items: [

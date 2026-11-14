@@ -17,7 +17,7 @@ internal object DailyCalendarWidgetRenderer {
     fun update(context: Context, manager: AppWidgetManager, widgetId: Int) {
         val appearance = WidgetAppearance.forWidget(manager, widgetId)
         val views = RemoteViews(context.packageName, appearance.dailyCalendarLayout)
-        val groupId = CalendarWidgetData.targetGroup(context)
+        val groupId = CalendarWidgetData.scope(context)
         val cache = CalendarWidgetData.read(context)
         val selected = CalendarWidgetData.selectedDate(context, widgetId)
         val month = cache?.let { CalendarWidgetData.readMonth(context, it, selected.withDayOfMonth(1)) }
@@ -36,17 +36,17 @@ internal object DailyCalendarWidgetRenderer {
         views.setTextColor(R.id.calendar_selected_date, color)
         views.setTextColor(R.id.daily_compact_date, color)
         views.setOnClickPendingIntent(R.id.daily_compact_date, HomeWidgetLaunchIntent.getActivity(
-            context, MainActivity::class.java, calendarLaunchUri(groupId, selected),
+            context, MainActivity::class.java, calendarLaunchUri(null, selected),
         ))
         views.setOnClickPendingIntent(R.id.daily_compact_refresh, calendarWidgetAction(context, widgetId))
         views.setOnClickPendingIntent(R.id.calendar_today, calendarWidgetAction(context, widgetId, today = true))
         views.setOnClickPendingIntent(R.id.calendar_previous, calendarWidgetAction(context, widgetId, selected.minusDays(1)))
         views.setOnClickPendingIntent(R.id.calendar_next, calendarWidgetAction(context, widgetId, selected.plusDays(1)))
         views.setOnClickPendingIntent(R.id.calendar_selected_date, HomeWidgetLaunchIntent.getActivity(
-            context, MainActivity::class.java, calendarLaunchUri(groupId, selected),
+            context, MainActivity::class.java, calendarLaunchUri(null, selected),
         ))
         views.setOnClickPendingIntent(R.id.calendar_add, HomeWidgetLaunchIntent.getActivity(
-            context, MainActivity::class.java, calendarLaunchUri(groupId, selected, create = true),
+            context, MainActivity::class.java, calendarLaunchUri(null, selected, create = true),
         ))
         views.setOnClickPendingIntent(R.id.calendar_refresh, calendarWidgetAction(context, widgetId))
         val loadState = CalendarWidgetData.loadState(context, selected)

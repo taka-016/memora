@@ -69,7 +69,7 @@ internal object CalendarWidgetRenderer {
         widgetId: Int,
         forceFull: Boolean = false,
     ) {
-        val groupId = CalendarWidgetData.targetGroup(context)
+        val groupId = CalendarWidgetData.scope(context)
         val cache = CalendarWidgetData.read(context)
         val appearance = WidgetAppearance.forWidget(manager, widgetId)
         val selected = CalendarWidgetData.selectedDate(context, widgetId)
@@ -79,7 +79,7 @@ internal object CalendarWidgetRenderer {
             view.setViewVisibility(R.id.calendar_content, View.GONE)
             view.setViewVisibility(R.id.calendar_message, View.VISIBLE)
             view.setTextViewText(R.id.calendar_message, if (groupId.isEmpty()) {
-                "表示対象グループを設定してください"
+                "カレンダーを開いて更新してください"
             } else {
                 loadState.message
             })
@@ -267,7 +267,7 @@ internal object CalendarWidgetRenderer {
                 setDaySelection(views, dayIds[index], day, true, state.appearance)
                 views.setOnClickPendingIntent(dayIds[index], HomeWidgetLaunchIntent.getActivity(
                     context, MainActivity::class.java,
-                    calendarLaunchUri(state.groupId, day.date, create = true),
+                    calendarLaunchUri(null, day.date, create = true),
                 ))
             }
         }
@@ -301,13 +301,13 @@ internal object CalendarWidgetRenderer {
             views.setRemoteAdapter(R.id.calendar_events, items.build())
         }
         val open = HomeWidgetLaunchIntent.getActivity(
-            context, MainActivity::class.java, calendarLaunchUri(state.groupId, state.selected),
+            context, MainActivity::class.java, calendarLaunchUri(null, state.selected),
         )
         views.setOnClickPendingIntent(R.id.calendar_month, open)
         views.setOnClickPendingIntent(R.id.calendar_selected_date, open)
         views.setOnClickPendingIntent(R.id.calendar_add, HomeWidgetLaunchIntent.getActivity(
             context, MainActivity::class.java,
-            calendarLaunchUri(state.groupId, state.selected, create = true),
+            calendarLaunchUri(null, state.selected, create = true),
         ))
         views.setScrollPosition(R.id.calendar_events, 0)
     }
@@ -334,8 +334,8 @@ internal object CalendarWidgetRenderer {
         if (Build.VERSION.SDK_INT >= 28) RemoteViews(views) else views.clone()
 }
 
-internal fun calendarLaunchUri(groupId: String, date: LocalDate, create: Boolean = false): Uri =
+internal fun calendarLaunchUri(groupId: String?, date: LocalDate, create: Boolean = false): Uri =
     Uri.Builder().scheme("memoraWidget").authority("openCalendar")
-        .appendQueryParameter("groupId", groupId)
+        .apply { if (!groupId.isNullOrEmpty()) appendQueryParameter("groupId", groupId) }
         .appendQueryParameter("date", date.toString())
         .appendQueryParameter("create", create.toString()).build()

@@ -13,6 +13,7 @@ class SharedPreferencesCalendarGroupSettingsStorage
   @override
   Future<CalendarGroupSettings> load(String ownerId) async {
     final preferences = await SharedPreferences.getInstance();
+    await preferences.reload();
     final raw = preferences.getString(_key(ownerId));
     if (raw == null) return CalendarGroupSettings(hasSavedSettings: false);
     final data = jsonDecode(raw) as Map<String, dynamic>;

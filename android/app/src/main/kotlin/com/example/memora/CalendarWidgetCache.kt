@@ -19,7 +19,9 @@ internal data class CalendarWidgetEvent(
     val isExternal: Boolean = false,
     val isHoliday: Boolean = false,
     val isMultiDay: Boolean = false,
+    val groupId: String? = null,
 ) {
+    val openGroupId: String? get() = if (isExternal || isHoliday) null else groupId
     val openEventId: String? get() = if (isHoliday) null else id
 }
 
@@ -39,7 +41,7 @@ internal data class CalendarWidgetMonth(
 )
 
 internal data class CalendarWidgetCache(
-    val groupId: String,
+    val cacheScope: String,
     val sourceMode: String,
     val months: Map<LocalDate, CalendarWidgetMonth>,
     val lastUpdatedAt: String,
@@ -49,13 +51,13 @@ internal data class CalendarWidgetCache(
 internal object CalendarWidgetData {
     private const val CACHE_KEY = "memora_widget_calendar_cache"
     private const val SELECTED_DATE_KEY = "memora_widget_calendar_selected_date"
-    private const val TARGET_GROUP_KEY = "memora_widget_target_group_id"
+    private const val TARGET_GROUP_KEY = "memora_widget_calendar_scope"
     private var path: String? = null
     private var modifiedAt = -1L
     private var length = -1L
     private var cache: CalendarWidgetCache? = null
 
-    fun targetGroup(context: Context): String =
+    fun scope(context: Context): String =
         HomeWidgetPlugin.getData(context).getString(TARGET_GROUP_KEY, null).orEmpty()
 
     @Synchronized
@@ -82,6 +84,7 @@ internal object CalendarWidgetData {
                             val event = events.getJSONObject(eventIndex)
                             CalendarWidgetEvent(
                                 id = event.getString("id"),
+                                groupId = event.getString("groupId"),
                                 occurrence = event.optString("occurrence").takeIf { it.isNotBlank() },
                                 title = event.getString("title"),
                                 isAllDay = event.optBoolean("isAllDay"),
@@ -100,7 +103,7 @@ internal object CalendarWidgetData {
                 parsedMonths[date] = CalendarWidgetMonth(date, parsedDays)
             }
             val loaded = CalendarWidgetCache(
-                root.getString("groupId"), root.getString("sourceMode"), parsedMonths,
+                root.getString("cacheScope"), root.getString("sourceMode"), parsedMonths,
                 root.optString("lastUpdatedAt"),
                 deviceCalendarOwnerId = if (root.isNull("deviceCalendarOwnerId")) null else root.getString("deviceCalendarOwnerId"),
             )
@@ -110,7 +113,7 @@ internal object CalendarWidgetData {
             cache = loaded
         }
         cache?.takeIf {
-            it.groupId == targetGroup(context) && it.sourceMode == BuildConfig.RESOLVED_APP_MODE
+            it.cacheScope == scope(context) && it.sourceMode == BuildConfig.RESOLVED_APP_MODE
         }
     }.getOrNull()
 
@@ -126,11 +129,11 @@ internal object CalendarWidgetData {
 
     fun loadState(context: Context, date: LocalDate): WidgetLoadState =
         WidgetLoadState.fromValue(HomeWidgetPlugin.getData(context).getString(
-            calendarWidgetLoadStateKey(targetGroup(context), date), null,
+            calendarWidgetLoadStateKey(scope(context), date), null,
         ))
 
     fun startLoading(context: Context, date: LocalDate) {
-        val groupId = targetGroup(context)
+        val groupId = scope(context)
         if (groupId.isEmpty()) return
         HomeWidgetPlugin.getData(context).edit()
             .putString(calendarWidgetLoadStateKey(groupId, date), "loading").apply()
@@ -138,7 +141,7 @@ internal object CalendarWidgetData {
 
     fun selectedDate(context: Context, widgetId: Int): LocalDate {
         val prefs = HomeWidgetPlugin.getData(context)
-        val date = if (prefs.getString(groupKey(widgetId), null) == targetGroup(context)) {
+        val date = if (prefs.getString(groupKey(widgetId), null) == scope(context)) {
             prefs.getString(dateKey(widgetId), null)
                 ?: prefs.getString(SELECTED_DATE_KEY, null)
         } else {
@@ -150,7 +153,7 @@ internal object CalendarWidgetData {
     fun selectDate(context: Context, widgetId: Int, date: LocalDate) {
         HomeWidgetPlugin.getData(context).edit()
             .putString(dateKey(widgetId), date.toString())
-            .putString(groupKey(widgetId), targetGroup(context))
+            .putString(groupKey(widgetId), scope(context))
             .putString(SELECTED_DATE_KEY, date.toString())
             .apply()
     }

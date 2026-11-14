@@ -105,12 +105,7 @@ Future<void> withAndroidWidgetDependencies(
       moveDate: move.execute,
       showToast: const MethodChannelAndroidWidgetToastNotifier().show,
       refreshCalendar: (date) async {
-        final groupId = await storage.getTargetGroupId();
-        if (groupId == null) {
-          await storage.updateWidget();
-          return;
-        }
-        await container!.read(refreshCalendarWidgetProvider)(groupId, date);
+        await container!.read(refreshCalendarWidgetProvider)(date);
       },
     );
     final caches = RefreshAndroidWidgetCachesUsecase(
@@ -123,8 +118,8 @@ Future<void> withAndroidWidgetDependencies(
         selectedItineraryDateId: await storage.getSelectedItineraryDateId(),
         updateWidgetAfterRefresh: false,
       ),
-      refreshCalendar: (groupId) =>
-          container!.read(refreshCalendarWidgetProvider)(groupId, null),
+      refreshCalendar: () =>
+          container!.read(refreshCalendarWidgetProvider)(null),
     );
     if (database == null) {
       await container

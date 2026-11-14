@@ -37,7 +37,7 @@ private class CalendarEventsFactory(
         val cache = CalendarWidgetData.read(context)
         val month = cache?.let { CalendarWidgetData.readMonth(context, it, date.withDayOfMonth(1)) }
         val events = calendarWidgetEventsForDate(month, date)
-        snapshot = Snapshot(cache?.groupId.orEmpty(), date, events)
+        snapshot = Snapshot(cache?.cacheScope.orEmpty(), date, events)
     }
 
     override fun getViewAt(position: Int): RemoteViews? {
@@ -87,7 +87,7 @@ internal fun calendarEventRow(
     setTextColor(R.id.calendar_event_end, if (event.isHoliday) event.textColor else appearance.text)
     setViewVisibility(R.id.calendar_event_bar, if (event.isHoliday) View.GONE else View.VISIBLE)
     setOnClickFillInIntent(R.id.calendar_event_row, Intent().apply {
-        data = calendarLaunchUri(groupId, date).buildUpon()
+        data = calendarLaunchUri(event.openGroupId, date).buildUpon()
             .apply {
                 event.openEventId?.let { id ->
                     appendQueryParameter("eventId", id)

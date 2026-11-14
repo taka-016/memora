@@ -82,6 +82,63 @@ class _WidgetDeviceCalendar extends ExternalCalendarNotifier {
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
+  testWidgets('非表示の所属グループの通知先は案内し表示対象を変えない', (tester) async {
+    final loader = calendarTestGroupLoader();
+    final events = MockGetCalendarEventsUsecase();
+    final labels = MockGetCalendarLabelsUsecase();
+    when(loader.execute('g1')).thenAnswer(
+      (_) async =>
+          const GroupDto(id: 'g1', ownerId: 'owner', name: '家族', members: []),
+    );
+    when(events.execute('g1', period: anyNamed('period')))
+        .thenAnswer((_) async => []);
+    when(labels.execute('g1')).thenAnswer((_) async => []);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          calendarSettingsOwnerProvider.overrideWithValue('online:owner'),
+          calendarGroupSettingsNotifierProvider.overrideWith(
+            () => TestCalendarGroupSettingsNotifier(),
+          ),
+          externalCalendarSupportedProvider.overrideWithValue(false),
+          appClockProvider.overrideWithValue(
+            FixedAppClock(DateTime(2026, 11, 1)),
+          ),
+          getGroupWithMembersByIdUsecaseProvider.overrideWithValue(loader),
+          getCalendarEventsUsecaseProvider.overrideWithValue(events),
+          getCalendarLabelsUsecaseProvider.overrideWithValue(labels),
+          watchCalendarGroupUsecaseProvider.overrideWithValue(null),
+          watchCalendarEventsUsecaseProvider.overrideWithValue(null),
+          watchCalendarLabelsUsecaseProvider.overrideWithValue(null),
+        ],
+        child: MaterialApp(
+          home: Scaffold(
+            body: CalendarScreen(
+              initialEventGroupId: 'g2',
+              initialEventId: 'hidden',
+              initialDate: DateTime(2026, 11, 2),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+    expect(find.text('指定された予定のグループは非表示です。表示対象を設定から変更できます'), findsOneWidget);
+    expect(find.byType(CalendarEventDialog), findsNothing);
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(CalendarScreen)),
+    );
+    expect(
+      container
+          .read(calendarGroupSettingsNotifierProvider)
+          .effectiveSettings
+          .visibleGroupIds,
+      {'g1'},
+    );
+    verifyNever(events.execute('g2', period: anyNamed('period')));
+  });
+
   for (final scenario in [
     (externalFirst: false, missing: false),
     (externalFirst: true, missing: false),

@@ -1,3 +1,4 @@
+import 'package:memora/infrastructure/services/local_calendar_widget_lock.dart';
 import 'package:memora/infrastructure/services/home_widget_android_widget_cache_storage.dart';
 
 import 'dart:convert';
@@ -10,7 +11,34 @@ import 'package:path_provider/path_provider.dart';
 class HomeWidgetCalendarCacheStorage {
   const HomeWidgetCalendarCacheStorage();
 
+  Future<void> synchronize(Future<void> Function() action) =>
+      LocalCalendarWidgetLock().run('refresh', action);
+
+  Future<String?> loadScope() => HomeWidget.getWidgetData<String>(scopeKey);
+
   static const cacheKey = 'memora_widget_calendar_cache';
+  static const scopeKey = 'memora_widget_calendar_scope';
+
+  Future<T> _synchronizeScope<T>(Future<T> Function() action) =>
+      LocalCalendarWidgetLock().run('scope', action);
+
+  Future<void> setScope(String? scope) async {
+    await _synchronizeScope(
+      () => HomeWidget.saveWidgetData<String>(scopeKey, scope),
+    );
+    await update();
+  }
+
+  Future<bool> setScopeIfCurrent(String? expected, String? scope) async {
+    final changed = await _synchronizeScope(() async {
+      if (await loadScope() != expected) return false;
+      await HomeWidget.saveWidgetData<String>(scopeKey, scope);
+      return true;
+    });
+    if (changed) await update();
+    return changed;
+  }
+
   static const selectedDateKey = 'memora_widget_calendar_selected_date';
   static const qualifiedAndroidName =
       'com.example.memora.CalendarWidgetReceiver';
@@ -56,7 +84,8 @@ class HomeWidgetCalendarCacheStorage {
     final previousMonths = previous?['months'] as Map<String, dynamic>?;
     final incomingMonths = cache['months'] as Map<String, Object?>?;
     final months = <String, Object?>{
-      if (previous?['groupId'] == cache['groupId'] &&
+      if (previous?['cacheScope'] == cache['cacheScope'] &&
+          previous?['groupId'] == cache['groupId'] &&
           previous?['sourceMode'] == cache['sourceMode'])
         ...?previousMonths,
       ...?incomingMonths,
@@ -105,6 +134,9 @@ class HomeWidgetCalendarCacheStorage {
   }
 
   Future<void> clear() async {
+    await _synchronizeScope(
+      () => HomeWidget.saveWidgetData<String>(scopeKey, null),
+    );
     await HomeWidget.saveWidgetData<String>(cacheKey, null);
     await HomeWidget.saveWidgetData<String>(selectedDateKey, null);
   }
