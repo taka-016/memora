@@ -11,10 +11,11 @@ import '../../../../helpers/test_exception.dart';
 
 class _Storage implements CalendarGroupSettingsStorage {
   CalendarGroupSettings value = CalendarGroupSettings(visibleGroupIds: {'a', 'removed'}, defaultGroupId: 'b');
+  bool failLoad = false;
   bool failSave = false;
   Completer<CalendarGroupSettings>? pending;
   @override
-  Future<CalendarGroupSettings> load(String ownerId) => pending?.future ?? Future.value(value);
+  Future<CalendarGroupSettings> load(String ownerId) { if (failLoad) throw TestException('読込失敗'); return pending?.future ?? Future.value(value); }
   @override
   Future<void> save(String ownerId, CalendarGroupSettings settings) async {
     if (failSave) throw TestException('保存失敗');
@@ -38,6 +39,28 @@ void main() {
   void groups(List<String> ids) => container.read(groupTimelineGroupSelectionNotifierProvider.notifier).setLoadedGroups(
     memberId: 'self', groups: [for (final id in ids) GroupDto(id: id, ownerId: 'self', name: id, members: const [])],
   );
+  test('設定取得失敗では保存できず読み直してから操作を再開する', () async {
+    storage.failLoad = true;
+    await flush();
+    groups(['a', 'b']);
+    expect(container.read(calendarGroupSettingsNotifierProvider).canUseSettings, isFalse);
+    expect(await container.read(calendarGroupSettingsNotifierProvider.notifier).setVisibleGroups({'b'}), isFalse);
+    expect(storage.value.visibleGroupIds, {'a', 'removed'});
+    storage.failLoad = false;
+    await container.read(calendarGroupSettingsNotifierProvider.notifier).reload();
+    expect(container.read(calendarGroupSettingsNotifierProvider).canUseSettings, isTrue);
+  });
+  test('設定の再取得が逆順で終わっても古い値へ戻さない', () async {
+    await flush();
+    final old = Completer<CalendarGroupSettings>();
+    storage.pending = old;
+    final first = container.read(calendarGroupSettingsNotifierProvider.notifier).reload();
+    storage.pending = null;
+    storage.value = CalendarGroupSettings(visibleGroupIds: {'b'});
+    await container.read(calendarGroupSettingsNotifierProvider.notifier).reload();
+    old.complete(CalendarGroupSettings(visibleGroupIds: {'old'})); await first;
+    expect(container.read(calendarGroupSettingsNotifierProvider).settings.visibleGroupIds, {'b'});
+  });
   test('所属取得成功時だけ対象を照合し既定値と表示を独立に更新する', () async {
     await flush();
     expect(container.read(calendarGroupSettingsNotifierProvider).settings.visibleGroupIds, {'a', 'removed'});

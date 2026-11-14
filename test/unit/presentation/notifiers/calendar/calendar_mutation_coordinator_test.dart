@@ -1,3 +1,4 @@
+import 'package:memora/application/exceptions/application_validation_exception.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mockito/annotations.dart';
@@ -17,6 +18,19 @@ import 'calendar_mutation_coordinator_test.mocks.dart';
 
 @GenerateMocks([MoveCalendarEventUsecase])
 void main() {
+  test('展開回と系列の取得時点が違う場合は新しい期待バージョンで上書きしない', () async {
+    final move = MockMoveCalendarEventUsecase();
+    final container = ProviderContainer(overrides: [
+      moveCalendarEventUsecaseProvider.overrideWithValue(move),
+      currentMemberNotifierProvider.overrideWith(() => FakeCurrentMemberNotifier.loaded(const MemberDto(id: 'self', displayName: '本人'))),
+      refreshSelectedCalendarWidgetCacheProvider.overrideWithValue(() async {}),
+    ]);
+    addTearDown(container.dispose);
+    final series = CalendarEventDto(id: 'event', version: 1, groupId: 'a', labelType: 'group', title: '予定', startDateTime: DateTime.utc(2026, 11, 1), endDateTime: DateTime.utc(2026, 11, 2), isAllDay: true, recurrenceRule: 'FREQ=DAILY;COUNT=5');
+    final occurrence = series.copyWith(originalStartDateTime: DateTime.utc(2026, 11, 1));
+    await expectLater(container.read(calendarMutationCoordinatorProvider).save(occurrence.copyWith(groupId: 'b'), expected: occurrence, expectedSeries: series.copyWith(version: 2, title: '他者の更新')), throwsA(isA<ApplicationValidationException>()));
+    verifyNever(move.execute(any, any, any));
+  });
   test('移動成功後に変更前後を再取得しウィジェットを更新し失敗時は更新しない', () async {
     final calls = <String>[];
     final move = MockMoveCalendarEventUsecase();

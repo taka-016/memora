@@ -27,7 +27,32 @@ class _Calendar extends CalendarNotifier {
   void selectDate(DateTime date) => state = state.copyWith(selectedDate: date);
   void receive({String error = ''}) => state = state.copyWith(loadError: error, events: [CalendarEventDto(id: 'same', groupId: groupId, labelType: 'group', title: groupId, startDateTime: DateTime(2026, 11, 14), endDateTime: DateTime(2026, 11, 15), isAllDay: true)]);
 }
+final _ownerProvider = NotifierProvider<_Owner, String>(_Owner.new);
+class _Owner extends Notifier<String> {
+  @override
+  String build() => 'online:old';
+  void select(String owner) => state = owner;
+}
 void main() {
+  test('利用者切替時は保持されている同じグループの子状態も破棄する', () async {
+    final container = ProviderContainer(overrides: [
+      calendarSettingsOwnerProvider.overrideWith((ref) => ref.watch(_ownerProvider)),
+      calendarGroupSettingsNotifierProvider.overrideWith(_Settings.new),
+      calendarNotifierProvider('a').overrideWith(_Calendar.new),
+      calendarNotifierProvider('b').overrideWith(_Calendar.new),
+    ]);
+    addTearDown(container.dispose);
+    container.listen(calendarNotifierProvider('a'), (_, _) {});
+    container.listen(multiGroupCalendarNotifierProvider, (_, _) {});
+    await container.pump();
+    (container.read(calendarNotifierProvider('a').notifier) as _Calendar).receive();
+    expect(container.read(multiGroupCalendarNotifierProvider).calendar.events, isNotEmpty);
+    container.read(_ownerProvider.notifier).select('online:new');
+    container.read(multiGroupCalendarNotifierProvider);
+    await container.pump();
+    expect(container.read(multiGroupCalendarNotifierProvider).groups.keys.toSet(), {'a', 'b'});
+    expect(container.read(multiGroupCalendarNotifierProvider).calendar.events, isEmpty);
+  });
   test('グループごとに取得・ラベルを区別し一部失敗と解除で他の予定を失わない', () async {
     final a = _Calendar();
     final b = _Calendar();

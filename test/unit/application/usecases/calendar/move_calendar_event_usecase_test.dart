@@ -30,6 +30,12 @@ void main() {
     expect(arguments.first.groupId, 'a'); expect(arguments.last.groupId, 'b');
     expect(arguments.last.id, 'e'); expect(arguments.last.version, 4);
   });
+  test('通常予定の移動と同時に設定した繰り返し条件を保存する', () async {
+    final source = event();
+    await usecase.execute(source, source.copyWith(groupId: 'b', recurrenceRule: 'FREQ=DAILY;COUNT=5'), member);
+    final moved = verify(repository.moveCalendarEvent(any, captureAny)).captured.single as CalendarEvent;
+    expect(moved.recurrenceRule, 'FREQ=DAILY;COUNT=5');
+  });
   test('系列移動では条件を保持し移動先のグループ固定ラベルへ戻す', () async {
     final source = event(recurring: true);
     await usecase.execute(source, source.copyWith(groupId: 'b', labelType: 'member', memberId: 'other'), member);
