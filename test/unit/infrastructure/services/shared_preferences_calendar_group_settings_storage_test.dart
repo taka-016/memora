@@ -10,6 +10,7 @@ void main() {
     final value = await storage.load('online:account');
     expect(value.visibleGroupIds, isEmpty);
     expect(value.defaultGroupId, isNull);
+    expect(value.hasSavedSettings, isFalse);
   });
   test('表示対象と非表示の既定グループを利用者・モードごとに分けて保存する', () async {
     await storage.save(
@@ -30,5 +31,6 @@ void main() {
     expect((await storage.load('offline:a')).visibleGroupIds, {'local'});
     await storage.save('online:a', CalendarGroupSettings());
     expect((await storage.load('online:a')).defaultGroupId, isNull);
+    expect((await storage.load('online:a')).hasSavedSettings, isTrue);
   });
 }

@@ -227,7 +227,7 @@ void main() {
     );
     expect(group.initialValue, 'g');
   });
-  testWidgets('所属1件でも自動選択せず表示選択のキャンセル・確定・全解除を扱う', (tester) async {
+  testWidgets('保存済みの未選択を維持し表示選択のキャンセル・確定・全解除を扱う', (tester) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [

@@ -57,6 +57,122 @@ void main() {
             GroupDto(id: id, ownerId: 'self', name: id, members: const []),
         ],
       );
+  for (final membershipsFirst in [true, false]) {
+    test('保存設定がなく所属1件なら表示対象と既定グループを自動保存する（所属が先: $membershipsFirst）', () async {
+      await flush();
+      final initial = CalendarGroupSettings(hasSavedSettings: false);
+      final pending = Completer<CalendarGroupSettings>();
+      storage.pending = pending;
+      final load = container
+          .read(calendarGroupSettingsNotifierProvider.notifier)
+          .reload();
+      if (membershipsFirst) groups(['a']);
+      pending.complete(initial);
+      await load;
+      if (!membershipsFirst) groups(['a']);
+      await flush();
+      final selected = container.read(calendarGroupSettingsNotifierProvider);
+      expect(selected.effectiveSettings.visibleGroupIds, {'a'});
+      expect(selected.effectiveSettings.defaultGroupId, 'a');
+      expect(storage.value.hasSavedSettings, isTrue);
+      expect(storage.value.visibleGroupIds, {'a'});
+      storage.pending = null;
+      await container
+          .read(calendarGroupSettingsNotifierProvider.notifier)
+          .setVisibleGroups({});
+      expect(
+        container
+            .read(calendarGroupSettingsNotifierProvider)
+            .effectiveSettings
+            .defaultGroupId,
+        'a',
+      );
+      await container
+          .read(calendarGroupSettingsNotifierProvider.notifier)
+          .setDefaultGroup(null);
+      await container
+          .read(calendarGroupSettingsNotifierProvider.notifier)
+          .reload();
+      expect(
+        container
+            .read(calendarGroupSettingsNotifierProvider)
+            .effectiveSettings
+            .visibleGroupIds,
+        isEmpty,
+      );
+      expect(
+        container
+            .read(calendarGroupSettingsNotifierProvider)
+            .effectiveSettings
+            .defaultGroupId,
+        isNull,
+      );
+    });
+  }
+  test('所属が複数または明示的な未選択設定がある場合は自動選択しない', () async {
+    await flush();
+    storage.value = CalendarGroupSettings(hasSavedSettings: false);
+    groups(['a', 'b']);
+    await container
+        .read(calendarGroupSettingsNotifierProvider.notifier)
+        .reload();
+    expect(
+      container
+          .read(calendarGroupSettingsNotifierProvider)
+          .effectiveSettings
+          .visibleGroupIds,
+      isEmpty,
+    );
+    storage.value = CalendarGroupSettings();
+    await container
+        .read(calendarGroupSettingsNotifierProvider.notifier)
+        .reload();
+    groups(['a']);
+    await flush();
+    expect(
+      container
+          .read(calendarGroupSettingsNotifierProvider)
+          .effectiveSettings
+          .visibleGroupIds,
+      isEmpty,
+    );
+    expect(
+      container
+          .read(calendarGroupSettingsNotifierProvider)
+          .effectiveSettings
+          .defaultGroupId,
+      isNull,
+    );
+  });
+  test('初期選択の保存失敗では操作を待機し再取得から再試行できる', () async {
+    await flush();
+    storage.value = CalendarGroupSettings(hasSavedSettings: false);
+    storage.failSave = true;
+    groups(['a']);
+    await container
+        .read(calendarGroupSettingsNotifierProvider.notifier)
+        .reload();
+    expect(
+      container.read(calendarGroupSettingsNotifierProvider).canUseSettings,
+      isFalse,
+    );
+    expect(storage.value.visibleGroupIds, isEmpty);
+    storage.failSave = false;
+    await container
+        .read(calendarGroupSettingsNotifierProvider.notifier)
+        .reload();
+    expect(
+      container.read(calendarGroupSettingsNotifierProvider).canUseSettings,
+      isTrue,
+    );
+    expect(
+      container
+          .read(calendarGroupSettingsNotifierProvider)
+          .effectiveSettings
+          .visibleGroupIds,
+      {'a'},
+    );
+  });
   test('設定取得失敗では保存できず読み直してから操作を再開する', () async {
     storage.failLoad = true;
     await container

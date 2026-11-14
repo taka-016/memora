@@ -111,14 +111,15 @@ void main() {
     verify(events.execute('2', period: anyNamed('period'))).called(1);
     expect(find.byTooltip('グループ選択へ戻る'), findsNothing);
   });
-  testWidgets('所属1件でも自動選択せずURLのグループで表示設定を上書きしない', (tester) async {
+  testWidgets('所属1件の初期選択はURLのグループではなく実際の所属を使う', (tester) async {
     final events = await pump(
       tester,
       count: 1,
       location: const CalendarRoute(groupId: 'other').location,
     );
-    expect(find.text('表示するグループを選択してください'), findsOneWidget);
-    verifyZeroInteractions(events);
+    expect(find.text('表示するグループを選択してください'), findsNothing);
+    verify(events.execute('1', period: anyNamed('period'))).called(1);
+    verifyNever(events.execute('other', period: anyNamed('period')));
   });
   testWidgets('下部メニューのカレンダーを再タップしても同じ月と選択日を維持する', (tester) async {
     await pump(tester, count: 1);
