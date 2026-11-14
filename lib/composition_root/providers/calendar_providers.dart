@@ -1,3 +1,6 @@
+import 'package:memora/application/usecases/calendar/move_calendar_event_usecase.dart';
+import 'package:memora/application/usecases/calendar/calendar_label_management_usecase.dart';
+import 'package:memora/composition_root/providers/group_providers.dart';
 import 'package:memora/application/usecases/calendar/watch_calendar_group_usecase.dart';
 import 'package:memora/infrastructure/queries/calendar/firestore_calendar_group_watch_query_service.dart';
 import 'package:memora/application/models/app_mode.dart';
@@ -109,3 +112,6 @@ final watchCalendarGroupUsecaseProvider = Provider<WatchCalendarGroupUsecase?>((
     ),
   );
 });
+
+final moveCalendarEventUsecaseProvider = Provider<MoveCalendarEventUsecase>((ref) => MoveCalendarEventUsecase(ref.watch(calendarEventRepositoryProvider), ref.watch(getGroupsWithMembersUsecaseProvider)));
+final calendarLabelManagementUsecaseProvider = Provider<CalendarLabelManagementUsecase>((ref) => CalendarLabelManagementUsecase(ref.watch(calendarLabelRepositoryProvider), ref.watch(getGroupWithMembersByIdUsecaseProvider)));
