@@ -43,6 +43,40 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
   }
 
   @override
+  Future<void> moveCalendarEvent(CalendarEvent expected, CalendarEvent replacement) async {
+    if (replacement.id != expected.id || replacement.groupId == expected.groupId) {
+      throw ValidationException('移動する予定の指定が不正です');
+    }
+    validateCalendarRecurrence(replacement);
+    final ref = _firestore.collection('calendar_events').doc(expected.id);
+    await _firestore.runTransaction<void>((transaction) async {
+      final snapshot = await transaction.get(ref);
+      FirestoreVersionCheck.requireMatch(snapshot.data(), expected.version);
+      final current = CalendarEventMapper.toEntity(await _store.read(snapshot, transaction: transaction));
+      if (calendarEventContent(current.copyWith(overrides: const [])) != calendarEventContent(expected.copyWith(overrides: const []))) {
+        throw ValidationException('予定が変更されています。再読み込みしてからやり直してください');
+      }
+      final moved = replacement.copyWith(version: expected.version, overrides: current.overrides);
+      final data = _store.data(moved, expected.id, create: false);
+      final before = _references(snapshot.data()!);
+      final after = _references(data);
+      final labels = <String, DocumentSnapshot<Map<String, dynamic>>>{};
+      for (final id in {...before, ...after}) {
+        final label = await transaction.get(_label(id));
+        final groupId = after.contains(id) ? moved.groupId : expected.groupId;
+        if (!label.exists || label.data()!['groupId'] != groupId) throw ValidationException('同じグループの色ラベルを指定してください');
+        labels[id] = label;
+      }
+      for (final entry in labels.entries) {
+        final delta = (after.contains(entry.key) ? 1 : 0) - (before.contains(entry.key) ? 1 : 0);
+        if (delta != 0) transaction.update(_label(entry.key), {'eventCount': (entry.value.data()!['eventCount'] as int) + delta});
+      }
+      transaction.update(ref, data);
+      _store.writeOverrides(transaction, moved, expected.id, _store.overrideIds(snapshot.data()!), previousEvent: current);
+    });
+  }
+
+  @override
   Future<void> replaceCalendarEvent(
     CalendarEvent expected,
     CalendarEvent? replacement,
