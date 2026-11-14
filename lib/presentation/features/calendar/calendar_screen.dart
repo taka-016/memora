@@ -162,6 +162,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   }
 
   void _openInitialRequest() {
+    if (ref.read(calendarGroupSettingsNotifierProvider).isLoading) return;
     final next = ref.read(multiGroupCalendarNotifierProvider).calendar;
     if ((!_pendingInitialCreate && _pendingInitialEventId == null) ||
         next.isLoading ||
@@ -240,6 +241,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       }
     });
     ref.listen(provider, (_, _) => _openInitialRequest());
+    ref.listen(calendarGroupSettingsNotifierProvider, (_, _) => _openInitialRequest());
     if (externalSupported) {
       ref.listen(
         externalCalendarNotifierProvider,
@@ -250,8 +252,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         ref.watch(calendarDisplaySettingsNotifierProvider).value?.settings ??
         const CalendarDisplaySettings();
     final month = state.month;
-    final canEdit = !state.isSaving;
     final groupSettings = ref.watch(calendarGroupSettingsNotifierProvider);
+    final canEdit = !state.isSaving && !groupSettings.isLoading;
     return PopScope(
       canPop: !state.isSaving,
       child: SafeArea(
@@ -285,7 +287,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                         ),
                       IconButton(
                         tooltip: '表示グループの選択',
-                        onPressed: () => showDialog<void>(context: context, builder: (_) => const CalendarGroupSelectionDialog()),
+                        onPressed: groupSettings.isLoading ? null : () => showDialog<void>(context: context, builder: (_) => const CalendarGroupSelectionDialog()),
                         icon: const Icon(Icons.groups_outlined),
                       ),
                     ],
@@ -331,7 +333,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                     ],
                   ),
                   if (groupSettings.effectiveSettings.visibleGroupIds.isEmpty)
-                    TextButton(onPressed: () => showDialog<void>(context: context, builder: (_) => const CalendarGroupSelectionDialog()), child: const Text('表示するグループを選択してください')),
+                    TextButton(onPressed: groupSettings.isLoading ? null : () => showDialog<void>(context: context, builder: (_) => const CalendarGroupSelectionDialog()), child: const Text('表示するグループを選択してください')),
                   if (state.isLoading) const LinearProgressIndicator(),
                   if (state.loadError.isNotEmpty)
                     Padding(
