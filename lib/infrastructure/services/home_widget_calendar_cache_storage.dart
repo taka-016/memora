@@ -1,3 +1,4 @@
+import 'package:memora/infrastructure/services/local_calendar_widget_lock.dart';
 import 'package:memora/infrastructure/services/home_widget_android_widget_cache_storage.dart';
 
 import 'dart:convert';
@@ -10,67 +11,16 @@ import 'package:path_provider/path_provider.dart';
 class HomeWidgetCalendarCacheStorage {
   const HomeWidgetCalendarCacheStorage();
 
-  static Future<void> _pending = Future.value();
-
-  Future<void> synchronize(Future<void> Function() action) {
-    final previous = _pending;
-    Future<void> run() async {
-      try {
-        await previous;
-      } catch (_) {}
-      final directory = await getApplicationSupportDirectory();
-      await directory.create(recursive: true);
-      final handle = await File(
-        '${directory.path}/calendar_widget_refresh.lock',
-      ).open(mode: FileMode.append);
-      try {
-        await handle.lock(FileLock.exclusive);
-        await action();
-      } finally {
-        await handle.unlock();
-        await handle.close();
-      }
-    }
-
-    final result = run();
-    _pending = result;
-    return result;
-  }
+  Future<void> synchronize(Future<void> Function() action) =>
+      LocalCalendarWidgetLock().run('refresh', action);
 
   Future<String?> loadScope() => HomeWidget.getWidgetData<String>(scopeKey);
 
   static const cacheKey = 'memora_widget_calendar_cache';
   static const scopeKey = 'memora_widget_calendar_scope';
 
-  static Future<void> _scopePending = Future.value();
-
-  Future<T> _synchronizeScope<T>(Future<T> Function() action) {
-    final previous = _scopePending;
-    Future<T> run() async {
-      await previous;
-      final directory = await getApplicationSupportDirectory();
-      await directory.create(recursive: true);
-      final handle = await File('${directory.path}/calendar_widget_scope.lock')
-          .open(mode: FileMode.append);
-      try {
-        await handle.lock(FileLock.exclusive);
-        return await action();
-      } finally {
-        await handle.unlock();
-        await handle.close();
-      }
-    }
-
-    final result = run();
-    Future<void> waitForResult() async {
-      try {
-        await result;
-      } catch (_) {}
-    }
-
-    _scopePending = waitForResult();
-    return result;
-  }
+  Future<T> _synchronizeScope<T>(Future<T> Function() action) =>
+      LocalCalendarWidgetLock().run('scope', action);
 
   Future<void> setScope(String? scope) async {
     await _synchronizeScope(
