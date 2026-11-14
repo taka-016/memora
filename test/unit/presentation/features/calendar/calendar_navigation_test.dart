@@ -1,3 +1,4 @@
+import 'package:memora/composition_root/providers/calendar_group_settings_providers.dart';
 import 'package:memora/presentation/notifiers/android_widget/android_widget_launch_notifier.dart';
 import 'package:memora/presentation/features/calendar/calendar_event_dialog.dart';
 import 'package:memora/composition_root/providers/group_providers.dart';
@@ -35,6 +36,8 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          calendarSettingsOwnerProvider.overrideWithValue('online:self'),
+          calendarSettingsMemberIdProvider.overrideWithValue('default_member'),
           getGroupWithMembersByIdUsecaseProvider.overrideWithValue(
             calendarTestGroupLoader(),
           ),
@@ -88,36 +91,26 @@ void main() {
     expect(find.byType(CalendarEventDialog), findsOneWidget);
   });
 
-  testWidgets('複数グループは選択後に月表示を開き戻ると別グループに切り替えられる', (tester) async {
+  Future<void> select(WidgetTester tester, List<String> names) async {
+    await tester.tap(find.byTooltip('表示グループの選択'));
+    await tester.pumpAndSettle();
+    for (final name in names) { await tester.tap(find.text(name)); }
+    await tester.tap(find.text('確定'));
+    await tester.pumpAndSettle();
+  }
+  testWidgets('カレンダーの入口は保存先グループを必要としない', (tester) async {
+    expect(const CalendarRoute().location, '/calendar');
     final events = await pump(tester);
-    expect(find.byKey(const Key('calendar_group_list')), findsOneWidget);
+    expect(find.byKey(const Key('calendar_screen')), findsOneWidget);
     verifyZeroInteractions(events);
-    await tester.tap(find.text('グループ1'));
-    await tester.pumpAndSettle();
-    expect(find.text('グループ1のカレンダー'), findsOneWidget);
-    await tester.tap(find.byTooltip('グループ選択へ戻る'));
-    await tester.pumpAndSettle();
-    expect(find.byKey(const Key('calendar_group_list')), findsOneWidget);
-    await tester.tap(find.text('グループ2'));
-    await tester.pumpAndSettle();
-    expect(find.text('グループ2のカレンダー'), findsOneWidget);
+    await select(tester, ['グループ1', 'グループ2']);
     verify(events.execute('1', period: anyNamed('period'))).called(1);
     verify(events.execute('2', period: anyNamed('period'))).called(1);
+    expect(find.byTooltip('グループ選択へ戻る'), findsNothing);
   });
-  testWidgets('1件のグループは選択を省略し戻る操作では選択画面を維持する', (tester) async {
-    await pump(tester, count: 1);
-    expect(find.text('グループ1のカレンダー'), findsOneWidget);
-    expect(find.byKey(const Key('calendar_group_list')), findsNothing);
-    await tester.tap(find.byTooltip('グループ選択へ戻る'));
-    await tester.pumpAndSettle();
-    expect(find.byKey(const Key('calendar_group_list')), findsOneWidget);
-  });
-  testWidgets('所属していないグループの直接URLは予定を取得せず選択へ戻る', (tester) async {
-    final events = await pump(
-      tester,
-      location: const CalendarRoute(groupId: 'other').location,
-    );
-    expect(find.byKey(const Key('calendar_group_list')), findsOneWidget);
+  testWidgets('所属1件でも自動選択せずURLのグループで表示設定を上書きしない', (tester) async {
+    final events = await pump(tester, count: 1, location: const CalendarRoute(groupId: 'other').location);
+    expect(find.text('表示するグループを選択してください'), findsOneWidget);
     verifyZeroInteractions(events);
   });
   testWidgets('下部メニューのカレンダーを再タップしても同じ月と選択日を維持する', (tester) async {
@@ -139,7 +132,7 @@ void main() {
   testWidgets('設定表示中のグループ更新で背面のカレンダーが画面を切り替えない', (tester) async {
     await pump(tester);
     final container = ProviderScope.containerOf(
-      tester.element(find.byKey(const Key('calendar_group_list'))),
+      tester.element(find.byKey(const Key('calendar_screen'))),
     );
     await tester.tap(find.byIcon(Icons.menu));
     await tester.pumpAndSettle();
@@ -157,8 +150,7 @@ void main() {
   });
   testWidgets('所属が失効したら既存の予定表示を閉じる', (tester) async {
     await pump(tester);
-    await tester.tap(find.text('グループ1'));
-    await tester.pumpAndSettle();
+    await select(tester, ['グループ1']);
     final container = ProviderScope.containerOf(
       tester.element(find.byKey(const Key('calendar_screen'))),
     );
@@ -169,7 +161,7 @@ void main() {
           groups: [support.groupsWithMembers[1]],
         );
     await tester.pumpAndSettle();
-    expect(find.text('グループ1のカレンダー'), findsNothing);
+    expect(find.text('表示するグループを選択してください'), findsOneWidget);
   });
 }
 
