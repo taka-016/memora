@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:memora/presentation/notifiers/backup/offline_backup_notifier.dart';
 import 'package:flutter/foundation.dart';
 import 'package:memora/core/app_logger.dart';
@@ -83,18 +84,33 @@ class CalendarGroupSettingsNotifier extends _$CalendarGroupSettingsNotifier {
     final changes = ref.watch(calendarMembershipChangesProvider);
     if (_owner != null && memberId != null && changes != null) {
       var membershipRequest = 0;
-      final subscription = changes(_owner!).listen((_) async {
-        final request = ++membershipRequest;
-        try {
-          final groups = await ref.read(reloadCalendarMembershipsProvider)(memberId);
-          if (!ref.mounted || generation != _generation || request != membershipRequest) return;
-          ref.read(groupTimelineGroupSelectionNotifierProvider.notifier).setLoadedGroups(memberId: memberId, groups: groups);
-        } catch (error, stack) {
-          if (ref.mounted && generation == _generation) logger.w('所属変更後のグループ取得に失敗しました', error: error, stackTrace: stack);
-        }
-      }, onError: (Object error, StackTrace stack) {
-        if (ref.mounted) logger.w('グループの所属監視に失敗しました', error: error, stackTrace: stack);
-      });
+      final subscription = changes(_owner!).listen(
+        (_) async {
+          final request = ++membershipRequest;
+          try {
+            final groups = await ref.read(reloadCalendarMembershipsProvider)(
+              memberId,
+            );
+            if (!ref.mounted ||
+                generation != _generation ||
+                request != membershipRequest) {
+              return;
+            }
+            ref
+                .read(groupTimelineGroupSelectionNotifierProvider.notifier)
+                .setLoadedGroups(memberId: memberId, groups: groups);
+          } catch (error, stack) {
+            if (ref.mounted && generation == _generation) {
+              logger.w('所属変更後のグループ取得に失敗しました', error: error, stackTrace: stack);
+            }
+          }
+        },
+        onError: (Object error, StackTrace stack) {
+          if (ref.mounted) {
+            logger.w('グループの所属監視に失敗しました', error: error, stackTrace: stack);
+          }
+        },
+      );
       ref.onDispose(() => unawaited(subscription.cancel()));
     }
     ref.onDispose(() => _generation++);
@@ -131,10 +147,13 @@ class CalendarGroupSettingsNotifier extends _$CalendarGroupSettingsNotifier {
   Future<void> _refreshWidget() async {
     try {
       final owner = _owner;
-      final scope = owner == null ? null : jsonEncode([
-        owner.split(':').first, owner,
-        state.effectiveSettings.visibleGroupIds.toList()..sort(),
-      ]);
+      final scope = owner == null
+          ? null
+          : jsonEncode([
+              owner.split(':').first,
+              owner,
+              state.effectiveSettings.visibleGroupIds.toList()..sort(),
+            ]);
       await ref.read(calendarWidgetScopeChangedProvider)(scope);
       if (!ref.mounted) return;
       await ref.read(calendarWidgetGroupsChangedProvider)();
@@ -154,7 +173,8 @@ class CalendarGroupSettingsNotifier extends _$CalendarGroupSettingsNotifier {
       final settings = await ref
           .read(calendarGroupSettingsStorageProvider)
           .load(owner);
-      final allowed = !owner.startsWith('offline:') ||
+      final allowed =
+          !owner.startsWith('offline:') ||
           await ref.read(calendarGroupInitializationAllowedProvider)(owner);
       if (!ref.mounted ||
           generation != _generation ||

@@ -108,8 +108,12 @@ final synchronizeOfflineBackupRestoreUsecaseProvider =
             .read(refreshAndroidWidgetCachesUsecaseProvider)
             .execute(kinds: const {AndroidWidgetKind.itinerary}),
         refreshCalendarCache: () async {
-          final member = await ref.read(offlineBackupCurrentMemberStorageProvider).load();
-          await ref.read(calendarGroupInitializationPolicyProvider).markRestored('offline:${member.id}');
+          final member = await ref
+              .read(offlineBackupCurrentMemberStorageProvider)
+              .load();
+          await ref
+              .read(calendarGroupInitializationPolicyProvider)
+              .markRestored('offline:${member.id}');
           ref.invalidate(currentMemberNotifierProvider);
           ref.invalidate(groupTimelineGroupSelectionNotifierProvider);
           ref.invalidate(calendarDisplaySettingsNotifierProvider);

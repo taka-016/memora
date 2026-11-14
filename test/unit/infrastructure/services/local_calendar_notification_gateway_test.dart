@@ -30,17 +30,36 @@ void main() {
   test('通知タップとコールド起動から元グループ・予定・個別回・表示日を渡す', () async {
     final plugin = MockFlutterLocalNotificationsPlugin();
     final occurrence = DateTime.utc(2026, 11, 2);
-    final payload = 'calendar:${jsonEncode(['g/e/${occurrence.microsecondsSinceEpoch}/0', '予定', '2026-11-01T09:00:00.000Z', occurrence.toIso8601String(), true])}';
-    final response = NotificationResponse(notificationResponseType: NotificationResponseType.selectedNotification, payload: payload);
-    when(plugin.getNotificationAppLaunchDetails()).thenAnswer((_) async => NotificationAppLaunchDetails(true, notificationResponse: response));
-    final gateway = LocalCalendarNotificationGateway(plugin: plugin, isAndroid: true);
+    final payload =
+        'calendar:${jsonEncode(['g/e/${occurrence.microsecondsSinceEpoch}/0', '予定', '2026-11-01T09:00:00.000Z', occurrence.toIso8601String(), true])}';
+    final response = NotificationResponse(
+      notificationResponseType: NotificationResponseType.selectedNotification,
+      payload: payload,
+    );
+    when(plugin.getNotificationAppLaunchDetails()).thenAnswer(
+      (_) async =>
+          NotificationAppLaunchDetails(true, notificationResponse: response),
+    );
+    final gateway = LocalCalendarNotificationGateway(
+      plugin: plugin,
+      isAndroid: true,
+    );
     final uri = await gateway.getInitialUri();
     expect(uri!.host.toLowerCase(), 'opencalendar');
     expect(uri.queryParameters, containsPair('groupId', 'g'));
     expect(uri.queryParameters, containsPair('eventId', 'e'));
     expect(uri.queryParameters, containsPair('date', '2026-11-02'));
     expect(DateTime.parse(uri.queryParameters['occurrence']!), occurrence);
-    final callback = verify(plugin.initialize(settings: anyNamed('settings'), onDidReceiveNotificationResponse: captureAnyNamed('onDidReceiveNotificationResponse'))).captured.single as void Function(NotificationResponse);
+    final callback =
+        verify(
+              plugin.initialize(
+                settings: anyNamed('settings'),
+                onDidReceiveNotificationResponse: captureAnyNamed(
+                  'onDidReceiveNotificationResponse',
+                ),
+              ),
+            ).captured.single
+            as void Function(NotificationResponse);
     final clicked = gateway.clickedUris.first;
     callback(response);
     expect(await clicked, uri);

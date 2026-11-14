@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:shared_preferences_platform_interface/shared_preferences_platform_interface.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -9,9 +10,16 @@ void main() {
   const storage = SharedPreferencesCalendarGroupSettingsStorage();
   setUp(() => SharedPreferences.setMockInitialValues({}));
   test('背景側で一度読んだ後も別isolateの表示解除を読み直す', () async {
-    await storage.save('online:a', CalendarGroupSettings(visibleGroupIds: {'g'}));
+    await storage.save(
+      'online:a',
+      CalendarGroupSettings(visibleGroupIds: {'g'}),
+    );
     expect((await storage.load('online:a')).visibleGroupIds, {'g'});
-    await SharedPreferencesStorePlatform.instance.setValue('String', 'flutter.calendar_groups_online%3Aa', jsonEncode({'visibleGroupIds': [], 'defaultGroupId': null}));
+    await SharedPreferencesStorePlatform.instance.setValue(
+      'String',
+      'flutter.calendar_groups_online%3Aa',
+      jsonEncode({'visibleGroupIds': [], 'defaultGroupId': null}),
+    );
     expect((await storage.load('online:a')).visibleGroupIds, isEmpty);
   });
   test('初期値は空で既定グループも未設定とする', () async {

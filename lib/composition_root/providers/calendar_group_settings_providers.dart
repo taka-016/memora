@@ -1,10 +1,11 @@
 import 'package:memora/infrastructure/services/home_widget_calendar_cache_storage.dart';
+
 import 'dart:io';
+
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/services/calendar_group_initialization_policy.dart';
 import 'package:memora/infrastructure/services/local_calendar_group_initialization_policy.dart';
 import 'package:memora/infrastructure/services/device_calendar_membership_source.dart';
-import 'package:memora/composition_root/providers/app_providers.dart';
 import 'package:memora/composition_root/providers/offline_database_provider.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/composition_root/providers/android_widget_providers.dart';
@@ -35,20 +36,45 @@ final calendarWidgetGroupsChangedProvider = Provider<Future<void> Function()>(
   (ref) => ref.read(refreshSelectedCalendarWidgetCacheProvider),
 );
 
-final calendarGroupInitializationPolicyProvider = Provider<CalendarGroupInitializationPolicy>((ref) => LocalCalendarGroupInitializationPolicy());
-final calendarGroupInitializationAllowedProvider = Provider<Future<bool> Function(String)>((ref) => (owner) async => !owner.startsWith('offline:') || await ref.read(calendarGroupInitializationPolicyProvider).canInitialize(owner));
-final calendarMembershipChangesProvider = Provider<Stream<void> Function(String)?>(
-  (ref) {
-    if (!Platform.isAndroid) return null;
-    final mode = ref.watch(appModeProvider);
-    return DeviceCalendarMembershipSource(
-      database: mode == AppMode.offline ? ref.watch(offlineDatabaseProvider) : null,
-      firestore: mode == AppMode.online ? ref.watch(firebaseFirestoreProvider) : null,
-    ).changes;
-  },
-);
-final reloadCalendarMembershipsProvider = Provider<Future<List<GroupDto>> Function(String)>((ref) => (memberId) => ref.read(groupQueryServiceProvider).getGroupsWithMembersByMemberId(memberId));
+final calendarGroupInitializationPolicyProvider =
+    Provider<CalendarGroupInitializationPolicy>(
+      (ref) => LocalCalendarGroupInitializationPolicy(),
+    );
+final calendarGroupInitializationAllowedProvider =
+    Provider<Future<bool> Function(String)>(
+      (ref) =>
+          (owner) async =>
+              !owner.startsWith('offline:') ||
+              await ref
+                  .read(calendarGroupInitializationPolicyProvider)
+                  .canInitialize(owner),
+    );
+final calendarMembershipChangesProvider =
+    Provider<Stream<void> Function(String)?>((ref) {
+      if (!Platform.isAndroid) return null;
+      final mode = ref.watch(appModeProvider);
+      return DeviceCalendarMembershipSource(
+        database: mode == AppMode.offline
+            ? ref.watch(offlineDatabaseProvider)
+            : null,
+        firestore: mode == AppMode.online
+            ? ref.watch(firebaseFirestoreProvider)
+            : null,
+      ).changes;
+    });
+final reloadCalendarMembershipsProvider =
+    Provider<Future<List<GroupDto>> Function(String)>(
+      (ref) =>
+          (memberId) => ref
+              .read(groupQueryServiceProvider)
+              .getGroupsWithMembersByMemberId(memberId),
+    );
 
-final calendarWidgetScopeChangedProvider = Provider<Future<void> Function(String?)>((ref) => (scope) async {
-  if (Platform.isAndroid) await const HomeWidgetCalendarCacheStorage().setScope(scope);
-});
+final calendarWidgetScopeChangedProvider =
+    Provider<Future<void> Function(String?)>(
+      (ref) => (scope) async {
+        if (Platform.isAndroid) {
+          await const HomeWidgetCalendarCacheStorage().setScope(scope);
+        }
+      },
+    );

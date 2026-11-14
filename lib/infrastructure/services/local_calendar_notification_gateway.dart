@@ -1,5 +1,7 @@
 import 'dart:async';
+
 import 'package:memora/application/services/android_widget_launch_uri_source.dart';
+
 import 'dart:convert';
 import 'dart:io';
 
@@ -9,7 +11,8 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:memora/application/services/calendar/calendar_notification_gateway.dart';
 import 'package:memora/application/services/calendar/calendar_notification_planner.dart';
 
-class LocalCalendarNotificationGateway implements CalendarNotificationGateway, AndroidWidgetLaunchUriSource {
+class LocalCalendarNotificationGateway
+    implements CalendarNotificationGateway, AndroidWidgetLaunchUriSource {
   LocalCalendarNotificationGateway({
     FlutterLocalNotificationsPlugin? plugin,
     bool? isAndroid,
@@ -25,8 +28,11 @@ class LocalCalendarNotificationGateway implements CalendarNotificationGateway, A
     if (!_isAndroid) return null;
     await _initialize();
     final details = await _plugin.getNotificationAppLaunchDetails();
-    return details?.didNotificationLaunchApp == true ? _launchUri(details?.notificationResponse?.payload) : null;
+    return details?.didNotificationLaunchApp == true
+        ? _launchUri(details?.notificationResponse?.payload)
+        : null;
   }
+
   Future<void> dispose() => _clicks.close();
   Uri? _launchUri(String? payload) {
     if (payload == null || !payload.startsWith('calendar:')) return null;
@@ -36,11 +42,21 @@ class LocalCalendarNotificationGateway implements CalendarNotificationGateway, A
       if (parts.length != 4) return null;
       final start = DateTime.parse(data[3] as String);
       final day = data[4] == true ? start : start.toLocal();
-      final date = '${day.year.toString().padLeft(4, '0')}-${day.month.toString().padLeft(2, '0')}-${day.day.toString().padLeft(2, '0')}';
-      return Uri(scheme: 'memoraWidget', host: 'openCalendar', queryParameters: {
-        'groupId': parts[0], 'eventId': parts[1], 'date': date,
-        'occurrence': DateTime.fromMicrosecondsSinceEpoch(int.parse(parts[2]), isUtc: true).toIso8601String(),
-      });
+      final date =
+          '${day.year.toString().padLeft(4, '0')}-${day.month.toString().padLeft(2, '0')}-${day.day.toString().padLeft(2, '0')}';
+      return Uri(
+        scheme: 'memoraWidget',
+        host: 'openCalendar',
+        queryParameters: {
+          'groupId': parts[0],
+          'eventId': parts[1],
+          'date': date,
+          'occurrence': DateTime.fromMicrosecondsSinceEpoch(
+            int.parse(parts[2]),
+            isUtc: true,
+          ).toIso8601String(),
+        },
+      );
     } on FormatException {
       return null;
     } on TypeError {
@@ -49,6 +65,7 @@ class LocalCalendarNotificationGateway implements CalendarNotificationGateway, A
       return null;
     }
   }
+
   Future<void>? _initialization;
   Future<void> _initialize() => _initialization ??= _plugin.initialize(
     settings: const InitializationSettings(

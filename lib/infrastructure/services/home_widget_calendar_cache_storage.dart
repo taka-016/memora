@@ -15,10 +15,14 @@ class HomeWidgetCalendarCacheStorage {
   Future<void> synchronize(Future<void> Function() action) {
     final previous = _pending;
     Future<void> run() async {
-      try { await previous; } catch (_) {}
+      try {
+        await previous;
+      } catch (_) {}
       final directory = await getApplicationSupportDirectory();
       await directory.create(recursive: true);
-      final handle = await File('${directory.path}/calendar_widget_refresh.lock').open(mode: FileMode.append);
+      final handle = await File(
+        '${directory.path}/calendar_widget_refresh.lock',
+      ).open(mode: FileMode.append);
       try {
         await handle.lock(FileLock.exclusive);
         await action();
@@ -27,6 +31,7 @@ class HomeWidgetCalendarCacheStorage {
         await handle.close();
       }
     }
+
     final result = run();
     _pending = result;
     return result;
@@ -45,22 +50,32 @@ class HomeWidgetCalendarCacheStorage {
       await previous;
       final directory = await getApplicationSupportDirectory();
       await directory.create(recursive: true);
-      final handle = await File('${directory.path}/calendar_widget_scope.lock').open(mode: FileMode.append);
+      final handle = await File('${directory.path}/calendar_widget_scope.lock')
+          .open(mode: FileMode.append);
       try {
         await handle.lock(FileLock.exclusive);
         return await action();
       } finally {
-        await handle.unlock(); await handle.close();
+        await handle.unlock();
+        await handle.close();
       }
     }
+
     final result = run();
-    Future<void> waitForResult() async { try { await result; } catch (_) {} }
+    Future<void> waitForResult() async {
+      try {
+        await result;
+      } catch (_) {}
+    }
+
     _scopePending = waitForResult();
     return result;
   }
 
   Future<void> setScope(String? scope) async {
-    await _synchronizeScope(() => HomeWidget.saveWidgetData<String>(scopeKey, scope));
+    await _synchronizeScope(
+      () => HomeWidget.saveWidgetData<String>(scopeKey, scope),
+    );
     await update();
   }
 
@@ -169,7 +184,9 @@ class HomeWidgetCalendarCacheStorage {
   }
 
   Future<void> clear() async {
-    await _synchronizeScope(() => HomeWidget.saveWidgetData<String>(scopeKey, null));
+    await _synchronizeScope(
+      () => HomeWidget.saveWidgetData<String>(scopeKey, null),
+    );
     await HomeWidget.saveWidgetData<String>(cacheKey, null);
     await HomeWidget.saveWidgetData<String>(selectedDateKey, null);
   }

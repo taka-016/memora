@@ -1,8 +1,10 @@
 import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/infrastructure/services/device_calendar_membership_source.dart';
+
 import '../queries/calendar/firestore_calendar_watch_query_service_test.mocks.dart';
 
 void main() {
@@ -11,9 +13,11 @@ void main() {
     final collection = MockCollectionReference();
     final permission = MockDocumentReference();
     final group = MockDocumentReference();
-    final permissions = StreamController<DocumentSnapshot<Map<String,dynamic>>>();
-    final groups = StreamController<DocumentSnapshot<Map<String,dynamic>>>();
-    addTearDown(permissions.close); addTearDown(groups.close);
+    final permissions =
+        StreamController<DocumentSnapshot<Map<String, dynamic>>>();
+    final groups = StreamController<DocumentSnapshot<Map<String, dynamic>>>();
+    addTearDown(permissions.close);
+    addTearDown(groups.close);
     when(firestore.collection(any)).thenReturn(collection);
     when(collection.doc('uid')).thenReturn(permission);
     when(collection.doc('g')).thenReturn(group);
@@ -21,10 +25,14 @@ void main() {
     when(group.snapshots()).thenAnswer((_) => groups.stream);
     final source = DeviceCalendarMembershipSource(firestore: firestore);
     var updates = 0;
-    final subscription = source.changes('online:uid').listen((_) { updates++; });
+    final subscription = source.changes('online:uid').listen((_) {
+      updates++;
+    });
     addTearDown(subscription.cancel);
     final membership = MockDocumentSnapshot();
-    when(membership.data()).thenReturn({'memberGroupIds': ['g']});
+    when(membership.data()).thenReturn({
+      'memberGroupIds': ['g'],
+    });
     permissions.add(membership);
     await pumpEventQueue();
     final first = updates;
