@@ -1,3 +1,7 @@
+import '../../../../helpers/calendar_group_settings_test_support.dart';
+
+import 'package:memora/presentation/notifiers/calendar/calendar_group_settings_notifier.dart';
+import 'package:memora/composition_root/providers/calendar_group_settings_providers.dart';
 import 'package:memora/composition_root/providers/external_calendar_providers.dart';
 
 import 'dart:async';
@@ -98,6 +102,10 @@ void main() {
         await tester.pumpWidget(
           ProviderScope(
             overrides: [
+              calendarSettingsOwnerProvider.overrideWithValue('online:owner'),
+              calendarGroupSettingsNotifierProvider.overrideWith(
+                () => TestCalendarGroupSettingsNotifier(),
+              ),
               externalCalendarOwnerProvider.overrideWithValue(null),
               externalCalendarSupportedProvider.overrideWithValue(true),
               externalCalendarNotifierProvider.overrideWith(() => external),
@@ -114,9 +122,7 @@ void main() {
             child: MaterialApp(
               home: Scaffold(
                 body: CalendarScreen(
-                  groupId: 'g1',
-                  groupName: '家族',
-                  onBack: () {},
+                  initialEventGroupId: 'g1',
                   initialDate: DateTime(2026, 11, 3),
                   initialEventId: 'device:12:42:1793667600000',
                   initialRequest: 1,
@@ -161,7 +167,7 @@ void main() {
 
   for (final fail in [false, true]) {
     testWidgets(
-      'ウィジェットの追加要求は読込${fail ? '失敗時には開かず再試行する' : '成功後に初期ラベルと選択日を使い再実行できる'}',
+      'ウィジェットの追加要求は入力先の読込${fail ? '失敗から再試行する' : '成功後に保存して再実行できる'}',
       (tester) async {
         final group = Completer<GroupDto?>();
         const loadedGroup = GroupDto(
@@ -188,6 +194,10 @@ void main() {
         await tester.pumpWidget(
           ProviderScope(
             overrides: [
+              calendarSettingsOwnerProvider.overrideWithValue('online:owner'),
+              calendarGroupSettingsNotifierProvider.overrideWith(
+                () => TestCalendarGroupSettingsNotifier(),
+              ),
               externalCalendarOwnerProvider.overrideWithValue(null),
               appClockProvider.overrideWithValue(
                 FixedAppClock(DateTime(2026, 10, 1)),
@@ -205,9 +215,7 @@ void main() {
                 body: ValueListenableBuilder<int>(
                   valueListenable: request,
                   builder: (context, value, child) => CalendarScreen(
-                    groupId: 'g1',
-                    groupName: '家族',
-                    onBack: () {},
+                    initialEventGroupId: 'g1',
                     initialDate: DateTime(2026, 11, 2),
                     createEvent: true,
                     initialRequest: value,
@@ -219,14 +227,14 @@ void main() {
         );
         await tester.pump();
         await tester.pump();
-        expect(find.byType(CalendarEventDialog), findsNothing);
+        expect(find.byType(CalendarEventDialog), findsOneWidget);
         if (fail) {
           group.completeError(TestException('読込失敗'));
           await tester.pump();
           await tester.pump();
-          expect(find.byType(CalendarEventDialog), findsNothing);
+          expect(find.byType(CalendarEventDialog), findsOneWidget);
           when(loader.execute('g1')).thenAnswer((_) async => loadedGroup);
-          await tester.tap(find.text('再試行'));
+          await tester.tap(find.descendant(of: find.byType(CalendarEventDialog), matching: find.text('再試行')));
         } else {
           group.complete(loadedGroup);
         }
@@ -280,6 +288,10 @@ void main() {
         await tester.pumpWidget(
           ProviderScope(
             overrides: [
+              calendarSettingsOwnerProvider.overrideWithValue('online:owner'),
+              calendarGroupSettingsNotifierProvider.overrideWith(
+                () => TestCalendarGroupSettingsNotifier(),
+              ),
               externalCalendarOwnerProvider.overrideWithValue(null),
               appClockProvider.overrideWithValue(
                 FixedAppClock(DateTime(2026, 11, 1)),
@@ -294,9 +306,7 @@ void main() {
             child: MaterialApp(
               home: Scaffold(
                 body: CalendarScreen(
-                  groupId: 'g1',
-                  groupName: '家族',
-                  onBack: () {},
+                  initialEventGroupId: 'g1',
                   initialDate: DateTime(2026, 11, 3),
                   initialRequest: 1,
                   initialEventId: missing ? 'deleted' : 'series',
@@ -357,6 +367,10 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          calendarSettingsOwnerProvider.overrideWithValue('online:owner'),
+          calendarGroupSettingsNotifierProvider.overrideWith(
+            () => TestCalendarGroupSettingsNotifier(),
+          ),
           externalCalendarOwnerProvider.overrideWithValue(null),
           appClockProvider.overrideWithValue(
             FixedAppClock(DateTime(2026, 11, 1)),
@@ -371,9 +385,7 @@ void main() {
         child: MaterialApp(
           home: Scaffold(
             body: CalendarScreen(
-              groupId: 'g1',
-              groupName: '家族',
-              onBack: () {},
+              initialEventGroupId: 'g1',
               initialDate: DateTime(2026, 11, 3),
               initialEventId: 'event',
               initialOccurrence: DateTime.utc(2026, 11, 3, 9),
