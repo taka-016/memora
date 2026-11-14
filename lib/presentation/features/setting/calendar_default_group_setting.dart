@@ -15,7 +15,7 @@ class CalendarDefaultGroupSetting extends ConsumerWidget {
         trailing: SizedBox(width: 150, child: DropdownButton<String>(isExpanded: true,
           value: state.effectiveSettings.defaultGroupId ?? '',
           items: [const DropdownMenuItem(value: '', child: Text('未設定')), for (final group in state.groups) DropdownMenuItem(value: group.id, child: Text(group.name, overflow: TextOverflow.ellipsis))],
-          onChanged: state.isLoading || state.isSaving || !state.groupsReady ? null : (id) async {
+          onChanged: !state.canUseSettings || state.isSaving || !state.groupsReady ? null : (id) async {
             final success = await ref.read(calendarGroupSettingsNotifierProvider.notifier).setDefaultGroup(id == '' ? null : id);
             if (!success && context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('既定グループを保存できませんでした')));
           },

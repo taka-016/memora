@@ -34,7 +34,7 @@ class MoveCalendarEventUsecase {
         endDateTime: recurring ? expected.endDateTime : changes.endDateTime,
         isAllDay: recurring ? expected.isAllDay : changes.isAllDay,
         notificationMinutesBefore: changes.notificationMinutesBefore,
-        recurrenceRule: expected.recurrenceRule, timeZone: expected.timeZone, overrides: expected.overrides,
+        recurrenceRule: recurring ? expected.recurrenceRule : changes.recurrenceRule, timeZone: recurring ? expected.timeZone : changes.timeZone, overrides: expected.overrides,
       );
       await _repository.moveCalendarEvent(CalendarEventMapper.toEntity(expected), replacement);
     } on ValidationException catch (error, stack) {

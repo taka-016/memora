@@ -8,7 +8,7 @@ import 'package:memora/presentation/notifiers/timeline/group_timeline_group_sele
 part 'calendar_group_settings_notifier.g.dart';
 
 class CalendarGroupSettingsState {
-  CalendarGroupSettingsState({CalendarGroupSettings? settings, List<GroupDto> groups = const [], this.groupsReady = false, this.isLoading = true, this.isSaving = false, this.error = ''})
+  CalendarGroupSettingsState({CalendarGroupSettings? settings, List<GroupDto> groups = const [], this.groupsReady = false, this.isLoading = true, this.isSaving = false, this.error = '', this.loadFailed = false})
     : settings = settings ?? CalendarGroupSettings(), groups = List.unmodifiable(groups);
   final CalendarGroupSettings settings;
   final List<GroupDto> groups;
@@ -16,16 +16,19 @@ class CalendarGroupSettingsState {
   final bool isLoading;
   final bool isSaving;
   final String error;
+  final bool loadFailed;
+  bool get canUseSettings => !isLoading && !loadFailed;
   CalendarGroupSettings get effectiveSettings => settings.retainGroups(groups.map((g) => g.id).toSet());
-  CalendarGroupSettingsState copyWith({CalendarGroupSettings? settings, List<GroupDto>? groups, bool? groupsReady, bool? isLoading, bool? isSaving, String? error}) => CalendarGroupSettingsState(
+  CalendarGroupSettingsState copyWith({CalendarGroupSettings? settings, List<GroupDto>? groups, bool? groupsReady, bool? isLoading, bool? isSaving, String? error, bool? loadFailed}) => CalendarGroupSettingsState(
     settings: settings ?? this.settings, groups: groups ?? this.groups, groupsReady: groupsReady ?? this.groupsReady,
-    isLoading: isLoading ?? this.isLoading, isSaving: isSaving ?? this.isSaving, error: error ?? this.error,
+    isLoading: isLoading ?? this.isLoading, isSaving: isSaving ?? this.isSaving, error: error ?? this.error, loadFailed: loadFailed ?? this.loadFailed,
   );
 }
 
 @Riverpod(keepAlive: true)
 class CalendarGroupSettingsNotifier extends _$CalendarGroupSettingsNotifier {
   int _generation = 0;
+  int _loadRequest = 0;
   String? _owner;
   @override
   CalendarGroupSettingsState build() {
@@ -55,14 +58,15 @@ class CalendarGroupSettingsNotifier extends _$CalendarGroupSettingsNotifier {
     final owner = _owner;
     if (owner == null || state.isSaving) return;
     final generation = _generation;
+    final request = ++_loadRequest;
     state = state.copyWith(isLoading: true, error: '');
     try {
       final settings = await ref.read(calendarGroupSettingsStorageProvider).load(owner);
-      if (!ref.mounted || generation != _generation) return;
-      state = state.copyWith(settings: settings, isLoading: false);
+      if (!ref.mounted || generation != _generation || request != _loadRequest) return;
+      state = state.copyWith(settings: settings, isLoading: false, loadFailed: false);
     } catch (_) {
-      if (!ref.mounted || generation != _generation) return;
-      state = state.copyWith(isLoading: false, error: 'グループ設定を取得できませんでした。再試行してください');
+      if (!ref.mounted || generation != _generation || request != _loadRequest) return;
+      state = state.copyWith(isLoading: false, loadFailed: true, error: 'グループ設定を取得できませんでした。再試行してください');
     }
   }
 
@@ -70,7 +74,7 @@ class CalendarGroupSettingsNotifier extends _$CalendarGroupSettingsNotifier {
   Future<bool> setDefaultGroup(String? id) => _save(CalendarGroupSettings(visibleGroupIds: state.settings.visibleGroupIds, defaultGroupId: id));
   Future<bool> _save(CalendarGroupSettings settings) async {
     final owner = _owner;
-    if (owner == null || state.isLoading || state.isSaving || !state.groupsReady) return false;
+    if (owner == null || !state.canUseSettings || state.isSaving || !state.groupsReady) return false;
     final allowed = state.groups.map((g) => g.id).toSet();
     if (!allowed.containsAll(settings.visibleGroupIds.difference(state.settings.visibleGroupIds)) ||
       (settings.defaultGroupId != null && settings.defaultGroupId != state.settings.defaultGroupId && !allowed.contains(settings.defaultGroupId))) return false;

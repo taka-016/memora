@@ -26,7 +26,7 @@ class _CalendarGroupSelectionDialogState extends ConsumerState<CalendarGroupSele
     ]))), actions: [
       TextButton(onPressed: state.isSaving ? null : () => setState(_selected.clear), child: const Text('全解除')),
       TextButton(onPressed: state.isSaving ? null : () => Navigator.pop(context), child: const Text('キャンセル')),
-      FilledButton(onPressed: !state.groupsReady || state.isLoading || state.isSaving ? null : () async {
+      FilledButton(onPressed: !state.groupsReady || !state.canUseSettings || state.isSaving ? null : () async {
         final success = await ref.read(calendarGroupSettingsNotifierProvider.notifier).setVisibleGroups(_selected.intersection(state.groups.map((g) => g.id).toSet()));
         if (success && context.mounted) Navigator.pop(context);
       }, child: const Text('確定')),

@@ -1,3 +1,4 @@
+import 'package:memora/presentation/notifiers/calendar/calendar_group_settings_notifier.dart';
 import 'package:memora/application/services/calendar/japanese_calendar.dart';
 import 'package:memora/presentation/features/calendar/calendar_holiday_banner.dart';
 import 'package:memora/composition_root/providers/external_calendar_providers.dart';
@@ -66,7 +67,7 @@ class _CalendarDayEventsSheetState
         ? state
         : overlayExternalCalendar(state, external);
     final canEdit =
-        !state.isSaving;
+        !state.isSaving && ref.watch(calendarGroupSettingsNotifierProvider).canUseSettings;
     return PopScope(
       canPop: !state.isSaving,
       child: FractionallySizedBox(

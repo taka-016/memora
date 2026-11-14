@@ -14,6 +14,14 @@ class CalendarMutationCoordinator {
   CalendarMutationCoordinator(this.ref);
   final Ref ref;
   Future<void> save(CalendarEventDto input, {CalendarEventDto? expected, CalendarEventDto? expectedSeries, CalendarChangeScope? scope}) async {
+    if (expected?.originalStartDateTime != null) {
+      if (expectedSeries == null || expectedSeries.version != expected!.version ||
+          expectedSeries.overridesFingerprint != expected.overridesFingerprint ||
+          expectedSeries.copyWith(startDateTime: expected.startDateTime, endDateTime: expected.endDateTime,
+            originalStartDateTime: expected.originalStartDateTime, overrides: expected.overrides) != expected) {
+        throw const ApplicationValidationException('予定が変更されています。再読み込みしてからやり直してください');
+      }
+    }
     final moving = expected != null && expected.groupId != input.groupId;
     if (moving) {
       final member = ref.read(currentMemberNotifierProvider).member;
@@ -31,6 +39,10 @@ class CalendarMutationCoordinator {
   }
   Future<void> delete(CalendarEventDto expected, {CalendarEventDto? expectedSeries, CalendarChangeScope? scope}) async {
     if (expected.originalStartDateTime != null) {
+      if (expectedSeries != null && (expectedSeries.version != expected.version || expectedSeries.overridesFingerprint != expected.overridesFingerprint ||
+        expectedSeries.copyWith(startDateTime: expected.startDateTime, endDateTime: expected.endDateTime, originalStartDateTime: expected.originalStartDateTime, overrides: expected.overrides) != expected)) {
+        throw const ApplicationValidationException('予定が変更されています。再読み込みしてからやり直してください');
+      }
       if (expectedSeries == null || scope == null) throw const ApplicationValidationException('変更する系列を確認できません。再読み込みしてください');
       await ref.read(changeCalendarRecurrenceUsecaseProvider).execute(expectedSeries, expected.originalStartDateTime!, scope);
     } else {

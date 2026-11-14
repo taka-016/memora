@@ -53,6 +53,7 @@ class MultiGroupCalendarNotifier extends _$MultiGroupCalendarNotifier {
     for (final id in ids) {
       if (_subscriptions.containsKey(id)) continue;
       final provider = calendarNotifierProvider(id);
+      if (ref.exists(provider)) ref.invalidate(provider);
       final generation = _generation;
       _subscriptions[id] = ref.listen(provider, (_, next) {
         if (!ref.mounted || generation != _generation || !_subscriptions.containsKey(id)) return;
