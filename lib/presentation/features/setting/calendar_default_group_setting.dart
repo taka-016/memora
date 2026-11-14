@@ -14,7 +14,6 @@ class CalendarDefaultGroupSetting extends ConsumerWidget {
         ListTile(
           contentPadding: EdgeInsets.zero,
           title: const Text('予定追加時の既定グループ'),
-          subtitle: const Text('表示しないグループも選択できます'),
           trailing: SizedBox(
             width: 150,
             child: DropdownButton<String>(
