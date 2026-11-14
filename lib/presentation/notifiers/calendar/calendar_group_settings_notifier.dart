@@ -26,7 +26,8 @@ class CalendarGroupSettingsState {
   final bool isSaving;
   final String error;
   final bool loadFailed;
-  bool get canUseSettings => groupsReady && !isLoading && !loadFailed;
+  bool get canUseSettings =>
+      groupsReady && !isLoading && !isSaving && !loadFailed;
   CalendarGroupSettings get effectiveSettings =>
       settings.retainGroups(groups.map((g) => g.id).toSet());
   CalendarGroupSettingsState copyWith({
@@ -66,7 +67,11 @@ class CalendarGroupSettingsNotifier extends _$CalendarGroupSettingsNotifier {
         return;
       }
       if (selection.status == GroupTimelineGroupSelectionStatus.loaded) {
-        state = state.copyWith(groups: selection.groups, groupsReady: true);
+        unawaited(
+          _applyLoaded(
+            state.copyWith(groups: selection.groups, groupsReady: true),
+          ),
+        );
       } else {
         state = state.copyWith(groupsReady: false);
       }
@@ -100,10 +105,8 @@ class CalendarGroupSettingsNotifier extends _$CalendarGroupSettingsNotifier {
           request != _loadRequest) {
         return;
       }
-      state = state.copyWith(
-        settings: settings,
-        isLoading: false,
-        loadFailed: false,
+      await _applyLoaded(
+        state.copyWith(settings: settings, isLoading: false, loadFailed: false),
       );
     } catch (_) {
       if (!ref.mounted ||
@@ -115,6 +118,37 @@ class CalendarGroupSettingsNotifier extends _$CalendarGroupSettingsNotifier {
         isLoading: false,
         loadFailed: true,
         error: 'グループ設定を取得できませんでした。再試行してください',
+      );
+    }
+  }
+
+  Future<void> _applyLoaded(CalendarGroupSettingsState next) async {
+    if (!next.canUseSettings ||
+        next.settings.hasSavedSettings ||
+        next.groups.length != 1) {
+      state = next;
+      return;
+    }
+    final generation = _generation;
+    final owner = _owner!;
+    final id = next.groups.single.id;
+    final settings = CalendarGroupSettings(
+      visibleGroupIds: {id},
+      defaultGroupId: id,
+    );
+    state = next.copyWith(isSaving: true);
+    try {
+      await ref
+          .read(calendarGroupSettingsStorageProvider)
+          .save(owner, settings);
+      if (!ref.mounted || generation != _generation) return;
+      state = state.copyWith(settings: settings, isSaving: false);
+    } catch (_) {
+      if (!ref.mounted || generation != _generation) return;
+      state = state.copyWith(
+        isSaving: false,
+        loadFailed: true,
+        error: 'グループ設定を保存できませんでした。再試行してください',
       );
     }
   }

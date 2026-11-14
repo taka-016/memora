@@ -14,7 +14,7 @@ class SharedPreferencesCalendarGroupSettingsStorage
   Future<CalendarGroupSettings> load(String ownerId) async {
     final preferences = await SharedPreferences.getInstance();
     final raw = preferences.getString(_key(ownerId));
-    if (raw == null) return CalendarGroupSettings();
+    if (raw == null) return CalendarGroupSettings(hasSavedSettings: false);
     final data = jsonDecode(raw) as Map<String, dynamic>;
     return CalendarGroupSettings(
       visibleGroupIds: (data['visibleGroupIds'] as List).cast<String>().toSet(),
