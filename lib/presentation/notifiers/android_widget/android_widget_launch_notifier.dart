@@ -293,7 +293,8 @@ class AndroidWidgetLaunchNotifier extends Notifier<AndroidWidgetLaunchState> {
             .read(getGroupsWithMembersUsecaseProvider)
             .execute(member);
         final groupId = calendarUri.queryParameters['create'] == 'true'
-            ? null : calendarUri.queryParameters['groupId'];
+            ? null
+            : calendarUri.queryParameters['groupId'];
         if (groupId == null ||
             groupId.isEmpty ||
             groups.any((group) => group.id == groupId)) {
