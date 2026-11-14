@@ -49,6 +49,16 @@ void main() {
     await directory.delete(recursive: true);
   });
 
+  test('新しい表示対象を先行する取得の公開で上書きしない', () async {
+    const storage = HomeWidgetCalendarCacheStorage();
+    await storage.setScope('old');
+    await storage.setScope('new');
+    expect(await storage.setScopeIfCurrent('old', 'old'), isFalse);
+    expect(await storage.loadScope(), 'new');
+    expect(await storage.setScopeIfCurrent('new', 'latest'), isTrue);
+    expect(await storage.loadScope(), 'latest');
+  });
+
   test('別Container相当のキャッシュ更新も直列に実行し失敗後に再開する', () async {
     const firstStorage = HomeWidgetCalendarCacheStorage();
     const secondStorage = HomeWidgetCalendarCacheStorage();

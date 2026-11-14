@@ -27,6 +27,11 @@ void main() {
     when(selection.execute()).thenAnswer((_) async => current);
     when(storage.synchronize(any)).thenAnswer((call) async => (call.positionalArguments[0] as Future<void> Function())());
     when(storage.loadScope()).thenAnswer((_) async => current.cacheScope);
+    when(storage.setScopeIfCurrent(any, any)).thenAnswer((call) async {
+      if (await storage.loadScope() != call.positionalArguments[0]) return false;
+      await storage.setScope(call.positionalArguments[1] as String?);
+      return true;
+    });
     when(storage.refresh(any, any, any)).thenAnswer((call) async => (call.positionalArguments[2] as Future<void> Function())());
     when(cache.execute(any, any, ownerId: anyNamed('ownerId'))).thenAnswer((_) async => {'cacheScope': current.cacheScope, 'month': '2026-11-01', 'months': <String,Object?>{}});
     container = ProviderContainer(overrides: [
