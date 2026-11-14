@@ -311,6 +311,7 @@ void main() {
     storage.pending = old;
     await flush();
     container.updateOverrides([
+      calendarWidgetGroupsChangedProvider.overrideWithValue(() async { widgetUpdates++; }),
       calendarSettingsOwnerProvider.overrideWithValue('online:other'),
       calendarSettingsMemberIdProvider.overrideWithValue('other'),
       calendarGroupSettingsStorageProvider.overrideWithValue(storage),
