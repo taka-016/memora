@@ -614,7 +614,7 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                                     ),
                                   )
                                   .toList(),
-                              onChanged: state.isSaving || _groupId == null || inputState.isLoading || inputState.error.isNotEmpty
+                              onChanged: state.isSaving || movingSeries || _groupId == null || inputState.isLoading || inputState.error.isNotEmpty
                                   ? null
                                   : (value) { if (value != null) ref.read(calendarEventInputNotifierProvider(_session).notifier).selectLabel(value); },
                               validator: (value) =>
@@ -625,7 +625,7 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                               title: const Text('終日'),
                               value: _allDay,
                               onChanged:
-                                  state.isSaving || notificationSettings == null || _groupId == null || inputState.isLoading || inputState.error.isNotEmpty || inputState.group == null || !groups.groupsReady
+                                  state.isSaving || movingSeries || notificationSettings == null || _groupId == null || inputState.isLoading || inputState.error.isNotEmpty || inputState.group == null || !groups.groupsReady
                                   ? null
                                   : (value) => setState(() {
                                       _allDay = value;
@@ -643,7 +643,7 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                                     flex: 3,
                                     child: TextButton(
                                       style: dateInputStyle,
-                                      onPressed: state.isSaving
+                                      onPressed: state.isSaving || movingSeries
                                           ? null
                                           : () => _pick(start, false),
                                       child: Row(
@@ -670,7 +670,7 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                                           'calendar_${start ? 'start' : 'end'}_time',
                                         ),
                                         onPressed:
-                                            state.isSaving ||
+                                            state.isSaving || movingSeries ||
                                                 (start &&
                                                     preferences.value == null)
                                             ? null
@@ -684,12 +684,13 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                                     ),
                                 ],
                               ),
+                            if (movingSeries) const Text('系列全体の日時・繰り返し・取消情報を保持して移動します'),
                             ListTile(
                               contentPadding: EdgeInsets.zero,
                               title: const Text('繰り返し'),
                               subtitle: Text(_recurrence.summary),
                               trailing: const Icon(Icons.chevron_right),
-                              onTap: state.isSaving
+                              onTap: state.isSaving || movingSeries
                                   ? null
                                   : () async {
                                       final value =
