@@ -82,6 +82,7 @@ void main() {
     ]);
     container.listen(calendarGroupSettingsNotifierProvider, (_, _) {});
     await pumpEventQueue();
+    container.read(offlineBackupNotifierProvider);
     backup.begin();
     groups(['restored']);
     await flush();
@@ -155,7 +156,7 @@ void main() {
     await flush();
     expect(container.read(calendarGroupSettingsNotifierProvider).effectiveSettings.visibleGroupIds, {'a'});
     changes.add(null);
-    await flush();
+    await pumpEventQueue();
     expect(container.read(calendarGroupSettingsNotifierProvider).effectiveSettings.visibleGroupIds, isEmpty);
     container.dispose();
   });
