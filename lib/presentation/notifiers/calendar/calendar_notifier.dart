@@ -62,7 +62,7 @@ class CalendarNotifier extends _$CalendarNotifier {
       _eventsWaiting = cached?.waiting ?? false;
       state = state.copyWith(
         selectedDate: DateTime(day.year, day.month, day.day),
-        events: _expand(_series, day),
+        events: cached?.events ?? const [],
         hasLoadedEvents: cached?.series != null,
       );
       _receiveStatus(events: true, error: cached?.error ?? '');
@@ -210,7 +210,9 @@ class CalendarNotifier extends _$CalendarNotifier {
     final month = state.month;
     final previous = _months[month];
     if (previous != null && !restart) return;
-    final cached = _MonthEvents()..series = previous?.series;
+    final cached = _MonthEvents()
+      ..series = previous?.series
+      ..events = previous?.events ?? const [];
     _months[month] = cached;
     bool active() => ref.mounted && identical(_months[month], cached);
     if (previous != null) await previous.subscription?.cancel();
@@ -221,7 +223,7 @@ class CalendarNotifier extends _$CalendarNotifier {
       _series = cached.series ?? const [];
       _eventsWaiting = cached.waiting;
       state = state.copyWith(
-        events: _expand(_series, month),
+        events: cached.events,
         hasLoadedEvents: cached.series != null,
       );
       _receiveStatus(events: true, error: cached.error);
@@ -244,8 +246,9 @@ class CalendarNotifier extends _$CalendarNotifier {
           .listen((series) {
             if (!active()) return;
             try {
-              _expand(series, month);
+              final expanded = _expand(series, month);
               cached.series = series;
+              cached.events = expanded;
               cached.waiting = false;
               cached.error = '';
               publish();
@@ -453,6 +456,7 @@ class CalendarNotifier extends _$CalendarNotifier {
 class _MonthEvents {
   StreamSubscription<List<CalendarEventDto>>? subscription;
   List<CalendarEventDto>? series;
+  List<CalendarEventDto> events = const [];
   bool waiting = true;
   String error = '';
 }

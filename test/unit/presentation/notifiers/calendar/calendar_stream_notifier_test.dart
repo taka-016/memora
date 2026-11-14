@@ -213,8 +213,10 @@ void main() {
     for (var round = 0; round < 3; round++) {
       for (var offset = 0; offset < 10; offset++) {
         notifier.selectDate(DateTime(2026, 10 + offset, 2));
-        expect(container.read(provider).events.single.title,
-            offset == 0 ? '非表示月の更新' : '月$offset');
+        expect(
+          container.read(provider).events.single.title,
+          offset == 0 ? '非表示月の更新' : '月$offset',
+        );
         expect(container.read(provider).isLoading, isFalse);
         expect(container.read(provider).hasLoadedEvents, isTrue);
         expect(notifier.seriesForEvent(event.id), isNotNull);
