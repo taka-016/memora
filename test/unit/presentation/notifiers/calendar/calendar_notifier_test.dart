@@ -116,6 +116,15 @@ void main() {
     container.listen(provider, (_, _) {});
     addTearDown(container.dispose);
   });
+  test('再構築後の月移動で取得前の内部キャッシュを再表示しない', () async {
+    final old = event.copyWith(startDateTime: DateTime(2026, 11, 1), endDateTime: DateTime(2026, 11, 2));
+    when(events.execute(any, period: anyNamed('period'))).thenAnswer((_) async => [old]);
+    await container.read(provider.notifier).load();
+    container.invalidate(provider);
+    container.read(provider.notifier).selectDate(DateTime(2026, 11, 1));
+    expect(container.read(provider).events, isEmpty);
+    expect(container.read(provider.notifier).seriesForEvent(old.id), isNull);
+  });
   test('予定の作成・更新・削除の成功後にウィジェットを更新する', () async {
     await container.read(provider.notifier).load();
     when(create.execute(any)).thenAnswer((_) async {
