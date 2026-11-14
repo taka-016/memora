@@ -220,7 +220,7 @@ void main() {
     final source = event(id: 'event').copyWith(recurrenceRule: 'FREQ=DAILY;COUNT=10', timeZone: 'Asia/Tokyo', overrides: [CalendarEventOverride(originalStartDateTime: DateTime.utc(2026, 10, 2, 12, 34, 56, 123, 456))]);
     final overrideId = FirestoreCalendarEventOverrideMapper.documentId('event', source.overrides.single, false);
     when(eventDoc.id).thenReturn('event');
-    when(eventDoc.data()).thenReturn({...FirestoreCalendarEventMapper.toFirestore(source), 'overrideIds': [overrideId]});
+    when(eventDoc.data()).thenReturn({...FirestoreCalendarEventMapper.toFirestore(source), 'version': 1, 'overrideIds': [overrideId]});
     final overrideDoc = MockDocumentSnapshot();
     when(overrideDoc.exists).thenReturn(true);
     when(overrideDoc.data()).thenReturn(FirestoreCalendarEventOverrideMapper.toFirestore(source.overrides.single, eventId: 'event', groupId: 'group', parentAllDay: false, parentDuration: source.duration));
