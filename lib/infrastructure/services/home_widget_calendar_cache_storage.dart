@@ -11,6 +11,13 @@ class HomeWidgetCalendarCacheStorage {
   const HomeWidgetCalendarCacheStorage();
 
   static const cacheKey = 'memora_widget_calendar_cache';
+  static const scopeKey = 'memora_widget_calendar_scope';
+
+  Future<void> setScope(String? scope) async {
+    await HomeWidget.saveWidgetData<String>(scopeKey, scope);
+    await update();
+  }
+
   static const selectedDateKey = 'memora_widget_calendar_selected_date';
   static const qualifiedAndroidName =
       'com.example.memora.CalendarWidgetReceiver';
@@ -106,6 +113,7 @@ class HomeWidgetCalendarCacheStorage {
   }
 
   Future<void> clear() async {
+    await HomeWidget.saveWidgetData<String>(scopeKey, null);
     await HomeWidget.saveWidgetData<String>(cacheKey, null);
     await HomeWidget.saveWidgetData<String>(selectedDateKey, null);
   }

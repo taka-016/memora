@@ -48,7 +48,7 @@ final class AndroidWidgetCalendarLaunchDestination
     this.occurrence,
     required this.groups,
   });
-  final String groupId;
+  final String? groupId;
   final int requestId;
   final DateTime? date;
   final bool create;
@@ -237,8 +237,7 @@ class AndroidWidgetLaunchNotifier extends Notifier<AndroidWidgetLaunchState> {
 
   bool _isCalendarLaunchUri(Uri? uri) =>
       uri?.scheme.toLowerCase() == _launchScheme &&
-      uri?.host.toLowerCase() == 'opencalendar' &&
-      (uri?.queryParameters['groupId']?.isNotEmpty ?? false);
+      uri?.host.toLowerCase() == 'opencalendar';
 
   void _acceptCalendarLaunch(Uri uri, {bool? isInitialUriLoading}) {
     _requestVersion++;
@@ -293,8 +292,8 @@ class AndroidWidgetLaunchNotifier extends Notifier<AndroidWidgetLaunchState> {
         final groups = await ref
             .read(getGroupsWithMembersUsecaseProvider)
             .execute(member);
-        final groupId = calendarUri.queryParameters['groupId']!;
-        if (groups.any((group) => group.id == groupId)) {
+        final groupId = calendarUri.queryParameters['groupId'];
+        if (groupId == null || groupId.isEmpty || groups.any((group) => group.id == groupId)) {
           resolution = AndroidWidgetCalendarLaunchDestination(
             requestId: version,
             memberId: member.id,
