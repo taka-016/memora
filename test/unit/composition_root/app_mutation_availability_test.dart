@@ -45,7 +45,7 @@ void main() {
     await tester.pump();
     final saving = container.read(groupRepositoryProvider).updateGroup(group);
     var transactionStarted = false;
-    final transaction = container.read(writeTransactionProvider).run((_) async {
+    final transaction = container.read(writeTransactionProvider).run<void>((_) async {
       transactionStarted = true;
     });
     await tester.pump();
@@ -57,7 +57,7 @@ void main() {
     await transaction;
     expect(store.rows['groups/g']!['name'], '変更後');
     expect(transactionStarted, isTrue);
-    await container.read(writeTransactionProvider).run((_) async {});
+    await container.read(writeTransactionProvider).run<void>((_) async {});
     verify(check.execute()).called(1);
   });
 
@@ -75,7 +75,7 @@ void main() {
       );
       var entered = false;
       await expectLater(
-        container.read(writeTransactionProvider).run((_) async {
+        container.read(writeTransactionProvider).run<void>((_) async {
           entered = true;
         }),
         throwsA(isA<ApplicationValidationException>()),
