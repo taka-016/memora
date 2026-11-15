@@ -2,7 +2,8 @@ import 'package:memora/composition_root/calendar_notification_background.dart';
 import 'package:memora/infrastructure/services/offline_app_services.dart';
 import 'package:memora/composition_root/android_widget_composition_root.dart';
 import 'package:memora/application/models/app_mode.dart';
-import 'package:memora/infrastructure/services/shared_preferences_app_mode_storage.dart';
+import 'package:memora/application/services/app_mode_resolver.dart';
+import 'package:memora/infrastructure/config/app_mode_build_configuration.dart';
 import 'package:memora/application/usecases/android_widget/android_widget_background_update.dart';
 
 import 'dart:async';
@@ -46,9 +47,9 @@ Future<void> registerAndroidWidgetPeriodicUpdateTask(Duration frequency) async {
   if (!Platform.isAndroid) {
     return;
   }
-  final mode = await const SharedPreferencesAppModeStorage()
-      .loadForCurrentBuild();
-  if (mode == null) return;
+  final mode = const AppModeResolver().resolve(
+    forcedMode: AppModeBuildConfiguration.fromEnvironment().forcedMode,
+  );
   final workmanager = Workmanager();
   await Future.wait([
     workmanager.cancelByUniqueName(_legacyShortUpdateFirstUniqueName),

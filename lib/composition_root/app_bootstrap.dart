@@ -6,14 +6,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/models/app_mode.dart';
-import 'package:memora/application/services/android_widget_cache_storage.dart';
 import 'package:memora/composition_root/app_composition_root.dart';
 import 'package:memora/composition_root/providers/android_widget_providers.dart';
 import 'package:memora/composition_root/providers/offline_backup_providers.dart';
 import 'package:memora/infrastructure/android_widget/android_widget_background_update.dart';
 import 'package:memora/infrastructure/android_widget/android_widget_interactivity_callback.dart';
-import 'package:memora/infrastructure/services/home_widget_android_widget_cache_storage.dart';
-import 'package:memora/infrastructure/services/shared_preferences_app_mode_storage.dart';
 
 Future<void> initializeAppDisplay() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,31 +19,11 @@ Future<void> initializeAppDisplay() async {
   ]);
 }
 
-Future<void> synchronizeAppModeAndAndroidWidgetCache(
-  AppMode mode, {
-  SharedPreferencesAppModeStorage modeStorage =
-      const SharedPreferencesAppModeStorage(),
-  AndroidWidgetCacheStorage cacheStorage =
-      const HomeWidgetAndroidWidgetCacheStorage(),
-}) async {
-  final storedMode = await modeStorage.loadState();
-  final previousMode = storedMode.mode;
-  final shouldClearCache = previousMode == null
-      ? storedMode.hasValue || mode == AppMode.offline
-      : previousMode != mode;
-  if (shouldClearCache) {
-    await cacheStorage.clear();
-    await cacheStorage.updateWidget();
-  }
-  await modeStorage.save(mode);
-}
-
 Future<void> launchApp(Widget app) async {
   final root = AppCompositionRoot.fromBuildConfiguration();
   await runZonedGuarded<Future<void>>(
     () async {
       await initializeAppDisplay();
-      await synchronizeAppModeAndAndroidWidgetCache(root.mode);
       final container = root.createContainer();
       try {
         await root.initialize(availabilityContainer: container);

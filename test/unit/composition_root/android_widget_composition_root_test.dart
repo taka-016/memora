@@ -33,7 +33,7 @@ void main() {
   });
 
   test(
-    '保存済みオフラインモードでSQLiteの旅程を定期更新と操作へ注入する',
+    'オフラインビルドでSQLiteの旅程を定期更新と操作へ注入する',
     skip: buildMode != AppMode.offline,
     () async {
       final database = OfflineDatabase(NativeDatabase.memory());
@@ -194,42 +194,34 @@ void main() {
     expect(restoreStarted, isTrue);
   });
 
-  test('APK更新前のモードが残っていても外部SDKやDBの初期化前に拒否する', () async {
-    final oldMode = buildMode == AppMode.offline ? 'online' : 'offline';
-    SharedPreferences.setMockInitialValues({'resolved_app_mode': oldMode});
-    var opened = false;
-    await expectLater(
-      withAndroidWidgetDependencies(
-        (refresh, handler, _) async {
-          fail('旧モードの更新処理を実行しない');
-        },
-        createOfflineDatabase: () {
-          opened = true;
-          return MockOfflineDatabase();
-        },
-      ),
-      throwsStateError,
-    );
-    expect(opened, isFalse);
-  });
+  for (final savedMode in [null, 'online', 'unknown']) {
+    test(
+      '保存済みモードが$savedModeでもオフラインビルドのウィジェットを更新する',
+      skip: buildMode != AppMode.offline,
+      () async {
+        SharedPreferences.setMockInitialValues({
+          'resolved_app_mode': ?savedMode,
+        });
+        final database = OfflineDatabase(NativeDatabase.memory());
+        var actionCalled = false;
 
-  test('モード未保存ならFirebaseやDBを初期化せず更新を拒否する', () async {
-    SharedPreferences.setMockInitialValues({});
-    var opened = false;
-    await expectLater(
-      withAndroidWidgetDependencies(
-        (refresh, handler, _) async {
-          fail('更新処理を実行しない');
-        },
-        createOfflineDatabase: () {
-          opened = true;
-          return MockOfflineDatabase();
-        },
-      ),
-      throwsStateError,
+        await withAndroidWidgetDependencies(
+          (refresh, handler, _) async {
+            actionCalled = true;
+          },
+          createOfflineDatabase: () => database,
+          recoverPendingRestore: (_) async {},
+          retryPendingRestore: (_) async {},
+          operationLock: _TestOperationLock(),
+          cacheStorage: MockAndroidWidgetCacheStorage(),
+        );
+
+        expect(actionCalled, isTrue);
+        final preferences = await SharedPreferences.getInstance();
+        expect(preferences.getString('resolved_app_mode'), savedMode);
+      },
     );
-    expect(opened, isFalse);
-  });
+  }
 }
 
 class _TestOperationLock implements OfflineBackupRestoreOperationLock {
