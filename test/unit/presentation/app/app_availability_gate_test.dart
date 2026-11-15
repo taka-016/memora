@@ -183,6 +183,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 500));
     }
     expect(find.text('利用状況を確認できませんでした'), findsOneWidget);
+    expect(find.byType(TextField), findsNothing);
     when(check.execute()).thenAnswer((_) async => AppAvailability.available);
     await tester.tap(find.text('再確認'));
     await tester.pump();
