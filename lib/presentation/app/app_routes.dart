@@ -257,7 +257,8 @@ class _CalendarEventInputRoutePage extends ConsumerStatefulWidget {
       _CalendarEventInputRoutePageState();
 }
 
-class _CalendarEventInputRoutePageState extends ConsumerState<_CalendarEventInputRoutePage> {
+class _CalendarEventInputRoutePageState
+    extends ConsumerState<_CalendarEventInputRoutePage> {
   bool _started = false;
   late final DateTime _date = widget.date ?? ref.read(appClockProvider).now();
 
@@ -269,7 +270,9 @@ class _CalendarEventInputRoutePageState extends ConsumerState<_CalendarEventInpu
       return Center(
         child: settings.loadFailed
             ? TextButton(
-                onPressed: () => ref.read(calendarGroupSettingsNotifierProvider.notifier).reload(),
+                onPressed: () => ref
+                    .read(calendarGroupSettingsNotifierProvider.notifier)
+                    .reload(),
                 child: Text(settings.error),
               )
             : const CircularProgressIndicator(),
@@ -277,8 +280,10 @@ class _CalendarEventInputRoutePageState extends ConsumerState<_CalendarEventInpu
     }
     return CalendarEventInputPage(
       date: _date,
-      onSaved: (savedDay) => CalendarRoute(date: savedDay.toIso8601String()).go(context),
-      onCancelled: () => CalendarRoute(date: _date.toIso8601String()).go(context),
+      onSaved: (savedDay) =>
+          CalendarRoute(date: savedDay.toIso8601String()).go(context),
+      onCancelled: () =>
+          CalendarRoute(date: _date.toIso8601String()).go(context),
     );
   }
 }

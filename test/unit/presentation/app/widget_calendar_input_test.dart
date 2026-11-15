@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:memora/application/models/calendar_group_settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -45,7 +46,10 @@ class _MembershipInputSettings extends TestCalendarGroupSettingsNotifier {
     await saving;
     state = state.copyWith(
       isSaving: false,
-      settings: CalendarGroupSettings(visibleGroupIds: {'g1'}, defaultGroupId: 'g1'),
+      settings: CalendarGroupSettings(
+        visibleGroupIds: {'g1'},
+        defaultGroupId: 'g1',
+      ),
     );
   }
 }
@@ -140,12 +144,22 @@ void main() {
           final pendingSave = Completer<void>();
           final join = settings.joinFirstGroup(pendingSave.future);
           await tester.pump();
-          expect(find.widgetWithText(TextFormField, 'ウィジェットから追加'), findsOneWidget);
+          expect(
+            find.widgetWithText(TextFormField, 'ウィジェットから追加'),
+            findsOneWidget,
+          );
           pendingSave.complete();
           await join;
           await tester.pumpAndSettle();
-          expect(find.widgetWithText(TextFormField, 'ウィジェットから追加'), findsOneWidget);
-          final groupField = find.byWidgetPredicate((widget) => widget is DropdownButtonFormField<String> && widget.decoration.labelText == '保存先グループ');
+          expect(
+            find.widgetWithText(TextFormField, 'ウィジェットから追加'),
+            findsOneWidget,
+          );
+          final groupField = find.byWidgetPredicate(
+            (widget) =>
+                widget is DropdownButtonFormField<String> &&
+                widget.decoration.labelText == '保存先グループ',
+          );
           await tester.tap(groupField);
           await tester.pumpAndSettle();
           await tester.tap(find.text('家族').last);
