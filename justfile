@@ -84,6 +84,7 @@ ssh-key *args:
   bash scripts/dev/generate_ssh_public_key.sh "$@"
 
 alias sm := sync-main
+alias sc := setup-cloud
 
 # mainを更新し、追跡先が削除されたローカルブランチを整理する
 sync-main:
