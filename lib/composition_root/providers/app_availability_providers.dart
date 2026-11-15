@@ -1,3 +1,4 @@
+import 'package:memora/presentation/notifiers/app_availability/app_availability_notifier.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -19,3 +20,11 @@ final checkAppAvailabilityUsecaseProvider =
             int.parse((await PackageInfo.fromPlatform()).buildNumber),
       );
     });
+
+final ensureAppAvailableForMutationProvider = Provider<Future<void> Function()>(
+  (ref) {
+    if (ref.watch(appModeProvider) == AppMode.offline) return () async {};
+    return () =>
+        ref.read(appAvailabilityNotifierProvider.notifier).ensureAvailable();
+  },
+);

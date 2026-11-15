@@ -1,3 +1,5 @@
+import 'package:memora/application/decorators/guarded_write_transaction.dart';
+import 'package:memora/composition_root/providers/app_availability_providers.dart';
 import 'package:memora/composition_root/providers/offline_database_provider.dart';
 import 'package:memora/infrastructure/transactions/sqlite_write_transaction.dart';
 import 'package:memora/application/models/app_mode.dart';
@@ -35,8 +37,11 @@ class TransactionFactory {
 
   static T _createFirestoreTransaction<T>({required Ref ref}) {
     if (T == WriteTransaction) {
-      return FirestoreWriteTransaction(
-        firestore: ref.watch(firebaseFirestoreProvider),
+      return GuardedWriteTransaction(
+        FirestoreWriteTransaction(
+          firestore: ref.watch(firebaseFirestoreProvider),
+        ),
+        ref.watch(ensureAppAvailableForMutationProvider),
       ) as T;
     }
     throw ArgumentError('Unknown transaction type: $T');

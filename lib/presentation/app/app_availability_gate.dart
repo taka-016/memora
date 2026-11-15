@@ -47,8 +47,7 @@ class _AppAvailabilityGateState extends ConsumerState<AppAvailabilityGate>
 
   void _maybeAllowFirstFrame() {
     if (!_firstFrameDeferred || !mounted) return;
-    if (ref.read(appAvailabilityNotifierProvider).isChecking ||
-        ref.read(themeSettingsNotifierProvider).isLoading) {
+    if (ref.read(themeSettingsNotifierProvider).isLoading) {
       return;
     }
     _allowFirstFrame();
@@ -69,21 +68,17 @@ class _AppAvailabilityGateState extends ConsumerState<AppAvailabilityGate>
 
   @override
   Future<bool> didPopRoute() async =>
-      !ref.read(appAvailabilityNotifierProvider).canUseApp;
+      ref.read(appAvailabilityNotifierProvider).isBlocked;
 
   @override
   bool handleStartBackGesture(PredictiveBackEvent backEvent) =>
-      !ref.read(appAvailabilityNotifierProvider).canUseApp;
+      ref.read(appAvailabilityNotifierProvider).isBlocked;
 
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(appAvailabilityNotifierProvider);
     final themeState = ref.watch(themeSettingsNotifierProvider);
-    if (state.canUseApp && !themeState.isLoading) _started = true;
-    final isCheckingAvailableApp =
-        _started &&
-        state.isChecking &&
-        state.availability == AppAvailability.available;
+    if (!themeState.isLoading) _started = true;
     final message = state.hasError
         ? '利用状況を確認できませんでした'
         : switch (state.availability) {
@@ -91,79 +86,120 @@ class _AppAvailabilityGateState extends ConsumerState<AppAvailabilityGate>
             AppAvailability.maintenance => 'メンテナンス中です',
             _ => null,
           };
-    return Stack(
+    return Directionality(
       textDirection: TextDirection.ltr,
-      children: [
-        if (_started)
-          Offstage(
-            offstage: !state.canUseApp && !isCheckingAvailableApp,
-            child: AbsorbPointer(
-              absorbing: !state.canUseApp,
-              child: TickerMode(
-                enabled: state.canUseApp,
-                child: ExcludeFocus(
-                  excluding: !state.canUseApp,
-                  child: widget.child,
+      child: Stack(
+        children: [
+          if (_started)
+            Offstage(
+              offstage: state.isBlocked,
+              child: AbsorbPointer(
+                absorbing: state.isBlocked,
+                child: TickerMode(
+                  enabled: !state.isBlocked,
+                  child: ExcludeFocus(
+                    excluding: state.isBlocked,
+                    child: widget.child,
+                  ),
                 ),
               ),
             ),
-          ),
-        if (!_started || (!state.canUseApp && !isCheckingAvailableApp))
-          MaterialApp(
-            theme: buildAppTheme(Brightness.light),
-            darkTheme: buildAppTheme(Brightness.dark),
-            themeMode: resolveAppThemeMode(themeState.value?.mode),
-            themeAnimationDuration: Duration.zero,
-            home: Scaffold(
-              body: SafeArea(
-                child: Center(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (message != null) ...[
-                          Text(
-                            message,
-                            style: const TextStyle(fontSize: 22),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 16),
-                        ],
-                        if (state.availability ==
-                            AppAvailability.updateRequired)
-                          const Text(
-                            '配布元から最新版に更新してください。',
-                            textAlign: TextAlign.center,
-                          ),
-                        if (state.availability == AppAvailability.maintenance)
-                          const Text(
-                            'しばらく待ってから再確認してください。',
-                            textAlign: TextAlign.center,
-                          ),
-                        if (state.hasError)
-                          const Text(
-                            '通信環境を確認して再確認してください。',
-                            textAlign: TextAlign.center,
-                          ),
-                        if (message != null) const SizedBox(height: 16),
-                        if (state.isChecking || themeState.isLoading)
-                          const CircularProgressIndicator()
-                        else
-                          FilledButton(
+          if (_started && state.hasError && !state.isBlocked)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: Theme(
+                data: buildAppTheme(
+                  resolveAppThemeMode(themeState.value?.mode) ==
+                              ThemeMode.dark ||
+                          (resolveAppThemeMode(themeState.value?.mode) ==
+                                  ThemeMode.system &&
+                              MediaQuery.platformBrightnessOf(context) ==
+                                  Brightness.dark)
+                      ? Brightness.dark
+                      : Brightness.light,
+                ),
+                child: Material(
+                  child: SafeArea(
+                    top: false,
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Row(
+                        children: [
+                          const Expanded(child: Text('利用状況を確認できませんでした')),
+                          TextButton(
                             onPressed: () => ref
                                 .read(appAvailabilityNotifierProvider.notifier)
                                 .refresh(),
                             child: const Text('再確認'),
                           ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
-      ],
+          if (!_started || state.isBlocked)
+            MaterialApp(
+              theme: buildAppTheme(Brightness.light),
+              darkTheme: buildAppTheme(Brightness.dark),
+              themeMode: resolveAppThemeMode(themeState.value?.mode),
+              themeAnimationDuration: Duration.zero,
+              home: Scaffold(
+                body: SafeArea(
+                  child: Center(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (message != null) ...[
+                            Text(
+                              message,
+                              style: const TextStyle(fontSize: 22),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 16),
+                          ],
+                          if (state.availability ==
+                              AppAvailability.updateRequired)
+                            const Text(
+                              '配布元から最新版に更新してください。',
+                              textAlign: TextAlign.center,
+                            ),
+                          if (state.availability == AppAvailability.maintenance)
+                            const Text(
+                              'しばらく待ってから再確認してください。',
+                              textAlign: TextAlign.center,
+                            ),
+                          if (state.hasError)
+                            const Text(
+                              '通信環境を確認して再確認してください。',
+                              textAlign: TextAlign.center,
+                            ),
+                          if (message != null) const SizedBox(height: 16),
+                          if (state.isChecking || themeState.isLoading)
+                            const CircularProgressIndicator()
+                          else
+                            FilledButton(
+                              onPressed: () => ref
+                                  .read(
+                                    appAvailabilityNotifierProvider.notifier,
+                                  )
+                                  .refresh(),
+                              child: const Text('再確認'),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

@@ -1,3 +1,5 @@
+import 'package:memora/application/decorators/guarded_repositories.dart';
+import 'package:memora/composition_root/providers/app_availability_providers.dart';
 import 'package:memora/infrastructure/repositories/calendar/firestore_calendar_label_repository.dart';
 import 'package:memora/infrastructure/repositories/calendar/firestore_calendar_event_repository.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
@@ -94,7 +96,10 @@ class RepositoryFactory {
   }) {
     switch (mode) {
       case AppMode.online:
-        return _createFirestoreRepository<T>(ref: ref);
+        return guardRepository<T>(
+          _createFirestoreRepository<T>(ref: ref),
+          ref.watch(ensureAppAvailableForMutationProvider),
+        );
       case AppMode.offline:
         if (T == CalendarLabelRepository) {
           return SqliteCalendarLabelRepository(
