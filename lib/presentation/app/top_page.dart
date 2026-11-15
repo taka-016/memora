@@ -209,6 +209,7 @@ class TopPage extends HookConsumerWidget {
       },
       child: Scaffold(
         key: scaffoldKey,
+        resizeToAvoidBottomInset: selectedItem != AppNavigationItem.calendar,
         onDrawerChanged: (isOpened) {
           isDrawerOpen.value = isOpened;
           if (isOpened) {
