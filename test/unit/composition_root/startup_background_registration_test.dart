@@ -15,7 +15,7 @@ void main() {
   late StartupBackgroundRegistration registration;
   Future<void> Function()? widgetRegistration;
 
-  setUp(() {
+  void prepare() {
     registered = {};
     calls = [];
     errors = [];
@@ -37,9 +37,10 @@ void main() {
         await widgetRegistration?.call();
       },
     );
-  });
+  }
 
   testWidgets('未登録は表示後の遅延を待たず初期化後に登録し成功した機能を記録する', (tester) async {
+    prepare();
     final running = registration.start(
       waitBeforeReregistration: () => delay.future,
       onError: errors.add,
@@ -55,6 +56,7 @@ void main() {
   });
 
   testWidgets('登録済みは初回画面表示後の遅延まで待ち最新の設定で再登録する', (tester) async {
+    prepare();
     registered.addAll(['notifications', 'widget']);
     final running = registration.start(
       waitBeforeReregistration: () => delay.future,
@@ -71,6 +73,7 @@ void main() {
   });
 
   testWidgets('一方が失敗しても他方は登録し失敗機能は次回起動で遅延せず再試行する', (tester) async {
+    prepare();
     widgetRegistration = () async => throw TestException('ウィジェット登録失敗');
     initialize.complete();
     await registration.start(
@@ -94,6 +97,7 @@ void main() {
   });
 
   testWidgets('設定変更の登録は進行中の起動登録の後で実行し古い間隔を最後に残さない', (tester) async {
+    prepare();
     initialize.complete();
     final first = Completer<void>();
     widgetRegistration = () => first.future;
@@ -113,6 +117,7 @@ void main() {
   });
 
   testWidgets('初期化失敗は両機能のエラーにして登録済みを残さず再試行できる', (tester) async {
+    prepare();
     final running = registration.start(
       waitBeforeReregistration: () => delay.future,
       onError: errors.add,
