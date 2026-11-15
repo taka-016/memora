@@ -231,32 +231,9 @@ class CalendarRoute extends GoRouteData with $CalendarRoute {
   @override
   Widget build(BuildContext context, GoRouterState state) {
     if (create) {
-      return Consumer(
-        builder: (context, ref, _) {
-          final settings = ref.watch(calendarGroupSettingsNotifierProvider);
-          if (!settings.canUseSettings) {
-            return Center(
-              child: settings.loadFailed
-                  ? TextButton(
-                      onPressed: () => ref
-                          .read(calendarGroupSettingsNotifierProvider.notifier)
-                          .reload(),
-                      child: Text(settings.error),
-                    )
-                  : const CircularProgressIndicator(),
-            );
-          }
-          final day =
-              DateTime.tryParse(date ?? '') ?? ref.read(appClockProvider).now();
-          return CalendarEventInputPage(
-            key: ValueKey(request),
-            date: day,
-            onSaved: (savedDay) =>
-                CalendarRoute(date: savedDay.toIso8601String()).go(context),
-            onCancelled: () =>
-                CalendarRoute(date: day.toIso8601String()).go(context),
-          );
-        },
+      return _CalendarEventInputRoutePage(
+        key: ValueKey(request),
+        date: DateTime.tryParse(date ?? ''),
       );
     }
     return Material(
@@ -267,6 +244,41 @@ class CalendarRoute extends GoRouteData with $CalendarRoute {
         initialEventId: eventId,
         initialOccurrence: DateTime.tryParse(occurrence ?? ''),
       ),
+    );
+  }
+}
+
+class _CalendarEventInputRoutePage extends ConsumerStatefulWidget {
+  const _CalendarEventInputRoutePage({super.key, this.date});
+  final DateTime? date;
+
+  @override
+  ConsumerState<_CalendarEventInputRoutePage> createState() =>
+      _CalendarEventInputRoutePageState();
+}
+
+class _CalendarEventInputRoutePageState extends ConsumerState<_CalendarEventInputRoutePage> {
+  bool _started = false;
+  late final DateTime _date = widget.date ?? ref.read(appClockProvider).now();
+
+  @override
+  Widget build(BuildContext context) {
+    final settings = ref.watch(calendarGroupSettingsNotifierProvider);
+    if (settings.canUseSettings) _started = true;
+    if (!_started) {
+      return Center(
+        child: settings.loadFailed
+            ? TextButton(
+                onPressed: () => ref.read(calendarGroupSettingsNotifierProvider.notifier).reload(),
+                child: Text(settings.error),
+              )
+            : const CircularProgressIndicator(),
+      );
+    }
+    return CalendarEventInputPage(
+      date: _date,
+      onSaved: (savedDay) => CalendarRoute(date: savedDay.toIso8601String()).go(context),
+      onCancelled: () => CalendarRoute(date: _date.toIso8601String()).go(context),
     );
   }
 }
