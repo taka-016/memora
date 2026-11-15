@@ -14,7 +14,6 @@ import 'package:memora/application/usecases/account/logout_usecase.dart';
 import 'package:memora/application/usecases/account/observe_auth_state_changes_usecase.dart';
 import 'package:memora/application/usecases/account/send_email_verification_usecase.dart';
 import 'package:memora/application/usecases/account/signup_usecase.dart';
-import 'package:memora/application/usecases/account/validate_current_user_token_usecase.dart';
 import 'package:memora/application/usecases/member/get_member_by_account_id_usecase.dart';
 import 'package:memora/application/usecases/member/create_member_from_user_usecase.dart';
 import 'package:memora/application/usecases/member/accept_invitation_usecase.dart';
@@ -33,8 +32,6 @@ class AuthNotifier extends Notifier<AuthState> {
 
   ObserveAuthStateChangesUseCase get observeAuthStateChangesUseCase =>
       ref.read(observeAuthStateChangesUseCaseProvider);
-  ValidateCurrentUserTokenUseCase get validateCurrentUserTokenUseCase =>
-      ref.read(validateCurrentUserTokenUseCaseProvider);
   SendEmailVerificationUseCase get sendEmailVerificationUseCase =>
       ref.read(sendEmailVerificationUseCaseProvider);
   GetCurrentUserUseCase get getCurrentUserUseCase =>

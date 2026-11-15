@@ -9,7 +9,6 @@ import 'package:memora/application/usecases/account/send_email_verification_usec
 import 'package:memora/application/usecases/account/signup_usecase.dart';
 import 'package:memora/application/usecases/account/update_email_usecase.dart';
 import 'package:memora/application/usecases/account/update_password_usecase.dart';
-import 'package:memora/application/usecases/account/validate_current_user_token_usecase.dart';
 import 'package:memora/composition_root/providers/android_widget_providers.dart';
 import 'package:memora/infrastructure/factories/auth_service_factory.dart';
 
@@ -61,10 +60,3 @@ final updateEmailUseCaseProvider = Provider<UpdateEmailUseCase>((ref) {
 final updatePasswordUseCaseProvider = Provider<UpdatePasswordUseCase>((ref) {
   return UpdatePasswordUseCase(authService: ref.watch(authServiceProvider));
 });
-
-final validateCurrentUserTokenUseCaseProvider =
-    Provider<ValidateCurrentUserTokenUseCase>((ref) {
-      return ValidateCurrentUserTokenUseCase(
-        authService: ref.watch(authServiceProvider),
-      );
-    });

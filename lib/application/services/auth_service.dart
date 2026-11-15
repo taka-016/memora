@@ -22,8 +22,6 @@ abstract class AuthService implements CurrentUserService {
 
   Future<void> reauthenticate({required String password});
 
-  Future<void> validateCurrentUserToken();
-
   Future<void> sendEmailVerification();
 
   Stream<User?> get authStateChanges;

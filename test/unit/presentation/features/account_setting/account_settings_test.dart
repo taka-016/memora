@@ -95,9 +95,6 @@ class _TestAuthService implements AuthService {
       await behavior();
     }
   }
-
-  @override
-  Future<void> validateCurrentUserToken() async {}
 }
 
 Widget _buildTestApp(Widget child, {_TestAuthService? authService}) {

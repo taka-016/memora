@@ -20,11 +20,9 @@ void main() {
     final controller = StreamController<UserDto?>();
     addTearDown(controller.close);
     final observe = MockObserveAuthStateChangesUseCase();
-    final validate = MockValidateCurrentUserTokenUseCase();
     final query = MockMemberQueryService();
     final current = MockGetCurrentMemberUseCase();
     when(observe.execute()).thenAnswer((_) => controller.stream);
-    when(validate.execute()).thenAnswer((_) async {});
     var account = 'a';
     when(query.getMemberByAccountId(any)).thenAnswer(
       (call) async => MemberDto(
@@ -37,7 +35,6 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         observeAuthStateChangesUseCaseProvider.overrideWithValue(observe),
-        validateCurrentUserTokenUseCaseProvider.overrideWithValue(validate),
         memberQueryServiceProvider.overrideWithValue(query),
         getCurrentMemberUsecaseProvider.overrideWithValue(current),
       ],

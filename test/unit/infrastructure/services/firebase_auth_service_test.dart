@@ -163,69 +163,6 @@ void main() {
       );
     });
 
-    test('現在のユーザーが存在し、トークンが有効な場合は正常に完了', () async {
-      when(mockFirebaseAuth.currentUser).thenReturn(mockFirebaseUser);
-      when(mockFirebaseUser.getIdToken(true))
-          .thenAnswer((_) async => 'valid-token');
-
-      await firebaseAuthService.validateCurrentUserToken();
-
-      verify(mockFirebaseUser.getIdToken(true)).called(1);
-    });
-
-    test('現在のユーザーが存在しない場合は例外をスロー', () async {
-      when(mockFirebaseAuth.currentUser).thenReturn(null);
-
-      expect(
-        () => firebaseAuthService.validateCurrentUserToken(),
-        throwsA(
-          isA<Exception>().having(
-            (e) => e.toString(),
-            'message',
-            contains('ユーザーがログインしていません'),
-          ),
-        ),
-      );
-    });
-
-    test('トークンの取得に失敗した場合は例外をスロー', () async {
-      AppLogger.suppressLogging(true);
-
-      when(mockFirebaseAuth.currentUser).thenReturn(mockFirebaseUser);
-      when(mockFirebaseUser.getIdToken(true))
-          .thenThrow(FirebaseAuthException(code: 'network-request-failed'));
-
-      expect(
-        () => firebaseAuthService.validateCurrentUserToken(),
-        throwsA(
-          isA<Exception>().having(
-            (e) => e.toString(),
-            'message',
-            contains('ネットワークエラーが発生しました。通信環境を確認してください。'),
-          ),
-        ),
-      );
-    });
-
-    test('トークンが期限切れの場合は例外をスロー', () async {
-      AppLogger.suppressLogging(true);
-
-      when(mockFirebaseAuth.currentUser).thenReturn(mockFirebaseUser);
-      when(mockFirebaseUser.getIdToken(true))
-          .thenThrow(FirebaseAuthException(code: 'invalid-credential'));
-
-      expect(
-        () => firebaseAuthService.validateCurrentUserToken(),
-        throwsA(
-          isA<Exception>().having(
-            (e) => e.toString(),
-            'message',
-            contains('認証情報が無効または期限切れです。やり直してください。'),
-          ),
-        ),
-      );
-    });
-
     test('認証状態の変更を監視できる', () {
       when(mockFirebaseAuth.authStateChanges())
           .thenAnswer((_) => Stream.value(mockFirebaseUser));

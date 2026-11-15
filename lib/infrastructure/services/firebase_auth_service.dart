@@ -142,28 +142,6 @@ class FirebaseAuthService implements AuthService {
   }
 
   @override
-  Future<void> validateCurrentUserToken() async {
-    final currentUser = _firebaseAuth.currentUser;
-    if (currentUser == null) {
-      throw Exception('ユーザーがログインしていません');
-    }
-
-    try {
-      // forceRefresh: trueでサーバーからトークンを強制取得
-      // トークンが期限切れの場合、ここで例外が発生する
-      await currentUser.getIdToken(true);
-    } on FirebaseAuthException catch (e, stack) {
-      final message = FirebaseErrorMapper.getFirebaseErrorMessage(e);
-      logger.e(
-        'FirebaseAuthService.validateCurrentUserToken: $message',
-        error: e,
-        stackTrace: stack,
-      );
-      throw Exception(message);
-    }
-  }
-
-  @override
   Future<void> sendEmailVerification() async {
     final currentUser = _firebaseAuth.currentUser;
     if (currentUser == null) {
