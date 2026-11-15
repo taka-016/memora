@@ -249,10 +249,12 @@ class TopPage extends HookConsumerWidget {
               )
             : shouldHideForAndroidWidgetLaunch
             ? const Center(child: CircularProgressIndicator())
-            : MediaQuery.removeViewInsets(
-                context: context,
-                removeBottom: !isCurrentRoute,
-                child: child,
+            : Builder(
+                builder: (bodyContext) => MediaQuery.removeViewInsets(
+                  context: bodyContext,
+                  removeBottom: !isCurrentRoute,
+                  child: child,
+                ),
               ),
       ),
     );
