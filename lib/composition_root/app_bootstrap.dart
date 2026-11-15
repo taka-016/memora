@@ -47,7 +47,9 @@ Future<void> launchApp(Widget app) async {
     () async {
       await initializeAppDisplay();
       await synchronizeAppModeAndAndroidWidgetCache(root.mode);
-      await root.initialize();
+      final container = root.createContainer();
+      try {
+      await root.initialize(availabilityContainer: container);
       FlutterError.onError = (details) {
         unawaited(
           root.services.log.recordError(details.exception, details.stack),
@@ -56,8 +58,6 @@ Future<void> launchApp(Widget app) async {
       registerAndroidWidgetInteractivityCallback();
       await initializeAndroidWidgetBackgroundUpdate();
       await registerCalendarNotificationBackgroundUpdate();
-      final container = root.createContainer();
-      try {
         if (root.mode == AppMode.offline) {
           try {
             await container
@@ -75,13 +75,14 @@ Future<void> launchApp(Widget app) async {
             .read(androidWidgetUpdateIntervalStorageProvider)
             .load();
         await registerAndroidWidgetPeriodicUpdateTask(interval.duration);
-      } finally {
-        container.dispose();
-      }
       root.services.log.i(
         'MEMORA_APP_MODE=${root.requestedValue ?? root.mode.name}, AppMode=${root.mode.name}',
       );
-      runApp(ProviderScope(overrides: root.overrides, child: app));
+      runApp(UncontrolledProviderScope(container: container, child: app));
+      } catch (_) {
+        container.dispose();
+        rethrow;
+      }
     },
     (error, stack) {
       unawaited(root.services.log.recordError(error, stack, fatal: true));

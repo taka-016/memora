@@ -1,3 +1,4 @@
+import 'package:memora/presentation/notifiers/app_availability/app_availability_notifier.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:memora/application/models/app_mode.dart';
@@ -41,10 +42,13 @@ class AppCompositionRoot {
   final String? requestedValue;
   final AppServices services;
 
-  Future<void> initialize() async {
+  Future<void> initialize({ProviderContainer? availabilityContainer}) async {
     logger = services.log;
     await Future.wait([
-      services.initialize(),
+      () async {
+        await services.initialize();
+        availabilityContainer?.read(appAvailabilityNotifierProvider);
+      }(),
       _synchronizeClock(),
     ]);
     logger = services.log;
