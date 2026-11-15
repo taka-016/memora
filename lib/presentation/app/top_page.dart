@@ -22,6 +22,7 @@ class TopPage extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isCurrentRoute = ModalRoute.isCurrentOf(context) ?? true;
     final authenticationAvailable = ref
         .watch(appCapabilitiesProvider)
         .availability(AppFeature.authentication)
@@ -209,7 +210,7 @@ class TopPage extends HookConsumerWidget {
       },
       child: Scaffold(
         key: scaffoldKey,
-        resizeToAvoidBottomInset: selectedItem != AppNavigationItem.calendar,
+        resizeToAvoidBottomInset: isCurrentRoute,
         onDrawerChanged: (isOpened) {
           isDrawerOpen.value = isOpened;
           if (isOpened) {
@@ -248,7 +249,11 @@ class TopPage extends HookConsumerWidget {
               )
             : shouldHideForAndroidWidgetLaunch
             ? const Center(child: CircularProgressIndicator())
-            : child,
+            : MediaQuery.removeViewInsets(
+                context: context,
+                removeBottom: !isCurrentRoute,
+                child: child,
+              ),
       ),
     );
   }
