@@ -15,9 +15,7 @@ void main() {
     const GroupListRoute().location,
     const AccountSettingsRoute().location,
   ]) {
-    testWidgets('$locationではダイアログ入力中も背後の表示領域を維持し閉じるとキーボード回避に戻る', (
-      tester,
-    ) async {
+    testWidgets('$locationではダイアログ終了後もキーボードが閉じるまで背後の表示領域を維持する', (tester) async {
       tester.view.devicePixelRatio = 1;
       tester.view.physicalSize = const Size(800, 1000);
       tester.view.padding = const FakeViewPadding(top: 24);
@@ -64,10 +62,21 @@ void main() {
       await tester.tap(find.text('閉じる'));
       await tester.pumpAndSettle();
 
-      expect(backgroundBounds().height, lessThan(initialBounds.height));
+      expect(backgroundBounds(), initialBounds);
+      for (final bottom in [200.0, 100.0]) {
+        tester.view.viewInsets = FakeViewPadding(bottom: bottom);
+        await tester.pump();
+        expect(backgroundBounds(), initialBounds);
+      }
       tester.view.resetViewInsets();
       await tester.pumpAndSettle();
       expect(backgroundBounds(), initialBounds);
+
+      tester.view.viewInsets = const FakeViewPadding(bottom: 300);
+      await tester.pumpAndSettle();
+      expect(backgroundBounds().height, lessThan(initialBounds.height));
+      tester.view.resetViewInsets();
+      await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
     });
   }
