@@ -133,18 +133,6 @@ class AuthNotifier extends Notifier<AuthState> {
       if (!_isLatestAuthStateChange(generation)) return;
       try {
         final stopwatch = Stopwatch()..start();
-        if (kDebugMode) logger.i('起動認証: トークン確認 開始');
-        await validateCurrentUserTokenUseCase.execute().timeout(
-          const Duration(seconds: 15),
-        );
-        if (kDebugMode) {
-          logger.i('起動認証: トークン確認 完了（${stopwatch.elapsedMilliseconds}ms）');
-        }
-        if (!_isLatestAuthStateChange(generation)) {
-          return;
-        }
-
-        stopwatch.reset();
         if (kDebugMode) logger.i('起動認証: メンバー存在確認 開始');
         final member = await getMemberByAccountIdUseCase
             .execute(user.id)
