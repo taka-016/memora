@@ -43,12 +43,18 @@ class AppCompositionRoot {
 
   Future<void> initialize() async {
     logger = services.log;
-    await services.initialize();
+    await Future.wait([
+      services.initialize(),
+      _synchronizeClock(),
+    ]);
     logger = services.log;
+  }
+
+  Future<void> _synchronizeClock() async {
     try {
       await services.clock.sync();
     } catch (error, stackTrace) {
-      logger.w('時刻の同期に失敗しました', error: error, stackTrace: stackTrace);
+      services.log.w('時刻の同期に失敗しました', error: error, stackTrace: stackTrace);
     }
   }
 
