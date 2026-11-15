@@ -103,7 +103,7 @@ void main() {
       );
     }
 
-    for (final waitForToken in [true, false]) {
+    for (final waitForToken in [false]) {
       testWidgets(
         '起動時の${waitForToken ? 'トークン' : 'メンバー'}確認を5回試してもタイムアウトした場合にログアウトせず手動再試行できる',
         (tester) async {
@@ -141,7 +141,7 @@ void main() {
             }
           }
           expect(notifier.state.hasInitializationError, isTrue);
-          verify(mockValidateCurrentUserTokenUseCase.execute()).called(5);
+          verify(mockGetMemberByAccountIdUseCase.execute(user.id)).called(5);
           verifyNever(mockLogoutUseCase.execute());
           when(mockValidateCurrentUserTokenUseCase.execute())
               .thenAnswer((_) async {});
@@ -163,7 +163,7 @@ void main() {
       );
     }
 
-    for (final waitForToken in [true, false]) {
+    for (final waitForToken in [false]) {
       testWidgets('起動時の${waitForToken ? 'トークン' : 'メンバー'}確認は一度のタイムアウト後に自動回復する', (
         tester,
       ) async {
@@ -219,8 +219,8 @@ void main() {
         loginId: 'test@example.com',
         isVerified: true,
       );
-      final pending = Completer<void>();
-      when(mockValidateCurrentUserTokenUseCase.execute())
+      final pending = Completer<MemberDto?>();
+      when(mockGetMemberByAccountIdUseCase.execute(user.id))
           .thenAnswer((_) => pending.future);
       final controller = StreamController<UserDto?>();
       addTearDown(controller.close);
@@ -237,8 +237,8 @@ void main() {
         container.read(authNotifierProvider).status,
         AuthStatus.unauthenticated,
       );
-      verify(mockValidateCurrentUserTokenUseCase.execute()).called(1);
-      pending.complete();
+      verify(mockGetMemberByAccountIdUseCase.execute(user.id)).called(1);
+      pending.complete(null);
       await tester.pump();
       expect(
         container.read(authNotifierProvider).status,
@@ -258,7 +258,7 @@ void main() {
       verify(mockObserveAuthStateChangesUseCase.execute()).called(1);
     });
 
-    test('既存メンバーのログイン時にauthenticated状態になる', () async {
+    test('トークンを強制更新せず本人確認でauthenticated状態になる', () async {
       const user = UserDto(
         id: 'user123',
         loginId: 'test@example.com',
@@ -282,6 +282,7 @@ void main() {
 
       expect(notifier.state.status, AuthStatus.authenticated);
       verify(mockGetMemberByAccountIdUseCase.execute(user.id)).called(1);
+      verifyNever(mockValidateCurrentUserTokenUseCase.execute());
     });
 
     test('新規ユーザーのログイン時にmember_selection_required状態になる', () async {
@@ -355,8 +356,8 @@ void main() {
       );
       final signOutCompleter = Completer<void>();
 
-      when(mockValidateCurrentUserTokenUseCase.execute())
-          .thenThrow(TestException('token invalid'));
+      when(mockGetMemberByAccountIdUseCase.execute(user.id))
+          .thenThrow(TestException('本人確認失敗'));
       when(mockLogoutUseCase.execute())
           .thenAnswer((_) => signOutCompleter.future);
 
