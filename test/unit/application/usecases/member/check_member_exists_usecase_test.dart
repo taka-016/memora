@@ -18,7 +18,7 @@ void main() {
   });
 
   group('CheckMemberExistsUseCase', () {
-    test('ログインユーザーIDでメンバーが存在する場合trueを返す', () async {
+    test('ログインユーザーIDでメンバーが存在する場合本人情報を返す', () async {
       // Arrange
       const accountId = 'test-user-id';
       const testMember = MemberDto(id: 'member-id', displayName: 'Test User');
@@ -29,11 +29,11 @@ void main() {
       final result = await useCase.execute(accountId);
 
       // Assert
-      expect(result, isTrue);
+      expect(result, testMember);
       verify(mockMemberQueryService.getMemberByAccountId(accountId)).called(1);
     });
 
-    test('ログインユーザーIDでメンバーが存在しない場合falseを返す', () async {
+    test('ログインユーザーIDでメンバーが存在しない場合nullを返す', () async {
       // Arrange
       const accountId = 'test-user-id';
       when(mockMemberQueryService.getMemberByAccountId(accountId))
@@ -43,7 +43,7 @@ void main() {
       final result = await useCase.execute(accountId);
 
       // Assert
-      expect(result, isFalse);
+      expect(result, isNull);
       verify(mockMemberQueryService.getMemberByAccountId(accountId)).called(1);
     });
   });

@@ -1,3 +1,4 @@
+import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/composition_root/providers/member_providers.dart';
 import 'package:memora/composition_root/providers/account_providers.dart';
 
@@ -115,7 +116,7 @@ void main() {
             isVerified: true,
           );
           final pendingToken = Completer<void>();
-          final pendingMember = Completer<bool>();
+          final pendingMember = Completer<MemberDto?>();
           when(mockValidateCurrentUserTokenUseCase.execute()).thenAnswer(
             (_) => waitForToken ? pendingToken.future : Future.value(),
           );
@@ -145,7 +146,7 @@ void main() {
           when(mockValidateCurrentUserTokenUseCase.execute())
               .thenAnswer((_) async {});
           when(mockCheckMemberExistsUseCase.execute(user.id))
-              .thenAnswer((_) async => true);
+              .thenAnswer((_) async => const MemberDto(id: 'member', displayName: '本人'));
           final retry = notifier.retryInitialization();
           expect(notifier.state.isLoading, isTrue);
           await tester.pump();
@@ -153,7 +154,7 @@ void main() {
           expect(notifier.state.user, user);
           expect(notifier.state.isAuthenticated, isTrue);
           pendingToken.complete();
-          pendingMember.complete(false);
+          pendingMember.complete(null);
           await tester.pump();
           expect(notifier.state.isAuthenticated, isTrue);
           verifyNever(mockLogoutUseCase.execute());
@@ -174,7 +175,7 @@ void main() {
           isVerified: true,
         );
         final pendingToken = Completer<void>();
-        final pendingMember = Completer<bool>();
+        final pendingMember = Completer<MemberDto?>();
         when(mockValidateCurrentUserTokenUseCase.execute()).thenAnswer(
           (_) => waitForToken ? pendingToken.future : Future.value(),
         );
@@ -196,12 +197,12 @@ void main() {
         when(mockValidateCurrentUserTokenUseCase.execute())
             .thenAnswer((_) async {});
         when(mockCheckMemberExistsUseCase.execute(user.id))
-            .thenAnswer((_) async => true);
+            .thenAnswer((_) async => const MemberDto(id: 'member', displayName: '本人'));
         await tester.pump(const Duration(milliseconds: 500));
         expect(container.read(authNotifierProvider).isAuthenticated, isTrue);
         verifyNever(mockLogoutUseCase.execute());
         pendingToken.complete();
-        pendingMember.complete(false);
+        pendingMember.complete(null);
         await tester.pump();
         expect(container.read(authNotifierProvider).isAuthenticated, isTrue);
       });
@@ -265,7 +266,7 @@ void main() {
       when(mockValidateCurrentUserTokenUseCase.execute())
           .thenAnswer((_) async {});
       when(mockCheckMemberExistsUseCase.execute(user.id))
-          .thenAnswer((_) async => true);
+          .thenAnswer((_) async => const MemberDto(id: 'member', displayName: '本人'));
 
       final controller = StreamController<UserDto?>();
       addTearDown(controller.close);
@@ -290,7 +291,7 @@ void main() {
       when(mockValidateCurrentUserTokenUseCase.execute())
           .thenAnswer((_) async {});
       when(mockCheckMemberExistsUseCase.execute(user.id))
-          .thenAnswer((_) async => false);
+          .thenAnswer((_) async => null);
 
       final controller = StreamController<UserDto?>();
       addTearDown(controller.close);
@@ -316,7 +317,7 @@ void main() {
       when(mockValidateCurrentUserTokenUseCase.execute())
           .thenAnswer((_) => validateCompleter.future);
       when(mockCheckMemberExistsUseCase.execute(user.id))
-          .thenAnswer((_) async => true);
+          .thenAnswer((_) async => const MemberDto(id: 'member', displayName: '本人'));
 
       final controller = StreamController<UserDto?>();
       addTearDown(controller.close);
