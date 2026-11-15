@@ -1,4 +1,5 @@
 import 'package:memora/presentation/notifiers/setting/theme_settings_notifier.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -32,7 +33,8 @@ class _StartupBackgroundTasksState
 
   @override
   Widget build(BuildContext context) {
-    if (!ref.watch(themeSettingsNotifierProvider).isLoading && !_frameScheduled) {
+    if (!ref.watch(themeSettingsNotifierProvider).isLoading &&
+        !_frameScheduled) {
       _frameScheduled = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!_firstFrame.isCompleted) _firstFrame.complete();
@@ -48,7 +50,7 @@ class StartupBackgroundRegistrationNotice extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final errors = ref.watch(startupBackgroundTasksNotifierProvider);
+    final errors = ref.watch(startupBackgroundTasksNotifierProvider).errors;
     return Column(
       children: [
         if (errors.isNotEmpty)

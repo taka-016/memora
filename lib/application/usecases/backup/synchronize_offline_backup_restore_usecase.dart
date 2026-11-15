@@ -80,8 +80,9 @@ class SynchronizeOfflineBackupRestoreUsecase {
       cacheStackTrace ??= stackTrace;
     }
     try {
-      if (registerPeriodicTask)
+      if (registerPeriodicTask) {
         await registerPeriodicUpdateTask(interval.duration);
+      }
     } catch (error, stackTrace) {
       if (cacheError == null) Error.throwWithStackTrace(error, stackTrace);
     }

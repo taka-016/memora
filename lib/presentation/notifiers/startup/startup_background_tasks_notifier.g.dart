@@ -14,7 +14,11 @@ final startupBackgroundTasksNotifierProvider =
     StartupBackgroundTasksNotifierProvider._();
 
 final class StartupBackgroundTasksNotifierProvider
-    extends $NotifierProvider<StartupBackgroundTasksNotifier, List<String>> {
+    extends
+        $NotifierProvider<
+          StartupBackgroundTasksNotifier,
+          StartupBackgroundTasksState
+        > {
   StartupBackgroundTasksNotifierProvider._()
     : super(
         from: null,
@@ -34,29 +38,34 @@ final class StartupBackgroundTasksNotifierProvider
   StartupBackgroundTasksNotifier create() => StartupBackgroundTasksNotifier();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(List<String> value) {
+  Override overrideWithValue(StartupBackgroundTasksState value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<List<String>>(value),
+      providerOverride: $SyncValueProvider<StartupBackgroundTasksState>(value),
     );
   }
 }
 
 String _$startupBackgroundTasksNotifierHash() =>
-    r'116bf27a3aefa79db8cfce55aac3faee19f3d864';
+    r'7d8119bfc82bcb5c026d5e24c8fee38faa61c275';
 
 abstract class _$StartupBackgroundTasksNotifier
-    extends $Notifier<List<String>> {
-  List<String> build();
+    extends $Notifier<StartupBackgroundTasksState> {
+  StartupBackgroundTasksState build();
   @$mustCallSuper
   @override
   WhenComplete runBuild() {
-    final ref = this.ref as $Ref<List<String>, List<String>>;
+    final ref =
+        this.ref
+            as $Ref<StartupBackgroundTasksState, StartupBackgroundTasksState>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<List<String>, List<String>>,
-              List<String>,
+              AnyNotifier<
+                StartupBackgroundTasksState,
+                StartupBackgroundTasksState
+              >,
+              StartupBackgroundTasksState,
               Object?,
               Object?
             >;

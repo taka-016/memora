@@ -141,13 +141,6 @@ void main() {
       );
     });
 
-    test('アプリ起動時に定期更新を初期化する', () {
-      final source = File(_mainPath).readAsStringSync();
-
-      expect(source, contains('initializeAndroidWidgetBackgroundUpdate'));
-      expect(source, contains('registerAndroidWidgetPeriodicUpdateTask'));
-    });
-
     test('表示対象グループ設定時に定期更新タスクを登録する', () {
       final source = File(_cacheUsecasesPath).readAsStringSync();
 

@@ -5,7 +5,9 @@ import 'package:memora/presentation/app/app_availability_gate.dart';
 import 'package:memora/composition_root/providers/app_availability_providers.dart';
 import 'package:memora/application/usecases/app_availability/check_app_availability_usecase.dart';
 import 'package:mockito/mockito.dart';
+
 import 'app_availability_gate_test.mocks.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -30,23 +32,27 @@ void main() {
       loadWidgetInterval: () async => const Duration(minutes: 30),
       registerWidget: (_) async => throw TestException('ウィジェット登録失敗'),
     );
-    final container = ProviderContainer(overrides: [
-      startupBackgroundRegistrationProvider.overrideWith((ref) {
-        ref.onDispose(() => disposed = true);
-        return registration;
-      }),
-    ]);
+    final container = ProviderContainer(
+      overrides: [
+        startupBackgroundRegistrationProvider.overrideWith((ref) {
+          ref.onDispose(() => disposed = true);
+          return registration;
+        }),
+      ],
+    );
     addTearDown(container.dispose);
-    await tester.pumpWidget(UncontrolledProviderScope(
-      container: container,
-      child: const StartupBackgroundTasks(
-        child: MaterialApp(
-          home: StartupBackgroundRegistrationNotice(
-            child: Scaffold(body: TextField()),
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const StartupBackgroundTasks(
+          child: MaterialApp(
+            home: StartupBackgroundRegistrationNotice(
+              child: Scaffold(body: TextField()),
+            ),
           ),
         ),
       ),
-    ));
+    );
     await tester.enterText(find.byType(TextField), '入力中');
     expect(find.textContaining('登録できませんでした'), findsNothing);
     ready.complete();
@@ -71,10 +77,14 @@ void main() {
       loadWidgetInterval: () async => const Duration(minutes: 30),
       registerWidget: (_) async => calls.add('ウィジェット'),
     );
-    await tester.pumpWidget(ProviderScope(
-      overrides: [startupBackgroundRegistrationProvider.overrideWithValue(registration)],
-      child: const StartupBackgroundTasks(child: SizedBox.shrink()),
-    ));
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          startupBackgroundRegistrationProvider.overrideWithValue(registration),
+        ],
+        child: const StartupBackgroundTasks(child: SizedBox.shrink()),
+      ),
+    );
     await tester.pump();
     expect(calls, isEmpty);
     await tester.pump(const Duration(seconds: 2));
@@ -95,14 +105,20 @@ void main() {
       loadWidgetInterval: () async => const Duration(minutes: 30),
       registerWidget: (_) async => calls.add('ウィジェット'),
     );
-    await tester.pumpWidget(ProviderScope(
-      overrides: [
-        startupBackgroundRegistrationProvider.overrideWithValue(registration),
-        appThemeModeStorageProvider.overrideWithValue(storage),
-        checkAppAvailabilityUsecaseProvider.overrideWithValue(const CheckAppAvailabilityUsecase.unrestricted()),
-      ],
-      child: const StartupBackgroundTasks(child: AppAvailabilityGate(child: SizedBox.shrink())),
-    ));
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          startupBackgroundRegistrationProvider.overrideWithValue(registration),
+          appThemeModeStorageProvider.overrideWithValue(storage),
+          checkAppAvailabilityUsecaseProvider.overrideWithValue(
+            const CheckAppAvailabilityUsecase.unrestricted(),
+          ),
+        ],
+        child: const StartupBackgroundTasks(
+          child: AppAvailabilityGate(child: SizedBox.shrink()),
+        ),
+      ),
+    );
     await tester.pump(const Duration(seconds: 5));
     expect(calls, isEmpty);
     theme.complete(AppThemeMode.system);
@@ -110,5 +126,4 @@ void main() {
     await tester.pump(const Duration(seconds: 3));
     expect(calls, ['初期化', '通知', 'ウィジェット']);
   });
-
 }

@@ -6,11 +6,8 @@ import 'package:memora/application/services/auth_service.dart';
 import 'package:memora/core/app_logger.dart';
 
 class FirebaseAuthService implements AuthService {
-  FirebaseAuthService({
-    FirebaseAuth? firebaseAuth,
-    Future<void> Function()? ensureAvailable,
-  }) : _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance,
-       _ensureAvailable = ensureAvailable;
+  FirebaseAuthService({FirebaseAuth? firebaseAuth, this._ensureAvailable})
+    : _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance;
 
   final FirebaseAuth _firebaseAuth;
   final Future<void> Function()? _ensureAvailable;

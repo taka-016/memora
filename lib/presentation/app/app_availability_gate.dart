@@ -28,10 +28,6 @@ class _AppAvailabilityGateState extends ConsumerState<AppAvailabilityGate>
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.deferFirstFrame();
     ref.listenManual(
-      appAvailabilityNotifierProvider,
-      (_, _) => _maybeAllowFirstFrame(),
-    );
-    ref.listenManual(
       themeSettingsNotifierProvider,
       (_, _) => _maybeAllowFirstFrame(),
     );

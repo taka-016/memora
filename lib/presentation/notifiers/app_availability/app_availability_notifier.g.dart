@@ -42,7 +42,7 @@ final class AppAvailabilityNotifierProvider
 }
 
 String _$appAvailabilityNotifierHash() =>
-    r'9a07a3b4ea2a02a2460b78b26156a2c7ed1e1783';
+    r'e275b5cb2a6f570c0111b36c4ec05419ed16616e';
 
 abstract class _$AppAvailabilityNotifier
     extends $Notifier<AppAvailabilityState> {

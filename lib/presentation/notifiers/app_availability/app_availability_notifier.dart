@@ -71,7 +71,10 @@ class AppAvailabilityNotifier extends _$AppAvailabilityNotifier {
         } catch (_) {
           if (!ref.mounted) return;
           if (attempt == 4) {
-            state = AppAvailabilityState(availability: state.availability, hasError: true);
+            state = AppAvailabilityState(
+              availability: state.availability,
+              hasError: true,
+            );
             return;
           }
           await Future<void>.delayed(const Duration(milliseconds: 500));

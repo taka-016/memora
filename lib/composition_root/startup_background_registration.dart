@@ -1,19 +1,12 @@
-import 'dart:async';
-
 class StartupBackgroundRegistration {
   StartupBackgroundRegistration({
-    required Future<bool> Function(String task) loadRegistered,
-    required Future<void> Function(String task) markRegistered,
-    required Future<void> Function() initialize,
-    required Future<void> Function() registerNotifications,
-    required Future<Duration> Function() loadWidgetInterval,
-    required Future<void> Function(Duration interval) registerWidget,
-  }) : _loadRegistered = loadRegistered,
-       _markRegistered = markRegistered,
-       _initialize = initialize,
-       _registerNotifications = registerNotifications,
-       _loadWidgetInterval = loadWidgetInterval,
-       _registerWidget = registerWidget;
+    required this._loadRegistered,
+    required this._markRegistered,
+    required this._initialize,
+    required this._registerNotifications,
+    required this._loadWidgetInterval,
+    required this._registerWidget,
+  });
 
   final Future<bool> Function(String task) _loadRegistered;
   final Future<void> Function(String task) _markRegistered;

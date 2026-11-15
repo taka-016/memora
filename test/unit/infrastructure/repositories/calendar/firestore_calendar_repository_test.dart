@@ -1,3 +1,5 @@
+import 'package:memora/composition_root/providers/app_availability_providers.dart';
+import 'package:memora/application/usecases/app_availability/check_app_availability_usecase.dart';
 import 'package:memora/infrastructure/mappers/calendar/firestore_calendar_event_override_mapper.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/infrastructure/queries/calendar/firestore_calendar_event_query_service.dart';
@@ -188,6 +190,9 @@ void main() {
     );
     container = ProviderContainer(
       overrides: [
+        checkAppAvailabilityUsecaseProvider.overrideWithValue(
+          const CheckAppAvailabilityUsecase.unrestricted(),
+        ),
         firebaseFirestoreProvider.overrideWithValue(firestore),
         firebaseAuthProvider.overrideWithValue(MockFirebaseAuth()),
       ],

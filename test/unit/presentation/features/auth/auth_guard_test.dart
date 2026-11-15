@@ -1,8 +1,11 @@
 import 'dart:async';
+
 import 'package:mockito/mockito.dart';
 import 'package:memora/composition_root/providers/account_providers.dart';
 import 'package:memora/presentation/notifiers/app_availability/app_availability_notifier.dart';
+
 import '../../notifiers/auth/auth_notifier_test.mocks.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -32,11 +35,15 @@ class _RetryAuth extends FakeAuthNotifier {
 }
 
 class _InvitationAuth extends FakeAuthNotifier {
-  _InvitationAuth() : super(const AuthState.unauthenticated(memberSelectionRequiredMessage));
+  _InvitationAuth()
+    : super(const AuthState.unauthenticated(memberSelectionRequiredMessage));
   Completer<bool> ready = Completer<bool>();
   final codes = <String>[];
   @override
-  Future<bool> acceptInvitation(String invitationCode, {required String userId}) {
+  Future<bool> acceptInvitation(
+    String invitationCode, {
+    required String userId,
+  }) {
     codes.add(invitationCode);
     return ready.future;
   }
@@ -65,18 +72,26 @@ void main() {
     }
 
     testWidgets('招待承諾の確認中と確認失敗後も同じダイアログと入力を保持して再試行する', (tester) async {
-      const user = UserDto(id: 'user', loginId: 'test@example.com', isVerified: true);
+      const user = UserDto(
+        id: 'user',
+        loginId: 'test@example.com',
+        isVerified: true,
+      );
       final current = MockGetCurrentUserUseCase();
       when(current.execute()).thenAnswer((_) async => user);
       final auth = _InvitationAuth();
-      await tester.pumpWidget(ProviderScope(
-        overrides: [
-          authNotifierProvider.overrideWith(() => auth),
-          getCurrentUserUseCaseProvider.overrideWithValue(current),
-          appAvailabilityNotifierProvider.overrideWith(_FailedAvailability.new),
-        ],
-        child: const MaterialApp(home: AuthGuard(child: Text('アプリ本体'))),
-      ));
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            authNotifierProvider.overrideWith(() => auth),
+            getCurrentUserUseCaseProvider.overrideWithValue(current),
+            appAvailabilityNotifierProvider.overrideWith(
+              _FailedAvailability.new,
+            ),
+          ],
+          child: const MaterialApp(home: AuthGuard(child: Text('アプリ本体'))),
+        ),
+      );
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
       await tester.tap(find.text('招待コード入力'));
