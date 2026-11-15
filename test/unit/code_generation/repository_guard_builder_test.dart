@@ -24,7 +24,7 @@ abstract class NewRepository { Future<void> delete(String id); }
     final builder = repositoryGuardBuilder(BuilderOptions.empty);
     await builder.build(step);
     final output = verify(step.writeAsString(
-      AssetId('example', 'lib/application/decorators/guarded_repositories.g.dart'),
+      AssetId('example', 'lib/application/decorators/repository_guards.g.dart'),
       captureAny,
     )).captured.single as String;
     expect(output, contains('T == FirstRepository'));
