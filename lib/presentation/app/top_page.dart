@@ -23,6 +23,14 @@ class TopPage extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isCurrentRoute = ModalRoute.isCurrentOf(context) ?? true;
+    final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
+    final suppressKeyboardResize = useRef(false);
+    if (!isCurrentRoute) {
+      suppressKeyboardResize.value = true;
+    } else if (keyboardInset == 0) {
+      suppressKeyboardResize.value = false;
+    }
+    final resizeForKeyboard = !suppressKeyboardResize.value;
     final authenticationAvailable = ref
         .watch(appCapabilitiesProvider)
         .availability(AppFeature.authentication)
@@ -210,7 +218,7 @@ class TopPage extends HookConsumerWidget {
       },
       child: Scaffold(
         key: scaffoldKey,
-        resizeToAvoidBottomInset: isCurrentRoute,
+        resizeToAvoidBottomInset: resizeForKeyboard,
         onDrawerChanged: (isOpened) {
           isDrawerOpen.value = isOpened;
           if (isOpened) {
@@ -252,7 +260,7 @@ class TopPage extends HookConsumerWidget {
             : Builder(
                 builder: (bodyContext) => MediaQuery.removeViewInsets(
                   context: bodyContext,
-                  removeBottom: !isCurrentRoute,
+                  removeBottom: !resizeForKeyboard,
                   child: child,
                 ),
               ),
