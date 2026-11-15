@@ -569,13 +569,9 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
           _editValues != _initialValues ||
           (_notifications ?? []).join(',') !=
               (_initialNotifications ?? []).join(','),
-      child: Dialog(
-        insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-        child: Material(
-          type: MaterialType.card,
-          child: SizedBox(
-            width: MediaQuery.sizeOf(context).width * 0.95,
-            height: MediaQuery.sizeOf(context).height * 0.8,
+      child: Scaffold(
+        appBar: AppBar(),
+        body: SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(24),
               child: Column(
@@ -954,7 +950,6 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                 ],
               ),
             ),
-          ),
         ),
       ),
     );
