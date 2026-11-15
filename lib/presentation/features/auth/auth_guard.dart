@@ -1,3 +1,4 @@
+import 'package:memora/presentation/notifiers/app_availability/app_availability_notifier.dart';
 import 'package:memora/composition_root/providers/account_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -85,34 +86,23 @@ class AuthGuard extends ConsumerWidget {
     WidgetRef ref,
     UserDto currentUser,
   ) async {
-    final authNotifier = ref.read(authNotifierProvider.notifier);
-
-    String? errorMessage;
-
-    while (true) {
-      if (!context.mounted) return true;
-
-      final invitationCode = await showDialog<String>(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) =>
-            InvitationCodeInputDialog(errorMessage: errorMessage),
-      );
-
-      if (invitationCode == null) {
-        return false;
-      }
-
-      final success = await authNotifier.acceptInvitation(
-        invitationCode,
-        userId: currentUser.id,
-      );
-
-      if (!success) {
-        errorMessage = '招待コードが無効です。';
-        continue;
-      }
-      return true;
-    }
+    if (!context.mounted) return true;
+    final success = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => InvitationCodeInputDialog(
+        onSubmit: (invitationCode) async {
+          final accepted = await ref
+              .read(authNotifierProvider.notifier)
+              .acceptInvitation(invitationCode, userId: currentUser.id);
+          if (accepted) return null;
+          if (!ref.read(appAvailabilityNotifierProvider).canUseApp) {
+            return '利用状況を確認できないため承諾できません。再確認してから再試行してください。';
+          }
+          return '招待コードが無効です。';
+        },
+      ),
+    );
+    return success ?? false;
   }
 }
