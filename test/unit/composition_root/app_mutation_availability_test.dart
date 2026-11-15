@@ -51,21 +51,28 @@ void main() {
     addTearDown(database.close);
     final blocked = TestException('共通ガードで更新停止');
     var checks = 0;
-    final offline = ProviderContainer(overrides: [
-      appModeProvider.overrideWithValue(AppMode.offline),
-      offlineDatabaseProvider.overrideWithValue(database),
-      ensureAppAvailableForMutationProvider.overrideWithValue(() async {
-        checks++;
-        throw blocked;
-      }),
-    ]);
+    final offline = ProviderContainer(
+      overrides: [
+        appModeProvider.overrideWithValue(AppMode.offline),
+        offlineDatabaseProvider.overrideWithValue(database),
+        ensureAppAvailableForMutationProvider.overrideWithValue(() async {
+          checks++;
+          throw blocked;
+        }),
+      ],
+    );
     addTearDown(offline.dispose);
-    await expectLater(offline.read(groupRepositoryProvider).updateGroup(group),
-      throwsA(same(blocked)));
+    await expectLater(
+      offline.read(groupRepositoryProvider).updateGroup(group),
+      throwsA(same(blocked)),
+    );
     var entered = false;
-    await expectLater(offline.read(writeTransactionProvider).run<void>((_) async {
-      entered = true;
-    }), throwsA(same(blocked)));
+    await expectLater(
+      offline.read(writeTransactionProvider).run<void>((_) async {
+        entered = true;
+      }),
+      throwsA(same(blocked)),
+    );
     expect(entered, isFalse);
     expect(checks, 2);
   });

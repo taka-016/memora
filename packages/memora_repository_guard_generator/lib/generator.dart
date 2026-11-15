@@ -14,9 +14,12 @@ String generateRepositoryGuards(
     imports.add("import '$uri';");
     for (final directive in unit.directives.whereType<ImportDirective>()) {
       final imported = uri.resolve(directive.uri.stringValue!);
-      imports.add(directive.toSource().replaceFirst(
-        directive.uri.toSource(), "'$imported'",
-      ));
+      imports.add(
+        directive.toSource().replaceFirst(
+          directive.uri.toSource(),
+          "'$imported'",
+        ),
+      );
     }
     repositories.addAll(unit.declarations.whereType<ClassDeclaration>());
   }
@@ -33,7 +36,9 @@ String generateRepositoryGuards(
     final name = repository.namePart.typeName.lexeme;
     result
       ..writeln('if (T == $name) {')
-      ..writeln('return Guarded$name(repository as $name, ensureAvailable) as T;')
+      ..writeln(
+        'return Guarded$name(repository as $name, ensureAvailable) as T;',
+      )
       ..writeln('}');
   }
   result
@@ -46,14 +51,19 @@ String generateRepositoryGuards(
       ..writeln('const Guarded$name(this._delegate, this._ensureAvailable);')
       ..writeln('final $name _delegate;')
       ..writeln('final Future<void> Function() _ensureAvailable;');
-    for (final method in repository.body.members.whereType<MethodDeclaration>()) {
-      final arguments = method.parameters!.parameters.map((parameter) {
-        final name = parameter.name!.lexeme;
-        return parameter.isNamed ? '$name: $name' : name;
-      }).join(', ');
+    for (final method
+        in repository.body.members.whereType<MethodDeclaration>()) {
+      final arguments = method.parameters!.parameters
+          .map((parameter) {
+            final name = parameter.name!.lexeme;
+            return parameter.isNamed ? '$name: $name' : name;
+          })
+          .join(', ');
       result
         ..writeln('@override')
-        ..writeln('${method.returnType!.toSource()} ${method.name.lexeme}${method.parameters!.toSource()} async {')
+        ..writeln(
+          '${method.returnType!.toSource()} ${method.name.lexeme}${method.parameters!.toSource()} async {',
+        )
         ..writeln('await _ensureAvailable();')
         ..writeln('return await _delegate.${method.name.lexeme}($arguments);')
         ..writeln('}');

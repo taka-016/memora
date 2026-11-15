@@ -20,7 +20,10 @@ abstract class NewRepository {
     final after = generateRepositoryGuards(sources, packageName: 'example');
     expect(after, contains('T == FirstRepository'));
     expect(after, contains('T == NewRepository'));
-    expect(after, contains('class GuardedNewRepository implements NewRepository'));
+    expect(
+      after,
+      contains('class GuardedNewRepository implements NewRepository'),
+    );
     expect(after, contains('await _ensureAvailable();'));
     expect(after, contains('expectedVersion: expectedVersion'));
     sources['lib/domain/repositories/new_repository.dart'] = '''
@@ -47,7 +50,10 @@ abstract class EventRepository {
 }
 ''',
     }, packageName: 'example');
-    expect(result, contains("import 'package:example/domain/entities/event.dart';"));
+    expect(
+      result,
+      contains("import 'package:example/domain/entities/event.dart';"),
+    );
     expect(result, contains('Future<Event?> save('));
     expect(result, contains('required String groupId'));
     expect(result, contains('Map<String, int> versions = const {}'));

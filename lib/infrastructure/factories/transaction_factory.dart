@@ -22,7 +22,9 @@ class TransactionFactory {
       AppMode.online => FirestoreWriteTransaction(
         firestore: ref.watch(firebaseFirestoreProvider),
       ),
-      AppMode.offline => SqliteWriteTransaction(ref.watch(offlineDatabaseProvider)),
+      AppMode.offline => SqliteWriteTransaction(
+        ref.watch(offlineDatabaseProvider),
+      ),
     };
     return GuardedWriteTransaction(
       transaction,
