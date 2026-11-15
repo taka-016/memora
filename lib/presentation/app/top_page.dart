@@ -235,7 +235,9 @@ class TopPage extends HookConsumerWidget {
           }
         },
         appBar: isCalendarInput ? null : _buildAppBar(),
-        drawer: isCalendarInput ? null : _buildDrawer(context, ref, closeDrawer),
+        drawer: isCalendarInput
+            ? null
+            : _buildDrawer(context, ref, closeDrawer),
         bottomNavigationBar: isCalendarInput
             ? null
             : _buildBottomNavigationBar(context, ref, closeDrawer),

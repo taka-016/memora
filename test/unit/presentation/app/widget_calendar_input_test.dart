@@ -35,108 +35,116 @@ void main() {
   ]) {
     final save = scenario.save;
     final fromWidget = scenario.fromWidget;
-    testWidgets('${fromWidget ? 'ウィジェット' : 'カレンダー'}の入力を背面操作から守り${save ? '保存' : '破棄確認'}後に指定日へ戻る', (
-      tester,
-    ) async {
-      final events = MockGetCalendarEventsUsecase();
-      final labels = MockGetCalendarLabelsUsecase();
-      final create = MockCreateCalendarEventUsecase();
-      when(events.execute(any, period: anyNamed('period')))
-          .thenAnswer((_) async => []);
-      when(labels.execute(any)).thenAnswer((_) async => []);
-      when(create.execute(any)).thenAnswer((_) async => 'new');
-      final date = DateTime(2026, 11, 20);
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            ...context.createTopPageTestOverrides(
-              initialLocation: '/calendar?date=${date.toIso8601String()}',
-              currentMember: context.testMember,
-              androidWidgetLaunchNotifier: _CalendarLaunch(
-                fromWidget ? AndroidWidgetCalendarLaunchDestination(
-                  memberId: context.testMember.id,
-                  groupId: null,
-                  requestId: 1,
-                  date: date,
-                  create: true,
-                  groups: context.groupsWithMembers,
-                ) : null,
+    testWidgets(
+      '${fromWidget ? 'ウィジェット' : 'カレンダー'}の入力を背面操作から守り${save ? '保存' : '破棄確認'}後に指定日へ戻る',
+      (tester) async {
+        final events = MockGetCalendarEventsUsecase();
+        final labels = MockGetCalendarLabelsUsecase();
+        final create = MockCreateCalendarEventUsecase();
+        when(events.execute(any, period: anyNamed('period')))
+            .thenAnswer((_) async => []);
+        when(labels.execute(any)).thenAnswer((_) async => []);
+        when(create.execute(any)).thenAnswer((_) async => 'new');
+        final date = DateTime(2026, 11, 20);
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              ...context.createTopPageTestOverrides(
+                initialLocation: '/calendar?date=${date.toIso8601String()}',
+                currentMember: context.testMember,
+                androidWidgetLaunchNotifier: _CalendarLaunch(
+                  fromWidget
+                      ? AndroidWidgetCalendarLaunchDestination(
+                          memberId: context.testMember.id,
+                          groupId: null,
+                          requestId: 1,
+                          date: date,
+                          create: true,
+                          groups: context.groupsWithMembers,
+                        )
+                      : null,
+                ),
+              ),
+              calendarGroupSettingsNotifierProvider.overrideWith(
+                () => TestCalendarGroupSettingsNotifier(),
+              ),
+              calendarWidgetGroupsChangedProvider.overrideWithValue(
+                () async {},
+              ),
+              calendarMembershipChangesProvider.overrideWithValue(null),
+              refreshSelectedCalendarWidgetCacheProvider.overrideWithValue(
+                () async {},
+              ),
+              getCalendarEventsUsecaseProvider.overrideWithValue(events),
+              getCalendarLabelsUsecaseProvider.overrideWithValue(labels),
+              createCalendarEventUsecaseProvider.overrideWithValue(create),
+              watchCalendarGroupUsecaseProvider.overrideWithValue(null),
+              watchCalendarEventsUsecaseProvider.overrideWithValue(null),
+              watchCalendarLabelsUsecaseProvider.overrideWithValue(null),
+            ],
+            child: Consumer(
+              builder: (context, ref, _) => MaterialApp.router(
+                routerConfig: ref.watch(appRouterConfigProvider),
               ),
             ),
-            calendarGroupSettingsNotifierProvider.overrideWith(
-              () => TestCalendarGroupSettingsNotifier(),
-            ),
-            calendarWidgetGroupsChangedProvider.overrideWithValue(() async {}),
-            calendarMembershipChangesProvider.overrideWithValue(null),
-            refreshSelectedCalendarWidgetCacheProvider.overrideWithValue(
-              () async {},
-            ),
-            getCalendarEventsUsecaseProvider.overrideWithValue(events),
-            getCalendarLabelsUsecaseProvider.overrideWithValue(labels),
-            createCalendarEventUsecaseProvider.overrideWithValue(create),
-            watchCalendarGroupUsecaseProvider.overrideWithValue(null),
-            watchCalendarEventsUsecaseProvider.overrideWithValue(null),
-            watchCalendarLabelsUsecaseProvider.overrideWithValue(null),
-          ],
-          child: Consumer(
-            builder: (context, ref, _) => MaterialApp.router(
-              routerConfig: ref.watch(appRouterConfigProvider),
-            ),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
-      if (fromWidget) {
-        verifyNever(events.execute(any, period: anyNamed('period')));
-      } else {
-        await tester.tap(find.byType(FloatingActionButton));
+        );
         await tester.pumpAndSettle();
-      }
-      expect(find.byType(CalendarScreen), findsNothing);
-      expect(find.byType(BottomNavigationBar), findsNothing);
-      await tester.enterText(
-        find.widgetWithText(TextFormField, 'タイトル'),
-        'ウィジェットから追加',
-      );
-      await tester.dragFrom(const Offset(0, 250), const Offset(300, 0));
-      await tester.pumpAndSettle();
-      expect(find.byType(Drawer), findsNothing);
-      expect(find.widgetWithText(TextFormField, 'ウィジェットから追加'), findsOneWidget);
-      if (save) {
-        await calendarTapVisible(tester, find.text('保存'));
-      } else {
-        await calendarTapVisible(tester, find.text('キャンセル'));
+        if (fromWidget) {
+          verifyNever(events.execute(any, period: anyNamed('period')));
+        } else {
+          await tester.tap(find.byType(FloatingActionButton));
+          await tester.pumpAndSettle();
+        }
+        expect(find.byType(CalendarScreen), findsNothing);
+        expect(find.byType(BottomNavigationBar), findsNothing);
+        await tester.enterText(
+          find.widgetWithText(TextFormField, 'タイトル'),
+          'ウィジェットから追加',
+        );
+        await tester.dragFrom(const Offset(0, 250), const Offset(300, 0));
         await tester.pumpAndSettle();
-        expect(find.text('変更内容の確認'), findsOneWidget);
-        await tester.tap(find.text('編集を続ける'));
-        await tester.pumpAndSettle();
+        expect(find.byType(Drawer), findsNothing);
         expect(
           find.widgetWithText(TextFormField, 'ウィジェットから追加'),
           findsOneWidget,
         );
-        await tester.binding.handlePopRoute();
+        if (save) {
+          await calendarTapVisible(tester, find.text('保存'));
+        } else {
+          await calendarTapVisible(tester, find.text('キャンセル'));
+          await tester.pumpAndSettle();
+          expect(find.text('変更内容の確認'), findsOneWidget);
+          await tester.tap(find.text('編集を続ける'));
+          await tester.pumpAndSettle();
+          expect(
+            find.widgetWithText(TextFormField, 'ウィジェットから追加'),
+            findsOneWidget,
+          );
+          await tester.binding.handlePopRoute();
+          await tester.pumpAndSettle();
+          await tester.tap(find.text('破棄する'));
+        }
         await tester.pumpAndSettle();
-        await tester.tap(find.text('破棄する'));
-      }
-      await tester.pumpAndSettle();
-      expect(find.byType(CalendarScreen), findsOneWidget);
-      final container = ProviderScope.containerOf(
-        tester.element(find.byType(CalendarScreen)),
-      );
-      expect(
-        container
-            .read(multiGroupCalendarNotifierProvider)
-            .calendar
-            .selectedDate,
-        date,
-      );
-      if (save) {
-        final input = verify(create.execute(captureAny)).captured.single;
-        expect(input.startDateTime, DateTime.utc(2026, 11, 20));
-        expect(input.groupId, 'g1');
-      } else {
-        verifyNever(create.execute(any));
-      }
-    });
+        expect(find.byType(CalendarScreen), findsOneWidget);
+        final container = ProviderScope.containerOf(
+          tester.element(find.byType(CalendarScreen)),
+        );
+        expect(
+          container
+              .read(multiGroupCalendarNotifierProvider)
+              .calendar
+              .selectedDate,
+          date,
+        );
+        if (save) {
+          final input = verify(create.execute(captureAny)).captured.single;
+          expect(input.startDateTime, DateTime.utc(2026, 11, 20));
+          expect(input.groupId, 'g1');
+        } else {
+          verifyNever(create.execute(any));
+        }
+      },
+    );
   }
 }
