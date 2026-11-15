@@ -38,7 +38,7 @@ class AppRootRoute extends GoRouteData with $AppRootRoute {
 
   @override
   String redirect(BuildContext context, GoRouterState state) {
-    return const GroupListRoute().location;
+    return const CalendarRoute().location;
   }
 }
 

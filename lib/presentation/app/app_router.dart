@@ -15,7 +15,7 @@ final appInitialLocationProvider = Provider<String>((ref) {
     WidgetsBinding.instance.platformDispatcher.defaultRouteName,
   );
   return platformLocation == null || platformLocation.path.isEmpty
-      ? const GroupListRoute().location
+      ? const CalendarRoute().location
       : platformLocation.toString();
 });
 
