@@ -123,6 +123,7 @@ class AuthNotifier extends Notifier<AuthState> {
       return;
     }
 
+    if (state.user?.id != user.id) state = const AuthState.loading();
     if (!user.isVerified) {
       await _handleUnverifiedUser(generation);
       return;
@@ -145,7 +146,7 @@ class AuthNotifier extends Notifier<AuthState> {
 
         stopwatch.reset();
         if (kDebugMode) logger.i('起動認証: メンバー存在確認 開始');
-        final memberExists = await checkMemberExistsUseCase
+        final member = await checkMemberExistsUseCase
             .execute(user.id)
             .timeout(const Duration(seconds: 15));
         if (kDebugMode) {
@@ -155,8 +156,8 @@ class AuthNotifier extends Notifier<AuthState> {
           return;
         }
 
-        if (memberExists) {
-          state = AuthState.authenticated(user);
+        if (member != null) {
+          state = AuthState.authenticated(user, member: member);
           return;
         }
 

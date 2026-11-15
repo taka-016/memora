@@ -51,34 +51,42 @@ final currentMemberNotifierProvider =
     );
 
 class CurrentMemberNotifier extends Notifier<CurrentMemberState> {
+  int _generation = 0;
   GetCurrentMemberUseCase get _getCurrentMemberUseCase =>
       ref.read(getCurrentMemberUsecaseProvider);
 
   @override
   CurrentMemberState build() {
+    ref.onDispose(() => _generation++);
     final authenticationAvailable = ref
         .watch(appCapabilitiesProvider)
         .availability(AppFeature.authentication)
         .isAvailable;
     if (authenticationAvailable) {
       ref.listen<AuthState>(authNotifierProvider, (previous, next) {
-        if (previous?.status == next.status) {
+        if (previous?.status == next.status && previous?.user?.id == next.user?.id) {
           return;
         }
 
+        _generation++;
         if (next.status == AuthStatus.authenticated) {
-          unawaited(load());
+          if (next.member != null) {
+            state = CurrentMemberState.loaded(next.member);
+          } else {
+            unawaited(load());
+          }
           return;
         }
 
-        if (next.status == AuthStatus.unauthenticated) {
-          state = const CurrentMemberState.loading();
-        }
+        state = const CurrentMemberState.loading();
       });
     }
 
-    if (!authenticationAvailable ||
-        ref.read(authNotifierProvider).isAuthenticated) {
+    final auth = authenticationAvailable ? ref.read(authNotifierProvider) : null;
+    if (auth?.isAuthenticated == true && auth?.member != null) {
+      return CurrentMemberState.loaded(auth!.member);
+    }
+    if (!authenticationAvailable || auth?.isAuthenticated == true) {
       Future.microtask(() {
         if (ref.mounted) unawaited(load());
       });
@@ -88,6 +96,7 @@ class CurrentMemberNotifier extends Notifier<CurrentMemberState> {
   }
 
   Future<void> load() async {
+    final generation = ++_generation;
     final stopwatch = Stopwatch()..start();
     if (kDebugMode) logger.i('起動データ: 本人情報取得 開始');
     try {
@@ -103,11 +112,11 @@ class CurrentMemberNotifier extends Notifier<CurrentMemberState> {
       if (kDebugMode) {
         logger.i('起動データ: 本人情報取得 完了（${stopwatch.elapsedMilliseconds}ms）');
       }
-      if (!ref.mounted) return;
+      if (!ref.mounted || generation != _generation) return;
       state = CurrentMemberState.loaded(member);
     } on TimeoutException catch (e, stack) {
       logger.w('本人情報の取得がタイムアウトしました', error: e, stackTrace: stack);
-      if (!ref.mounted) return;
+      if (!ref.mounted || generation != _generation) return;
       state = const CurrentMemberState.error(
         '本人情報の取得に時間がかかっています。再試行してください。',
         canRetry: true,
@@ -118,7 +127,7 @@ class CurrentMemberNotifier extends Notifier<CurrentMemberState> {
         error: e,
         stackTrace: stack,
       );
-      if (!ref.mounted) return;
+      if (!ref.mounted || generation != _generation) return;
       state = CurrentMemberState.error(
         ref
                 .read(appCapabilitiesProvider)
