@@ -1,4 +1,4 @@
-import 'package:memora/application/decorators/guarded_repositories.dart';
+import 'package:memora/application/decorators/repository_guards.g.dart';
 import 'package:memora/composition_root/providers/app_availability_providers.dart';
 import 'package:memora/infrastructure/repositories/calendar/firestore_calendar_label_repository.dart';
 import 'package:memora/infrastructure/repositories/calendar/firestore_calendar_event_repository.dart';
@@ -87,7 +87,10 @@ final dvcPointUsageRepositoryProvider = Provider<DvcPointUsageRepository>((
 class RepositoryFactory {
   static T create<T extends Object>({required Ref ref}) {
     final mode = ref.watch(appModeProvider);
-    return _createRepositoryByMode<T>(mode, ref: ref);
+    return guardRepository<T>(
+      _createRepositoryByMode<T>(mode, ref: ref),
+      ref.watch(ensureAppAvailableForMutationProvider),
+    );
   }
 
   static T _createRepositoryByMode<T extends Object>(
@@ -96,10 +99,7 @@ class RepositoryFactory {
   }) {
     switch (mode) {
       case AppMode.online:
-        return guardRepository<T>(
-          _createFirestoreRepository<T>(ref: ref),
-          ref.watch(ensureAppAvailableForMutationProvider),
-        );
+        return _createFirestoreRepository<T>(ref: ref);
       case AppMode.offline:
         if (T == CalendarLabelRepository) {
           return SqliteCalendarLabelRepository(
