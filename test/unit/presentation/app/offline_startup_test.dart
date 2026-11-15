@@ -181,7 +181,8 @@ void main() {
         'グループ',
       ]);
       await tester.tap(find.byKey(const Key('hamburger_menu')));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
       expect(find.text('ログアウト'), findsNothing);
       expect(find.text('アカウント設定'), findsNothing);
       expect(find.text('地図表示'), findsNothing);
