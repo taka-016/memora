@@ -19,7 +19,7 @@ import 'package:memora/presentation/app/app_router.dart';
 
 class _CalendarLaunch extends AndroidWidgetLaunchNotifier {
   _CalendarLaunch(this.destination);
-  final AndroidWidgetCalendarLaunchDestination destination;
+  final AndroidWidgetCalendarLaunchDestination? destination;
   @override
   AndroidWidgetLaunchState build() =>
       AndroidWidgetLaunchState(resolution: destination);
@@ -28,8 +28,14 @@ class _CalendarLaunch extends AndroidWidgetLaunchNotifier {
 void main() {
   final context = TopPageTestContext();
   setUp(context.setUpContext);
-  for (final save in [true, false]) {
-    testWidgets('ウィジェットから月一覧を取得せず入力し${save ? '保存' : '破棄確認'}後に指定日へ戻る', (
+  for (final scenario in [
+    (save: true, fromWidget: true),
+    (save: false, fromWidget: true),
+    (save: true, fromWidget: false),
+  ]) {
+    final save = scenario.save;
+    final fromWidget = scenario.fromWidget;
+    testWidgets('${fromWidget ? 'ウィジェット' : 'カレンダー'}の入力を背面操作から守り${save ? '保存' : '破棄確認'}後に指定日へ戻る', (
       tester,
     ) async {
       final events = MockGetCalendarEventsUsecase();
@@ -44,17 +50,17 @@ void main() {
         ProviderScope(
           overrides: [
             ...context.createTopPageTestOverrides(
-              initialLocation: '/calendar',
+              initialLocation: '/calendar?date=${date.toIso8601String()}',
               currentMember: context.testMember,
               androidWidgetLaunchNotifier: _CalendarLaunch(
-                AndroidWidgetCalendarLaunchDestination(
+                fromWidget ? AndroidWidgetCalendarLaunchDestination(
                   memberId: context.testMember.id,
                   groupId: null,
                   requestId: 1,
                   date: date,
                   create: true,
                   groups: context.groupsWithMembers,
-                ),
+                ) : null,
               ),
             ),
             calendarGroupSettingsNotifierProvider.overrideWith(
@@ -80,12 +86,22 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
+      if (fromWidget) {
+        verifyNever(events.execute(any, period: anyNamed('period')));
+      } else {
+        await tester.tap(find.byType(FloatingActionButton));
+        await tester.pumpAndSettle();
+      }
       expect(find.byType(CalendarScreen), findsNothing);
-      verifyNever(events.execute(any, period: anyNamed('period')));
+      expect(find.byType(BottomNavigationBar), findsNothing);
       await tester.enterText(
         find.widgetWithText(TextFormField, 'タイトル'),
         'ウィジェットから追加',
       );
+      await tester.dragFrom(const Offset(0, 250), const Offset(300, 0));
+      await tester.pumpAndSettle();
+      expect(find.byType(Drawer), findsNothing);
+      expect(find.widgetWithText(TextFormField, 'ウィジェットから追加'), findsOneWidget);
       if (save) {
         await calendarTapVisible(tester, find.text('保存'));
       } else {
