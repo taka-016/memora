@@ -124,7 +124,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   Future<void> _edit([CalendarEventDto? event]) async {
     final provider = multiGroupCalendarNotifierProvider;
     if (!mounted) return;
-    await Navigator.of(context).push<void>(
+    await Navigator.of(context, rootNavigator: true).push<void>(
       MaterialPageRoute(
         builder: (context) => CalendarEventInputPage(
           date: ref.read(provider).calendar.selectedDate,
