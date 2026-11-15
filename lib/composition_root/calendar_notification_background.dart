@@ -10,16 +10,17 @@ import 'package:memora/composition_root/providers/calendar_notification_provider
 import 'package:memora/composition_root/providers/offline_database_provider.dart';
 import 'package:memora/composition_root/providers/offline_backup_operation_lock_provider.dart';
 import 'package:memora/infrastructure/backup/offline_backup_restore_recovery.dart';
-import 'package:memora/infrastructure/services/shared_preferences_app_mode_storage.dart';
+import 'package:memora/application/services/app_mode_resolver.dart';
+import 'package:memora/infrastructure/config/app_mode_build_configuration.dart';
 
 const calendarNotificationPeriodicTaskName =
     'memora_calendar_notification_refresh';
 
 Future<void> registerCalendarNotificationBackgroundUpdate() async {
   if (!Platform.isAndroid) return;
-  final mode = await const SharedPreferencesAppModeStorage()
-      .loadForCurrentBuild();
-  if (mode == null) return;
+  final mode = const AppModeResolver().resolve(
+    forcedMode: AppModeBuildConfiguration.fromEnvironment().forcedMode,
+  );
   await Workmanager().registerPeriodicTask(
     calendarNotificationPeriodicTaskName,
     calendarNotificationPeriodicTaskName,
@@ -42,9 +43,9 @@ Future<bool> refreshCalendarNotificationsInBackground() async {
 }
 
 Future<bool> _refreshCalendarNotificationsInBackground() async {
-  final mode = await const SharedPreferencesAppModeStorage()
-      .loadForCurrentBuild();
-  if (mode == null) return true;
+  final mode = const AppModeResolver().resolve(
+    forcedMode: AppModeBuildConfiguration.fromEnvironment().forcedMode,
+  );
   final root = AppCompositionRoot(mode);
   await root.initialize();
   final container = root.createContainer();
