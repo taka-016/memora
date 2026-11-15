@@ -47,11 +47,12 @@ void main() {
       expect(source, contains('memora_android_widget_periodic_update'));
     });
 
-    test('保存済みモードで通常登録のネットワーク制約を選択する', () {
+    test('ビルド設定で通常登録のネットワーク制約を選択する', () {
       final source = File(_backgroundUpdatePath).readAsStringSync();
 
       expect(source, contains('Constraints('));
-      expect(source, contains('.loadForCurrentBuild()'));
+      expect(source, contains('AppModeBuildConfiguration.fromEnvironment()'));
+      expect(source, isNot(contains('SharedPreferencesAppModeStorage')));
       expect(
         source,
         contains('constraints: androidWidgetNetworkConstraints(mode)'),
@@ -68,7 +69,7 @@ void main() {
         buildGradle,
         contains('buildConfigField("String", "RESOLVED_APP_MODE"'),
       );
-      expect(source, contains('flutter.resolved_app_mode'));
+      expect(source, isNot(contains('flutter.resolved_app_mode')));
       expect(source, contains('BuildConfig.RESOLVED_APP_MODE'));
       expect(
         source.indexOf('BuildConfig.RESOLVED_APP_MODE'),
@@ -80,17 +81,22 @@ void main() {
       expect('.setConstraints(constraints)'.allMatches(source).length, 2);
     });
 
-    test('コールバック登録前にアプリモードとウィジェットキャッシュを同期する', () {
+    test('起動時は保存済みモードの同期やキャッシュ削除を行わない', () {
       final source = File(_mainPath).readAsStringSync();
-      final synchronize = source.indexOf(
-        'synchronizeAppModeAndAndroidWidgetCache(root.mode)',
-      );
-      expect(synchronize, greaterThanOrEqualTo(0));
+      expect(source, isNot(contains('synchronizeAppModeAndAndroidWidgetCache')));
+      expect(source, isNot(contains('SharedPreferencesAppModeStorage')));
+      expect(source, isNot(contains('cacheStorage.clear()')));
+      expect(source, contains('registerAndroidWidgetInteractivityCallback();'));
+    });
+
+    test('予定通知の登録とバックグラウンド処理はビルド設定を使う', () {
+      final source = File(
+        'lib/composition_root/calendar_notification_background.dart',
+      ).readAsStringSync();
+      expect(source, isNot(contains('SharedPreferencesAppModeStorage')));
       expect(
-        synchronize,
-        lessThan(
-          source.indexOf('registerAndroidWidgetInteractivityCallback();'),
-        ),
+        'AppModeBuildConfiguration.fromEnvironment()'.allMatches(source).length,
+        2,
       );
     });
 
