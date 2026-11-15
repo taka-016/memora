@@ -15,35 +15,18 @@ final writeTransactionProvider = Provider<WriteTransaction>((ref) {
 
 class TransactionFactory {
   static T create<T extends Object>({required Ref ref}) {
-    final mode = ref.watch(appModeProvider);
-    return _createTransactionByMode<T>(mode, ref: ref);
-  }
-
-  static T _createTransactionByMode<T extends Object>(
-    AppMode mode, {
-    required Ref ref,
-  }) {
-    switch (mode) {
-      case AppMode.online:
-        return _createFirestoreTransaction<T>(ref: ref);
-      case AppMode.offline:
-        if (T == WriteTransaction) {
-          return SqliteWriteTransaction(ref.watch(offlineDatabaseProvider))
-              as T;
-        }
-        throw ArgumentError('Unknown transaction type: $T');
+    if (T != WriteTransaction) {
+      throw ArgumentError('Unknown transaction type: $T');
     }
-  }
-
-  static T _createFirestoreTransaction<T>({required Ref ref}) {
-    if (T == WriteTransaction) {
-      return GuardedWriteTransaction(
-        FirestoreWriteTransaction(
-          firestore: ref.watch(firebaseFirestoreProvider),
-        ),
-        ref.watch(ensureAppAvailableForMutationProvider),
-      ) as T;
-    }
-    throw ArgumentError('Unknown transaction type: $T');
+    final WriteTransaction transaction = switch (ref.watch(appModeProvider)) {
+      AppMode.online => FirestoreWriteTransaction(
+        firestore: ref.watch(firebaseFirestoreProvider),
+      ),
+      AppMode.offline => SqliteWriteTransaction(ref.watch(offlineDatabaseProvider)),
+    };
+    return GuardedWriteTransaction(
+      transaction,
+      ref.watch(ensureAppAvailableForMutationProvider),
+    ) as T;
   }
 }
