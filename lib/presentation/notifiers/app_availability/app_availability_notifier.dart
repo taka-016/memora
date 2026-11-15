@@ -44,12 +44,23 @@ class AppAvailabilityNotifier extends _$AppAvailabilityNotifier {
 
   Future<void> _check() async {
     try {
-      final result = await ref
-          .read(checkAppAvailabilityUsecaseProvider)
-          .execute();
-      if (ref.mounted) state = AppAvailabilityState(availability: result);
-    } catch (_) {
-      if (ref.mounted) state = const AppAvailabilityState(hasError: true);
+      for (var attempt = 0; attempt < 5; attempt++) {
+        if (!ref.mounted) return;
+        try {
+          final result = await ref
+              .read(checkAppAvailabilityUsecaseProvider)
+              .execute();
+          if (ref.mounted) state = AppAvailabilityState(availability: result);
+          return;
+        } catch (_) {
+          if (!ref.mounted) return;
+          if (attempt == 4) {
+            state = const AppAvailabilityState(hasError: true);
+            return;
+          }
+          await Future<void>.delayed(const Duration(milliseconds: 500));
+        }
+      }
     } finally {
       _pending = null;
     }

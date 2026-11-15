@@ -128,56 +128,69 @@ class AuthNotifier extends Notifier<AuthState> {
       return;
     }
 
-    try {
-      final stopwatch = Stopwatch()..start();
-      if (kDebugMode) logger.i('起動認証: トークン確認 開始');
-      await validateCurrentUserTokenUseCase.execute().timeout(
-        const Duration(seconds: 15),
-      );
-      if (kDebugMode) {
-        logger.i('起動認証: トークン確認 完了（${stopwatch.elapsedMilliseconds}ms）');
-      }
-      if (!_isLatestAuthStateChange(generation)) {
-        return;
-      }
-
-      stopwatch.reset();
-      if (kDebugMode) logger.i('起動認証: メンバー存在確認 開始');
-      final memberExists = await checkMemberExistsUseCase
-          .execute(user.id)
-          .timeout(const Duration(seconds: 15));
-      if (kDebugMode) {
-        logger.i('起動認証: メンバー存在確認 完了（${stopwatch.elapsedMilliseconds}ms）');
-      }
-      if (!_isLatestAuthStateChange(generation)) {
-        return;
-      }
-
-      if (memberExists) {
-        state = AuthState.authenticated(user);
-        return;
-      }
-
-      state = AuthState.unauthenticated(
-        memberSelectionRequiredMessage,
-        messageType: MessageType.info,
-      );
-    } on TimeoutException catch (e, stack) {
-      logger.w('起動時の認証確認がタイムアウトしました', error: e, stackTrace: stack);
+    for (var attempt = 0; attempt < 5; attempt++) {
       if (!_isLatestAuthStateChange(generation)) return;
-      state = const AuthState.initializationFailed(
-        'ログイン状態の確認に時間がかかっています。再試行してください。',
-      );
-    } catch (e, stack) {
-      logger.e(
-        'AuthNotifier.authStateChanges: ${e.toString()}',
-        error: e,
-        stackTrace: stack,
-      );
-      if (!_isLatestAuthStateChange(generation)) {
+      try {
+        final stopwatch = Stopwatch()..start();
+        if (kDebugMode) logger.i('起動認証: トークン確認 開始');
+        await validateCurrentUserTokenUseCase.execute().timeout(
+          const Duration(seconds: 15),
+        );
+        if (kDebugMode) {
+          logger.i('起動認証: トークン確認 完了（${stopwatch.elapsedMilliseconds}ms）');
+        }
+        if (!_isLatestAuthStateChange(generation)) {
+          return;
+        }
+
+        stopwatch.reset();
+        if (kDebugMode) logger.i('起動認証: メンバー存在確認 開始');
+        final memberExists = await checkMemberExistsUseCase
+            .execute(user.id)
+            .timeout(const Duration(seconds: 15));
+        if (kDebugMode) {
+          logger.i('起動認証: メンバー存在確認 完了（${stopwatch.elapsedMilliseconds}ms）');
+        }
+        if (!_isLatestAuthStateChange(generation)) {
+          return;
+        }
+
+        if (memberExists) {
+          state = AuthState.authenticated(user);
+          return;
+        }
+
+        state = AuthState.unauthenticated(
+          memberSelectionRequiredMessage,
+          messageType: MessageType.info,
+        );
+        return;
+      } on TimeoutException catch (e, stack) {
+        if (!_isLatestAuthStateChange(generation)) return;
+        if (attempt < 4) {
+          await Future<void>.delayed(const Duration(milliseconds: 500));
+          continue;
+        }
+        logger.w('起動時の認証確認がタイムアウトしました', error: e, stackTrace: stack);
+        state = const AuthState.initializationFailed(
+          'ログイン状態の確認に時間がかかっています。再試行してください。',
+        );
+        return;
+      } catch (e, stack) {
+        logger.e(
+          'AuthNotifier.authStateChanges: ${e.toString()}',
+          error: e,
+          stackTrace: stack,
+        );
+        if (!_isLatestAuthStateChange(generation)) {
+          return;
+        }
+        await _signOutWithError(
+          '認証が無効です。再度ログインしてください。',
+          generation: generation,
+        );
         return;
       }
-      await _signOutWithError('認証が無効です。再度ログインしてください。', generation: generation);
     }
   }
 
