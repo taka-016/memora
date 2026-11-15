@@ -43,7 +43,7 @@ void main() {
     (AppThemeMode.system, Brightness.dark, Brightness.dark),
   ]) {
     testWidgets(
-      '待機中と停止案内は保存テーマ${entry.$1.name}と端末${entry.$2.name}から${entry.$3.name}で表示する',
+      '停止案内は保存テーマ${entry.$1.name}と端末${entry.$2.name}から${entry.$3.name}で表示する',
       (tester) async {
         tester.binding.resetFirstFrameSent();
         final platform = tester.binding.platformDispatcher;
@@ -55,11 +55,7 @@ void main() {
         when(check.execute()).thenAnswer((_) => pending.future);
         await tester.pumpWidget(createGate(check));
         await tester.pump();
-        expect(
-          Theme.of(tester.element(find.byType(Scaffold))).brightness,
-          entry.$3,
-        );
-        expect(tester.binding.sendFramesToEngine, isFalse);
+        expect(tester.binding.sendFramesToEngine, isTrue);
         pending.complete(AppAvailability.maintenance);
         await tester.pump();
         expect(find.text('メンテナンス中です'), findsOneWidget);
@@ -72,7 +68,7 @@ void main() {
     );
   }
 
-  testWidgets('テーマと利用可否が揃うまで初回の描画と本体の開始を待つ', (tester) async {
+  testWidgets('テーマの読み込み後は利用可否の確認を待たず初回画面を表示する', (tester) async {
     tester.binding.resetFirstFrameSent();
     final themeReady = Completer<AppThemeMode>();
     when(themeStorage.load()).thenAnswer((_) => themeReady.future);
@@ -92,14 +88,13 @@ void main() {
       ),
     );
     expect(tester.binding.sendFramesToEngine, isFalse);
-    pending.complete(AppAvailability.available);
-    await tester.pump();
-    expect(tester.binding.sendFramesToEngine, isFalse);
     expect(built, isFalse);
     themeReady.complete(AppThemeMode.dark);
     await tester.pump();
     expect(tester.binding.sendFramesToEngine, isTrue);
     expect(built, isTrue);
+    pending.complete(AppAvailability.available);
+    await tester.pump();
   });
 
   testWidgets('自動再試行を使い切ったらスプラッシュを終了し再確認できる', (tester) async {
@@ -108,7 +103,7 @@ void main() {
     when(check.execute()).thenThrow(TestException('通信失敗'));
     await tester.pumpWidget(createGate(check));
     await tester.pump();
-    expect(tester.binding.sendFramesToEngine, isFalse);
+    expect(tester.binding.sendFramesToEngine, isTrue);
     for (var attempt = 1; attempt < 5; attempt++) {
       await tester.pump(const Duration(milliseconds: 500));
     }
@@ -120,7 +115,7 @@ void main() {
     expect(find.text('利用状況を確認できませんでした'), findsNothing);
   });
 
-  testWidgets('起動確認中は機能を開始せず更新案内から再確認して再開する', (tester) async {
+  testWidgets('起動確認中は画面を表示し更新案内から再確認して再開する', (tester) async {
     final check = MockCheckAppAvailabilityUsecase();
     final pending = Completer<AppAvailability>();
     when(check.execute()).thenAnswer((_) => pending.future);
@@ -141,13 +136,14 @@ void main() {
         ),
       ),
     );
-    expect(built, isFalse);
+    await tester.pump();
+    expect(built, isTrue);
     expect(find.text('利用状況を確認しています'), findsNothing);
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.byType(CircularProgressIndicator), findsNothing);
     pending.complete(AppAvailability.updateRequired);
     await tester.pump();
     expect(find.text('アプリの更新が必要です'), findsOneWidget);
-    expect(built, isFalse);
+    expect(built, isTrue);
     when(check.execute()).thenAnswer((_) async => AppAvailability.available);
     await tester.tap(find.text('再確認'));
     await tester.pump();
@@ -192,7 +188,7 @@ void main() {
     await tester.pump();
     expect(find.text('編集中'), findsOneWidget);
   });
-  testWidgets('復帰確認中は元の画面を表示したまま操作を止める', (tester) async {
+  testWidgets('復帰確認中も元の画面で操作を続ける', (tester) async {
     final check = MockCheckAppAvailabilityUsecase();
     when(check.execute()).thenAnswer((_) async => AppAvailability.available);
     var operations = 0;
@@ -229,11 +225,37 @@ void main() {
     expect(find.text('利用状況を確認しています'), findsNothing);
     expect(find.byType(CircularProgressIndicator), findsNothing);
     await tester.tap(find.text('操作'), warnIfMissed: false);
-    expect(operations, 0);
+    expect(operations, 1);
     pending.complete(AppAvailability.available);
     await tester.pump();
     await tester.tap(find.text('操作'));
-    expect(operations, 1);
+    expect(operations, 2);
+  });
+
+  testWidgets('確認失敗後も入力を続けられ再確認で内容を失わない', (tester) async {
+    final check = MockCheckAppAvailabilityUsecase();
+    final pending = Completer<AppAvailability>();
+    when(check.execute()).thenAnswer((_) => pending.future);
+    await tester.pumpWidget(
+      createGate(
+        check,
+        child: const MaterialApp(home: Scaffold(body: TextField())),
+      ),
+    );
+    await tester.pump();
+    await tester.enterText(find.byType(TextField), '入力中');
+    when(check.execute()).thenThrow(TestException('通信失敗'));
+    pending.completeError(TestException('通信失敗'));
+    await tester.pump();
+    for (var attempt = 1; attempt < 5; attempt++) {
+      await tester.pump(const Duration(milliseconds: 500));
+    }
+    expect(find.text('利用状況を確認できませんでした'), findsOneWidget);
+    await tester.enterText(find.byType(TextField), '入力を継続');
+    when(check.execute()).thenAnswer((_) async => AppAvailability.available);
+    await tester.tap(find.text('再確認'));
+    await tester.pump();
+    expect(find.text('入力を継続'), findsOneWidget);
   });
 
   testWidgets('停止中の戻る操作は隠れた編集中の画面を閉じない', (tester) async {
