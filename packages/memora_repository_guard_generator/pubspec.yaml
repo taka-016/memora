@@ -1,0 +1,13 @@
+name: memora_repository_guard_generator
+description: Repositoryインターフェースから利用可否ガードを生成する。
+publish_to: none
+version: 0.0.1
+
+environment:
+  sdk: ^3.13.0
+
+dependencies:
+  analyzer: ^13.3.0
+  build: ^4.0.10
+  dart_style: ^3.1.13
+  glob: ^2.2.0

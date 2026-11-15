@@ -948,6 +948,13 @@ packages:
       relative: true
     source: path
     version: "0.1.0"
+  memora_repository_guard_generator:
+    dependency: "direct dev"
+    description:
+      path: "packages/memora_repository_guard_generator"
+      relative: true
+    source: path
+    version: "0.0.1"
   meta:
     dependency: transitive
     description:

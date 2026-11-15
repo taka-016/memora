@@ -69,6 +69,8 @@ dependencies:
   qreki_dart: ^1.1.2
 
 dev_dependencies:
+  memora_repository_guard_generator:
+    path: packages/memora_repository_guard_generator
   flutter_test:
     sdk: flutter
   mockito: ^5.4.6
