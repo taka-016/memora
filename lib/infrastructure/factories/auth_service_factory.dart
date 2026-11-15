@@ -1,3 +1,4 @@
+import 'package:memora/composition_root/providers/app_availability_providers.dart';
 import 'package:memora/application/models/app_mode.dart';
 import 'package:memora/application/models/app_capabilities.dart';
 import 'package:memora/application/exceptions/feature_unavailable_exception.dart';
@@ -29,6 +30,7 @@ class AuthServiceFactory {
       case AppMode.online:
         return FirebaseAuthService(
           firebaseAuth: ref.watch(firebaseAuthProvider),
+          ensureAvailable: ref.watch(ensureAppAvailableForMutationProvider),
         );
       case AppMode.offline:
         throw const FeatureUnavailableException(

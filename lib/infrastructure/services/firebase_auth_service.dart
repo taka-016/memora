@@ -6,10 +6,14 @@ import 'package:memora/application/services/auth_service.dart';
 import 'package:memora/core/app_logger.dart';
 
 class FirebaseAuthService implements AuthService {
-  FirebaseAuthService({FirebaseAuth? firebaseAuth})
-    : _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance;
+  FirebaseAuthService({
+    FirebaseAuth? firebaseAuth,
+    Future<void> Function()? ensureAvailable,
+  }) : _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance,
+       _ensureAvailable = ensureAvailable;
 
   final FirebaseAuth _firebaseAuth;
+  final Future<void> Function()? _ensureAvailable;
 
   @override
   Future<domain.User?> getCurrentUser() async {
@@ -51,6 +55,7 @@ class FirebaseAuthService implements AuthService {
     required String email,
     required String password,
   }) async {
+    await _ensureAvailable?.call();
     try {
       final userCredential = await _firebaseAuth.createUserWithEmailAndPassword(
         email: email,
@@ -110,6 +115,7 @@ class FirebaseAuthService implements AuthService {
   Future<void> _executeCurrentUserUpdate(
     Future<void> Function(User currentUser) update,
   ) async {
+    await _ensureAvailable?.call();
     final currentUser = _firebaseAuth.currentUser;
     if (currentUser == null) {
       throw Exception('ユーザーがログインしていません');
