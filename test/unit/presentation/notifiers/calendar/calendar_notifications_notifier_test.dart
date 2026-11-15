@@ -1,3 +1,5 @@
+import 'package:memora/application/models/app_availability.dart';
+import 'package:memora/presentation/notifiers/app_availability/app_availability_notifier.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
 
 import 'dart:async';
@@ -27,7 +29,11 @@ void main() {
   late MockCalendarNotificationGateway gateway;
   late MockSynchronizeCalendarNotificationsUsecase sync;
   late StreamController<void> changes;
+  late _Availability availability;
   setUp(() {
+    availability = _Availability(
+      const AppAvailabilityState(availability: AppAvailability.available),
+    );
     changes = StreamController<void>.broadcast();
     source = MockCalendarNotificationSource();
     gateway = MockCalendarNotificationGateway();
@@ -39,6 +45,7 @@ void main() {
         .thenAnswer((_) async => CalendarNotificationStatus.ready);
     container = ProviderContainer(
       overrides: [
+        appAvailabilityNotifierProvider.overrideWith(() => availability),
         calendarNotificationsSupportedProvider.overrideWithValue(true),
         calendarNotificationGatewayProvider.overrideWithValue(gateway),
         calendarNotificationSourceProvider.overrideWithValue(source),
@@ -51,6 +58,82 @@ void main() {
     container.dispose();
     await changes.close();
   });
+  for (final entry in [
+    ('確認前', const AppAvailabilityState()),
+    ('確認中', const AppAvailabilityState(isChecking: true)),
+    ('確認失敗', const AppAvailabilityState(hasError: true)),
+    (
+      'メンテナンス',
+      const AppAvailabilityState(availability: AppAvailability.maintenance),
+    ),
+    (
+      '更新必須',
+      const AppAvailabilityState(availability: AppAvailability.updateRequired),
+    ),
+  ]) {
+    testWidgets('起動時の${entry.$1}では通知を変更せず利用可能になってから同期する', (tester) async {
+      availability.initial = entry.$2;
+      container.read(currentMemberNotifierProvider.notifier).state =
+          const CurrentMemberState.loading();
+      final notifier = container.read(
+        calendarNotificationsNotifierProvider.notifier,
+      );
+      expect(
+        container.read(calendarNotificationsNotifierProvider).isSuspended,
+        isTrue,
+      );
+      expect(
+        container.read(calendarNotificationsNotifierProvider).isSyncing,
+        isFalse,
+      );
+      await tester.pump();
+      verifyNever(gateway.replace(any));
+      verifyNever(source.changes());
+      verifyNever(sync.execute());
+      container
+          .read(currentMemberNotifierProvider.notifier)
+          .state = const CurrentMemberState.loaded(
+        MemberDto(id: 'self', displayName: '本人'),
+      );
+      await notifier.refresh();
+      await tester.pump(const Duration(hours: 1));
+      verifyNever(gateway.replace(any));
+      verifyNever(source.changes());
+      verifyNever(sync.execute());
+      availability.update(
+        const AppAvailabilityState(availability: AppAvailability.available),
+      );
+      await tester.pump();
+      expect(
+        container.read(calendarNotificationsNotifierProvider).isSuspended,
+        isFalse,
+      );
+      expect(changes.hasListener, isTrue);
+      verify(sync.execute()).called(1);
+    });
+  }
+
+  testWidgets('利用可否が停止に変わると変更監視を止め再確認成功後に同期を再開する', (tester) async {
+    container.read(calendarNotificationsNotifierProvider);
+    await tester.pump();
+    expect(changes.hasListener, isTrue);
+    clearInteractions(sync);
+    availability.update(
+      const AppAvailabilityState(availability: AppAvailability.maintenance),
+    );
+    await tester.pump();
+    expect(changes.hasListener, isFalse);
+    changes.add(null);
+    await tester.pump(const Duration(hours: 1));
+    verifyNever(sync.execute());
+    availability.update(
+      const AppAvailabilityState(availability: AppAvailability.available),
+    );
+    await tester.pump();
+    expect(changes.hasListener, isTrue);
+    verify(sync.execute()).called(1);
+  });
+
   test('利用停止中は変更通知と定期再取得を開始せず解除時に監視を再開する', () async {
     final notifier = container.read(
       calendarNotificationsNotifierProvider.notifier,
@@ -165,4 +248,13 @@ class _CurrentMember extends CurrentMemberNotifier {
   @override
   CurrentMemberState build() =>
       const CurrentMemberState.loaded(MemberDto(id: 'self', displayName: '本人'));
+}
+
+class _Availability extends AppAvailabilityNotifier {
+  _Availability(this.initial);
+  AppAvailabilityState initial;
+  @override
+  AppAvailabilityState build() => initial;
+
+  void update(AppAvailabilityState value) => state = value;
 }
