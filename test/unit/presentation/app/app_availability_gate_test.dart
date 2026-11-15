@@ -102,14 +102,18 @@ void main() {
     expect(built, isTrue);
   });
 
-  testWidgets('初回の取得に失敗してもスプラッシュを終了し再確認できる', (tester) async {
+  testWidgets('自動再試行を使い切ったらスプラッシュを終了し再確認できる', (tester) async {
     tester.binding.resetFirstFrameSent();
     final check = MockCheckAppAvailabilityUsecase();
     when(check.execute()).thenThrow(TestException('通信失敗'));
     await tester.pumpWidget(createGate(check));
     await tester.pump();
-    expect(tester.binding.sendFramesToEngine, isTrue);
+    expect(tester.binding.sendFramesToEngine, isFalse);
+    for (var attempt = 1; attempt < 5; attempt++) {
+      await tester.pump(const Duration(milliseconds: 500));
+    }
     expect(find.text('利用状況を確認できませんでした'), findsOneWidget);
+    expect(tester.binding.sendFramesToEngine, isTrue);
     when(check.execute()).thenAnswer((_) async => AppAvailability.available);
     await tester.tap(find.text('再確認'));
     await tester.pump();
@@ -179,6 +183,9 @@ void main() {
     when(check.execute()).thenThrow(TestException('通信失敗'));
     await tester.tap(find.text('再確認'));
     await tester.pump();
+    for (var attempt = 1; attempt < 5; attempt++) {
+      await tester.pump(const Duration(milliseconds: 500));
+    }
     expect(find.text('利用状況を確認できませんでした'), findsOneWidget);
     when(check.execute()).thenAnswer((_) async => AppAvailability.available);
     await tester.tap(find.text('再確認'));

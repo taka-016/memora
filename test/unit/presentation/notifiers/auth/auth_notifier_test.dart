@@ -104,7 +104,7 @@ void main() {
 
     for (final waitForToken in [true, false]) {
       testWidgets(
-        '起動時の${waitForToken ? 'トークン' : 'メンバー'}確認のタイムアウト後もログアウトせず再試行できる',
+        '起動時の${waitForToken ? 'トークン' : 'メンバー'}確認を5回試してもタイムアウトした場合にログアウトせず手動再試行できる',
         (tester) async {
           final previousLog = logger;
           logger = const SilentAppLog();
@@ -131,8 +131,16 @@ void main() {
           controller.add(user);
           await tester.pump();
           expect(notifier.state.isLoading, isTrue);
-          await tester.pump(const Duration(seconds: 15));
+          for (var attempt = 1; attempt <= 5; attempt++) {
+            await tester.pump(const Duration(seconds: 15));
+            if (attempt < 5) {
+              expect(notifier.state.isLoading, isTrue);
+              expect(notifier.state.hasInitializationError, isFalse);
+              await tester.pump(const Duration(milliseconds: 500));
+            }
+          }
           expect(notifier.state.hasInitializationError, isTrue);
+          verify(mockValidateCurrentUserTokenUseCase.execute()).called(5);
           verifyNever(mockLogoutUseCase.execute());
           when(mockValidateCurrentUserTokenUseCase.execute())
               .thenAnswer((_) async {});
@@ -152,6 +160,88 @@ void main() {
         },
       );
     }
+
+    for (final waitForToken in [true, false]) {
+      testWidgets('起動時の${waitForToken ? 'トークン' : 'メンバー'}確認は一度のタイムアウト後に自動回復する', (
+        tester,
+      ) async {
+        final previousLog = logger;
+        logger = const SilentAppLog();
+        addTearDown(() => logger = previousLog);
+        const user = UserDto(
+          id: 'user123',
+          loginId: 'test@example.com',
+          isVerified: true,
+        );
+        final pendingToken = Completer<void>();
+        final pendingMember = Completer<bool>();
+        when(mockValidateCurrentUserTokenUseCase.execute()).thenAnswer(
+          (_) => waitForToken ? pendingToken.future : Future.value(),
+        );
+        when(mockCheckMemberExistsUseCase.execute(user.id))
+            .thenAnswer((_) => pendingMember.future);
+        final controller = StreamController<UserDto?>();
+        addTearDown(controller.close);
+        final container = createContainer(controller.stream);
+        addTearDown(container.dispose);
+        container.read(authNotifierProvider);
+        controller.add(user);
+        await tester.pump();
+        await tester.pump(const Duration(seconds: 15));
+        expect(container.read(authNotifierProvider).isLoading, isTrue);
+        expect(
+          container.read(authNotifierProvider).hasInitializationError,
+          isFalse,
+        );
+        when(mockValidateCurrentUserTokenUseCase.execute())
+            .thenAnswer((_) async {});
+        when(mockCheckMemberExistsUseCase.execute(user.id))
+            .thenAnswer((_) async => true);
+        await tester.pump(const Duration(milliseconds: 500));
+        expect(container.read(authNotifierProvider).isAuthenticated, isTrue);
+        verifyNever(mockLogoutUseCase.execute());
+        pendingToken.complete();
+        pendingMember.complete(false);
+        await tester.pump();
+        expect(container.read(authNotifierProvider).isAuthenticated, isTrue);
+      });
+    }
+
+    testWidgets('認証の自動再試行待ちにログアウト通知が来たら古い確認を再開しない', (tester) async {
+      final previousLog = logger;
+      logger = const SilentAppLog();
+      addTearDown(() => logger = previousLog);
+      const user = UserDto(
+        id: 'user123',
+        loginId: 'test@example.com',
+        isVerified: true,
+      );
+      final pending = Completer<void>();
+      when(mockValidateCurrentUserTokenUseCase.execute())
+          .thenAnswer((_) => pending.future);
+      final controller = StreamController<UserDto?>();
+      addTearDown(controller.close);
+      final container = createContainer(controller.stream);
+      addTearDown(container.dispose);
+      container.read(authNotifierProvider);
+      controller.add(user);
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 15));
+      controller.add(null);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(
+        container.read(authNotifierProvider).status,
+        AuthStatus.unauthenticated,
+      );
+      verify(mockValidateCurrentUserTokenUseCase.execute()).called(1);
+      pending.complete();
+      await tester.pump();
+      expect(
+        container.read(authNotifierProvider).status,
+        AuthStatus.unauthenticated,
+      );
+    });
 
     test('初期状態はloading', () {
       final controller = StreamController<UserDto?>();
