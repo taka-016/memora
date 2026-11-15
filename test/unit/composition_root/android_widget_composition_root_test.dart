@@ -200,7 +200,7 @@ void main() {
       skip: buildMode != AppMode.offline,
       () async {
         SharedPreferences.setMockInitialValues({
-          if (savedMode != null) 'resolved_app_mode': savedMode,
+          'resolved_app_mode': ?savedMode,
         });
         final database = OfflineDatabase(NativeDatabase.memory());
         var actionCalled = false;
@@ -222,7 +222,6 @@ void main() {
       },
     );
   }
-
 }
 
 class _TestOperationLock implements OfflineBackupRestoreOperationLock {

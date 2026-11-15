@@ -83,7 +83,10 @@ void main() {
 
     test('起動時は保存済みモードの同期やキャッシュ削除を行わない', () {
       final source = File(_mainPath).readAsStringSync();
-      expect(source, isNot(contains('synchronizeAppModeAndAndroidWidgetCache')));
+      expect(
+        source,
+        isNot(contains('synchronizeAppModeAndAndroidWidgetCache')),
+      );
       expect(source, isNot(contains('SharedPreferencesAppModeStorage')));
       expect(source, isNot(contains('cacheStorage.clear()')));
       expect(source, contains('registerAndroidWidgetInteractivityCallback();'));

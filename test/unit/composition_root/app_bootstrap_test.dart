@@ -2,7 +2,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/composition_root/app_bootstrap.dart';
 
-
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -26,5 +25,4 @@ void main() {
       ['DeviceOrientation.portraitUp'],
     ]);
   });
-
 }
