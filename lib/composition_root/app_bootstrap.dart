@@ -1,4 +1,4 @@
-import 'package:memora/composition_root/calendar_notification_background.dart';
+import 'package:memora/presentation/app/startup_background_tasks.dart';
 
 import 'dart:async';
 
@@ -7,9 +7,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/models/app_mode.dart';
 import 'package:memora/composition_root/app_composition_root.dart';
-import 'package:memora/composition_root/providers/android_widget_providers.dart';
 import 'package:memora/composition_root/providers/offline_backup_providers.dart';
-import 'package:memora/infrastructure/android_widget/android_widget_background_update.dart';
 import 'package:memora/infrastructure/android_widget/android_widget_interactivity_callback.dart';
 
 Future<void> initializeAppDisplay() async {
@@ -33,8 +31,6 @@ Future<void> launchApp(Widget app) async {
           );
         };
         registerAndroidWidgetInteractivityCallback();
-        await initializeAndroidWidgetBackgroundUpdate();
-        await registerCalendarNotificationBackgroundUpdate();
         if (root.mode == AppMode.offline) {
           try {
             await container
@@ -48,14 +44,15 @@ Future<void> launchApp(Widget app) async {
             );
           }
         }
-        final interval = await container
-            .read(androidWidgetUpdateIntervalStorageProvider)
-            .load();
-        await registerAndroidWidgetPeriodicUpdateTask(interval.duration);
         root.services.log.i(
           'MEMORA_APP_MODE=${root.requestedValue ?? root.mode.name}, AppMode=${root.mode.name}',
         );
-        runApp(UncontrolledProviderScope(container: container, child: app));
+        runApp(
+          UncontrolledProviderScope(
+            container: container,
+            child: StartupBackgroundTasks(child: app),
+          ),
+        );
       } catch (_) {
         container.dispose();
         rethrow;

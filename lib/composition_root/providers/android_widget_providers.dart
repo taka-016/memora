@@ -1,3 +1,4 @@
+import 'package:memora/composition_root/providers/background_task_providers.dart';
 import 'package:memora/application/services/combined_android_widget_launch_uri_source.dart';
 import 'package:memora/composition_root/providers/calendar_notification_providers.dart';
 import 'package:memora/application/queries/android_widget/android_widget_itinerary_query_service.dart';
@@ -23,7 +24,6 @@ import 'package:memora/application/usecases/android_widget/get_android_widget_it
 import 'package:memora/application/usecases/android_widget/update_android_widget_interval_usecase.dart';
 import 'package:memora/application/usecases/android_widget/watch_android_widget_launch_uri_usecase.dart';
 import 'package:memora/composition_root/providers/app_providers.dart';
-import 'package:memora/infrastructure/android_widget/android_widget_background_update.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/infrastructure/services/home_widget_android_widget_launch_uri_source.dart';
 
@@ -115,7 +115,8 @@ final androidWidgetReadTransactionProvider = Provider<ReadTransaction?>((ref) {
 
 final androidWidgetPeriodicUpdateRegistrarProvider =
     Provider<RegisterAndroidWidgetPeriodicUpdateTask>((ref) {
-      return registerAndroidWidgetPeriodicUpdateTask;
+      final registration = ref.watch(startupBackgroundRegistrationProvider);
+      return (_) => registration.registerWidget();
     });
 
 final updateAndroidWidgetIntervalUsecaseProvider =

@@ -1,3 +1,4 @@
+import 'package:memora/presentation/app/startup_background_tasks.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_group_settings_notifier.dart';
 import 'package:memora/presentation/notifiers/app_availability/app_availability_notifier.dart';
 import 'package:memora/presentation/app/app_availability_gate.dart';
@@ -79,6 +80,9 @@ class MyApp extends ConsumerWidget {
     ref.watch(calendarNotificationsNotifierProvider);
     ref.watch(calendarGroupSettingsNotifierProvider);
     return MaterialApp.router(
+      builder: (context, child) => StartupBackgroundRegistrationNotice(
+        child: child ?? const SizedBox.shrink(),
+      ),
       routerConfig: ref.watch(appRouterConfigProvider),
       title: ref.watch(appDisplayNameProvider),
       theme: buildAppTheme(Brightness.light),
