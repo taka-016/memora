@@ -1,3 +1,4 @@
+import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:equatable/equatable.dart';
 import 'package:memora/application/dtos/account/user_dto.dart';
 
@@ -16,6 +17,7 @@ class AuthState extends Equatable {
   const AuthState._({
     required this.status,
     this.user,
+    this.member,
     required this.message,
     required this.messageType,
   });
@@ -27,10 +29,11 @@ class AuthState extends Equatable {
         messageType: MessageType.info,
       );
 
-  const AuthState.authenticated(UserDto user)
+  const AuthState.authenticated(UserDto user, {MemberDto? member})
     : this._(
         status: AuthStatus.authenticated,
         user: user,
+        member: member,
         message: '',
         messageType: MessageType.info,
       );
@@ -51,6 +54,7 @@ class AuthState extends Equatable {
 
   final AuthStatus status;
   final UserDto? user;
+  final MemberDto? member;
   final String message;
   final MessageType messageType;
 
@@ -75,11 +79,16 @@ class AuthState extends Equatable {
     return AuthState._(
       status: status ?? this.status,
       user: user ?? this.user,
+      member:
+          (status ?? this.status) == AuthStatus.authenticated &&
+              (user ?? this.user)?.id == this.user?.id
+          ? member
+          : null,
       message: message ?? this.message,
       messageType: messageType ?? this.messageType,
     );
   }
 
   @override
-  List<Object?> get props => [status, user, message, messageType];
+  List<Object?> get props => [status, user, member, message, messageType];
 }

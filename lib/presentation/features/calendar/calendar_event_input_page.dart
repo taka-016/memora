@@ -1,3 +1,4 @@
+import 'package:memora/presentation/shared/dialogs/edit_discard_confirm_dialog.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_mutation_coordinator.dart';
 
 import 'dart:async';
@@ -40,17 +41,26 @@ String calendarPeriodText(CalendarEventDto event) {
   return '${calendarDateText(start)} ${calendarTimeText(start)} 〜 ${calendarDateText(end)} ${calendarTimeText(end)}';
 }
 
-class CalendarEventDialog extends ConsumerStatefulWidget {
-  const CalendarEventDialog({super.key, required this.date, this.event});
+class CalendarEventInputPage extends ConsumerStatefulWidget {
+  const CalendarEventInputPage({
+    super.key,
+    required this.date,
+    this.event,
+    this.onSaved,
+    this.onCancelled,
+  });
+  final ValueChanged<DateTime>? onSaved;
+  final VoidCallback? onCancelled;
   final DateTime date;
   final CalendarEventDto? event;
 
   @override
-  ConsumerState<CalendarEventDialog> createState() =>
-      _CalendarEventDialogState();
+  ConsumerState<CalendarEventInputPage> createState() =>
+      _CalendarEventInputPageState();
 }
 
-class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
+class _CalendarEventInputPageState
+    extends ConsumerState<CalendarEventInputPage> {
   final Object _session = Object();
   String? _groupId;
   bool _saving = false;
@@ -293,6 +303,37 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
     }
   }
 
+  bool get _isDirty =>
+      _editValues != _initialValues ||
+      (_notifications ?? []).join(',') !=
+          (_initialNotifications ?? []).join(',');
+  bool _confirmingClose = false;
+
+  Future<void> _close() async {
+    if (_saving || _confirmingClose) return;
+    if (widget.onCancelled == null) {
+      await Navigator.maybePop(context);
+      return;
+    }
+    _confirmingClose = true;
+    try {
+      if (_isDirty && !await EditDiscardConfirmDialog.show(context)) return;
+      if (mounted) widget.onCancelled!();
+    } finally {
+      _confirmingClose = false;
+    }
+  }
+
+  Widget _withDiscardScope(Widget child) => widget.onCancelled == null
+      ? EditDiscardScope(isSaving: _saving, isDirty: _isDirty, child: child)
+      : PopScope<Object?>(
+          canPop: false,
+          onPopInvokedWithResult: (didPop, _) {
+            if (!didPop) unawaited(_close());
+          },
+          child: child,
+        );
+
   Future<void> _save() async {
     if (!_form.currentState!.validate()) return;
     if (_saving || _groupId == null) return;
@@ -416,7 +457,13 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
             expectedSeries: recurring ? _seriesAtOpen : null,
             scope: scope,
           );
-      if (mounted) Navigator.of(context).pop();
+      if (mounted) {
+        if (widget.onSaved != null) {
+          widget.onSaved!(_start);
+        } else {
+          Navigator.of(context).pop();
+        }
+      }
     } on ApplicationValidationException catch (error) {
       if (mounted) setState(() => _error = error.message);
     } catch (_) {
@@ -563,396 +610,382 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
         borderRadius: BorderRadius.circular(4),
       ),
     );
-    return EditDiscardScope(
-      isSaving: state.isSaving,
-      isDirty:
-          _editValues != _initialValues ||
-          (_notifications ?? []).join(',') !=
-              (_initialNotifications ?? []).join(','),
-      child: Dialog(
-        insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-        child: Material(
-          type: MaterialType.card,
-          child: SizedBox(
-            width: MediaQuery.sizeOf(context).width * 0.95,
-            height: MediaQuery.sizeOf(context).height * 0.8,
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    widget.event == null ? '予定を追加' : '予定を編集',
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w500,
-                    ),
+    return _withDiscardScope(
+      Scaffold(
+        appBar: AppBar(leading: BackButton(onPressed: _close)),
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  widget.event == null ? '予定を追加' : '予定を編集',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w500,
                   ),
-                  if (widget.event != null)
-                    Text(
-                      '保存先: ${groups.groups.where((g) => g.id == widget.event!.groupId).firstOrNull?.name ?? widget.event!.groupId}',
+                ),
+                if (widget.event != null)
+                  Text(
+                    '保存先: ${groups.groups.where((g) => g.id == widget.event!.groupId).firstOrNull?.name ?? widget.event!.groupId}',
+                  ),
+                const SizedBox(height: 16),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.only(
+                      top: MediaQuery.textScalerOf(context).scale(8),
                     ),
-                  const SizedBox(height: 16),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      padding: EdgeInsets.only(
-                        top: MediaQuery.textScalerOf(context).scale(8),
-                      ),
-                      child: Form(
-                        key: _form,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          spacing: 16,
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            DropdownButtonFormField<String>(
-                              key: ValueKey(('calendar_event_group', _groupId)),
-                              initialValue:
-                                  groups.groups.any((g) => g.id == _groupId)
-                                  ? _groupId
-                                  : null,
-                              isExpanded: true,
-                              decoration: const InputDecoration(
-                                labelText: '保存先グループ',
-                                border: OutlineInputBorder(),
-                              ),
-                              items: [
-                                for (final group in groups.groups)
-                                  DropdownMenuItem(
-                                    value: group.id,
-                                    child: Text(group.name),
-                                  ),
+                    child: Form(
+                      key: _form,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        spacing: 16,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          DropdownButtonFormField<String>(
+                            key: ValueKey(('calendar_event_group', _groupId)),
+                            initialValue:
+                                groups.groups.any((g) => g.id == _groupId)
+                                ? _groupId
+                                : null,
+                            isExpanded: true,
+                            decoration: const InputDecoration(
+                              labelText: '保存先グループ',
+                              border: OutlineInputBorder(),
+                            ),
+                            items: [
+                              for (final group in groups.groups)
+                                DropdownMenuItem(
+                                  value: group.id,
+                                  child: Text(group.name),
+                                ),
+                            ],
+                            onChanged: state.isSaving || !groups.groupsReady
+                                ? null
+                                : (id) {
+                                    setState(() {
+                                      _groupId = id;
+                                      _labelId = 'group:';
+                                    });
+                                    unawaited(
+                                      ref
+                                          .read(
+                                            calendarEventInputNotifierProvider(
+                                              _session,
+                                            ).notifier,
+                                          )
+                                          .selectGroup(id),
+                                    );
+                                  },
+                          ),
+                          if (groups.groupsReady && groups.groups.isEmpty)
+                            const Text('グループを作成するか、グループに参加してください'),
+                          if (inputState.isLoading)
+                            const LinearProgressIndicator(),
+                          if (inputState.error.isNotEmpty)
+                            Column(
+                              children: [
+                                Text(inputState.error),
+                                TextButton(
+                                  onPressed: () => ref
+                                      .read(
+                                        calendarEventInputNotifierProvider(
+                                          _session,
+                                        ).notifier,
+                                      )
+                                      .retry(),
+                                  child: const Text('再試行'),
+                                ),
                               ],
-                              onChanged: state.isSaving || !groups.groupsReady
-                                  ? null
-                                  : (id) {
-                                      setState(() {
-                                        _groupId = id;
-                                        _labelId = 'group:';
-                                      });
-                                      unawaited(
-                                        ref
-                                            .read(
-                                              calendarEventInputNotifierProvider(
-                                                _session,
-                                              ).notifier,
-                                            )
-                                            .selectGroup(id),
-                                      );
-                                    },
                             ),
-                            if (groups.groupsReady && groups.groups.isEmpty)
-                              const Text('グループを作成するか、グループに参加してください'),
-                            if (inputState.isLoading)
-                              const LinearProgressIndicator(),
-                            if (inputState.error.isNotEmpty)
-                              Column(
-                                children: [
-                                  Text(inputState.error),
-                                  TextButton(
-                                    onPressed: () => ref
-                                        .read(
-                                          calendarEventInputNotifierProvider(
-                                            _session,
-                                          ).notifier,
-                                        )
-                                        .retry(),
-                                    child: const Text('再試行'),
-                                  ),
-                                ],
-                              ),
-                            TextFormField(
-                              controller: _title,
-                              onChanged: (_) => setState(() {}),
-                              enabled: !state.isSaving,
-                              decoration: const InputDecoration(
-                                labelText: 'タイトル',
-                                border: OutlineInputBorder(),
-                              ),
-                              validator: (value) =>
-                                  value == null || value.trim().isEmpty
-                                  ? 'タイトルを入力してください'
-                                  : null,
+                          TextFormField(
+                            controller: _title,
+                            onChanged: (_) => setState(() {}),
+                            enabled: !state.isSaving,
+                            decoration: const InputDecoration(
+                              labelText: 'タイトル',
+                              border: OutlineInputBorder(),
                             ),
-                            DropdownButtonFormField<String>(
-                              key: ValueKey((
-                                'calendar_event_label',
-                                _groupId,
-                                inputState.isLoading,
-                              )),
-                              initialValue:
-                                  labels.any((label) => label.id == _labelId)
-                                  ? _labelId
-                                  : null,
-                              isExpanded: true,
-                              decoration: const InputDecoration(
-                                labelText: '色ラベル',
-                                border: OutlineInputBorder(),
-                              ),
-                              items: labels
-                                  .map(
-                                    (label) => DropdownMenuItem(
-                                      value: label.id,
-                                      enabled: label.isSelectable,
-                                      child:
-                                          label.labelType == 'member' &&
-                                              label.isSelectable
-                                          ? Semantics(
-                                              label: label.name,
-                                              excludeSemantics: true,
-                                              child: Row(
-                                                children: [
-                                                  Flexible(
-                                                    child: Text(
-                                                      label.name.substring(
-                                                        0,
-                                                        label.name.length -
-                                                            'の予定'.length,
-                                                      ),
-                                                      overflow:
-                                                          TextOverflow.ellipsis,
-                                                      maxLines: 1,
+                            validator: (value) =>
+                                value == null || value.trim().isEmpty
+                                ? 'タイトルを入力してください'
+                                : null,
+                          ),
+                          DropdownButtonFormField<String>(
+                            key: ValueKey((
+                              'calendar_event_label',
+                              _groupId,
+                              inputState.isLoading,
+                            )),
+                            initialValue:
+                                labels.any((label) => label.id == _labelId)
+                                ? _labelId
+                                : null,
+                            isExpanded: true,
+                            decoration: const InputDecoration(
+                              labelText: '色ラベル',
+                              border: OutlineInputBorder(),
+                            ),
+                            items: labels
+                                .map(
+                                  (label) => DropdownMenuItem(
+                                    value: label.id,
+                                    enabled: label.isSelectable,
+                                    child:
+                                        label.labelType == 'member' &&
+                                            label.isSelectable
+                                        ? Semantics(
+                                            label: label.name,
+                                            excludeSemantics: true,
+                                            child: Row(
+                                              children: [
+                                                Flexible(
+                                                  child: Text(
+                                                    label.name.substring(
+                                                      0,
+                                                      label.name.length -
+                                                          'の予定'.length,
                                                     ),
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    maxLines: 1,
                                                   ),
-                                                  const Text('の予定'),
-                                                ],
-                                              ),
-                                            )
-                                          : Text(
-                                              label.name,
-                                              overflow: TextOverflow.ellipsis,
-                                              maxLines: 1,
+                                                ),
+                                                const Text('の予定'),
+                                              ],
                                             ),
+                                          )
+                                        : Text(
+                                            label.name,
+                                            overflow: TextOverflow.ellipsis,
+                                            maxLines: 1,
+                                          ),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged:
+                                state.isSaving ||
+                                    movingSeries ||
+                                    _groupId == null ||
+                                    inputState.isLoading ||
+                                    inputState.error.isNotEmpty
+                                ? null
+                                : (value) {
+                                    if (value != null) {
+                                      ref
+                                          .read(
+                                            calendarEventInputNotifierProvider(
+                                              _session,
+                                            ).notifier,
+                                          )
+                                          .selectLabel(value);
+                                    }
+                                  },
+                            validator: (value) =>
+                                value == null ? '色ラベルを指定してください' : null,
+                          ),
+                          SwitchListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: const Text('終日'),
+                            value: _allDay,
+                            onChanged:
+                                state.isSaving ||
+                                    movingSeries ||
+                                    notificationSettings == null ||
+                                    _groupId == null ||
+                                    inputState.isLoading ||
+                                    inputState.error.isNotEmpty ||
+                                    inputState.group == null ||
+                                    !groups.groupsReady
+                                ? null
+                                : (value) => setState(() {
+                                    _allDay = value;
+                                    _notifications = List.of(
+                                      value
+                                          ? notificationSettings.allDay
+                                          : notificationSettings.timed,
+                                    );
+                                  }),
+                          ),
+                          for (final start in [true, false])
+                            Row(
+                              children: [
+                                Expanded(
+                                  flex: 3,
+                                  child: TextButton(
+                                    style: dateInputStyle,
+                                    onPressed: state.isSaving || movingSeries
+                                        ? null
+                                        : () => _pick(start, false),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            '${start ? '開始' : '終了'}日: ${calendarDateText(start ? _start : _end)}',
+                                          ),
+                                        ),
+                                        const Icon(
+                                          Icons.calendar_today,
+                                          size: 20,
+                                        ),
+                                      ],
                                     ),
-                                  )
-                                  .toList(),
-                              onChanged:
-                                  state.isSaving ||
-                                      movingSeries ||
-                                      _groupId == null ||
-                                      inputState.isLoading ||
-                                      inputState.error.isNotEmpty
-                                  ? null
-                                  : (value) {
-                                      if (value != null) {
-                                        ref
-                                            .read(
-                                              calendarEventInputNotifierProvider(
-                                                _session,
-                                              ).notifier,
-                                            )
-                                            .selectLabel(value);
-                                      }
-                                    },
-                              validator: (value) =>
-                                  value == null ? '色ラベルを指定してください' : null,
-                            ),
-                            SwitchListTile(
-                              contentPadding: EdgeInsets.zero,
-                              title: const Text('終日'),
-                              value: _allDay,
-                              onChanged:
-                                  state.isSaving ||
-                                      movingSeries ||
-                                      notificationSettings == null ||
-                                      _groupId == null ||
-                                      inputState.isLoading ||
-                                      inputState.error.isNotEmpty ||
-                                      inputState.group == null ||
-                                      !groups.groupsReady
-                                  ? null
-                                  : (value) => setState(() {
-                                      _allDay = value;
-                                      _notifications = List.of(
-                                        value
-                                            ? notificationSettings.allDay
-                                            : notificationSettings.timed,
-                                      );
-                                    }),
-                            ),
-                            for (final start in [true, false])
-                              Row(
-                                children: [
+                                  ),
+                                ),
+                                if (!_allDay)
                                   Expanded(
-                                    flex: 3,
+                                    flex: 2,
                                     child: TextButton(
                                       style: dateInputStyle,
-                                      onPressed: state.isSaving || movingSeries
+                                      key: Key(
+                                        'calendar_${start ? 'start' : 'end'}_time',
+                                      ),
+                                      onPressed:
+                                          state.isSaving ||
+                                              movingSeries ||
+                                              (start &&
+                                                  preferences.value == null)
                                           ? null
-                                          : () => _pick(start, false),
-                                      child: Row(
-                                        children: [
-                                          Expanded(
-                                            child: Text(
-                                              '${start ? '開始' : '終了'}日: ${calendarDateText(start ? _start : _end)}',
-                                            ),
-                                          ),
-                                          const Icon(
-                                            Icons.calendar_today,
-                                            size: 20,
-                                          ),
-                                        ],
+                                          : () => _pick(start, true),
+                                      child: Text(
+                                        calendarTimeText(start ? _start : _end),
                                       ),
                                     ),
                                   ),
-                                  if (!_allDay)
-                                    Expanded(
-                                      flex: 2,
-                                      child: TextButton(
-                                        style: dateInputStyle,
-                                        key: Key(
-                                          'calendar_${start ? 'start' : 'end'}_time',
-                                        ),
-                                        onPressed:
-                                            state.isSaving ||
-                                                movingSeries ||
-                                                (start &&
-                                                    preferences.value == null)
-                                            ? null
-                                            : () => _pick(start, true),
-                                        child: Text(
-                                          calendarTimeText(
-                                            start ? _start : _end,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            if (movingSeries)
-                              const Text('系列全体の日時・繰り返し・取消情報を保持して移動します'),
-                            ListTile(
-                              contentPadding: EdgeInsets.zero,
-                              title: const Text('繰り返し'),
-                              subtitle: Text(_recurrence.summary),
-                              trailing: const Icon(Icons.chevron_right),
-                              onTap: state.isSaving || movingSeries
-                                  ? null
-                                  : () async {
-                                      final value =
-                                          await showCalendarRecurrencePicker(
-                                            context,
-                                            _recurrence,
-                                            _start,
-                                          );
-                                      if (value != null && mounted) {
-                                        setState(() {
-                                          _recurrence = value;
-                                          _recurrenceEdited = true;
-                                        });
-                                      }
-                                    },
+                              ],
                             ),
-                            if (notificationSettings != null)
-                              CalendarNotificationEditor(
-                                allDay: _allDay,
-                                values: _notifications ?? [],
-                                enabled: !state.isSaving,
-                                onChanged: (value) =>
-                                    setState(() => _notifications = value),
-                              ),
-                            if (notificationPreferences.hasError)
-                              TextButton(
-                                onPressed: () => ref.invalidate(
-                                  calendarNotificationPreferencesNotifierProvider,
-                                ),
-                                child: const Text('通知設定を再取得'),
-                              ),
-                            if (!_allDay && preferences.hasError)
-                              TextButton(
-                                onPressed: () => ref.invalidate(
-                                  calendarPreferencesNotifierProvider,
-                                ),
-                                child: const Text('標準時間を再取得'),
-                              ),
-                            TextFormField(
-                              controller: _url,
-                              onChanged: (_) => setState(() {}),
+                          if (movingSeries)
+                            const Text('系列全体の日時・繰り返し・取消情報を保持して移動します'),
+                          ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: const Text('繰り返し'),
+                            subtitle: Text(_recurrence.summary),
+                            trailing: const Icon(Icons.chevron_right),
+                            onTap: state.isSaving || movingSeries
+                                ? null
+                                : () async {
+                                    final value =
+                                        await showCalendarRecurrencePicker(
+                                          context,
+                                          _recurrence,
+                                          _start,
+                                        );
+                                    if (value != null && mounted) {
+                                      setState(() {
+                                        _recurrence = value;
+                                        _recurrenceEdited = true;
+                                      });
+                                    }
+                                  },
+                          ),
+                          if (notificationSettings != null)
+                            CalendarNotificationEditor(
+                              allDay: _allDay,
+                              values: _notifications ?? [],
                               enabled: !state.isSaving,
-                              keyboardType: TextInputType.url,
-                              decoration: InputDecoration(
-                                labelText: 'URL',
-                                border: const OutlineInputBorder(),
-                                suffixIcon: IconButton(
-                                  tooltip: 'URLを開く',
-                                  icon: const Icon(Icons.open_in_new),
-                                  onPressed:
-                                      state.isSaving || _url.text.trim().isEmpty
-                                      ? null
-                                      : _openUrl,
-                                ),
+                              onChanged: (value) =>
+                                  setState(() => _notifications = value),
+                            ),
+                          if (notificationPreferences.hasError)
+                            TextButton(
+                              onPressed: () => ref.invalidate(
+                                calendarNotificationPreferencesNotifierProvider,
+                              ),
+                              child: const Text('通知設定を再取得'),
+                            ),
+                          if (!_allDay && preferences.hasError)
+                            TextButton(
+                              onPressed: () => ref.invalidate(
+                                calendarPreferencesNotifierProvider,
+                              ),
+                              child: const Text('標準時間を再取得'),
+                            ),
+                          TextFormField(
+                            controller: _url,
+                            onChanged: (_) => setState(() {}),
+                            enabled: !state.isSaving,
+                            keyboardType: TextInputType.url,
+                            decoration: InputDecoration(
+                              labelText: 'URL',
+                              border: const OutlineInputBorder(),
+                              suffixIcon: IconButton(
+                                tooltip: 'URLを開く',
+                                icon: const Icon(Icons.open_in_new),
+                                onPressed:
+                                    state.isSaving || _url.text.trim().isEmpty
+                                    ? null
+                                    : _openUrl,
                               ),
                             ),
-                            TextFormField(
-                              controller: _memo,
-                              onChanged: (_) => setState(() {}),
-                              enabled: !state.isSaving,
-                              minLines: 3,
-                              maxLines: null,
-                              keyboardType: TextInputType.multiline,
-                              decoration: const InputDecoration(
-                                labelText: 'メモ',
-                                border: OutlineInputBorder(),
+                          ),
+                          TextFormField(
+                            controller: _memo,
+                            onChanged: (_) => setState(() {}),
+                            enabled: !state.isSaving,
+                            minLines: 3,
+                            maxLines: null,
+                            keyboardType: TextInputType.multiline,
+                            decoration: const InputDecoration(
+                              labelText: 'メモ',
+                              border: OutlineInputBorder(),
+                            ),
+                          ),
+                          CalendarLocationField(
+                            controller: _locationName,
+                            enabled: !state.isSaving,
+                            onChanged: (_) => setState(() {
+                              _latitude = null;
+                              _longitude = null;
+                            }),
+                            onSelected: (candidate) => setState(() {
+                              _latitude = candidate.coordinate.latitude;
+                              _longitude = candidate.coordinate.longitude;
+                            }),
+                          ),
+                          if (_error.isNotEmpty)
+                            Text(
+                              _error,
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.error,
                               ),
                             ),
-                            CalendarLocationField(
-                              controller: _locationName,
-                              enabled: !state.isSaving,
-                              onChanged: (_) => setState(() {
-                                _latitude = null;
-                                _longitude = null;
-                              }),
-                              onSelected: (candidate) => setState(() {
-                                _latitude = candidate.coordinate.latitude;
-                                _longitude = candidate.coordinate.longitude;
-                              }),
-                            ),
-                            if (_error.isNotEmpty)
-                              Text(
-                                _error,
-                                style: TextStyle(
-                                  color: Theme.of(context).colorScheme.error,
-                                ),
-                              ),
-                          ],
-                        ),
+                        ],
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
-                  OverflowBar(
-                    alignment: MainAxisAlignment.end,
-                    spacing: 8,
-                    overflowSpacing: 8,
-                    children: [
-                      if (widget.event != null)
-                        TextButton(
-                          onPressed: state.isSaving ? null : _delete,
-                          child: const Text('削除'),
-                        ),
+                ),
+                const SizedBox(height: 24),
+                OverflowBar(
+                  alignment: MainAxisAlignment.end,
+                  spacing: 8,
+                  overflowSpacing: 8,
+                  children: [
+                    if (widget.event != null)
                       TextButton(
-                        onPressed: state.isSaving
-                            ? null
-                            : () => Navigator.maybePop(context),
-                        child: const Text('キャンセル'),
+                        onPressed: state.isSaving ? null : _delete,
+                        child: const Text('削除'),
                       ),
-                      ElevatedButton(
-                        onPressed:
-                            state.isSaving ||
-                                notificationSettings == null ||
-                                _groupId == null ||
-                                inputState.isLoading ||
-                                inputState.error.isNotEmpty ||
-                                inputState.group == null ||
-                                !groups.groupsReady
-                            ? null
-                            : _save,
-                        child: Text(state.isSaving ? '保存中' : '保存'),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+                    TextButton(
+                      onPressed: state.isSaving ? null : _close,
+                      child: const Text('キャンセル'),
+                    ),
+                    ElevatedButton(
+                      onPressed:
+                          state.isSaving ||
+                              notificationSettings == null ||
+                              _groupId == null ||
+                              inputState.isLoading ||
+                              inputState.error.isNotEmpty ||
+                              inputState.group == null ||
+                              !groups.groupsReady
+                          ? null
+                          : _save,
+                      child: Text(state.isSaving ? '保存中' : '保存'),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
         ),

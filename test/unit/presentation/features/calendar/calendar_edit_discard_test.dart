@@ -9,8 +9,7 @@ import 'calendar_test_support.dart';
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
   Future<void> pumpDialog(WidgetTester tester) async {
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
   }
 
   Future<CalendarTestHarness> openEvent(WidgetTester tester) async {
@@ -25,7 +24,7 @@ void main() {
     return harness;
   }
 
-  for (final exit in ['キャンセル', '戻る', '外側']) {
+  for (final exit in ['キャンセル', '戻る', '戻るボタン']) {
     testWidgets('予定の変更後に$exitで閉じると共通の破棄確認が出て編集を続けられる', (tester) async {
       final harness = await openEvent(tester);
       await tester.enterText(
@@ -38,8 +37,8 @@ void main() {
           await calendarTapVisible(tester, find.text('キャンセル'));
         case '戻る':
           await tester.binding.handlePopRoute();
-        case '外側':
-          await tester.tapAt(const Offset(2, 2));
+        case '戻るボタン':
+          await tester.tap(find.byType(BackButton));
       }
       await pumpDialog(tester);
       expect(find.text('変更内容の確認'), findsOneWidget);

@@ -15,7 +15,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
-import 'package:memora/presentation/features/calendar/calendar_event_dialog.dart';
+import 'package:memora/presentation/features/calendar/calendar_event_input_page.dart';
 import 'package:memora/presentation/notifiers/calendar/multi_group_calendar_notifier.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_group_settings_notifier.dart';
 import 'package:memora/presentation/features/calendar/calendar_group_selection_dialog.dart';
@@ -27,14 +27,12 @@ class CalendarScreen extends ConsumerStatefulWidget {
     super.key,
     this.initialEventGroupId,
     this.initialDate,
-    this.createEvent = false,
     this.initialRequest = 0,
     this.initialEventId,
     this.initialOccurrence,
   });
   final String? initialEventGroupId;
   final DateTime? initialDate;
-  final bool createEvent;
   final int initialRequest;
   final String? initialEventId;
   final DateTime? initialOccurrence;
@@ -43,7 +41,6 @@ class CalendarScreen extends ConsumerStatefulWidget {
 }
 
 class _CalendarScreenState extends ConsumerState<CalendarScreen> {
-  bool _pendingInitialCreate = false;
   String? _pendingInitialEventId;
   int _initialRequestVersion = 0;
   bool _loadingInitialExternal = false;
@@ -56,7 +53,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   void _initializeRequest() {
     final version = ++_initialRequestVersion;
-    _pendingInitialCreate = false;
     _pendingInitialEventId = null;
     Future.microtask(() {
       if (!mounted || version != _initialRequestVersion) return;
@@ -64,7 +60,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       if (widget.initialDate != null) {
         notifier.selectDate(widget.initialDate!);
       }
-      _pendingInitialCreate = widget.createEvent;
       _pendingInitialEventId = widget.initialEventId;
       _loadingInitialExternal = true;
       _openInitialRequest();
@@ -96,7 +91,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.initialEventGroupId != widget.initialEventGroupId ||
         oldWidget.initialDate != widget.initialDate ||
-        oldWidget.createEvent != widget.createEvent ||
         oldWidget.initialEventId != widget.initialEventId ||
         oldWidget.initialOccurrence != widget.initialOccurrence ||
         oldWidget.initialRequest != widget.initialRequest) {
@@ -130,11 +124,12 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   Future<void> _edit([CalendarEventDto? event]) async {
     final provider = multiGroupCalendarNotifierProvider;
     if (!mounted) return;
-    await showDialog<void>(
-      context: context,
-      builder: (context) => CalendarEventDialog(
-        date: ref.read(provider).calendar.selectedDate,
-        event: event,
+    await Navigator.of(context, rootNavigator: true).push<void>(
+      MaterialPageRoute(
+        builder: (context) => CalendarEventInputPage(
+          date: ref.read(provider).calendar.selectedDate,
+          event: event,
+        ),
       ),
     );
   }
@@ -162,8 +157,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final settings = ref.read(calendarGroupSettingsNotifierProvider);
     if (!settings.canUseSettings) return;
     final next = ref.read(multiGroupCalendarNotifierProvider).calendar;
-    if ((!_pendingInitialCreate && _pendingInitialEventId == null) ||
-        next.isSaving) {
+    if (_pendingInitialEventId == null || next.isSaving) {
       return;
     }
     final eventId = _pendingInitialEventId;
@@ -216,7 +210,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final source = external?.events
         .where((event) => 'device:${event.calendarId}:${event.id}' == eventId)
         .firstOrNull;
-    _pendingInitialCreate = false;
     final occurrence = widget.initialOccurrence;
     final event = eventId == null
         ? null

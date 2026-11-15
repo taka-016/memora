@@ -19,13 +19,12 @@ import 'package:memora/composition_root/providers/app_providers.dart';
 import 'package:memora/composition_root/providers/calendar_providers.dart';
 import 'package:memora/composition_root/providers/group_providers.dart';
 import 'package:memora/infrastructure/time/fixed_app_clock.dart';
-import 'package:memora/presentation/features/calendar/calendar_event_dialog.dart';
+import 'package:memora/presentation/features/calendar/calendar_event_input_page.dart';
 import 'package:memora/presentation/features/calendar/calendar_screen.dart';
 import 'package:mockito/mockito.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../helpers/calendar_group_test_support.dart';
-import '../../../../helpers/test_exception.dart';
 import '../../notifiers/calendar/calendar_notifier_test.mocks.dart';
 
 class _WidgetDeviceCalendar extends ExternalCalendarNotifier {
@@ -125,7 +124,7 @@ void main() {
     await tester.pump();
     await tester.pump();
     expect(find.text('指定された予定のグループは非表示です。表示対象を設定から変更できます'), findsOneWidget);
-    expect(find.byType(CalendarEventDialog), findsNothing);
+    expect(find.byType(CalendarEventInputPage), findsNothing);
     final container = ProviderScope.containerOf(
       tester.element(find.byType(CalendarScreen)),
     );
@@ -203,7 +202,7 @@ void main() {
         await tester.pump();
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 300));
-        expect(find.byType(CalendarEventDialog), findsNothing);
+        expect(find.byType(CalendarEventInputPage), findsNothing);
         if (scenario.missing) {
           expect(find.text('指定された予定が見つかりませんでした'), findsOneWidget);
           expect(find.byType(AlertDialog), findsNothing);
@@ -222,106 +221,6 @@ void main() {
     );
   }
 
-  for (final fail in [false, true]) {
-    testWidgets('ウィジェットの追加要求は入力先の読込${fail ? '失敗から再試行する' : '成功後に保存して再実行できる'}', (
-      tester,
-    ) async {
-      final group = Completer<GroupDto?>();
-      const loadedGroup = GroupDto(
-        id: 'g1',
-        ownerId: 'owner',
-        name: '家族',
-        members: [],
-      );
-      final loader = calendarTestGroupLoader();
-      when(loader.execute('g1')).thenAnswer((_) => group.future);
-      final events = MockGetCalendarEventsUsecase();
-      final labels = MockGetCalendarLabelsUsecase();
-      final create = MockCreateCalendarEventUsecase();
-      final saved = <CalendarEventDto>[];
-      when(events.execute('g1', period: anyNamed('period')))
-          .thenAnswer((_) async => []);
-      when(labels.execute('g1')).thenAnswer((_) async => []);
-      when(create.execute(any)).thenAnswer((call) async {
-        saved.add(call.positionalArguments.single as CalendarEventDto);
-        return 'new';
-      });
-      final request = ValueNotifier(1);
-      addTearDown(request.dispose);
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            calendarSettingsOwnerProvider.overrideWithValue('online:owner'),
-            calendarGroupSettingsNotifierProvider.overrideWith(
-              () => TestCalendarGroupSettingsNotifier(),
-            ),
-            externalCalendarOwnerProvider.overrideWithValue(null),
-            appClockProvider.overrideWithValue(
-              FixedAppClock(DateTime(2026, 10, 1)),
-            ),
-            getGroupWithMembersByIdUsecaseProvider.overrideWithValue(loader),
-            getCalendarEventsUsecaseProvider.overrideWithValue(events),
-            getCalendarLabelsUsecaseProvider.overrideWithValue(labels),
-            createCalendarEventUsecaseProvider.overrideWithValue(create),
-            watchCalendarGroupUsecaseProvider.overrideWithValue(null),
-            watchCalendarEventsUsecaseProvider.overrideWithValue(null),
-            watchCalendarLabelsUsecaseProvider.overrideWithValue(null),
-          ],
-          child: MaterialApp(
-            home: Scaffold(
-              body: ValueListenableBuilder<int>(
-                valueListenable: request,
-                builder: (context, value, child) => CalendarScreen(
-                  initialEventGroupId: 'g1',
-                  initialDate: DateTime(2026, 11, 2),
-                  createEvent: true,
-                  initialRequest: value,
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
-      await tester.pump();
-      await tester.pump();
-      expect(find.byType(CalendarEventDialog), findsOneWidget);
-      if (fail) {
-        group.completeError(TestException('読込失敗'));
-        await tester.pump();
-        await tester.pump();
-        expect(find.byType(CalendarEventDialog), findsOneWidget);
-        when(loader.execute('g1')).thenAnswer((_) async => loadedGroup);
-        await tester.tap(
-          find.descendant(
-            of: find.byType(CalendarEventDialog),
-            matching: find.text('再試行'),
-          ),
-        );
-      } else {
-        group.complete(loadedGroup);
-      }
-      await tester.pump();
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
-      expect(find.byType(CalendarEventDialog), findsOneWidget);
-      expect(find.text('家族の予定'), findsOneWidget);
-      await tester.enterText(
-        find.widgetWithText(TextFormField, 'タイトル'),
-        '家族旅行',
-      );
-      await tester.tap(find.text('保存'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
-      expect(saved.single.startDateTime, DateTime.utc(2026, 11, 2));
-      expect(saved.single.labelType, 'group');
-      expect(find.byType(CalendarEventDialog), findsNothing);
-      request.value++;
-      await tester.pump();
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
-      expect(find.byType(CalendarEventDialog), findsOneWidget);
-    });
-  }
   for (final missing in [false, true]) {
     testWidgets(
       '予定タップ起動は${missing ? '削除済み予定を新規作成として開かない' : '読込後に指定した繰り返し予定の回を編集する'}',
@@ -379,7 +278,7 @@ void main() {
         );
         await tester.pump();
         await tester.pump();
-        expect(find.byType(CalendarEventDialog), findsNothing);
+        expect(find.byType(CalendarEventInputPage), findsNothing);
         group.complete(
           const GroupDto(id: 'g1', ownerId: 'owner', name: '家族', members: []),
         );
@@ -387,11 +286,11 @@ void main() {
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 300));
         if (missing) {
-          expect(find.byType(CalendarEventDialog), findsNothing);
+          expect(find.byType(CalendarEventInputPage), findsNothing);
           expect(find.text('指定された予定が見つかりませんでした'), findsOneWidget);
         } else {
-          final dialog = tester.widget<CalendarEventDialog>(
-            find.byType(CalendarEventDialog),
+          final dialog = tester.widget<CalendarEventInputPage>(
+            find.byType(CalendarEventInputPage),
           );
           expect(dialog.event!.id, 'series');
           expect(
@@ -460,8 +359,8 @@ void main() {
     await tester.pump();
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-    final dialog = tester.widget<CalendarEventDialog>(
-      find.byType(CalendarEventDialog),
+    final dialog = tester.widget<CalendarEventInputPage>(
+      find.byType(CalendarEventInputPage),
     );
     expect(dialog.event!.title, '時刻変更後の予定');
     expect(dialog.event!.startDateTime, DateTime.utc(2026, 11, 3, 11));

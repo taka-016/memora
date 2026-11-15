@@ -24,7 +24,7 @@ void main() {
 
   test('モードに応じた初期化後に起動ログを出力する', () {
     final source = File(_bootstrapPath).readAsStringSync();
-    final initializationIndex = source.indexOf('await root.initialize()');
+    final initializationIndex = source.indexOf('await root.initialize(');
     final logIndex = source.indexOf('root.services.log.i(');
     expect(initializationIndex, isNonNegative);
     expect(logIndex, greaterThan(initializationIndex));

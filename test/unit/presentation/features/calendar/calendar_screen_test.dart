@@ -10,6 +10,8 @@ import 'package:memora/application/dtos/calendar/calendar_label_dto.dart';
 
 import 'calendar_test_support.dart';
 
+import 'package:memora/presentation/features/calendar/calendar_event_input_page.dart';
+
 void _useTallScreen(WidgetTester tester) {
   tester.view.physicalSize = const Size(800, 900);
   tester.view.devicePixelRatio = 1;
@@ -18,6 +20,29 @@ void _useTallScreen(WidgetTester tester) {
 }
 
 void main() {
+  testWidgets('予定入力は独立した画面で開き入力を保存してカレンダーへ戻る', (tester) async {
+    final harness = CalendarTestHarness();
+    await harness.pump(tester);
+    await calendarTapVisible(tester, find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+    expect(find.byType(Dialog), findsNothing);
+    expect(
+      find.descendant(
+        of: find.byType(CalendarEventInputPage),
+        matching: find.byType(Scaffold),
+      ),
+      findsOneWidget,
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'タイトル'),
+      '画面から追加',
+    );
+    await calendarTapVisible(tester, find.text('保存'));
+    await tester.pumpAndSettle();
+    expect(harness.savedEvents.single.title, '画面から追加');
+    expect(find.byType(CalendarEventInputPage), findsNothing);
+  });
+
   for (final textScale in [1.0, 1.5]) {
     testWidgets('6週の月は小画面でも予定件数を減らして縦スクロールせず表示する（文字倍率$textScale）', (
       tester,
@@ -98,7 +123,7 @@ void main() {
     expect(nameParagraph.didExceedMaxLines, isTrue);
     expect(
       tester.getRect(suffix).left,
-      lessThan(tester.getRect(find.byType(Dialog).last).right),
+      lessThan(tester.getRect(find.byType(CalendarEventInputPage)).right),
     );
     await calendarTapVisible(tester, suffix);
     await tester.pumpAndSettle();

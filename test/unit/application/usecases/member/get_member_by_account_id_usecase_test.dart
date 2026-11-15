@@ -3,22 +3,22 @@ import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/queries/member/member_query_service.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
-import 'package:memora/application/usecases/member/check_member_exists_usecase.dart';
+import 'package:memora/application/usecases/member/get_member_by_account_id_usecase.dart';
 
-import 'check_member_exists_usecase_test.mocks.dart';
+import 'get_member_by_account_id_usecase_test.mocks.dart';
 
 @GenerateMocks([MemberQueryService])
 void main() {
-  late CheckMemberExistsUseCase useCase;
+  late GetMemberByAccountIdUseCase useCase;
   late MockMemberQueryService mockMemberQueryService;
 
   setUp(() {
     mockMemberQueryService = MockMemberQueryService();
-    useCase = CheckMemberExistsUseCase(mockMemberQueryService);
+    useCase = GetMemberByAccountIdUseCase(mockMemberQueryService);
   });
 
-  group('CheckMemberExistsUseCase', () {
-    test('ログインユーザーIDでメンバーが存在する場合trueを返す', () async {
+  group('GetMemberByAccountIdUseCase', () {
+    test('ログインユーザーIDでメンバーが存在する場合本人情報を返す', () async {
       // Arrange
       const accountId = 'test-user-id';
       const testMember = MemberDto(id: 'member-id', displayName: 'Test User');
@@ -29,11 +29,11 @@ void main() {
       final result = await useCase.execute(accountId);
 
       // Assert
-      expect(result, isTrue);
+      expect(result, testMember);
       verify(mockMemberQueryService.getMemberByAccountId(accountId)).called(1);
     });
 
-    test('ログインユーザーIDでメンバーが存在しない場合falseを返す', () async {
+    test('ログインユーザーIDでメンバーが存在しない場合nullを返す', () async {
       // Arrange
       const accountId = 'test-user-id';
       when(mockMemberQueryService.getMemberByAccountId(accountId))
@@ -43,7 +43,7 @@ void main() {
       final result = await useCase.execute(accountId);
 
       // Assert
-      expect(result, isFalse);
+      expect(result, isNull);
       verify(mockMemberQueryService.getMemberByAccountId(accountId)).called(1);
     });
   });

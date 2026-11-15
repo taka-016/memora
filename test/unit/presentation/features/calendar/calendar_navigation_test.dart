@@ -1,6 +1,6 @@
 import 'package:memora/composition_root/providers/calendar_group_settings_providers.dart';
 import 'package:memora/presentation/notifiers/android_widget/android_widget_launch_notifier.dart';
-import 'package:memora/presentation/features/calendar/calendar_event_dialog.dart';
+import 'package:memora/presentation/features/calendar/calendar_event_input_page.dart';
 import 'package:memora/composition_root/providers/group_providers.dart';
 
 import '../../../../helpers/calendar_group_test_support.dart';
@@ -70,10 +70,10 @@ void main() {
       location: '/groups',
       launch: _CalendarLaunchNotifier(),
     );
-    expect(find.byType(CalendarEventDialog), findsOneWidget);
+    expect(find.byType(CalendarEventInputPage), findsOneWidget);
     expect(find.text('開始日: 2027/1/1'), findsOneWidget);
     final container = ProviderScope.containerOf(
-      tester.element(find.byType(CalendarEventDialog)),
+      tester.element(find.byType(CalendarEventInputPage)),
     );
     final router = container.read(appRouterConfigProvider);
     expect(router.state.uri.queryParameters['create'], 'true');
@@ -88,7 +88,7 @@ void main() {
       ).location,
     );
     await tester.pumpAndSettle();
-    expect(find.byType(CalendarEventDialog), findsOneWidget);
+    expect(find.byType(CalendarEventInputPage), findsOneWidget);
   });
 
   Future<void> select(WidgetTester tester, List<String> names) async {

@@ -1,3 +1,6 @@
+import 'package:memora/presentation/features/calendar/calendar_event_input_page.dart';
+import 'package:memora/presentation/notifiers/calendar/calendar_group_settings_notifier.dart';
+import 'package:memora/composition_root/providers/app_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -226,16 +229,63 @@ class CalendarRoute extends GoRouteData with $CalendarRoute {
   final String? eventId;
   final String? occurrence;
   @override
-  Widget build(BuildContext context, GoRouterState state) => Material(
-    child: CalendarScreen(
-      initialEventGroupId: groupId,
-      initialDate: DateTime.tryParse(date ?? ''),
-      createEvent: create,
-      initialRequest: request,
-      initialEventId: eventId,
-      initialOccurrence: DateTime.tryParse(occurrence ?? ''),
-    ),
-  );
+  Widget build(BuildContext context, GoRouterState state) {
+    if (create) {
+      return _CalendarEventInputRoutePage(
+        key: ValueKey(request),
+        date: DateTime.tryParse(date ?? ''),
+      );
+    }
+    return Material(
+      child: CalendarScreen(
+        initialEventGroupId: groupId,
+        initialDate: DateTime.tryParse(date ?? ''),
+        initialRequest: request,
+        initialEventId: eventId,
+        initialOccurrence: DateTime.tryParse(occurrence ?? ''),
+      ),
+    );
+  }
+}
+
+class _CalendarEventInputRoutePage extends ConsumerStatefulWidget {
+  const _CalendarEventInputRoutePage({super.key, this.date});
+  final DateTime? date;
+
+  @override
+  ConsumerState<_CalendarEventInputRoutePage> createState() =>
+      _CalendarEventInputRoutePageState();
+}
+
+class _CalendarEventInputRoutePageState
+    extends ConsumerState<_CalendarEventInputRoutePage> {
+  bool _started = false;
+  late final DateTime _date = widget.date ?? ref.read(appClockProvider).now();
+
+  @override
+  Widget build(BuildContext context) {
+    final settings = ref.watch(calendarGroupSettingsNotifierProvider);
+    if (settings.canUseSettings) _started = true;
+    if (!_started) {
+      return Center(
+        child: settings.loadFailed
+            ? TextButton(
+                onPressed: () => ref
+                    .read(calendarGroupSettingsNotifierProvider.notifier)
+                    .reload(),
+                child: Text(settings.error),
+              )
+            : const CircularProgressIndicator(),
+      );
+    }
+    return CalendarEventInputPage(
+      date: _date,
+      onSaved: (savedDay) =>
+          CalendarRoute(date: savedDay.toIso8601String()).go(context),
+      onCancelled: () =>
+          CalendarRoute(date: _date.toIso8601String()).go(context),
+    );
+  }
 }
 
 class MapRoute extends GoRouteData with $MapRoute {

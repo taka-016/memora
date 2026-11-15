@@ -1,3 +1,5 @@
+import 'package:memora/presentation/notifiers/calendar/calendar_notifier.dart';
+import 'package:memora/presentation/notifiers/calendar/calendar_group_settings_notifier.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/application/dtos/calendar/calendar_label_dto.dart';
@@ -45,6 +47,7 @@ class CalendarEventInputNotifier extends _$CalendarEventInputNotifier {
   }
 
   Future<void> selectGroup(String? id, {CalendarEventDto? original}) async {
+    if (state.groupId == id && state.group != null) return;
     _original ??= original;
     final key = original?.labelKey ?? 'group:';
     await _load(id, key);
@@ -61,9 +64,23 @@ class CalendarEventInputNotifier extends _$CalendarEventInputNotifier {
     );
     if (id == null) return;
     try {
+      final settings = ref.exists(calendarGroupSettingsNotifierProvider)
+          ? ref.read(calendarGroupSettingsNotifierProvider)
+          : null;
+      final knownGroup = settings?.groupsReady == true
+          ? settings!.groups.where((group) => group.id == id).firstOrNull
+          : null;
+      final calendar =
+          knownGroup != null && ref.exists(calendarNotifierProvider(id))
+          ? ref.read(calendarNotifierProvider(id))
+          : null;
       final results = await Future.wait<Object?>([
-        ref.read(getGroupWithMembersByIdUsecaseProvider).execute(id),
-        ref.read(getCalendarLabelsUsecaseProvider).execute(id),
+        calendar?.group != null || knownGroup != null
+            ? Future.value(calendar?.group ?? knownGroup)
+            : ref.read(getGroupWithMembersByIdUsecaseProvider).execute(id),
+        calendar?.hasLoadedLabels == true
+            ? Future.value(calendar!.labels)
+            : ref.read(getCalendarLabelsUsecaseProvider).execute(id),
       ]);
       if (!ref.mounted || generation != _generation) return;
       if (results[0] == null) throw StateError('グループが見つかりません');
@@ -71,7 +88,7 @@ class CalendarEventInputNotifier extends _$CalendarEventInputNotifier {
         groupId: id,
         group: results[0] as GroupDto,
         labels: results[1] as List<CalendarLabelDto>,
-        selectedLabelKey: key,
+        selectedLabelKey: state.selectedLabelKey,
         original: _original,
       );
     } catch (_) {

@@ -9,7 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/usecases/member/accept_invitation_usecase.dart';
 import 'package:memora/application/usecases/member/calculate_school_grade_usecase.dart';
 import 'package:memora/application/usecases/member/calculate_yakudoshi_usecase.dart';
-import 'package:memora/application/usecases/member/check_member_exists_usecase.dart';
+import 'package:memora/application/usecases/member/get_member_by_account_id_usecase.dart';
 import 'package:memora/application/usecases/member/create_member_from_user_usecase.dart';
 import 'package:memora/application/usecases/member/create_member_usecase.dart';
 import 'package:memora/application/usecases/member/create_or_update_member_invitation_usecase.dart';
@@ -48,11 +48,10 @@ final calculateYakudoshiUsecaseProvider = Provider<CalculateYakudoshiUsecase>((
   return CalculateYakudoshiUsecase();
 });
 
-final checkMemberExistsUseCaseProvider = Provider<CheckMemberExistsUseCase>((
-  ref,
-) {
-  return CheckMemberExistsUseCase(ref.watch(memberQueryServiceProvider));
-});
+final getMemberByAccountIdUseCaseProvider =
+    Provider<GetMemberByAccountIdUseCase>((ref) {
+      return GetMemberByAccountIdUseCase(ref.watch(memberQueryServiceProvider));
+    });
 
 final createMemberFromUserUseCaseProvider =
     Provider<CreateMemberFromUserUseCase>((ref) {

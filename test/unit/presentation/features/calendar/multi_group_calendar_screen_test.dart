@@ -16,7 +16,7 @@ import 'package:memora/application/models/calendar_group_settings.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_group_settings_notifier.dart';
 import 'package:memora/presentation/features/calendar/calendar_screen.dart';
-import 'package:memora/presentation/features/calendar/calendar_event_dialog.dart';
+import 'package:memora/presentation/features/calendar/calendar_event_input_page.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_notifier.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_state.dart';
 import 'package:memora/composition_root/providers/calendar_group_settings_providers.dart';
@@ -141,7 +141,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.byType(CalendarEventDialog), findsOneWidget);
+    expect(find.byType(CalendarEventInputPage), findsOneWidget);
     expect(find.widgetWithText(TextFormField, '取得済みの予定'), findsOneWidget);
   });
   testWidgets('所属一覧の取得完了まで追加と表示選択を開始しない', (tester) async {
@@ -160,13 +160,11 @@ void main() {
           ),
           getCalendarLabelsUsecaseProvider.overrideWithValue(labels),
         ],
-        child: const MaterialApp(
-          home: Scaffold(body: CalendarScreen(createEvent: true)),
-        ),
+        child: const MaterialApp(home: Scaffold(body: CalendarScreen())),
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.byType(CalendarEventDialog), findsNothing);
+    expect(find.byType(CalendarEventInputPage), findsNothing);
     expect(
       tester
           .widget<FloatingActionButton>(find.byType(FloatingActionButton))
@@ -175,9 +173,11 @@ void main() {
     );
     settings.finish();
     await tester.pumpAndSettle();
-    expect(find.byType(CalendarEventDialog), findsOneWidget);
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+    expect(find.byType(CalendarEventInputPage), findsOneWidget);
   });
-  testWidgets('設定取得完了まで追加要求を待ち保存済み既定グループで開く', (tester) async {
+  testWidgets('設定取得完了後に保存済み既定グループで入力を開く', (tester) async {
     final settings = _LoadingSettings();
     final labels = MockGetCalendarLabelsUsecase();
     when(labels.execute(any)).thenAnswer((_) async => []);
@@ -192,13 +192,11 @@ void main() {
           ),
           getCalendarLabelsUsecaseProvider.overrideWithValue(labels),
         ],
-        child: const MaterialApp(
-          home: Scaffold(body: CalendarScreen(createEvent: true)),
-        ),
+        child: const MaterialApp(home: Scaffold(body: CalendarScreen())),
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.byType(CalendarEventDialog), findsNothing);
+    expect(find.byType(CalendarEventInputPage), findsNothing);
     expect(
       tester
           .widget<FloatingActionButton>(find.byType(FloatingActionButton))
@@ -217,7 +215,9 @@ void main() {
     );
     settings.finish();
     await tester.pumpAndSettle();
-    expect(find.byType(CalendarEventDialog), findsOneWidget);
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+    expect(find.byType(CalendarEventInputPage), findsOneWidget);
     final group = tester.widget<DropdownButtonFormField<String>>(
       find.byWidgetPredicate(
         (w) =>
@@ -255,7 +255,7 @@ void main() {
     expect(find.text('表示するグループを選択してください'), findsNothing);
     await tester.tap(find.byTooltip('予定を追加'));
     await tester.pumpAndSettle();
-    expect(find.byType(CalendarEventDialog), findsOneWidget);
+    expect(find.byType(CalendarEventInputPage), findsOneWidget);
     expect(
       tester
           .widget<ElevatedButton>(find.widgetWithText(ElevatedButton, '保存'))

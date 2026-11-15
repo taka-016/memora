@@ -8,7 +8,7 @@ import 'package:memora/presentation/features/calendar/external_calendar_widgets.
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
-import 'package:memora/presentation/features/calendar/calendar_event_dialog.dart';
+import 'package:memora/presentation/features/calendar/calendar_event_input_page.dart';
 import 'package:memora/presentation/features/calendar/calendar_labels_dialog.dart';
 import 'package:memora/presentation/notifiers/calendar/multi_group_calendar_notifier.dart';
 import 'package:memora/presentation/features/calendar/calendar_swipe_pager.dart';

@@ -5,7 +5,7 @@ import 'package:memora/application/services/calendar/japanese_calendar.dart';
 import 'package:memora/presentation/features/calendar/calendar_date_color.dart';
 import 'package:flutter/material.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
-import 'package:memora/presentation/features/calendar/calendar_event_dialog.dart';
+import 'package:memora/presentation/features/calendar/calendar_event_input_page.dart';
 import 'package:memora/presentation/features/calendar/calendar_labels_dialog.dart';
 import 'package:memora/presentation/features/calendar/calendar_week_layout.dart';
 import 'package:memora/presentation/features/calendar/calendar_swipe_pager.dart';
