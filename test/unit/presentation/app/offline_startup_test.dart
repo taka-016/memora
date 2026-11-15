@@ -26,11 +26,14 @@ import '../../../helpers/fake_current_member_notifier.dart';
 import '../../../helpers/test_exception.dart';
 
 class _IdleLaunch extends AndroidWidgetLaunchNotifier {
-  _IdleLaunch({this.settings = false});
+  _IdleLaunch({this.settings = false, this.initialUriLoading = false});
+  final bool initialUriLoading;
   final bool settings;
   @override
-  AndroidWidgetLaunchState build() =>
-      AndroidWidgetLaunchState(isSettingsLaunchPending: settings);
+  AndroidWidgetLaunchState build() => AndroidWidgetLaunchState(
+    isSettingsLaunchPending: settings,
+    isInitialUriLoading: initialUriLoading,
+  );
 }
 
 class _LoadedGroups extends GroupTimelineGroupSelectionNotifier {
@@ -127,13 +130,14 @@ void main() {
   });
 
   for (final path in [
-    '/groups',
+    '/',
+    '/loading',
     '/login',
     '/signup',
     '/member-setup',
     '/account-settings',
   ]) {
-    testWidgets('オフラインでは$pathから認証を解決せず年表へ起動する', (tester) async {
+    testWidgets('オフラインでは$pathから認証を解決せずカレンダーへ起動する', (tester) async {
       var authResolutions = 0;
       final container = ProviderContainer(
         overrides: [
@@ -151,7 +155,9 @@ void main() {
           groupTimelineGroupSelectionNotifierProvider.overrideWith(
             _LoadedGroups.new,
           ),
-          androidWidgetLaunchNotifierProvider.overrideWith(_IdleLaunch.new),
+          androidWidgetLaunchNotifierProvider.overrideWith(
+            () => _IdleLaunch(initialUriLoading: true),
+          ),
         ],
       );
       addTearDown(container.dispose);
@@ -160,7 +166,10 @@ void main() {
       );
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
-      expect(container.read(appRouterConfigProvider).state.uri.path, '/groups');
+      expect(
+        container.read(appRouterConfigProvider).state.uri.path,
+        '/calendar',
+      );
       expect(authResolutions, 0);
       final navigation = tester.widget<BottomNavigationBar>(
         find.byType(BottomNavigationBar),
@@ -172,7 +181,8 @@ void main() {
         'グループ',
       ]);
       await tester.tap(find.byKey(const Key('hamburger_menu')));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
       expect(find.text('ログアウト'), findsNothing);
       expect(find.text('アカウント設定'), findsNothing);
       expect(find.text('地図表示'), findsNothing);

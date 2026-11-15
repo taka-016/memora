@@ -163,7 +163,7 @@ void main() {
     expect(live.read(provider).displayLabels.last.name, '花子の予定');
   });
 
-  test('外部変更を受信して選択日と月を保ち通常保存では購読し直さず月移動は予定だけを再購読する', () async {
+  test('外部変更を受信して選択日と月を保ち通常保存でも月移動でも既存の購読を解除しない', () async {
     await start();
     final notifier = container.read(provider.notifier);
     expect(events.periods.single, isNotNull);
@@ -172,7 +172,7 @@ void main() {
     expect(events.streams, hasLength(1));
     notifier.selectDate(DateTime(2021, 11, 2));
     await flush();
-    expect(events.cancelled, 1);
+    expect(events.cancelled, 0);
     expect(events.streams, hasLength(2));
     expect(labels.streams, hasLength(1));
     expect(events.periods.last!.from.isBefore(oldPeriod.from), isTrue);
@@ -192,6 +192,126 @@ void main() {
     expect(events.streams, hasLength(2));
     verifyZeroInteractions(getEvents);
   });
+  test('10か月表示後の往復は追加購読0回で非表示月の更新と削除も保持する', () async {
+    await start();
+    final notifier = container.read(provider.notifier);
+    for (var offset = 1; offset < 10; offset++) {
+      final day = DateTime(2026, 10 + offset, 2);
+      notifier.selectDate(day);
+      await flush();
+      expect(container.read(provider).hasLoadedEvents, isFalse);
+      events.streams.last.add([
+        event.copyWith(startDateTime: day, endDateTime: day, title: '月$offset'),
+      ]);
+      await flush();
+    }
+    expect(events.streams, hasLength(10));
+    expect(events.cancelled, 0);
+    events.streams.first.add([event.copyWith(title: '非表示月の更新')]);
+    await flush();
+    expect(container.read(provider).events.single.title, '月9');
+    for (var round = 0; round < 3; round++) {
+      for (var offset = 0; offset < 10; offset++) {
+        notifier.selectDate(DateTime(2026, 10 + offset, 2));
+        expect(
+          container.read(provider).events.single.title,
+          offset == 0 ? '非表示月の更新' : '月$offset',
+        );
+        expect(container.read(provider).isLoading, isFalse);
+        expect(container.read(provider).hasLoadedEvents, isTrue);
+        expect(notifier.seriesForEvent(event.id), isNotNull);
+      }
+    }
+    events.streams.first.add([]);
+    await flush();
+    notifier.selectDate(DateTime(2026, 10, 2));
+    expect(container.read(provider).events, isEmpty);
+    expect(container.read(provider).hasLoadedEvents, isTrue);
+    expect(container.read(provider).isLoading, isFalse);
+    expect(events.streams, hasLength(10), reason: '往復による追加購読の目標は0回');
+    expect(labels.streams, hasLength(1));
+    verifyZeroInteractions(getEvents);
+    container.invalidate(provider);
+    await container.pump();
+    expect(events.cancelled, 10);
+    expect(container.read(provider).events, isEmpty);
+    expect(container.read(provider.notifier).seriesForEvent(event.id), isNull);
+  });
+
+  test('非表示月の受信失敗はその月だけに表示し再試行は他の月を再購読しない', () async {
+    await start();
+    final notifier = container.read(provider.notifier);
+    notifier.selectDate(DateTime(2026, 11, 2));
+    await flush();
+    events.streams.last.add([]);
+    events.streams.first.addError(TestException('非表示月の失敗'));
+    await flush();
+    expect(container.read(provider).loadError, isEmpty);
+    notifier.selectDate(DateTime(2026, 10, 2));
+    expect(container.read(provider).events, [event]);
+    expect(container.read(provider).eventLoadError, isNotEmpty);
+    await notifier.load();
+    expect(events.streams, hasLength(3));
+    expect(events.cancelled, 1);
+    events.streams.last.add([event.copyWith(title: '復旧')]);
+    labels.streams.last.add([label]);
+    await flush();
+    expect(container.read(provider).loadError, isEmpty);
+    notifier.selectDate(DateTime(2026, 11, 2));
+    expect(container.read(provider).events, isEmpty);
+    expect(container.read(provider).isLoading, isFalse);
+    expect(events.streams, hasLength(3));
+  });
+
+  test('再構築後はload前の月選択では購読せず初回取得を重複させない', () async {
+    await start();
+    container.invalidate(provider);
+    await container.pump();
+    final notifier = container.read(provider.notifier);
+    notifier.selectDate(DateTime(2026, 11, 2));
+    await flush();
+    expect(events.streams, hasLength(1));
+    expect(container.read(provider).events, isEmpty);
+    expect(container.read(provider).isLoading, isFalse);
+    await notifier.load();
+    expect(events.streams, hasLength(2));
+    events.streams.last.add([]);
+    labels.streams.last.add([label]);
+    await flush();
+    expect(container.read(provider).hasLoadedEvents, isTrue);
+    expect(container.read(provider).isLoading, isFalse);
+  });
+
+  test('購読解除の待機中に別月を再試行しても元の月の購読を再開する', () async {
+    await start();
+    final notifier = container.read(provider.notifier);
+    final cancelled = Completer<void>();
+    events.cancelWait = cancelled.future;
+    final firstRetry = notifier.load();
+    await flush();
+    expect(events.cancelled, 1);
+    events.cancelWait = null;
+    try {
+      notifier.selectDate(DateTime(2026, 11, 2));
+      await notifier.load();
+      events.streams.last.add([]);
+      labels.streams.last.add([label]);
+      await flush();
+    } finally {
+      cancelled.complete();
+      await firstRetry;
+    }
+    expect(events.streams, hasLength(4));
+    events.streams.last.add([event.copyWith(title: '元の月も復旧')]);
+    await flush();
+    expect(container.read(provider).events, isEmpty);
+    notifier.selectDate(DateTime(2026, 10, 2));
+    expect(container.read(provider).events.single.title, '元の月も復旧');
+    expect(container.read(provider).isLoading, isFalse);
+    expect(container.read(provider).loadError, isEmpty);
+    expect(events.streams, hasLength(4));
+  });
+
   test('予定とラベルの失敗を別々に保持し既存表示を残して再試行する', () async {
     await start();
     events.streams.last.addError(TestException('予定取得失敗'));

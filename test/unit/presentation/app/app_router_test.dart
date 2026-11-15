@@ -134,7 +134,7 @@ void main() {
 
     authNotifier.authenticate('user-2');
     await pumpNavigation(tester);
-    expect(router.state.matchedLocation, const GroupListRoute().location);
+    expect(router.state.matchedLocation, const CalendarRoute().location);
   });
 
   testWidgets('認証済みから直接未認証になった場合は前セッションの保護ルートを保持しない', (tester) async {
@@ -153,7 +153,7 @@ void main() {
 
     authNotifier.authenticate('user-2');
     await pumpNavigation(tester);
-    expect(router.state.matchedLocation, const GroupListRoute().location);
+    expect(router.state.matchedLocation, const CalendarRoute().location);
   });
 
   testWidgets('ログアウト時はグループ選択状態を破棄する', (tester) async {
@@ -396,7 +396,7 @@ void main() {
         matchedLocation: const LoginRoute().location,
         location: const LoginRoute().location,
       ),
-      const GroupListRoute().location,
+      const CalendarRoute().location,
     );
   });
 
@@ -444,7 +444,7 @@ void main() {
     });
   }
 
-  testWidgets('起動済みアプリへ届いたウィジェットURIはグループ一覧へ退避する', (tester) async {
+  testWidgets('起動済みアプリへ届いたウィジェットURIはカレンダーへ退避する', (tester) async {
     final authNotifier = _MutableAuthNotifier(
       const AuthState.authenticated(
         UserDto(id: 'user-1', loginId: 'user-1@example.com', isVerified: true),
@@ -457,10 +457,10 @@ void main() {
     );
 
     expect(tester.takeException(), isNull);
-    expect(router.state.uri.toString(), const GroupListRoute().location);
+    expect(router.state.uri.toString(), const CalendarRoute().location);
   });
 
-  testWidgets('ルートパスはグループ一覧へ退避する', (tester) async {
+  testWidgets('通常起動はカレンダーを初期表示する', (tester) async {
     final authNotifier = _MutableAuthNotifier(
       const AuthState.authenticated(
         UserDto(id: 'user-1', loginId: 'user-1@example.com', isVerified: true),
@@ -473,7 +473,11 @@ void main() {
     );
 
     expect(tester.takeException(), isNull);
-    expect(router.state.uri.toString(), const GroupListRoute().location);
+    expect(router.state.uri.toString(), const CalendarRoute().location);
+    final navigation = tester.widget<BottomNavigationBar>(
+      find.byType(BottomNavigationBar),
+    );
+    expect(navigation.items[navigation.currentIndex].label, 'カレンダー');
   });
 
   testWidgets('戻る操作では画面ルートより先にダイアログを閉じる', (tester) async {

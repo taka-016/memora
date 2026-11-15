@@ -7,7 +7,7 @@ class AppRedirectController {
     final uri = Uri.parse(location);
     if (_isAuthenticationLocation(uri.path) ||
         uri.path == const AccountSettingsRoute().location) {
-      return const GroupListRoute().location;
+      return const CalendarRoute().location;
     }
     return _safeLocationFor(uri);
   }
@@ -75,7 +75,7 @@ class AppRedirectController {
 
   String _consumePendingProtectedLocation() {
     final destination =
-        _pendingProtectedLocation ?? const GroupListRoute().location;
+        _pendingProtectedLocation ?? const CalendarRoute().location;
     _discardPendingProtectedLocation();
     return destination;
   }
