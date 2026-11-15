@@ -62,7 +62,12 @@ void main() {
     addTearDown(offline.dispose);
     await expectLater(offline.read(groupRepositoryProvider).updateGroup(group),
       throwsA(same(blocked)));
-    expect(checks, 1);
+    var entered = false;
+    await expectLater(offline.read(writeTransactionProvider).run<void>((_) async {
+      entered = true;
+    }), throwsA(same(blocked)));
+    expect(entered, isFalse);
+    expect(checks, 2);
   });
 
   testWidgets('更新は進行中の確認を共有して待ち利用可能になったら書き込む', (tester) async {
