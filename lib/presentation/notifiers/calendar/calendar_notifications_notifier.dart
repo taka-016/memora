@@ -1,3 +1,5 @@
+import 'package:memora/presentation/notifiers/app_availability/app_availability_notifier.dart';
+
 import 'dart:async';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -32,6 +34,10 @@ class CalendarNotificationsNotifier extends _$CalendarNotificationsNotifier {
         status: CalendarNotificationStatus.denied,
       );
     }
+    final isSuspended = !ref.read(appAvailabilityNotifierProvider).canUseApp;
+    ref.listen(appAvailabilityNotifierProvider, (_, next) {
+      unawaited(setSuspended(!next.canUseApp));
+    });
     ref.listen(currentMemberNotifierProvider, (_, next) {
       unawaited(_subscription?.cancel());
       _subscription = null;
@@ -53,7 +59,10 @@ class CalendarNotificationsNotifier extends _$CalendarNotificationsNotifier {
       if (!ref.mounted) return;
       unawaited(refresh());
     });
-    return const CalendarNotificationsState(isSyncing: true);
+    return CalendarNotificationsState(
+      isSuspended: isSuspended,
+      isSyncing: !isSuspended,
+    );
   }
 
   void _watch() {
