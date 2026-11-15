@@ -155,15 +155,29 @@ final restoreOfflineBackupUsecaseProvider =
 
 final retryPendingOfflineBackupRestoreUsecaseProvider =
     Provider<RetryPendingOfflineBackupRestoreUsecase>(
-      (ref) => RetryPendingOfflineBackupRestoreUsecase(
-        dataStore: ref.watch(offlineBackupDataStoreProvider),
-        operationLock: ref.watch(offlineBackupRestoreOperationLockProvider),
-        restoreSyncStorage: ref.watch(offlineBackupRestoreSyncStorageProvider),
-        synchronizeAfterRestore: ref
-            .watch(synchronizeOfflineBackupRestoreUsecaseProvider)
-            .execute,
-      ),
+      (ref) => _retryPendingRestore(ref, registerPeriodicTask: true),
     );
+
+final retryPendingOfflineBackupRestoreBeforeDisplayUsecaseProvider =
+    Provider<RetryPendingOfflineBackupRestoreUsecase>(
+      (ref) => _retryPendingRestore(ref, registerPeriodicTask: false),
+    );
+
+RetryPendingOfflineBackupRestoreUsecase _retryPendingRestore(
+  Ref ref, {
+  required bool registerPeriodicTask,
+}) {
+  final synchronize = ref.watch(synchronizeOfflineBackupRestoreUsecaseProvider);
+  return RetryPendingOfflineBackupRestoreUsecase(
+    dataStore: ref.watch(offlineBackupDataStoreProvider),
+    operationLock: ref.watch(offlineBackupRestoreOperationLockProvider),
+    restoreSyncStorage: ref.watch(offlineBackupRestoreSyncStorageProvider),
+    synchronizeAfterRestore: (snapshot) => synchronize.execute(
+      snapshot,
+      registerPeriodicTask: registerPeriodicTask,
+    ),
+  );
+}
 
 void _requireOffline(Ref ref) {
   if (ref.watch(appModeProvider) != AppMode.offline) {

@@ -34,7 +34,10 @@ class SynchronizeOfflineBackupRestoreUsecase {
   final RefreshOfflineWidgetCache refreshWidgetCache;
   final RegisterOfflineWidgetPeriodicUpdate registerPeriodicUpdateTask;
 
-  Future<void> execute(OfflineBackupSnapshot snapshot) async {
+  Future<void> execute(
+    OfflineBackupSnapshot snapshot, {
+    bool registerPeriodicTask = true,
+  }) async {
     final interval = AndroidWidgetUpdateInterval.values
         .where(
           (value) =>
@@ -77,7 +80,8 @@ class SynchronizeOfflineBackupRestoreUsecase {
       cacheStackTrace ??= stackTrace;
     }
     try {
-      await registerPeriodicUpdateTask(interval.duration);
+      if (registerPeriodicTask)
+        await registerPeriodicUpdateTask(interval.duration);
     } catch (error, stackTrace) {
       if (cacheError == null) Error.throwWithStackTrace(error, stackTrace);
     }

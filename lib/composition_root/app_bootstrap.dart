@@ -34,7 +34,9 @@ Future<void> launchApp(Widget app) async {
         if (root.mode == AppMode.offline) {
           try {
             await container
-                .read(retryPendingOfflineBackupRestoreUsecaseProvider)
+                .read(
+                  retryPendingOfflineBackupRestoreBeforeDisplayUsecaseProvider,
+                )
                 .execute();
           } catch (error, stackTrace) {
             root.services.log.w(
