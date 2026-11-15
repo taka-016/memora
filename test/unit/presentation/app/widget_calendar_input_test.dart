@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'package:memora/application/models/calendar_group_settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -25,19 +27,44 @@ class _CalendarLaunch extends AndroidWidgetLaunchNotifier {
       AndroidWidgetLaunchState(resolution: destination);
 }
 
+class _MembershipInputSettings extends TestCalendarGroupSettingsNotifier {
+  _MembershipInputSettings(this.initiallyEmpty);
+  final bool initiallyEmpty;
+
+  @override
+  CalendarGroupSettingsState build() => initiallyEmpty
+      ? CalendarGroupSettingsState(
+          settings: CalendarGroupSettings(hasSavedSettings: false),
+          groupsReady: true,
+          isLoading: false,
+        )
+      : super.build();
+
+  Future<void> joinFirstGroup(Future<void> saving) async {
+    state = state.copyWith(groups: [groups.first], isSaving: true);
+    await saving;
+    state = state.copyWith(
+      isSaving: false,
+      settings: CalendarGroupSettings(visibleGroupIds: {'g1'}, defaultGroupId: 'g1'),
+    );
+  }
+}
+
 void main() {
   final context = TopPageTestContext();
   setUp(context.setUpContext);
   for (final scenario in [
-    (save: true, fromWidget: true),
-    (save: false, fromWidget: true),
-    (save: true, fromWidget: false),
+    (save: true, fromWidget: true, initiallyEmpty: false),
+    (save: false, fromWidget: true, initiallyEmpty: false),
+    (save: true, fromWidget: false, initiallyEmpty: false),
+    (save: true, fromWidget: true, initiallyEmpty: true),
   ]) {
     final save = scenario.save;
     final fromWidget = scenario.fromWidget;
     testWidgets(
-      '${fromWidget ? 'ウィジェット' : 'カレンダー'}の入力を背面操作から守り${save ? '保存' : '破棄確認'}後に指定日へ戻る',
+      '${fromWidget ? 'ウィジェット' : 'カレンダー'}の入力を背面操作から守り${save ? '保存' : '破棄確認'}後に指定日へ戻る（所属更新${scenario.initiallyEmpty}）',
       (tester) async {
+        final settings = _MembershipInputSettings(scenario.initiallyEmpty);
         final events = MockGetCalendarEventsUsecase();
         final labels = MockGetCalendarLabelsUsecase();
         final create = MockCreateCalendarEventUsecase();
@@ -66,7 +93,7 @@ void main() {
                 ),
               ),
               calendarGroupSettingsNotifierProvider.overrideWith(
-                () => TestCalendarGroupSettingsNotifier(),
+                () => settings,
               ),
               calendarWidgetGroupsChangedProvider.overrideWithValue(
                 () async {},
@@ -109,6 +136,21 @@ void main() {
           find.widgetWithText(TextFormField, 'ウィジェットから追加'),
           findsOneWidget,
         );
+        if (scenario.initiallyEmpty) {
+          final pendingSave = Completer<void>();
+          final join = settings.joinFirstGroup(pendingSave.future);
+          await tester.pump();
+          expect(find.widgetWithText(TextFormField, 'ウィジェットから追加'), findsOneWidget);
+          pendingSave.complete();
+          await join;
+          await tester.pumpAndSettle();
+          expect(find.widgetWithText(TextFormField, 'ウィジェットから追加'), findsOneWidget);
+          final groupField = find.byWidgetPredicate((widget) => widget is DropdownButtonFormField<String> && widget.decoration.labelText == '保存先グループ');
+          await tester.tap(groupField);
+          await tester.pumpAndSettle();
+          await tester.tap(find.text('家族').last);
+          await tester.pumpAndSettle();
+        }
         if (save) {
           await calendarTapVisible(tester, find.text('保存'));
         } else {
