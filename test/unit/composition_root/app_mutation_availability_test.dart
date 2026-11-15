@@ -1,6 +1,11 @@
+import 'package:memora/infrastructure/factories/auth_service_factory.dart';
+
+import '../infrastructure/services/firebase_auth_service_test.mocks.dart';
+
 import 'dart:async';
 
 import '../../helpers/firestore_transaction_store.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/exceptions/application_validation_exception.dart';
@@ -45,7 +50,9 @@ void main() {
     await tester.pump();
     final saving = container.read(groupRepositoryProvider).updateGroup(group);
     var transactionStarted = false;
-    final transaction = container.read(writeTransactionProvider).run<void>((_) async {
+    final transaction = container.read(writeTransactionProvider).run<void>((
+      _,
+    ) async {
       transactionStarted = true;
     });
     await tester.pump();
@@ -106,5 +113,53 @@ void main() {
     await retry;
     await container.read(groupRepositoryProvider).updateGroup(group);
     expect(store.rows['groups/g']!['name'], '変更後');
+  });
+  testWidgets('アカウントの変更も確認を待ち利用不可ならSDKへ渡さない', (tester) async {
+    final auth = MockFirebaseAuth();
+    final user = MockUser();
+    when(auth.currentUser).thenReturn(user);
+    final pending = Completer<AppAvailability>();
+    when(check.execute()).thenAnswer((_) => pending.future);
+    final accountContainer = ProviderContainer(
+      overrides: [
+        firebaseAuthProvider.overrideWithValue(auth),
+        checkAppAvailabilityUsecaseProvider.overrideWithValue(check),
+      ],
+    );
+    addTearDown(accountContainer.dispose);
+    final service = accountContainer.read(authServiceProvider);
+    final updating = service.updatePassword(newPassword: 'new-password');
+    final failed = expectLater(
+      updating,
+      throwsA(isA<ApplicationValidationException>()),
+    );
+    await tester.pump();
+    verifyNever(user.updatePassword(any));
+    pending.complete(AppAvailability.maintenance);
+    await tester.pump();
+    await failed;
+    await expectLater(
+      service.deleteUser(),
+      throwsA(isA<ApplicationValidationException>()),
+    );
+    await expectLater(
+      service.updateEmail(newEmail: 'next@example.com'),
+      throwsA(isA<ApplicationValidationException>()),
+    );
+    await expectLater(
+      service.createUserWithEmailAndPassword(
+        email: 'new@example.com',
+        password: 'password',
+      ),
+      throwsA(isA<ApplicationValidationException>()),
+    );
+    verifyNever(user.delete());
+    verifyNever(user.verifyBeforeUpdateEmail(any));
+    verifyNever(
+      auth.createUserWithEmailAndPassword(
+        email: anyNamed('email'),
+        password: anyNamed('password'),
+      ),
+    );
   });
 }
