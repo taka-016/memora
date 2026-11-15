@@ -110,6 +110,7 @@ void main() {
       );
       expect(changes.hasListener, isTrue);
       verify(sync.execute()).called(1);
+      container.dispose();
     });
   }
 
@@ -132,6 +133,7 @@ void main() {
     await tester.pump();
     expect(changes.hasListener, isTrue);
     verify(sync.execute()).called(1);
+      container.dispose();
   });
 
   test('利用停止中は変更通知と定期再取得を開始せず解除時に監視を再開する', () async {
