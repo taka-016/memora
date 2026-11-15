@@ -7,9 +7,9 @@ final startupTrace = StartupTrace(
 );
 
 class StartupTrace {
-  StartupTrace({required void Function(String) write}) : _write = write;
+  StartupTrace({required this.write});
 
-  final void Function(String) _write;
+  final void Function(String) write;
   final Stopwatch _total = Stopwatch();
 
   void start() {
@@ -21,7 +21,7 @@ class StartupTrace {
 
   void mark(String label) {
     if (_total.isRunning) {
-      _write('起動計測: $label 累計=${_total.elapsedMilliseconds}ms');
+      write('起動計測: $label 累計=${_total.elapsedMilliseconds}ms');
     }
   }
 

@@ -1,3 +1,4 @@
+import 'package:memora/core/startup_trace.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
@@ -23,15 +24,21 @@ class OnlineAppServices implements AppServices {
   @override
   Future<void> initialize() async {
     if (Firebase.apps.isEmpty) {
-      await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform,
+      await startupTrace.measure(
+        'Firebase初期化',
+        () => Firebase.initializeApp(
+          options: DefaultFirebaseOptions.currentPlatform,
+        ),
       );
     }
     FirebaseFirestore.instance.settings = const Settings(
       persistenceEnabled: true,
     );
     final crashlytics = FirebaseCrashlytics.instance;
-    await crashlytics.setCrashlyticsCollectionEnabled(true);
+    await startupTrace.measure(
+      'Crashlytics初期化',
+      () => crashlytics.setCrashlyticsCollectionEnabled(true),
+    );
     log = CrashlyticsAppLog(
       Logger(
         printer: PrettyPrinter(),

@@ -1,3 +1,4 @@
+import 'package:memora/core/startup_trace.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:memora/application/models/app_mode.dart';
@@ -43,10 +44,10 @@ class AppCompositionRoot {
 
   Future<void> initialize() async {
     logger = services.log;
-    await services.initialize();
+    await startupTrace.measure('サービス初期化', services.initialize);
     logger = services.log;
     try {
-      await services.clock.sync();
+      await startupTrace.measure('NTP時刻同期', services.clock.sync);
     } catch (error, stackTrace) {
       logger.w('時刻の同期に失敗しました', error: error, stackTrace: stackTrace);
     }

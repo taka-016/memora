@@ -1,3 +1,5 @@
+import 'package:memora/core/startup_trace.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -57,6 +59,7 @@ class _AppAvailabilityGateState extends ConsumerState<AppAvailabilityGate>
   void _allowFirstFrame() {
     if (!_firstFrameDeferred) return;
     _firstFrameDeferred = false;
+    startupTrace.mark('初回描画の抑止解除');
     WidgetsBinding.instance.allowFirstFrame();
   }
 

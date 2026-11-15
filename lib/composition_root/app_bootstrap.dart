@@ -1,7 +1,9 @@
+import 'package:memora/core/startup_trace.dart';
 import 'package:memora/composition_root/calendar_notification_background.dart';
 
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -43,10 +45,14 @@ Future<void> synchronizeAppModeAndAndroidWidgetCache(
 
 Future<void> launchApp(Widget app) async {
   final root = AppCompositionRoot.fromBuildConfiguration();
+  if (kDebugMode && root.mode == AppMode.online) startupTrace.start();
   await runZonedGuarded<Future<void>>(
     () async {
-      await initializeAppDisplay();
-      await synchronizeAppModeAndAndroidWidgetCache(root.mode);
+      await startupTrace.measure('画面初期化', initializeAppDisplay);
+      await startupTrace.measure(
+        'モードとウィジェットキャッシュ同期',
+        () => synchronizeAppModeAndAndroidWidgetCache(root.mode),
+      );
       await root.initialize();
       FlutterError.onError = (details) {
         unawaited(
@@ -54,8 +60,14 @@ Future<void> launchApp(Widget app) async {
         );
       };
       registerAndroidWidgetInteractivityCallback();
-      await initializeAndroidWidgetBackgroundUpdate();
-      await registerCalendarNotificationBackgroundUpdate();
+      await startupTrace.measure(
+        'Workmanager初期化',
+        initializeAndroidWidgetBackgroundUpdate,
+      );
+      await startupTrace.measure(
+        '通知バックグラウンド登録',
+        registerCalendarNotificationBackgroundUpdate,
+      );
       final container = root.createContainer();
       try {
         if (root.mode == AppMode.offline) {
@@ -71,20 +83,33 @@ Future<void> launchApp(Widget app) async {
             );
           }
         }
-        final interval = await container
-            .read(androidWidgetUpdateIntervalStorageProvider)
-            .load();
-        await registerAndroidWidgetPeriodicUpdateTask(interval.duration);
+        final interval = await startupTrace.measure(
+          'ウィジェット更新間隔取得',
+          container.read(androidWidgetUpdateIntervalStorageProvider).load,
+        );
+        await startupTrace.measure(
+          'ウィジェット定期更新登録',
+          () => registerAndroidWidgetPeriodicUpdateTask(interval.duration),
+        );
       } finally {
         container.dispose();
       }
       root.services.log.i(
         'MEMORA_APP_MODE=${root.requestedValue ?? root.mode.name}, AppMode=${root.mode.name}',
       );
+      startupTrace.mark('runApp呼び出し');
       runApp(ProviderScope(overrides: root.overrides, child: app));
+      if (kDebugMode && root.mode == AppMode.online) {
+        unawaited(_recordFirstFrame());
+      }
     },
     (error, stack) {
       unawaited(root.services.log.recordError(error, stack, fatal: true));
     },
   );
+}
+
+Future<void> _recordFirstFrame() async {
+  await WidgetsBinding.instance.waitUntilFirstFrameRasterized;
+  startupTrace.finish();
 }
