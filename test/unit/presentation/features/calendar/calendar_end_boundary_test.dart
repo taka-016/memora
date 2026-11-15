@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/application/services/calendar/calendar_recurrence_expander.dart';
 import 'package:memora/infrastructure/services/iana_calendar_time_zone.dart';
-import 'package:memora/presentation/features/calendar/calendar_event_dialog.dart';
+import 'package:memora/presentation/features/calendar/calendar_event_input_page.dart';
 import 'package:memora/presentation/features/calendar/calendar_week_layout.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_state.dart';
 

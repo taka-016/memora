@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
-import 'package:memora/presentation/features/calendar/calendar_event_dialog.dart';
+import 'package:memora/presentation/features/calendar/calendar_event_input_page.dart';
 
 import 'calendar_test_support.dart';
 import 'calendar_event_details_test.dart' show field, openEvent;
@@ -93,7 +93,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('保存する'));
     await tester.pumpAndSettle();
-    expect(find.byType(CalendarEventDialog), findsOneWidget);
+    expect(find.byType(CalendarEventInputPage), findsOneWidget);
     expect(tester.widget<TextField>(field('タイトル')).controller!.text, '入力中');
     when(move.execute(any, any, any)).thenAnswer((_) async {});
     await tester.tap(find.text('保存'));
@@ -106,6 +106,6 @@ void main() {
     expect(input.groupId, 'g2');
     expect(input.labelType, 'group');
     expect(input.title, '入力中');
-    expect(find.byType(CalendarEventDialog), findsNothing);
+    expect(find.byType(CalendarEventInputPage), findsNothing);
   });
 }

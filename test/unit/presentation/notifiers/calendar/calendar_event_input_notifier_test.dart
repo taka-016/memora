@@ -1,7 +1,9 @@
 import 'package:memora/presentation/notifiers/calendar/calendar_notifier.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_state.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_group_settings_notifier.dart';
+
 import '../../../../helpers/calendar_group_settings_test_support.dart';
+
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -21,7 +23,12 @@ class _LoadedCalendar extends CalendarNotifier {
   @override
   CalendarState build(String groupId) => CalendarState(
     selectedDate: DateTime(2026, 11, 15),
-    group: const GroupDto(id: 'g1', ownerId: 'owner', name: '表示済み', members: []),
+    group: const GroupDto(
+      id: 'g1',
+      ownerId: 'owner',
+      name: '表示済み',
+      members: [],
+    ),
     hasLoadedLabels: true,
   );
 }
@@ -29,22 +36,32 @@ class _LoadedCalendar extends CalendarNotifier {
 void main() {
   for (final calendarLoaded in [true, false]) {
     test('取得済みグループを再利用し色ラベルは未取得の場合だけ取得する $calendarLoaded', () async {
-      final groups = calendarTestGroupLoader() as MockGetGroupWithMembersByIdUsecase;
+      final groups =
+          calendarTestGroupLoader() as MockGetGroupWithMembersByIdUsecase;
       final labels = MockGetCalendarLabelsUsecase();
       when(labels.execute(any)).thenAnswer((_) async => []);
-      final container = ProviderContainer(overrides: [
-        getGroupWithMembersByIdUsecaseProvider.overrideWithValue(groups),
-        getCalendarLabelsUsecaseProvider.overrideWithValue(labels),
-        calendarGroupSettingsNotifierProvider.overrideWith(() => TestCalendarGroupSettingsNotifier()),
-        calendarNotifierProvider('g1').overrideWith(_LoadedCalendar.new),
-      ]);
+      final container = ProviderContainer(
+        overrides: [
+          getGroupWithMembersByIdUsecaseProvider.overrideWithValue(groups),
+          getCalendarLabelsUsecaseProvider.overrideWithValue(labels),
+          calendarGroupSettingsNotifierProvider.overrideWith(
+            () => TestCalendarGroupSettingsNotifier(),
+          ),
+          calendarNotifierProvider('g1').overrideWith(_LoadedCalendar.new),
+        ],
+      );
       addTearDown(container.dispose);
       container.read(calendarGroupSettingsNotifierProvider);
-      if (calendarLoaded) container.listen(calendarNotifierProvider('g1'), (_, _) {});
+      if (calendarLoaded) {
+        container.listen(calendarNotifierProvider('g1'), (_, _) {});
+      }
       final provider = calendarEventInputNotifierProvider('reuse');
       container.listen(provider, (_, _) {});
       await container.read(provider.notifier).selectGroup('g1');
-      expect(container.read(provider).group?.name, calendarLoaded ? '表示済み' : '家族');
+      expect(
+        container.read(provider).group?.name,
+        calendarLoaded ? '表示済み' : '家族',
+      );
       expect(container.read(provider).error, isEmpty);
       verifyNever(groups.execute(any));
       if (calendarLoaded) {

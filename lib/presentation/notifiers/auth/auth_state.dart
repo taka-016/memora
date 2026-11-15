@@ -79,8 +79,11 @@ class AuthState extends Equatable {
     return AuthState._(
       status: status ?? this.status,
       user: user ?? this.user,
-      member: (status ?? this.status) == AuthStatus.authenticated &&
-              (user ?? this.user)?.id == this.user?.id ? member : null,
+      member:
+          (status ?? this.status) == AuthStatus.authenticated &&
+              (user ?? this.user)?.id == this.user?.id
+          ? member
+          : null,
       message: message ?? this.message,
       messageType: messageType ?? this.messageType,
     );

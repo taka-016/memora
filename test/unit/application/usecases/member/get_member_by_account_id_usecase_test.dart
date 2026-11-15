@@ -3,21 +3,21 @@ import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/queries/member/member_query_service.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
-import 'package:memora/application/usecases/member/check_member_exists_usecase.dart';
+import 'package:memora/application/usecases/member/get_member_by_account_id_usecase.dart';
 
-import 'check_member_exists_usecase_test.mocks.dart';
+import 'get_member_by_account_id_usecase_test.mocks.dart';
 
 @GenerateMocks([MemberQueryService])
 void main() {
-  late CheckMemberExistsUseCase useCase;
+  late GetMemberByAccountIdUseCase useCase;
   late MockMemberQueryService mockMemberQueryService;
 
   setUp(() {
     mockMemberQueryService = MockMemberQueryService();
-    useCase = CheckMemberExistsUseCase(mockMemberQueryService);
+    useCase = GetMemberByAccountIdUseCase(mockMemberQueryService);
   });
 
-  group('CheckMemberExistsUseCase', () {
+  group('GetMemberByAccountIdUseCase', () {
     test('ログインユーザーIDでメンバーが存在する場合本人情報を返す', () async {
       // Arrange
       const accountId = 'test-user-id';

@@ -1,4 +1,4 @@
-import 'package:memora/presentation/features/calendar/calendar_event_dialog.dart';
+import 'package:memora/presentation/features/calendar/calendar_event_input_page.dart';
 import 'package:mockito/annotations.dart';
 import 'package:memora/application/usecases/calendar/calendar_label_management_usecase.dart';
 
@@ -37,7 +37,7 @@ import '../../notifiers/calendar/calendar_notifier_test.mocks.dart';
 
 Future<void> calendarTapVisible(WidgetTester tester, Finder target) async {
   if (find
-      .ancestor(of: target, matching: find.byType(CalendarEventDialog))
+      .ancestor(of: target, matching: find.byType(CalendarEventInputPage))
       .evaluate()
       .isNotEmpty) {
     await tester.ensureVisible(target);

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/models/app_capabilities.dart';
 import 'package:memora/application/models/app_mode.dart';
-import 'package:memora/presentation/features/calendar/calendar_event_dialog.dart';
+import 'package:memora/presentation/features/calendar/calendar_event_input_page.dart';
 import 'package:mockito/mockito.dart';
 
 import '../../shared/inputs/custom_search_bar_test.mocks.dart';
@@ -51,8 +51,7 @@ void main() {
     await tester.tap(find.byKey(calendarTestDay2));
     await tester.pump();
     await tester.tap(find.byType(FloatingActionButton));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
     for (final entry in {
       'タイトル': '予定',
       'URL': 'https://example.com',
@@ -66,8 +65,7 @@ void main() {
     await tester.pump();
     await tester.ensureVisible(find.text('保存'));
     await tester.tap(find.text('保存'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
     expect(harness.savedEvents.single.endDateTime, DateTime.utc(2026, 10, 3));
     expect(harness.savedEvents.single.memo, '一行目\n二行目');
     expect(harness.savedEvents.single.locationName, '集合場所');
@@ -84,8 +82,7 @@ void main() {
     await tester.pump();
     await tester.ensureVisible(find.text('保存'));
     await tester.tap(find.text('保存'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
     expect(harness.savedEvents.single.url, '');
     expect(harness.savedEvents.single.memo, '');
     expect(harness.savedEvents.single.locationName, '');
@@ -124,12 +121,10 @@ void main() {
     expect(tester.widget<TextField>(field('場所名')).controller!.text, '東京タワー');
     expect(harness.savedEvents.single.locationName, '');
     await tester.tap(find.text('キャンセル'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('破棄する'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
-    expect(find.byType(CalendarEventDialog), findsNothing);
+    await tester.pumpAndSettle();
+    expect(find.byType(CalendarEventInputPage), findsNothing);
     expect(harness.savedEvents.single.locationName, '');
     await openEvent(tester);
     await tester.ensureVisible(field('場所名'));
@@ -142,15 +137,13 @@ void main() {
     await tester.pump();
     await tester.ensureVisible(find.text('保存'));
     await tester.tap(find.text('保存'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
     expect(harness.savedEvents.single.latitude, 35.0);
     expect(harness.savedEvents.single.longitude, 139.0);
     await openEvent(tester);
     await tester.ensureVisible(find.text('保存'));
     await tester.tap(find.text('保存'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
     expect(harness.savedEvents.single.latitude, 35.0);
     await openEvent(tester);
     await tester.ensureVisible(field('場所名'));
@@ -158,8 +151,7 @@ void main() {
     await tester.pump();
     await tester.ensureVisible(find.text('保存'));
     await tester.tap(find.text('保存'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
     expect(harness.savedEvents.single.locationName, '東京タワー入口');
     expect(harness.savedEvents.single.latitude, isNull);
     expect(harness.savedEvents.single.longitude, isNull);

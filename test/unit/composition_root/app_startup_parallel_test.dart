@@ -3,7 +3,9 @@ import 'package:memora/application/models/app_availability.dart';
 import 'package:memora/composition_root/providers/app_availability_providers.dart';
 import 'package:memora/presentation/notifiers/app_availability/app_availability_notifier.dart';
 import 'package:mockito/mockito.dart';
+
 import '../presentation/notifiers/app_availability/app_availability_notifier_test.mocks.dart';
+
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -20,7 +22,11 @@ class _Clock implements AppClock {
   final ready = Completer<void>();
   bool started = false;
   @override
-  Future<void> sync() { started = true; return ready.future; }
+  Future<void> sync() {
+    started = true;
+    return ready.future;
+  }
+
   @override
   DateTime now() => DateTime(2026, 11, 15);
 }
@@ -33,13 +39,17 @@ class _Services implements AppServices {
   @override
   AppLog get log => const SilentAppLog();
   @override
-  Future<void> initialize() { started = true; return ready.future; }
+  Future<void> initialize() {
+    started = true;
+    return ready.future;
+  }
 }
 
 class _Root extends AppCompositionRoot {
-  _Root(this.services) : super(AppMode.online);
+  _Root(this._services) : super(AppMode.online);
+  final _Services _services;
   @override
-  final _Services services;
+  _Services get services => _services;
 }
 
 void main() {
@@ -49,7 +59,9 @@ void main() {
     final check = MockCheckAppAvailabilityUsecase();
     final result = Completer<AppAvailability>();
     when(check.execute()).thenAnswer((_) => result.future);
-    final container = ProviderContainer(overrides: [checkAppAvailabilityUsecaseProvider.overrideWithValue(check)]);
+    final container = ProviderContainer(
+      overrides: [checkAppAvailabilityUsecaseProvider.overrideWithValue(check)],
+    );
     addTearDown(container.dispose);
     final initialization = root.initialize(availabilityContainer: container);
     verifyNever(check.execute());
@@ -73,7 +85,10 @@ void main() {
       final root = _Root(services);
       var complete = false;
       final initialization = root.initialize();
-      final observed = () async { await initialization; complete = true; }();
+      final observed = () async {
+        await initialization;
+        complete = true;
+      }();
       expect(services.started, isTrue);
       expect(services.clock.started, isTrue);
       if (clockFails) {

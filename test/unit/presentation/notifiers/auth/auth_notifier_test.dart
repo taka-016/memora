@@ -21,7 +21,7 @@ import 'package:memora/application/usecases/account/observe_auth_state_changes_u
 import 'package:memora/application/usecases/account/send_email_verification_usecase.dart';
 import 'package:memora/application/usecases/account/signup_usecase.dart';
 import 'package:memora/application/usecases/account/validate_current_user_token_usecase.dart';
-import 'package:memora/application/usecases/member/check_member_exists_usecase.dart';
+import 'package:memora/application/usecases/member/get_member_by_account_id_usecase.dart';
 import 'package:memora/application/usecases/member/create_member_from_user_usecase.dart';
 import 'package:memora/application/usecases/member/accept_invitation_usecase.dart';
 
@@ -37,7 +37,7 @@ import 'auth_notifier_test.mocks.dart';
   LoginUseCase,
   SignupUseCase,
   LogoutUseCase,
-  CheckMemberExistsUseCase,
+  GetMemberByAccountIdUseCase,
   CreateMemberFromUserUseCase,
   AcceptInvitationUseCase,
 ])
@@ -51,7 +51,7 @@ void main() {
     late MockLoginUseCase mockLoginUseCase;
     late MockSignupUseCase mockSignupUseCase;
     late MockLogoutUseCase mockLogoutUseCase;
-    late MockCheckMemberExistsUseCase mockCheckMemberExistsUseCase;
+    late MockGetMemberByAccountIdUseCase mockGetMemberByAccountIdUseCase;
     late MockCreateMemberFromUserUseCase mockCreateMemberFromUserUseCase;
     late MockAcceptInvitationUseCase mockAcceptInvitationUseCase;
 
@@ -64,7 +64,7 @@ void main() {
       mockLoginUseCase = MockLoginUseCase();
       mockSignupUseCase = MockSignupUseCase();
       mockLogoutUseCase = MockLogoutUseCase();
-      mockCheckMemberExistsUseCase = MockCheckMemberExistsUseCase();
+      mockGetMemberByAccountIdUseCase = MockGetMemberByAccountIdUseCase();
       mockCreateMemberFromUserUseCase = MockCreateMemberFromUserUseCase();
       mockAcceptInvitationUseCase = MockAcceptInvitationUseCase();
     });
@@ -90,8 +90,8 @@ void main() {
           loginUseCaseProvider.overrideWithValue(mockLoginUseCase),
           signupUseCaseProvider.overrideWithValue(mockSignupUseCase),
           logoutUseCaseProvider.overrideWithValue(mockLogoutUseCase),
-          checkMemberExistsUseCaseProvider.overrideWithValue(
-            mockCheckMemberExistsUseCase,
+          getMemberByAccountIdUseCaseProvider.overrideWithValue(
+            mockGetMemberByAccountIdUseCase,
           ),
           createMemberFromUserUseCaseProvider.overrideWithValue(
             mockCreateMemberFromUserUseCase,
@@ -120,7 +120,7 @@ void main() {
           when(mockValidateCurrentUserTokenUseCase.execute()).thenAnswer(
             (_) => waitForToken ? pendingToken.future : Future.value(),
           );
-          when(mockCheckMemberExistsUseCase.execute(user.id))
+          when(mockGetMemberByAccountIdUseCase.execute(user.id))
               .thenAnswer((_) => pendingMember.future);
           when(mockGetCurrentUserUseCase.execute())
               .thenAnswer((_) async => user);
@@ -145,8 +145,9 @@ void main() {
           verifyNever(mockLogoutUseCase.execute());
           when(mockValidateCurrentUserTokenUseCase.execute())
               .thenAnswer((_) async {});
-          when(mockCheckMemberExistsUseCase.execute(user.id))
-              .thenAnswer((_) async => const MemberDto(id: 'member', displayName: '本人'));
+          when(mockGetMemberByAccountIdUseCase.execute(user.id)).thenAnswer(
+            (_) async => const MemberDto(id: 'member', displayName: '本人'),
+          );
           final retry = notifier.retryInitialization();
           expect(notifier.state.isLoading, isTrue);
           await tester.pump();
@@ -179,7 +180,7 @@ void main() {
         when(mockValidateCurrentUserTokenUseCase.execute()).thenAnswer(
           (_) => waitForToken ? pendingToken.future : Future.value(),
         );
-        when(mockCheckMemberExistsUseCase.execute(user.id))
+        when(mockGetMemberByAccountIdUseCase.execute(user.id))
             .thenAnswer((_) => pendingMember.future);
         final controller = StreamController<UserDto?>();
         addTearDown(controller.close);
@@ -196,8 +197,9 @@ void main() {
         );
         when(mockValidateCurrentUserTokenUseCase.execute())
             .thenAnswer((_) async {});
-        when(mockCheckMemberExistsUseCase.execute(user.id))
-            .thenAnswer((_) async => const MemberDto(id: 'member', displayName: '本人'));
+        when(mockGetMemberByAccountIdUseCase.execute(user.id)).thenAnswer(
+          (_) async => const MemberDto(id: 'member', displayName: '本人'),
+        );
         await tester.pump(const Duration(milliseconds: 500));
         expect(container.read(authNotifierProvider).isAuthenticated, isTrue);
         verifyNever(mockLogoutUseCase.execute());
@@ -265,8 +267,9 @@ void main() {
 
       when(mockValidateCurrentUserTokenUseCase.execute())
           .thenAnswer((_) async {});
-      when(mockCheckMemberExistsUseCase.execute(user.id))
-          .thenAnswer((_) async => const MemberDto(id: 'member', displayName: '本人'));
+      when(mockGetMemberByAccountIdUseCase.execute(user.id)).thenAnswer(
+        (_) async => const MemberDto(id: 'member', displayName: '本人'),
+      );
 
       final controller = StreamController<UserDto?>();
       addTearDown(controller.close);
@@ -278,7 +281,7 @@ void main() {
       await Future(() {});
 
       expect(notifier.state.status, AuthStatus.authenticated);
-      verify(mockCheckMemberExistsUseCase.execute(user.id)).called(1);
+      verify(mockGetMemberByAccountIdUseCase.execute(user.id)).called(1);
     });
 
     test('新規ユーザーのログイン時にmember_selection_required状態になる', () async {
@@ -290,7 +293,7 @@ void main() {
 
       when(mockValidateCurrentUserTokenUseCase.execute())
           .thenAnswer((_) async {});
-      when(mockCheckMemberExistsUseCase.execute(user.id))
+      when(mockGetMemberByAccountIdUseCase.execute(user.id))
           .thenAnswer((_) async => null);
 
       final controller = StreamController<UserDto?>();
@@ -316,8 +319,9 @@ void main() {
 
       when(mockValidateCurrentUserTokenUseCase.execute())
           .thenAnswer((_) => validateCompleter.future);
-      when(mockCheckMemberExistsUseCase.execute(user.id))
-          .thenAnswer((_) async => const MemberDto(id: 'member', displayName: '本人'));
+      when(mockGetMemberByAccountIdUseCase.execute(user.id)).thenAnswer(
+        (_) async => const MemberDto(id: 'member', displayName: '本人'),
+      );
 
       final controller = StreamController<UserDto?>();
       addTearDown(controller.close);
@@ -451,7 +455,7 @@ void main() {
     });
 
     test(
-      'CheckMemberExistsUseCaseが例外を投げた場合はエラーでサインアウトしunauthenticatedになる',
+      'GetMemberByAccountIdUseCaseが例外を投げた場合はエラーでサインアウトしunauthenticatedになる',
       () async {
         const user = UserDto(
           id: 'user123',
@@ -461,7 +465,7 @@ void main() {
 
         when(mockValidateCurrentUserTokenUseCase.execute())
             .thenAnswer((_) async {});
-        when(mockCheckMemberExistsUseCase.execute(user.id))
+        when(mockGetMemberByAccountIdUseCase.execute(user.id))
             .thenThrow(TestException('Firestore error'));
         when(mockLogoutUseCase.execute()).thenAnswer((_) async {});
 

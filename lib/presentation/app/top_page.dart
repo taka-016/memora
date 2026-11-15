@@ -58,7 +58,8 @@ class TopPage extends HookConsumerWidget {
       androidWidgetLaunchNotifierProvider.notifier,
     );
     final router = GoRouter.of(context);
-    final isCalendarInput = router.state.uri.path == '/calendar' &&
+    final isCalendarInput =
+        router.state.uri.path == '/calendar' &&
         router.state.uri.queryParameters['create'] == 'true';
     final previousLocation = useRef(router.state.uri.toString());
     final pendingAndroidWidgetTripId = androidWidgetLaunchState.pendingTripId;
@@ -235,11 +236,9 @@ class TopPage extends HookConsumerWidget {
         },
         appBar: isCalendarInput ? null : _buildAppBar(),
         drawer: _buildDrawer(context, ref, closeDrawer),
-        bottomNavigationBar: isCalendarInput ? null : _buildBottomNavigationBar(
-          context,
-          ref,
-          closeDrawer,
-        ),
+        bottomNavigationBar: isCalendarInput
+            ? null
+            : _buildBottomNavigationBar(context, ref, closeDrawer),
         body:
             currentMemberState.status == CurrentMemberStatus.error &&
                 (!authenticationAvailable || currentMemberState.canRetry)

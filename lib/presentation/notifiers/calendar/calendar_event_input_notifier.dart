@@ -70,7 +70,8 @@ class CalendarEventInputNotifier extends _$CalendarEventInputNotifier {
       final knownGroup = settings?.groupsReady == true
           ? settings!.groups.where((group) => group.id == id).firstOrNull
           : null;
-      final calendar = knownGroup != null && ref.exists(calendarNotifierProvider(id))
+      final calendar =
+          knownGroup != null && ref.exists(calendarNotifierProvider(id))
           ? ref.read(calendarNotifierProvider(id))
           : null;
       final results = await Future.wait<Object?>([

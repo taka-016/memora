@@ -15,7 +15,7 @@ import 'package:memora/application/usecases/account/observe_auth_state_changes_u
 import 'package:memora/application/usecases/account/send_email_verification_usecase.dart';
 import 'package:memora/application/usecases/account/signup_usecase.dart';
 import 'package:memora/application/usecases/account/validate_current_user_token_usecase.dart';
-import 'package:memora/application/usecases/member/check_member_exists_usecase.dart';
+import 'package:memora/application/usecases/member/get_member_by_account_id_usecase.dart';
 import 'package:memora/application/usecases/member/create_member_from_user_usecase.dart';
 import 'package:memora/application/usecases/member/accept_invitation_usecase.dart';
 import 'package:memora/core/app_logger.dart';
@@ -42,8 +42,8 @@ class AuthNotifier extends Notifier<AuthState> {
   LoginUseCase get loginUseCase => ref.read(loginUseCaseProvider);
   SignupUseCase get signupUseCase => ref.read(signupUseCaseProvider);
   LogoutUseCase get logoutUseCase => ref.read(logoutUseCaseProvider);
-  CheckMemberExistsUseCase get checkMemberExistsUseCase =>
-      ref.read(checkMemberExistsUseCaseProvider);
+  GetMemberByAccountIdUseCase get getMemberByAccountIdUseCase =>
+      ref.read(getMemberByAccountIdUseCaseProvider);
   CreateMemberFromUserUseCase get createMemberFromUserUseCase =>
       ref.read(createMemberFromUserUseCaseProvider);
   AcceptInvitationUseCase get acceptInvitationUseCase =>
@@ -146,7 +146,7 @@ class AuthNotifier extends Notifier<AuthState> {
 
         stopwatch.reset();
         if (kDebugMode) logger.i('起動認証: メンバー存在確認 開始');
-        final member = await checkMemberExistsUseCase
+        final member = await getMemberByAccountIdUseCase
             .execute(user.id)
             .timeout(const Duration(seconds: 15));
         if (kDebugMode) {

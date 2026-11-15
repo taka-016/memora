@@ -9,7 +9,8 @@ import 'package:memora/presentation/features/setting/calendar_default_duration_s
 import 'package:memora/application/dtos/calendar/calendar_label_dto.dart';
 
 import 'calendar_test_support.dart';
-import 'package:memora/presentation/features/calendar/calendar_event_dialog.dart';
+
+import 'package:memora/presentation/features/calendar/calendar_event_input_page.dart';
 
 void _useTallScreen(WidgetTester tester) {
   tester.view.physicalSize = const Size(800, 900);
@@ -25,12 +26,21 @@ void main() {
     await calendarTapVisible(tester, find.byType(FloatingActionButton));
     await tester.pumpAndSettle();
     expect(find.byType(Dialog), findsNothing);
-    expect(find.descendant(of: find.byType(CalendarEventDialog), matching: find.byType(Scaffold)), findsOneWidget);
-    await tester.enterText(find.widgetWithText(TextFormField, 'タイトル'), '画面から追加');
+    expect(
+      find.descendant(
+        of: find.byType(CalendarEventInputPage),
+        matching: find.byType(Scaffold),
+      ),
+      findsOneWidget,
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'タイトル'),
+      '画面から追加',
+    );
     await calendarTapVisible(tester, find.text('保存'));
     await tester.pumpAndSettle();
     expect(harness.savedEvents.single.title, '画面から追加');
-    expect(find.byType(CalendarEventDialog), findsNothing);
+    expect(find.byType(CalendarEventInputPage), findsNothing);
   });
 
   for (final textScale in [1.0, 1.5]) {
@@ -113,7 +123,7 @@ void main() {
     expect(nameParagraph.didExceedMaxLines, isTrue);
     expect(
       tester.getRect(suffix).left,
-      lessThan(tester.getRect(find.byType(Dialog).last).right),
+      lessThan(tester.getRect(find.byType(CalendarEventInputPage)).right),
     );
     await calendarTapVisible(tester, suffix);
     await tester.pumpAndSettle();

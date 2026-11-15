@@ -64,7 +64,8 @@ class CurrentMemberNotifier extends Notifier<CurrentMemberState> {
         .isAvailable;
     if (authenticationAvailable) {
       ref.listen<AuthState>(authNotifierProvider, (previous, next) {
-        if (previous?.status == next.status && previous?.user?.id == next.user?.id) {
+        if (previous?.status == next.status &&
+            previous?.user?.id == next.user?.id) {
           return;
         }
 
@@ -82,7 +83,9 @@ class CurrentMemberNotifier extends Notifier<CurrentMemberState> {
       });
     }
 
-    final auth = authenticationAvailable ? ref.read(authNotifierProvider) : null;
+    final auth = authenticationAvailable
+        ? ref.read(authNotifierProvider)
+        : null;
     if (auth?.isAuthenticated == true && auth?.member != null) {
       return CurrentMemberState.loaded(auth!.member);
     }
