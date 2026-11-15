@@ -1,3 +1,6 @@
+import 'package:drift/native.dart';
+import 'package:memora/infrastructure/database/offline_database.dart';
+import 'package:memora/composition_root/providers/offline_database_provider.dart';
 import 'package:memora/infrastructure/factories/auth_service_factory.dart';
 
 import '../infrastructure/services/firebase_auth_service_test.mocks.dart';
@@ -42,6 +45,25 @@ void main() {
     );
   });
   tearDown(() => container.dispose());
+
+  test('オフラインRepositoryもFactoryの共通入口でガードを通る', () async {
+    final database = OfflineDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    final blocked = TestException('共通ガードで更新停止');
+    var checks = 0;
+    final offline = ProviderContainer(overrides: [
+      appModeProvider.overrideWithValue(AppMode.offline),
+      offlineDatabaseProvider.overrideWithValue(database),
+      ensureAppAvailableForMutationProvider.overrideWithValue(() async {
+        checks++;
+        throw blocked;
+      }),
+    ]);
+    addTearDown(offline.dispose);
+    await expectLater(offline.read(groupRepositoryProvider).updateGroup(group),
+      throwsA(same(blocked)));
+    expect(checks, 1);
+  });
 
   testWidgets('更新は進行中の確認を共有して待ち利用可能になったら書き込む', (tester) async {
     final pending = Completer<AppAvailability>();
