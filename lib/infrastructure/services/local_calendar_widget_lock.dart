@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:drift/drift.dart';
@@ -11,13 +12,30 @@ class LocalCalendarWidgetLock {
   }) : _directory = directory ?? getApplicationSupportDirectory;
   final Future<Directory> Function() _directory;
   final Duration busyTimeout;
+  static final _pending = <String, Future<void>>{};
 
   Future<T> run<T>(String name, Future<T> Function() action) async {
     final directory = await _directory();
     await directory.create(recursive: true);
+    final file = File('${directory.path}/calendar_widget_$name.lock.sqlite');
+    final key = file.absolute.path;
+    final previous = _pending[key];
+    final released = Completer<void>();
+    final pending = released.future;
+    _pending[key] = pending;
+    try {
+      await previous;
+      return await _run(file, action);
+    } finally {
+      released.complete();
+      if (identical(_pending[key], pending)) _pending.remove(key);
+    }
+  }
+
+  Future<T> _run<T>(File file, Future<T> Function() action) async {
     final timeoutMillis = busyTimeout.inMilliseconds;
     final executor = NativeDatabase.createInBackground(
-      File('${directory.path}/calendar_widget_$name.lock.sqlite'),
+      file,
       setup: (database) =>
           database.execute('PRAGMA busy_timeout = $timeoutMillis'),
     );
