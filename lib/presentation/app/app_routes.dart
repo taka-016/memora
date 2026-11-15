@@ -1,3 +1,6 @@
+import 'package:memora/presentation/features/calendar/calendar_event_dialog.dart';
+import 'package:memora/presentation/notifiers/calendar/calendar_group_settings_notifier.dart';
+import 'package:memora/composition_root/providers/app_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -226,7 +229,25 @@ class CalendarRoute extends GoRouteData with $CalendarRoute {
   final String? eventId;
   final String? occurrence;
   @override
-  Widget build(BuildContext context, GoRouterState state) => Material(
+  Widget build(BuildContext context, GoRouterState state) {
+    if (create) {
+      return Consumer(builder: (context, ref, _) {
+        final settings = ref.watch(calendarGroupSettingsNotifierProvider);
+        if (!settings.canUseSettings) {
+          return Center(child: settings.loadFailed
+              ? TextButton(onPressed: () => ref.read(calendarGroupSettingsNotifierProvider.notifier).reload(), child: Text(settings.error))
+              : const CircularProgressIndicator());
+        }
+        final day = DateTime.tryParse(date ?? '') ?? ref.read(appClockProvider).now();
+        return CalendarEventDialog(
+          key: ValueKey(request),
+          date: day,
+          onSaved: (savedDay) => CalendarRoute(date: savedDay.toIso8601String()).go(context),
+          onCancelled: () => CalendarRoute(date: day.toIso8601String()).go(context),
+        );
+      });
+    }
+    return Material(
     child: CalendarScreen(
       initialEventGroupId: groupId,
       initialDate: DateTime.tryParse(date ?? ''),
@@ -236,6 +257,7 @@ class CalendarRoute extends GoRouteData with $CalendarRoute {
       initialOccurrence: DateTime.tryParse(occurrence ?? ''),
     ),
   );
+  }
 }
 
 class MapRoute extends GoRouteData with $MapRoute {

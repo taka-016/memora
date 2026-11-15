@@ -1,3 +1,4 @@
+import 'package:memora/presentation/shared/dialogs/edit_discard_confirm_dialog.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_mutation_coordinator.dart';
 
 import 'dart:async';
@@ -41,7 +42,9 @@ String calendarPeriodText(CalendarEventDto event) {
 }
 
 class CalendarEventDialog extends ConsumerStatefulWidget {
-  const CalendarEventDialog({super.key, required this.date, this.event});
+  const CalendarEventDialog({super.key, required this.date, this.event, this.onSaved, this.onCancelled});
+  final ValueChanged<DateTime>? onSaved;
+  final VoidCallback? onCancelled;
   final DateTime date;
   final CalendarEventDto? event;
 
@@ -293,6 +296,35 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
     }
   }
 
+  bool get _isDirty => _editValues != _initialValues ||
+      (_notifications ?? []).join(',') != (_initialNotifications ?? []).join(',');
+  bool _confirmingClose = false;
+
+  Future<void> _close() async {
+    if (_saving || _confirmingClose) return;
+    if (widget.onCancelled == null) {
+      await Navigator.maybePop(context);
+      return;
+    }
+    _confirmingClose = true;
+    try {
+      if (_isDirty && !await EditDiscardConfirmDialog.show(context)) return;
+      if (mounted) widget.onCancelled!();
+    } finally {
+      _confirmingClose = false;
+    }
+  }
+
+  Widget _withDiscardScope(Widget child) => widget.onCancelled == null
+      ? EditDiscardScope(isSaving: _saving, isDirty: _isDirty, child: child)
+      : PopScope<Object?>(
+          canPop: false,
+          onPopInvokedWithResult: (didPop, _) {
+            if (!didPop) unawaited(_close());
+          },
+          child: child,
+        );
+
   Future<void> _save() async {
     if (!_form.currentState!.validate()) return;
     if (_saving || _groupId == null) return;
@@ -416,7 +448,13 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
             expectedSeries: recurring ? _seriesAtOpen : null,
             scope: scope,
           );
-      if (mounted) Navigator.of(context).pop();
+      if (mounted) {
+        if (widget.onSaved != null) {
+          widget.onSaved!(_start);
+        } else {
+          Navigator.of(context).pop();
+        }
+      }
     } on ApplicationValidationException catch (error) {
       if (mounted) setState(() => _error = error.message);
     } catch (_) {
@@ -563,14 +601,9 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
         borderRadius: BorderRadius.circular(4),
       ),
     );
-    return EditDiscardScope(
-      isSaving: state.isSaving,
-      isDirty:
-          _editValues != _initialValues ||
-          (_notifications ?? []).join(',') !=
-              (_initialNotifications ?? []).join(','),
-      child: Scaffold(
-        appBar: AppBar(),
+    return _withDiscardScope(
+      Scaffold(
+        appBar: AppBar(leading: BackButton(onPressed: _close)),
         body: SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(24),
@@ -929,7 +962,7 @@ class _CalendarEventDialogState extends ConsumerState<CalendarEventDialog> {
                       TextButton(
                         onPressed: state.isSaving
                             ? null
-                            : () => Navigator.maybePop(context),
+                            : _close,
                         child: const Text('キャンセル'),
                       ),
                       ElevatedButton(
