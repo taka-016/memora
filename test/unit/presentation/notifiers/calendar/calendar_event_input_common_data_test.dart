@@ -90,6 +90,7 @@ void main() {
     common.pending = Completer()..complete();
     await notifier.validateForSave();
     common.update(groups: []);
+    expect(container.read(input).error, contains('選び直してください'));
     await expectLater(
       notifier.validateForSave(),
       throwsA(isA<ApplicationValidationException>()),
