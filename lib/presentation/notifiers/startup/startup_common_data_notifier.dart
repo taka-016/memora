@@ -15,12 +15,15 @@ class StartupCommonDataState {
     this.groupsConfirmed = false,
     Set<String> labelsConfirmed = const {},
     this.error = '',
-  }) : data = data ?? StartupCommonData(),
+    Map<String, String> labelErrors = const {},
+  }) : labelErrors = Map.unmodifiable(labelErrors),
+       data = data ?? StartupCommonData(),
        labelsConfirmed = Set.unmodifiable(labelsConfirmed);
   final StartupCommonData data;
   final bool groupsConfirmed;
   final Set<String> labelsConfirmed;
   final String error;
+  final Map<String, String> labelErrors;
 }
 
 @Riverpod(keepAlive: true)
@@ -134,7 +137,10 @@ class StartupCommonDataNotifier extends _$StartupCommonDataNotifier {
     final member = ref.read(startupCommonDataMemberIdProvider);
     if (owner == null || member == null) return Future.value();
     final generation = _generation;
-    state = StartupCommonDataState(data: state.data);
+    state = StartupCommonDataState(
+      data: state.data,
+      labelErrors: state.labelErrors,
+    );
     final operation = _fetchGroups(owner, member, generation).whenComplete(() {
       if (_current(generation)) _groupsRequest = null;
     });
@@ -159,6 +165,10 @@ class StartupCommonDataNotifier extends _$StartupCommonDataNotifier {
         ),
         groupsConfirmed: true,
         labelsConfirmed: state.labelsConfirmed.intersection(ids),
+        labelErrors: {
+          for (final entry in state.labelErrors.entries)
+            if (ids.contains(entry.key)) entry.key: entry.value,
+        },
       );
       await _persist(owner, generation);
     } catch (_) {
@@ -167,6 +177,7 @@ class StartupCommonDataNotifier extends _$StartupCommonDataNotifier {
           data: state.data,
           labelsConfirmed: state.labelsConfirmed,
           error: '共通データの最新情報を取得できませんでした',
+          labelErrors: state.labelErrors,
         );
       }
     }
@@ -194,6 +205,8 @@ class StartupCommonDataNotifier extends _$StartupCommonDataNotifier {
       data: state.data,
       groupsConfirmed: state.groupsConfirmed,
       labelsConfirmed: state.labelsConfirmed.difference({id}),
+      error: state.error,
+      labelErrors: {...state.labelErrors}..remove(id),
     );
     final generation = _generation;
     final operation = _fetchLabels(owner, id, generation).whenComplete(() {
@@ -218,6 +231,8 @@ class StartupCommonDataNotifier extends _$StartupCommonDataNotifier {
         ),
         groupsConfirmed: state.groupsConfirmed,
         labelsConfirmed: {...state.labelsConfirmed, id},
+        error: state.error,
+        labelErrors: {...state.labelErrors}..remove(id),
       );
       await _persist(owner, generation);
     } catch (_) {
@@ -226,7 +241,8 @@ class StartupCommonDataNotifier extends _$StartupCommonDataNotifier {
           data: state.data,
           groupsConfirmed: state.groupsConfirmed,
           labelsConfirmed: state.labelsConfirmed.difference({id}),
-          error: '色ラベルの最新情報を取得できませんでした',
+          error: state.error,
+          labelErrors: {...state.labelErrors, id: '色ラベルの最新情報を取得できませんでした'},
         );
       }
     }

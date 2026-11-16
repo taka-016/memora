@@ -78,17 +78,18 @@ class CalendarEventInputNotifier extends _$CalendarEventInputNotifier {
     final labels = common.data.labels[id];
     final loading =
         common.data.groups == null || (group != null && labels == null);
+    final loadError = common.labelErrors[id] ?? common.error;
     state = CalendarEventInputState(
       groupId: id,
       group: group,
       labels: labels ?? const [],
       selectedLabelKey: state.selectedLabelKey,
       original: _original,
-      isLoading: loading && common.error.isEmpty,
+      isLoading: loading && loadError.isEmpty,
       error: common.groupsConfirmed && group == null
           ? '保存先グループが無効です。選び直してください'
           : loading
-          ? common.error
+          ? loadError
           : '',
     );
   }
