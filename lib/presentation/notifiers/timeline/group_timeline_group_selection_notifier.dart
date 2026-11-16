@@ -1,3 +1,4 @@
+import 'package:memora/application/exceptions/application_validation_exception.dart';
 import 'package:memora/composition_root/providers/startup_common_data_providers.dart';
 import 'package:memora/presentation/notifiers/startup/startup_common_data_notifier.dart';
 import 'package:memora/composition_root/providers/group_providers.dart';
@@ -82,15 +83,17 @@ class GroupTimelineGroupSelectionNotifier
       if (requestGeneration != _requestGeneration) {
         return;
       }
-      logger.e(
-        'GroupTimelineGroupSelectionNotifier.load: ${e.toString()}',
-        error: e,
-        stackTrace: stack,
-      );
+      if (e is! ApplicationValidationException) {
+        logger.e(
+          'GroupTimelineGroupSelectionNotifier.load: ${e.toString()}',
+          error: e,
+          stackTrace: stack,
+        );
+      }
       state = GroupTimelineGroupSelectionState(
         status: GroupTimelineGroupSelectionStatus.error,
         memberId: currentMember.id,
-        message: 'エラーが発生しました',
+        message: e is ApplicationValidationException ? e.message : 'エラーが発生しました',
       );
     }
   }
@@ -129,6 +132,15 @@ class GroupTimelineGroupSelectionNotifier
       status: GroupTimelineGroupSelectionStatus.loaded,
       memberId: memberId,
       groups: groups,
+    );
+  }
+
+  void setLoadError({required String memberId, required String message}) {
+    _requestGeneration++;
+    state = GroupTimelineGroupSelectionState(
+      status: GroupTimelineGroupSelectionStatus.error,
+      memberId: memberId,
+      message: message,
     );
   }
 

@@ -1,3 +1,6 @@
+import 'package:memora/presentation/notifiers/startup/startup_common_data_notifier.dart';
+import 'package:memora/composition_root/providers/startup_common_data_providers.dart';
+
 import 'dart:convert';
 
 import 'package:memora/presentation/notifiers/backup/offline_backup_notifier.dart';
@@ -22,6 +25,7 @@ class CalendarGroupSettingsState {
     this.isLoading = true,
     this.isSaving = false,
     this.error = '',
+    this.groupsError = '',
     this.loadFailed = false,
   }) : settings = settings ?? CalendarGroupSettings(),
        groups = List.unmodifiable(groups);
@@ -31,6 +35,7 @@ class CalendarGroupSettingsState {
   final bool isLoading;
   final bool isSaving;
   final String error;
+  final String groupsError;
   final bool loadFailed;
   bool get canUseSettings =>
       groupsReady && !isLoading && !isSaving && !loadFailed;
@@ -43,6 +48,7 @@ class CalendarGroupSettingsState {
     bool? isLoading,
     bool? isSaving,
     String? error,
+    String? groupsError,
     bool? loadFailed,
   }) => CalendarGroupSettingsState(
     settings: settings ?? this.settings,
@@ -51,6 +57,7 @@ class CalendarGroupSettingsState {
     isLoading: isLoading ?? this.isLoading,
     isSaving: isSaving ?? this.isSaving,
     error: error ?? this.error,
+    groupsError: groupsError ?? this.groupsError,
     loadFailed: loadFailed ?? this.loadFailed,
   );
 }
@@ -88,6 +95,13 @@ class CalendarGroupSettingsNotifier extends _$CalendarGroupSettingsNotifier {
         (_) async {
           final request = ++membershipRequest;
           try {
+            if (ref.exists(startupCommonDataNotifierProvider) &&
+                ref.read(startupCommonDataOwnerProvider) != null) {
+              await ref
+                  .read(startupCommonDataNotifierProvider.notifier)
+                  .refresh();
+              return;
+            }
             final groups = await ref.read(reloadCalendarMembershipsProvider)(
               memberId,
             );
@@ -123,8 +137,17 @@ class CalendarGroupSettingsNotifier extends _$CalendarGroupSettingsNotifier {
       if (selection.status == GroupTimelineGroupSelectionStatus.loaded) {
         unawaited(
           _applyLoaded(
-            state.copyWith(groups: selection.groups, groupsReady: true),
+            state.copyWith(
+              groups: selection.groups,
+              groupsReady: true,
+              groupsError: '',
+            ),
           ),
+        );
+      } else if (selection.status == GroupTimelineGroupSelectionStatus.error) {
+        state = state.copyWith(
+          groupsReady: false,
+          groupsError: selection.message,
         );
       } else {
         state = state.copyWith(groupsReady: false);

@@ -62,22 +62,34 @@ class StartupCommonDataNotifier extends _$StartupCommonDataNotifier {
   }
 
   Future<void> refresh() async {
+    final generation = _generation;
     await _initializing;
-    await _refresh(_generation);
+    if (_current(generation)) await _refresh(generation);
   }
 
   Future<void> _refresh(int generation) async {
     await _loadGroups();
     if (!_current(generation) || !state.groupsConfirmed) return;
     await Future.wait([
-      for (final group in state.data.groups!) _loadLabels(group.id),
+      for (final group in state.data.groups!)
+        if (!state.labelsConfirmed.contains(group.id)) _loadLabels(group.id),
     ]);
   }
 
   Future<List<GroupDto>> availableGroups() async {
-    await _initializing;
     final generation = _generation;
-    if (state.data.groups == null) await _loadGroups();
+    await _initializing;
+    if (!_current(generation))
+      throw const ApplicationValidationException('利用者が変わりました。再度開いてください');
+    if (state.data.groups == null) {
+      await _loadGroups();
+      if (_current(generation) && state.groupsConfirmed) {
+        for (final group in state.data.groups!) {
+          if (!state.labelsConfirmed.contains(group.id))
+            unawaited(_loadLabels(group.id));
+        }
+      }
+    }
     if (!_current(generation) || state.data.groups == null) {
       throw const ApplicationValidationException('グループを取得できませんでした。再試行してください');
     }
@@ -85,8 +97,10 @@ class StartupCommonDataNotifier extends _$StartupCommonDataNotifier {
   }
 
   Future<void> ensureLatest(String groupId) async {
-    await _initializing;
     final generation = _generation;
+    await _initializing;
+    if (!_current(generation))
+      throw const ApplicationValidationException('利用者が変わりました。再度開いてください');
     if (!state.groupsConfirmed) await _loadGroups();
     if (!_current(generation) || !state.groupsConfirmed) {
       throw const ApplicationValidationException(
@@ -110,7 +124,10 @@ class StartupCommonDataNotifier extends _$StartupCommonDataNotifier {
     final member = ref.read(startupCommonDataMemberIdProvider);
     if (owner == null || member == null) return Future.value();
     final generation = _generation;
-    final operation = _fetchGroups(owner, member, generation);
+    state = StartupCommonDataState(data: state.data);
+    final operation = _fetchGroups(owner, member, generation).whenComplete(() {
+      if (_current(generation)) _groupsRequest = null;
+    });
     _groupsRequest = operation;
     return operation;
   }
@@ -142,16 +159,33 @@ class StartupCommonDataNotifier extends _$StartupCommonDataNotifier {
           error: '共通データの最新情報を取得できませんでした',
         );
       }
-    } finally {
-      if (_current(generation)) _groupsRequest = null;
     }
+  }
+
+  Future<void> refreshLabels(String groupId) async {
+    final generation = _generation;
+    await _initializing;
+    if (!_current(generation)) return;
+    if (state.data.groups == null) await _loadGroups();
+    if (!_current(generation) ||
+        state.data.groups?.any((g) => g.id == groupId) != true)
+      return;
+    await _loadLabels(groupId);
   }
 
   Future<void> _loadLabels(String id) {
     if (_labelRequests[id] != null) return _labelRequests[id]!;
     final owner = ref.read(startupCommonDataOwnerProvider);
     if (owner == null) return Future.value();
-    final operation = _fetchLabels(owner, id, _generation);
+    state = StartupCommonDataState(
+      data: state.data,
+      groupsConfirmed: state.groupsConfirmed,
+      labelsConfirmed: state.labelsConfirmed.difference({id}),
+    );
+    final generation = _generation;
+    final operation = _fetchLabels(owner, id, generation).whenComplete(() {
+      if (_current(generation)) _labelRequests.remove(id);
+    });
     _labelRequests[id] = operation;
     return operation;
   }
@@ -182,8 +216,6 @@ class StartupCommonDataNotifier extends _$StartupCommonDataNotifier {
           error: '色ラベルの最新情報を取得できませんでした',
         );
       }
-    } finally {
-      if (_current(generation)) _labelRequests.remove(id);
     }
   }
 

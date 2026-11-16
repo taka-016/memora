@@ -81,7 +81,14 @@ class MyApp extends ConsumerWidget {
     ref.listen(startupCommonDataNotifierProvider, (_, next) {
       final groups = next.data.groups;
       final member = ref.read(startupCommonDataMemberIdProvider);
-      if (groups != null && member != null) {
+      if (groups == null && member != null && next.error.isNotEmpty) {
+        ref
+            .read(groupTimelineGroupSelectionNotifierProvider.notifier)
+            .setLoadError(
+              memberId: member,
+              message: 'グループを取得できませんでした。再試行してください',
+            );
+      } else if (groups != null && member != null) {
         ref
             .read(groupTimelineGroupSelectionNotifierProvider.notifier)
             .setLoadedGroups(memberId: member, groups: groups);
