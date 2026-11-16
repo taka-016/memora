@@ -33,11 +33,13 @@ class _Storage implements StartupCommonDataStorage {
 class _Source implements StartupCommonDataSource {
   Completer<List<GroupDto>> groups = Completer();
   Completer<List<CalendarLabelDto>> labels = Completer();
+  final started = Completer<void>();
   int groupCalls = 0;
   int labelCalls = 0;
   @override
   Future<List<GroupDto>> loadGroups(String memberId) {
     groupCalls++;
+    if (!started.isCompleted) started.complete();
     return groups.future;
   }
 
@@ -74,7 +76,7 @@ void main() {
       },
     );
     container.read(startupCommonDataNotifierProvider);
-    await container.pump();
+    await source.started.future;
     expect(container.read(startupCommonDataNotifierProvider).data.groups, [
       oldGroup,
     ]);
@@ -110,7 +112,7 @@ void main() {
       },
     );
     container.read(startupCommonDataNotifierProvider);
-    await container.pump();
+    await source.started.future;
     source.groups.completeError(TestException('通信失敗'));
     await container.pump();
     expect(container.read(startupCommonDataNotifierProvider).data.groups, [
@@ -131,10 +133,12 @@ void main() {
   test('別アカウントのキャッシュと進行中の取得結果を表示しない', () async {
     storage.values['a1'] = StartupCommonData(groups: [oldGroup]);
     container.read(startupCommonDataNotifierProvider);
-    await container.pump();
+    await source.started.future;
     container.updateOverrides([
       startupCommonDataOwnerProvider.overrideWithValue('a2'),
       startupCommonDataMemberIdProvider.overrideWithValue('m2'),
+      startupCommonDataSourceProvider.overrideWithValue(source),
+      startupCommonDataStorageProvider.overrideWithValue(storage),
     ]);
     await container.pump();
     expect(
@@ -143,6 +147,9 @@ void main() {
     );
     container.updateOverrides([
       startupCommonDataOwnerProvider.overrideWithValue(null),
+      startupCommonDataMemberIdProvider.overrideWithValue('m2'),
+      startupCommonDataSourceProvider.overrideWithValue(source),
+      startupCommonDataStorageProvider.overrideWithValue(storage),
     ]);
     await container.pump();
     source.groups.complete([newGroup]);
@@ -157,7 +164,7 @@ void main() {
 
   test('未保存のグループやラベルは取得完了まで未取得と区別する', () async {
     container.read(startupCommonDataNotifierProvider);
-    await container.pump();
+    await source.started.future;
     expect(
       container.read(startupCommonDataNotifierProvider).data.groups,
       isNull,
