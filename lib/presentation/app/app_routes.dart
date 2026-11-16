@@ -268,12 +268,28 @@ class _CalendarEventInputRoutePageState
     if (settings.canUseSettings) _started = true;
     if (!_started) {
       return Center(
-        child: settings.loadFailed
+        child: settings.loadFailed || settings.groupsError.isNotEmpty
             ? TextButton(
-                onPressed: () => ref
-                    .read(calendarGroupSettingsNotifierProvider.notifier)
-                    .reload(),
-                child: Text(settings.error),
+                onPressed: () async {
+                  final member = ref.read(currentMemberNotifierProvider).member;
+                  if (!settings.groupsReady && member != null) {
+                    await ref
+                        .read(
+                          groupTimelineGroupSelectionNotifierProvider.notifier,
+                        )
+                        .load(member);
+                  }
+                  if (mounted) {
+                    await ref
+                        .read(calendarGroupSettingsNotifierProvider.notifier)
+                        .reload();
+                  }
+                },
+                child: Text(
+                  settings.groupsError.isNotEmpty
+                      ? settings.groupsError
+                      : settings.error,
+                ),
               )
             : const CircularProgressIndicator(),
       );

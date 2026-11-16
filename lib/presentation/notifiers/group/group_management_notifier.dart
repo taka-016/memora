@@ -1,3 +1,5 @@
+import 'package:memora/presentation/notifiers/startup/startup_common_data_notifier.dart';
+import 'package:memora/composition_root/providers/startup_common_data_providers.dart';
 import 'package:memora/composition_root/providers/android_widget_providers.dart';
 import 'package:memora/composition_root/providers/group_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -114,6 +116,13 @@ class GroupManagementNotifier extends AsyncNotifier<GroupManagementState> {
         }
         if (ref.mounted) {
           await _refreshGroups();
+          if (ref.mounted &&
+              ref.exists(startupCommonDataNotifierProvider) &&
+              ref.read(startupCommonDataOwnerProvider) != null) {
+            await ref
+                .read(startupCommonDataNotifierProvider.notifier)
+                .refreshAfterChange();
+          }
         }
       },
     );

@@ -1,3 +1,5 @@
+import 'package:memora/presentation/notifiers/startup/startup_common_data_notifier.dart';
+import 'package:memora/composition_root/providers/startup_common_data_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/application/exceptions/application_validation_exception.dart';
@@ -106,7 +108,15 @@ class CalendarMutationCoordinator {
     await _refresh({expected.groupId});
   }
 
-  Future<void> labelsChanged(String groupId) => _refresh({groupId});
+  Future<void> labelsChanged(String groupId) async {
+    if (ref.exists(startupCommonDataNotifierProvider) &&
+        ref.read(startupCommonDataOwnerProvider) != null) {
+      await ref
+          .read(startupCommonDataNotifierProvider.notifier)
+          .refreshLabels(groupId);
+    }
+    await _refresh({groupId});
+  }
 
   Future<void> _refresh(Set<String> ids) async {
     if (!ref.mounted) return;

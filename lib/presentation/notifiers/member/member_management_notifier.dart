@@ -1,3 +1,5 @@
+import 'package:memora/presentation/notifiers/startup/startup_common_data_notifier.dart';
+import 'package:memora/composition_root/providers/startup_common_data_providers.dart';
 import 'package:memora/composition_root/providers/member_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
@@ -88,6 +90,13 @@ class MemberManagementNotifier extends AsyncNotifier<MemberManagementState> {
         }
         if (ref.mounted) {
           await _refreshMembers();
+          if (ref.mounted &&
+              ref.exists(startupCommonDataNotifierProvider) &&
+              ref.read(startupCommonDataOwnerProvider) != null) {
+            await ref
+                .read(startupCommonDataNotifierProvider.notifier)
+                .refreshAfterChange();
+          }
         }
       },
     );

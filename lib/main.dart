@@ -1,3 +1,8 @@
+import 'package:memora/presentation/notifiers/startup/startup_common_data_notifier.dart';
+import 'package:memora/composition_root/providers/startup_common_data_providers.dart';
+import 'package:memora/presentation/notifiers/timeline/group_timeline_group_selection_notifier.dart';
+import 'package:memora/presentation/notifiers/calendar/calendar_preferences_notifier.dart';
+import 'package:memora/presentation/notifiers/calendar/calendar_notification_preferences_notifier.dart';
 import 'package:memora/presentation/app/startup_background_tasks.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_group_settings_notifier.dart';
 import 'package:memora/presentation/app/app_availability_gate.dart';
@@ -73,6 +78,24 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.listen(startupCommonDataNotifierProvider, (_, next) {
+      final groups = next.data.groups;
+      final member = ref.read(startupCommonDataMemberIdProvider);
+      if (groups == null && member != null && next.error.isNotEmpty) {
+        ref
+            .read(groupTimelineGroupSelectionNotifierProvider.notifier)
+            .setLoadError(
+              memberId: member,
+              message: 'グループを取得できませんでした。再試行してください',
+            );
+      } else if (groups != null && member != null) {
+        ref
+            .read(groupTimelineGroupSelectionNotifierProvider.notifier)
+            .setLoadedGroups(memberId: member, groups: groups);
+      }
+    });
+    ref.watch(calendarPreferencesNotifierProvider);
+    ref.watch(calendarNotificationPreferencesNotifierProvider);
     ref.watch(androidWidgetLaunchNotifierProvider);
     ref.watch(calendarNotificationsNotifierProvider);
     ref.watch(calendarGroupSettingsNotifierProvider);

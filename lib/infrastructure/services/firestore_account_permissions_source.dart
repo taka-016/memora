@@ -20,9 +20,11 @@ class FirestoreAccountPermissionsSource {
   FirestoreAccountPermissionsSource(
     this.firestore, {
     String? Function()? accountId,
+    this.options,
   }) : _accountId = accountId ?? (() => FirebaseAuth.instance.currentUser?.uid);
 
   final FirebaseFirestore firestore;
+  final GetOptions? options;
   final String? Function() _accountId;
 
   Future<FirestoreAccountPermissions?> current() async {
@@ -35,7 +37,7 @@ class FirestoreAccountPermissionsSource {
     final doc = await firestore
         .collection('account_permissions')
         .doc(accountId)
-        .get();
+        .get(options);
     return doc.exists ? FirestoreAccountPermissions(doc.data()!) : null;
   }
 }
