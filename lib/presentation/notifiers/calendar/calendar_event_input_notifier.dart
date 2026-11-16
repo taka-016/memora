@@ -85,7 +85,11 @@ class CalendarEventInputNotifier extends _$CalendarEventInputNotifier {
       selectedLabelKey: state.selectedLabelKey,
       original: _original,
       isLoading: loading && common.error.isEmpty,
-      error: loading ? common.error : '',
+      error: common.groupsConfirmed && group == null
+          ? '保存先グループが無効です。選び直してください'
+          : loading
+          ? common.error
+          : '',
     );
   }
 
