@@ -67,6 +67,13 @@ class StartupCommonDataNotifier extends _$StartupCommonDataNotifier {
     if (_current(generation)) await _refresh(generation);
   }
 
+  Future<void> refreshAfterChange() async {
+    final generation = _generation;
+    await _initializing;
+    await _groupsRequest;
+    if (_current(generation)) await _refresh(generation);
+  }
+
   Future<void> _refresh(int generation) async {
     await _loadGroups();
     if (!_current(generation) || !state.groupsConfirmed) return;
@@ -79,14 +86,16 @@ class StartupCommonDataNotifier extends _$StartupCommonDataNotifier {
   Future<List<GroupDto>> availableGroups() async {
     final generation = _generation;
     await _initializing;
-    if (!_current(generation))
+    if (!_current(generation)) {
       throw const ApplicationValidationException('利用者が変わりました。再度開いてください');
+    }
     if (state.data.groups == null) {
       await _loadGroups();
       if (_current(generation) && state.groupsConfirmed) {
         for (final group in state.data.groups!) {
-          if (!state.labelsConfirmed.contains(group.id))
+          if (!state.labelsConfirmed.contains(group.id)) {
             unawaited(_loadLabels(group.id));
+          }
         }
       }
     }
@@ -99,8 +108,9 @@ class StartupCommonDataNotifier extends _$StartupCommonDataNotifier {
   Future<void> ensureLatest(String groupId) async {
     final generation = _generation;
     await _initializing;
-    if (!_current(generation))
+    if (!_current(generation)) {
       throw const ApplicationValidationException('利用者が変わりました。再度開いてください');
+    }
     if (!state.groupsConfirmed) await _loadGroups();
     if (!_current(generation) || !state.groupsConfirmed) {
       throw const ApplicationValidationException(
@@ -166,10 +176,13 @@ class StartupCommonDataNotifier extends _$StartupCommonDataNotifier {
     final generation = _generation;
     await _initializing;
     if (!_current(generation)) return;
+    await _labelRequests[groupId];
+    if (!_current(generation)) return;
     if (state.data.groups == null) await _loadGroups();
     if (!_current(generation) ||
-        state.data.groups?.any((g) => g.id == groupId) != true)
+        state.data.groups?.any((g) => g.id == groupId) != true) {
       return;
+    }
     await _loadLabels(groupId);
   }
 

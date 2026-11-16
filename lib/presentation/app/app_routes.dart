@@ -279,10 +279,11 @@ class _CalendarEventInputRoutePageState
                         )
                         .load(member);
                   }
-                  if (mounted)
+                  if (mounted) {
                     await ref
                         .read(calendarGroupSettingsNotifierProvider.notifier)
                         .reload();
+                  }
                 },
                 child: Text(
                   settings.groupsError.isNotEmpty

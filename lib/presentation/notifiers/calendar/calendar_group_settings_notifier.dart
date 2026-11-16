@@ -99,7 +99,7 @@ class CalendarGroupSettingsNotifier extends _$CalendarGroupSettingsNotifier {
                 ref.read(startupCommonDataOwnerProvider) != null) {
               await ref
                   .read(startupCommonDataNotifierProvider.notifier)
-                  .refresh();
+                  .refreshAfterChange();
               return;
             }
             final groups = await ref.read(reloadCalendarMembershipsProvider)(

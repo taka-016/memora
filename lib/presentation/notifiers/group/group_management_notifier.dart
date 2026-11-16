@@ -121,7 +121,7 @@ class GroupManagementNotifier extends AsyncNotifier<GroupManagementState> {
               ref.read(startupCommonDataOwnerProvider) != null) {
             await ref
                 .read(startupCommonDataNotifierProvider.notifier)
-                .refresh();
+                .refreshAfterChange();
           }
         }
       },

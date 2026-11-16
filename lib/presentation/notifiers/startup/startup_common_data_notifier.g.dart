@@ -43,7 +43,7 @@ final class StartupCommonDataNotifierProvider
 }
 
 String _$startupCommonDataNotifierHash() =>
-    r'04222bffb44a4ff3dca7d76a1714cf266c9a7935';
+    r'ec07c2f80efbf6b103e43c94beaa33cd6d746f2c';
 
 abstract class _$StartupCommonDataNotifier
     extends $Notifier<StartupCommonDataState> {

@@ -95,7 +95,7 @@ class MemberManagementNotifier extends AsyncNotifier<MemberManagementState> {
               ref.read(startupCommonDataOwnerProvider) != null) {
             await ref
                 .read(startupCommonDataNotifierProvider.notifier)
-                .refresh();
+                .refreshAfterChange();
           }
         }
       },
