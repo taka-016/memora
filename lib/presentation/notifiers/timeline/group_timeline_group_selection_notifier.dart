@@ -1,3 +1,5 @@
+import 'package:memora/composition_root/providers/startup_common_data_providers.dart';
+import 'package:memora/presentation/notifiers/startup/startup_common_data_notifier.dart';
 import 'package:memora/composition_root/providers/group_providers.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -38,6 +40,22 @@ class GroupTimelineGroupSelectionNotifier
     );
   }
 
+  bool get _usesCommonData =>
+      ref.exists(startupCommonDataNotifierProvider) &&
+      ref.read(startupCommonDataOwnerProvider) != null;
+
+  Future<List<GroupDto>> _loadGroups(
+    MemberDto currentMember, {
+    bool refresh = false,
+  }) async {
+    if (_usesCommonData) {
+      final common = ref.read(startupCommonDataNotifierProvider.notifier);
+      if (refresh) await common.refresh();
+      return common.availableGroups();
+    }
+    return ref.read(getGroupsWithMembersUsecaseProvider).execute(currentMember);
+  }
+
   Future<void> load(MemberDto currentMember) async {
     final stopwatch = Stopwatch()..start();
     if (kDebugMode) logger.i('起動データ: グループ一覧取得 開始');
@@ -48,9 +66,7 @@ class GroupTimelineGroupSelectionNotifier
     );
 
     try {
-      final groups = await ref
-          .read(getGroupsWithMembersUsecaseProvider)
-          .execute(currentMember);
+      final groups = await _loadGroups(currentMember);
       if (kDebugMode) {
         logger.i('起動データ: グループ一覧取得 完了（${stopwatch.elapsedMilliseconds}ms）');
       }
@@ -83,9 +99,7 @@ class GroupTimelineGroupSelectionNotifier
     final requestGeneration = ++_requestGeneration;
 
     try {
-      final groups = await ref
-          .read(getGroupsWithMembersUsecaseProvider)
-          .execute(currentMember);
+      final groups = await _loadGroups(currentMember, refresh: true);
       if (requestGeneration != _requestGeneration) {
         return;
       }

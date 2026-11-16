@@ -1,3 +1,5 @@
+import 'package:memora/composition_root/providers/startup_common_data_providers.dart';
+import 'package:memora/presentation/notifiers/startup/startup_common_data_notifier.dart';
 import 'package:memora/composition_root/providers/android_widget_providers.dart';
 import 'package:memora/composition_root/providers/group_providers.dart';
 import 'package:memora/composition_root/providers/trip_providers.dart';
@@ -289,9 +291,15 @@ class AndroidWidgetLaunchNotifier extends Notifier<AndroidWidgetLaunchState> {
         memberId: member.id,
       );
       try {
-        final groups = await ref
-            .read(getGroupsWithMembersUsecaseProvider)
-            .execute(member);
+        final groups =
+            ref.exists(startupCommonDataNotifierProvider) &&
+                ref.read(startupCommonDataOwnerProvider) != null
+            ? await ref
+                  .read(startupCommonDataNotifierProvider.notifier)
+                  .availableGroups()
+            : await ref
+                  .read(getGroupsWithMembersUsecaseProvider)
+                  .execute(member);
         final groupId = calendarUri.queryParameters['create'] == 'true'
             ? null
             : calendarUri.queryParameters['groupId'];

@@ -1,3 +1,5 @@
+import 'package:memora/application/dtos/group/group_dto.dart';
+
 import 'dart:async';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -56,17 +58,30 @@ class StartupCommonDataNotifier extends _$StartupCommonDataNotifier {
     } catch (_) {
       // 読み出せないキャッシュは使わず、通常の初回取得へ進む。
     }
-    if (_current(generation)) unawaited(refresh());
+    if (_current(generation)) unawaited(_refresh(generation));
   }
 
   Future<void> refresh() async {
     await _initializing;
-    final generation = _generation;
+    await _refresh(_generation);
+  }
+
+  Future<void> _refresh(int generation) async {
     await _loadGroups();
     if (!_current(generation) || !state.groupsConfirmed) return;
     await Future.wait([
       for (final group in state.data.groups!) _loadLabels(group.id),
     ]);
+  }
+
+  Future<List<GroupDto>> availableGroups() async {
+    await _initializing;
+    final generation = _generation;
+    if (state.data.groups == null) await _loadGroups();
+    if (!_current(generation) || state.data.groups == null) {
+      throw const ApplicationValidationException('グループを取得できませんでした。再試行してください');
+    }
+    return state.data.groups!;
   }
 
   Future<void> ensureLatest(String groupId) async {

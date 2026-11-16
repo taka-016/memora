@@ -1,5 +1,3 @@
-import 'package:memora/presentation/notifiers/startup/startup_common_data_notifier.dart';
-import 'package:memora/composition_root/providers/startup_common_data_providers.dart';
 import 'package:memora/application/models/app_capabilities.dart';
 import 'package:memora/composition_root/providers/app_providers.dart';
 
@@ -181,10 +179,6 @@ class TopPage extends HookConsumerWidget {
 
     useEffect(
       () {
-        if (ref.exists(startupCommonDataNotifierProvider) &&
-            ref.read(startupCommonDataOwnerProvider) != null) {
-          return null;
-        }
         if (!isAuthenticated ||
             (selectedItem != AppNavigationItem.groupTimeline &&
                 selectedItem != AppNavigationItem.calendar) ||
