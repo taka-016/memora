@@ -5,9 +5,9 @@ import 'package:memora/infrastructure/mappers/calendar/firestore_calendar_label_
 
 class FirestoreCalendarLabelQueryService implements CalendarLabelQueryService {
   FirestoreCalendarLabelQueryService({
-    required FirebaseFirestore firestore,
+    required this.firestore,
     this.options = const GetOptions(),
-  }) : firestore = firestore;
+  });
   final FirebaseFirestore firestore;
   final GetOptions options;
   @override

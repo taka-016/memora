@@ -1,3 +1,9 @@
+import 'package:memora/presentation/notifiers/startup/startup_common_data_notifier.dart';
+import 'package:memora/composition_root/providers/startup_common_data_providers.dart';
+import 'package:memora/presentation/notifiers/timeline/group_timeline_group_selection_notifier.dart';
+import 'package:memora/presentation/notifiers/calendar/calendar_group_settings_notifier.dart';
+import 'package:memora/presentation/notifiers/calendar/calendar_preferences_notifier.dart';
+import 'package:memora/presentation/notifiers/calendar/calendar_notification_preferences_notifier.dart';
 import 'package:memora/presentation/notifiers/setting/theme_settings_notifier.dart';
 
 import 'dart:async';
@@ -33,6 +39,18 @@ class _StartupBackgroundTasksState
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(startupCommonDataNotifierProvider, (_, next) {
+      final groups = next.data.groups;
+      final member = ref.read(startupCommonDataMemberIdProvider);
+      if (groups != null && member != null) {
+        ref
+            .read(groupTimelineGroupSelectionNotifierProvider.notifier)
+            .setLoadedGroups(memberId: member, groups: groups);
+      }
+    });
+    ref.watch(calendarGroupSettingsNotifierProvider);
+    ref.watch(calendarPreferencesNotifierProvider);
+    ref.watch(calendarNotificationPreferencesNotifierProvider);
     if (!ref.watch(themeSettingsNotifierProvider).isLoading &&
         !_frameScheduled) {
       _frameScheduled = true;

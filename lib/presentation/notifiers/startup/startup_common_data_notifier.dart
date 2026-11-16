@@ -120,12 +120,13 @@ class StartupCommonDataNotifier extends _$StartupCommonDataNotifier {
       );
       await _persist(owner, generation);
     } catch (_) {
-      if (_current(generation))
+      if (_current(generation)) {
         state = StartupCommonDataState(
           data: state.data,
           labelsConfirmed: state.labelsConfirmed,
           error: '共通データの最新情報を取得できませんでした',
         );
+      }
     } finally {
       if (_current(generation)) _groupsRequest = null;
     }
@@ -145,8 +146,9 @@ class StartupCommonDataNotifier extends _$StartupCommonDataNotifier {
       final labels = await ref
           .read(startupCommonDataSourceProvider)
           .loadLabels(id);
-      if (!_current(generation) || !state.data.groups!.any((g) => g.id == id))
+      if (!_current(generation) || !state.data.groups!.any((g) => g.id == id)) {
         return;
+      }
       state = StartupCommonDataState(
         data: StartupCommonData(
           groups: state.data.groups,
@@ -157,13 +159,14 @@ class StartupCommonDataNotifier extends _$StartupCommonDataNotifier {
       );
       await _persist(owner, generation);
     } catch (_) {
-      if (_current(generation))
+      if (_current(generation)) {
         state = StartupCommonDataState(
           data: state.data,
           groupsConfirmed: state.groupsConfirmed,
           labelsConfirmed: state.labelsConfirmed.difference({id}),
           error: '色ラベルの最新情報を取得できませんでした',
         );
+      }
     } finally {
       if (_current(generation)) _labelRequests.remove(id);
     }

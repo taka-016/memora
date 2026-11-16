@@ -389,6 +389,12 @@ class _CalendarEventInputPageState
       _error = '';
     });
     try {
+      if (widget.event == null) {
+        await ref
+            .read(calendarEventInputNotifierProvider(_session).notifier)
+            .validateForSave();
+        if (!mounted) return;
+      }
       final expander = ref.read(calendarRecurrenceExpanderProvider);
       final original = widget.event?.originalStartDateTime;
       final series = recurring ? _seriesAtOpen : null;

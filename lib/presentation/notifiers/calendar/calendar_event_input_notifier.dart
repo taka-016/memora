@@ -1,3 +1,6 @@
+import 'package:memora/application/exceptions/application_validation_exception.dart';
+import 'package:memora/composition_root/providers/startup_common_data_providers.dart';
+import 'package:memora/presentation/notifiers/startup/startup_common_data_notifier.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_notifier.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_group_settings_notifier.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -43,6 +46,12 @@ class CalendarEventInputNotifier extends _$CalendarEventInputNotifier {
   @override
   CalendarEventInputState build(Object session) {
     ref.onDispose(() => _generation++);
+    if (_usesCommonData) {
+      ref.listen(startupCommonDataNotifierProvider, (_, next) {
+        final id = state.groupId;
+        if (id != null) _applyCommon(id, next);
+      });
+    }
     return CalendarEventInputState();
   }
 
@@ -53,7 +62,51 @@ class CalendarEventInputNotifier extends _$CalendarEventInputNotifier {
     await _load(id, key);
   }
 
-  Future<void> retry() => _load(state.groupId, state.selectedLabelKey);
+  bool get _usesCommonData =>
+      ref.exists(startupCommonDataNotifierProvider) &&
+      ref.read(startupCommonDataOwnerProvider) != null;
+
+  Future<void> retry() async {
+    if (_usesCommonData)
+      await ref.read(startupCommonDataNotifierProvider.notifier).refresh();
+    if (ref.mounted) await _load(state.groupId, state.selectedLabelKey);
+  }
+
+  void _applyCommon(String id, StartupCommonDataState common) {
+    final group = common.data.groups?.where((g) => g.id == id).firstOrNull;
+    final labels = common.data.labels[id];
+    final loading =
+        common.data.groups == null || (group != null && labels == null);
+    state = CalendarEventInputState(
+      groupId: id,
+      group: group,
+      labels: labels ?? const [],
+      selectedLabelKey: state.selectedLabelKey,
+      original: _original,
+      isLoading: loading && common.error.isEmpty,
+      error: loading ? common.error : '',
+    );
+  }
+
+  Future<void> validateForSave() async {
+    if (!_usesCommonData) return;
+    final id = state.groupId;
+    if (id == null)
+      throw const ApplicationValidationException('保存先グループを選択してください');
+    final generation = _generation;
+    await ref.read(startupCommonDataNotifierProvider.notifier).ensureLatest(id);
+    if (!ref.mounted || generation != _generation)
+      throw const ApplicationValidationException('保存先グループを確認して再度保存してください');
+    _applyCommon(id, ref.read(startupCommonDataNotifierProvider));
+    if (state.group == null)
+      throw const ApplicationValidationException('保存先グループが無効です。選び直してください');
+    final selected = state.displayLabels
+        .where((l) => l.id == state.selectedLabelKey)
+        .firstOrNull;
+    if (selected == null || !selected.isSelectable)
+      throw const ApplicationValidationException('色ラベルが無効です。選び直してください');
+  }
+
   Future<void> _load(String? id, String key) async {
     final generation = ++_generation;
     state = CalendarEventInputState(
@@ -63,6 +116,10 @@ class CalendarEventInputNotifier extends _$CalendarEventInputNotifier {
       original: _original,
     );
     if (id == null) return;
+    if (_usesCommonData) {
+      _applyCommon(id, ref.read(startupCommonDataNotifierProvider));
+      return;
+    }
     try {
       final settings = ref.exists(calendarGroupSettingsNotifierProvider)
           ? ref.read(calendarGroupSettingsNotifierProvider)
