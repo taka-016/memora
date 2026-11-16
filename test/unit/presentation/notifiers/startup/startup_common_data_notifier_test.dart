@@ -37,6 +37,7 @@ class _Source implements StartupCommonDataSource {
   Completer<List<GroupDto>> groups = Completer();
   Completer<List<CalendarLabelDto>> labels = Completer();
   final started = Completer<void>();
+  final labelsStarted = Completer<void>();
   int groupCalls = 0;
   int labelCalls = 0;
   @override
@@ -49,6 +50,7 @@ class _Source implements StartupCommonDataSource {
   @override
   Future<List<CalendarLabelDto>> loadLabels(String groupId) {
     labelCalls++;
+    if (!labelsStarted.isCompleted) labelsStarted.complete();
     return labels.future;
   }
 }
@@ -172,6 +174,37 @@ void main() {
       [label],
     );
     expect(storage.values['a1']!.labels['g1'], [label]);
+  });
+
+  test('ラベル変更前から進行中だった取得の後に再取得して追加ラベルを反映する', () async {
+    source.groups.complete([newGroup]);
+    final notifier = container.read(startupCommonDataNotifierProvider.notifier);
+    await source.labelsStarted.future;
+    final previous = source.labels;
+    source.labels = Completer()..complete([label]);
+    final changing = notifier.refreshLabels('g1');
+    previous.complete([]);
+    await changing;
+    expect(
+      container.read(startupCommonDataNotifierProvider).data.labels['g1'],
+      [label],
+    );
+    expect(source.labelCalls, 2);
+  });
+
+  test('所属変更前から進行中だった取得の後に再取得して新しい所属を反映する', () async {
+    final notifier = container.read(startupCommonDataNotifierProvider.notifier);
+    await source.started.future;
+    final previous = source.groups;
+    source.groups = Completer()..complete([newGroup]);
+    source.labels.complete([]);
+    final changing = notifier.refreshAfterChange();
+    previous.complete([oldGroup]);
+    await changing;
+    expect(container.read(startupCommonDataNotifierProvider).data.groups, [
+      newGroup,
+    ]);
+    expect(source.groupCalls, 2);
   });
 
   test('最新確認失敗後もキャッシュを残し、保存時の再試行で回復する', () async {
