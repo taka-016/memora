@@ -67,8 +67,9 @@ class CalendarEventInputNotifier extends _$CalendarEventInputNotifier {
       ref.read(startupCommonDataOwnerProvider) != null;
 
   Future<void> retry() async {
-    if (_usesCommonData)
+    if (_usesCommonData) {
       await ref.read(startupCommonDataNotifierProvider.notifier).refresh();
+    }
     if (ref.mounted) await _load(state.groupId, state.selectedLabelKey);
   }
 
@@ -91,20 +92,24 @@ class CalendarEventInputNotifier extends _$CalendarEventInputNotifier {
   Future<void> validateForSave() async {
     if (!_usesCommonData) return;
     final id = state.groupId;
-    if (id == null)
+    if (id == null) {
       throw const ApplicationValidationException('保存先グループを選択してください');
+    }
     final generation = _generation;
     await ref.read(startupCommonDataNotifierProvider.notifier).ensureLatest(id);
-    if (!ref.mounted || generation != _generation)
+    if (!ref.mounted || generation != _generation) {
       throw const ApplicationValidationException('保存先グループを確認して再度保存してください');
+    }
     _applyCommon(id, ref.read(startupCommonDataNotifierProvider));
-    if (state.group == null)
+    if (state.group == null) {
       throw const ApplicationValidationException('保存先グループが無効です。選び直してください');
+    }
     final selected = state.displayLabels
         .where((l) => l.id == state.selectedLabelKey)
         .firstOrNull;
-    if (selected == null || !selected.isSelectable)
+    if (selected == null || !selected.isSelectable) {
       throw const ApplicationValidationException('色ラベルが無効です。選び直してください');
+    }
   }
 
   Future<void> _load(String? id, String key) async {

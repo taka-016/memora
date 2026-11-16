@@ -61,7 +61,7 @@ final class CalendarEventInputNotifierProvider
 }
 
 String _$calendarEventInputNotifierHash() =>
-    r'9496382b9242d26480743b959bdfad6e45fadb4b';
+    r'd699dad8a905cb56aa1a596e7b32694786b2bb94';
 
 final class CalendarEventInputNotifierFamily extends $Family
     with

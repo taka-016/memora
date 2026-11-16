@@ -182,8 +182,9 @@ class TopPage extends HookConsumerWidget {
     useEffect(
       () {
         if (ref.exists(startupCommonDataNotifierProvider) &&
-            ref.read(startupCommonDataOwnerProvider) != null)
+            ref.read(startupCommonDataOwnerProvider) != null) {
           return null;
+        }
         if (!isAuthenticated ||
             (selectedItem != AppNavigationItem.groupTimeline &&
                 selectedItem != AppNavigationItem.calendar) ||
