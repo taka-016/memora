@@ -4,12 +4,9 @@ import 'package:memora/application/queries/calendar/calendar_label_query_service
 import 'package:memora/infrastructure/mappers/calendar/firestore_calendar_label_mapper.dart';
 
 class FirestoreCalendarLabelQueryService implements CalendarLabelQueryService {
-  FirestoreCalendarLabelQueryService({
-    required this.firestore,
-    this.options = const GetOptions(),
-  });
+  FirestoreCalendarLabelQueryService({required this.firestore, this.options});
   final FirebaseFirestore firestore;
-  final GetOptions options;
+  final GetOptions? options;
   @override
   Future<List<CalendarLabelDto>> getCalendarLabelsByGroupId(
     String groupId,

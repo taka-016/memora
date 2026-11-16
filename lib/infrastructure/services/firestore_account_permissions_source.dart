@@ -20,11 +20,11 @@ class FirestoreAccountPermissionsSource {
   FirestoreAccountPermissionsSource(
     this.firestore, {
     String? Function()? accountId,
-    this.options = const GetOptions(),
+    this.options,
   }) : _accountId = accountId ?? (() => FirebaseAuth.instance.currentUser?.uid);
 
   final FirebaseFirestore firestore;
-  final GetOptions options;
+  final GetOptions? options;
   final String? Function() _accountId;
 
   Future<FirestoreAccountPermissions?> current() async {

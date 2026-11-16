@@ -14,7 +14,7 @@ class FirestoreGroupQueryService implements GroupQueryService {
   FirestoreGroupQueryService({
     FirebaseFirestore? firestore,
     FirestoreAccountPermissionsSource? permissions,
-    GetOptions options = const GetOptions(),
+    GetOptions? options,
   }) : _options = options,
        _firestore = firestore ?? FirebaseFirestore.instance,
        _permissions =
@@ -25,7 +25,7 @@ class FirestoreGroupQueryService implements GroupQueryService {
            );
 
   final FirestoreAccountPermissionsSource _permissions;
-  final GetOptions _options;
+  final GetOptions? _options;
 
   @override
   Future<bool> groupExists(String groupId) async =>
