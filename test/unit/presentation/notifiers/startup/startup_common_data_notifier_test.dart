@@ -104,6 +104,17 @@ void main() {
     expect(storage.values['a1']!.labels['g1'], isEmpty);
   });
 
+  test('キャッシュの所属一覧は最新確認と色ラベルの完了を待たず共通利用できる', () async {
+    storage.values['a1'] = StartupCommonData(groups: [oldGroup]);
+    final notifier = container.read(startupCommonDataNotifierProvider.notifier);
+    expect(await notifier.availableGroups(), [oldGroup]);
+    expect(source.groupCalls, 1);
+    expect(source.labelCalls, 0);
+    source.groups.complete([newGroup]);
+    source.labels.complete([]);
+    await notifier.ensureLatest('g1');
+  });
+
   test('最新確認失敗後もキャッシュを残し、保存時の再試行で回復する', () async {
     storage.values['a1'] = StartupCommonData(
       groups: [oldGroup],
