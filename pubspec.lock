@@ -66,7 +66,7 @@ packages:
     source: hosted
     version: "2.1.2"
   build:
-    dependency: transitive
+    dependency: "direct dev"
     description:
       name: build
       sha256: b94f5da9ed3d081fd4ecc426c260998b5f4f4eb2f6d89b7e5472edef0b2b2a1b
@@ -948,6 +948,13 @@ packages:
       relative: true
     source: path
     version: "0.1.0"
+  memora_repository_guard_generator:
+    dependency: "direct dev"
+    description:
+      path: "packages/memora_repository_guard_generator"
+      relative: true
+    source: path
+    version: "0.0.1"
   meta:
     dependency: transitive
     description:

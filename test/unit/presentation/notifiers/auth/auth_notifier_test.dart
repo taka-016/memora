@@ -20,7 +20,6 @@ import 'package:memora/application/usecases/account/logout_usecase.dart';
 import 'package:memora/application/usecases/account/observe_auth_state_changes_usecase.dart';
 import 'package:memora/application/usecases/account/send_email_verification_usecase.dart';
 import 'package:memora/application/usecases/account/signup_usecase.dart';
-import 'package:memora/application/usecases/account/validate_current_user_token_usecase.dart';
 import 'package:memora/application/usecases/member/get_member_by_account_id_usecase.dart';
 import 'package:memora/application/usecases/member/create_member_from_user_usecase.dart';
 import 'package:memora/application/usecases/member/accept_invitation_usecase.dart';
@@ -31,7 +30,6 @@ import 'auth_notifier_test.mocks.dart';
 
 @GenerateMocks([
   ObserveAuthStateChangesUseCase,
-  ValidateCurrentUserTokenUseCase,
   SendEmailVerificationUseCase,
   GetCurrentUserUseCase,
   LoginUseCase,
@@ -44,8 +42,6 @@ import 'auth_notifier_test.mocks.dart';
 void main() {
   group('AuthNotifier', () {
     late MockObserveAuthStateChangesUseCase mockObserveAuthStateChangesUseCase;
-    late MockValidateCurrentUserTokenUseCase
-    mockValidateCurrentUserTokenUseCase;
     late MockSendEmailVerificationUseCase mockSendEmailVerificationUseCase;
     late MockGetCurrentUserUseCase mockGetCurrentUserUseCase;
     late MockLoginUseCase mockLoginUseCase;
@@ -57,8 +53,6 @@ void main() {
 
     setUp(() {
       mockObserveAuthStateChangesUseCase = MockObserveAuthStateChangesUseCase();
-      mockValidateCurrentUserTokenUseCase =
-          MockValidateCurrentUserTokenUseCase();
       mockSendEmailVerificationUseCase = MockSendEmailVerificationUseCase();
       mockGetCurrentUserUseCase = MockGetCurrentUserUseCase();
       mockLoginUseCase = MockLoginUseCase();
@@ -77,9 +71,6 @@ void main() {
         overrides: [
           observeAuthStateChangesUseCaseProvider.overrideWithValue(
             mockObserveAuthStateChangesUseCase,
-          ),
-          validateCurrentUserTokenUseCaseProvider.overrideWithValue(
-            mockValidateCurrentUserTokenUseCase,
           ),
           sendEmailVerificationUseCaseProvider.overrideWithValue(
             mockSendEmailVerificationUseCase,
@@ -103,68 +94,8 @@ void main() {
       );
     }
 
-    for (final waitForToken in [true, false]) {
-      testWidgets(
-        '起動時の${waitForToken ? 'トークン' : 'メンバー'}確認を5回試してもタイムアウトした場合にログアウトせず手動再試行できる',
-        (tester) async {
-          final previousLog = logger;
-          logger = const SilentAppLog();
-          addTearDown(() => logger = previousLog);
-          const user = UserDto(
-            id: 'user123',
-            loginId: 'test@example.com',
-            isVerified: true,
-          );
-          final pendingToken = Completer<void>();
-          final pendingMember = Completer<MemberDto?>();
-          when(mockValidateCurrentUserTokenUseCase.execute()).thenAnswer(
-            (_) => waitForToken ? pendingToken.future : Future.value(),
-          );
-          when(mockGetMemberByAccountIdUseCase.execute(user.id))
-              .thenAnswer((_) => pendingMember.future);
-          when(mockGetCurrentUserUseCase.execute())
-              .thenAnswer((_) async => user);
-          final controller = StreamController<UserDto?>();
-          addTearDown(controller.close);
-          final container = createContainer(controller.stream);
-          addTearDown(container.dispose);
-          final notifier = container.read(authNotifierProvider.notifier);
-          controller.add(user);
-          await tester.pump();
-          expect(notifier.state.isLoading, isTrue);
-          for (var attempt = 1; attempt <= 5; attempt++) {
-            await tester.pump(const Duration(seconds: 15));
-            if (attempt < 5) {
-              expect(notifier.state.isLoading, isTrue);
-              expect(notifier.state.hasInitializationError, isFalse);
-              await tester.pump(const Duration(milliseconds: 500));
-            }
-          }
-          expect(notifier.state.hasInitializationError, isTrue);
-          verify(mockValidateCurrentUserTokenUseCase.execute()).called(5);
-          verifyNever(mockLogoutUseCase.execute());
-          when(mockValidateCurrentUserTokenUseCase.execute())
-              .thenAnswer((_) async {});
-          when(mockGetMemberByAccountIdUseCase.execute(user.id)).thenAnswer(
-            (_) async => const MemberDto(id: 'member', displayName: '本人'),
-          );
-          final retry = notifier.retryInitialization();
-          expect(notifier.state.isLoading, isTrue);
-          await tester.pump();
-          await retry;
-          expect(notifier.state.user, user);
-          expect(notifier.state.isAuthenticated, isTrue);
-          pendingToken.complete();
-          pendingMember.complete(null);
-          await tester.pump();
-          expect(notifier.state.isAuthenticated, isTrue);
-          verifyNever(mockLogoutUseCase.execute());
-        },
-      );
-    }
-
-    for (final waitForToken in [true, false]) {
-      testWidgets('起動時の${waitForToken ? 'トークン' : 'メンバー'}確認は一度のタイムアウト後に自動回復する', (
+    {
+      testWidgets('起動時のメンバー確認を5回試してもタイムアウトした場合にログアウトせず手動再試行できる', (
         tester,
       ) async {
         final previousLog = logger;
@@ -175,11 +106,56 @@ void main() {
           loginId: 'test@example.com',
           isVerified: true,
         );
-        final pendingToken = Completer<void>();
         final pendingMember = Completer<MemberDto?>();
-        when(mockValidateCurrentUserTokenUseCase.execute()).thenAnswer(
-          (_) => waitForToken ? pendingToken.future : Future.value(),
+        when(mockGetMemberByAccountIdUseCase.execute(user.id))
+            .thenAnswer((_) => pendingMember.future);
+        when(mockGetCurrentUserUseCase.execute()).thenAnswer((_) async => user);
+        final controller = StreamController<UserDto?>();
+        addTearDown(controller.close);
+        final container = createContainer(controller.stream);
+        addTearDown(container.dispose);
+        final notifier = container.read(authNotifierProvider.notifier);
+        controller.add(user);
+        await tester.pump();
+        expect(notifier.state.isLoading, isTrue);
+        for (var attempt = 1; attempt <= 5; attempt++) {
+          await tester.pump(const Duration(seconds: 15));
+          if (attempt < 5) {
+            expect(notifier.state.isLoading, isTrue);
+            expect(notifier.state.hasInitializationError, isFalse);
+            await tester.pump(const Duration(milliseconds: 500));
+          }
+        }
+        expect(notifier.state.hasInitializationError, isTrue);
+        verify(mockGetMemberByAccountIdUseCase.execute(user.id)).called(5);
+        verifyNever(mockLogoutUseCase.execute());
+        when(mockGetMemberByAccountIdUseCase.execute(user.id)).thenAnswer(
+          (_) async => const MemberDto(id: 'member', displayName: '本人'),
         );
+        final retry = notifier.retryInitialization();
+        expect(notifier.state.isLoading, isTrue);
+        await tester.pump();
+        await retry;
+        expect(notifier.state.user, user);
+        expect(notifier.state.isAuthenticated, isTrue);
+        pendingMember.complete(null);
+        await tester.pump();
+        expect(notifier.state.isAuthenticated, isTrue);
+        verifyNever(mockLogoutUseCase.execute());
+      });
+    }
+
+    {
+      testWidgets('起動時のメンバー確認は一度のタイムアウト後に自動回復する', (tester) async {
+        final previousLog = logger;
+        logger = const SilentAppLog();
+        addTearDown(() => logger = previousLog);
+        const user = UserDto(
+          id: 'user123',
+          loginId: 'test@example.com',
+          isVerified: true,
+        );
+        final pendingMember = Completer<MemberDto?>();
         when(mockGetMemberByAccountIdUseCase.execute(user.id))
             .thenAnswer((_) => pendingMember.future);
         final controller = StreamController<UserDto?>();
@@ -195,15 +171,12 @@ void main() {
           container.read(authNotifierProvider).hasInitializationError,
           isFalse,
         );
-        when(mockValidateCurrentUserTokenUseCase.execute())
-            .thenAnswer((_) async {});
         when(mockGetMemberByAccountIdUseCase.execute(user.id)).thenAnswer(
           (_) async => const MemberDto(id: 'member', displayName: '本人'),
         );
         await tester.pump(const Duration(milliseconds: 500));
         expect(container.read(authNotifierProvider).isAuthenticated, isTrue);
         verifyNever(mockLogoutUseCase.execute());
-        pendingToken.complete();
         pendingMember.complete(null);
         await tester.pump();
         expect(container.read(authNotifierProvider).isAuthenticated, isTrue);
@@ -219,8 +192,8 @@ void main() {
         loginId: 'test@example.com',
         isVerified: true,
       );
-      final pending = Completer<void>();
-      when(mockValidateCurrentUserTokenUseCase.execute())
+      final pending = Completer<MemberDto?>();
+      when(mockGetMemberByAccountIdUseCase.execute(user.id))
           .thenAnswer((_) => pending.future);
       final controller = StreamController<UserDto?>();
       addTearDown(controller.close);
@@ -237,8 +210,8 @@ void main() {
         container.read(authNotifierProvider).status,
         AuthStatus.unauthenticated,
       );
-      verify(mockValidateCurrentUserTokenUseCase.execute()).called(1);
-      pending.complete();
+      verify(mockGetMemberByAccountIdUseCase.execute(user.id)).called(1);
+      pending.complete(null);
       await tester.pump();
       expect(
         container.read(authNotifierProvider).status,
@@ -258,15 +231,12 @@ void main() {
       verify(mockObserveAuthStateChangesUseCase.execute()).called(1);
     });
 
-    test('既存メンバーのログイン時にauthenticated状態になる', () async {
+    test('トークンを強制更新せず本人確認でauthenticated状態になる', () async {
       const user = UserDto(
         id: 'user123',
         loginId: 'test@example.com',
         isVerified: true,
       );
-
-      when(mockValidateCurrentUserTokenUseCase.execute())
-          .thenAnswer((_) async {});
       when(mockGetMemberByAccountIdUseCase.execute(user.id)).thenAnswer(
         (_) async => const MemberDto(id: 'member', displayName: '本人'),
       );
@@ -290,9 +260,6 @@ void main() {
         loginId: 'test@example.com',
         isVerified: true,
       );
-
-      when(mockValidateCurrentUserTokenUseCase.execute())
-          .thenAnswer((_) async {});
       when(mockGetMemberByAccountIdUseCase.execute(user.id))
           .thenAnswer((_) async => null);
 
@@ -315,13 +282,9 @@ void main() {
         loginId: 'test@example.com',
         isVerified: true,
       );
-      final validateCompleter = Completer<void>();
-
-      when(mockValidateCurrentUserTokenUseCase.execute())
-          .thenAnswer((_) => validateCompleter.future);
-      when(mockGetMemberByAccountIdUseCase.execute(user.id)).thenAnswer(
-        (_) async => const MemberDto(id: 'member', displayName: '本人'),
-      );
+      final memberCompleter = Completer<MemberDto?>();
+      when(mockGetMemberByAccountIdUseCase.execute(user.id))
+          .thenAnswer((_) => memberCompleter.future);
 
       final controller = StreamController<UserDto?>();
       addTearDown(controller.close);
@@ -339,7 +302,7 @@ void main() {
       expect(notifier.state.status, AuthStatus.unauthenticated);
       expect(notifier.state.message, '');
 
-      validateCompleter.complete();
+      memberCompleter.complete(null);
       await Future(() {});
       await Future(() {});
 
@@ -355,8 +318,8 @@ void main() {
       );
       final signOutCompleter = Completer<void>();
 
-      when(mockValidateCurrentUserTokenUseCase.execute())
-          .thenThrow(TestException('token invalid'));
+      when(mockGetMemberByAccountIdUseCase.execute(user.id))
+          .thenThrow(TestException('本人確認失敗'));
       when(mockLogoutUseCase.execute())
           .thenAnswer((_) => signOutCompleter.future);
 
@@ -462,9 +425,6 @@ void main() {
           loginId: 'test@example.com',
           isVerified: true,
         );
-
-        when(mockValidateCurrentUserTokenUseCase.execute())
-            .thenAnswer((_) async {});
         when(mockGetMemberByAccountIdUseCase.execute(user.id))
             .thenThrow(TestException('Firestore error'));
         when(mockLogoutUseCase.execute()).thenAnswer((_) async {});

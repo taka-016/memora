@@ -1,3 +1,11 @@
+import 'dart:async';
+
+import 'package:mockito/mockito.dart';
+import 'package:memora/composition_root/providers/account_providers.dart';
+import 'package:memora/presentation/notifiers/app_availability/app_availability_notifier.dart';
+
+import '../../notifiers/auth/auth_notifier_test.mocks.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -26,6 +34,26 @@ class _RetryAuth extends FakeAuthNotifier {
   }
 }
 
+class _InvitationAuth extends FakeAuthNotifier {
+  _InvitationAuth()
+    : super(const AuthState.unauthenticated(memberSelectionRequiredMessage));
+  Completer<bool> ready = Completer<bool>();
+  final codes = <String>[];
+  @override
+  Future<bool> acceptInvitation(
+    String invitationCode, {
+    required String userId,
+  }) {
+    codes.add(invitationCode);
+    return ready.future;
+  }
+}
+
+class _FailedAvailability extends AppAvailabilityNotifier {
+  @override
+  AppAvailabilityState build() => const AppAvailabilityState(hasError: true);
+}
+
 void main() {
   group('AuthGuard', () {
     Widget createTestWidget({AuthState? authState, Widget? child}) {
@@ -42,6 +70,53 @@ void main() {
         ),
       );
     }
+
+    testWidgets('招待承諾の確認中と確認失敗後も同じダイアログと入力を保持して再試行する', (tester) async {
+      const user = UserDto(
+        id: 'user',
+        loginId: 'test@example.com',
+        isVerified: true,
+      );
+      final current = MockGetCurrentUserUseCase();
+      when(current.execute()).thenAnswer((_) async => user);
+      final auth = _InvitationAuth();
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            authNotifierProvider.overrideWith(() => auth),
+            getCurrentUserUseCaseProvider.overrideWithValue(current),
+            appAvailabilityNotifierProvider.overrideWith(
+              _FailedAvailability.new,
+            ),
+          ],
+          child: const MaterialApp(home: AuthGuard(child: Text('アプリ本体'))),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.tap(find.text('招待コード入力'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.enterText(find.byType(TextFormField), '招待コード123');
+      await tester.tap(find.text('確定'));
+      await tester.pump();
+      expect(find.text('招待コード123'), findsOneWidget);
+      await tester.tap(find.text('確定'));
+      expect(auth.codes, ['招待コード123']);
+      auth.ready.complete(false);
+      await tester.pump();
+      expect(find.text('招待コード123'), findsOneWidget);
+      expect(find.textContaining('利用状況'), findsOneWidget);
+      expect(find.text('招待コードが無効です。'), findsNothing);
+      auth.ready = Completer<bool>();
+      await tester.tap(find.text('確定'));
+      await tester.pump();
+      expect(auth.codes, ['招待コード123', '招待コード123']);
+      auth.ready.complete(true);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.byType(TextFormField), findsNothing);
+    });
 
     testWidgets('通信タイムアウトの再試行から確認中を経て保護された画面へ進む', (tester) async {
       final auth = _RetryAuth();

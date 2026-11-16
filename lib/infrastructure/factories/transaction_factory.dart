@@ -1,3 +1,5 @@
+import 'package:memora/application/decorators/guarded_write_transaction.dart';
+import 'package:memora/composition_root/providers/app_availability_providers.dart';
 import 'package:memora/composition_root/providers/offline_database_provider.dart';
 import 'package:memora/infrastructure/transactions/sqlite_write_transaction.dart';
 import 'package:memora/application/models/app_mode.dart';
@@ -13,32 +15,20 @@ final writeTransactionProvider = Provider<WriteTransaction>((ref) {
 
 class TransactionFactory {
   static T create<T extends Object>({required Ref ref}) {
-    final mode = ref.watch(appModeProvider);
-    return _createTransactionByMode<T>(mode, ref: ref);
-  }
-
-  static T _createTransactionByMode<T extends Object>(
-    AppMode mode, {
-    required Ref ref,
-  }) {
-    switch (mode) {
-      case AppMode.online:
-        return _createFirestoreTransaction<T>(ref: ref);
-      case AppMode.offline:
-        if (T == WriteTransaction) {
-          return SqliteWriteTransaction(ref.watch(offlineDatabaseProvider))
-              as T;
-        }
-        throw ArgumentError('Unknown transaction type: $T');
+    if (T != WriteTransaction) {
+      throw ArgumentError('Unknown transaction type: $T');
     }
-  }
-
-  static T _createFirestoreTransaction<T>({required Ref ref}) {
-    if (T == WriteTransaction) {
-      return FirestoreWriteTransaction(
+    final WriteTransaction transaction = switch (ref.watch(appModeProvider)) {
+      AppMode.online => FirestoreWriteTransaction(
         firestore: ref.watch(firebaseFirestoreProvider),
-      ) as T;
-    }
-    throw ArgumentError('Unknown transaction type: $T');
+      ),
+      AppMode.offline => SqliteWriteTransaction(
+        ref.watch(offlineDatabaseProvider),
+      ),
+    };
+    return GuardedWriteTransaction(
+      transaction,
+      ref.watch(ensureAppAvailableForMutationProvider),
+    ) as T;
   }
 }

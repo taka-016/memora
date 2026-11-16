@@ -22,6 +22,21 @@ void main() {
     tables: {},
   );
 
+  test('起動前の復元同期はキャッシュを再構築して定期登録を待たない', () async {
+    final calls = <String>[];
+    final usecase = SynchronizeOfflineBackupRestoreUsecase(
+      loadTargetGroupId: () async => null,
+      loadSelectedItineraryDateId: () async => null,
+      targetGroupExists: (_, _) async => false,
+      clearWidgetCache: () async => calls.add('旅程'),
+      refreshWidgetCache: (_, _) async {},
+      refreshCalendarCache: () async => calls.add('カレンダー'),
+      registerPeriodicUpdateTask: (_) async => calls.add('定期登録'),
+    );
+    await usecase.execute(snapshot, registerPeriodicTask: false);
+    expect(calls, ['旅程', 'カレンダー']);
+  });
+
   for (final fail in [false, true]) {
     test('旅程用グループ未設定・旅程更新失敗=$failでもカレンダーを独立して再構築する', () async {
       var calendar = 0;

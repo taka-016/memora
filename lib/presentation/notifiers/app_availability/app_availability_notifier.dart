@@ -1,3 +1,5 @@
+import 'package:memora/application/exceptions/application_validation_exception.dart';
+
 import 'dart:async';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -16,6 +18,9 @@ class AppAvailabilityState {
   final AppAvailability? availability;
   final bool isChecking;
   final bool hasError;
+  bool get isBlocked =>
+      availability == AppAvailability.maintenance ||
+      availability == AppAvailability.updateRequired;
   bool get canUseApp =>
       !isChecking && !hasError && availability == AppAvailability.available;
 }
@@ -42,6 +47,17 @@ class AppAvailabilityNotifier extends _$AppAvailabilityNotifier {
     return _pending = Future.microtask(_check);
   }
 
+  Future<void> ensureAvailable() async {
+    if (state.isChecking || (state.availability == null && !state.hasError)) {
+      await refresh();
+    }
+    if (!ref.mounted || !state.canUseApp) {
+      throw const ApplicationValidationException(
+        '利用可能と確認できないため保存できません。利用状況を再確認してください。',
+      );
+    }
+  }
+
   Future<void> _check() async {
     try {
       for (var attempt = 0; attempt < 5; attempt++) {
@@ -55,7 +71,10 @@ class AppAvailabilityNotifier extends _$AppAvailabilityNotifier {
         } catch (_) {
           if (!ref.mounted) return;
           if (attempt == 4) {
-            state = const AppAvailabilityState(hasError: true);
+            state = AppAvailabilityState(
+              availability: state.availability,
+              hasError: true,
+            );
             return;
           }
           await Future<void>.delayed(const Duration(milliseconds: 500));

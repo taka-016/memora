@@ -1,5 +1,5 @@
+import 'package:memora/presentation/app/startup_background_tasks.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_group_settings_notifier.dart';
-import 'package:memora/presentation/notifiers/app_availability/app_availability_notifier.dart';
 import 'package:memora/presentation/app/app_availability_gate.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_notifications_notifier.dart';
 import 'package:memora/composition_root/providers/app_providers.dart';
@@ -19,9 +19,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 Future<void> main() async {
   await launchApp(
-    const AppClockLifecycleSync(
-      child: AppAvailabilityGate(child: _AvailableApp()),
-    ),
+    const AppClockLifecycleSync(child: AppAvailabilityGate(child: MyApp())),
   );
 }
 
@@ -79,6 +77,9 @@ class MyApp extends ConsumerWidget {
     ref.watch(calendarNotificationsNotifierProvider);
     ref.watch(calendarGroupSettingsNotifierProvider);
     return MaterialApp.router(
+      builder: (context, child) => StartupBackgroundRegistrationNotice(
+        child: child ?? const SizedBox.shrink(),
+      ),
       routerConfig: ref.watch(appRouterConfigProvider),
       title: ref.watch(appDisplayNameProvider),
       theme: buildAppTheme(Brightness.light),
@@ -96,21 +97,5 @@ class MyApp extends ConsumerWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
     );
-  }
-}
-
-class _AvailableApp extends ConsumerWidget {
-  const _AvailableApp();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    ref.listen(appAvailabilityNotifierProvider, (previous, next) {
-      unawaited(
-        ref
-            .read(calendarNotificationsNotifierProvider.notifier)
-            .setSuspended(!next.canUseApp),
-      );
-    });
-    return const MyApp();
   }
 }

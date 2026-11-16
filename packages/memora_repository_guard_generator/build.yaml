@@ -1,0 +1,8 @@
+builders:
+  repository_guards:
+    import: package:memora_repository_guard_generator/builder.dart
+    builder_factories: [repositoryGuardBuilder]
+    build_extensions:
+      "$lib$": ["application/decorators/repository_guards.g.dart"]
+    auto_apply: dependents
+    build_to: source

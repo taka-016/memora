@@ -14,7 +14,6 @@ import 'package:memora/application/usecases/account/logout_usecase.dart';
 import 'package:memora/application/usecases/account/observe_auth_state_changes_usecase.dart';
 import 'package:memora/application/usecases/account/send_email_verification_usecase.dart';
 import 'package:memora/application/usecases/account/signup_usecase.dart';
-import 'package:memora/application/usecases/account/validate_current_user_token_usecase.dart';
 import 'package:memora/application/usecases/member/get_member_by_account_id_usecase.dart';
 import 'package:memora/application/usecases/member/create_member_from_user_usecase.dart';
 import 'package:memora/application/usecases/member/accept_invitation_usecase.dart';
@@ -33,8 +32,6 @@ class AuthNotifier extends Notifier<AuthState> {
 
   ObserveAuthStateChangesUseCase get observeAuthStateChangesUseCase =>
       ref.read(observeAuthStateChangesUseCaseProvider);
-  ValidateCurrentUserTokenUseCase get validateCurrentUserTokenUseCase =>
-      ref.read(validateCurrentUserTokenUseCaseProvider);
   SendEmailVerificationUseCase get sendEmailVerificationUseCase =>
       ref.read(sendEmailVerificationUseCaseProvider);
   GetCurrentUserUseCase get getCurrentUserUseCase =>
@@ -133,18 +130,6 @@ class AuthNotifier extends Notifier<AuthState> {
       if (!_isLatestAuthStateChange(generation)) return;
       try {
         final stopwatch = Stopwatch()..start();
-        if (kDebugMode) logger.i('起動認証: トークン確認 開始');
-        await validateCurrentUserTokenUseCase.execute().timeout(
-          const Duration(seconds: 15),
-        );
-        if (kDebugMode) {
-          logger.i('起動認証: トークン確認 完了（${stopwatch.elapsedMilliseconds}ms）');
-        }
-        if (!_isLatestAuthStateChange(generation)) {
-          return;
-        }
-
-        stopwatch.reset();
         if (kDebugMode) logger.i('起動認証: メンバー存在確認 開始');
         final member = await getMemberByAccountIdUseCase
             .execute(user.id)

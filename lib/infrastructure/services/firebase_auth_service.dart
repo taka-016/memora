@@ -6,10 +6,11 @@ import 'package:memora/application/services/auth_service.dart';
 import 'package:memora/core/app_logger.dart';
 
 class FirebaseAuthService implements AuthService {
-  FirebaseAuthService({FirebaseAuth? firebaseAuth})
+  FirebaseAuthService({FirebaseAuth? firebaseAuth, this._ensureAvailable})
     : _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance;
 
   final FirebaseAuth _firebaseAuth;
+  final Future<void> Function()? _ensureAvailable;
 
   @override
   Future<domain.User?> getCurrentUser() async {
@@ -51,6 +52,7 @@ class FirebaseAuthService implements AuthService {
     required String email,
     required String password,
   }) async {
+    await _ensureAvailable?.call();
     try {
       final userCredential = await _firebaseAuth.createUserWithEmailAndPassword(
         email: email,
@@ -110,6 +112,7 @@ class FirebaseAuthService implements AuthService {
   Future<void> _executeCurrentUserUpdate(
     Future<void> Function(User currentUser) update,
   ) async {
+    await _ensureAvailable?.call();
     final currentUser = _firebaseAuth.currentUser;
     if (currentUser == null) {
       throw Exception('ユーザーがログインしていません');
@@ -139,28 +142,6 @@ class FirebaseAuthService implements AuthService {
       password: password,
     );
     await currentUser.reauthenticateWithCredential(credential);
-  }
-
-  @override
-  Future<void> validateCurrentUserToken() async {
-    final currentUser = _firebaseAuth.currentUser;
-    if (currentUser == null) {
-      throw Exception('ユーザーがログインしていません');
-    }
-
-    try {
-      // forceRefresh: trueでサーバーからトークンを強制取得
-      // トークンが期限切れの場合、ここで例外が発生する
-      await currentUser.getIdToken(true);
-    } on FirebaseAuthException catch (e, stack) {
-      final message = FirebaseErrorMapper.getFirebaseErrorMessage(e);
-      logger.e(
-        'FirebaseAuthService.validateCurrentUserToken: $message',
-        error: e,
-        stackTrace: stack,
-      );
-      throw Exception(message);
-    }
   }
 
   @override
