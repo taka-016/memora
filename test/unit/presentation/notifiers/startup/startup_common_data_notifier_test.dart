@@ -1,3 +1,4 @@
+import 'package:memora/presentation/notifiers/calendar/calendar_event_input_notifier.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_mutation_coordinator.dart';
 import 'package:memora/composition_root/providers/android_widget_providers.dart';
 
@@ -38,6 +39,7 @@ class _Source implements StartupCommonDataSource {
   Completer<List<CalendarLabelDto>> labels = Completer();
   final started = Completer<void>();
   final labelsStarted = Completer<void>();
+  final labelsByGroup = <String, Completer<List<CalendarLabelDto>>>{};
   int groupCalls = 0;
   int labelCalls = 0;
   @override
@@ -51,7 +53,7 @@ class _Source implements StartupCommonDataSource {
   Future<List<CalendarLabelDto>> loadLabels(String groupId) {
     labelCalls++;
     if (!labelsStarted.isCompleted) labelsStarted.complete();
-    return labels.future;
+    return labelsByGroup[groupId]?.future ?? labels.future;
   }
 }
 
@@ -205,6 +207,45 @@ void main() {
       newGroup,
     ]);
     expect(source.groupCalls, 2);
+  });
+
+  test('別グループの取得状況でラベル取得失敗を消さず入力から再試行できる', () async {
+    final failed = Completer<List<CalendarLabelDto>>();
+    final succeeded = Completer<List<CalendarLabelDto>>();
+    final pending = Completer<List<CalendarLabelDto>>();
+    source.labelsByGroup.addAll({'g1': failed, 'g2': succeeded, 'g3': pending});
+    source.groups.complete([
+      newGroup,
+      newGroup.copyWith(id: 'g2'),
+      newGroup.copyWith(id: 'g3'),
+    ]);
+    container.read(startupCommonDataNotifierProvider);
+    await source.labelsStarted.future;
+    final failedInput = calendarEventInputNotifierProvider('失敗したグループ');
+    final pendingInput = calendarEventInputNotifierProvider('取得中のグループ');
+    container.listen(failedInput, (_, _) {});
+    container.listen(pendingInput, (_, _) {});
+    await container.read(failedInput.notifier).selectGroup('g1');
+    await container.read(pendingInput.notifier).selectGroup('g3');
+    failed.completeError(TestException('ラベル取得失敗'));
+    await container.pump();
+    expect(container.read(failedInput).error, isNotEmpty);
+    expect(container.read(failedInput).isLoading, isFalse);
+    expect(container.read(pendingInput).error, isEmpty);
+    expect(container.read(pendingInput).isLoading, isTrue);
+    succeeded.complete([]);
+    await container.pump();
+    expect(container.read(failedInput).error, isNotEmpty);
+    expect(container.read(failedInput).isLoading, isFalse);
+    pending.complete([]);
+    await container.pump();
+    expect(container.read(failedInput).error, isNotEmpty);
+    source.labelsByGroup['g1'] = Completer()..complete([label]);
+    await container.read(failedInput.notifier).retry();
+    expect(container.read(failedInput).error, isEmpty);
+    expect(container.read(failedInput).isLoading, isFalse);
+    expect(container.read(failedInput).labels, [label]);
+    await container.read(failedInput.notifier).validateForSave();
   });
 
   test('最新確認失敗後もキャッシュを残し、保存時の再試行で回復する', () async {
