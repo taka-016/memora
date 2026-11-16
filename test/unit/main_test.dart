@@ -1,3 +1,5 @@
+import '../helpers/test_exception.dart';
+
 import 'package:memora/application/services/startup_common_data_source.dart';
 import 'package:memora/composition_root/providers/startup_common_data_providers.dart';
 import 'package:memora/composition_root/providers/location_providers.dart';
@@ -81,7 +83,10 @@ void main() {
     ).thenAnswer((_) async => []);
   });
 
-  Widget createTestApp({AppMode appMode = AppMode.online}) {
+  Widget createTestApp({
+    AppMode appMode = AppMode.online,
+    String? initialLocation,
+  }) {
     return ProviderScope(
       overrides: [
         appModeProvider.overrideWithValue(appMode),
@@ -94,7 +99,7 @@ void main() {
           () => _IdleAndroidWidgetLaunchNotifier(),
         ),
         appInitialLocationProvider.overrideWithValue(
-          const GroupListRoute().location,
+          initialLocation ?? const GroupListRoute().location,
         ),
         mapViewBuilderProvider.overrideWithValue(
           const PlaceholderMapViewBuilder(),
@@ -105,6 +110,26 @@ void main() {
   }
 
   group('MyApp', () {
+    testWidgets('キャッシュがない予定追加起動の取得失敗を表示し再試行で入力を開始できる', (tester) async {
+      when(commonDataSource.loadGroups(any)).thenThrow(TestException('初回取得失敗'));
+      await tester.pumpWidget(
+        createTestApp(
+          initialLocation: const CalendarRoute(create: true).location,
+        ),
+      );
+      for (var frame = 0; frame < 6; frame++) {
+        await tester.pump();
+      }
+      expect(find.text('グループを取得できませんでした。再試行してください'), findsOneWidget);
+      when(commonDataSource.loadGroups(any)).thenAnswer((_) async => []);
+      await tester.tap(find.text('グループを取得できませんでした。再試行してください'));
+      for (var frame = 0; frame < 6; frame++) {
+        await tester.pump();
+      }
+      expect(find.text('予定を追加'), findsOneWidget);
+      expect(find.byType(TextFormField), findsWidgets);
+    });
+
     testWidgets('設定画面から起動しても認証後に共通データの取得を開始する', (tester) async {
       await tester.pumpWidget(
         ProviderScope(

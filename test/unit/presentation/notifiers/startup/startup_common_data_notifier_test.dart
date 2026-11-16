@@ -1,3 +1,6 @@
+import 'package:memora/presentation/notifiers/calendar/calendar_mutation_coordinator.dart';
+import 'package:memora/composition_root/providers/android_widget_providers.dart';
+
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -113,6 +116,62 @@ void main() {
     source.groups.complete([newGroup]);
     source.labels.complete([]);
     await notifier.ensureLatest('g1');
+  });
+
+  test('明示更新中は保存時の最新確認も同じ取得を待ち新しいラベルを使う', () async {
+    source.groups.complete([newGroup]);
+    source.labels.complete([label]);
+    final notifier = container.read(startupCommonDataNotifierProvider.notifier);
+    await notifier.ensureLatest('g1');
+    source.groups = Completer();
+    source.labels = Completer();
+    final refreshing = notifier.refresh();
+    await container.pump();
+    expect(
+      container.read(startupCommonDataNotifierProvider).groupsConfirmed,
+      isFalse,
+    );
+    var finished = false;
+    final saving = notifier
+        .ensureLatest('g1')
+        .whenComplete(() => finished = true);
+    await container.pump();
+    expect(finished, isFalse);
+    source.groups.complete([newGroup]);
+    source.labels.complete([]);
+    await Future.wait([refreshing, saving]);
+    expect(
+      container.read(startupCommonDataNotifierProvider).data.labels['g1'],
+      isEmpty,
+    );
+    expect(source.groupCalls, 2);
+    expect(source.labelCalls, 2);
+  });
+
+  test('ラベル更新後の再取得を共通状態と永続キャッシュへ反映する', () async {
+    source.groups.complete([newGroup]);
+    source.labels.complete([]);
+    final notifier = container.read(startupCommonDataNotifierProvider.notifier);
+    await notifier.ensureLatest('g1');
+    source.labels = Completer()..complete([label]);
+    // ウィジェット更新はこのテストの対象外。
+    final coordinatorContainer = ProviderContainer(
+      parent: container,
+      overrides: [
+        refreshSelectedCalendarWidgetCacheProvider.overrideWithValue(
+          () async {},
+        ),
+      ],
+    );
+    addTearDown(coordinatorContainer.dispose);
+    await coordinatorContainer
+        .read(calendarMutationCoordinatorProvider)
+        .labelsChanged('g1');
+    expect(
+      container.read(startupCommonDataNotifierProvider).data.labels['g1'],
+      [label],
+    );
+    expect(storage.values['a1']!.labels['g1'], [label]);
   });
 
   test('最新確認失敗後もキャッシュを残し、保存時の再試行で回復する', () async {
