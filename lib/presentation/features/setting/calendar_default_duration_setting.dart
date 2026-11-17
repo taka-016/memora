@@ -102,6 +102,7 @@ class _DurationInputState extends ConsumerState<_DurationInput>
         contentPadding: EdgeInsets.zero,
         title: const Text('予定の標準時間'),
         trailing: DropdownMenu<int>(
+          width: 150,
           key: ValueKey((_selectionRevision, widget.minutes)),
           selectOnly: true,
           menuStyle: const MenuStyle(

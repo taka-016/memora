@@ -39,6 +39,7 @@ class CalendarDisplaySetting extends HookConsumerWidget {
           trailing: KeyedSubtree(
             key: const Key('calendar_week_start_setting'),
             child: DropdownMenu<CalendarWeekStart>(
+              width: 150,
               selectOnly: true,
               menuStyle: const MenuStyle(
                 alignment: AlignmentDirectional.bottomStart,
