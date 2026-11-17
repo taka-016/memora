@@ -211,7 +211,7 @@ void main() {
       );
 
       // Assert
-      expect(find.byType(DropdownButtonFormField<String>), findsOneWidget);
+      expect(find.byType(DropdownMenu<String>), findsOneWidget);
       expect(find.text('性別'), findsOneWidget);
     });
 

@@ -649,41 +649,53 @@ class _CalendarEventInputPageState
                         spacing: 16,
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          DropdownButtonFormField<String>(
-                            key: ValueKey(('calendar_event_group', _groupId)),
-                            initialValue:
+                          DropdownMenuFormField<String>(
+                            selectOnly: true,
+                            menuStyle: const MenuStyle(
+                              alignment: AlignmentDirectional.bottomStart,
+                            ),
+                            requestFocusOnTap: false,
+                            expandedInsets: EdgeInsets.zero,
+                            key: ValueKey((
+                              'calendar_event_group',
+                              _groupId,
+                              groups.groups
+                                  .map((group) => (group.id, group.name))
+                                  .toList()
+                                  .toString(),
+                            )),
+                            initialSelection:
                                 groups.groups.any((g) => g.id == _groupId)
                                 ? _groupId
                                 : null,
-                            isExpanded: true,
-                            decoration: const InputDecoration(
-                              labelText: '保存先グループ',
-                              border: OutlineInputBorder(),
-                            ),
-                            items: [
+                            label: const Text('保存先グループ'),
+                            decorationBuilder: (context, controller) =>
+                                const InputDecoration(
+                                  border: OutlineInputBorder(),
+                                ),
+                            dropdownMenuEntries: [
                               for (final group in groups.groups)
-                                DropdownMenuItem(
+                                DropdownMenuEntry(
                                   value: group.id,
-                                  child: Text(group.name),
+                                  label: group.name,
                                 ),
                             ],
-                            onChanged: state.isSaving || !groups.groupsReady
-                                ? null
-                                : (id) {
-                                    setState(() {
-                                      _groupId = id;
-                                      _labelId = 'group:';
-                                    });
-                                    unawaited(
-                                      ref
-                                          .read(
-                                            calendarEventInputNotifierProvider(
-                                              _session,
-                                            ).notifier,
-                                          )
-                                          .selectGroup(id),
-                                    );
-                                  },
+                            enabled: !(state.isSaving || !groups.groupsReady),
+                            onSelected: (id) {
+                              setState(() {
+                                _groupId = id;
+                                _labelId = 'group:';
+                              });
+                              unawaited(
+                                ref
+                                    .read(
+                                      calendarEventInputNotifierProvider(
+                                        _session,
+                                      ).notifier,
+                                    )
+                                    .selectGroup(id),
+                              );
+                            },
                           ),
                           if (groups.groupsReady && groups.groups.isEmpty)
                             const Text('グループを作成するか、グループに参加してください'),
@@ -718,27 +730,45 @@ class _CalendarEventInputPageState
                                 ? 'タイトルを入力してください'
                                 : null,
                           ),
-                          DropdownButtonFormField<String>(
+                          DropdownMenuFormField<String>(
+                            selectOnly: true,
+                            menuStyle: const MenuStyle(
+                              alignment: AlignmentDirectional.bottomStart,
+                            ),
+                            requestFocusOnTap: false,
+                            expandedInsets: EdgeInsets.zero,
                             key: ValueKey((
                               'calendar_event_label',
+                              _labelId,
+                              labels
+                                  .map(
+                                    (label) => (
+                                      label.id,
+                                      label.name,
+                                      label.isSelectable,
+                                    ),
+                                  )
+                                  .toList()
+                                  .toString(),
                               _groupId,
                               inputState.isLoading,
                             )),
-                            initialValue:
+                            initialSelection:
                                 labels.any((label) => label.id == _labelId)
                                 ? _labelId
                                 : null,
-                            isExpanded: true,
-                            decoration: const InputDecoration(
-                              labelText: '色ラベル',
-                              border: OutlineInputBorder(),
-                            ),
-                            items: labels
+                            label: const Text('色ラベル'),
+                            decorationBuilder: (context, controller) =>
+                                const InputDecoration(
+                                  border: OutlineInputBorder(),
+                                ),
+                            dropdownMenuEntries: labels
                                 .map(
-                                  (label) => DropdownMenuItem(
+                                  (label) => DropdownMenuEntry(
                                     value: label.id,
                                     enabled: label.isSelectable,
-                                    child:
+                                    label: label.name,
+                                    labelWidget:
                                         label.labelType == 'member' &&
                                             label.isSelectable
                                         ? Semantics(
@@ -770,24 +800,23 @@ class _CalendarEventInputPageState
                                   ),
                                 )
                                 .toList(),
-                            onChanged:
-                                state.isSaving ||
+                            enabled:
+                                !(state.isSaving ||
                                     movingSeries ||
                                     _groupId == null ||
                                     inputState.isLoading ||
-                                    inputState.error.isNotEmpty
-                                ? null
-                                : (value) {
-                                    if (value != null) {
-                                      ref
-                                          .read(
-                                            calendarEventInputNotifierProvider(
-                                              _session,
-                                            ).notifier,
-                                          )
-                                          .selectLabel(value);
-                                    }
-                                  },
+                                    inputState.error.isNotEmpty),
+                            onSelected: (value) {
+                              if (value != null) {
+                                ref
+                                    .read(
+                                      calendarEventInputNotifierProvider(
+                                        _session,
+                                      ).notifier,
+                                    )
+                                    .selectLabel(value);
+                              }
+                            },
                             validator: (value) =>
                                 value == null ? '色ラベルを指定してください' : null,
                           ),

@@ -236,18 +236,21 @@ class MemberEditModal extends HookConsumerWidget {
     }
 
     Widget buildGenderField() {
-      return DropdownButtonFormField<String>(
-        initialValue: gender.value,
-        decoration: const InputDecoration(
-          labelText: '性別',
-          border: OutlineInputBorder(),
-        ),
-        items: const [
-          DropdownMenuItem(value: '男性', child: Text('男性')),
-          DropdownMenuItem(value: '女性', child: Text('女性')),
-          DropdownMenuItem(value: 'その他', child: Text('その他')),
+      return DropdownMenuFormField<String>(
+        selectOnly: true,
+        menuStyle: const MenuStyle(alignment: AlignmentDirectional.bottomStart),
+        requestFocusOnTap: false,
+        expandedInsets: EdgeInsets.zero,
+        initialSelection: gender.value,
+        label: const Text('性別'),
+        decorationBuilder: (context, controller) =>
+            const InputDecoration(border: OutlineInputBorder()),
+        dropdownMenuEntries: const [
+          DropdownMenuEntry(value: '男性', label: '男性'),
+          DropdownMenuEntry(value: '女性', label: '女性'),
+          DropdownMenuEntry(value: 'その他', label: 'その他'),
         ],
-        onChanged: (value) {
+        onSelected: (value) {
           gender.value = value;
         },
       );

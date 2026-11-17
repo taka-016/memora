@@ -45,11 +45,8 @@ Future<void> calendarTapVisible(WidgetTester tester, Finder target) async {
   await tester.tap(target);
 }
 
-Finder calendarLabelDropdown() => find.byWidgetPredicate(
-  (widget) =>
-      widget is DropdownButtonFormField<String> &&
-      widget.decoration.labelText == '色ラベル',
-);
+Finder calendarLabelDropdown() =>
+    find.widgetWithText(DropdownMenu<String>, '色ラベル');
 
 const calendarTestDay2 = Key('calendar_day_2026_10_2');
 const calendarTestFamily = CalendarLabelDto(

@@ -155,10 +155,9 @@ void main() {
             find.widgetWithText(TextFormField, 'ウィジェットから追加'),
             findsOneWidget,
           );
-          final groupField = find.byWidgetPredicate(
-            (widget) =>
-                widget is DropdownButtonFormField<String> &&
-                widget.decoration.labelText == '保存先グループ',
+          final groupField = find.widgetWithText(
+            DropdownMenu<String>,
+            '保存先グループ',
           );
           await tester.tap(groupField);
           await tester.pumpAndSettle();

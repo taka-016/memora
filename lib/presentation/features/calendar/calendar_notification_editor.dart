@@ -182,23 +182,26 @@ class _CalendarNotificationDialogState
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: DropdownButtonFormField<int>(
-                      initialValue: _unit,
-                      isExpanded: true,
-                      decoration: const InputDecoration(
-                        labelText: '単位',
-                        border: OutlineInputBorder(),
+                    child: DropdownMenuFormField<int>(
+                      selectOnly: true,
+                      menuStyle: const MenuStyle(
+                        alignment: AlignmentDirectional.bottomStart,
                       ),
-                      items: [
+                      requestFocusOnTap: false,
+                      expandedInsets: EdgeInsets.zero,
+                      initialSelection: _unit,
+                      label: const Text('単位'),
+                      decorationBuilder: (context, controller) =>
+                          const InputDecoration(border: OutlineInputBorder()),
+                      dropdownMenuEntries: [
                         for (final entry in _units.entries)
-                          DropdownMenuItem(
+                          DropdownMenuEntry(
                             value: entry.key,
-                            child: Text(entry.value),
+                            label: entry.value,
                           ),
                       ],
-                      onChanged: atLimit
-                          ? null
-                          : (value) => setState(() => _unit = value!),
+                      enabled: !(atLimit),
+                      onSelected: (value) => setState(() => _unit = value!),
                     ),
                   ),
                 ],

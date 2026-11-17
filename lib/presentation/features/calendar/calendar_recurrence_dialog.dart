@@ -145,22 +145,27 @@ class _CalendarRecurrenceCustomDialogState
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                DropdownButtonFormField<String>(
-                  initialValue: _frequency,
-                  decoration: const InputDecoration(labelText: '単位'),
-                  items: [
+                DropdownMenuFormField<String>(
+                  selectOnly: true,
+                  menuStyle: const MenuStyle(
+                    alignment: AlignmentDirectional.bottomStart,
+                  ),
+                  requestFocusOnTap: false,
+                  expandedInsets: EdgeInsets.zero,
+                  initialSelection: _frequency,
+                  label: const Text('単位'),
+                  decorationBuilder: (context, controller) =>
+                      const InputDecoration(),
+                  dropdownMenuEntries: [
                     for (final entry in {
                       'DAILY': '日',
                       'WEEKLY': '週',
                       'MONTHLY': '月',
                       'YEARLY': '年',
                     }.entries)
-                      DropdownMenuItem(
-                        value: entry.key,
-                        child: Text(entry.value),
-                      ),
+                      DropdownMenuEntry(value: entry.key, label: entry.value),
                   ],
-                  onChanged: (value) => setState(() => _frequency = value!),
+                  onSelected: (value) => setState(() => _frequency = value!),
                 ),
                 TextFormField(
                   controller: _interval,
@@ -192,15 +197,23 @@ class _CalendarRecurrenceCustomDialogState
                     ],
                   ),
                 if (_frequency == 'MONTHLY') Text('毎月$_monthlyDay日'),
-                DropdownButtonFormField<String>(
-                  initialValue: _endMode,
-                  decoration: const InputDecoration(labelText: '終了条件'),
-                  items: const [
-                    DropdownMenuItem(value: 'never', child: Text('終了しない')),
-                    DropdownMenuItem(value: 'count', child: Text('回数指定')),
-                    DropdownMenuItem(value: 'until', child: Text('終了日指定')),
+                DropdownMenuFormField<String>(
+                  selectOnly: true,
+                  menuStyle: const MenuStyle(
+                    alignment: AlignmentDirectional.bottomStart,
+                  ),
+                  requestFocusOnTap: false,
+                  expandedInsets: EdgeInsets.zero,
+                  initialSelection: _endMode,
+                  label: const Text('終了条件'),
+                  decorationBuilder: (context, controller) =>
+                      const InputDecoration(),
+                  dropdownMenuEntries: const [
+                    DropdownMenuEntry(value: 'never', label: '終了しない'),
+                    DropdownMenuEntry(value: 'count', label: '回数指定'),
+                    DropdownMenuEntry(value: 'until', label: '終了日指定'),
                   ],
-                  onChanged: (value) => setState(() => _endMode = value!),
+                  onSelected: (value) => setState(() => _endMode = value!),
                 ),
                 if (_endMode == 'count')
                   TextFormField(

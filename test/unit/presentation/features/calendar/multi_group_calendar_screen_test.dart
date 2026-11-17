@@ -218,14 +218,10 @@ void main() {
     await tester.tap(find.byType(FloatingActionButton));
     await tester.pumpAndSettle();
     expect(find.byType(CalendarEventInputPage), findsOneWidget);
-    final group = tester.widget<DropdownButtonFormField<String>>(
-      find.byWidgetPredicate(
-        (w) =>
-            w is DropdownButtonFormField<String> &&
-            w.decoration.labelText == '保存先グループ',
-      ),
+    final group = tester.widget<DropdownMenu<String>>(
+      find.widgetWithText(DropdownMenu<String>, '保存先グループ'),
     );
-    expect(group.initialValue, 'g');
+    expect(group.initialSelection, 'g');
   });
   testWidgets('保存済みの未選択を維持し表示選択のキャンセル・確定・全解除を扱う', (tester) async {
     await tester.pumpWidget(

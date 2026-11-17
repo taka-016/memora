@@ -6,6 +6,10 @@ import 'package:memora/presentation/notifiers/calendar/calendar_preferences_noti
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
+  Finder durationInput() => find.byWidgetPredicate(
+    (widget) => widget is TextField && !widget.readOnly,
+  );
+
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
   Future<void> pumpSetting(WidgetTester tester) async {
@@ -25,7 +29,7 @@ void main() {
   ).read(calendarPreferencesNotifierProvider).value!.minutes;
 
   Future<void> select(WidgetTester tester, String label) async {
-    await tester.tap(find.byType(DropdownButton<int>));
+    await tester.tap(find.byType(DropdownMenu<int>));
     await tester.pumpAndSettle();
     await tester.tap(find.text(label).last);
     await tester.pumpAndSettle();
@@ -38,30 +42,27 @@ void main() {
       expect(savedMinutes(tester), minutes);
     }
     await select(tester, 'その他');
-    await tester.enterText(find.byType(TextField), '0');
+    await tester.enterText(durationInput(), '0');
     await tester.pump();
     expect(savedMinutes(tester), 60);
     expect(find.text('1〜1440分'), findsOneWidget);
-    await tester.enterText(find.byType(TextField), '75');
+    await tester.enterText(durationInput(), '75');
     await tester.pumpAndSettle();
     expect(savedMinutes(tester), 75);
     await tester.pumpWidget(const SizedBox.shrink());
     await pumpSetting(tester);
-    expect(
-      tester.widget<TextField>(find.byType(TextField)).controller!.text,
-      '75',
-    );
+    expect(tester.widget<TextField>(durationInput()).controller!.text, '75');
     await select(tester, '15分');
     expect(savedMinutes(tester), 15);
-    expect(find.byType(TextField), findsNothing);
+    expect(durationInput(), findsNothing);
   });
 
   testWidgets('キーボードを閉じるか入力欄の外をタップするとフォーカスを解除する', (tester) async {
     await pumpSetting(tester);
     await select(tester, 'その他');
-    await tester.tap(find.byType(TextField));
+    await tester.tap(durationInput());
     await tester.pump();
-    final focus = tester.widget<TextField>(find.byType(TextField)).focusNode!;
+    final focus = tester.widget<TextField>(durationInput()).focusNode!;
     expect(focus.hasFocus, isTrue);
     tester.view.viewInsets = const FakeViewPadding(bottom: 300);
     addTearDown(tester.view.resetViewInsets);
@@ -70,7 +71,7 @@ void main() {
     await tester.pump();
     await tester.pump();
     expect(focus.hasFocus, isFalse);
-    await tester.tap(find.byType(TextField));
+    await tester.tap(durationInput());
     await tester.pump();
     expect(focus.hasFocus, isTrue);
     await tester.tap(find.text('予定の標準時間'));

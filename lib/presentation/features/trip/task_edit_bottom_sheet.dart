@@ -152,51 +152,57 @@ class TaskEditBottomSheet extends HookWidget {
               ),
             ),
             const SizedBox(height: 16),
-            DropdownButtonFormField<String?>(
-              key: const Key('assigned_member_dropdown'),
-              initialValue: selectedAssignedMemberId,
-              decoration: const InputDecoration(
-                labelText: '担当者',
-                border: OutlineInputBorder(),
+            DropdownMenuFormField<String?>(
+              selectOnly: true,
+              menuStyle: const MenuStyle(
+                alignment: AlignmentDirectional.bottomStart,
               ),
-              items: [
-                const DropdownMenuItem<String?>(
-                  value: null,
-                  child: Text('未選択'),
-                ),
+              requestFocusOnTap: false,
+              expandedInsets: EdgeInsets.zero,
+              key: const Key('assigned_member_dropdown'),
+              initialSelection: selectedAssignedMemberId,
+              label: const Text('担当者'),
+              decorationBuilder: (context, controller) =>
+                  const InputDecoration(border: OutlineInputBorder()),
+              dropdownMenuEntries: [
+                const DropdownMenuEntry<String?>(value: null, label: '未選択'),
                 ...groupMembers.map(
-                  (member) => DropdownMenuItem(
+                  (member) => DropdownMenuEntry(
                     value: member.memberId,
-                    child: Text(member.displayName),
+                    label: member.displayName,
                   ),
                 ),
               ],
-              onChanged: (value) {
+              onSelected: (value) {
                 assignedMemberState.value = value;
               },
             ),
             const SizedBox(height: 16),
-            DropdownButtonFormField<String?>(
-              key: const Key('parent_task_dropdown'),
-              initialValue: selectedParentTaskId,
-              decoration: const InputDecoration(
-                labelText: '親タスク',
-                border: OutlineInputBorder(),
+            DropdownMenuFormField<String?>(
+              selectOnly: true,
+              menuStyle: const MenuStyle(
+                alignment: AlignmentDirectional.bottomStart,
               ),
-              items: [
-                const DropdownMenuItem<String?>(value: null, child: Text('なし')),
+              requestFocusOnTap: false,
+              expandedInsets: EdgeInsets.zero,
+              key: const Key('parent_task_dropdown'),
+              initialSelection: selectedParentTaskId,
+              label: const Text('親タスク'),
+              decorationBuilder: (context, controller) =>
+                  const InputDecoration(border: OutlineInputBorder()),
+              dropdownMenuEntries: [
+                const DropdownMenuEntry<String?>(value: null, label: 'なし'),
                 ...filteredParentCandidates.map(
-                  (candidate) => DropdownMenuItem<String?>(
+                  (candidate) => DropdownMenuEntry<String?>(
                     value: candidate.id,
-                    child: Text(candidate.name),
+                    label: candidate.name,
                   ),
                 ),
               ],
-              onChanged: hasChildren(task.id)
-                  ? null
-                  : (value) {
-                      parentTaskState.value = value;
-                    },
+              enabled: !(hasChildren(task.id)),
+              onSelected: (value) {
+                parentTaskState.value = value;
+              },
             ),
             if (hasChildren(task.id))
               Padding(

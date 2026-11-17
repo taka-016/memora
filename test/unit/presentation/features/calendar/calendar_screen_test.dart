@@ -127,7 +127,10 @@ void main() {
     );
     await calendarTapVisible(tester, suffix);
     await tester.pumpAndSettle();
-    expect(find.text('の予定'), findsOneWidget);
+    expect(
+      find.text('とても長い名前のメンバーとても長い名前のメンバーとても長い名前のメンバーの予定'),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
     await tester.enterText(find.byType(TextFormField).first, '個人の予定');
     await calendarTapVisible(tester, find.text('保存'));
@@ -164,14 +167,11 @@ void main() {
     expect(find.text('所属解除・削除済みメンバーの予定'), findsOneWidget);
     await calendarTapVisible(tester, find.widgetWithText(ListTile, '本人の予定'));
     await tester.pumpAndSettle();
-    final dropdown = tester.widget<DropdownButton<String>>(
-      find.descendant(
-        of: calendarLabelDropdown(),
-        matching: find.byType(DropdownButton<String>),
-      ),
+    final dropdown = tester.widget<DropdownMenu<String>>(
+      calendarLabelDropdown(),
     );
     expect(
-      dropdown.items!
+      dropdown.dropdownMenuEntries
           .singleWhere((item) => item.value == 'member:removed')
           .enabled,
       isFalse,
@@ -842,13 +842,10 @@ void main() {
       await tester.pumpAndSettle();
       await calendarTapVisible(tester, find.byTooltip('予定を追加'));
       await tester.pumpAndSettle();
-      final dropdown = tester.widget<DropdownButton<String>>(
-        find.descendant(
-          of: calendarLabelDropdown(),
-          matching: find.byType(DropdownButton<String>),
-        ),
+      final dropdown = tester.widget<DropdownMenu<String>>(
+        calendarLabelDropdown(),
       );
-      expect(dropdown.items!.map((item) => item.value), [
+      expect(dropdown.dropdownMenuEntries.map((item) => item.value), [
         'group:',
         'child',
         'parent',
@@ -869,11 +866,16 @@ void main() {
           ),
         );
         await tester.pumpAndSettle();
-        await calendarTapVisible(tester, find.byType(DropdownButton<int>));
+        await calendarTapVisible(tester, find.byType(DropdownMenu<int>));
         await tester.pumpAndSettle();
         await calendarTapVisible(tester, find.text('その他').last);
         await tester.pumpAndSettle();
-        await tester.enterText(find.byType(TextField), '$minutes');
+        await tester.enterText(
+          find.byWidgetPredicate(
+            (widget) => widget is TextField && !widget.readOnly,
+          ),
+          '$minutes',
+        );
         await tester.pumpAndSettle();
       }
       await tester.pumpWidget(const SizedBox.shrink());

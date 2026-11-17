@@ -29,12 +29,12 @@ void main() {
     await tester.tap(find.text('ライト').last);
     await tester.pumpAndSettle();
     expect(find.text('テーマを保存できませんでした'), findsOneWidget);
-    expect(find.text('端末設定に従う'), findsOneWidget);
+    expect(find.text('端末設定に従う').hitTestable(), findsOneWidget);
     when(storage.save(AppThemeMode.light)).thenAnswer((_) async {});
     await tester.tap(find.byKey(const Key('theme_mode_setting')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('ライト').last);
     await tester.pumpAndSettle();
-    expect(find.text('ライト'), findsOneWidget);
+    expect(find.text('ライト').hitTestable(), findsOneWidget);
   });
 }

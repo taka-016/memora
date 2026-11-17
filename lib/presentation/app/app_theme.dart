@@ -23,6 +23,5 @@ ThemeData buildAppTheme(Brightness brightness) {
             backgroundColor: scheme.primaryContainer,
             foregroundColor: scheme.onPrimaryContainer,
           ),
-    buttonTheme: const ButtonThemeData(alignedDropdown: true),
   );
 }

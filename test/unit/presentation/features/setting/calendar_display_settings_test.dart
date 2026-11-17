@@ -28,7 +28,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('日曜日'), findsOneWidget);
+    expect(find.text('日曜日').hitTestable(), findsOneWidget);
     expect(
       tester.widget<SwitchListTile>(find.byType(SwitchListTile)).value,
       isFalse,
@@ -59,7 +59,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('月曜日'), findsOneWidget);
+    expect(find.text('月曜日').hitTestable(), findsOneWidget);
     expect(
       tester.widget<SwitchListTile>(find.byType(SwitchListTile)).value,
       isTrue,
