@@ -29,14 +29,16 @@ void validateReadScenario(
 ) {
   if (scenario['version'] != 1) invalid('未対応のシナリオ形式です');
   for (final key in ['id', 'dataset']) {
-    if (!RegExp(r'^[a-z0-9-]+$').hasMatch(nonEmpty(scenario[key], key)))
+    if (!RegExp(r'^[a-z0-9-]+$').hasMatch(nonEmpty(scenario[key], key))) {
       invalid('不正な$keyです');
+    }
   }
   timestamp(scenario['now']);
   data.initializeTimeZones();
   final zone = nonEmpty(scenario['timeZone'], 'timeZone');
-  if (!tz.timeZoneDatabase.locations.containsKey(zone))
+  if (!tz.timeZoneDatabase.locations.containsKey(zone)) {
     invalid('未対応のタイムゾーンです: $zone');
+  }
   if (scenario['cache'] != 'cold') invalid('この取得経路実行器はキャッシュなしだけに対応しています');
   final ids = <String>{};
   for (final raw in array(scenario['operations'], 'operations')) {
@@ -48,8 +50,9 @@ void validateReadScenario(
     if (schema == null) invalid('未登録の操作です: $action');
     final params = object(operation['parameters'], 'parameters');
     if (params.length != schema.length ||
-        !params.keys.every(schema.containsKey))
+        !params.keys.every(schema.containsKey)) {
       invalid('$actionの引数が一致しません');
+    }
     for (final field in schema.entries) {
       switch (field.value) {
         case 'string':

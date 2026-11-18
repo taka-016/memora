@@ -86,12 +86,24 @@ void main() {
   test('購読開始操作と変更受信時の操作を両方記録する', () {
     final events = <Map<String, Object?>>[];
     var operation = 'open';
-    final probe = FirestoreReadProbe(runId: 'run', operationId: () => operation, emit: events.add);
-    final subscription = probe.start(site: 'events', target: 'calendar_events', kind: 'subscribe');
+    final probe = FirestoreReadProbe(
+      runId: 'run',
+      operationId: () => operation,
+      emit: events.add,
+    );
+    final subscription = probe.start(
+      site: 'events',
+      target: 'calendar_events',
+      kind: 'subscribe',
+    );
     operation = 'update';
-    subscription.receive(documents: 1, changes: 1, fromCache: false, pendingWrites: false);
+    subscription.receive(
+      documents: 1,
+      changes: 1,
+      fromCache: false,
+      pendingWrites: false,
+    );
     expect(events.last['operationId'], 'open');
     expect(events.last['receivedOperationId'], 'update');
   });
-
 }

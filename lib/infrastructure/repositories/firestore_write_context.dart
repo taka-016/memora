@@ -47,7 +47,10 @@ class FirestoreBatchWriteContext implements FirestoreWriteContext {
     Query<Map<String, dynamic>> query, {
     String? target,
   }) {
-    return query.measuredGet('firestore_write_context.01', target: target ?? '');
+    return query.measuredGet(
+      'firestore_write_context.01',
+      target: target ?? '',
+    );
   }
 
   @override
@@ -107,7 +110,10 @@ class FirestoreTransactionWriteContext implements FirestoreWriteContext {
     Query<Map<String, dynamic>> query, {
     String? target,
   }) {
-    return query.measuredGet('firestore_write_context.03', target: target ?? '');
+    return query.measuredGet(
+      'firestore_write_context.03',
+      target: target ?? '',
+    );
   }
 
   @override

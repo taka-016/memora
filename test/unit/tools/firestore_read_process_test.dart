@@ -46,7 +46,9 @@ read_regression_run bash -c 'echo \$\$ > "\$1"; echo ready; exec sleep 30' _ "\$
     expect((await Process.run('kill', ['-0', child])).exitCode, isNot(0));
   });
   test('リーダー終了後もTERMを無視する子が残ればグループごと回収し失敗を返す', () async {
-    final directory = await Directory.systemTemp.createTemp('memora-read-stubborn-');
+    final directory = await Directory.systemTemp.createTemp(
+      'memora-read-stubborn-',
+    );
     final childFile = File('${directory.path}/child');
     final leader = File('${directory.path}/leader.sh');
     await leader.writeAsString(r'''trap 'exit 0' TERM
@@ -54,21 +56,32 @@ bash -c 'trap "" TERM; echo $$ > "$1"; echo ready; exec sleep 30' _ "$1" &
 wait
 ''');
     final script = File('${directory.path}/test.sh');
-    await script.writeAsString(r'''source scripts/test/firestore_reads/process.sh
+    await script.writeAsString(
+      r'''source scripts/test/firestore_reads/process.sh
 setsid bash "$1" "$2" &
 leader=$!
 read -r command
 if read_regression_stop "$leader"; then echo stopped:0; else echo stopped:1; fi
-''');
-    final process = await Process.start('bash', [script.path, leader.path, childFile.path]);
+''',
+    );
+    final process = await Process.start('bash', [
+      script.path,
+      leader.path,
+      childFile.path,
+    ]);
     addTearDown(() async {
       process.kill(ProcessSignal.sigkill);
       if (await childFile.exists()) {
-        await Process.run('kill', ['-KILL', (await childFile.readAsString()).trim()]);
+        await Process.run('kill', [
+          '-KILL',
+          (await childFile.readAsString()).trim(),
+        ]);
       }
       await directory.delete(recursive: true);
     });
-    final lines = StreamIterator(process.stdout.transform(utf8.decoder).transform(const LineSplitter()));
+    final lines = StreamIterator(
+      process.stdout.transform(utf8.decoder).transform(const LineSplitter()),
+    );
     expect(await lines.moveNext().timeout(const Duration(seconds: 5)), isTrue);
     expect(lines.current, 'ready');
     process.stdin.writeln('stop');
@@ -79,5 +92,4 @@ if read_regression_stop "$leader"; then echo stopped:0; else echo stopped:1; fi
     expect((await Process.run('kill', ['-0', child])).exitCode, isNot(0));
     await lines.cancel();
   });
-
 }
