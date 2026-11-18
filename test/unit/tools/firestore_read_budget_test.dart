@@ -23,6 +23,7 @@ void main() {
     final rule = ReadBudget.parse(budget(2, 10));
     for (final input in [
       [event('start')],
+      [event('start'), event('end')],
       [event('start'), {...event('error'), 'error': 'permission-denied'}],
       [event('start', site: 'unknown'), event('initial', site: 'unknown'), event('end', site: 'unknown')],
     ]) {
