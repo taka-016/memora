@@ -57,19 +57,19 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
         locationsCollection
             .where('tripId', isEqualTo: tripEntry.id)
             .where('groupId', isEqualTo: tripEntry.groupId),
-        target: locationsCollection.path,
+        target: 'locations',
       );
       final tasksSnapshot = await context.get(
         tasksCollection
             .where('tripId', isEqualTo: tripEntry.id)
             .where('groupId', isEqualTo: tripEntry.groupId),
-        target: tasksCollection.path,
+        target: 'tasks',
       );
       final itineraryItemsSnapshot = await context.get(
         itineraryItemsCollection
             .where('tripId', isEqualTo: tripEntry.id)
             .where('groupId', isEqualTo: tripEntry.groupId),
-        target: itineraryItemsCollection.path,
+        target: 'itinerary_items',
       );
 
       context.update(
