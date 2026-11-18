@@ -1,4 +1,3 @@
-import 'package:memora/infrastructure/services/firestore_measured_reads.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/member/member_event_dto.dart';
 import 'package:memora/application/queries/member/member_event_query_service.dart';
@@ -36,10 +35,7 @@ class FirestoreMemberEventQueryService implements MemberEventQueryService {
           }
         }
 
-        final snapshot = await query.measuredGet(
-          'firestore_member_event_query_service.01',
-          target: 'member_events',
-        );
+        final snapshot = await query.get();
         results.addAll(
           snapshot.docs.map(FirestoreMemberEventMapper.fromFirestore),
         );

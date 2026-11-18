@@ -1,4 +1,3 @@
-import 'package:memora/infrastructure/services/firestore_measured_reads.dart';
 import 'package:memora/infrastructure/services/firestore_parent_group_id.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/trip/location_dto.dart';
@@ -38,10 +37,7 @@ class FirestoreItineraryItemQueryService implements ItineraryItemQueryService {
         }
       }
 
-      final snapshot = await query.measuredGet(
-        'firestore_itinerary_item_query_service.01',
-        target: 'itinerary_items',
-      );
+      final snapshot = await query.get();
       final items = <ItineraryItemDto>[];
       for (final doc in snapshot.docs) {
         final location = await _getLocation(doc.data()['locationId']);
@@ -68,7 +64,7 @@ class FirestoreItineraryItemQueryService implements ItineraryItemQueryService {
     final locationDoc = await _firestore
         .collection('locations')
         .doc(locationId)
-        .measuredGet('firestore_itinerary_item_query_service.02');
+        .get();
     if (!locationDoc.exists) {
       return null;
     }

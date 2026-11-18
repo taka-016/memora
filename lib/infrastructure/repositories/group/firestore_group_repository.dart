@@ -1,4 +1,3 @@
-import 'package:memora/infrastructure/services/firestore_measured_reads.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/domain/entities/group/group.dart';
 import 'package:memora/domain/entities/group/group_member.dart';
@@ -72,7 +71,7 @@ class FirestoreGroupRepository implements GroupRepository {
     await _firestore.runTransaction<void>((tx) async {
       final ref = _firestore.collection('groups').doc(group.id);
       FirestoreVersionCheck.requireMatch(
-        (await tx.measuredGet('firestore_group_repository.01', ref)).data(),
+        (await tx.get(ref)).data(),
         group.version,
       );
       final changed = ids.where((id) => before[id] != after[id]).toList();
@@ -117,19 +116,12 @@ class FirestoreGroupRepository implements GroupRepository {
     final links = await _firestore
         .collection('group_members')
         .where('groupId', isEqualTo: groupId)
-        .measuredGet(
-          'firestore_group_repository.03',
-          target: 'group_members',
-          options: const GetOptions(source: Source.server),
-        );
+        .get(const GetOptions(source: Source.server));
     final ids = links.docs
         .map((doc) => doc.data()['memberId'] as String)
         .toSet();
     await _firestore.runTransaction<void>((tx) async {
-      final data = (await tx.measuredGet(
-        'firestore_group_repository.02',
-        source,
-      )).data();
+      final data = (await tx.get(source)).data();
       FirestoreVersionCheck.requireMatch(data, expectedVersion);
       final profiles = await _readMembers(tx, ids);
       tx.set(_firestore.collection('deleted_groups').doc(groupId), data!);
@@ -159,10 +151,8 @@ class FirestoreGroupRepository implements GroupRepository {
   ) async {
     final result = <String, Map<String, dynamic>?>{};
     for (final id in ids) {
-      result[id] = (await tx.measuredGet(
-        'firestore_group_repository.04',
-        _firestore.collection('members').doc(id),
-      )).data();
+      result[id] = (await tx.get(_firestore.collection('members').doc(id)))
+          .data();
     }
     return result;
   }

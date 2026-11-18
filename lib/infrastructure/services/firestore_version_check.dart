@@ -1,4 +1,3 @@
-import 'package:memora/infrastructure/services/firestore_measured_reads.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class FirestoreVersionCheck {
@@ -32,10 +31,7 @@ class FirestoreVersionCheck {
     int? expectedVersion,
   ) async {
     await firestore.runTransaction<void>((transaction) async {
-      final snapshot = await transaction.measuredGet(
-        'firestore_version_check.01',
-        reference,
-      );
+      final snapshot = await transaction.get(reference);
       requireMatch(snapshot.data(), expectedVersion);
       transaction.delete(reference);
     });

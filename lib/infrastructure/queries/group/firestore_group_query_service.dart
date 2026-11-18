@@ -1,4 +1,3 @@
-import 'package:memora/infrastructure/services/firestore_measured_reads.dart';
 import 'package:memora/infrastructure/services/firestore_account_permissions_source.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
@@ -30,11 +29,7 @@ class FirestoreGroupQueryService implements GroupQueryService {
 
   @override
   Future<bool> groupExists(String groupId) async =>
-      (await _firestore
-              .collection('groups')
-              .doc(groupId)
-              .measuredGet('firestore_group_query_service.01', _options))
-          .exists;
+      (await _firestore.collection('groups').doc(groupId).get(_options)).exists;
 
   @override
   Future<List<GroupDto>> getGroupsWithMembersByMemberId(
@@ -96,7 +91,7 @@ class FirestoreGroupQueryService implements GroupQueryService {
       final groupSnapshot = await _firestore
           .collection('groups')
           .doc(groupId)
-          .measuredGet('firestore_group_query_service.02', _options);
+          .get(_options);
 
       if (!groupSnapshot.exists) {
         return null;
@@ -139,10 +134,7 @@ class FirestoreGroupQueryService implements GroupQueryService {
         : permissions.memberGroupIds;
     final groups = <GroupDto>[];
     for (final id in ids) {
-      final doc = await _firestore
-          .collection('groups')
-          .doc(id)
-          .measuredGet('firestore_group_query_service.03', _options);
+      final doc = await _firestore.collection('groups').doc(id).get(_options);
       if (doc.exists) groups.add(FirestoreGroupMapper.fromFirestore(doc));
     }
     return groups;
@@ -194,11 +186,7 @@ class FirestoreGroupQueryService implements GroupQueryService {
     final groupMembersSnapshot = await _firestore
         .collection('group_members')
         .where('groupId', isEqualTo: groupId)
-        .measuredGet(
-          'firestore_group_query_service.04',
-          target: 'group_members',
-          options: _options,
-        );
+        .get(_options);
 
     final List<GroupMemberDto> members = [];
 
@@ -207,7 +195,7 @@ class FirestoreGroupQueryService implements GroupQueryService {
       final memberSnapshot = await _firestore
           .collection('members')
           .doc(memberId)
-          .measuredGet('firestore_group_query_service.05', _options);
+          .get(_options);
 
       if (memberSnapshot.exists) {
         members.add(

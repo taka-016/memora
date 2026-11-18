@@ -1,5 +1,3 @@
-import 'package:memora/infrastructure/services/firestore_measured_reads.dart';
-
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -61,10 +59,7 @@ class FirestoreCalendarGroupWatchQueryService
             ? (await firestore
                       .collection('group_members')
                       .where('groupId', isEqualTo: groupId)
-                      .measuredGet(
-                        'firestore_calendar_group_watch_query_service.01',
-                        target: 'group_members',
-                      ))
+                      .get())
                   .docs
             : <QueryDocumentSnapshot<Map<String, dynamic>>>[];
         if (!active || version != generation) return;
@@ -84,9 +79,7 @@ class FirestoreCalendarGroupWatchQueryService
           members[id] = firestore
               .collection('members')
               .doc(id)
-              .measuredSnapshots(
-                'firestore_calendar_group_watch_query_service.02',
-              )
+              .snapshots()
               .listen((member) {
                 if (!active || !members.containsKey(id)) return;
                 receivedMembers[id] = member;
@@ -108,9 +101,7 @@ class FirestoreCalendarGroupWatchQueryService
         parent = firestore
             .collection('groups')
             .doc(groupId)
-            .measuredSnapshots(
-              'firestore_calendar_group_watch_query_service.03',
-            )
+            .snapshots()
             .listen(
               (snapshot) => unawaited(refresh(snapshot)),
               onError: controller.addError,

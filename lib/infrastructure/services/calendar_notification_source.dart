@@ -1,4 +1,3 @@
-import 'package:memora/infrastructure/services/firestore_measured_reads.dart';
 import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/application/models/calendar_event_period.dart';
 import 'package:memora/application/usecases/calendar/watch_calendar_events_usecase.dart';
@@ -98,28 +97,24 @@ class DeviceCalendarNotificationSource implements CalendarNotificationSource {
       final subscriptions = <StreamSubscription<dynamic>>[];
       groupSubscriptions[id] = subscriptions;
       subscriptions.add(
-        firestore!
-            .collection('groups')
-            .doc(id)
-            .measuredSnapshots('calendar_notification_source.01')
-            .listen((doc) {
-              if (closed || !identical(groupSubscriptions[id], subscriptions)) {
-                return;
-              }
-              loadedGroups.add(id);
-              if (doc.exists) {
-                existing.add(id);
-              } else {
-                existing.remove(id);
-                received.remove(id);
-                groupSubscriptions.remove(id);
-                loadedGroups.remove(id);
-                for (final subscription in subscriptions) {
-                  unawaited(subscription.cancel());
-                }
-              }
-              publish();
-            }, onError: error),
+        firestore!.collection('groups').doc(id).snapshots().listen((doc) {
+          if (closed || !identical(groupSubscriptions[id], subscriptions)) {
+            return;
+          }
+          loadedGroups.add(id);
+          if (doc.exists) {
+            existing.add(id);
+          } else {
+            existing.remove(id);
+            received.remove(id);
+            groupSubscriptions.remove(id);
+            loadedGroups.remove(id);
+            for (final subscription in subscriptions) {
+              unawaited(subscription.cancel());
+            }
+          }
+          publish();
+        }, onError: error),
       );
       subscriptions.add(
         watcher.execute(id, period: period).listen((events) {
@@ -193,7 +188,7 @@ class DeviceCalendarNotificationSource implements CalendarNotificationSource {
           firestore!
               .collection('account_permissions')
               .doc(uid)
-              .measuredSnapshots('calendar_notification_source.02')
+              .snapshots()
               .listen((_) {
                 unawaited(updateGroups());
               }, onError: error),

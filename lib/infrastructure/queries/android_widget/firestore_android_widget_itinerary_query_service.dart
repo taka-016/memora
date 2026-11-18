@@ -1,4 +1,3 @@
-import 'package:memora/infrastructure/services/firestore_measured_reads.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/queries/android_widget/android_widget_itinerary_query_service.dart';
@@ -35,10 +34,7 @@ class FirestoreAndroidWidgetItineraryQueryService
       final rows = await query
           .orderBy('startDateTime', descending: before)
           .limit(1)
-          .measuredGet(
-            'firestore_android_widget_itinerary_query_service.01',
-            target: 'itinerary_items',
-          );
+          .get();
       if (rows.docs.isEmpty) continue;
       final date = (rows.docs.single.data()['startDateTime'] as Timestamp)
           .toDate();
@@ -56,10 +52,7 @@ class FirestoreAndroidWidgetItineraryQueryService
       (await firestore
               .collection('trip_entries')
               .where('groupId', isEqualTo: groupId)
-              .measuredGet(
-                'firestore_android_widget_itinerary_query_service.02',
-                target: 'trip_entries',
-              ))
+              .get())
           .docs;
 
   @override
@@ -75,10 +68,7 @@ class FirestoreAndroidWidgetItineraryQueryService
           )
           .where('startDateTime', isLessThan: Timestamp.fromDate(to))
           .orderBy('startDateTime')
-          .measuredGet(
-            'firestore_android_widget_itinerary_query_service.03',
-            target: 'itinerary_items',
-          );
+          .get();
       if (rows.docs.isEmpty) continue;
       trips.add(
         FirestoreTripEntryMapper.fromFirestore(

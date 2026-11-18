@@ -1,4 +1,3 @@
-import 'package:memora/infrastructure/services/firestore_measured_reads.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/queries/order_by.dart';
 
@@ -14,10 +13,7 @@ Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> firestoreDvcChildren(
       : (await firestore
                 .collection('dvc_point_contracts')
                 .where('groupId', isEqualTo: groupId)
-                .measuredGet(
-                  'firestore_dvc_children_query.01',
-                  target: 'dvc_point_contracts',
-                ))
+                .get())
             .docs
             .map((doc) => doc.id)
             .toList();
@@ -30,12 +26,7 @@ Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> firestoreDvcChildren(
     for (final order in orderBy ?? const <OrderBy>[]) {
       query = query.orderBy(order.field, descending: order.descending);
     }
-    docs.addAll(
-      (await query.measuredGet(
-        'firestore_dvc_children_query.02',
-        target: collection,
-      )).docs,
-    );
+    docs.addAll((await query.get()).docs);
   }
   if (orderBy != null) {
     docs.sort((a, b) {

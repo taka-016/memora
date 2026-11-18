@@ -1,5 +1,3 @@
-import 'package:memora/infrastructure/services/firestore_measured_reads.dart';
-
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -44,7 +42,7 @@ class DeviceCalendarMembershipSource {
         subscriptions[id] = firestore!
             .collection('groups')
             .doc(id)
-            .measuredSnapshots('device_calendar_membership_source.01')
+            .snapshots()
             .listen((_) {
               if (!closed && subscriptions.containsKey(id)) {
                 controller.add(null);
@@ -59,7 +57,7 @@ class DeviceCalendarMembershipSource {
         permissions = firestore!
             .collection('account_permissions')
             .doc(ownerId.substring('online:'.length))
-            .measuredSnapshots('device_calendar_membership_source.02')
+            .snapshots()
             .listen(update, onError: controller.addError);
       },
       onCancel: () async {

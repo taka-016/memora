@@ -1,4 +1,3 @@
-import 'package:memora/infrastructure/services/firestore_measured_reads.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/member/member_invitation_dto.dart';
@@ -22,10 +21,7 @@ class FirestoreMemberInvitationQueryService
     final snapshot = await _firestore
         .collection('member_invitations')
         .where('inviteeId', isEqualTo: inviteeId)
-        .measuredGet(
-          'firestore_member_invitation_query_service.01',
-          target: 'member_invitations',
-        );
+        .get();
     return snapshot.docs
         .map(FirestoreMemberInvitationMapper.fromFirestore)
         .toList();
@@ -37,10 +33,7 @@ class FirestoreMemberInvitationQueryService
       final querySnapshot = await _firestore
           .collection('member_invitations')
           .where('inviteeId', isEqualTo: inviteeId)
-          .measuredGet(
-            'firestore_member_invitation_query_service.02',
-            target: 'member_invitations',
-          );
+          .get();
 
       if (querySnapshot.docs.isEmpty) {
         return null;
@@ -67,7 +60,7 @@ class FirestoreMemberInvitationQueryService
       final doc = await _firestore
           .collection('member_invitations')
           .doc(invitationCode)
-          .measuredGet('firestore_member_invitation_query_service.03');
+          .get();
       if (!doc.exists) return null;
       final uid = _accountId();
       if (uid == null) throw StateError('ログインが必要です');

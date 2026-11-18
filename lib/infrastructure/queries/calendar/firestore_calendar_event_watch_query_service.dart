@@ -1,4 +1,3 @@
-import 'package:memora/infrastructure/services/firestore_measured_reads.dart';
 import 'package:memora/infrastructure/queries/calendar/firestore_calendar_event_queries.dart';
 import 'package:memora/application/models/calendar_event_period.dart';
 
@@ -99,50 +98,44 @@ class FirestoreCalendarEventWatchQueryService
         for (var index = 0; index < queries.length; index++) {
           final bucket = index;
           subscriptions.add(
-            queries[index]
-                .measuredSnapshots(
-                  'firestore_calendar_event_watch_query_service.01',
-                  target: 'calendar_events',
-                )
-                .listen(
-                  (snapshot) async {
-                    final current = ++generation;
-                    try {
-                      final pending =
-                          received[bucket] ??
-                          <String, Future<CalendarEventDto>>{};
-                      for (final change in snapshot.docChanges) {
-                        if (change.type == DocumentChangeType.removed) {
-                          pending.remove(change.doc.id);
-                        } else {
-                          pending[change.doc.id] = store.read(
-                            change.doc,
-                            period: period,
-                          );
-                        }
-                      }
-                      received[bucket] = pending;
-                      await Future.wait(pending.values);
-                      if (cancelled) return;
-                      if (received.any((value) => value == null)) return;
-                      final combined = <String, Future<CalendarEventDto>>{
-                        for (final values in received) ...values!,
-                      };
-                      final events = await Future.wait(combined.values);
-                      if (!cancelled && current == generation) {
-                        controller.add(events);
-                      }
-                    } catch (error, stack) {
-                      if (!cancelled && current == generation) {
-                        controller.addError(error, stack);
-                      }
+            queries[index].snapshots().listen(
+              (snapshot) async {
+                final current = ++generation;
+                try {
+                  final pending =
+                      received[bucket] ?? <String, Future<CalendarEventDto>>{};
+                  for (final change in snapshot.docChanges) {
+                    if (change.type == DocumentChangeType.removed) {
+                      pending.remove(change.doc.id);
+                    } else {
+                      pending[change.doc.id] = store.read(
+                        change.doc,
+                        period: period,
+                      );
                     }
-                  },
-                  onError: (Object error, StackTrace stack) {
-                    generation++;
-                    if (!cancelled) controller.addError(error, stack);
-                  },
-                ),
+                  }
+                  received[bucket] = pending;
+                  await Future.wait(pending.values);
+                  if (cancelled) return;
+                  if (received.any((value) => value == null)) return;
+                  final combined = <String, Future<CalendarEventDto>>{
+                    for (final values in received) ...values!,
+                  };
+                  final events = await Future.wait(combined.values);
+                  if (!cancelled && current == generation) {
+                    controller.add(events);
+                  }
+                } catch (error, stack) {
+                  if (!cancelled && current == generation) {
+                    controller.addError(error, stack);
+                  }
+                }
+              },
+              onError: (Object error, StackTrace stack) {
+                generation++;
+                if (!cancelled) controller.addError(error, stack);
+              },
+            ),
           );
         }
       },

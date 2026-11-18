@@ -1,4 +1,3 @@
-import 'package:memora/infrastructure/services/firestore_measured_reads.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/models/app_availability.dart';
 import 'package:memora/application/services/app_availability_source.dart';
@@ -12,10 +11,7 @@ class FirestoreAppAvailabilitySource implements AppAvailabilitySource {
   Future<AppAvailabilitySettings> load() async {
     final snapshot = await _firestore
         .doc('app_settings/availability')
-        .measuredGet(
-          'firestore_app_availability_source.01',
-          const GetOptions(source: Source.server),
-        )
+        .get(const GetOptions(source: Source.server))
         .timeout(const Duration(seconds: 10));
     final data = snapshot.data();
     if (data == null) {

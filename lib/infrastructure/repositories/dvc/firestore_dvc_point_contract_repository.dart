@@ -1,4 +1,3 @@
-import 'package:memora/infrastructure/services/firestore_measured_reads.dart';
 import 'package:memora/infrastructure/services/firestore_parent_group_id.dart';
 import 'package:memora/infrastructure/services/firestore_version_check.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -46,10 +45,7 @@ class FirestoreDvcPointContractRepository
     final collection = _firestore.collection('dvc_point_contracts');
     final existing = await collection
         .where('groupId', isEqualTo: groupId)
-        .measuredGet(
-          'firestore_dvc_point_contract_repository.01',
-          target: 'dvc_point_contracts',
-        );
+        .get();
     final retainedIds = contracts.map((v) => v.id).toSet();
     final deleted = existing.docs
         .where((v) => !retainedIds.contains(v.id))
@@ -59,10 +55,7 @@ class FirestoreDvcPointContractRepository
     }
     await _firestore.runTransaction<void>((transaction) async {
       for (final doc in deleted) {
-        final current = await transaction.measuredGet(
-          'firestore_dvc_point_contract_repository.02',
-          doc.reference,
-        );
+        final current = await transaction.get(doc.reference);
         FirestoreVersionCheck.requireMatch(
           current.data(),
           expectedVersions[doc.id],
@@ -106,10 +99,7 @@ class FirestoreDvcPointContractRepository
           .where('contractId', isEqualTo: contractId)
           .where('groupId', isEqualTo: scope)
           .limit(1)
-          .measuredGet(
-            'firestore_dvc_point_contract_repository.03',
-            target: name,
-          );
+          .get();
       if (children.docs.isNotEmpty) {
         throw StateError('利用履歴・期間限定ポイントがある契約は削除できません');
       }
@@ -134,10 +124,7 @@ class FirestoreDvcPointContractRepository
     final snapshot = await _firestore
         .collection('dvc_point_contracts')
         .where('groupId', isEqualTo: groupId)
-        .measuredGet(
-          'firestore_dvc_point_contract_repository.04',
-          target: 'dvc_point_contracts',
-        );
+        .get();
     await saveDvcPointContracts(
       groupId,
       [],

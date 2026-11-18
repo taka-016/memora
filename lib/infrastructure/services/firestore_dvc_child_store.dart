@@ -1,4 +1,3 @@
-import 'package:memora/infrastructure/services/firestore_measured_reads.dart';
 import 'package:memora/infrastructure/queries/dvc/firestore_dvc_children_query.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/infrastructure/mappers/firestore_write_metadata.dart';
@@ -36,15 +35,9 @@ class FirestoreDvcChildStore {
   Future<void> delete(String id, int? expectedVersion) async {
     final child = _firestore.collection(_collection).doc(id);
     await _firestore.runTransaction<void>((transaction) async {
-      final childSnapshot = await transaction.measuredGet(
-        'firestore_dvc_child_store.01',
-        child,
-      );
+      final childSnapshot = await transaction.get(child);
       final contract = _contract(childSnapshot.data()!['contractId'] as String);
-      final parent = await transaction.measuredGet(
-        'firestore_dvc_child_store.02',
-        contract,
-      );
+      final parent = await transaction.get(contract);
       FirestoreVersionCheck.requireMatch(parent.data(), expectedVersion);
       transaction.update(contract, _nextVersion(expectedVersion));
       transaction.delete(child);
@@ -63,10 +56,7 @@ class FirestoreDvcChildStore {
     final expected = <String, int?>{};
     await _firestore.runTransaction<void>((transaction) async {
       for (final id in contractIds) {
-        final parent = await transaction.measuredGet(
-          'firestore_dvc_child_store.03',
-          _contract(id),
-        );
+        final parent = await transaction.get(_contract(id));
         final version = expected.putIfAbsent(
           id,
           () => parent.data()?['version'] as int?,

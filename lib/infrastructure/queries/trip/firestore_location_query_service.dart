@@ -1,4 +1,3 @@
-import 'package:memora/infrastructure/services/firestore_measured_reads.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/trip/location_dto.dart';
 import 'package:memora/application/queries/trip/location_query_service.dart';
@@ -17,20 +16,14 @@ class FirestoreLocationQueryService implements LocationQueryService {
       final parents = await _firestore
           .collection('trip_entries')
           .where('groupId', isEqualTo: groupId)
-          .measuredGet(
-            'firestore_location_query_service.01',
-            target: 'trip_entries',
-          );
+          .get();
       final result = <LocationDto>[];
       for (final parent in parents.docs) {
         final snapshot = await _firestore
             .collection('locations')
             .where('groupId', isEqualTo: groupId)
             .where('tripId', isEqualTo: parent.id)
-            .measuredGet(
-              'firestore_location_query_service.02',
-              target: 'locations',
-            );
+            .get();
         result.addAll(snapshot.docs.map(FirestoreLocationMapper.fromFirestore));
       }
       return result;

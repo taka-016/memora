@@ -38,15 +38,7 @@ val resolvedAppMode = when (requestedAppMode) {
     )
 }
 
-val isFirestoreReadRegression = project.findProperty("dart-defines")
-    ?.toString()?.split(",")?.any { encoded ->
-        runCatching {
-            String(Base64.getDecoder().decode(encoded), Charsets.UTF_8) ==
-                "MEMORA_FIRESTORE_READ_REGRESSION=true"
-        }.getOrDefault(false)
-    } ?: false
-
-if (resolvedAppMode == "online" && !isFirestoreReadRegression) {
+if (resolvedAppMode == "online") {
     apply(plugin = "com.google.gms.google-services")
 }
 

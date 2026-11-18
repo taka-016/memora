@@ -1,4 +1,3 @@
-import 'package:memora/infrastructure/services/firestore_measured_reads.dart';
 import 'package:memora/infrastructure/services/firestore_version_check.dart';
 import 'package:memora/infrastructure/repositories/firestore_write_context.dart';
 import 'package:memora/infrastructure/services/firestore_deleted_parent_store.dart';
@@ -47,10 +46,7 @@ class FirestoreMemberRepository implements MemberRepository {
   Future<void> deleteMember(String memberId, {int? expectedVersion}) async {
     final source = _firestore.collection('members').doc(memberId);
     await _firestore.runTransaction<void>((transaction) async {
-      final snapshot = await transaction.measuredGet(
-        'firestore_member_repository.01',
-        source,
-      );
+      final snapshot = await transaction.get(source);
       final data = snapshot.data();
       FirestoreVersionCheck.requireMatch(data, expectedVersion);
       final context = FirestoreTransactionWriteContext(

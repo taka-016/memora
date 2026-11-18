@@ -1,13 +1,11 @@
-import 'package:memora/infrastructure/services/firestore_measured_reads.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 abstract class FirestoreWriteContext {
   CollectionReference<Map<String, dynamic>> collection(String path);
 
   Future<QuerySnapshot<Map<String, dynamic>>> get(
-    Query<Map<String, dynamic>> query, {
-    String? target,
-  });
+    Query<Map<String, dynamic>> query,
+  );
 
   Future<DocumentSnapshot<Map<String, dynamic>>> getDocument(
     DocumentReference<Map<String, dynamic>> reference,
@@ -44,19 +42,15 @@ class FirestoreBatchWriteContext implements FirestoreWriteContext {
 
   @override
   Future<QuerySnapshot<Map<String, dynamic>>> get(
-    Query<Map<String, dynamic>> query, {
-    String? target,
-  }) {
-    return query.measuredGet(
-      'firestore_write_context.01',
-      target: target ?? '',
-    );
+    Query<Map<String, dynamic>> query,
+  ) {
+    return query.get();
   }
 
   @override
   Future<DocumentSnapshot<Map<String, dynamic>>> getDocument(
     DocumentReference<Map<String, dynamic>> reference,
-  ) => reference.measuredGet('firestore_write_context.02');
+  ) => reference.get();
 
   @override
   void set(
@@ -107,19 +101,15 @@ class FirestoreTransactionWriteContext implements FirestoreWriteContext {
 
   @override
   Future<QuerySnapshot<Map<String, dynamic>>> get(
-    Query<Map<String, dynamic>> query, {
-    String? target,
-  }) {
-    return query.measuredGet(
-      'firestore_write_context.03',
-      target: target ?? '',
-    );
+    Query<Map<String, dynamic>> query,
+  ) {
+    return query.get();
   }
 
   @override
   Future<DocumentSnapshot<Map<String, dynamic>>> getDocument(
     DocumentReference<Map<String, dynamic>> reference,
-  ) => _transaction.measuredGet('firestore_write_context.04', reference);
+  ) => _transaction.get(reference);
 
   @override
   void set(
