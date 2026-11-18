@@ -146,6 +146,14 @@ just emulator-stop
 
 環境検証用の`just test-emulator`も終了時にエミュレータを停止します。
 
+### Firestore読み取り回帰テストの準備
+
+上記のDocker・KVM・ADB環境に加え、Firebase CLIとJava 21以上のJREを用意し、`MEMORA_FIREBASE_JAVA_HOME`にそのインストール先を指定してください。Androidビルド用の`JAVA_HOME`とは分けて指定できます。初回はAndroidエミュレータのイメージ作成とFirebase Emulatorのダウンロードが必要です。ポート4400・4500・8080・9099・9151・8765は空けてください。
+
+テスト設定は[`test/fixtures/firestore_read_regression/`](test/fixtures/firestore_read_regression/)の`datasets`・`scenarios`・`budgets`にあるJSONを編集します。使用データと操作パラメータ・期待結果はシナリオ、取得上限と算出根拠は予算へ記載します。入力形式は同フォルダの既存JSONと[ローダー](scripts/test/firestore_reads/fixture.dart)を参照してください。実行結果は`build/firestore_read_regression/`に保存されます。
+
+現在の対象は`baseline-queries`の取得経路です。画面操作・通知・ウィジェットを含む全機能の対応範囲は[ToDo](project_docs/todo.md)で管理します。
+
 ## ライセンス
 
 このプロジェクトはGNU Affero General Public License v3.0（AGPL-3.0）の下で公開されています。  
