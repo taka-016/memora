@@ -34,7 +34,7 @@ void main() {
         ),
       ),
     );
-    await tester.tap(find.byType(DropdownButton<String>));
+    await tester.tap(find.byType(DropdownMenu<String>));
     await tester.pumpAndSettle();
     await tester.tap(find.text('非表示グループ').last);
     await tester.pumpAndSettle();
@@ -55,7 +55,7 @@ void main() {
           .visibleGroupIds,
       isEmpty,
     );
-    await tester.tap(find.byType(DropdownButton<String>));
+    await tester.tap(find.byType(DropdownMenu<String>));
     await tester.pumpAndSettle();
     await tester.tap(find.text('未設定').last);
     await tester.pumpAndSettle();

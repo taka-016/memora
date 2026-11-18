@@ -251,16 +251,19 @@ class _ContractForm extends StatelessWidget {
           children: [
             const Expanded(child: Text('ユースイヤー開始月')),
             const SizedBox(width: 16),
-            DropdownButton<int>(
-              value: contract.useYearStartMonth,
-              items: List.generate(
-                12,
-                (index) => DropdownMenuItem(
-                  value: index + 1,
-                  child: Text('${index + 1}月'),
-                ),
+            DropdownMenu<int>(
+              selectOnly: true,
+              menuStyle: const MenuStyle(
+                alignment: AlignmentDirectional.bottomStart,
               ),
-              onChanged: (value) {
+              requestFocusOnTap: false,
+              initialSelection: contract.useYearStartMonth,
+              dropdownMenuEntries: List.generate(
+                12,
+                (index) =>
+                    DropdownMenuEntry(value: index + 1, label: '${index + 1}月'),
+              ),
+              onSelected: (value) {
                 if (value == null) {
                   return;
                 }

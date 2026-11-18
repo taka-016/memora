@@ -76,7 +76,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     await calendarTapVisible(tester, find.text('回数指定').last);
-    await tester.pump();
+    await tester.pumpAndSettle();
     await tester.enterText(find.widgetWithText(TextFormField, '回数'), '10');
     await tester.ensureVisible(find.text('決定').last);
     await calendarTapVisible(tester, find.text('決定').last);
@@ -372,7 +372,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     await calendarTapVisible(tester, find.text('終了日指定').last);
-    await tester.pump();
+    await tester.pumpAndSettle();
     final until = find.descendant(
       of: find.widgetWithText(AlertDialog, 'カスタムの繰り返し'),
       matching: find.textContaining('終了日:'),

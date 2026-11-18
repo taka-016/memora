@@ -61,9 +61,7 @@ void main() {
       expect(find.textContaining('クラウド'), findsNothing);
       for (final entry in {
         'カレンダー': find.text('予定の通知設定'),
-        'Androidウィジェット': find.byType(
-          DropdownButtonFormField<AndroidWidgetUpdateInterval>,
-        ),
+        'Androidウィジェット': find.byType(DropdownMenu<AndroidWidgetUpdateInterval>),
         '表示': find.byKey(const Key('theme_mode_setting')),
       }.entries) {
         await tester.scrollUntilVisible(
@@ -73,12 +71,12 @@ void main() {
         );
         await tester.pumpAndSettle();
         expect(entry.value.hitTestable(), findsOneWidget);
-        await tester.ensureVisible(find.bySemanticsLabel(entry.key));
-        await tester.tap(find.bySemanticsLabel(entry.key));
+        await tester.ensureVisible(find.text(entry.key));
+        await tester.tap(find.text(entry.key));
         await tester.pumpAndSettle();
         expect(entry.value.hitTestable(), findsNothing);
-        await tester.ensureVisible(find.bySemanticsLabel(entry.key));
-        await tester.tap(find.bySemanticsLabel(entry.key));
+        await tester.ensureVisible(find.text(entry.key));
+        await tester.tap(find.text(entry.key));
         await tester.pumpAndSettle();
         expect(entry.value.hitTestable(), findsOneWidget);
       }
@@ -103,13 +101,13 @@ void main() {
         scrollable: find.byType(Scrollable).first,
       );
       await tester.pumpAndSettle();
-      expect(find.text('端末設定に従う'), findsOneWidget);
+      expect(find.text('端末設定に従う').hitTestable(), findsOneWidget);
       for (final label in ['ダーク', 'ライト', '端末設定に従う', 'ダーク']) {
         await tester.tap(find.byKey(const Key('theme_mode_setting')));
         await tester.pumpAndSettle();
         await tester.tap(find.text(label).last);
         await tester.pumpAndSettle();
-        expect(find.text(label), findsOneWidget);
+        expect(find.text(label).hitTestable(), findsOneWidget);
       }
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pumpWidget(app());
@@ -120,7 +118,7 @@ void main() {
         scrollable: find.byType(Scrollable).first,
       );
       await tester.pumpAndSettle();
-      expect(find.text('ダーク'), findsOneWidget);
+      expect(find.text('ダーク').hitTestable(), findsOneWidget);
     });
 
     testWidgets('オフラインモードでは手動バックアップと復元不能条件を案内する', (tester) async {
@@ -253,19 +251,17 @@ void main() {
 
       expect(
         tester
-            .widget<DropdownButtonFormField<String>>(
-              find.byType(DropdownButtonFormField<String>),
-            )
-            .onChanged,
-        isNull,
+            .widget<DropdownMenu<String?>>(find.byType(DropdownMenu<String?>))
+            .enabled,
+        isFalse,
       );
       expect(
         tester
-            .widget<DropdownButtonFormField<AndroidWidgetUpdateInterval>>(
-              find.byType(DropdownButtonFormField<AndroidWidgetUpdateInterval>),
+            .widget<DropdownMenu<AndroidWidgetUpdateInterval>>(
+              find.byType(DropdownMenu<AndroidWidgetUpdateInterval>),
             )
-            .onChanged,
-        isNull,
+            .enabled,
+        isFalse,
       );
       restoreUsecase.blocker!.complete();
       await tester.pumpAndSettle();
@@ -373,7 +369,7 @@ void main() {
 
       expect(_selectedDropdownValue(tester), 'group-a');
 
-      await tester.tap(find.byType(DropdownButtonFormField<String>));
+      await tester.tap(find.byType(DropdownMenu<String?>));
       await tester.pumpAndSettle();
 
       await tester.tap(find.text('グループB').last);
@@ -422,7 +418,7 @@ void main() {
 
       expect(_selectedDropdownValue(tester), 'group-a');
 
-      await tester.tap(find.byType(DropdownButtonFormField<String>));
+      await tester.tap(find.byType(DropdownMenu<String?>));
       await tester.pumpAndSettle();
       await tester.tap(find.text(longGroupName).last);
       await tester.pumpAndSettle();
@@ -459,7 +455,7 @@ void main() {
       expect(_selectedDropdownValue(tester), 'group-a');
       expect(find.text('表示対象を解除'), findsNothing);
 
-      await tester.tap(find.byType(DropdownButtonFormField<String>));
+      await tester.tap(find.byType(DropdownMenu<String?>));
       await tester.pumpAndSettle();
 
       await tester.tap(find.text('未選択').last);
@@ -531,9 +527,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(
-        find.byType(DropdownButtonFormField<AndroidWidgetUpdateInterval>),
-      );
+      await tester.tap(find.byType(DropdownMenu<AndroidWidgetUpdateInterval>));
       await tester.pumpAndSettle();
 
       for (final label in ['1分（検証用）', '5分（検証用）', '15分（検証用）']) {
@@ -563,9 +557,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(
-        find.byType(DropdownButtonFormField<AndroidWidgetUpdateInterval>),
-      );
+      await tester.tap(find.byType(DropdownMenu<AndroidWidgetUpdateInterval>));
       await tester.pumpAndSettle();
       await tester.tap(find.text('6時間').last);
       await tester.pumpAndSettle();
@@ -668,7 +660,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byType(DropdownButtonFormField<String>));
+      await tester.tap(find.byType(DropdownMenu<String?>));
       await tester.pumpAndSettle();
       await tester.tap(find.text('グループB').last);
       await tester.pumpAndSettle();
@@ -697,9 +689,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(
-        find.byType(DropdownButtonFormField<AndroidWidgetUpdateInterval>),
-      );
+      await tester.tap(find.byType(DropdownMenu<AndroidWidgetUpdateInterval>));
       await tester.pumpAndSettle();
       await tester.tap(find.text('6時間').last);
       await tester.pumpAndSettle();
@@ -763,21 +753,14 @@ Widget _buildTestApp({
       if (restoreUsecase != null)
         restoreOfflineBackupUsecaseProvider.overrideWithValue(restoreUsecase),
     ],
-    child: MaterialApp(
-      theme: ThemeData(
-        buttonTheme: const ButtonThemeData(alignedDropdown: true),
-      ),
-      home: home ?? const Settings(),
-    ),
+    child: MaterialApp(home: home ?? const Settings()),
   );
 }
 
 String? _selectedDropdownValue(WidgetTester tester) {
   return tester
-      .widget<DropdownButtonFormField<String>>(
-        find.byType(DropdownButtonFormField<String>),
-      )
-      .initialValue;
+      .widget<DropdownMenu<String?>>(find.byType(DropdownMenu<String?>))
+      .initialSelection;
 }
 
 class _FakeGroupQueryService implements GroupQueryService {

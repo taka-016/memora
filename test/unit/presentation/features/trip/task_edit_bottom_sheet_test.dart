@@ -111,13 +111,13 @@ void main() {
       final parentDropdown = find.byKey(const Key('parent_task_dropdown'));
       expect(
         tester
-            .widget<DropdownButtonFormField<String?>>(assignedDropdown)
+            .widget<DropdownMenuFormField<String?>>(assignedDropdown)
             .initialValue,
         isNull,
       );
       expect(
         tester
-            .widget<DropdownButtonFormField<String?>>(parentDropdown)
+            .widget<DropdownMenuFormField<String?>>(parentDropdown)
             .initialValue,
         isNull,
       );
@@ -269,16 +269,10 @@ void main() {
         },
       );
 
-      final parentDropdown = find.byWidgetPredicate(
-        (widget) =>
-            widget is DropdownButtonFormField<String?> &&
-            widget.decoration.labelText == '親タスク',
-      );
+      final parentDropdown = find.widgetWithText(DropdownMenu<String?>, '親タスク');
       expect(
-        tester
-            .widget<DropdownButtonFormField<String?>>(parentDropdown)
-            .onChanged,
-        isNull,
+        tester.widget<DropdownMenu<String?>>(parentDropdown).enabled,
+        isFalse,
       );
       expect(find.text('子タスクがあるため親タスクは変更できません'), findsOneWidget);
 

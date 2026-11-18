@@ -528,46 +528,47 @@ class Settings extends ConsumerWidget {
       );
     }
 
-    return DropdownButtonFormField<AndroidWidgetUpdateInterval>(
+    return DropdownMenuFormField<AndroidWidgetUpdateInterval>(
+      selectOnly: true,
+      menuStyle: const MenuStyle(alignment: AlignmentDirectional.bottomStart),
+      requestFocusOnTap: false,
+      expandedInsets: EdgeInsets.zero,
       key: ValueKey((setting.interval, setting.operationRevision)),
-      initialValue: setting.interval,
-      decoration: const InputDecoration(
-        labelText: '更新間隔',
-        border: OutlineInputBorder(),
-      ),
-      items: AndroidWidgetUpdateInterval.values
+      initialSelection: setting.interval,
+      label: const Text('更新間隔'),
+      decorationBuilder: (context, controller) =>
+          const InputDecoration(border: OutlineInputBorder()),
+      dropdownMenuEntries: AndroidWidgetUpdateInterval.values
           .map(
-            (interval) => DropdownMenuItem<AndroidWidgetUpdateInterval>(
+            (interval) => DropdownMenuEntry<AndroidWidgetUpdateInterval>(
               value: interval,
-              child: Text(interval.label),
+              label: interval.label,
             ),
           )
           .toList(),
-      onChanged: setting.isSaving || backupIsWorking
-          ? null
-          : (interval) async {
-              if (interval == null) {
-                return;
-              }
-              try {
-                final saved = await ref
-                    .read(androidWidgetUpdateIntervalProvider.notifier)
-                    .save(interval);
-                if (!saved || !context.mounted) {
-                  return;
-                }
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('ウィジェット更新間隔を保存しました')),
-                );
-              } catch (_) {
-                if (!context.mounted) {
-                  return;
-                }
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('ウィジェット更新間隔を保存できませんでした')),
-                );
-              }
-            },
+      enabled: !(setting.isSaving || backupIsWorking),
+      onSelected: (interval) async {
+        if (interval == null) {
+          return;
+        }
+        try {
+          final saved = await ref
+              .read(androidWidgetUpdateIntervalProvider.notifier)
+              .save(interval);
+          if (!saved || !context.mounted) {
+            return;
+          }
+          ScaffoldMessenger.of(context)
+              .showSnackBar(const SnackBar(content: Text('ウィジェット更新間隔を保存しました')));
+        } catch (_) {
+          if (!context.mounted) {
+            return;
+          }
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('ウィジェット更新間隔を保存できませんでした')),
+          );
+        }
+      },
     );
   }
 
@@ -617,24 +618,27 @@ class Settings extends ConsumerWidget {
       return const Text('所属グループがありません');
     }
 
-    return DropdownButtonFormField<String>(
+    return DropdownMenuFormField<String?>(
+      selectOnly: true,
+      menuStyle: const MenuStyle(alignment: AlignmentDirectional.bottomStart),
+      requestFocusOnTap: false,
+      expandedInsets: EdgeInsets.zero,
       key: ValueKey((
         member.id,
         setting.selectedGroupId,
         setting.operationRevision,
       )),
-      initialValue: setting.selectedGroupId,
-      isExpanded: true,
-      decoration: const InputDecoration(
-        labelText: '旅程ウィジェットの表示対象グループ',
-        border: OutlineInputBorder(),
-      ),
-      items: [
-        const DropdownMenuItem<String>(value: null, child: Text('未選択')),
+      initialSelection: setting.selectedGroupId,
+      label: const Text('旅程ウィジェットの表示対象グループ'),
+      decorationBuilder: (context, controller) =>
+          const InputDecoration(border: OutlineInputBorder()),
+      dropdownMenuEntries: [
+        const DropdownMenuEntry<String?>(value: null, label: '未選択'),
         ...setting.groups.map(
-          (group) => DropdownMenuItem<String>(
+          (group) => DropdownMenuEntry<String>(
             value: group.id,
-            child: Text(
+            label: group.name,
+            labelWidget: Text(
               group.name,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -642,13 +646,12 @@ class Settings extends ConsumerWidget {
           ),
         ),
       ],
-      onChanged: setting.isSaving || backupIsWorking
-          ? null
-          : (groupId) => _saveTargetGroupSelection(
-              context,
-              ref.read(provider.notifier),
-              groupId,
-            ),
+      enabled: !(setting.isSaving || backupIsWorking),
+      onSelected: (groupId) => _saveTargetGroupSelection(
+        context,
+        ref.read(provider.notifier),
+        groupId,
+      ),
     );
   }
 

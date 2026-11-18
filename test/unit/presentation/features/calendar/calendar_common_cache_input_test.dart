@@ -79,11 +79,8 @@ void main() {
       '入力中の予定',
     );
     tester.testTextInput.hide();
-    final dropdown = find.byWidgetPredicate(
-      (w) =>
-          w is DropdownButtonFormField<String> &&
-          w.decoration.labelText == '色ラベル',
-    );
+    await tester.pumpAndSettle();
+    final dropdown = find.widgetWithText(DropdownMenu<String>, '色ラベル');
     await tester.ensureVisible(dropdown);
     await tester.tap(dropdown);
     await tester.pumpAndSettle();

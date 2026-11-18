@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/models/calendar_display_settings.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_display_settings_notifier.dart';
 
-class CalendarDisplaySetting extends ConsumerWidget {
+class CalendarDisplaySetting extends HookConsumerWidget {
   const CalendarDisplaySetting({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final selectionRevision = useState(0);
     final setting = ref.watch(calendarDisplaySettingsNotifierProvider);
     final value = setting.value;
     if (value == null) {
@@ -34,26 +36,35 @@ class CalendarDisplaySetting extends ConsumerWidget {
         ListTile(
           contentPadding: EdgeInsets.zero,
           title: const Text('週の始まり'),
-          trailing: DropdownButton<CalendarWeekStart>(
+          trailing: KeyedSubtree(
             key: const Key('calendar_week_start_setting'),
-            value: value.settings.weekStart,
-            items: const [
-              DropdownMenuItem(
-                value: CalendarWeekStart.sunday,
-                child: Text('日曜日'),
+            child: DropdownMenu<CalendarWeekStart>(
+              width: 150,
+              selectOnly: true,
+              menuStyle: const MenuStyle(
+                alignment: AlignmentDirectional.bottomStart,
               ),
-              DropdownMenuItem(
-                value: CalendarWeekStart.monday,
-                child: Text('月曜日'),
-              ),
-            ],
-            onChanged: value.isSaving
-                ? null
-                : (day) async {
-                    if (day != null) {
-                      await save(value.settings.copyWith(weekStart: day));
-                    }
-                  },
+              requestFocusOnTap: false,
+              key: ValueKey(selectionRevision.value),
+              initialSelection: value.settings.weekStart,
+              dropdownMenuEntries: const [
+                DropdownMenuEntry(
+                  value: CalendarWeekStart.sunday,
+                  label: '日曜日',
+                ),
+                DropdownMenuEntry(
+                  value: CalendarWeekStart.monday,
+                  label: '月曜日',
+                ),
+              ],
+              enabled: !value.isSaving,
+              onSelected: (day) async {
+                selectionRevision.value++;
+                if (day != null) {
+                  await save(value.settings.copyWith(weekStart: day));
+                }
+              },
+            ),
           ),
         ),
         SwitchListTile(

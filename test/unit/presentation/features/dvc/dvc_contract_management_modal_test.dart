@@ -30,15 +30,15 @@ void main() {
     await tester.tap(find.text('契約管理を開く'));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
-    await tester.ensureVisible(find.byType(DropdownButton<int>));
-    await tester.tap(find.byType(DropdownButton<int>));
+    await tester.ensureVisible(find.byType(DropdownMenu<int>));
+    await tester.tap(find.byType(DropdownMenu<int>));
     await tester.pumpAndSettle();
     await tester.tap(find.text('12月').last);
     await tester.pumpAndSettle();
     expect(
       tester
-          .widget<DropdownButton<int>>(find.byType(DropdownButton<int>))
-          .value,
+          .widget<DropdownMenu<int>>(find.byType(DropdownMenu<int>))
+          .initialSelection,
       12,
     );
     expect(tester.takeException(), isNull);

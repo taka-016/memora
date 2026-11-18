@@ -81,9 +81,11 @@ void main() {
     ) async {
       final values = await pumpEditor(tester, allDay: allDay);
       await tapVisible(tester, find.text('通知'));
-      await tapVisible(tester, find.byType(DropdownButtonFormField<int>));
+      await tapVisible(tester, find.byType(DropdownMenu<int>));
       await tapVisible(tester, find.text(setting.unit).last);
-      final input = find.byType(TextField);
+      final input = find.byWidgetPredicate(
+        (widget) => widget is TextField && !widget.readOnly,
+      );
       await tester.ensureVisible(input);
       await tester.enterText(input, '${setting.maximum + 1}');
       await tapVisible(tester, find.widgetWithText(TextButton, '追加'));

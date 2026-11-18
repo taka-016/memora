@@ -35,6 +35,7 @@ class _DurationInputState extends ConsumerState<_DurationInput>
   late final TextEditingController _controller;
   final _focusNode = FocusNode();
   bool _isInvalid = false;
+  int _selectionRevision = 0;
   late bool _isCustom;
   bool _keyboardWasVisible = false;
   static const _presetMinutes = [5, 15, 30, 45, 60];
@@ -100,14 +101,23 @@ class _DurationInputState extends ConsumerState<_DurationInput>
       ListTile(
         contentPadding: EdgeInsets.zero,
         title: const Text('予定の標準時間'),
-        trailing: DropdownButton<int>(
-          value: _isCustom || !_isPreset(widget.minutes) ? 0 : widget.minutes,
-          items: [
+        trailing: DropdownMenu<int>(
+          width: 150,
+          key: ValueKey((_selectionRevision, widget.minutes)),
+          selectOnly: true,
+          menuStyle: const MenuStyle(
+            alignment: AlignmentDirectional.bottomStart,
+          ),
+          requestFocusOnTap: false,
+          initialSelection: _isCustom || !_isPreset(widget.minutes)
+              ? 0
+              : widget.minutes,
+          dropdownMenuEntries: [
             for (final minutes in _presetMinutes)
-              DropdownMenuItem(value: minutes, child: Text('$minutes分')),
-            const DropdownMenuItem(value: 0, child: Text('その他')),
+              DropdownMenuEntry(value: minutes, label: '$minutes分'),
+            const DropdownMenuEntry(value: 0, label: 'その他'),
           ],
-          onChanged: _select,
+          onSelected: _select,
         ),
       ),
       if (_isCustom || !_isPreset(widget.minutes))
@@ -139,6 +149,7 @@ class _DurationInputState extends ConsumerState<_DurationInput>
     if (minutes == null) return;
     _focusNode.unfocus();
     setState(() {
+      _selectionRevision++;
       _isCustom = minutes == 0;
       _isInvalid = false;
     });

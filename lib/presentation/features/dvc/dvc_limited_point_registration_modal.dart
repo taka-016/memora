@@ -45,20 +45,27 @@ Future<void> showDvcLimitedPointRegistrationModal({
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         if (contracts.isEmpty) const Text('先に契約を登録してください'),
-                        DropdownButtonFormField<String>(
+                        DropdownMenuFormField<String>(
+                          selectOnly: true,
+                          menuStyle: const MenuStyle(
+                            alignment: AlignmentDirectional.bottomStart,
+                          ),
+                          requestFocusOnTap: false,
+                          expandedInsets: EdgeInsets.zero,
                           key: const Key('dvc_limited_contract_field'),
-                          initialValue: contractId,
-                          isExpanded: true,
-                          decoration: const InputDecoration(labelText: '契約'),
-                          items: contracts
+                          initialSelection: contractId,
+                          label: const Text('契約'),
+                          decorationBuilder: (context, controller) =>
+                              const InputDecoration(),
+                          dropdownMenuEntries: contracts
                               .map(
-                                (contract) => DropdownMenuItem(
+                                (contract) => DropdownMenuEntry(
                                   value: contract.id,
-                                  child: Text(contract.contractName),
+                                  label: contract.contractName,
                                 ),
                               )
                               .toList(),
-                          onChanged: (value) => setState(() {
+                          onSelected: (value) => setState(() {
                             contractId = value;
                             validationError = '';
                           }),
