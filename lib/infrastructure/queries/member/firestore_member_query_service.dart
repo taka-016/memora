@@ -1,3 +1,4 @@
+import 'package:memora/infrastructure/services/firestore_measured_reads.dart';
 import 'package:memora/infrastructure/services/firestore_account_permissions_source.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
@@ -30,7 +31,10 @@ class FirestoreMemberQueryService implements MemberQueryService {
   @override
   Future<MemberDto?> getMemberById(String memberId) async {
     try {
-      final doc = await _firestore.collection('members').doc(memberId).get();
+      final doc = await _firestore
+          .collection('members')
+          .doc(memberId)
+          .measuredGet('firestore_member_query_service.01');
       if (doc.exists) {
         return FirestoreMemberMapper.fromFirestore(doc);
       }
@@ -77,7 +81,9 @@ class FirestoreMemberQueryService implements MemberQueryService {
         }
       }
 
-      final snapshot = await query.get();
+      final snapshot = await query.measuredGet(
+        'firestore_member_query_service.02',
+      );
       return snapshot.docs
           .map((doc) => FirestoreMemberMapper.fromFirestore(doc))
           .toList();

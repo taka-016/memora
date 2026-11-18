@@ -1,3 +1,4 @@
+import 'package:memora/infrastructure/services/firestore_measured_reads.dart';
 import 'package:memora/application/models/calendar_event_period.dart';
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -41,7 +42,9 @@ class FirestoreCalendarEventStore {
             .orderBy('originalEndDateTime')
             .orderBy('originalStartDateTime');
       }
-      final snapshot = await query.get();
+      final snapshot = await query.measuredGet(
+        'firestore_calendar_event_store.01',
+      );
       overrides.addAll(
         snapshot.docs.map(
           (doc) => FirestoreCalendarEventOverrideMapper.fromFirestore(
@@ -52,7 +55,8 @@ class FirestoreCalendarEventStore {
       );
     } else if (transaction != null) {
       for (final id in overrideIds(data)) {
-        final doc = await transaction.get(
+        final doc = await transaction.measuredGet(
+          'firestore_calendar_event_store.02',
           firestore.collection('calendar_event_overrides').doc(id),
         );
         final row = doc.data();

@@ -1,3 +1,4 @@
+import 'package:memora/infrastructure/services/firestore_measured_reads.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/dvc/dvc_point_contract_dto.dart';
 import 'package:memora/application/queries/dvc/dvc_point_contract_query_service.dart';
@@ -28,7 +29,9 @@ class FirestoreDvcPointContractQueryService
         }
       }
 
-      final snapshot = await query.get();
+      final snapshot = await query.measuredGet(
+        'firestore_dvc_point_contract_query_service.01',
+      );
       return snapshot.docs
           .map(FirestoreDvcPointContractMapper.fromFirestore)
           .toList();

@@ -1,3 +1,4 @@
+import 'package:memora/infrastructure/services/firestore_measured_reads.dart';
 import 'package:memora/infrastructure/services/firestore_version_check.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/domain/entities/group/group_event.dart';
@@ -40,7 +41,7 @@ class FirestoreGroupEventRepository implements GroupEventRepository {
     final snapshot = await _firestore
         .collection('group_events')
         .where('groupId', isEqualTo: groupId)
-        .get();
+        .measuredGet('firestore_group_event_repository.01');
 
     final batch = _firestore.batch();
     for (final doc in snapshot.docs) {

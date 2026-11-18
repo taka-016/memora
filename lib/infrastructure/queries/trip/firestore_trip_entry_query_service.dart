@@ -1,3 +1,4 @@
+import 'package:memora/infrastructure/services/firestore_measured_reads.dart';
 import 'package:memora/infrastructure/time/ntp_synchronized_app_clock.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
@@ -27,7 +28,10 @@ class FirestoreTripEntryQueryService implements TripEntryQueryService {
     List<OrderBy>? itineraryItemsOrderBy,
   }) async {
     try {
-      final doc = await _firestore.collection('trip_entries').doc(tripId).get();
+      final doc = await _firestore
+          .collection('trip_entries')
+          .doc(tripId)
+          .measuredGet('firestore_trip_entry_query_service.01');
       if (!doc.exists) {
         return null;
       }
@@ -37,7 +41,7 @@ class FirestoreTripEntryQueryService implements TripEntryQueryService {
           .collection('locations')
           .where('tripId', isEqualTo: tripId)
           .where('groupId', isEqualTo: groupId)
-          .get();
+          .measuredGet('firestore_trip_entry_query_service.02');
       final locations = locationsSnapshot.docs
           .map(FirestoreLocationMapper.fromFirestore)
           .toList();
@@ -56,7 +60,9 @@ class FirestoreTripEntryQueryService implements TripEntryQueryService {
         }
       }
 
-      final tasksSnapshot = await tasksQuery.get();
+      final tasksSnapshot = await tasksQuery.measuredGet(
+        'firestore_trip_entry_query_service.03',
+      );
       final tasks = tasksSnapshot.docs
           .map((taskDoc) => FirestoreTaskMapper.fromFirestore(taskDoc))
           .toList();
@@ -79,7 +85,9 @@ class FirestoreTripEntryQueryService implements TripEntryQueryService {
         );
       }
 
-      final itineraryItemsSnapshot = await itineraryItemsQuery.get();
+      final itineraryItemsSnapshot = await itineraryItemsQuery.measuredGet(
+        'firestore_trip_entry_query_service.04',
+      );
       final itineraryItems = itineraryItemsSnapshot.docs
           .map(
             (itineraryItemDoc) =>
@@ -120,7 +128,9 @@ class FirestoreTripEntryQueryService implements TripEntryQueryService {
         }
       }
 
-      final snapshot = await query.get();
+      final snapshot = await query.measuredGet(
+        'firestore_trip_entry_query_service.05',
+      );
       return snapshot.docs
           .map(
             (doc) => FirestoreTripEntryMapper.fromFirestore(
@@ -157,7 +167,9 @@ class FirestoreTripEntryQueryService implements TripEntryQueryService {
         }
       }
 
-      final snapshot = await query.get();
+      final snapshot = await query.measuredGet(
+        'firestore_trip_entry_query_service.06',
+      );
       return snapshot.docs
           .map(
             (doc) => FirestoreTripEntryMapper.fromFirestore(

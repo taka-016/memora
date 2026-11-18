@@ -1,3 +1,4 @@
+import 'package:memora/infrastructure/services/firestore_measured_reads.dart';
 import 'package:memora/infrastructure/queries/calendar/firestore_calendar_event_queries.dart';
 import 'package:memora/application/models/calendar_event_period.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -13,7 +14,7 @@ class FirestoreCalendarEventQueryService implements CalendarEventQueryService {
     final doc = await _firestore
         .collection('calendar_events')
         .doc(eventId)
-        .get();
+        .measuredGet('firestore_calendar_event_query_service.01');
     return doc.exists
         ? FirestoreCalendarEventStore(_firestore).read(doc)
         : null;
@@ -25,11 +26,10 @@ class FirestoreCalendarEventQueryService implements CalendarEventQueryService {
     CalendarEventPeriod? period,
   }) async {
     final snapshots = await Future.wait(
-      calendarEventQueries(
-        _firestore,
-        groupId,
-        period,
-      ).map((query) => query.get()),
+      calendarEventQueries(_firestore, groupId, period).map(
+        (query) =>
+            query.measuredGet('firestore_calendar_event_query_service.02'),
+      ),
     );
     final docs = {
       for (final snapshot in snapshots)

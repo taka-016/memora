@@ -1,3 +1,4 @@
+import 'package:memora/infrastructure/services/firestore_measured_reads.dart';
 import 'package:memora/infrastructure/services/firestore_version_check.dart';
 import 'package:memora/infrastructure/services/calendar_event_content.dart';
 import 'package:memora/application/mappers/calendar/calendar_event_mapper.dart';
@@ -25,7 +26,10 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
   ) async {
     final snapshots = <String, DocumentSnapshot<Map<String, dynamic>>>{};
     for (final id in {...before, ...after}) {
-      final label = await transaction.get(_label(id));
+      final label = await transaction.measuredGet(
+        'firestore_calendar_event_repository.05',
+        _label(id),
+      );
       if (!label.exists || label.data()!['groupId'] != groupId) {
         throw ValidationException('同じグループの色ラベルを指定してください');
       }
@@ -54,7 +58,10 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
     validateCalendarRecurrence(replacement);
     final ref = _firestore.collection('calendar_events').doc(expected.id);
     await _firestore.runTransaction<void>((transaction) async {
-      final snapshot = await transaction.get(ref);
+      final snapshot = await transaction.measuredGet(
+        'firestore_calendar_event_repository.01',
+        ref,
+      );
       FirestoreVersionCheck.requireMatch(snapshot.data(), expected.version);
       final current = CalendarEventMapper.toEntity(
         await _store.read(snapshot, transaction: transaction),
@@ -72,7 +79,10 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
       final after = _references(data);
       final labels = <String, DocumentSnapshot<Map<String, dynamic>>>{};
       for (final id in {...before, ...after}) {
-        final label = await transaction.get(_label(id));
+        final label = await transaction.measuredGet(
+          'firestore_calendar_event_repository.06',
+          _label(id),
+        );
         final groupId = after.contains(id) ? moved.groupId : expected.groupId;
         if (!label.exists || label.data()!['groupId'] != groupId) {
           throw ValidationException('同じグループの色ラベルを指定してください');
@@ -141,7 +151,10 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
         ),
     ];
     await _firestore.runTransaction<void>((transaction) async {
-      final current = await transaction.get(ref);
+      final current = await transaction.measuredGet(
+        'firestore_calendar_event_repository.02',
+        ref,
+      );
       FirestoreVersionCheck.requireMatch(current.data(), expected.version);
       if (!current.exists) {
         throw ValidationException('予定が変更されています。再読み込みしてからやり直してください');
@@ -175,7 +188,10 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
       };
       final snapshots = <String, DocumentSnapshot<Map<String, dynamic>>>{};
       for (final id in ids) {
-        final label = await transaction.get(_label(id));
+        final label = await transaction.measuredGet(
+          'firestore_calendar_event_repository.07',
+          _label(id),
+        );
         if (!label.exists || label.data()!['groupId'] != expected.groupId) {
           throw ValidationException('同じグループの色ラベルを指定してください');
         }
@@ -234,7 +250,10 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
     final ref = _firestore.collection('calendar_events').doc(event.id);
     final data = _store.data(event, ref.id, create: false);
     await _firestore.runTransaction<void>((transaction) async {
-      final existing = await transaction.get(ref);
+      final existing = await transaction.measuredGet(
+        'firestore_calendar_event_repository.03',
+        ref,
+      );
       FirestoreVersionCheck.requireMatch(existing.data(), event.version);
       if (!existing.exists || existing.data()!['groupId'] != event.groupId) {
         throw ValidationException('更新する予定のグループは変更できません');
@@ -269,7 +288,10 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
   }) async {
     final ref = _firestore.collection('calendar_events').doc(eventId);
     await _firestore.runTransaction<void>((transaction) async {
-      final existing = await transaction.get(ref);
+      final existing = await transaction.measuredGet(
+        'firestore_calendar_event_repository.04',
+        ref,
+      );
       FirestoreVersionCheck.requireMatch(existing.data(), expectedVersion);
       await _adjustLabels(
         transaction,

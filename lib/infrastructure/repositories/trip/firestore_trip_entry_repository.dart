@@ -1,3 +1,4 @@
+import 'package:memora/infrastructure/services/firestore_measured_reads.dart';
 import 'package:memora/infrastructure/services/firestore_version_check.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/domain/repositories/trip/trip_entry_repository.dart';
@@ -145,7 +146,7 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
     final tripEntriesSnapshot = await _firestore
         .collection('trip_entries')
         .where('groupId', isEqualTo: groupId)
-        .get();
+        .measuredGet('firestore_trip_entry_repository.01');
     await _runDelete((context) async {
       for (final trip in tripEntriesSnapshot.docs) {
         final current = await context.getDocument(trip.reference);

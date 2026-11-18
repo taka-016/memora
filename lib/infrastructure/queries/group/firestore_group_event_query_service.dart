@@ -1,3 +1,4 @@
+import 'package:memora/infrastructure/services/firestore_measured_reads.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/group/group_event_dto.dart';
 import 'package:memora/application/queries/group/group_event_query_service.dart';
@@ -27,7 +28,9 @@ class FirestoreGroupEventQueryService implements GroupEventQueryService {
         }
       }
 
-      final snapshot = await query.get();
+      final snapshot = await query.measuredGet(
+        'firestore_group_event_query_service.01',
+      );
       return snapshot.docs
           .map(FirestoreGroupEventMapper.fromFirestore)
           .toList();

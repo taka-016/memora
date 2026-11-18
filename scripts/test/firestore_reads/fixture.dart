@@ -140,8 +140,9 @@ class ReadFixture {
         return variables[key].toString();
       });
     }
-    if (value is List)
+    if (value is List) {
       return value.map((v) => _substitute(v, variables)).toList();
+    }
     if (value is Map<String, dynamic>) {
       return value.map((key, v) => MapEntry(key, _substitute(v, variables)));
     }
@@ -154,10 +155,11 @@ class ReadFixture {
     if (value is int) return {'integerValue': value.toString()};
     if (value is double && value.isFinite) return {'doubleValue': value};
     if (value is String) return {'stringValue': value};
-    if (value is List)
+    if (value is List) {
       return {
         'arrayValue': {'values': value.map((v) => _encode(v, paths)).toList()},
       };
+    }
     if (value is Map<String, dynamic>) {
       if (value.containsKey(r'$timestamp')) {
         if (value.length != 1) invalid('日時指定に余分なフィールドがあります');
@@ -167,8 +169,9 @@ class ReadFixture {
       }
       if (value.containsKey(r'$reference')) {
         final path = nonEmpty(value[r'$reference'], 'reference');
-        if (value.length != 1 || !paths.contains(path))
+        if (value.length != 1 || !paths.contains(path)) {
           invalid('参照先がありません: $path');
+        }
         return {'referenceValue': '$readRegressionDocumentRoot/$path'};
       }
       if (value.keys.any((key) => key.startsWith(r'$'))) invalid('未対応の型指定です');

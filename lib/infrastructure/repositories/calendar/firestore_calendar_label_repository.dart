@@ -1,3 +1,4 @@
+import 'package:memora/infrastructure/services/firestore_measured_reads.dart';
 import 'package:memora/infrastructure/services/firestore_version_check.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/domain/entities/calendar/calendar_label.dart';
@@ -22,7 +23,10 @@ class FirestoreCalendarLabelRepository implements CalendarLabelRepository {
     }
     final ref = collection.doc(label.id);
     return _firestore.runTransaction((transaction) async {
-      final existing = await transaction.get(ref);
+      final existing = await transaction.measuredGet(
+        'firestore_calendar_label_repository.01',
+        ref,
+      );
       if (!existing.exists || existing.data()!['groupId'] != label.groupId) {
         throw ValidationException('更新する色ラベルのグループは変更できません');
       }
@@ -46,7 +50,10 @@ class FirestoreCalendarLabelRepository implements CalendarLabelRepository {
         .toList();
     await _firestore.runTransaction<void>((transaction) async {
       for (var index = 0; index < refs.length; index++) {
-        final existing = await transaction.get(refs[index]);
+        final existing = await transaction.measuredGet(
+          'firestore_calendar_label_repository.02',
+          refs[index],
+        );
         if (!existing.exists || existing.data()!['groupId'] != groupId) {
           throw ValidationException('同じグループの色ラベルを指定してください');
         }
@@ -74,7 +81,10 @@ class FirestoreCalendarLabelRepository implements CalendarLabelRepository {
   }) async {
     final ref = _firestore.collection('calendar_labels').doc(labelId);
     await _firestore.runTransaction<void>((transaction) async {
-      final existing = await transaction.get(ref);
+      final existing = await transaction.measuredGet(
+        'firestore_calendar_label_repository.03',
+        ref,
+      );
       FirestoreVersionCheck.requireMatch(existing.data(), expectedVersion);
       if (existing.data()!['eventCount'] != 0) {
         throw ValidationException('使用中の色ラベルは削除できません');

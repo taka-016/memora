@@ -1,3 +1,4 @@
+import 'package:memora/infrastructure/services/firestore_measured_reads.dart';
 import 'package:memora/infrastructure/services/firestore_parent_group_id.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/trip/task_dto.dart';
@@ -35,7 +36,9 @@ class FirestoreTaskQueryService implements TaskQueryService {
         }
       }
 
-      final snapshot = await query.get();
+      final snapshot = await query.measuredGet(
+        'firestore_task_query_service.01',
+      );
       return snapshot.docs.map(FirestoreTaskMapper.fromFirestore).toList();
     } catch (e, stack) {
       logger.e(

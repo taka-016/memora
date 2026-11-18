@@ -1,3 +1,4 @@
+import 'package:memora/infrastructure/services/firestore_measured_reads.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/domain/repositories/member/member_event_repository.dart';
 import 'package:memora/domain/entities/member/member_event.dart';
@@ -20,19 +21,23 @@ class FirestoreMemberEventRepository implements MemberEventRepository {
         .where('groupId', isEqualTo: memberEvent.groupId)
         .where('memberId', isEqualTo: memberEvent.memberId)
         .where('year', isEqualTo: memberEvent.year)
-        .get();
+        .measuredGet('firestore_member_event_repository.01');
     final duplicates = {
       for (final doc in snapshot.docs)
         if (doc.id != docId) doc.id: doc.data()['version'] as int?,
     };
     await _firestore.runTransaction<void>((transaction) async {
-      final current = await transaction.get(target);
+      final current = await transaction.measuredGet(
+        'firestore_member_event_repository.02',
+        target,
+      );
       if (memberEvent.id == docId) {
         FirestoreVersionCheck.requireMatch(current.data(), memberEvent.version);
       } else {
         FirestoreVersionCheck.requireAbsent(current.data());
         if (memberEvent.id.isNotEmpty) {
-          final original = await transaction.get(
+          final original = await transaction.measuredGet(
+            'firestore_member_event_repository.04',
             collection.doc(memberEvent.id),
           );
           FirestoreVersionCheck.requireMatch(
@@ -43,7 +48,10 @@ class FirestoreMemberEventRepository implements MemberEventRepository {
       }
       if (memberEvent.memo.isEmpty) {
         for (final entry in duplicates.entries) {
-          final duplicate = await transaction.get(collection.doc(entry.key));
+          final duplicate = await transaction.measuredGet(
+            'firestore_member_event_repository.05',
+            collection.doc(entry.key),
+          );
           FirestoreVersionCheck.requireMatch(
             duplicate.data(),
             entry.key == memberEvent.id ? memberEvent.version : entry.value,
@@ -69,7 +77,10 @@ class FirestoreMemberEventRepository implements MemberEventRepository {
     if (duplicates.isNotEmpty) {
       await _firestore.runTransaction<void>((transaction) async {
         for (final entry in duplicates.entries) {
-          final duplicate = await transaction.get(collection.doc(entry.key));
+          final duplicate = await transaction.measuredGet(
+            'firestore_member_event_repository.06',
+            collection.doc(entry.key),
+          );
           FirestoreVersionCheck.requireMatch(
             duplicate.data(),
             entry.key == memberEvent.id ? memberEvent.version : entry.value,
@@ -101,7 +112,7 @@ class FirestoreMemberEventRepository implements MemberEventRepository {
     final snapshot = await _firestore
         .collection('member_events')
         .where('memberId', isEqualTo: memberId)
-        .get();
+        .measuredGet('firestore_member_event_repository.03');
     for (final doc in snapshot.docs) {
       batch.delete(doc.reference);
     }

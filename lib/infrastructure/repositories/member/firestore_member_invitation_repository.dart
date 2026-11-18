@@ -1,3 +1,4 @@
+import 'package:memora/infrastructure/services/firestore_measured_reads.dart';
 import 'package:memora/domain/entities/member/member.dart';
 import 'package:memora/infrastructure/services/firestore_version_check.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -20,10 +21,14 @@ class FirestoreMemberInvitationRepository
     final targets = List<MemberInvitation>.unmodifiable(invitations);
     final memberRef = _firestore.collection('members').doc(member.id);
     await _firestore.runTransaction<void>((transaction) async {
-      final currentMember = await transaction.get(memberRef);
+      final currentMember = await transaction.measuredGet(
+        'firestore_member_invitation_repository.01',
+        memberRef,
+      );
       FirestoreVersionCheck.requireMatch(currentMember.data(), member.version);
       for (final invitation in targets) {
-        final current = await transaction.get(
+        final current = await transaction.measuredGet(
+          'firestore_member_invitation_repository.05',
           _firestore.collection('member_invitations').doc(invitation.id),
         );
         FirestoreVersionCheck.requireMatch(current.data(), invitation.version);
@@ -59,7 +64,12 @@ class FirestoreMemberInvitationRepository
         .collection('member_invitations')
         .doc(memberInvitation.invitationCode);
     await _firestore.runTransaction<void>((tx) async {
-      FirestoreVersionCheck.requireAbsent((await tx.get(ref)).data());
+      FirestoreVersionCheck.requireAbsent(
+        (await tx.measuredGet(
+          'firestore_member_invitation_repository.02',
+          ref,
+        )).data(),
+      );
       tx.set(
         ref,
         FirestoreMemberInvitationMapper.toCreateFirestore(memberInvitation),
@@ -77,10 +87,18 @@ class FirestoreMemberInvitationRepository
         .doc(memberInvitation.invitationCode);
     await _firestore.runTransaction<void>((tx) async {
       FirestoreVersionCheck.requireMatch(
-        (await tx.get(old)).data(),
+        (await tx.measuredGet(
+          'firestore_member_invitation_repository.03',
+          old,
+        )).data(),
         memberInvitation.version,
       );
-      FirestoreVersionCheck.requireAbsent((await tx.get(replacement)).data());
+      FirestoreVersionCheck.requireAbsent(
+        (await tx.measuredGet(
+          'firestore_member_invitation_repository.04',
+          replacement,
+        )).data(),
+      );
       tx.delete(old);
       tx.set(
         replacement,

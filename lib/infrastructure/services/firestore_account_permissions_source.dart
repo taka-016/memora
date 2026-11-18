@@ -1,3 +1,4 @@
+import 'package:memora/infrastructure/services/firestore_measured_reads.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -37,7 +38,7 @@ class FirestoreAccountPermissionsSource {
     final doc = await firestore
         .collection('account_permissions')
         .doc(accountId)
-        .get(options);
+        .measuredGet('firestore_account_permissions_source.01', options);
     return doc.exists ? FirestoreAccountPermissions(doc.data()!) : null;
   }
 }
