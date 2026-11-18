@@ -22,7 +22,10 @@ class FirestoreMemberInvitationQueryService
     final snapshot = await _firestore
         .collection('member_invitations')
         .where('inviteeId', isEqualTo: inviteeId)
-        .measuredGet('firestore_member_invitation_query_service.01');
+        .measuredGet(
+          'firestore_member_invitation_query_service.01',
+          target: 'member_invitations',
+        );
     return snapshot.docs
         .map(FirestoreMemberInvitationMapper.fromFirestore)
         .toList();
@@ -34,7 +37,10 @@ class FirestoreMemberInvitationQueryService
       final querySnapshot = await _firestore
           .collection('member_invitations')
           .where('inviteeId', isEqualTo: inviteeId)
-          .measuredGet('firestore_member_invitation_query_service.02');
+          .measuredGet(
+            'firestore_member_invitation_query_service.02',
+            target: 'member_invitations',
+          );
 
       if (querySnapshot.docs.isEmpty) {
         return null;

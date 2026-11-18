@@ -47,6 +47,7 @@ class ReadBudget {
     final totals = <String, int>{};
     final bySite = <String, Map<String, int>>{};
     final active = <String, String>{};
+    final received = <String>{};
     void add(String site, String metric, int value) {
       totals[metric] = (totals[metric] ?? 0) + value;
       final metrics = bySite.putIfAbsent(site, () => {});
@@ -66,8 +67,9 @@ class ReadBudget {
       }
       switch (event['phase']) {
         case 'start':
-          if (active.containsKey(id))
+          if (active.containsKey(id)) {
             errors.add('$operation/$site: 開始が重複しています');
+          }
           active[id] = site;
           add(
             site,
@@ -76,8 +78,10 @@ class ReadBudget {
           );
         case 'initial':
         case 'changes':
-          if (!active.containsKey(id))
+          if (!active.containsKey(id)) {
             errors.add('$operation/$site: 開始のない受信です');
+          }
+          received.add(id);
           final documents = event['documents'];
           final changes = event['changes'];
           final origin = event['origin'];
@@ -101,8 +105,12 @@ class ReadBudget {
             );
           }
         case 'end':
-          if (active.remove(id) == null)
+          if (!received.contains(id)) {
+            errors.add('$operation/$site: 取得結果の計測がありません');
+          }
+          if (active.remove(id) == null) {
             errors.add('$operation/$site: 開始のない終了です');
+          }
         case 'error':
           errors.add('$operation/$site: 取得失敗 ${event['error']}');
           active.remove(id);

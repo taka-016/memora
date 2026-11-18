@@ -41,7 +41,10 @@ class FirestoreGroupEventRepository implements GroupEventRepository {
     final snapshot = await _firestore
         .collection('group_events')
         .where('groupId', isEqualTo: groupId)
-        .measuredGet('firestore_group_event_repository.01');
+        .measuredGet(
+          'firestore_group_event_repository.01',
+          target: 'group_events',
+        );
 
     final batch = _firestore.batch();
     for (final doc in snapshot.docs) {

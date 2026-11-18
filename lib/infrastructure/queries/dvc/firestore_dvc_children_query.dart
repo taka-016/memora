@@ -14,7 +14,10 @@ Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> firestoreDvcChildren(
       : (await firestore
                 .collection('dvc_point_contracts')
                 .where('groupId', isEqualTo: groupId)
-                .measuredGet('firestore_dvc_children_query.01'))
+                .measuredGet(
+                  'firestore_dvc_children_query.01',
+                  target: 'dvc_point_contracts',
+                ))
             .docs
             .map((doc) => doc.id)
             .toList();
@@ -28,7 +31,10 @@ Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> firestoreDvcChildren(
       query = query.orderBy(order.field, descending: order.descending);
     }
     docs.addAll(
-      (await query.measuredGet('firestore_dvc_children_query.02')).docs,
+      (await query.measuredGet(
+        'firestore_dvc_children_query.02',
+        target: collection,
+      )).docs,
     );
   }
   if (orderBy != null) {

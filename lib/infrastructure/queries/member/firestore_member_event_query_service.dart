@@ -38,6 +38,7 @@ class FirestoreMemberEventQueryService implements MemberEventQueryService {
 
         final snapshot = await query.measuredGet(
           'firestore_member_event_query_service.01',
+          target: 'member_events',
         );
         results.addAll(
           snapshot.docs.map(FirestoreMemberEventMapper.fromFirestore),

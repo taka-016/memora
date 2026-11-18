@@ -38,6 +38,7 @@ class FirestoreTaskQueryService implements TaskQueryService {
 
       final snapshot = await query.measuredGet(
         'firestore_task_query_service.01',
+        target: 'tasks',
       );
       return snapshot.docs.map(FirestoreTaskMapper.fromFirestore).toList();
     } catch (e, stack) {

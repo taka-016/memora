@@ -5,16 +5,14 @@ import 'package:memora/infrastructure/services/firestore_read_probe.dart';
 
 extension MeasuredQuery<T extends Object?> on Query<T> {
   Future<QuerySnapshot<T>> measuredGet(
-    String site, [
+    String site, {
     GetOptions? options,
-  ]) async {
+    required String target,
+  }) async {
     final probe = FirestoreReadProbe.current;
     if (probe == null) return get(options);
-    final read = probe.start(
-      site: site,
-      target: parameters.toString(),
-      kind: 'get',
-    );
+    if (target.isEmpty) throw StateError('Queryの取得先が未指定です: $site');
+    final read = probe.start(site: site, target: target, kind: 'get');
     try {
       final result = await get(options);
       read.receive(
@@ -31,16 +29,16 @@ extension MeasuredQuery<T extends Object?> on Query<T> {
     }
   }
 
-  Stream<QuerySnapshot<T>> measuredSnapshots(String site) {
+  Stream<QuerySnapshot<T>> measuredSnapshots(
+    String site, {
+    required String target,
+  }) {
     final probe = FirestoreReadProbe.current;
     if (probe == null) return snapshots();
+    if (target.isEmpty) throw StateError('Queryの取得先が未指定です: $site');
     return _observeStream(
       snapshots,
-      () => probe.start(
-        site: site,
-        target: parameters.toString(),
-        kind: 'subscribe',
-      ),
+      () => probe.start(site: site, target: target, kind: 'subscribe'),
       (read, result) => read.receive(
         documents: result.docs.length,
         changes: result.docChanges.length,

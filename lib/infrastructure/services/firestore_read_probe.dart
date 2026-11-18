@@ -19,7 +19,7 @@ class FirestoreReadProbe {
     required String target,
     required String kind,
   }) {
-    final observation = FirestoreReadObservation._(emit, {
+    final observation = FirestoreReadObservation._(emit, operationId, {
       'runId': runId,
       'isolateId': isolateId,
       'operationId': operationId(),
@@ -34,7 +34,12 @@ class FirestoreReadProbe {
 }
 
 class FirestoreReadObservation {
-  FirestoreReadObservation._(this._emit, this._identity);
+  FirestoreReadObservation._(
+    this._emit,
+    this._currentOperationId,
+    this._identity,
+  );
+  final String Function() _currentOperationId;
   final void Function(Map<String, Object?>) _emit;
   final Map<String, Object?> _identity;
   final _origins = <String>{};
@@ -51,6 +56,7 @@ class FirestoreReadObservation {
     _send({
       'phase': _origins.add(origin) ? 'initial' : 'changes',
       'origin': origin,
+      'receivedOperationId': _currentOperationId(),
       'documents': documents,
       'changes': changes,
     });

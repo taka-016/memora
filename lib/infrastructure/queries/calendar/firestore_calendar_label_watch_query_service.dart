@@ -14,7 +14,10 @@ class FirestoreCalendarLabelWatchQueryService
       firestore
           .collection('calendar_labels')
           .where('groupId', isEqualTo: groupId)
-          .measuredSnapshots('firestore_calendar_label_watch_query_service.01')
+          .measuredSnapshots(
+            'firestore_calendar_label_watch_query_service.01',
+            target: 'calendar_labels',
+          )
           .map(
             (snapshot) =>
                 snapshot.docs

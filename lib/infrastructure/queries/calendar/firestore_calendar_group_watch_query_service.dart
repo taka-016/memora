@@ -63,6 +63,7 @@ class FirestoreCalendarGroupWatchQueryService
                       .where('groupId', isEqualTo: groupId)
                       .measuredGet(
                         'firestore_calendar_group_watch_query_service.01',
+                        target: 'group_members',
                       ))
                   .docs
             : <QueryDocumentSnapshot<Map<String, dynamic>>>[];

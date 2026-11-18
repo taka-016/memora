@@ -194,7 +194,11 @@ class FirestoreGroupQueryService implements GroupQueryService {
     final groupMembersSnapshot = await _firestore
         .collection('group_members')
         .where('groupId', isEqualTo: groupId)
-        .measuredGet('firestore_group_query_service.04', _options);
+        .measuredGet(
+          'firestore_group_query_service.04',
+          target: 'group_members',
+          options: _options,
+        );
 
     final List<GroupMemberDto> members = [];
 

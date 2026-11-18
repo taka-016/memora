@@ -41,7 +41,10 @@ class FirestoreTripEntryQueryService implements TripEntryQueryService {
           .collection('locations')
           .where('tripId', isEqualTo: tripId)
           .where('groupId', isEqualTo: groupId)
-          .measuredGet('firestore_trip_entry_query_service.02');
+          .measuredGet(
+            'firestore_trip_entry_query_service.02',
+            target: 'locations',
+          );
       final locations = locationsSnapshot.docs
           .map(FirestoreLocationMapper.fromFirestore)
           .toList();
@@ -62,6 +65,7 @@ class FirestoreTripEntryQueryService implements TripEntryQueryService {
 
       final tasksSnapshot = await tasksQuery.measuredGet(
         'firestore_trip_entry_query_service.03',
+        target: 'tasks',
       );
       final tasks = tasksSnapshot.docs
           .map((taskDoc) => FirestoreTaskMapper.fromFirestore(taskDoc))
@@ -87,6 +91,7 @@ class FirestoreTripEntryQueryService implements TripEntryQueryService {
 
       final itineraryItemsSnapshot = await itineraryItemsQuery.measuredGet(
         'firestore_trip_entry_query_service.04',
+        target: 'itinerary_items',
       );
       final itineraryItems = itineraryItemsSnapshot.docs
           .map(
@@ -130,6 +135,7 @@ class FirestoreTripEntryQueryService implements TripEntryQueryService {
 
       final snapshot = await query.measuredGet(
         'firestore_trip_entry_query_service.05',
+        target: 'trip_entries',
       );
       return snapshot.docs
           .map(
@@ -169,6 +175,7 @@ class FirestoreTripEntryQueryService implements TripEntryQueryService {
 
       final snapshot = await query.measuredGet(
         'firestore_trip_entry_query_service.06',
+        target: 'trip_entries',
       );
       return snapshot.docs
           .map(

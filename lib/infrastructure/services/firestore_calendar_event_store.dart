@@ -44,6 +44,7 @@ class FirestoreCalendarEventStore {
       }
       final snapshot = await query.measuredGet(
         'firestore_calendar_event_store.01',
+        target: 'calendar_event_overrides',
       );
       overrides.addAll(
         snapshot.docs.map(

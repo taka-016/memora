@@ -119,7 +119,8 @@ class FirestoreGroupRepository implements GroupRepository {
         .where('groupId', isEqualTo: groupId)
         .measuredGet(
           'firestore_group_repository.03',
-          const GetOptions(source: Source.server),
+          target: 'group_members',
+          options: const GetOptions(source: Source.server),
         );
     final ids = links.docs
         .map((doc) => doc.data()['memberId'] as String)

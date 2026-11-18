@@ -27,8 +27,10 @@ class FirestoreCalendarEventQueryService implements CalendarEventQueryService {
   }) async {
     final snapshots = await Future.wait(
       calendarEventQueries(_firestore, groupId, period).map(
-        (query) =>
-            query.measuredGet('firestore_calendar_event_query_service.02'),
+        (query) => query.measuredGet(
+          'firestore_calendar_event_query_service.02',
+          target: 'calendar_events',
+        ),
       ),
     );
     final docs = {

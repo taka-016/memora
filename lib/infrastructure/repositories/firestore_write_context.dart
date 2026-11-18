@@ -5,8 +5,9 @@ abstract class FirestoreWriteContext {
   CollectionReference<Map<String, dynamic>> collection(String path);
 
   Future<QuerySnapshot<Map<String, dynamic>>> get(
-    Query<Map<String, dynamic>> query,
-  );
+    Query<Map<String, dynamic>> query, {
+    String? target,
+  });
 
   Future<DocumentSnapshot<Map<String, dynamic>>> getDocument(
     DocumentReference<Map<String, dynamic>> reference,
@@ -43,9 +44,10 @@ class FirestoreBatchWriteContext implements FirestoreWriteContext {
 
   @override
   Future<QuerySnapshot<Map<String, dynamic>>> get(
-    Query<Map<String, dynamic>> query,
-  ) {
-    return query.measuredGet('firestore_write_context.01');
+    Query<Map<String, dynamic>> query, {
+    String? target,
+  }) {
+    return query.measuredGet('firestore_write_context.01', target: target ?? '');
   }
 
   @override
@@ -102,9 +104,10 @@ class FirestoreTransactionWriteContext implements FirestoreWriteContext {
 
   @override
   Future<QuerySnapshot<Map<String, dynamic>>> get(
-    Query<Map<String, dynamic>> query,
-  ) {
-    return query.measuredGet('firestore_write_context.03');
+    Query<Map<String, dynamic>> query, {
+    String? target,
+  }) {
+    return query.measuredGet('firestore_write_context.03', target: target ?? '');
   }
 
   @override

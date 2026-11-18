@@ -30,6 +30,7 @@ class FirestoreGroupEventQueryService implements GroupEventQueryService {
 
       final snapshot = await query.measuredGet(
         'firestore_group_event_query_service.01',
+        target: 'group_events',
       );
       return snapshot.docs
           .map(FirestoreGroupEventMapper.fromFirestore)

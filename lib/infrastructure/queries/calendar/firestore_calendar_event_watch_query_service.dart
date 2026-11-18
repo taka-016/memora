@@ -102,6 +102,7 @@ class FirestoreCalendarEventWatchQueryService
             queries[index]
                 .measuredSnapshots(
                   'firestore_calendar_event_watch_query_service.01',
+                  target: 'calendar_events',
                 )
                 .listen(
                   (snapshot) async {

@@ -57,16 +57,19 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
         locationsCollection
             .where('tripId', isEqualTo: tripEntry.id)
             .where('groupId', isEqualTo: tripEntry.groupId),
+        target: locationsCollection.path,
       );
       final tasksSnapshot = await context.get(
         tasksCollection
             .where('tripId', isEqualTo: tripEntry.id)
             .where('groupId', isEqualTo: tripEntry.groupId),
+        target: tasksCollection.path,
       );
       final itineraryItemsSnapshot = await context.get(
         itineraryItemsCollection
             .where('tripId', isEqualTo: tripEntry.id)
             .where('groupId', isEqualTo: tripEntry.groupId),
+        target: itineraryItemsCollection.path,
       );
 
       context.update(
@@ -112,6 +115,7 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
             .collection('locations')
             .where('tripId', isEqualTo: tripId)
             .where('groupId', isEqualTo: parent.data()!['groupId']),
+        target: 'locations',
       );
       for (final locationDoc in locationsSnapshot.docs) {
         context.delete(locationDoc.reference);
@@ -122,6 +126,7 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
             .collection('tasks')
             .where('tripId', isEqualTo: tripId)
             .where('groupId', isEqualTo: parent.data()!['groupId']),
+        target: 'tasks',
       );
       for (final taskDoc in tasksSnapshot.docs) {
         context.delete(taskDoc.reference);
@@ -132,6 +137,7 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
             .collection('itinerary_items')
             .where('tripId', isEqualTo: tripId)
             .where('groupId', isEqualTo: parent.data()!['groupId']),
+        target: 'itinerary_items',
       );
       for (final itemDoc in itineraryItemsSnapshot.docs) {
         context.delete(itemDoc.reference);
@@ -146,7 +152,10 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
     final tripEntriesSnapshot = await _firestore
         .collection('trip_entries')
         .where('groupId', isEqualTo: groupId)
-        .measuredGet('firestore_trip_entry_repository.01');
+        .measuredGet(
+          'firestore_trip_entry_repository.01',
+          target: 'trip_entries',
+        );
     await _runDelete((context) async {
       for (final trip in tripEntriesSnapshot.docs) {
         final current = await context.getDocument(trip.reference);
@@ -161,6 +170,7 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
               .collection('locations')
               .where('tripId', isEqualTo: tripEntryDoc.id)
               .where('groupId', isEqualTo: groupId),
+          target: 'locations',
         );
         for (final locationDoc in locationsSnapshot.docs) {
           context.delete(locationDoc.reference);
@@ -170,6 +180,7 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
               .collection('tasks')
               .where('tripId', isEqualTo: tripEntryDoc.id)
               .where('groupId', isEqualTo: groupId),
+          target: 'tasks',
         );
         for (final taskDoc in tasksSnapshot.docs) {
           context.delete(taskDoc.reference);
@@ -179,6 +190,7 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
               .collection('itinerary_items')
               .where('tripId', isEqualTo: tripEntryDoc.id)
               .where('groupId', isEqualTo: groupId),
+          target: 'itinerary_items',
         );
         for (final itemDoc in itineraryItemsSnapshot.docs) {
           context.delete(itemDoc.reference);

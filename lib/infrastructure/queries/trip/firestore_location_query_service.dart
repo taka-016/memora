@@ -17,14 +17,20 @@ class FirestoreLocationQueryService implements LocationQueryService {
       final parents = await _firestore
           .collection('trip_entries')
           .where('groupId', isEqualTo: groupId)
-          .measuredGet('firestore_location_query_service.01');
+          .measuredGet(
+            'firestore_location_query_service.01',
+            target: 'trip_entries',
+          );
       final result = <LocationDto>[];
       for (final parent in parents.docs) {
         final snapshot = await _firestore
             .collection('locations')
             .where('groupId', isEqualTo: groupId)
             .where('tripId', isEqualTo: parent.id)
-            .measuredGet('firestore_location_query_service.02');
+            .measuredGet(
+              'firestore_location_query_service.02',
+              target: 'locations',
+            );
         result.addAll(snapshot.docs.map(FirestoreLocationMapper.fromFirestore));
       }
       return result;

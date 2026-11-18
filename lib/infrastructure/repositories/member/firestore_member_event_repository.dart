@@ -21,7 +21,10 @@ class FirestoreMemberEventRepository implements MemberEventRepository {
         .where('groupId', isEqualTo: memberEvent.groupId)
         .where('memberId', isEqualTo: memberEvent.memberId)
         .where('year', isEqualTo: memberEvent.year)
-        .measuredGet('firestore_member_event_repository.01');
+        .measuredGet(
+          'firestore_member_event_repository.01',
+          target: 'member_events',
+        );
     final duplicates = {
       for (final doc in snapshot.docs)
         if (doc.id != docId) doc.id: doc.data()['version'] as int?,
@@ -112,7 +115,10 @@ class FirestoreMemberEventRepository implements MemberEventRepository {
     final snapshot = await _firestore
         .collection('member_events')
         .where('memberId', isEqualTo: memberId)
-        .measuredGet('firestore_member_event_repository.03');
+        .measuredGet(
+          'firestore_member_event_repository.03',
+          target: 'member_events',
+        );
     for (final doc in snapshot.docs) {
       batch.delete(doc.reference);
     }

@@ -46,7 +46,10 @@ class FirestoreDvcPointContractRepository
     final collection = _firestore.collection('dvc_point_contracts');
     final existing = await collection
         .where('groupId', isEqualTo: groupId)
-        .measuredGet('firestore_dvc_point_contract_repository.01');
+        .measuredGet(
+          'firestore_dvc_point_contract_repository.01',
+          target: 'dvc_point_contracts',
+        );
     final retainedIds = contracts.map((v) => v.id).toSet();
     final deleted = existing.docs
         .where((v) => !retainedIds.contains(v.id))
@@ -103,7 +106,10 @@ class FirestoreDvcPointContractRepository
           .where('contractId', isEqualTo: contractId)
           .where('groupId', isEqualTo: scope)
           .limit(1)
-          .measuredGet('firestore_dvc_point_contract_repository.03');
+          .measuredGet(
+            'firestore_dvc_point_contract_repository.03',
+            target: name,
+          );
       if (children.docs.isNotEmpty) {
         throw StateError('利用履歴・期間限定ポイントがある契約は削除できません');
       }
@@ -128,7 +134,10 @@ class FirestoreDvcPointContractRepository
     final snapshot = await _firestore
         .collection('dvc_point_contracts')
         .where('groupId', isEqualTo: groupId)
-        .measuredGet('firestore_dvc_point_contract_repository.04');
+        .measuredGet(
+          'firestore_dvc_point_contract_repository.04',
+          target: 'dvc_point_contracts',
+        );
     await saveDvcPointContracts(
       groupId,
       [],

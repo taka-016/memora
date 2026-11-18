@@ -83,6 +83,7 @@ class FirestoreMemberQueryService implements MemberQueryService {
 
       final snapshot = await query.measuredGet(
         'firestore_member_query_service.02',
+        target: 'members',
       );
       return snapshot.docs
           .map((doc) => FirestoreMemberMapper.fromFirestore(doc))

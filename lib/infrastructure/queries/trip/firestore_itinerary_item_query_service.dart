@@ -40,6 +40,7 @@ class FirestoreItineraryItemQueryService implements ItineraryItemQueryService {
 
       final snapshot = await query.measuredGet(
         'firestore_itinerary_item_query_service.01',
+        target: 'itinerary_items',
       );
       final items = <ItineraryItemDto>[];
       for (final doc in snapshot.docs) {

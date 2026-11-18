@@ -31,6 +31,7 @@ class FirestoreDvcPointContractQueryService
 
       final snapshot = await query.measuredGet(
         'firestore_dvc_point_contract_query_service.01',
+        target: 'dvc_point_contracts',
       );
       return snapshot.docs
           .map(FirestoreDvcPointContractMapper.fromFirestore)

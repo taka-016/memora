@@ -35,7 +35,10 @@ class FirestoreAndroidWidgetItineraryQueryService
       final rows = await query
           .orderBy('startDateTime', descending: before)
           .limit(1)
-          .measuredGet('firestore_android_widget_itinerary_query_service.01');
+          .measuredGet(
+            'firestore_android_widget_itinerary_query_service.01',
+            target: 'itinerary_items',
+          );
       if (rows.docs.isEmpty) continue;
       final date = (rows.docs.single.data()['startDateTime'] as Timestamp)
           .toDate();
@@ -55,6 +58,7 @@ class FirestoreAndroidWidgetItineraryQueryService
               .where('groupId', isEqualTo: groupId)
               .measuredGet(
                 'firestore_android_widget_itinerary_query_service.02',
+                target: 'trip_entries',
               ))
           .docs;
 
@@ -71,7 +75,10 @@ class FirestoreAndroidWidgetItineraryQueryService
           )
           .where('startDateTime', isLessThan: Timestamp.fromDate(to))
           .orderBy('startDateTime')
-          .measuredGet('firestore_android_widget_itinerary_query_service.03');
+          .measuredGet(
+            'firestore_android_widget_itinerary_query_service.03',
+            target: 'itinerary_items',
+          );
       if (rows.docs.isEmpty) continue;
       trips.add(
         FirestoreTripEntryMapper.fromFirestore(

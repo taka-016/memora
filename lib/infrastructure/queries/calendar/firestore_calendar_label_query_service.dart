@@ -15,7 +15,11 @@ class FirestoreCalendarLabelQueryService implements CalendarLabelQueryService {
     final snapshot = await firestore
         .collection('calendar_labels')
         .where('groupId', isEqualTo: groupId)
-        .measuredGet('firestore_calendar_label_query_service.01', options);
+        .measuredGet(
+          'firestore_calendar_label_query_service.01',
+          target: 'calendar_labels',
+          options: options,
+        );
     return snapshot.docs
         .map(FirestoreCalendarLabelMapper.fromFirestore)
         .toList()
