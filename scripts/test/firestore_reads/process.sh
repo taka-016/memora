@@ -14,7 +14,7 @@ read_regression_stop() {
   [[ -n "$managed_pid" ]] || return 0
   kill -TERM -- "-$managed_pid" 2>/dev/null || true
   for ((attempt=0; attempt<40; attempt++)); do
-    if ! kill -0 "$managed_pid" 2>/dev/null; then
+    if ! kill -0 -- "-$managed_pid" 2>/dev/null; then
       wait "$managed_pid" 2>/dev/null || true
       return 0
     fi
@@ -22,5 +22,9 @@ read_regression_stop() {
   done
   kill -KILL -- "-$managed_pid" 2>/dev/null || true
   wait "$managed_pid" 2>/dev/null || true
+  for ((attempt=0; attempt<40; attempt++)); do
+    kill -0 -- "-$managed_pid" 2>/dev/null || return 1
+    sleep 0.1
+  done
   return 1
 }
