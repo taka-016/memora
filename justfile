@@ -68,6 +68,10 @@ test-dev *configs:
 test-emulator:
   bash scripts/test/emulator.sh
 
+# 専用Emulatorで登録済み取得経路の期待結果とFirestore読み取り予算を判定する
+test-firestore-reads scenario='baseline-queries':
+  bash scripts/test/firestore_read_regression.sh "$@"
+
 # Android側のカレンダーウィジェットの予定統合を検証する
 test-calendar-widget:
   ./android/gradlew -p android :app:testOnlineDebugUnitTest --console=plain
