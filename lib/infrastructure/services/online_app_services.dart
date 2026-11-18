@@ -1,3 +1,4 @@
+import 'package:memora/infrastructure/services/firestore_read_regression_session.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -63,6 +64,7 @@ class OnlineAppServices implements AppServices {
   Future<void> initialize() async {
     final emulator = _emulator;
     if (emulator != null) {
+      await FirestoreReadRegressionSession.connect();
       await (_emulatorInitialization ??= _initializeEmulator(emulator));
       return;
     }

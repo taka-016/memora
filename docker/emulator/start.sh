@@ -3,13 +3,14 @@ set -euo pipefail
 
 avd_name=memora_aosp_api36
 avd_path="$ANDROID_AVD_HOME/$avd_name.avd"
-mkdir -p "$avd_path" /root/.android/memora-adb
+adb_directory="${MEMORA_ADB_DIRECTORY:-/root/.android/memora-adb}"
+mkdir -p "$avd_path" "$adb_directory"
 if [[ ! -f "$avd_path/config.ini" ]]; then
   cp /opt/memora-emulator/config.ini "$avd_path/config.ini"
 fi
 printf 'avd.ini.encoding=UTF-8\npath=%s\ntarget=android-36\n' "$avd_path" > "$ANDROID_AVD_HOME/$avd_name.ini"
 
-socat UNIX-LISTEN:/root/.android/memora-adb/adbd.sock,fork,unlink-early TCP:127.0.0.1:5555 &
+socat UNIX-LISTEN:"$adb_directory/adbd.sock",fork,unlink-early TCP:127.0.0.1:5555 &
 adb start-server
 (
   for ((attempt = 0; attempt < 90; attempt++)); do

@@ -1,0 +1,183 @@
+{
+  "version": 1,
+  "id": "baseline-queries",
+  "dataset": "baseline",
+  "now": "2026-11-15T12:00:00+09:00",
+  "timeZone": "Asia/Tokyo",
+  "cache": "cold",
+  "operations": [
+    {
+      "id": "login",
+      "action": "login",
+      "parameters": {
+        "account": "account-owner"
+      },
+      "expect": {
+        "id": "account-owner"
+      },
+      "budget": "login"
+    },
+    {
+      "id": "availability",
+      "action": "availability",
+      "parameters": {},
+      "expect": {
+        "isMaintenance": false,
+        "minimumBuildNumber": 0
+      },
+      "budget": "availability"
+    },
+    {
+      "id": "currentMember",
+      "action": "currentMember",
+      "parameters": {
+        "accountId": "account-owner"
+      },
+      "expect": {
+        "id": "member-1"
+      },
+      "budget": "currentMember"
+    },
+    {
+      "id": "group",
+      "action": "group",
+      "parameters": {
+        "groupId": "group-1"
+      },
+      "expect": {
+        "id": "group-1",
+        "members": 4
+      },
+      "budget": "group"
+    },
+    {
+      "id": "calendarEvents",
+      "action": "calendarEvents",
+      "parameters": {
+        "groupId": "group-1",
+        "month": "2026-11-01T00:00:00+09:00"
+      },
+      "expect": {
+        "count": 30
+      },
+      "budget": "calendarEvents"
+    },
+    {
+      "id": "calendarLabels",
+      "action": "calendarLabels",
+      "parameters": {
+        "groupId": "group-1"
+      },
+      "expect": {
+        "count": 2
+      },
+      "budget": "calendarLabels"
+    },
+    {
+      "id": "groupTimeline",
+      "action": "groupTimeline",
+      "parameters": {
+        "groupId": "group-1"
+      },
+      "expect": {
+        "count": 11
+      },
+      "budget": "groupTimeline"
+    },
+    {
+      "id": "memberTimeline",
+      "action": "memberTimeline",
+      "parameters": {
+        "groupId": "group-1",
+        "memberIds": [
+          "member-1",
+          "member-2",
+          "member-3",
+          "member-4"
+        ]
+      },
+      "expect": {
+        "count": 44
+      },
+      "budget": "memberTimeline"
+    },
+    {
+      "id": "trips",
+      "action": "trips",
+      "parameters": {
+        "groupId": "group-1"
+      },
+      "expect": {
+        "count": 2
+      },
+      "budget": "trips"
+    },
+    {
+      "id": "trip",
+      "action": "trip",
+      "parameters": {
+        "tripId": "trip-1"
+      },
+      "expect": {
+        "id": "trip-1",
+        "locations": 3,
+        "tasks": 4,
+        "itineraryItems": 6
+      },
+      "budget": "trip"
+    },
+    {
+      "id": "mapLocations",
+      "action": "mapLocations",
+      "parameters": {
+        "groupId": "group-1"
+      },
+      "expect": {
+        "count": 6
+      },
+      "budget": "mapLocations"
+    },
+    {
+      "id": "dvcContracts",
+      "action": "dvcContracts",
+      "parameters": {
+        "groupId": "group-1"
+      },
+      "expect": {
+        "count": 2
+      },
+      "budget": "dvcContracts"
+    },
+    {
+      "id": "dvcLimitedPoints",
+      "action": "dvcLimitedPoints",
+      "parameters": {
+        "groupId": "group-1"
+      },
+      "expect": {
+        "count": 4
+      },
+      "budget": "dvcLimitedPoints"
+    },
+    {
+      "id": "dvcUsages",
+      "action": "dvcUsages",
+      "parameters": {
+        "groupId": "group-1"
+      },
+      "expect": {
+        "count": 24
+      },
+      "budget": "dvcUsages"
+    },
+    {
+      "id": "logout",
+      "action": "logout",
+      "parameters": {},
+      "expect": {
+        "signedOut": true
+      },
+      "budget": "logout"
+    }
+  ]
+}
