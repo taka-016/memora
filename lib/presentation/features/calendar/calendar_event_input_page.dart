@@ -688,6 +688,12 @@ class _CalendarEventInputPageState
         borderRadius: BorderRadius.circular(4),
       ),
     );
+    final errorText = _error.isEmpty
+        ? null
+        : Text(
+            _error,
+            style: TextStyle(color: Theme.of(context).colorScheme.error),
+          );
     return _withDiscardScope(
       Scaffold(
         appBar: AppBar(leading: BackButton(onPressed: _close)),
@@ -1062,18 +1068,16 @@ class _CalendarEventInputPageState
                               _longitude = candidate.coordinate.longitude;
                             }),
                           ),
-                          if (_error.isNotEmpty)
-                            Text(
-                              _error,
-                              style: TextStyle(
-                                color: Theme.of(context).colorScheme.error,
-                              ),
-                            ),
+                          if (widget._duplicateSource == null &&
+                              errorText != null)
+                            errorText,
                         ],
                       ),
                     ),
                   ),
                 ),
+                if (widget._duplicateSource != null && errorText != null)
+                  errorText,
                 const SizedBox(height: 24),
                 OverflowBar(
                   alignment: MainAxisAlignment.end,
