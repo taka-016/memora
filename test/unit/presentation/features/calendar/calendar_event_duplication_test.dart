@@ -82,4 +82,45 @@ void main() {
       },
     );
   }
+
+  testWidgets('繰り返し予定を複製して開始日を選び直しても元の曜日を保持する', (tester) async {
+    tester.view.physicalSize = const Size(1000, 1600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final original = calendarTestEvent('series', '金曜の予定').copyWith(
+      startDateTime: DateTime.utc(2026, 10, 2),
+      endDateTime: DateTime.utc(2026, 10, 4),
+      isAllDay: true,
+      recurrenceRule: 'FREQ=WEEKLY;BYDAY=FR',
+    );
+    final harness = CalendarTestHarness()..savedEvents.add(original);
+    await harness.pump(tester);
+    final saturday = find.byKey(const Key('calendar_day_2026_10_3'));
+    await calendarTapVisible(tester, saturday);
+    await tester.pump();
+    await calendarTapVisible(tester, saturday);
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(ListTile, original.title));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('予定を複製'));
+    await tester.pumpAndSettle();
+
+    await calendarTapVisible(tester, find.text('開始日: 2026/10/3'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('date_header')));
+    await tester.pump();
+    await tester.enterText(find.byKey(const Key('date_field')), '20261009');
+    await tester.tap(find.text('確定'));
+    await tester.pumpAndSettle();
+    await calendarTapVisible(tester, find.text('保存'));
+    await tester.pumpAndSettle();
+
+    expect(harness.savedEvents, hasLength(2));
+    final copy = harness.savedEvents.last;
+    expect(copy.startDateTime, DateTime.utc(2026, 10, 9));
+    expect(copy.endDateTime, DateTime.utc(2026, 10, 10));
+    expect(copy.recurrenceRule, original.recurrenceRule);
+    expect(copy.originalStartDateTime, isNull);
+  });
 }
