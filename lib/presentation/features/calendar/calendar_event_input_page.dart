@@ -276,6 +276,7 @@ class _CalendarEventInputPageState
         if (!time) {
           _end = _end.add(next.difference(_start));
           if (_recurrence.frequency != null &&
+              (widget._duplicateSource == null || _recurrenceEdited) &&
               (next.year != _start.year ||
                   next.month != _start.month ||
                   next.day != _start.day)) {
