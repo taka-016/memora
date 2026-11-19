@@ -66,9 +66,11 @@ void main() {
         expect(find.text('開始時刻を選択'), findsOneWidget);
         expect(find.text('終了時刻を選択'), findsOneWidget);
 
+        tester.view.physicalSize = const Size(550, 800);
+        await tester.pumpAndSettle();
         await calendarTapVisible(tester, find.text('保存'));
         await tester.pump();
-        expect(find.text('開始日と終了日を選択してください'), findsOneWidget);
+        expect(find.text('開始日と終了日を選択してください').hitTestable(), findsOneWidget);
         expect(harness.savedEvents, [original]);
 
         await _selectDate(tester, '開始日', '20261005');
@@ -80,7 +82,7 @@ void main() {
         );
         await calendarTapVisible(tester, find.text('保存'));
         await tester.pump();
-        expect(find.text('開始時刻と終了時刻を選択してください'), findsOneWidget);
+        expect(find.text('開始時刻と終了時刻を選択してください').hitTestable(), findsOneWidget);
         expect(harness.savedEvents, [original]);
 
         await _selectTime(
