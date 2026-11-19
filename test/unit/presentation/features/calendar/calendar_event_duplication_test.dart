@@ -11,7 +11,7 @@ void main() {
     testWidgets(
       hasChanges
           ? '複製の破棄確認から編集を続けられ、破棄すると保存済みの予定を複製する'
-          : '予定を複製して日時を初期化し、別の予定として保存できる',
+          : '予定の複製では日時が空欄で、入力すると別の予定として保存できる',
       (tester) async {
         tester.view.physicalSize = const Size(1000, 1600);
         tester.view.devicePixelRatio = 1;
@@ -61,23 +61,43 @@ void main() {
           find.widgetWithText(TextFormField, original.title),
           findsOneWidget,
         );
-        expect(find.text('開始日: 2026/10/2'), findsOneWidget);
-        expect(find.text('終了日: 2026/10/2'), findsOneWidget);
-        expect(find.text('00:00'), findsNWidgets(2));
-        expect(harness.savedEvents, [original]);
+        expect(find.text('開始日'), findsOneWidget);
+        expect(find.text('終了日'), findsOneWidget);
+        expect(find.text('開始時刻を選択'), findsOneWidget);
+        expect(find.text('終了時刻を選択'), findsOneWidget);
 
         await calendarTapVisible(tester, find.text('保存'));
+        await tester.pump();
+        expect(find.text('開始日と終了日を選択してください'), findsOneWidget);
+        expect(harness.savedEvents, [original]);
+
+        await _selectDate(tester, '開始日', '20261005');
+        await _selectDate(tester, '終了日', '20261005');
+        await _selectTime(
+          tester,
+          '開始時刻を選択',
+          const TimeOfDay(hour: 13, minute: 0),
+        );
+        await calendarTapVisible(tester, find.text('保存'));
+        await tester.pump();
+        expect(find.text('開始時刻と終了時刻を選択してください'), findsOneWidget);
+        expect(harness.savedEvents, [original]);
+
+        await _selectTime(
+          tester,
+          '終了時刻を選択',
+          const TimeOfDay(hour: 14, minute: 0),
+        );
+        await calendarTapVisible(tester, find.text('保存'));
         await tester.pumpAndSettle();
-        final saved = harness.savedEvents.last;
         expect(harness.savedEvents, [
           original,
           original.copyWith(
             id: 'new',
-            startDateTime: DateTime(2026, 10, 2),
-            endDateTime: DateTime(2026, 10, 2),
+            startDateTime: DateTime(2026, 10, 5, 13),
+            endDateTime: DateTime(2026, 10, 5, 14),
           ),
         ]);
-        expect(saved.id, 'new');
         expect(find.text('予定を編集'), findsNothing);
       },
     );
@@ -106,13 +126,8 @@ void main() {
     await tester.tap(find.byTooltip('予定を複製'));
     await tester.pumpAndSettle();
 
-    await calendarTapVisible(tester, find.text('開始日: 2026/10/3'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('date_header')));
-    await tester.pump();
-    await tester.enterText(find.byKey(const Key('date_field')), '20261009');
-    await tester.tap(find.text('確定'));
-    await tester.pumpAndSettle();
+    await _selectDate(tester, '開始日', '20261009');
+    await _selectDate(tester, '終了日', '20261009');
     await calendarTapVisible(tester, find.text('保存'));
     await tester.pumpAndSettle();
 
@@ -123,4 +138,25 @@ void main() {
     expect(copy.recurrenceRule, original.recurrenceRule);
     expect(copy.originalStartDateTime, isNull);
   });
+}
+
+Future<void> _selectDate(WidgetTester tester, String label, String date) async {
+  await calendarTapVisible(tester, find.text(label));
+  await tester.pumpAndSettle();
+  await tester.tap(find.byKey(const Key('date_header')));
+  await tester.pump();
+  await tester.enterText(find.byKey(const Key('date_field')), date);
+  await tester.tap(find.text('確定'));
+  await tester.pumpAndSettle();
+}
+
+Future<void> _selectTime(
+  WidgetTester tester,
+  String label,
+  TimeOfDay time,
+) async {
+  await calendarTapVisible(tester, find.text(label));
+  await tester.pumpAndSettle();
+  Navigator.of(tester.element(find.byType(TimePickerDialog))).pop(time);
+  await tester.pumpAndSettle();
 }
