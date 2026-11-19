@@ -83,6 +83,10 @@ class _CalendarEventInputPageState
   double? _longitude;
   late DateTime _start;
   late DateTime _end;
+  late bool _hasStartDate = widget._duplicateSource == null;
+  late bool _hasEndDate = widget._duplicateSource == null;
+  late bool _hasStartTime = widget._duplicateSource == null;
+  late bool _hasEndTime = widget._duplicateSource == null;
   late bool _allDay;
   String? _labelId;
   String _error = '';
@@ -105,6 +109,10 @@ class _CalendarEventInputPageState
     _longitude,
     _start,
     _end,
+    _hasStartDate,
+    _hasEndDate,
+    _hasStartTime,
+    _hasEndTime,
     _allDay,
     _labelId,
     _recurrence.frequency,
@@ -274,7 +282,9 @@ class _CalendarEventInputPageState
     setState(() {
       if (start) {
         if (!time) {
-          _end = _end.add(next.difference(_start));
+          if (widget._duplicateSource == null) {
+            _end = _end.add(next.difference(_start));
+          }
           if (_recurrence.frequency != null &&
               (widget._duplicateSource == null || _recurrenceEdited) &&
               (next.year != _start.year ||
@@ -283,19 +293,41 @@ class _CalendarEventInputPageState
             _recurrence = _recurrence.alignedTo(next, previous: _start);
             _recurrenceEdited = true;
           }
+          _hasStartDate = true;
         }
         _start = next;
         if (time) {
-          final minutes = ref
-              .read(calendarPreferencesNotifierProvider)
-              .value!
-              .minutes;
-          _end = _start.add(Duration(minutes: minutes));
+          _hasStartTime = true;
+          if (widget._duplicateSource == null) {
+            final minutes = ref
+                .read(calendarPreferencesNotifierProvider)
+                .value!
+                .minutes;
+            _end = _start.add(Duration(minutes: minutes));
+          }
         }
       } else {
         _end = next;
+        if (time) {
+          _hasEndTime = true;
+        } else {
+          _hasEndDate = true;
+        }
       }
     });
+  }
+
+  String _dateLabel(bool start) {
+    final label = start ? '開始日' : '終了日';
+    final hasDate = start ? _hasStartDate : _hasEndDate;
+    if (!hasDate) return label;
+    return '$label: ${calendarDateText(start ? _start : _end)}';
+  }
+
+  String _timeLabel(bool start) {
+    final hasTime = start ? _hasStartTime : _hasEndTime;
+    if (!hasTime) return start ? '開始時刻を選択' : '終了時刻を選択';
+    return calendarTimeText(start ? _start : _end);
   }
 
   Future<void> _openUrl() async {
@@ -369,6 +401,14 @@ class _CalendarEventInputPageState
   Future<void> _save() async {
     if (!_form.currentState!.validate()) return;
     if (_saving || _groupId == null) return;
+    if (!_hasStartDate || !_hasEndDate) {
+      setState(() => _error = '開始日と終了日を選択してください');
+      return;
+    }
+    if (!_allDay && (!_hasStartTime || !_hasEndTime)) {
+      setState(() => _error = '開始時刻と終了時刻を選択してください');
+      return;
+    }
     final moving = widget.event != null && widget.event!.groupId != _groupId;
     final recurring = widget.event?.originalStartDateTime != null;
     final scope = recurring && !moving ? await _chooseScope(false) : null;
@@ -900,9 +940,7 @@ class _CalendarEventInputPageState
                                     child: Row(
                                       children: [
                                         Expanded(
-                                          child: Text(
-                                            '${start ? '開始' : '終了'}日: ${calendarDateText(start ? _start : _end)}',
-                                          ),
+                                          child: Text(_dateLabel(start)),
                                         ),
                                         const Icon(
                                           Icons.calendar_today,
@@ -924,12 +962,12 @@ class _CalendarEventInputPageState
                                           state.isSaving ||
                                               movingSeries ||
                                               (start &&
+                                                  widget._duplicateSource ==
+                                                      null &&
                                                   preferences.value == null)
                                           ? null
                                           : () => _pick(start, true),
-                                      child: Text(
-                                        calendarTimeText(start ? _start : _end),
-                                      ),
+                                      child: Text(_timeLabel(start)),
                                     ),
                                   ),
                               ],
@@ -973,7 +1011,9 @@ class _CalendarEventInputPageState
                               ),
                               child: const Text('通知設定を再取得'),
                             ),
-                          if (!_allDay && preferences.hasError)
+                          if (!_allDay &&
+                              widget._duplicateSource == null &&
+                              preferences.hasError)
                             TextButton(
                               onPressed: () => ref.invalidate(
                                 calendarPreferencesNotifierProvider,
