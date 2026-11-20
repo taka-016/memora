@@ -193,6 +193,23 @@ void main() {
     await fixture.dispose();
   });
 
+  test('退避済みグループの所属が残っていても予定を購読しない', () async {
+    final fixture = _NotificationFixture(ids: []);
+    addTearDown(fixture.dispose);
+    await fixture.start();
+
+    fixture.ids = ['archived'];
+    fixture.publishMembership();
+    await fixture.flush();
+    fixture.groupExists('archived', false);
+    await fixture.flush();
+
+    expect(await fixture.source.load(), isEmpty);
+    verifyNever(
+      fixture.watcher.execute('archived', period: anyNamed('period')),
+    );
+  });
+
   test('監視の初回受信と変更受信では全グループの予定を取り直さない', () async {
     final currentMember = MockGetCurrentMemberUseCase();
     final groups = MockGetGroupsWithMembersUsecase();
