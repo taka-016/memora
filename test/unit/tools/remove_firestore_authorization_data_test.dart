@@ -33,10 +33,15 @@ void main() {
     expect(writes, [
       {
         'update': {'name': '$root/members/old'},
-        'updateMask': {'fieldPaths': ['groupIds', 'managedGroupIds', 'changedGroupId']},
+        'updateMask': {
+          'fieldPaths': ['groupIds', 'managedGroupIds', 'changedGroupId'],
+        },
         'currentDocument': {'updateTime': updateTime},
       },
-      for (final collection in ['account_permissions', 'member_invitation_claims'])
+      for (final collection in [
+        'account_permissions',
+        'member_invitation_claims',
+      ])
         {
           'delete': '$root/$collection/id',
           'currentDocument': {'updateTime': updateTime},
