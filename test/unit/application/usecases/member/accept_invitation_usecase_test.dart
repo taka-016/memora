@@ -54,16 +54,11 @@ void main() {
     when(query.getAllByInviteeId('m'))
         .thenAnswer((_) async => [invitation, other]);
     when(members.getMemberById('m')).thenAnswer(
-      (_) async => const MemberDto(
-        id: 'm',
-        displayName: '本人',
-        accountId: 'old',
-        version: 7,
-      ),
+      (_) async => const MemberDto(id: 'm', displayName: '本人', version: 7),
     );
   });
   for (final code in ['code', 'other']) {
-    test('招待$codeから既存アカウントを含め同じ対象の全招待を一括承認する', () async {
+    test('招待$codeから同じ対象の全招待を一括承認する', () async {
       expect(await usecase.execute(code, 'user'), isTrue);
       final args = verify(repository.acceptInvitation(captureAny, captureAny))
           .captured;
@@ -81,6 +76,15 @@ void main() {
       );
     });
   }
+  test('アカウントに紐づいたメンバーの招待は受理しない', () async {
+    when(members.getMemberById('m')).thenAnswer(
+      (_) async =>
+          const MemberDto(id: 'm', displayName: '本人', accountId: 'old'),
+    );
+    expect(await usecase.execute('code', 'user'), isFalse);
+    verifyNever(repository.acceptInvitation(any, any));
+  });
+
   for (final absent in ['コード', 'メンバー', '承認対象', '再発行']) {
     test('$absentの欠落・変更時は承認しない', () async {
       switch (absent) {

@@ -29,10 +29,7 @@ void main() {
           MockCollectionReference<Map<String, dynamic>>();
       when(mockFirestore.collection('member_invitations'))
           .thenReturn(mockInvitationCollection);
-      service = FirestoreMemberInvitationQueryService(
-        firestore: mockFirestore,
-        accountId: () => 'uid',
-      );
+      service = FirestoreMemberInvitationQueryService(firestore: mockFirestore);
     });
 
     test('同じ対象の全招待をIDと期待バージョン付きで返す', () async {
@@ -108,11 +105,9 @@ void main() {
       );
     });
 
-    test('招待コードの文書を単一取得し本人の受理処理へ紐付ける', () async {
+    test('招待コードの文書を単一取得し受理用の文書を書き込まない', () async {
       final ref = MockDocumentReference<Map<String, dynamic>>();
       final doc = MockDocumentSnapshot<Map<String, dynamic>>();
-      final claims = MockCollectionReference<Map<String, dynamic>>();
-      final claim = MockDocumentReference<Map<String, dynamic>>();
       when(mockInvitationCollection.doc('CODE')).thenReturn(ref);
       when(ref.get()).thenAnswer((_) async => doc);
       when(doc.exists).thenReturn(true);
@@ -123,12 +118,8 @@ void main() {
         'invitationCode': 'CODE',
         'version': 2,
       });
-      when(mockFirestore.collection('member_invitation_claims'))
-          .thenReturn(claims);
-      when(claims.doc('uid')).thenReturn(claim);
-      when(claim.set(any)).thenAnswer((_) async {});
       expect((await service.getByInvitationCode('CODE'))?.inviteeId, 'm');
-      verify(claim.set({'code': 'CODE'})).called(1);
+      verifyNever(mockFirestore.collection('member_invitation_claims'));
       verifyNever(
         mockInvitationCollection.where(
           'invitationCode',
@@ -137,7 +128,7 @@ void main() {
       );
     });
 
-    test('招待コードが存在しなければ受理処理へ紐付けない', () async {
+    test('招待コードが存在しなければnullを返す', () async {
       final ref = MockDocumentReference<Map<String, dynamic>>();
       final doc = MockDocumentSnapshot<Map<String, dynamic>>();
       when(mockInvitationCollection.doc('missing')).thenReturn(ref);

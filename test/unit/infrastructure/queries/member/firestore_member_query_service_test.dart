@@ -1,4 +1,4 @@
-import 'package:memora/infrastructure/services/firestore_account_permissions_source.dart';
+import 'package:memora/infrastructure/services/firestore_account_member_source.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
@@ -11,7 +11,7 @@ import '../../../../helpers/test_exception.dart';
 import 'firestore_member_query_service_test.mocks.dart';
 
 @GenerateMocks([
-  FirestoreAccountPermissionsSource,
+  FirestoreAccountMemberSource,
   FirebaseFirestore,
   CollectionReference,
   Query,
@@ -25,29 +25,25 @@ void main() {
     late MockFirebaseFirestore mockFirestore;
     late MockCollectionReference<Map<String, dynamic>> mockMembersCollection;
     late FirestoreMemberQueryService service;
-    late MockFirestoreAccountPermissionsSource permissions;
+    late MockFirestoreAccountMemberSource accountMember;
 
     setUp(() {
       mockFirestore = MockFirebaseFirestore();
       mockMembersCollection = MockCollectionReference<Map<String, dynamic>>();
       when(mockFirestore.collection('members'))
           .thenReturn(mockMembersCollection);
-      permissions = MockFirestoreAccountPermissionsSource();
-      when(permissions.forAccount(any)).thenAnswer(
+      accountMember = MockFirestoreAccountMemberSource();
+      when(accountMember.forAccount(any)).thenAnswer(
         (call) =>
-            FirestoreAccountPermissionsSource(mockFirestore)
+            FirestoreAccountMemberSource(mockFirestore)
                 .forAccount(call.positionalArguments.single as String),
       );
-      when(permissions.current()).thenAnswer(
-        (_) async => FirestoreAccountPermissions({
-          'memberId': 'self',
-          'memberGroupIds': <String>[],
-          'managedGroupIds': <String>[],
-        }),
-      );
+      final self = MockQueryDocumentSnapshot<Map<String, dynamic>>();
+      when(self.id).thenReturn('self');
+      when(accountMember.current()).thenAnswer((_) async => self);
       service = FirestoreMemberQueryService(
         firestore: mockFirestore,
-        permissions: permissions,
+        accountMember: accountMember,
       );
     });
 
@@ -125,48 +121,31 @@ void main() {
       );
     });
 
-    test('本人を認可文書の対応から取得する', () async {
-      final permissions = MockCollectionReference<Map<String, dynamic>>();
-      final permissionRef = MockDocumentReference<Map<String, dynamic>>();
-      final permission = MockDocumentSnapshot<Map<String, dynamic>>();
-      final memberRef = MockDocumentReference<Map<String, dynamic>>();
-      final member = MockDocumentSnapshot<Map<String, dynamic>>();
-      when(mockFirestore.collection('account_permissions'))
-          .thenReturn(permissions);
-      when(permissions.doc('account001')).thenReturn(permissionRef);
-      when(permissionRef.get()).thenAnswer((_) async => permission);
-      when(permission.exists).thenReturn(true);
-      when(permission.data()).thenReturn({
-        'memberId': 'member001',
-        'memberGroupIds': <String>[],
-        'managedGroupIds': <String>[],
-      });
-      when(mockMembersCollection.doc('member001')).thenReturn(memberRef);
-      when(memberRef.get()).thenAnswer((_) async => member);
-      when(member.exists).thenReturn(true);
+    test('アカウントIDに一致するメンバーを取得する', () async {
+      final query = MockQuery<Map<String, dynamic>>();
+      final snapshot = MockQuerySnapshot<Map<String, dynamic>>();
+      final member = MockQueryDocumentSnapshot<Map<String, dynamic>>();
+      when(mockMembersCollection.where('accountId', isEqualTo: 'account001'))
+          .thenReturn(query);
+      when(query.limit(1)).thenReturn(query);
+      when(query.get()).thenAnswer((_) async => snapshot);
+      when(snapshot.docs).thenReturn([member]);
       when(member.id).thenReturn('member001');
       when(member.data()).thenReturn({'displayName': '田中一郎'});
-      expect(
-        (await service.getMemberByAccountId('account001'))?.displayName,
-        '田中一郎',
-      );
-      verifyNever(
-        mockMembersCollection.where(
-          'accountId',
-          isEqualTo: anyNamed('isEqualTo'),
-        ),
-      );
+      final result = await service.getMemberByAccountId('account001');
+      expect(result?.id, 'member001');
+      expect(result?.displayName, '田中一郎');
+      verifyNever(mockMembersCollection.doc(any));
     });
 
-    test('認可文書がなければ未登録として扱う', () async {
-      final permissions = MockCollectionReference<Map<String, dynamic>>();
-      final ref = MockDocumentReference<Map<String, dynamic>>();
-      final doc = MockDocumentSnapshot<Map<String, dynamic>>();
-      when(mockFirestore.collection('account_permissions'))
-          .thenReturn(permissions);
-      when(permissions.doc('missing')).thenReturn(ref);
-      when(ref.get()).thenAnswer((_) async => doc);
-      when(doc.exists).thenReturn(false);
+    test('一致するメンバーがいなければ未登録として扱う', () async {
+      final query = MockQuery<Map<String, dynamic>>();
+      final snapshot = MockQuerySnapshot<Map<String, dynamic>>();
+      when(mockMembersCollection.where('accountId', isEqualTo: 'missing'))
+          .thenReturn(query);
+      when(query.limit(1)).thenReturn(query);
+      when(query.get()).thenAnswer((_) async => snapshot);
+      when(snapshot.docs).thenReturn([]);
       expect(await service.getMemberByAccountId('missing'), isNull);
     });
 

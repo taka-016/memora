@@ -25,3 +25,21 @@ await expectCommit(uid, [write(availability, {minimumBuildNumber: 1})], 403, '�
 await expectCommit(uid, [write(trip, {groupId: group, version: 3})], 403, 'バージョンを飛ばして更新できない');
 await expectCommit(uid, [write(trip, {groupId: group, version: 2})], 200, '次のバージョンへ更新できる');
 await expectCommit(uid, [remove(trip)], 200, '記録を削除できる');
+
+const invitation = 'member_invitations/rules-test-code';
+const member = 'members/rules-test-invitee';
+await expectCommit('another-verified-user', [
+  write(member, {accountId: null, ownerId: 'inviter', version: 1}),
+  write(invitation, {invitationCode: 'rules-test-code', inviteeId: 'rules-test-invitee', version: 1}),
+], 200, '別アカウントが招待を発行できる');
+assert.equal(await get(invitation, token(uid)), 200, '招待を取得できる');
+await expectCommit(uid, [
+  write(member, {accountId: uid, ownerId: 'inviter', version: 2}),
+  remove(invitation),
+], 200, '受理用の文書なしで招待を受理できる');
+await expectCommit('another-verified-user', [
+  write(member, {accountId: 'another-verified-user', ownerId: 'inviter', version: 3}),
+], 403, '紐づいたアカウントを上書きできない');
+for (const collection of ['account_permissions', 'member_invitation_claims']) {
+  await expectCommit(uid, [write(`${collection}/obsolete`, {})], 403, '廃止したコレクションに書き込めない');
+}

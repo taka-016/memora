@@ -4,7 +4,7 @@ const ids=['verified','unverified','anonymous'].map(type=>`archive-groups-${type
 const f=await fixture('archive',ids);
 for(const table of ['groups','members']) {
   for(const [label,bearer,allowed] of [['verified',f.uid,true],['unverified',token(f.uid,false),false],['anonymous',null,false]]) {
-    const id=`archive-${table}-${label}`,data={version:1,ownerId:f.member,name:'退避情報',...(table==='members'?{accountId:null,groupIds:[],managedGroupIds:[]}: {})};
+    const id=`archive-${table}-${label}`,data={version:1,ownerId:f.member,name:'退避情報',...(table==='members'?{accountId:null}: {})};
     await expectCommit('owner',[remove(`deleted_${table}/${id}`),write(`${table}/${id}`,data),write(`group_events/${id}`,{version:1,groupId:id,memo:'保持する記録'})],200,'退避対象を準備');
     const [status,body]=await archivedDelete(bearer,table,id);
     assert.equal(status,allowed?200:403,`${table} ${label}: ${body}`);

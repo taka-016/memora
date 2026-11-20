@@ -5,7 +5,7 @@ import 'package:mockito/mockito.dart';
 import 'package:memora/domain/entities/group/group.dart';
 import 'package:memora/domain/entities/group/group_member.dart';
 import 'package:memora/infrastructure/repositories/group/firestore_group_repository.dart';
-import 'package:memora/infrastructure/services/firestore_account_permissions_source.dart';
+import 'package:memora/infrastructure/services/firestore_account_member_source.dart';
 
 import '../../../../helpers/firestore_transaction_store.dart';
 import '../../../../helpers/test_exception.dart';
@@ -20,26 +20,22 @@ import 'firestore_group_repository_test.mocks.dart';
   DocumentSnapshot,
   Query,
   WriteBatch,
-  FirestoreAccountPermissionsSource,
+  FirestoreAccountMemberSource,
   FirestoreGroupRepository,
 ])
 void main() {
   late FirestoreTransactionStore store;
   late FirestoreGroupRepository repo;
-  late MockFirestoreAccountPermissionsSource permissions;
+  late MockFirestoreAccountMemberSource accountMember;
   setUp(() {
     store = FirestoreTransactionStore();
-    permissions = MockFirestoreAccountPermissionsSource();
-    when(permissions.current()).thenAnswer(
-      (_) async => FirestoreAccountPermissions({
-        'memberId': 'self',
-        'memberGroupIds': <String>[],
-        'managedGroupIds': <String>[],
-      }),
-    );
+    accountMember = MockFirestoreAccountMemberSource();
+    final self = MockQueryDocumentSnapshot<Map<String, dynamic>>();
+    when(self.id).thenReturn('self');
+    when(accountMember.current()).thenAnswer((_) async => self);
     repo = FirestoreGroupRepository(
       firestore: store.firestore,
-      permissions: permissions,
+      accountMember: accountMember,
     );
     store.rows['members/self'] = {
       'version': 1,
@@ -65,7 +61,7 @@ void main() {
     expect(store.commits, 1);
   });
 
-  test('所属追加・管理者変更とプロフィールの所属一覧と認可を同時に保存する', () async {
+  test('所属を追加してもメンバー文書は変更しない', () async {
     store.rows['groups/g'] = {'version': 3, 'ownerId': 'self'};
     const self = GroupMember(groupId: 'g', memberId: 'self');
     const added = GroupMember(
@@ -96,15 +92,16 @@ void main() {
     );
     expect(store.rows['groups/g']!['version'], 4);
     expect(store.rows['group_members/g:other']!['isAdministrator'], true);
-    expect(store.rows['members/other']!['groupIds'], ['else', 'g']);
-    expect(store.rows['members/other']!['version'], 5);
-    expect(store.rows['account_permissions/otherUid']!['managedGroupIds'], [
-      'g',
-    ]);
+    expect(store.rows['members/other']!['groupIds'], ['else']);
+    expect(store.rows['members/other']!['version'], 4);
+    expect(
+      store.rows['account_permissions/otherUid']!['managedGroupIds'],
+      isEmpty,
+    );
     expect(store.commits, 1);
   });
 
-  test('所属色だけの変更ではプロフィールと認可を更新しない', () async {
+  test('所属色だけの変更ではメンバー文書を更新しない', () async {
     store.rows['groups/g'] = {'version': 3, 'ownerId': 'self'};
     const before = GroupMember(groupId: 'g', memberId: 'self');
     await repo.updateGroup(
@@ -121,7 +118,7 @@ void main() {
     expect(store.rows['members/self']!['version'], 1);
   });
 
-  test('競合と保存拒否では所属と認可を一部だけ変更しない', () async {
+  test('競合と保存拒否ではグループと所属を一部だけ変更しない', () async {
     store.rows['groups/g'] = {'version': 3, 'ownerId': 'self'};
     store.commitError = TestException();
     const self = GroupMember(groupId: 'g', memberId: 'self');
@@ -176,53 +173,10 @@ void main() {
     expect(store.rows['groups/g']!['version'], 4);
   });
 
-  test('別グループの所属更新と競合した再試行でも更新済みの所属を上書きしない', () async {
-    store.rows['groups/g'] = {'version': 3, 'ownerId': 'self'};
-    store.rows['members/other'] = {
-      'version': 4,
-      'accountId': 'otherUid',
-      'groupIds': ['else'],
-      'managedGroupIds': <String>[],
-    };
-    store.rows['account_permissions/otherUid'] = {
-      'memberId': 'other',
-      'memberGroupIds': ['else'],
-      'managedGroupIds': <String>[],
-    };
-    store.beforeRetry = () {
-      store.rows['members/other']!.addAll({
-        'version': 5,
-        'groupIds': ['else', 'concurrent'],
-      });
-      store.rows['account_permissions/otherUid']!['memberGroupIds'] = [
-        'else',
-        'concurrent',
-      ];
-    };
-    const self = GroupMember(groupId: 'g', memberId: 'self');
-    const other = GroupMember(groupId: 'g', memberId: 'other');
-    await repo.updateGroup(
-      Group(
-        id: 'g',
-        ownerId: 'self',
-        name: '家族',
-        version: 3,
-        originalMembers: const [self],
-        members: const [self, other],
-      ),
-    );
-    expect(store.rows['account_permissions/otherUid']!['memberGroupIds'], [
-      'else',
-      'concurrent',
-      'g',
-    ]);
-    expect(store.rows['members/other']!['version'], 6);
-  });
-
-  test('グループ退避では認可を解除する全所属をサーバーから取得し関連データを保持する', () async {
+  test('グループ退避では所属を取得し直さずに関連データを保持する', () async {
     final id = await repo.saveGroup(Group(id: '', ownerId: 'self', name: '家族'));
     await repo.deleteGroup(id, expectedVersion: 1);
-    expect(store.querySources, [Source.server]);
+    expect(store.querySources, isEmpty);
     expect(store.rows.containsKey('groups/$id'), false);
     expect(store.rows['deleted_groups/$id']!['name'], '家族');
     expect(store.rows.containsKey('group_members/$id:self'), true);

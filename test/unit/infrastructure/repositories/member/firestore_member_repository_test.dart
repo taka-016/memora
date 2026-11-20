@@ -31,50 +31,31 @@ void main() {
       repository = FirestoreMemberRepository(firestore: mockFirestore);
     });
 
-    test('本人登録ではメンバーと空の認可文書を同じバッチで作成する', () async {
+    test('本人と未連携のメンバーを登録してもグループIDの一覧を保存しない', () async {
       final store = FirestoreTransactionStore();
       final repository = FirestoreMemberRepository(firestore: store.firestore);
       await repository.saveMember(
         const Member(id: '', accountId: 'uid', displayName: '本人'),
       );
-      final entry = store.rows.entries.singleWhere(
-        (entry) => entry.key.startsWith('members/'),
+      await repository.saveMember(
+        const Member(id: '', ownerId: 'self', displayName: '家族'),
       );
-      expect(entry.value['groupIds'], isEmpty);
-      expect(store.rows['account_permissions/uid'], {
-        'memberId': entry.key.split('/').last,
-        'memberGroupIds': <String>[],
-        'managedGroupIds': <String>[],
-      });
-      expect(store.commits, 1);
+      expect(store.rows.keys, everyElement(startsWith('members/')));
+      expect(store.rows, hasLength(2));
+      for (final document in store.rows.values) {
+        expect(document.keys, isNot(contains('groupIds')));
+        expect(document.keys, isNot(contains('managedGroupIds')));
+      }
     });
 
-    test('未連携の管理メンバーには認可文書を作成しない', () async {
+    test('本人の削除ではメンバー文書を退避する', () async {
       final store = FirestoreTransactionStore();
-      await FirestoreMemberRepository(firestore: store.firestore)
-          .saveMember(const Member(id: '', ownerId: 'self', displayName: '家族'));
-      expect(store.rows.length, 1);
-      expect(store.rows.values.single['managedGroupIds'], isEmpty);
-    });
-
-    test('本人の退避と削除では認可文書も同じトランザクションで削除する', () async {
-      final store = FirestoreTransactionStore();
-      store.rows['members/m'] = {
-        'version': 2,
-        'accountId': 'uid',
-        'groupIds': ['g'],
-        'managedGroupIds': ['g'],
-      };
-      store.rows['account_permissions/uid'] = {
-        'memberId': 'm',
-        'memberGroupIds': ['g'],
-        'managedGroupIds': ['g'],
-      };
+      store.rows['members/m'] = {'version': 2, 'accountId': 'uid'};
       await FirestoreMemberRepository(firestore: store.firestore)
           .deleteMember('m', expectedVersion: 2);
-      expect(store.rows.containsKey('members/m'), false);
-      expect(store.rows.containsKey('account_permissions/uid'), false);
-      expect(store.rows['deleted_members/m']!['version'], 2);
+      expect(store.rows, {
+        'deleted_members/m': {'version': 2, 'accountId': 'uid'},
+      });
       expect(store.commits, 1);
     });
 

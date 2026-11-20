@@ -10,11 +10,8 @@ import 'package:memora/infrastructure/mappers/group/firestore_group_member_mappe
 class FirestoreGroupQueryService implements GroupQueryService {
   final FirebaseFirestore _firestore;
 
-  FirestoreGroupQueryService({
-    FirebaseFirestore? firestore,
-    GetOptions? options,
-  }) : _options = options,
-       _firestore = firestore ?? FirebaseFirestore.instance;
+  FirestoreGroupQueryService({FirebaseFirestore? firestore, this._options})
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   final GetOptions? _options;
 

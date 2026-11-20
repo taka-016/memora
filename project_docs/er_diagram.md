@@ -1,6 +1,6 @@
 # ER図
 
-オンラインの認可文書・所属一覧の補完と切替は[専用手順](../scripts/firebase/backfill_account_permissions.md)を参照。
+オンライン版のFirestoreルールと保証範囲は[ADR-012](adr/adr-012-firestore-access-without-document-reads.md)を参照。
 
 ```mermaid
 erDiagram
@@ -83,8 +83,6 @@ erDiagram
         string id PK
         string accountId
         string ownerId FK
-        string[] groupIds "オンライン専用・所属先"
-        string[] managedGroupIds "オンライン専用・所有者と管理者の対象"
         string hiraganaFirstName
         string hiraganaLastName
         string kanjiFirstName
@@ -115,12 +113,6 @@ erDiagram
         string email
         string phoneNumber
     }
-    account_permissions {
-        string accountId PK "認証UID・Firestore文書ID"
-        string memberId FK "NOT NULL・本人"
-        string[] memberGroupIds "所属先グループID"
-        string[] managedGroupIds "所有者・管理者のグループID"
-    }
     member_events {
         string id PK
         string groupId FK "NOT NULL"
@@ -133,10 +125,6 @@ erDiagram
         string inviteeId FK "NOT NULL"
         string inviterId FK "NOT NULL"
         string invitationCode "NOT NULL"
-    }
-    member_invitation_claims {
-        string accountId PK "認証UID・Firestore文書ID・オンライン専用"
-        string code FK "受理に使用する招待コード"
     }
     dvc_point_contracts {
         string id PK
@@ -214,7 +202,6 @@ erDiagram
     groups ||--o{ locations : "id → groupId"
     group_members ||--|| members : "memberId → id"
     members ||--o{ member_events : "id → memberId"
-    members ||--o| account_permissions : "id → memberId"
     members ||--o{ members : "id → ownerId"
     members ||--o{ groups : "id → ownerId"
     members ||--o{ member_invitations : "id → inviteeId"
@@ -227,16 +214,13 @@ erDiagram
     calendar_labels ||--o{ calendar_events : "id → labelId"
     calendar_events ||--o{ calendar_event_overrides : "id → eventId"
     externally_managed_accounts ||--|| members : "id → accountId"
-    externally_managed_accounts ||--o| account_permissions : "id → accountId"
-    externally_managed_accounts ||--o| member_invitation_claims : "id → accountId"
-    member_invitations ||--o{ member_invitation_claims : "invitationCode → code"
 ```
 
 ## 図の補足
 
 - 図は共通の業務モデルを示す。SQLiteの物理定義・制約・インデックスは[`offline_schema.drift`](../lib/infrastructure/database/offline_schema.drift)を参照。
 - `app_settings/availability`はオンライン専用の利用停止設定。文書が未作成なら`minimumBuildNumber: 0`・`isMaintenance: false`として扱う。SQLiteやオフラインバックアップには含めない。
-- `account_permissions`はオンライン専用の認可コレクションで、認証UIDごとに1文書を持つ。`memberGroupIds`と`managedGroupIds`はグループIDの重複を持たない一覧で、管理対象は所属先の一部とする。所有者のグループも管理対象に含める。SQLiteやオフラインバックアップには含めない。
+- オンライン版の本人のメンバー情報は `members.accountId` で取得する。所属グループと管理者設定は `group_members` に保持する。
 - `member_events`はグループとメンバーの両方に属し、`groupId`・`memberId`・`year`の組ごとに1件のメモを持つ。同じメンバー・同じ年でもグループごとに別の記録を保持する。
 - `deleted_groups`・`deleted_members`はFirestoreの専用コレクションとSQLiteの専用テーブルに対応する。親の退避時は、元のドキュメントID・行IDをそのまま主キーにし、親の全フィールドを保存する。Firestoreでは取得データをそのまま保存し、`createdAt`・`updatedAt`やオンラインの`version`を含むフィールドを欠落させない。通常テーブルの親は残さず、退避保存と元データ削除を原子的に行う。
 - 図の通常グループ・メンバーへの関連線は元のIDによる論理的な関係を示す。退避後は同じIDの親が削除済み保存先にあり、関連データ・所属・タスク担当のIDは変更しない。通常の取得で退避先を参照して親を表示せず、削除済み一覧や復活機能は提供しない。
@@ -251,7 +235,3 @@ erDiagram
 - `calendar_labels`は任意ラベルのみを保存する。固定ラベルは`groups.color`と所属順の`group_members.color`から組み立てる。文字色はそれぞれの`textColor`を使用し、未指定時は背景色から読みやすい白・黒を選ぶ。グループ固定は予定の`groupId`、メンバー固定は`memberId`で参照する。種別に対応しない参照はNULLとする。所属解除・メンバー削除後も固定参照は保持し、再加入時は現在の所属色を使う。`referencedLabelIds`と任意ラベルの使用件数は、系列と独立した通常予定それぞれの任意ラベル参照を集計する。
 
 - 旅程ウィジェットは所属グループと旅程の開始日時で表示日と前後の日付を取得し、旅行の登録年・旅行期間に依存しない。Firestoreの旅程は検索用の`groupId`を親旅行と同じ保存単位で更新する。SQLiteは親旅行と結合してグループを絞る。ウィジェット用の取得では場所の詳細を取得しない。
-
-- オンラインの`members`には認可参照用の`groupIds`と`managedGroupIds`を保持する。所属・役割と認可文書と同じ原子的な更新に含め、通常のプロフィール編集では変更しない。SQLite・オフラインバックアップには含めない。プロフィールと所属更新は同じ文書のバージョンで競合し、プロフィールの閲覧者に全所属グループIDが見えることを許容する。
-
-- `member_invitation_claims`はオンラインの招待受理に使う本人専用の文書で、有効な招待コードに限定して対象メンバーの取得を許可する。受理時にはアカウントの紐付け・認可文書の作成・対象の招待削除と同じトランザクションで削除する。

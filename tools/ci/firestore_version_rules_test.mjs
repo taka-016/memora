@@ -4,7 +4,7 @@ const f=await fixture('versions',['version-groups']);
 const invalidStored=[undefined,null,'1',raw({doubleValue:1}),0,-1];
 for(const collection of ['members','member_invitations','group_events','member_events','trip_entries','groups','calendar_events','dvc_point_contracts','calendar_labels']) {
   const id=`version-${collection}`, path=`${collection}/${id}`;
-  const base={version:1,groupId:f.group,name:'編集前',...(collection==='members'?{accountId:null,ownerId:f.member,groupIds:[],managedGroupIds:[]}:{}),...(collection==='groups'?{ownerId:f.member}:{}),...(collection==='member_invitations'?{inviterId:f.member,inviteeId:f.invitee,invitationCode:id}:{}),...(collection==='calendar_events'?{labelType:'group',memberId:null,labelId:null}:{}),...(collection==='calendar_labels'?{eventCount:0}: {})};
+  const base={version:1,groupId:f.group,name:'編集前',...(collection==='members'?{accountId:null,ownerId:f.member}:{}),...(collection==='groups'?{ownerId:f.member}:{}),...(collection==='member_invitations'?{inviterId:f.member,inviteeId:f.invitee,invitationCode:id}:{}),...(collection==='calendar_events'?{labelType:'group',memberId:null,labelId:null}:{}),...(collection==='calendar_labels'?{eventCount:0}: {})};
   await expectCommit('owner',[remove(path),remove(`deleted_${collection}/${id}`)],200,'初期化');
   await expectCommit(f.uid,[write(path,base)],200,`${collection}の初期作成`);
   const next={...base,version:2,name:'編集後'};
@@ -41,4 +41,4 @@ for(const invalid of invalidStored) {
   await expectCommit(f.uid,[write('calendar_labels/version-count',{...label,version:invalid,eventCount:2})],403,'不正な既存バージョンの件数更新を拒否');
 }
 await expectCommit(f.uid,[write('unknown/doc',{})],403,'未知のコレクションを拒否');
-console.log('認可済み利用者のバージョン・同時更新・認証・迂回拒否を確認しました');
+console.log('メール確認済みの利用者のバージョン・同時更新・認証・迂回拒否を確認しました');

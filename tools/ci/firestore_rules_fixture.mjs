@@ -34,11 +34,10 @@ export async function fixture(prefix, extraGroups=[]) {
   const uid=`${prefix}-uid`, member=`${prefix}-self`, group=`${prefix}-group`, invitee=`${prefix}-invitee`;
   const groups=[group,...extraGroups];
   await expectCommit('owner',[
-    write(`members/${member}`,{version:1,accountId:uid,ownerId:null,groupIds:groups,managedGroupIds:groups}),
-    write(`account_permissions/${uid}`,{memberId:member,memberGroupIds:groups,managedGroupIds:groups}),
+    write(`members/${member}`,{version:1,accountId:uid,ownerId:null}),
     write(`groups/${group}`,{version:1,ownerId:member,name:'確認用'}),
-    write(`members/${invitee}`,{version:1,accountId:null,ownerId:member,groupIds:[],managedGroupIds:[]}),
+    write(`members/${invitee}`,{version:1,accountId:null,ownerId:member}),
     ...groups.map(g=>write(`group_members/${g}:${member}`,{groupId:g,memberId:member,isAdministrator:false})),
-  ],200,'認可済みfixture');
+  ],200,'グループとメンバーを準備');
   return {uid,member,group,invitee};
 }
