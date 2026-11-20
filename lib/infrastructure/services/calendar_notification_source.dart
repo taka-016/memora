@@ -104,7 +104,18 @@ class DeviceCalendarNotificationSource implements CalendarNotificationSource {
           }
           loadedGroups.add(id);
           if (doc.exists) {
-            existing.add(id);
+            if (existing.add(id)) {
+              subscriptions.add(
+                watcher.execute(id, period: period).listen((events) {
+                  if (closed ||
+                      !identical(groupSubscriptions[id], subscriptions)) {
+                    return;
+                  }
+                  received[id] = events;
+                  publish();
+                }, onError: error),
+              );
+            }
           } else {
             existing.remove(id);
             received.remove(id);
@@ -114,15 +125,6 @@ class DeviceCalendarNotificationSource implements CalendarNotificationSource {
               unawaited(subscription.cancel());
             }
           }
-          publish();
-        }, onError: error),
-      );
-      subscriptions.add(
-        watcher.execute(id, period: period).listen((events) {
-          if (closed || !identical(groupSubscriptions[id], subscriptions)) {
-            return;
-          }
-          received[id] = events;
           publish();
         }, onError: error),
       );

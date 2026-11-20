@@ -127,6 +127,7 @@ void main() {
     fixture.publishMembership();
     await fixture.flush();
     cancellation.complete();
+    fixture.groupExists('retained', true);
     await fixture.flush();
     expect(fixture.eventStreams['retained']!.hasListener, isTrue);
   });
@@ -396,6 +397,9 @@ class _NotificationFixture {
     await flush();
     for (final id in ids) {
       groupExists(id, true);
+    }
+    await flush();
+    for (final id in ids) {
       eventStreams[id]!.add([]);
     }
     await flush();

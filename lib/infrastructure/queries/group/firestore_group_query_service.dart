@@ -19,6 +19,13 @@ class FirestoreGroupQueryService implements GroupQueryService {
   Future<bool> groupExists(String groupId) async =>
       (await _firestore.collection('groups').doc(groupId).get(_options)).exists;
 
+  Future<bool> isGroupMember(String groupId, String memberId) async =>
+      (await _firestore
+              .collection('group_members')
+              .doc('$groupId:$memberId')
+              .get(_options))
+          .exists;
+
   @override
   Future<List<GroupDto>> getGroupsWithMembersByMemberId(
     String memberId, {

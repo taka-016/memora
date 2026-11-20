@@ -82,6 +82,9 @@ Future<void> withAndroidWidgetDependencies(
         getAndroidWidgetItineraryCacheUsecaseProvider,
       ),
       mode: mode,
+      isGroupMembershipActive: container.read(
+        androidWidgetItineraryGroupMembershipProvider,
+      ),
       isWidgetInstalled: Platform.isAndroid
           ? () async => (await container!.read(
               loadInstalledAndroidWidgetKindsProvider,

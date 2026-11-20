@@ -1,3 +1,5 @@
+import 'package:memora/composition_root/providers/member_providers.dart';
+import 'package:memora/infrastructure/queries/group/firestore_group_query_service.dart';
 import 'package:memora/composition_root/providers/background_task_providers.dart';
 import 'package:memora/application/services/combined_android_widget_launch_uri_source.dart';
 import 'package:memora/composition_root/providers/calendar_notification_providers.dart';
@@ -38,6 +40,21 @@ final androidWidgetUpdateIntervalStorageProvider =
       throw UnimplementedError('AndroidWidgetUpdateIntervalStorageが注入されていません');
     });
 
+final androidWidgetItineraryGroupMembershipProvider =
+    Provider<Future<bool> Function(String)?>((ref) {
+      if (ref.watch(appModeProvider) == AppMode.offline) return null;
+      return (groupId) async {
+        final member = await ref
+            .read(getCurrentMemberUsecaseProvider)
+            .execute();
+        if (member == null) return false;
+        final groups = FirestoreGroupQueryService(
+          firestore: ref.read(firebaseFirestoreProvider),
+        );
+        return groups.isGroupMember(groupId, member.id);
+      };
+    });
+
 final refreshAndroidWidgetItineraryCacheUsecaseProvider =
     Provider<RefreshAndroidWidgetItineraryCacheUsecase>((ref) {
       return RefreshAndroidWidgetItineraryCacheUsecase(
@@ -47,6 +64,9 @@ final refreshAndroidWidgetItineraryCacheUsecaseProvider =
           getAndroidWidgetItineraryCacheUsecaseProvider,
         ),
         mode: ref.watch(appModeProvider),
+        isGroupMembershipActive: ref.watch(
+          androidWidgetItineraryGroupMembershipProvider,
+        ),
         isWidgetInstalled: Platform.isAndroid
             ? () async => (await ref.read(
                 loadInstalledAndroidWidgetKindsProvider,

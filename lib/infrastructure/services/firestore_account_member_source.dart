@@ -21,6 +21,14 @@ class FirestoreAccountMemberSource {
         .where('accountId', isEqualTo: accountId)
         .limit(1)
         .get();
-    return snapshot.docs.firstOrNull;
+    final member = snapshot.docs.firstOrNull;
+    if (member == null && snapshot.metadata.isFromCache) {
+      throw FirebaseException(
+        plugin: 'cloud_firestore',
+        code: 'unavailable',
+        message: '本人のメンバー情報を確認できません',
+      );
+    }
+    return member;
   }
 }

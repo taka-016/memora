@@ -27,6 +27,7 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
     required this._groupQueryService,
     this._mode = AppMode.online,
     this.isWidgetInstalled,
+    this._isGroupMembershipActive,
     this.trackLoading,
     this._readTransaction,
   });
@@ -36,6 +37,7 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
   final GroupQueryService _groupQueryService;
   final AppMode _mode;
   final Future<bool> Function()? isWidgetInstalled;
+  final Future<bool> Function(String)? _isGroupMembershipActive;
   final ReadTransaction? _readTransaction;
   final TrackAndroidWidgetItineraryLoading? trackLoading;
 
@@ -84,7 +86,8 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
     final selectedAtStart = await _cacheStorage.getSelectedItineraryDateId();
     try {
       Future<AndroidWidgetItineraryCacheDto?> read() async {
-        if (!await _groupQueryService.groupExists(groupId)) {
+        if (!await _groupQueryService.groupExists(groupId) ||
+            !await _canReadGroupItinerary(groupId)) {
           return null;
         }
         final previous = extendCache
@@ -143,6 +146,9 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
       }
     }
   }
+
+  Future<bool> _canReadGroupItinerary(String groupId) async =>
+      await _isGroupMembershipActive?.call(groupId) ?? true;
 }
 
 class SelectAndroidWidgetTargetGroupUsecase {
@@ -257,6 +263,15 @@ class MoveAndroidWidgetSelectedItineraryDateUsecase {
           recentItineraryDateId: cache.recentItineraryDateId,
         ),
       );
+      await _cacheStorage.updateWidget();
+      return null;
+    }
+
+    if (!await _refreshCacheUsecase._canReadGroupItinerary(cache.groupId)) {
+      final selectedGroup = await _cacheStorage.getTargetGroupId();
+      if (selectedGroup == cache.groupId) {
+        await _cacheStorage.clearItinerary();
+      }
       await _cacheStorage.updateWidget();
       return null;
     }

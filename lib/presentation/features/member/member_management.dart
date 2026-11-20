@@ -252,7 +252,10 @@ class MemberManagement extends HookConsumerWidget {
             successMessage: 'メンバーを更新しました',
             failureMessage: '更新に失敗しました',
           ),
-          onInvite: invitationsAvailable && targetMember.id != currentMember.id
+          onInvite:
+              invitationsAvailable &&
+                  targetMember.id != currentMember.id &&
+                  targetMember.accountId == null
               ? (memberDto) async {
                   await handleMemberInvite(memberDto, dialogContext);
                 }
