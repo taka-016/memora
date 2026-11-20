@@ -98,35 +98,51 @@ class DeviceCalendarNotificationSource implements CalendarNotificationSource {
       final subscriptions = <StreamSubscription<dynamic>>[];
       groupSubscriptions[id] = subscriptions;
       subscriptions.add(
-        firestore!.collection('groups').doc(id).snapshots().listen((doc) {
-          if (closed || !identical(groupSubscriptions[id], subscriptions)) {
-            return;
-          }
-          loadedGroups.add(id);
-          if (doc.exists) {
-            if (existing.add(id)) {
-              subscriptions.add(
-                watcher.execute(id, period: period).listen((events) {
-                  if (closed ||
-                      !identical(groupSubscriptions[id], subscriptions)) {
-                    return;
-                  }
-                  received[id] = events;
-                  publish();
-                }, onError: error),
-              );
-            }
-          } else {
-            existing.remove(id);
-            received.remove(id);
-            groupSubscriptions.remove(id);
-            loadedGroups.remove(id);
-            for (final subscription in subscriptions) {
-              unawaited(subscription.cancel());
-            }
-          }
-          publish();
-        }, onError: error),
+        firestore!
+            .collection('groups')
+            .doc(id)
+            .snapshots(includeMetadataChanges: true)
+            .listen((doc) {
+              if (closed || !identical(groupSubscriptions[id], subscriptions)) {
+                return;
+              }
+              if (!doc.exists && doc.metadata.isFromCache) {
+                loadedGroups.remove(id);
+                error(
+                  FirebaseException(
+                    plugin: 'cloud_firestore',
+                    code: 'unavailable',
+                    message: 'グループの存在を確認できません',
+                  ),
+                  StackTrace.current,
+                );
+                return;
+              }
+              loadedGroups.add(id);
+              if (doc.exists) {
+                if (existing.add(id)) {
+                  subscriptions.add(
+                    watcher.execute(id, period: period).listen((events) {
+                      if (closed ||
+                          !identical(groupSubscriptions[id], subscriptions)) {
+                        return;
+                      }
+                      received[id] = events;
+                      publish();
+                    }, onError: error),
+                  );
+                }
+              } else {
+                existing.remove(id);
+                received.remove(id);
+                groupSubscriptions.remove(id);
+                loadedGroups.remove(id);
+                for (final subscription in subscriptions) {
+                  unawaited(subscription.cancel());
+                }
+              }
+              publish();
+            }, onError: error),
       );
     }
 

@@ -265,7 +265,8 @@ void main() {
     when(collection.where('ownerId', isEqualTo: 'm')).thenReturn(query);
     when(query.snapshots()).thenAnswer((_) => membership.stream);
     when(collection.doc('g')).thenReturn(group);
-    when(group.snapshots()).thenAnswer((_) => Stream.value(groupDoc));
+    when(group.snapshots(includeMetadataChanges: true))
+        .thenAnswer((_) => Stream.value(groupDoc));
     final eventQuery = fs.MockQuery();
     when(collection.where('groupId', isEqualTo: 'g')).thenReturn(eventQuery);
     when(
@@ -372,7 +373,8 @@ class _NotificationFixture {
               DocumentSnapshot<Map<String, dynamic>>
             >.broadcast(),
       );
-      when(document.snapshots()).thenAnswer((_) => stream.stream);
+      when(document.snapshots(includeMetadataChanges: true))
+          .thenAnswer((_) => stream.stream);
       return document;
     });
     when(watcher.execute(any, period: anyNamed('period')))

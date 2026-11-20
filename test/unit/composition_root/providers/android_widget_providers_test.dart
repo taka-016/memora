@@ -168,6 +168,9 @@ void main() {
             FixedAppClock(DateTime(2026, 9, 12)),
           ),
           firebaseFirestoreProvider.overrideWithValue(firestore),
+          androidWidgetItineraryGroupMembershipProvider.overrideWithValue(
+            (_) async => true,
+          ),
           androidWidgetCacheStorageProvider.overrideWithValue(storage),
         ],
       );
