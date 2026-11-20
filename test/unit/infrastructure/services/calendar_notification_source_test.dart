@@ -211,6 +211,34 @@ void main() {
     );
   });
 
+  test('グループのキャッシュが空でも通信復帰後に予定の購読を始める', () async {
+    final fixture = _NotificationFixture(ids: []);
+    addTearDown(fixture.dispose);
+    await fixture.start();
+
+    fixture.ids = ['g'];
+    fixture.publishMembership();
+    await fixture.flush();
+    fixture.groupExists('g', false, fromCache: true);
+    await fixture.flush();
+    await expectLater(fixture.source.load(), throwsA(isA<FirebaseException>()));
+    verifyNever(fixture.watcher.execute('g', period: anyNamed('period')));
+
+    fixture.groupExists('g', true);
+    await fixture.flush();
+    final event = CalendarEventDto(
+      id: 'event',
+      groupId: 'g',
+      title: '通信復帰後の予定',
+      startDateTime: DateTime(2026, 11, 12),
+      endDateTime: DateTime(2026, 11, 13),
+      isAllDay: true,
+    );
+    fixture.eventStreams['g']!.add([event]);
+    await fixture.flush();
+    expect(await fixture.source.load(), [event]);
+  });
+
   test('監視の初回受信と変更受信では全グループの予定を取り直さない', () async {
     final currentMember = MockGetCurrentMemberUseCase();
     final groups = MockGetGroupsWithMembersUsecase();
@@ -382,9 +410,10 @@ class _NotificationFixture {
   late DeviceCalendarNotificationSource source;
   late StreamSubscription<void> subscription;
   Future<void> flush() => Future<void>(() {});
-  void groupExists(String id, bool exists) {
+  void groupExists(String id, bool exists, {bool fromCache = false}) {
     final doc = fs.MockDocumentSnapshot();
     when(doc.exists).thenReturn(exists);
+    when(doc.metadata).thenReturn(_Metadata(fromCache));
     groupStreams[id]!.add(doc);
   }
 
@@ -429,4 +458,11 @@ QueryDocumentSnapshot<Map<String, dynamic>> _membership(String groupId) {
   final doc = fs.MockQueryDocumentSnapshot();
   when(doc.data()).thenReturn({'groupId': groupId});
   return doc;
+}
+
+class _Metadata extends Fake implements SnapshotMetadata {
+  _Metadata(this.isFromCache);
+
+  @override
+  final bool isFromCache;
 }
