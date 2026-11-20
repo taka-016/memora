@@ -40,9 +40,13 @@ void main() {
       await repository.saveMember(
         const Member(id: '', ownerId: 'self', displayName: '家族'),
       );
-      expect(store.rows.keys, everyElement(startsWith('members/')));
-      expect(store.rows, hasLength(2));
-      for (final document in store.rows.values) {
+      final members = store.rows.entries.where(
+        (entry) => entry.key.startsWith('members/'),
+      );
+      expect(members, hasLength(2));
+      expect(store.rows['member_account_registrations/uid'], isEmpty);
+      expect(store.rows, hasLength(3));
+      for (final document in members.map((entry) => entry.value)) {
         expect(document.keys, isNot(contains('groupIds')));
         expect(document.keys, isNot(contains('managedGroupIds')));
       }
@@ -51,6 +55,7 @@ void main() {
     test('本人の削除ではメンバー文書を退避する', () async {
       final store = FirestoreTransactionStore();
       store.rows['members/m'] = {'version': 2, 'accountId': 'uid'};
+      store.rows['member_account_registrations/uid'] = {};
       await FirestoreMemberRepository(firestore: store.firestore)
           .deleteMember('m', expectedVersion: 2);
       expect(store.rows, {

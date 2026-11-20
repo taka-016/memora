@@ -58,8 +58,13 @@ void main() {
     expect(store.rows['members/m']!['version'], 8);
     expect(
       store.rows.keys,
-      unorderedEquals(['members/m', 'member_invitations/else']),
+      unorderedEquals([
+        'members/m',
+        'member_invitations/else',
+        'member_account_registrations/user',
+      ]),
     );
+    expect(store.rows['member_account_registrations/user'], isEmpty);
     expect(store.commits, 1);
   });
   for (final path in [

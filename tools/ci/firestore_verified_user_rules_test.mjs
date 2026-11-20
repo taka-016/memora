@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {expectCommit, remove, root, token, write} from './firestore_rules_fixture.mjs';
+import {commit, expectCommit, remove, root, token, write} from './firestore_rules_fixture.mjs';
 
 const availability = 'app_settings/availability';
 const group = 'shared-rules-group';
@@ -42,4 +42,34 @@ await expectCommit('another-verified-user', [
 ], 403, '紐づいたアカウントを上書きできない');
 for (const collection of ['account_permissions', 'member_invitation_claims']) {
   await expectCommit(uid, [write(`${collection}/obsolete`, {})], 403, '廃止したコレクションに書き込めない');
+}
+
+for (const [caseId, attemptTypes] of [
+  ['new-new', ['new', 'new']],
+  ['new-invite', ['new', 'invited']],
+  ['invite-invite', ['invited', 'invited']],
+]) {
+  const accountId = `register-${caseId}`;
+  const registration = `member_account_registrations/${accountId}`;
+  const paths = attemptTypes.map((_, index) => `members/${accountId}-${index}`);
+  const writes = attemptTypes.map((type, index) => [
+    write(registration, {}),
+    write(paths[index], {accountId, ownerId: null, version: type === 'new' ? 1 : 2}),
+  ]);
+  for (const [index, type] of attemptTypes.entries()) {
+    if (type === 'invited') {
+      await expectCommit('owner', [
+        write(paths[index], {accountId: null, ownerId: null, version: 1}),
+      ], 200, '招待されたメンバーを用意する');
+    }
+  }
+  const results = await Promise.all(writes.map(batch => commit(accountId, batch)));
+  const statuses = results.map(([status]) => status);
+  assert.equal(statuses.filter(status => status === 200).length, 1, '同時登録では一方だけ確定する');
+  const loser = statuses.findIndex(status => status !== 200);
+  assert.ok([403, 409].includes(statuses[loser]), results[loser][1]);
+  await expectCommit(accountId, writes[loser], 403, '同じアカウントの再度の登録を拒否する');
+  assert.equal(await get(registration, token(accountId)), 403, '登録の競合に使う文書を読み取らない');
+  await expectCommit('another-verified-user', [remove(registration)], 403, '別アカウントは登録文書を削除できない');
+  await expectCommit(accountId, [remove(registration)], 200, '本人は登録文書を削除できる');
 }
