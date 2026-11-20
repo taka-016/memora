@@ -48,11 +48,21 @@ class CalendarEventInputPage extends ConsumerStatefulWidget {
     this.event,
     this.onSaved,
     this.onCancelled,
-  });
+  }) : _duplicateSource = null;
+
+  const CalendarEventInputPage._duplicate({
+    required this.date,
+    required CalendarEventDto source,
+  }) : _duplicateSource = source,
+       event = null,
+       onSaved = null,
+       onCancelled = null;
+
   final ValueChanged<DateTime>? onSaved;
   final VoidCallback? onCancelled;
   final DateTime date;
   final CalendarEventDto? event;
+  final CalendarEventDto? _duplicateSource;
 
   @override
   ConsumerState<CalendarEventInputPage> createState() =>
@@ -73,6 +83,10 @@ class _CalendarEventInputPageState
   double? _longitude;
   late DateTime _start;
   late DateTime _end;
+  late bool _hasStartDate = widget._duplicateSource == null;
+  late bool _hasEndDate = widget._duplicateSource == null;
+  late bool _hasStartTime = widget._duplicateSource == null;
+  late bool _hasEndTime = widget._duplicateSource == null;
   late bool _allDay;
   String? _labelId;
   String _error = '';
@@ -95,6 +109,10 @@ class _CalendarEventInputPageState
     _longitude,
     _start,
     _end,
+    _hasStartDate,
+    _hasEndDate,
+    _hasStartTime,
+    _hasEndTime,
     _allDay,
     _labelId,
     _recurrence.frequency,
@@ -116,8 +134,9 @@ class _CalendarEventInputPageState
   void initState() {
     super.initState();
     final event = widget.event;
+    final source = event ?? widget._duplicateSource;
     _groupId =
-        event?.groupId ??
+        source?.groupId ??
         ref
             .read(calendarGroupSettingsNotifierProvider)
             .effectiveSettings
@@ -127,7 +146,7 @@ class _CalendarEventInputPageState
         unawaited(
           ref
               .read(calendarEventInputNotifierProvider(_session).notifier)
-              .selectGroup(_groupId, original: event),
+              .selectGroup(_groupId, original: source),
         );
       }
     });
@@ -140,17 +159,17 @@ class _CalendarEventInputPageState
                 ).notifier,
               )
               .seriesForEvent(event.id);
-    _notifications = event?.notificationMinutesBefore;
+    _notifications = source?.notificationMinutesBefore;
     _initialNotifications = _notifications == null
         ? null
         : List.of(_notifications!);
-    _title = TextEditingController(text: event?.title ?? '');
-    _url = TextEditingController(text: event?.url ?? '');
-    _memo = TextEditingController(text: event?.memo ?? '');
-    _locationName = TextEditingController(text: event?.locationName ?? '');
-    _latitude = event?.latitude;
-    _longitude = event?.longitude;
-    _allDay = event?.isAllDay ?? true;
+    _title = TextEditingController(text: source?.title ?? '');
+    _url = TextEditingController(text: source?.url ?? '');
+    _memo = TextEditingController(text: source?.memo ?? '');
+    _locationName = TextEditingController(text: source?.locationName ?? '');
+    _latitude = source?.latitude;
+    _longitude = source?.longitude;
+    _allDay = source?.isAllDay ?? true;
     _start = event == null
         ? widget.date
         : _allDay
@@ -180,7 +199,7 @@ class _CalendarEventInputPageState
                   .seriesForEvent(event.id)
                   ?.isAllDay ??
               event.isAllDay;
-    _zone = event?.timeZone ?? 'Asia/Tokyo';
+    _zone = source?.timeZone ?? 'Asia/Tokyo';
     final expander = ref.read(calendarRecurrenceExpanderProvider);
     if (event != null && !event.isAllDay && event.timeZone != null) {
       final start = expander.localTime(event.startDateTime, _zone);
@@ -203,12 +222,12 @@ class _CalendarEventInputPageState
       );
     }
     _recurrence = CalendarRecurrenceSettings.fromRule(
-      event?.recurrenceRule,
+      source?.recurrenceRule,
       _start,
-      zone: event?.timeZone,
+      zone: source?.timeZone,
       expander: expander,
     );
-    _labelId = event?.labelKey ?? 'group:';
+    _labelId = source?.labelKey ?? 'group:';
     _initialValues = _editValues;
   }
 
@@ -263,27 +282,52 @@ class _CalendarEventInputPageState
     setState(() {
       if (start) {
         if (!time) {
-          _end = _end.add(next.difference(_start));
+          if (widget._duplicateSource == null) {
+            _end = _end.add(next.difference(_start));
+          }
           if (_recurrence.frequency != null &&
+              (widget._duplicateSource == null || _recurrenceEdited) &&
               (next.year != _start.year ||
                   next.month != _start.month ||
                   next.day != _start.day)) {
             _recurrence = _recurrence.alignedTo(next, previous: _start);
             _recurrenceEdited = true;
           }
+          _hasStartDate = true;
         }
         _start = next;
         if (time) {
-          final minutes = ref
-              .read(calendarPreferencesNotifierProvider)
-              .value!
-              .minutes;
-          _end = _start.add(Duration(minutes: minutes));
+          _hasStartTime = true;
+          if (widget._duplicateSource == null) {
+            final minutes = ref
+                .read(calendarPreferencesNotifierProvider)
+                .value!
+                .minutes;
+            _end = _start.add(Duration(minutes: minutes));
+          }
         }
       } else {
         _end = next;
+        if (time) {
+          _hasEndTime = true;
+        } else {
+          _hasEndDate = true;
+        }
       }
     });
+  }
+
+  String _dateLabel(bool start) {
+    final label = start ? '開始日' : '終了日';
+    final hasDate = start ? _hasStartDate : _hasEndDate;
+    if (!hasDate) return label;
+    return '$label: ${calendarDateText(start ? _start : _end)}';
+  }
+
+  String _timeLabel(bool start) {
+    final hasTime = start ? _hasStartTime : _hasEndTime;
+    if (!hasTime) return start ? '開始時刻を選択' : '終了時刻を選択';
+    return calendarTimeText(start ? _start : _end);
   }
 
   Future<void> _openUrl() async {
@@ -315,10 +359,30 @@ class _CalendarEventInputPageState
       await Navigator.maybePop(context);
       return;
     }
+    await _confirmClose(widget.onCancelled!);
+  }
+
+  Future<void> _duplicate() => _confirmClose(() {
+    final source = widget.event!;
+    final date = widget.date;
+    unawaited(
+      Navigator.of(context).pushReplacement<void, void>(
+        MaterialPageRoute(
+          builder: (_) => CalendarEventInputPage._duplicate(
+            date: DateUtils.dateOnly(date),
+            source: source,
+          ),
+        ),
+      ),
+    );
+  });
+
+  Future<void> _confirmClose(VoidCallback onConfirmed) async {
+    if (_saving || _confirmingClose) return;
     _confirmingClose = true;
     try {
       if (_isDirty && !await EditDiscardConfirmDialog.show(context)) return;
-      if (mounted) widget.onCancelled!();
+      if (mounted && !_saving) onConfirmed();
     } finally {
       _confirmingClose = false;
     }
@@ -337,6 +401,14 @@ class _CalendarEventInputPageState
   Future<void> _save() async {
     if (!_form.currentState!.validate()) return;
     if (_saving || _groupId == null) return;
+    if (!_hasStartDate || !_hasEndDate) {
+      setState(() => _error = '開始日と終了日を選択してください');
+      return;
+    }
+    if (!_allDay && (!_hasStartTime || !_hasEndTime)) {
+      setState(() => _error = '開始時刻と終了時刻を選択してください');
+      return;
+    }
     final moving = widget.event != null && widget.event!.groupId != _groupId;
     final recurring = widget.event?.originalStartDateTime != null;
     final scope = recurring && !moving ? await _chooseScope(false) : null;
@@ -616,6 +688,12 @@ class _CalendarEventInputPageState
         borderRadius: BorderRadius.circular(4),
       ),
     );
+    final errorText = _error.isEmpty
+        ? null
+        : Text(
+            _error,
+            style: TextStyle(color: Theme.of(context).colorScheme.error),
+          );
     return _withDiscardScope(
       Scaffold(
         appBar: AppBar(leading: BackButton(onPressed: _close)),
@@ -625,12 +703,24 @@ class _CalendarEventInputPageState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(
-                  widget.event == null ? '予定を追加' : '予定を編集',
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w500,
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        widget.event == null ? '予定を追加' : '予定を編集',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    if (widget.event != null)
+                      IconButton(
+                        tooltip: '予定を複製',
+                        onPressed: _saving ? null : _duplicate,
+                        icon: const Icon(Icons.content_copy),
+                      ),
+                  ],
                 ),
                 if (widget.event != null)
                   Text(
@@ -856,9 +946,7 @@ class _CalendarEventInputPageState
                                     child: Row(
                                       children: [
                                         Expanded(
-                                          child: Text(
-                                            '${start ? '開始' : '終了'}日: ${calendarDateText(start ? _start : _end)}',
-                                          ),
+                                          child: Text(_dateLabel(start)),
                                         ),
                                         const Icon(
                                           Icons.calendar_today,
@@ -880,12 +968,12 @@ class _CalendarEventInputPageState
                                           state.isSaving ||
                                               movingSeries ||
                                               (start &&
+                                                  widget._duplicateSource ==
+                                                      null &&
                                                   preferences.value == null)
                                           ? null
                                           : () => _pick(start, true),
-                                      child: Text(
-                                        calendarTimeText(start ? _start : _end),
-                                      ),
+                                      child: Text(_timeLabel(start)),
                                     ),
                                   ),
                               ],
@@ -929,7 +1017,9 @@ class _CalendarEventInputPageState
                               ),
                               child: const Text('通知設定を再取得'),
                             ),
-                          if (!_allDay && preferences.hasError)
+                          if (!_allDay &&
+                              widget._duplicateSource == null &&
+                              preferences.hasError)
                             TextButton(
                               onPressed: () => ref.invalidate(
                                 calendarPreferencesNotifierProvider,
@@ -978,18 +1068,16 @@ class _CalendarEventInputPageState
                               _longitude = candidate.coordinate.longitude;
                             }),
                           ),
-                          if (_error.isNotEmpty)
-                            Text(
-                              _error,
-                              style: TextStyle(
-                                color: Theme.of(context).colorScheme.error,
-                              ),
-                            ),
+                          if (widget._duplicateSource == null &&
+                              errorText != null)
+                            errorText,
                         ],
                       ),
                     ),
                   ),
                 ),
+                if (widget._duplicateSource != null && errorText != null)
+                  errorText,
                 const SizedBox(height: 24),
                 OverflowBar(
                   alignment: MainAxisAlignment.end,
