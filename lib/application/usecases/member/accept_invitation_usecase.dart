@@ -43,7 +43,7 @@ class AcceptInvitationUseCase {
         memberInvitation.inviteeId,
       );
 
-      if (member == null) {
+      if (member == null || member.accountId != null) {
         return false;
       }
 

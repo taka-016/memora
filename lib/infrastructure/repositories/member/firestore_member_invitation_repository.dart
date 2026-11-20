@@ -33,18 +33,6 @@ class FirestoreMemberInvitationRepository
         'version': member.version! + 1,
         'updatedAt': FieldValue.serverTimestamp(),
       });
-      final data = currentMember.data()!;
-      transaction.set(
-        _firestore.collection('account_permissions').doc(member.accountId),
-        {
-          'memberId': member.id,
-          'memberGroupIds': List<String>.from(data['groupIds'] as List),
-          'managedGroupIds': List<String>.from(data['managedGroupIds'] as List),
-        },
-      );
-      transaction.delete(
-        _firestore.collection('member_invitation_claims').doc(member.accountId),
-      );
       for (final invitation in targets) {
         transaction.delete(
           _firestore.collection('member_invitations').doc(invitation.id),

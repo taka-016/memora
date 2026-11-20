@@ -91,7 +91,7 @@ class CalendarGroupSettingsNotifier extends _$CalendarGroupSettingsNotifier {
     final changes = ref.watch(calendarMembershipChangesProvider);
     if (_owner != null && memberId != null && changes != null) {
       var membershipRequest = 0;
-      final subscription = changes(_owner!).listen(
+      final subscription = changes(memberId).listen(
         (_) async {
           final request = ++membershipRequest;
           try {

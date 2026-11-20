@@ -1,4 +1,4 @@
-import 'package:memora/infrastructure/services/firestore_account_permissions_source.dart';
+import 'package:memora/infrastructure/services/firestore_account_member_source.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/queries/member/member_query_service.dart';
@@ -11,20 +11,20 @@ class FirestoreMemberQueryService implements MemberQueryService {
 
   FirestoreMemberQueryService({
     FirebaseFirestore? firestore,
-    FirestoreAccountPermissionsSource? permissions,
+    FirestoreAccountMemberSource? accountMember,
   }) : _firestore = firestore ?? FirebaseFirestore.instance,
-       _permissions =
-           permissions ??
-           FirestoreAccountPermissionsSource(
+       _accountMember =
+           accountMember ??
+           FirestoreAccountMemberSource(
              firestore ?? FirebaseFirestore.instance,
            );
-  final FirestoreAccountPermissionsSource _permissions;
+  final FirestoreAccountMemberSource _accountMember;
 
   @override
   Future<List<MemberDto>> getMembers({List<OrderBy>? orderBy}) async {
-    final current = await _permissions.current();
+    final current = await _accountMember.current();
     if (current == null) return [];
-    return getMembersByOwnerId(current.memberId, orderBy: orderBy);
+    return getMembersByOwnerId(current.id, orderBy: orderBy);
   }
 
   @override
@@ -48,9 +48,10 @@ class FirestoreMemberQueryService implements MemberQueryService {
   @override
   Future<MemberDto?> getMemberByAccountId(String accountId) async {
     try {
-      final permissions = await _permissions.forAccount(accountId);
-      if (permissions == null) return null;
-      return await getMemberById(permissions.memberId);
+      final member = await _accountMember.forAccount(accountId);
+      return member == null
+          ? null
+          : FirestoreMemberMapper.fromFirestore(member);
     } catch (e, stack) {
       logger.e(
         'FirestoreMemberQueryService.getMemberByAccountId: ${e.toString()}',
