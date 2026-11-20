@@ -54,14 +54,14 @@ void main() {
     };
   });
 
-  test('作成者を本人の認可から所有者かつ所属者にして同時保存する', () async {
+  test('グループと作成者の所属を保存しメンバー文書を変更しない', () async {
     final id = await repo.saveGroup(
       Group(id: '', ownerId: '偽の所有者', name: '家族'),
     );
     expect(store.rows['groups/$id']!['ownerId'], 'self');
     expect(store.rows['group_members/$id:self']!['memberId'], 'self');
-    expect(store.rows['members/self']!['groupIds'], [id]);
-    expect(store.rows['account_permissions/uid']!['managedGroupIds'], [id]);
+    expect(store.rows['members/self']!['version'], 1);
+    expect(store.rows['members/self']!['groupIds'], isEmpty);
     expect(store.commits, 1);
   });
 
