@@ -16,6 +16,7 @@ import 'firestore_member_query_service_test.mocks.dart';
   CollectionReference,
   Query,
   QuerySnapshot,
+  SnapshotMetadata,
   QueryDocumentSnapshot,
   DocumentReference,
   DocumentSnapshot,
@@ -138,16 +139,27 @@ void main() {
       verifyNever(mockMembersCollection.doc(any));
     });
 
-    test('一致するメンバーがいなければ未登録として扱う', () async {
-      final query = MockQuery<Map<String, dynamic>>();
-      final snapshot = MockQuerySnapshot<Map<String, dynamic>>();
-      when(mockMembersCollection.where('accountId', isEqualTo: 'missing'))
-          .thenReturn(query);
-      when(query.limit(1)).thenReturn(query);
-      when(query.get()).thenAnswer((_) async => snapshot);
-      when(snapshot.docs).thenReturn([]);
-      expect(await service.getMemberByAccountId('missing'), isNull);
-    });
+    for (final fromCache in [true, false]) {
+      test('メンバーが0件ならサーバーの結果だけを未登録として扱う（キャッシュ=$fromCache）', () async {
+        final query = MockQuery<Map<String, dynamic>>();
+        final snapshot = MockQuerySnapshot<Map<String, dynamic>>();
+        final metadata = MockSnapshotMetadata();
+        when(mockMembersCollection.where('accountId', isEqualTo: 'missing'))
+            .thenReturn(query);
+        when(query.limit(1)).thenReturn(query);
+        when(query.get()).thenAnswer((_) async => snapshot);
+        when(snapshot.docs).thenReturn([]);
+        when(snapshot.metadata).thenReturn(metadata);
+        when(metadata.isFromCache).thenReturn(fromCache);
+
+        final result = service.getMemberByAccountId('missing');
+        if (fromCache) {
+          await expectLater(result, throwsA(isA<FirebaseException>()));
+        } else {
+          expect(await result, isNull);
+        }
+      });
+    }
 
     test('オーナーIDでメンバー一覧を取得する', () async {
       const ownerId = 'owner001';
