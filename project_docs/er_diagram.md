@@ -221,6 +221,7 @@ erDiagram
 - 図は共通の業務モデルを示す。SQLiteの物理定義・制約・インデックスは[`offline_schema.drift`](../lib/infrastructure/database/offline_schema.drift)を参照。
 - `app_settings/availability`はオンライン専用の利用停止設定。文書が未作成なら`minimumBuildNumber: 0`・`isMaintenance: false`として扱う。SQLiteやオフラインバックアップには含めない。
 - オンライン版の本人のメンバー情報は `members.accountId` で取得する。所属グループと管理者設定は `group_members` に保持する。
+- `member_account_registrations` はアカウントIDを文書IDとする空の文書。アプリでの本人の登録と招待受理が同時に確定することを防ぐために作成し、本人のメンバー情報を探すときは使わない。
 - `member_events`はグループとメンバーの両方に属し、`groupId`・`memberId`・`year`の組ごとに1件のメモを持つ。同じメンバー・同じ年でもグループごとに別の記録を保持する。
 - `deleted_groups`・`deleted_members`はFirestoreの専用コレクションとSQLiteの専用テーブルに対応する。親の退避時は、元のドキュメントID・行IDをそのまま主キーにし、親の全フィールドを保存する。Firestoreでは取得データをそのまま保存し、`createdAt`・`updatedAt`やオンラインの`version`を含むフィールドを欠落させない。通常テーブルの親は残さず、退避保存と元データ削除を原子的に行う。
 - 図の通常グループ・メンバーへの関連線は元のIDによる論理的な関係を示す。退避後は同じIDの親が削除済み保存先にあり、関連データ・所属・タスク担当のIDは変更しない。通常の取得で退避先を参照して親を表示せず、削除済み一覧や復活機能は提供しない。

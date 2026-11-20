@@ -17,6 +17,9 @@ class FirestoreMemberInvitationRepository
     Member member,
     List<MemberInvitation> invitations,
   ) async {
+    final registration = _firestore
+        .collection('member_account_registrations')
+        .doc(member.accountId!);
     final targets = List<MemberInvitation>.unmodifiable(invitations);
     final memberRef = _firestore.collection('members').doc(member.id);
     await _firestore.runTransaction<void>((transaction) async {
@@ -28,6 +31,7 @@ class FirestoreMemberInvitationRepository
         );
         FirestoreVersionCheck.requireMatch(current.data(), invitation.version);
       }
+      transaction.set(registration, <String, dynamic>{});
       transaction.update(memberRef, {
         'accountId': member.accountId,
         'version': member.version! + 1,

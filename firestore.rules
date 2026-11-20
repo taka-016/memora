@@ -59,6 +59,12 @@ service cloud.firestore {
       allow delete: if isVerifiedUser() && isStoredVersion();
     }
 
+    match /member_account_registrations/{accountId} {
+      allow create: if isVerifiedUser() && request.auth.uid == accountId
+                       && request.resource.data.keys().size() == 0;
+      allow delete: if isVerifiedUser() && request.auth.uid == accountId;
+    }
+
     match /member_invitations/{code} {
       allow read: if isVerifiedUser();
       allow create: if isVerifiedUser() && isInitialVersion()

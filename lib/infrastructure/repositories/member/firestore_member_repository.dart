@@ -17,6 +17,13 @@ class FirestoreMemberRepository implements MemberRepository {
     final batch = _firestore.batch();
     final ref = _firestore.collection('members').doc();
     batch.set(ref, FirestoreMemberMapper.toCreateFirestore(member));
+    final accountId = member.accountId;
+    if (accountId != null) {
+      batch.set(
+        _firestore.collection('member_account_registrations').doc(accountId),
+        <String, dynamic>{},
+      );
+    }
     await batch.commit();
   }
 
@@ -41,6 +48,12 @@ class FirestoreMemberRepository implements MemberRepository {
       );
       FirestoreDeletedParentStore(context).saveMember(memberId, data!);
       context.delete(source);
+      final accountId = data['accountId'] as String?;
+      if (accountId != null) {
+        context.delete(
+          _firestore.collection('member_account_registrations').doc(accountId),
+        );
+      }
       await context.commit();
     });
   }
