@@ -72,7 +72,7 @@ class CalendarWeekLayout {
         if (isHoliday(date)) lanes[0][column] = true;
       }
     }
-    final bandEvents = state.events.where(_isBand).toList()
+    final bandEvents = state.eventsForMonth(month).where(_isBand).toList()
       ..sort((a, b) {
         if (a.isAllDay != b.isAllDay) return a.isAllDay ? -1 : 1;
         final order = a.startDateTime.compareTo(b.startDateTime);

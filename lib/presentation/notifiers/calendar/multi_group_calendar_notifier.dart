@@ -96,6 +96,9 @@ class MultiGroupCalendarNotifier extends _$MultiGroupCalendarNotifier {
   }
 
   void _publish() {
+    final previewMonths = {
+      for (final group in _groups.values) ...group.previewEventsByMonth.keys,
+    };
     final errors = [
       for (final entry in _groups.entries)
         if (entry.value.loadError.isNotEmpty)
@@ -106,6 +109,13 @@ class MultiGroupCalendarNotifier extends _$MultiGroupCalendarNotifier {
       calendar: CalendarState(
         selectedDate: _date,
         events: [for (final group in _groups.values) ...group.events],
+        previewEventsByMonth: {
+          for (final month in previewMonths)
+            month: [
+              for (final group in _groups.values)
+                ...group.eventsForMonth(month),
+            ],
+        },
         labels: [for (final group in _groups.values) ...group.displayLabels],
         isLoading: !_initialized || _groups.values.any((g) => g.isLoading),
         isSaving: _groups.values.any((g) => g.isSaving),

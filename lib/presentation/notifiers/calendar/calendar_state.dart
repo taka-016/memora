@@ -9,6 +9,7 @@ class CalendarState {
     this.group,
     this.groupLoadError = '',
     List<CalendarEventDto> events = const [],
+    Map<DateTime, List<CalendarEventDto>> previewEventsByMonth = const {},
     List<CalendarLabelDto> labels = const [],
     this.isLoading = false,
     this.isSaving = false,
@@ -20,16 +21,28 @@ class CalendarState {
     this.isWatching = false,
     this.mutationError = '',
   }) : events = List.unmodifiable(events),
+       previewEventsByMonth = Map.unmodifiable({
+         for (final entry in previewEventsByMonth.entries)
+           entry.key: List<CalendarEventDto>.unmodifiable(entry.value),
+       }),
        labels = List.unmodifiable(labels);
 
   final GroupDto? group;
   final String groupLoadError;
   List<CalendarLabelDto> get displayLabels => group == null
       ? labels
-      : buildCalendarDisplayLabels(group!, labels, events: events);
+      : buildCalendarDisplayLabels(
+          group!,
+          labels,
+          events: [
+            ...events,
+            for (final preview in previewEventsByMonth.values) ...preview,
+          ],
+        );
   final DateTime selectedDate;
   DateTime get month => DateTime(selectedDate.year, selectedDate.month);
   final List<CalendarEventDto> events;
+  final Map<DateTime, List<CalendarEventDto>> previewEventsByMonth;
   final List<CalendarLabelDto> labels;
   final bool isLoading;
   final bool isSaving;
@@ -41,10 +54,13 @@ class CalendarState {
   final bool isWatching;
   final String mutationError;
 
+  List<CalendarEventDto> eventsForMonth(DateTime day) =>
+      previewEventsByMonth[DateTime(day.year, day.month)] ?? events;
+
   List<CalendarEventDto> eventsForDay(DateTime day) {
     final start = DateTime(day.year, day.month, day.day);
     final end = DateTime(day.year, day.month, day.day + 1);
-    final result = events.where((event) {
+    final result = eventsForMonth(day).where((event) {
       if (event.isAllDay) {
         final first = DateTime(
           event.startDateTime.year,
@@ -75,6 +91,7 @@ class CalendarState {
     GroupDto? group,
     String? groupLoadError,
     List<CalendarEventDto>? events,
+    Map<DateTime, List<CalendarEventDto>>? previewEventsByMonth,
     List<CalendarLabelDto>? labels,
     bool? isLoading,
     bool? isSaving,
@@ -90,6 +107,7 @@ class CalendarState {
     group: group ?? this.group,
     groupLoadError: groupLoadError ?? this.groupLoadError,
     events: events ?? this.events,
+    previewEventsByMonth: previewEventsByMonth ?? this.previewEventsByMonth,
     labels: labels ?? this.labels,
     isLoading: isLoading ?? this.isLoading,
     isSaving: isSaving ?? this.isSaving,
