@@ -1,3 +1,4 @@
+import 'package:memora/presentation/notifiers/calendar/calendar_event_view_notifier.dart';
 import 'package:memora/presentation/features/calendar/calendar_event_details.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -28,30 +29,12 @@ class CalendarEventViewPage extends ConsumerStatefulWidget {
 }
 
 class _CalendarEventViewPageState extends ConsumerState<CalendarEventViewPage> {
-  CalendarEventSaved? _saved;
-  Future<({CalendarEventDto event, CalendarEventDto? series})?>? _updatedEvent;
+  late final _viewProvider = calendarEventViewNotifierProvider(
+    Object(),
+    widget.event,
+    series: widget.series,
+  );
   String? _urlError;
-
-  Future<({CalendarEventDto event, CalendarEventDto? series})?> _loadSavedEvent(
-    CalendarEventSaved saved,
-  ) async {
-    final id = saved.id;
-    if (id == null) return null;
-    final expander = ref.read(calendarRecurrenceExpanderProvider);
-    final event = await ref.read(getCalendarEventByIdProvider)(id);
-    if (event == null) return null;
-    if (event.recurrenceRule == null) return (event: event, series: null);
-
-    final start = saved.start;
-    final nextDay = start.add(const Duration(days: 1));
-    final occurrence =
-        expander
-            .expand(event, start, nextDay)
-            .where((value) => value.startDateTime.isAtSameMomentAs(start))
-            .firstOrNull ??
-        expander.firstOccurrence(event);
-    return occurrence == null ? null : (event: occurrence, series: event);
-  }
 
   Future<void> _edit(CalendarEventDto event, CalendarEventDto? series) async {
     final result = await Navigator.of(context).push<CalendarEventEditResult>(
@@ -68,11 +51,14 @@ class _CalendarEventViewPageState extends ConsumerState<CalendarEventViewPage> {
       case CalendarEventDeleted():
         Navigator.of(context).pop(result);
       case CalendarEventSaved():
-        setState(() {
-          _saved = result;
-          _updatedEvent = _loadSavedEvent(result);
-          _urlError = null;
-        });
+        setState(() => _urlError = null);
+        await ref
+            .read(_viewProvider.notifier)
+            .refreshAfterSave(
+              id: result.id,
+              start: result.start,
+              label: result.label,
+            );
       case null:
         break;
     }
@@ -96,54 +82,46 @@ class _CalendarEventViewPageState extends ConsumerState<CalendarEventViewPage> {
   }
 
   @override
-  Widget build(BuildContext context) => FutureBuilder(
-    future: _updatedEvent,
-    initialData: (event: widget.event, series: widget.series),
-    builder: (context, snapshot) {
-      final loading = snapshot.connectionState == ConnectionState.waiting;
-      final data = loading ? null : snapshot.data;
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text('予定の照会'),
-          actions: [
-            if (data != null) ...[
-              IconButton(
-                tooltip: '予定を編集',
-                onPressed: () => _edit(data.event, data.series),
-                icon: const Icon(Icons.edit),
-              ),
-              IconButton(
-                tooltip: '予定を複製',
-                onPressed: () => _duplicate(data.event),
-                icon: const Icon(Icons.content_copy),
-              ),
-            ],
+  Widget build(BuildContext context) {
+    final state = ref.watch(_viewProvider);
+    final event = state.event;
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('予定の照会'),
+        actions: [
+          if (event != null) ...[
+            IconButton(
+              tooltip: '予定を編集',
+              onPressed: () => _edit(event, state.series),
+              icon: const Icon(Icons.edit),
+            ),
+            IconButton(
+              tooltip: '予定を複製',
+              onPressed: () => _duplicate(event),
+              icon: const Icon(Icons.content_copy),
+            ),
           ],
-        ),
-        body: SafeArea(
-          child: switch (data) {
-            (event: final event, series: _) => Consumer(
-              builder: (context, ref, _) => _details(context, ref, event),
+        ],
+      ),
+      body: SafeArea(
+        child: switch (event) {
+          CalendarEventDto() => _details(event, state.savedLabelName),
+          null when state.isLoading => const Center(
+            child: CircularProgressIndicator(),
+          ),
+          null when state.hasError => Center(
+            child: TextButton(
+              onPressed: () => ref.read(_viewProvider.notifier).retry(),
+              child: const Text('予定を再取得'),
             ),
-            null when loading => const Center(
-              child: CircularProgressIndicator(),
-            ),
-            null when snapshot.hasError => Center(
-              child: TextButton(
-                onPressed: () => setState(() {
-                  _updatedEvent = _loadSavedEvent(_saved!);
-                }),
-                child: const Text('予定を再取得'),
-              ),
-            ),
-            null => const Center(child: Text('予定が見つかりませんでした')),
-          },
-        ),
-      );
-    },
-  );
+          ),
+          null => const Center(child: Text('予定が見つかりませんでした')),
+        },
+      ),
+    );
+  }
 
-  Widget _details(BuildContext context, WidgetRef ref, CalendarEventDto event) {
+  Widget _details(CalendarEventDto event, String? savedLabelName) {
     final groups = ref.watch(calendarGroupSettingsNotifierProvider).groups;
     final groupName = groups
         .where((group) => group.id == event.groupId)
@@ -157,13 +135,9 @@ class _CalendarEventViewPageState extends ConsumerState<CalendarEventViewPage> {
     final label = calendar?.displayLabels
         .where((label) => label.id == event.labelKey)
         .firstOrNull;
-    final savedLabel = _saved?.label;
     final labelName =
         label?.name ??
-        (savedLabel?.groupId == event.groupId &&
-                savedLabel?.id == event.labelKey
-            ? savedLabel?.name
-            : null) ??
+        savedLabelName ??
         (event.labelType == 'group' && groupName != null
             ? '$groupNameの予定'
             : null);
