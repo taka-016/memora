@@ -7,6 +7,7 @@ import 'package:memora/application/services/calendar/calendar_notification_prefe
 import 'package:memora/application/services/calendar/calendar_notification_source.dart';
 import 'package:memora/application/services/calendar/calendar_notification_planner.dart';
 import 'package:memora/application/usecases/calendar/synchronize_calendar_notifications_usecase.dart';
+import 'package:memora/application/usecases/calendar/watch_calendar_events_usecase.dart';
 import 'package:memora/composition_root/providers/app_providers.dart';
 import 'package:memora/composition_root/providers/calendar_providers.dart';
 import 'package:memora/composition_root/providers/group_providers.dart';
@@ -41,7 +42,11 @@ final calendarNotificationSourceProvider = Provider<CalendarNotificationSource>(
     groups: ref.watch(getGroupsWithMembersUsecaseProvider),
     events: ref.watch(getCalendarEventsUsecaseProvider),
     clock: ref.watch(appClockProvider),
-    watchEvents: ref.watch(watchCalendarEventsUsecaseProvider),
+    watchEvents: ref.watch(appModeProvider) == AppMode.online
+        ? WatchCalendarEventsUsecase(
+            ref.watch(firestoreCalendarEventQueriesProvider),
+          )
+        : null,
     database: ref.watch(appModeProvider) == AppMode.offline
         ? ref.watch(offlineDatabaseProvider)
         : null,
