@@ -6,17 +6,10 @@ List<Query<Map<String, dynamic>>> calendarEventQueries(
   String groupId,
   CalendarEventPeriod? period,
 ) {
-  final base = firestore
-      .collection('calendar_events')
-      .where('groupId', isEqualTo: groupId);
+  final base = calendarEventGroupQuery(firestore, groupId);
   if (period == null) return [base];
   return [
-    calendarEventPeriodQuery(
-      base.where('recurrenceRule', isNull: true),
-      period,
-      startField: 'startDateTime',
-      endField: 'endDateTime',
-    ),
+    calendarSingleEventQuery(base, period),
     calendarEventPeriodQuery(
       base.where('recurrenceRule', isNull: false),
       period,
@@ -25,6 +18,23 @@ List<Query<Map<String, dynamic>>> calendarEventQueries(
     ).orderBy('recurrenceRule'),
   ];
 }
+
+Query<Map<String, dynamic>> calendarEventGroupQuery(
+  FirebaseFirestore firestore,
+  String groupId,
+) => firestore
+    .collection('calendar_events')
+    .where('groupId', isEqualTo: groupId);
+
+Query<Map<String, dynamic>> calendarSingleEventQuery(
+  Query<Map<String, dynamic>> base,
+  CalendarEventPeriod period,
+) => calendarEventPeriodQuery(
+  base.where('recurrenceRule', isNull: true),
+  period,
+  startField: 'startDateTime',
+  endField: 'endDateTime',
+);
 
 Query<Map<String, dynamic>> calendarEventPeriodQuery(
   Query<Map<String, dynamic>> base,

@@ -94,8 +94,10 @@ final changeCalendarRecurrenceUsecaseProvider =
 final watchCalendarEventsUsecaseProvider =
     Provider<WatchCalendarEventsUsecase?>((ref) {
       if (ref.watch(appModeProvider) == AppMode.offline) return null;
-      return WatchCalendarEventsUsecase(
-        ref.watch(firestoreCalendarEventQueriesProvider),
+      return WatchCalendarEventsUsecase.withWatcher(
+        ref
+            .watch(firestoreCalendarEventQueriesProvider)
+            .watchCalendarScreenEvents,
       );
     });
 

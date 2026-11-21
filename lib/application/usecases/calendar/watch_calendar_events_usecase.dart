@@ -3,11 +3,18 @@ import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/application/queries/calendar/calendar_event_watch_query_service.dart';
 
 class WatchCalendarEventsUsecase {
-  WatchCalendarEventsUsecase(this._queryService);
-  final CalendarEventWatchQueryService _queryService;
+  WatchCalendarEventsUsecase(CalendarEventWatchQueryService queryService)
+    : this.withWatcher(queryService.watchCalendarEventsByGroupId);
+
+  WatchCalendarEventsUsecase.withWatcher(this._watch);
+  final Stream<List<CalendarEventDto>> Function(
+    String groupId, {
+    CalendarEventPeriod? period,
+  })
+  _watch;
 
   Stream<List<CalendarEventDto>> execute(
     String groupId, {
     CalendarEventPeriod? period,
-  }) => _queryService.watchCalendarEventsByGroupId(groupId, period: period);
+  }) => _watch(groupId, period: period);
 }
