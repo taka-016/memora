@@ -49,6 +49,7 @@ class CalendarEventInputPage extends ConsumerStatefulWidget {
   }) : _duplicateSource = null;
 
   const CalendarEventInputPage.duplicate({
+    super.key,
     required this.date,
     required CalendarEventDto source,
   }) : _duplicateSource = source,

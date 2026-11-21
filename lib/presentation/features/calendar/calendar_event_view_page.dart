@@ -168,7 +168,7 @@ class _CalendarEventViewPageState extends ConsumerState<CalendarEventViewPage> {
     final labelName =
         label?.name ??
         (event.labelType == 'group' && groupName != null
-            ? '${groupName}の予定'
+            ? '$groupNameの予定'
             : null);
     final expander = ref.read(calendarRecurrenceExpanderProvider);
     final start = event.timeZone == null
