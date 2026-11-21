@@ -228,6 +228,7 @@ class FirestoreCalendarEventWatchQueryService
               },
               onError: (Object error, StackTrace stack) {
                 generation++;
+                received[bucket] = null;
                 if (!cancelled) controller.addError(error, stack);
               },
             ),
