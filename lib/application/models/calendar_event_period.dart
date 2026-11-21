@@ -9,6 +9,14 @@ class CalendarEventPeriod extends Equatable {
     to: DateTime(day.year, day.month + 2, 8),
   );
 
+  factory CalendarEventPeriod.forQuarter(DateTime day) {
+    final firstMonth = ((day.month - 1) ~/ 3) * 3 + 1;
+    return CalendarEventPeriod(
+      from: DateTime(day.year, firstMonth),
+      to: DateTime(day.year, firstMonth + 3),
+    );
+  }
+
   factory CalendarEventPeriod.forNotifications(DateTime now) =>
       CalendarEventPeriod(
         from: DateTime(now.year, now.month, now.day),

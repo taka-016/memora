@@ -14,9 +14,8 @@ String _labelId(String accountId, String calendarId) =>
 CalendarState overlayExternalCalendar(
   CalendarState shared,
   ExternalCalendarState external,
-) => shared.copyWith(
-  events: [
-    ...shared.events,
+) {
+  final externalEvents = [
     for (final event in external.events)
       CalendarEventDto(
         id: externalEventDisplayId(event),
@@ -27,21 +26,28 @@ CalendarState overlayExternalCalendar(
         endDateTime: event.endDateTime,
         isAllDay: event.isAllDay,
       ),
-  ],
-  labels: [
-    ...shared.labels,
-    for (final connection in external.connections)
-      for (final calendar
-          in external.calendarsByAccount[connection.account.id] ??
-              <ExternalCalendarDto>[])
-        CalendarLabelDto(
-          id: _labelId(connection.account.id, calendar.id),
-          groupId: '',
-          name: calendar.name == connection.account.name
-              ? '端末-${connection.account.name}'
-              : '端末-${connection.account.name}（${calendar.name}）',
-          color: '#1967D2',
-          isSelectable: false,
-        ),
-  ],
-);
+  ];
+  return shared.copyWith(
+    events: [...shared.events, ...externalEvents],
+    previewEventsByMonth: {
+      for (final entry in shared.previewEventsByMonth.entries)
+        entry.key: [...entry.value, ...externalEvents],
+    },
+    labels: [
+      ...shared.labels,
+      for (final connection in external.connections)
+        for (final calendar
+            in external.calendarsByAccount[connection.account.id] ??
+                <ExternalCalendarDto>[])
+          CalendarLabelDto(
+            id: _labelId(connection.account.id, calendar.id),
+            groupId: '',
+            name: calendar.name == connection.account.name
+                ? '端末-${connection.account.name}'
+                : '端末-${connection.account.name}（${calendar.name}）',
+            color: '#1967D2',
+            isSelectable: false,
+          ),
+    ],
+  );
+}

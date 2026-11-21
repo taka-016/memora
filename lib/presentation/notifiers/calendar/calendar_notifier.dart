@@ -23,7 +23,7 @@ class CalendarNotifier extends _$CalendarNotifier {
   int _loadVersion = 0;
   StreamSubscription<GroupDto?>? _groupSubscription;
   bool _groupWaiting = false;
-  final _months = <DateTime, _MonthEvents>{};
+  final _quarters = <CalendarEventPeriod, _QuarterEvents>{};
   StreamSubscription<List<CalendarLabelDto>>? _labelsSubscription;
   List<CalendarLabelDto>? _receivedLabels;
   bool _reordering = false;
@@ -34,16 +34,16 @@ class CalendarNotifier extends _$CalendarNotifier {
   @override
   CalendarState build(String groupId) {
     _series = const [];
-    _months.clear();
+    _quarters.clear();
     _receivedLabels = null;
     _reordering = false;
     ref.onDispose(() {
       _loadVersion++;
       unawaited(_groupSubscription?.cancel());
-      for (final month in _months.values) {
-        unawaited(month.subscription?.cancel());
+      for (final quarter in _quarters.values) {
+        unawaited(quarter.subscription?.cancel());
       }
-      _months.clear();
+      _quarters.clear();
       unawaited(_labelsSubscription?.cancel());
     });
     final watching = ref.watch(watchCalendarEventsUsecaseProvider) != null;
@@ -57,28 +57,25 @@ class CalendarNotifier extends _$CalendarNotifier {
   void selectDate(DateTime day) {
     final monthChanged = state.month != DateTime(day.year, day.month);
     if (monthChanged && state.isWatching) {
-      final cached = _months[DateTime(day.year, day.month)];
-      _series = cached?.series ?? const [];
-      _eventsWaiting = cached?.waiting ?? false;
-      state = state.copyWith(
-        selectedDate: DateTime(day.year, day.month, day.day),
-        events: cached?.events ?? const [],
-        hasLoadedEvents: cached?.series != null,
-      );
-      _receiveStatus(events: true, error: cached?.error ?? '');
+      _publishEvents(DateTime(day.year, day.month, day.day));
+      if (_quarters.isNotEmpty) {
+        unawaited(_watchEvents(CalendarEventPeriod.forQuarter(day)));
+        _prefetchAdjacentQuarter();
+      }
     } else {
       state = state.copyWith(
         selectedDate: DateTime(day.year, day.month, day.day),
-        events: monthChanged ? _expand(_series, day) : null,
+        events: monthChanged
+            ? _expand(_series, CalendarEventPeriod.forMonth(day))
+            : null,
       );
-    }
-    if (monthChanged && state.isWatching && _months.isNotEmpty) {
-      unawaited(_watchEvents());
     }
   }
 
-  List<CalendarEventDto> _expand(List<CalendarEventDto> series, DateTime day) {
-    final period = CalendarEventPeriod.forMonth(day);
+  List<CalendarEventDto> _expand(
+    List<CalendarEventDto> series,
+    CalendarEventPeriod period,
+  ) {
     final expander = ref.read(calendarRecurrenceExpanderProvider);
     return series
         .expand((event) => expander.expand(event, period.from, period.to))
@@ -105,7 +102,10 @@ class CalendarNotifier extends _$CalendarNotifier {
         throw const ApplicationValidationException('グループが見つかりません');
       }
       final series = results[0] as List<CalendarEventDto>;
-      final expanded = _expand(series, state.selectedDate);
+      final expanded = _expand(
+        series,
+        CalendarEventPeriod.forMonth(state.selectedDate),
+      );
       _series = series;
       state = state.copyWith(
         group: results[2] as GroupDto,
@@ -151,7 +151,10 @@ class CalendarNotifier extends _$CalendarNotifier {
       );
     }
 
-    await _watchEvents(restart: true);
+    await _watchEvents(
+      CalendarEventPeriod.forQuarter(state.month),
+      restart: true,
+    );
     if (!active()) return;
     try {
       _labelsSubscription = ref
@@ -206,27 +209,72 @@ class CalendarNotifier extends _$CalendarNotifier {
     }
   }
 
-  Future<void> _watchEvents({bool restart = false}) async {
-    final month = state.month;
-    final previous = _months[month];
+  DateTime? _adjacentMonth(DateTime day) {
+    if (day.month % 3 == 1 && (day.year > 1 || day.month > 1)) {
+      return DateTime(day.year, day.month - 1);
+    }
+    if (day.month % 3 == 0 && (day.year < 9999 || day.month < 12)) {
+      return DateTime(day.year, day.month + 1);
+    }
+    return null;
+  }
+
+  void _prefetchAdjacentQuarter() {
+    if (_quarters[CalendarEventPeriod.forQuarter(state.month)]?.series ==
+        null) {
+      return;
+    }
+    final adjacent = _adjacentMonth(state.month);
+    if (adjacent != null) {
+      unawaited(_watchEvents(CalendarEventPeriod.forQuarter(adjacent)));
+    }
+  }
+
+  void _publishEvents(DateTime day) {
+    final cached = _quarters[CalendarEventPeriod.forQuarter(day)];
+    final adjacent = _adjacentMonth(day);
+    final preview = adjacent == null
+        ? null
+        : _quarters[CalendarEventPeriod.forQuarter(adjacent)]?.events;
+    _series = cached?.series ?? const [];
+    _eventsWaiting = cached?.waiting ?? _quarters.isNotEmpty;
+    _receiveStatus(
+      events: true,
+      error: cached?.error ?? '',
+      updated: state.copyWith(
+        selectedDate: day,
+        events: cached?.events ?? const [],
+        previewEventsByMonth: {
+          if (adjacent != null && preview != null) adjacent: preview,
+        },
+        hasLoadedEvents: cached?.series != null,
+      ),
+    );
+  }
+
+  Future<void> _watchEvents(
+    CalendarEventPeriod period, {
+    bool restart = false,
+  }) async {
+    final previous = _quarters[period];
     if (previous != null && !restart) return;
-    final cached = _MonthEvents()
+    final cached = _QuarterEvents()
       ..series = previous?.series
-      ..events = previous?.events ?? const [];
-    _months[month] = cached;
-    bool active() => ref.mounted && identical(_months[month], cached);
+      ..events = previous?.events;
+    _quarters[period] = cached;
+    bool active() => ref.mounted && identical(_quarters[period], cached);
     if (previous != null) await previous.subscription?.cancel();
     if (!active()) return;
 
     void publish() {
-      if (!active() || state.month != month) return;
-      _series = cached.series ?? const [];
-      _eventsWaiting = cached.waiting;
-      state = state.copyWith(
-        events: cached.events,
-        hasLoadedEvents: cached.series != null,
-      );
-      _receiveStatus(events: true, error: cached.error);
+      if (!active()) return;
+      final day = state.selectedDate;
+      final adjacent = _adjacentMonth(day);
+      if (period == CalendarEventPeriod.forQuarter(day) ||
+          (adjacent != null &&
+              period == CalendarEventPeriod.forQuarter(adjacent))) {
+        _publishEvents(day);
+      }
     }
 
     void failure() {
@@ -242,16 +290,19 @@ class CalendarNotifier extends _$CalendarNotifier {
     try {
       cached.subscription = ref
           .read(watchCalendarEventsUsecaseProvider)!
-          .execute(groupId, period: CalendarEventPeriod.forMonth(month))
+          .execute(groupId, period: period)
           .listen((series) {
             if (!active()) return;
             try {
-              final expanded = _expand(series, month);
+              final expanded = _expand(series, period);
               cached.series = series;
               cached.events = expanded;
               cached.waiting = false;
               cached.error = '';
               publish();
+              if (period == CalendarEventPeriod.forQuarter(state.month)) {
+                _prefetchAdjacentQuarter();
+              }
             } catch (_) {
               failure();
             }
@@ -261,16 +312,21 @@ class CalendarNotifier extends _$CalendarNotifier {
     }
   }
 
-  void _receiveStatus({required bool events, String error = ''}) {
-    final eventError = events ? error : state.eventLoadError;
-    final labelError = events ? state.labelLoadError : error;
-    state = state.copyWith(
+  void _receiveStatus({
+    required bool events,
+    String error = '',
+    CalendarState? updated,
+  }) {
+    final current = updated ?? state;
+    final eventError = events ? error : current.eventLoadError;
+    final labelError = events ? current.labelLoadError : error;
+    state = current.copyWith(
       eventLoadError: eventError,
       labelLoadError: labelError,
       loadError: [
         eventError,
         labelError,
-        state.groupLoadError,
+        current.groupLoadError,
       ].where((value) => value.isNotEmpty).join('\n'),
       isLoading: _eventsWaiting || _labelsWaiting || _groupWaiting,
     );
@@ -453,10 +509,10 @@ class CalendarNotifier extends _$CalendarNotifier {
       });
 }
 
-class _MonthEvents {
+class _QuarterEvents {
   StreamSubscription<List<CalendarEventDto>>? subscription;
   List<CalendarEventDto>? series;
-  List<CalendarEventDto> events = const [];
+  List<CalendarEventDto>? events;
   bool waiting = true;
   String error = '';
 }

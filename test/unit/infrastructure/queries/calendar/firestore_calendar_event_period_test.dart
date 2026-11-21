@@ -149,6 +149,70 @@ void main() {
     verifyNever(cancellations.doc(any));
   });
 
+  for (final upperLimit in [false, true]) {
+    test('Firestoreの日時の${upperLimit ? '上限' : '下限'}をまたぐ期間も予定と取消を取得する', () async {
+      final period = upperLimit
+          ? CalendarEventPeriod.forQuarter(DateTime(9999, 10))
+          : CalendarEventPeriod(
+              from: DateTime.utc(0, 12, 31, 15),
+              to: DateTime.utc(1, 4),
+            );
+      final from = Timestamp.fromDate(
+        upperLimit ? period.queryFrom : DateTime.utc(1),
+      );
+      final parent = MockQueryDocumentSnapshot();
+      final parents = MockQuerySnapshot();
+      when(parent.id).thenReturn('series');
+      when(parent.data()).thenReturn({
+        'groupId': 'g',
+        'labelType': 'group',
+        'title': '予定',
+        'isAllDay': true,
+        'startDateTime': from,
+        'endDateTime': from,
+        'recurrenceRule': 'FREQ=DAILY',
+      });
+      when(parents.docs).thenReturn([parent]);
+      when(recurring.get()).thenAnswer((_) async => parents);
+
+      final cancellations = MockCollectionReference();
+      final overrides = MockQuery();
+      when(firestore.collection('calendar_event_overrides'))
+          .thenReturn(cancellations);
+      when(cancellations.where('eventId', isEqualTo: 'series'))
+          .thenReturn(overrides);
+      when(overrides.where('groupId', isEqualTo: 'g')).thenReturn(overrides);
+      when(overrides.get()).thenAnswer((_) async => empty);
+
+      for (final (source, query, startField, endField) in [
+        (base, bounded, 'startDateTime', 'endDateTime'),
+        (recurring, recurring, 'startDateTime', 'recurrenceEndDateTime'),
+        (overrides, overrides, 'originalStartDateTime', 'originalEndDateTime'),
+      ]) {
+        when(source.where(endField, isGreaterThanOrEqualTo: from))
+            .thenReturn(query);
+        when(query.orderBy(endField)).thenReturn(query);
+        when(query.orderBy(startField)).thenReturn(query);
+        if (!upperLimit) {
+          when(
+            query.where(
+              startField,
+              isLessThan: Timestamp.fromDate(period.queryTo),
+            ),
+          ).thenReturn(query);
+        }
+      }
+
+      final result = await FirestoreCalendarEventQueryService(
+        firestore: firestore,
+      ).getCalendarEventsByGroupId('g', period: period);
+      expect(result.single.id, 'series');
+      verify(bounded.get()).called(1);
+      verify(recurring.get()).called(1);
+      verify(overrides.get()).called(1);
+    });
+  }
+
   test('期間指定の監視も全期間を読まず両方の初回受信を待ち解除時は両方を止める', () async {
     final normalStream =
         StreamController<QuerySnapshot<Map<String, dynamic>>>();

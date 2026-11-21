@@ -8,6 +8,7 @@ import 'package:memora/domain/exceptions/validation_exception.dart';
 import 'package:memora/infrastructure/mappers/calendar/firestore_calendar_event_mapper.dart';
 import 'package:memora/infrastructure/mappers/calendar/firestore_calendar_event_override_mapper.dart';
 import 'package:memora/infrastructure/mappers/firestore_write_metadata.dart';
+import 'package:memora/infrastructure/queries/calendar/firestore_calendar_event_queries.dart';
 
 class FirestoreCalendarEventStore {
   FirestoreCalendarEventStore(this.firestore);
@@ -29,17 +30,12 @@ class FirestoreCalendarEventStore {
           .where('eventId', isEqualTo: event.id)
           .where('groupId', isEqualTo: data['groupId']);
       if (period != null) {
-        query = query
-            .where(
-              'originalEndDateTime',
-              isGreaterThanOrEqualTo: Timestamp.fromDate(period.queryFrom),
-            )
-            .where(
-              'originalStartDateTime',
-              isLessThan: Timestamp.fromDate(period.queryTo),
-            )
-            .orderBy('originalEndDateTime')
-            .orderBy('originalStartDateTime');
+        query = calendarEventPeriodQuery(
+          query,
+          period,
+          startField: 'originalStartDateTime',
+          endField: 'originalEndDateTime',
+        );
       }
       final snapshot = await query.get();
       overrides.addAll(
