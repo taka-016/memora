@@ -1,3 +1,4 @@
+import 'package:memora/presentation/features/calendar/calendar_event_details.dart';
 import 'package:memora/presentation/shared/dialogs/edit_discard_confirm_dialog.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_mutation_coordinator.dart';
 
@@ -21,24 +22,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_preferences_notifier.dart';
-
-String calendarDateText(DateTime value) =>
-    '${value.year}/${value.month}/${value.day}';
-String calendarTimeText(DateTime value) =>
-    '${value.hour.toString().padLeft(2, '0')}:${value.minute.toString().padLeft(2, '0')}';
-String calendarPeriodText(CalendarEventDto event) {
-  if (event.isAllDay) {
-    final lastDay = DateTime.utc(
-      event.endDateTime.year,
-      event.endDateTime.month,
-      event.endDateTime.day - 1,
-    );
-    return '${calendarDateText(event.startDateTime)} 〜 ${calendarDateText(lastDay)}（終日）';
-  }
-  final start = event.startDateTime.toLocal();
-  final end = event.endDateTime.toLocal();
-  return '${calendarDateText(start)} ${calendarTimeText(start)} 〜 ${calendarDateText(end)} ${calendarTimeText(end)}';
-}
 
 sealed class CalendarEventEditResult {
   const CalendarEventEditResult();
@@ -112,7 +95,6 @@ class _CalendarEventInputPageState
   bool _recurrenceEdited = false;
   late final String _zone;
   bool? _seriesAllDay;
-  CalendarEventDto? get _seriesAtOpen => widget.series;
   late final Object _initialValues;
   List<int>? _initialNotifications;
 
@@ -196,7 +178,7 @@ class _CalendarEventInputPageState
             event.endDateTime.day - 1,
           )
         : event.endDateTime.toLocal();
-    _seriesAllDay = _seriesAtOpen?.isAllDay ?? event?.isAllDay;
+    _seriesAllDay = widget.series?.isAllDay ?? event?.isAllDay;
     _zone = source?.timeZone ?? 'Asia/Tokyo';
     final expander = ref.read(calendarRecurrenceExpanderProvider);
     if (event != null && !event.isAllDay && event.timeZone != null) {
@@ -329,20 +311,12 @@ class _CalendarEventInputPageState
   }
 
   Future<void> _openUrl() async {
-    final uri = Uri.tryParse(_url.text.trim());
-    if (uri == null ||
-        !['https', 'http'].contains(uri.scheme) ||
-        uri.host.isEmpty) {
-      setState(() => _error = 'httpまたはhttpsのURLを入力してください');
-      return;
-    }
     setState(() => _error = '');
-    try {
-      final opened = await ref.read(openUrlProvider)(uri);
-      if (!opened && mounted) setState(() => _error = 'URLを開けませんでした');
-    } catch (_) {
-      if (mounted) setState(() => _error = 'URLを開けませんでした');
-    }
+    final error = await openCalendarEventUrl(
+      _url.text,
+      ref.read(openUrlProvider),
+    );
+    if (error != null && mounted) setState(() => _error = error);
   }
 
   bool get _isDirty =>
@@ -452,7 +426,7 @@ class _CalendarEventInputPageState
       }
       final expander = ref.read(calendarRecurrenceExpanderProvider);
       final original = widget.event?.originalStartDateTime;
-      final series = recurring ? _seriesAtOpen : null;
+      final series = recurring ? widget.series : null;
       final recurrenceStart = recurring && !_recurrenceEdited
           ? _seriesAllDay == true
                 ? DateTime.utc(original!.year, original.month, original.day)
@@ -515,7 +489,7 @@ class _CalendarEventInputPageState
           .save(
             input,
             expected: widget.event,
-            expectedSeries: recurring ? _seriesAtOpen : null,
+            expectedSeries: recurring ? widget.series : null,
             scope: scope,
           );
       if (mounted) {
@@ -632,7 +606,7 @@ class _CalendarEventInputPageState
     try {
       await ref
           .read(calendarMutationCoordinatorProvider)
-          .delete(event, expectedSeries: _seriesAtOpen, scope: scope);
+          .delete(event, expectedSeries: widget.series, scope: scope);
       if (mounted) Navigator.of(context).pop(const CalendarEventDeleted());
     } on ApplicationValidationException catch (error) {
       if (mounted) setState(() => _error = error.message);

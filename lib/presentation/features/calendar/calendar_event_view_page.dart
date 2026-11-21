@@ -1,3 +1,4 @@
+import 'package:memora/presentation/features/calendar/calendar_event_details.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
@@ -93,20 +94,9 @@ class _CalendarEventViewPageState extends ConsumerState<CalendarEventViewPage> {
   }
 
   Future<void> _openUrl(String url) async {
-    final uri = Uri.tryParse(url.trim());
-    if (uri == null ||
-        !['http', 'https'].contains(uri.scheme) ||
-        uri.host.isEmpty) {
-      setState(() => _urlError = 'httpまたはhttpsのURLを入力してください');
-      return;
-    }
     setState(() => _urlError = null);
-    try {
-      if (await ref.read(openUrlProvider)(uri)) return;
-    } catch (_) {
-      // URLを起動できなかった場合は同じメッセージを表示する。
-    }
-    if (mounted) setState(() => _urlError = 'URLを開けませんでした');
+    final error = await openCalendarEventUrl(url, ref.read(openUrlProvider));
+    if (error != null && mounted) setState(() => _urlError = error);
   }
 
   @override
