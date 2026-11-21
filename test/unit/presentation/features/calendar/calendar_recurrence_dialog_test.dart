@@ -406,6 +406,52 @@ void main() {
     expect(saved.recurrenceRule, endsWith('UNTIL=20261031'));
     expect(tester.takeException(), isNull);
   });
+  testWidgets('更新した系列で選択した回がなくなると未取消の回を照会できる', (tester) async {
+    final first = DateTime.utc(2026, 10, 1);
+    final source = calendarTestEvent('series', '定例').copyWith(
+      isAllDay: true,
+      startDateTime: first,
+      endDateTime: DateTime.utc(2026, 10, 2),
+      recurrenceRule: 'FREQ=DAILY',
+      overrides: [CalendarEventOverride(originalStartDateTime: first)],
+    );
+    final harness = CalendarTestHarness()..savedEvents.add(source);
+    await harness.pump(tester);
+    when(
+      harness.changeRecurrence.execute(
+        any,
+        DateTime.utc(2026, 10, 2),
+        CalendarChangeScope.all,
+        changes: anyNamed('changes'),
+      ),
+    ).thenAnswer((_) async {
+      harness.savedEvents[0] = source.copyWith(recurrenceRule: 'FREQ=MONTHLY');
+      return source.id;
+    });
+    await calendarTapVisible(tester, find.byKey(calendarTestDay2));
+    await tester.pumpAndSettle();
+    await calendarTapVisible(tester, find.byKey(calendarTestDay2));
+    await tester.pumpAndSettle();
+    await calendarTapVisible(tester, find.widgetWithText(ListTile, '定例'));
+    await tester.pumpAndSettle();
+    await editCalendarTestEvent(tester);
+    await calendarTapVisible(tester, find.widgetWithText(ListTile, '繰り返し'));
+    await tester.pumpAndSettle();
+    await calendarTapVisible(tester, find.text('毎月'));
+    await tester.pumpAndSettle();
+    await calendarTapVisible(tester, find.text('保存'));
+    await tester.pumpAndSettle();
+    await calendarTapVisible(tester, find.text('すべての予定'));
+    await tester.pump();
+    await calendarTapVisible(tester, find.text('変更する'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('予定の照会'), findsOneWidget);
+    expect(find.text('2026/11/1 〜 2026/11/1（終日）'), findsOneWidget);
+    await editCalendarTestEvent(tester);
+    expect(find.text('開始日: 2026/11/1'), findsOneWidget);
+  });
+
   testWidgets('分割後の新しい系列を照会に表示し再編集から削除できる', (tester) async {
     final harness = CalendarTestHarness()
       ..savedEvents.add(

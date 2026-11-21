@@ -1,3 +1,4 @@
+import 'package:memora/application/dtos/calendar/calendar_label_dto.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
@@ -53,7 +54,7 @@ void main() {
     expect(arguments.first.startDateTime, source.startDateTime);
     expect(arguments.last.groupId, 'g2');
   });
-  testWidgets('非表示グループへの移動を確認しキャンセルと失敗では入力を保持する', (tester) async {
+  testWidgets('非表示グループへの移動は失敗時に入力を保持し成功後は照会に色ラベルを表示する', (tester) async {
     tester.view.physicalSize = const Size(1000, 1800);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -62,12 +63,24 @@ void main() {
     final harness = CalendarTestHarness()
       ..savedEvents.add(calendarTestEvent('event', '予定'));
     await harness.pump(tester, move: move);
+    const label = CalendarLabelDto(
+      id: 'friend-label',
+      groupId: 'g2',
+      name: '友人の任意ラベル',
+      color: '#123ABC',
+    );
+    when(harness.labels.execute('g2')).thenAnswer((_) async => [label]);
+
     await openEvent(tester);
     await editCalendarTestEvent(tester);
     await tester.enterText(field('タイトル'), '入力中');
     await tester.tap(find.widgetWithText(DropdownMenu<String>, '保存先グループ'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('友人').last);
+    await tester.pumpAndSettle();
+    await tester.tap(calendarLabelDropdown());
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(label.name).last);
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('保存'));
     await tester.tap(find.text('保存'));
@@ -85,7 +98,10 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(CalendarEventInputPage), findsOneWidget);
     expect(tester.widget<TextField>(field('タイトル')).controller!.text, '入力中');
-    when(move.execute(any, any, any)).thenAnswer((_) async {});
+    when(move.execute(any, any, any)).thenAnswer((invocation) async {
+      harness.savedEvents[0] =
+          invocation.positionalArguments[1] as CalendarEventDto;
+    });
     await tester.tap(find.text('保存'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('保存する'));
@@ -94,8 +110,10 @@ void main() {
         verify(move.execute(any, captureAny, any)).captured.last
             as CalendarEventDto;
     expect(input.groupId, 'g2');
-    expect(input.labelType, 'group');
+    expect(input.labelId, label.id);
     expect(input.title, '入力中');
-    expect(find.byType(CalendarEventInputPage), findsNothing);
+    expect(find.text('予定の照会'), findsOneWidget);
+    expect(find.text('保存先: 友人'), findsOneWidget);
+    expect(find.text('色ラベル: ${label.name}'), findsOneWidget);
   });
 }
