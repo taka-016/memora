@@ -1,17 +1,17 @@
-import 'package:memora/infrastructure/queries/calendar/firestore_calendar_event_queries.dart';
-import 'package:memora/application/models/calendar_event_period.dart';
-
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
-import 'package:memora/application/queries/calendar/calendar_event_watch_query_service.dart';
-import 'package:memora/infrastructure/services/firestore_calendar_event_store.dart';
+import 'package:memora/application/models/calendar_event_period.dart';
 import 'package:memora/application/queries/calendar/calendar_event_query_service.dart';
+import 'package:memora/application/queries/calendar/calendar_event_watch_query_service.dart';
+import 'package:memora/infrastructure/queries/calendar/firestore_calendar_event_queries.dart';
 import 'package:memora/infrastructure/queries/calendar/firestore_calendar_event_query_service.dart';
+import 'package:memora/infrastructure/services/firestore_calendar_event_store.dart';
 
 typedef _EventDocument = DocumentSnapshot<Map<String, dynamic>>;
 typedef _EventDocuments = Map<String, _EventDocument>;
+typedef _EventRead = (_EventDocument, Future<CalendarEventDto>);
 
 class FirestoreCalendarEventWatchQueryService
     implements CalendarEventWatchQueryService, CalendarEventQueryService {
@@ -178,11 +178,10 @@ class FirestoreCalendarEventWatchQueryService
             groupId,
             period,
           ).map(_watchDocuments).toList();
-    final received =
-        List<Map<String, (_EventDocument, Future<CalendarEventDto>)>?>.filled(
-          sources.length,
-          null,
-        );
+    final received = List<Map<String, _EventRead>?>.filled(
+      sources.length,
+      null,
+    );
     final store = FirestoreCalendarEventStore(firestore);
     final subscriptions = <StreamSubscription<_EventDocuments>>[];
     var generation = 0;
@@ -198,8 +197,7 @@ class FirestoreCalendarEventWatchQueryService
                 final current = ++generation;
                 try {
                   final previous = received[bucket];
-                  final pending =
-                      <String, (_EventDocument, Future<CalendarEventDto>)>{};
+                  final pending = <String, _EventRead>{};
                   for (final entry in documents.entries) {
                     final existing = previous?[entry.key];
                     pending[entry.key] =
@@ -212,8 +210,9 @@ class FirestoreCalendarEventWatchQueryService
                   }
                   received[bucket] = pending;
                   await Future.wait(pending.values.map((entry) => entry.$2));
-                  if (cancelled || received.any((value) => value == null))
+                  if (cancelled || received.any((value) => value == null)) {
                     return;
+                  }
                   final combined = {for (final values in received) ...values!};
                   final events = await Future.wait(
                     combined.values.map((entry) => entry.$2),
