@@ -1,3 +1,5 @@
+import 'package:memora/application/dtos/calendar/calendar_label_dto.dart';
+import 'package:memora/presentation/features/calendar/calendar_event_details.dart';
 import 'package:memora/presentation/shared/dialogs/edit_discard_confirm_dialog.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_mutation_coordinator.dart';
 
@@ -20,25 +22,22 @@ import 'package:memora/presentation/features/calendar/calendar_recurrence_dialog
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
-import 'package:memora/presentation/notifiers/calendar/calendar_notifier.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_preferences_notifier.dart';
 
-String calendarDateText(DateTime value) =>
-    '${value.year}/${value.month}/${value.day}';
-String calendarTimeText(DateTime value) =>
-    '${value.hour.toString().padLeft(2, '0')}:${value.minute.toString().padLeft(2, '0')}';
-String calendarPeriodText(CalendarEventDto event) {
-  if (event.isAllDay) {
-    final lastDay = DateTime.utc(
-      event.endDateTime.year,
-      event.endDateTime.month,
-      event.endDateTime.day - 1,
-    );
-    return '${calendarDateText(event.startDateTime)} 〜 ${calendarDateText(lastDay)}（終日）';
-  }
-  final start = event.startDateTime.toLocal();
-  final end = event.endDateTime.toLocal();
-  return '${calendarDateText(start)} ${calendarTimeText(start)} 〜 ${calendarDateText(end)} ${calendarTimeText(end)}';
+sealed class CalendarEventEditResult {
+  const CalendarEventEditResult();
+}
+
+class CalendarEventSaved extends CalendarEventEditResult {
+  const CalendarEventSaved(this.id, this.start, {this.label});
+
+  final String? id;
+  final DateTime start;
+  final CalendarLabelDto? label;
+}
+
+class CalendarEventDeleted extends CalendarEventEditResult {
+  const CalendarEventDeleted();
 }
 
 class CalendarEventInputPage extends ConsumerStatefulWidget {
@@ -46,15 +45,18 @@ class CalendarEventInputPage extends ConsumerStatefulWidget {
     super.key,
     required this.date,
     this.event,
+    this.series,
     this.onSaved,
     this.onCancelled,
   }) : _duplicateSource = null;
 
-  const CalendarEventInputPage._duplicate({
+  const CalendarEventInputPage.duplicate({
+    super.key,
     required this.date,
     required CalendarEventDto source,
   }) : _duplicateSource = source,
        event = null,
+       series = null,
        onSaved = null,
        onCancelled = null;
 
@@ -62,6 +64,7 @@ class CalendarEventInputPage extends ConsumerStatefulWidget {
   final VoidCallback? onCancelled;
   final DateTime date;
   final CalendarEventDto? event;
+  final CalendarEventDto? series;
   final CalendarEventDto? _duplicateSource;
 
   @override
@@ -95,7 +98,6 @@ class _CalendarEventInputPageState
   bool _recurrenceEdited = false;
   late final String _zone;
   bool? _seriesAllDay;
-  CalendarEventDto? _seriesAtOpen;
   late final Object _initialValues;
   List<int>? _initialNotifications;
 
@@ -150,15 +152,6 @@ class _CalendarEventInputPageState
         );
       }
     });
-    _seriesAtOpen = event == null
-        ? null
-        : ref
-              .read(
-                calendarNotifierProvider(
-                  widget.event?.groupId ?? _groupId ?? '',
-                ).notifier,
-              )
-              .seriesForEvent(event.id);
     _notifications = source?.notificationMinutesBefore;
     _initialNotifications = _notifications == null
         ? null
@@ -188,17 +181,7 @@ class _CalendarEventInputPageState
             event.endDateTime.day - 1,
           )
         : event.endDateTime.toLocal();
-    _seriesAllDay = event == null
-        ? null
-        : ref
-                  .read(
-                    calendarNotifierProvider(
-                      widget.event?.groupId ?? _groupId ?? '',
-                    ).notifier,
-                  )
-                  .seriesForEvent(event.id)
-                  ?.isAllDay ??
-              event.isAllDay;
+    _seriesAllDay = widget.series?.isAllDay ?? event?.isAllDay;
     _zone = source?.timeZone ?? 'Asia/Tokyo';
     final expander = ref.read(calendarRecurrenceExpanderProvider);
     if (event != null && !event.isAllDay && event.timeZone != null) {
@@ -331,20 +314,12 @@ class _CalendarEventInputPageState
   }
 
   Future<void> _openUrl() async {
-    final uri = Uri.tryParse(_url.text.trim());
-    if (uri == null ||
-        !['https', 'http'].contains(uri.scheme) ||
-        uri.host.isEmpty) {
-      setState(() => _error = 'httpまたはhttpsのURLを入力してください');
-      return;
-    }
     setState(() => _error = '');
-    try {
-      final opened = await ref.read(openUrlProvider)(uri);
-      if (!opened && mounted) setState(() => _error = 'URLを開けませんでした');
-    } catch (_) {
-      if (mounted) setState(() => _error = 'URLを開けませんでした');
-    }
+    final error = await openCalendarEventUrl(
+      _url.text,
+      ref.read(openUrlProvider),
+    );
+    if (error != null && mounted) setState(() => _error = error);
   }
 
   bool get _isDirty =>
@@ -361,21 +336,6 @@ class _CalendarEventInputPageState
     }
     await _confirmClose(widget.onCancelled!);
   }
-
-  Future<void> _duplicate() => _confirmClose(() {
-    final source = widget.event!;
-    final date = widget.date;
-    unawaited(
-      Navigator.of(context).pushReplacement<void, void>(
-        MaterialPageRoute(
-          builder: (_) => CalendarEventInputPage._duplicate(
-            date: DateUtils.dateOnly(date),
-            source: source,
-          ),
-        ),
-      ),
-    );
-  });
 
   Future<void> _confirmClose(VoidCallback onConfirmed) async {
     if (_saving || _confirmingClose) return;
@@ -469,7 +429,7 @@ class _CalendarEventInputPageState
       }
       final expander = ref.read(calendarRecurrenceExpanderProvider);
       final original = widget.event?.originalStartDateTime;
-      final series = recurring ? _seriesAtOpen : null;
+      final series = recurring ? widget.series : null;
       final recurrenceStart = recurring && !_recurrenceEdited
           ? _seriesAllDay == true
                 ? DateTime.utc(original!.year, original.month, original.day)
@@ -527,19 +487,31 @@ class _CalendarEventInputPageState
         recurrenceRule: rule,
         timeZone: rule != null && !_allDay ? _zone : null,
       );
-      await ref
+      final label = ref
+          .read(calendarEventInputNotifierProvider(_session))
+          .displayLabels
+          .where((label) => label.id == input.labelKey)
+          .firstOrNull;
+      final savedId = await ref
           .read(calendarMutationCoordinatorProvider)
           .save(
             input,
             expected: widget.event,
-            expectedSeries: recurring ? _seriesAtOpen : null,
+            expectedSeries: recurring ? widget.series : null,
             scope: scope,
           );
       if (mounted) {
         if (widget.onSaved != null) {
           widget.onSaved!(_start);
         } else {
-          Navigator.of(context).pop();
+          final result = widget.event == null
+              ? null
+              : CalendarEventSaved(
+                  savedId,
+                  moving && recurring ? widget.event!.startDateTime : start,
+                  label: label,
+                );
+          Navigator.of(context).pop(result);
         }
       }
     } on ApplicationValidationException catch (error) {
@@ -643,8 +615,8 @@ class _CalendarEventInputPageState
     try {
       await ref
           .read(calendarMutationCoordinatorProvider)
-          .delete(event, expectedSeries: _seriesAtOpen, scope: scope);
-      if (mounted) Navigator.of(context).pop();
+          .delete(event, expectedSeries: widget.series, scope: scope);
+      if (mounted) Navigator.of(context).pop(const CalendarEventDeleted());
     } on ApplicationValidationException catch (error) {
       if (mounted) setState(() => _error = error.message);
     } catch (_) {
@@ -703,24 +675,12 @@ class _CalendarEventInputPageState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        widget.event == null ? '予定を追加' : '予定を編集',
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                    if (widget.event != null)
-                      IconButton(
-                        tooltip: '予定を複製',
-                        onPressed: _saving ? null : _duplicate,
-                        icon: const Icon(Icons.content_copy),
-                      ),
-                  ],
+                Text(
+                  widget.event == null ? '予定を追加' : '予定を編集',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
                 if (widget.event != null)
                   Text(

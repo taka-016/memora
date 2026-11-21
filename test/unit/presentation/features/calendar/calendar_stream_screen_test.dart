@@ -90,6 +90,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(ListTile, '編集前'));
     await tester.pumpAndSettle();
+    await editCalendarTestEvent(tester);
     await tester.enterText(find.widgetWithText(TextFormField, 'タイトル'), '入力中');
     events.streams.last.add([original.copyWith(title: '他者の更新', version: 2)]);
     await tester.pump();
@@ -103,6 +104,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('変更内容の確認'), findsOneWidget);
     await tester.tap(find.text('破棄する'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(BackButton));
     await tester.pumpAndSettle();
     Navigator.of(tester.element(find.byType(CalendarScreen))).pop();
     await tester.pumpAndSettle();

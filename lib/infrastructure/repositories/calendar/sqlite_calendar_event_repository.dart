@@ -73,7 +73,7 @@ class SqliteCalendarEventRepository implements CalendarEventRepository {
   });
 
   @override
-  Future<void> replaceCalendarEvent(
+  Future<List<String>> replaceCalendarEvent(
     CalendarEvent expected,
     CalendarEvent? replacement,
     CalendarEvent? following, {
@@ -133,10 +133,10 @@ class SqliteCalendarEventRepository implements CalendarEventRepository {
     } else {
       await updateCalendarEvent(replacement);
     }
-    if (following != null) await saveCalendarEvent(following);
-    for (final value in preservedEvents) {
-      await saveCalendarEvent(value);
-    }
+    return [
+      if (following != null) await saveCalendarEvent(following),
+      for (final value in preservedEvents) await saveCalendarEvent(value),
+    ];
   });
 
   @override

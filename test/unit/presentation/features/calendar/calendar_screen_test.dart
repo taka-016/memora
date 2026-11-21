@@ -167,6 +167,8 @@ void main() {
     expect(find.text('所属解除・削除済みメンバーの予定'), findsOneWidget);
     await calendarTapVisible(tester, find.widgetWithText(ListTile, '本人の予定'));
     await tester.pumpAndSettle();
+    expect(find.text('色ラベル: 所属解除・削除済みメンバーの予定'), findsOneWidget);
+    await editCalendarTestEvent(tester);
     final dropdown = tester.widget<DropdownMenu<String>>(
       calendarLabelDropdown(),
     );
@@ -336,12 +338,22 @@ void main() {
     await tester.pumpAndSettle();
     await calendarTapVisible(tester, find.widgetWithText(ListTile, '家族旅行'));
     await tester.pumpAndSettle();
+    expect(find.text('予定の照会'), findsOneWidget);
+    expect(find.byType(TextFormField), findsNothing);
+    expect(find.byTooltip('予定を複製'), findsOneWidget);
+    await editCalendarTestEvent(tester);
+    expect(find.byTooltip('予定を複製'), findsNothing);
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+    expect(find.text('予定の照会'), findsOneWidget);
+    await editCalendarTestEvent(tester);
     await tester.enterText(find.widgetWithText(TextFormField, 'タイトル'), '運動会');
     await calendarTapVisible(tester, find.text('保存'));
     await tester.pumpAndSettle();
-    expect(find.widgetWithText(ListTile, '運動会'), findsOneWidget);
-    await calendarTapVisible(tester, find.widgetWithText(ListTile, '運動会'));
-    await tester.pumpAndSettle();
+    expect(find.text('予定の照会'), findsOneWidget);
+    expect(find.text('運動会'), findsOneWidget);
+    await editCalendarTestEvent(tester);
+    expect(find.widgetWithText(TextFormField, '運動会'), findsOneWidget);
     await calendarTapVisible(tester, find.text('削除'));
     await tester.pumpAndSettle();
     await calendarTapVisible(tester, find.text('削除する'));
@@ -969,7 +981,7 @@ void main() {
       find.widgetWithText(ListTile, '長い予定のタイトル5'),
     );
     await tester.pumpAndSettle();
-    expect(find.text('予定を編集'), findsOneWidget);
+    expect(find.text('予定の照会'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

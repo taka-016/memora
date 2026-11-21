@@ -202,7 +202,7 @@ void main() {
     ).thenAnswer((_) async => [original.copyWith(version: 8, title: '別端末の変更')]);
     await notifier.load();
     when(change.execute(any, any, any, changes: anyNamed('changes')))
-        .thenAnswer((_) async {});
+        .thenAnswer((_) async => null);
     expect(
       await notifier.changeRecurringEvent(
         occurrence,
@@ -305,7 +305,7 @@ void main() {
     expect(container.read(provider).isSaving, isFalse);
     expect(container.read(provider).mutationError, isNotEmpty);
     when(change.execute(any, any, any, changes: anyNamed('changes')))
-        .thenAnswer((_) async {});
+        .thenAnswer((_) async => null);
     expect(
       await notifier.changeRecurringEvent(
         occurrence,

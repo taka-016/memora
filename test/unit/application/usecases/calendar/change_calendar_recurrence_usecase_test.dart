@@ -37,6 +37,21 @@ void main() {
   late ChangeCalendarRecurrenceUsecase usecase;
   setUp(() {
     repository = MockCalendarEventRepository();
+    when(
+      repository.replaceCalendarEvent(
+        any,
+        any,
+        any,
+        preservedEvents: anyNamed('preservedEvents'),
+      ),
+    ).thenAnswer(
+      (call) async => [
+        if (call.positionalArguments[2] != null) 'new-series',
+        for (final _
+            in call.namedArguments[#preservedEvents] as List<CalendarEvent>)
+          'independent',
+      ],
+    );
     usecase = ChangeCalendarRecurrenceUsecase(repository, expander);
   });
   for (final cancelled in [true]) {
@@ -172,12 +187,13 @@ void main() {
       notificationMinutesBefore: [0, 1440],
     );
     final key = DateTime.utc(2026, 10, 3);
-    await usecase.execute(
+    final savedId = await usecase.execute(
       source,
       key,
       CalendarChangeScope.only,
       changes: changes,
     );
+    expect(savedId, 'independent');
     final saved = verify(
       repository.replaceCalendarEvent(
         any,
@@ -214,7 +230,7 @@ void main() {
     expect(independent.labelId, changes.labelId);
   });
   test('これ以降の分割は取消を引き継がず残り回数を保つ', () async {
-    await usecase.execute(
+    final savedId = await usecase.execute(
       source,
       DateTime.utc(2026, 10, 3),
       CalendarChangeScope.following,
@@ -224,6 +240,7 @@ void main() {
         title: '新系列',
       ),
     );
+    expect(savedId, 'new-series');
     final saved = verify(
       repository.replaceCalendarEvent(any, captureAny, captureAny),
     ).captured;
@@ -243,7 +260,7 @@ void main() {
     );
   });
   test('すべての変更は個別の内容を維持して系列の初回へ日時差分を適用する', () async {
-    await usecase.execute(
+    final savedId = await usecase.execute(
       source,
       DateTime.utc(2026, 10, 3),
       CalendarChangeScope.all,
@@ -253,6 +270,7 @@ void main() {
         title: '変更',
       ),
     );
+    expect(savedId, 'event');
     final saved = verify(repository.replaceCalendarEvent(any, captureAny, null))
         .captured
         .single;

@@ -84,6 +84,7 @@ void main() {
       await calendarTapVisible(tester, find.widgetWithText(ListTile, '月末の予定'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
+      await editCalendarTestEvent(tester);
       await calendarTapVisible(tester, find.text('開始日: 2026/2/28'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
@@ -189,6 +190,7 @@ void main() {
         );
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 300));
+        await editCalendarTestEvent(tester);
         await calendarTapVisible(tester, find.text('開始日: 2026/10/2'));
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 300));

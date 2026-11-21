@@ -16,6 +16,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/presentation/features/calendar/calendar_event_input_page.dart';
+import 'package:memora/presentation/features/calendar/calendar_event_view_page.dart';
+import 'package:memora/presentation/notifiers/calendar/calendar_notifier.dart';
 import 'package:memora/presentation/notifiers/calendar/multi_group_calendar_notifier.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_group_settings_notifier.dart';
 import 'package:memora/presentation/features/calendar/calendar_group_selection_dialog.dart';
@@ -121,17 +123,33 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     ref.read(provider.notifier).selectDate(month);
   }
 
-  Future<void> _edit([CalendarEventDto? event]) async {
+  Future<void> _openEvent({
+    CalendarEventDto? event,
+    bool showListOnDelete = false,
+  }) async {
     final provider = multiGroupCalendarNotifierProvider;
     if (!mounted) return;
-    await Navigator.of(context, rootNavigator: true).push<void>(
-      MaterialPageRoute(
-        builder: (context) => CalendarEventInputPage(
-          date: ref.read(provider).calendar.selectedDate,
-          event: event,
-        ),
-      ),
-    );
+    final date = ref.read(provider).calendar.selectedDate;
+    final series = event?.originalStartDateTime == null
+        ? null
+        : ref
+              .read(calendarNotifierProvider(event!.groupId).notifier)
+              .seriesForEvent(event.id);
+    final result = await Navigator.of(context, rootNavigator: true)
+        .push<CalendarEventDeleted>(
+          MaterialPageRoute(
+            builder: (context) => event == null
+                ? CalendarEventInputPage(date: date)
+                : CalendarEventViewPage(
+                    date: date,
+                    event: event,
+                    series: series,
+                  ),
+          ),
+        );
+    if (mounted && result != null && showListOnDelete) {
+      await _showDayEvents(date);
+    }
   }
 
   Future<void> _selectDay(DateTime date) async {
@@ -141,14 +159,18 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       ref.read(provider.notifier).selectDate(date);
       return;
     }
+    await _showDayEvents(date);
+  }
+
+  Future<void> _showDayEvents(DateTime date) async {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
       builder: (context) => CalendarDayEventsSheet(
         date: date,
-        onEdit: (event) => _edit(event),
-        onAdd: () => _edit(),
+        onOpen: (event) => _openEvent(event: event),
+        onAdd: _openEvent,
       ),
     );
   }
@@ -240,7 +262,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           showExternalCalendarEvent(context, source, sourceLabel: label.name),
         );
       } else {
-        unawaited(_edit(event));
+        unawaited(_openEvent(event: event, showListOnDelete: true));
       }
     });
     WidgetsBinding.instance.ensureVisualUpdate();
@@ -469,7 +491,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 shape: const CircleBorder(),
                 backgroundColor: Theme.of(context).colorScheme.primaryContainer
                     .withValues(alpha: .85),
-                onPressed: canEdit ? () => _edit() : null,
+                onPressed: canEdit ? _openEvent : null,
                 child: const Icon(Icons.add),
               ),
             ),

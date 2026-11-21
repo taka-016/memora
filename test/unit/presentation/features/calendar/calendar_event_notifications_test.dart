@@ -52,8 +52,8 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     await calendarTapVisible(tester, find.widgetWithText(ListTile, '予定'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
+    await editCalendarTestEvent(tester);
     await tester.ensureVisible(find.text('30分前'));
     await calendarTapVisible(tester, find.widgetWithText(ListTile, '通知'));
     await tester.pump();

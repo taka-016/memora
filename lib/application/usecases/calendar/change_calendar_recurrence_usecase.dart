@@ -21,7 +21,7 @@ class ChangeCalendarRecurrenceUsecase {
   final CalendarEventRepository _repository;
   final CalendarRecurrenceExpander _expander;
 
-  Future<void> execute(
+  Future<String?> execute(
     CalendarEventDto source,
     DateTime original,
     CalendarChangeScope scope, {
@@ -268,20 +268,21 @@ class ChangeCalendarRecurrenceUsecase {
       final tail = following == null
           ? null
           : CalendarEventMapper.toEntity(following);
-      if (preservedEvents.isEmpty) {
-        await _repository.replaceCalendarEvent(
-          CalendarEventMapper.toEntity(source),
-          head,
-          tail,
-        );
-      } else {
-        await _repository.replaceCalendarEvent(
-          CalendarEventMapper.toEntity(source),
-          head,
-          tail,
-          preservedEvents: preservedEvents,
-        );
-      }
+      final expected = CalendarEventMapper.toEntity(source);
+      final createdIds = preservedEvents.isEmpty
+          ? await _repository.replaceCalendarEvent(expected, head, tail)
+          : await _repository.replaceCalendarEvent(
+              expected,
+              head,
+              tail,
+              preservedEvents: preservedEvents,
+            );
+      if (changes == null) return null;
+      return switch (scope) {
+        CalendarChangeScope.all => replacement?.id,
+        CalendarChangeScope.only ||
+        CalendarChangeScope.following => createdIds.single,
+      };
     } on ValidationException catch (e, stack) {
       Error.throwWithStackTrace(
         ApplicationValidationException(e.message),

@@ -19,6 +19,7 @@ Finder field(String label) => find.byWidgetPredicate(
 );
 
 Future<void> openEvent(WidgetTester tester) async {
+  if (find.byTooltip('予定を編集').evaluate().isNotEmpty) return;
   if (find.widgetWithText(ListTile, '予定').evaluate().isEmpty) {
     await tester.tap(find.byKey(calendarTestDay2));
     await tester.pump();
@@ -35,6 +36,28 @@ Future<void> openEvent(WidgetTester tester) async {
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
+  testWidgets('更新後の照会取得に失敗したときは画面から再取得できる', (tester) async {
+    final harness = CalendarTestHarness()
+      ..savedEvents.add(calendarTestEvent('event', '予定'));
+    await harness.pump(tester);
+    when(harness.eventQuery.getCalendarEventById('event'))
+        .thenThrow(TestException('予定の取得失敗'));
+    await openEvent(tester);
+    await editCalendarTestEvent(tester);
+    await tester.enterText(field('タイトル'), '更新した予定');
+    await calendarTapVisible(tester, find.text('保存'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('予定の照会'), findsOneWidget);
+    expect(find.byTooltip('予定を編集'), findsNothing);
+    when(harness.eventQuery.getCalendarEventById('event'))
+        .thenAnswer((_) async => harness.savedEvents.single);
+    await tester.tap(find.text('予定を再取得'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('更新した予定'), findsOneWidget);
+    expect(find.byTooltip('予定を編集'), findsOneWidget);
+  });
   testWidgets('詳細を入力して保存し再表示・URL起動・解除できる', (tester) async {
     tester.view.physicalSize = const Size(1000, 1800);
     addTearDown(tester.view.resetPhysicalSize);
@@ -70,11 +93,12 @@ void main() {
     expect(harness.savedEvents.single.memo, '一行目\n二行目');
     expect(harness.savedEvents.single.locationName, '集合場所');
     await openEvent(tester);
-    expect(tester.widget<TextField>(field('メモ')).controller!.text, '一行目\n二行目');
+    expect(find.text('一行目\n二行目'), findsOneWidget);
     await tester.ensureVisible(find.byTooltip('URLを開く'));
     await tester.tap(find.byTooltip('URLを開く'));
     await tester.pump();
     expect(opened, Uri.parse('https://example.com'));
+    await editCalendarTestEvent(tester);
     for (final label in ['URL', 'メモ', '場所名']) {
       await tester.ensureVisible(field(label));
       await tester.enterText(field(label), '');
@@ -109,6 +133,7 @@ void main() {
       capabilities: AppCapabilities.forMode(AppMode.online),
     );
     await openEvent(tester);
+    await editCalendarTestEvent(tester);
     await tester.ensureVisible(field('場所名'));
     final searchField = field('場所名');
     await tester.enterText(searchField, '東京');
@@ -127,6 +152,7 @@ void main() {
     expect(find.byType(CalendarEventInputPage), findsNothing);
     expect(harness.savedEvents.single.locationName, '');
     await openEvent(tester);
+    await editCalendarTestEvent(tester);
     await tester.ensureVisible(field('場所名'));
     await tester.enterText(searchField, '東京');
     await tester.pump();
@@ -141,11 +167,13 @@ void main() {
     expect(harness.savedEvents.single.latitude, 35.0);
     expect(harness.savedEvents.single.longitude, 139.0);
     await openEvent(tester);
+    await editCalendarTestEvent(tester);
     await tester.ensureVisible(find.text('保存'));
     await tester.tap(find.text('保存'));
     await tester.pumpAndSettle();
     expect(harness.savedEvents.single.latitude, 35.0);
     await openEvent(tester);
+    await editCalendarTestEvent(tester);
     await tester.ensureVisible(field('場所名'));
     await tester.enterText(field('場所名'), '東京タワー入口');
     await tester.pump();
@@ -158,7 +186,7 @@ void main() {
   });
 
   for (final throwsError in [false, true]) {
-    testWidgets('URL起動に失敗しても編集内容を保持して再試行できる（例外: $throwsError）', (tester) async {
+    testWidgets('照会でURL起動に失敗しても再試行できる（例外: $throwsError）', (tester) async {
       tester.view.physicalSize = const Size(1000, 1800);
       addTearDown(tester.view.resetPhysicalSize);
       var attempts = 0;
@@ -185,10 +213,7 @@ void main() {
       await tester.tap(find.byTooltip('URLを開く'));
       await tester.pump();
       expect(attempts, 2);
-      expect(
-        tester.widget<TextField>(field('URL')).controller!.text,
-        'https://example.com',
-      );
+      expect(find.text('https://example.com'), findsOneWidget);
     });
   }
 }

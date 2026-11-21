@@ -111,7 +111,7 @@ class GuardedCalendarEventRepository implements CalendarEventRepository {
   }
 
   @override
-  Future<void> replaceCalendarEvent(
+  Future<List<String>> replaceCalendarEvent(
     CalendarEvent expected,
     CalendarEvent? replacement,
     CalendarEvent? following, {
