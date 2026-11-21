@@ -13,6 +13,7 @@ import 'package:memora/application/models/calendar_event_period.dart';
 import 'package:memora/infrastructure/queries/calendar/firestore_calendar_event_query_service.dart';
 import 'package:memora/infrastructure/queries/calendar/firestore_calendar_event_watch_query_service.dart';
 
+import '../../../../helpers/test_exception.dart';
 import 'firestore_calendar_watch_query_service_test.mocks.dart';
 
 void main() {
@@ -441,6 +442,73 @@ void main() {
     await first.cancel();
     expect(parents.hasListener, isTrue);
     await future.cancel();
+    expect(parents.hasListener, isFalse);
+  });
+  test('親予定の購読失敗中は単発予定を受信しても再試行できる状態を維持する', () async {
+    final normal =
+        StreamController<QuerySnapshot<Map<String, dynamic>>>.broadcast();
+    final parents =
+        StreamController<QuerySnapshot<Map<String, dynamic>>>.broadcast();
+    final restartedParents =
+        StreamController<QuerySnapshot<Map<String, dynamic>>>.broadcast();
+    when(bounded.snapshots()).thenAnswer((_) => normal.stream);
+    when(recurring.snapshots()).thenAnswer((_) => parents.stream);
+    final service = FirestoreCalendarEventWatchQueryService(
+      firestore: firestore,
+    );
+    final values = <List<CalendarEventDto>>[];
+    final errors = <Object>[];
+    final subscription = service
+        .watchCalendarScreenEvents('g', period: period)
+        .listen(values.add, onError: errors.add);
+    StreamSubscription<List<CalendarEventDto>>? retry;
+    addTearDown(() async {
+      await subscription.cancel();
+      await retry?.cancel();
+      await normal.close();
+      await parents.close();
+      await restartedParents.close();
+    });
+    normal.add(empty);
+    parents.add(empty);
+    await Future<void>(() {});
+    expect(values, [isEmpty]);
+
+    final error = TestException('親予定の購読に失敗');
+    parents.addError(error);
+    await Future<void>(() {});
+    expect(errors, [error]);
+
+    final doc = MockQueryDocumentSnapshot();
+    when(doc.id).thenReturn('single');
+    when(doc.data()).thenReturn({
+      'groupId': 'g',
+      'labelType': 'group',
+      'title': '単発予定',
+      'isAllDay': true,
+      'startDateTime': Timestamp.fromDate(DateTime.utc(2026, 11, 12)),
+      'endDateTime': Timestamp.fromDate(DateTime.utc(2026, 11, 13)),
+    });
+    final change = MockDocumentChange();
+    when(change.type).thenReturn(DocumentChangeType.added);
+    when(change.doc).thenReturn(doc);
+    final snapshot = MockQuerySnapshot();
+    when(snapshot.docChanges).thenReturn([change]);
+    normal.add(snapshot);
+    await Future<void>(() {});
+    expect(values, hasLength(1));
+
+    when(recurring.snapshots()).thenAnswer((_) => restartedParents.stream);
+    final retried = <List<CalendarEventDto>>[];
+    retry = service
+        .watchCalendarScreenEvents('g', period: period)
+        .listen(retried.add);
+    normal.add(snapshot);
+    restartedParents.add(empty);
+    await Future<void>(() {});
+    expect(values.last.single.id, 'single');
+    expect(retried.single.single.id, 'single');
+    verify(recurring.snapshots()).called(2);
     expect(parents.hasListener, isFalse);
   });
 }
