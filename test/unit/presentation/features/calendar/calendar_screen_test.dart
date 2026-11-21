@@ -167,6 +167,8 @@ void main() {
     expect(find.text('所属解除・削除済みメンバーの予定'), findsOneWidget);
     await calendarTapVisible(tester, find.widgetWithText(ListTile, '本人の予定'));
     await tester.pumpAndSettle();
+    expect(find.text('色ラベル: 所属解除・削除済みメンバーの予定'), findsOneWidget);
+    await editCalendarTestEvent(tester);
     final dropdown = tester.widget<DropdownMenu<String>>(
       calendarLabelDropdown(),
     );

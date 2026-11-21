@@ -164,7 +164,7 @@ void main() {
   });
 
   for (final throwsError in [false, true]) {
-    testWidgets('URL起動に失敗しても編集内容を保持して再試行できる（例外: $throwsError）', (tester) async {
+    testWidgets('照会でURL起動に失敗しても再試行できる（例外: $throwsError）', (tester) async {
       tester.view.physicalSize = const Size(1000, 1800);
       addTearDown(tester.view.resetPhysicalSize);
       var attempts = 0;

@@ -1,3 +1,5 @@
+import 'package:memora/presentation/features/calendar/calendar_event_view_page.dart';
+
 import '../../../../helpers/calendar_group_settings_test_support.dart';
 
 import 'package:memora/presentation/notifiers/calendar/calendar_group_settings_notifier.dart';
@@ -223,7 +225,7 @@ void main() {
 
   for (final missing in [false, true]) {
     testWidgets(
-      '予定タップ起動は${missing ? '削除済み予定を新規作成として開かない' : '読込後に指定した繰り返し予定の回を編集する'}',
+      '予定タップ起動は${missing ? '削除済み予定を新規作成として開かない' : '読込後に指定した繰り返し予定の回を照会する'}',
       (tester) async {
         final group = Completer<GroupDto?>();
         final loader = calendarTestGroupLoader();
@@ -238,7 +240,7 @@ void main() {
               labelType: 'group',
               title: '毎日の予定',
               startDateTime: DateTime.utc(2026, 11, 1),
-              endDateTime: DateTime.utc(2026, 11, 1),
+              endDateTime: DateTime.utc(2026, 11, 2),
               isAllDay: true,
               recurrenceRule: 'FREQ=DAILY',
             ),
@@ -353,6 +355,12 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('予定の照会'), findsOneWidget);
-    expect(find.text('時刻変更後の予定'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(CalendarEventViewPage),
+        matching: find.text('時刻変更後の予定'),
+      ),
+      findsOneWidget,
+    );
   });
 }

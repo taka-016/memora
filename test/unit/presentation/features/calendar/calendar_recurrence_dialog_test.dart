@@ -406,7 +406,7 @@ void main() {
     expect(saved.recurrenceRule, endsWith('UNTIL=20261031'));
     expect(tester.takeException(), isNull);
   });
-  testWidgets('繰り返しの編集と削除は範囲を確認してUseCaseへ渡す', (tester) async {
+  testWidgets('分割後の新しい系列を照会に表示し再編集から削除できる', (tester) async {
     final harness = CalendarTestHarness()
       ..savedEvents.add(
         calendarTestEvent('e', '定例').copyWith(
@@ -415,6 +415,26 @@ void main() {
         ),
       );
     await harness.pump(tester);
+    when(
+      harness.changeRecurrence.execute(
+        any,
+        any,
+        CalendarChangeScope.following,
+        changes: anyNamed('changes'),
+      ),
+    ).thenAnswer((invocation) async {
+      final changes = invocation.namedArguments[#changes] as CalendarEventDto;
+      harness.savedEvents
+        ..clear()
+        ..add(changes.copyWith(id: 'new-series', version: 1));
+      return 'new-series';
+    });
+    when(harness.changeRecurrence.execute(any, any, CalendarChangeScope.only))
+        .thenAnswer((_) async {
+          harness.savedEvents.clear();
+          return null;
+        });
+
     await calendarTapVisible(tester, find.byKey(calendarTestDay2));
     await tester.pump();
     await calendarTapVisible(tester, find.byKey(calendarTestDay2));
@@ -442,11 +462,8 @@ void main() {
         changes: anyNamed('changes'),
       ),
     ).called(1);
-    await tester.tap(find.byType(BackButton));
-    await tester.pumpAndSettle();
-    await calendarTapVisible(tester, find.widgetWithText(ListTile, '定例'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('予定の照会'), findsOneWidget);
+    expect(find.text('変更').hitTestable(), findsOneWidget);
     await editCalendarTestEvent(tester);
     await calendarTapVisible(tester, find.text('削除'));
     await tester.pump();
@@ -454,10 +471,22 @@ void main() {
     await calendarTapVisible(tester, find.text('この予定のみ'));
     await tester.pump();
     await calendarTapVisible(tester, find.text('削除する'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
-    verify(harness.changeRecurrence.execute(any, any, CalendarChangeScope.only))
-        .called(1);
+    await tester.pumpAndSettle();
+    verify(
+      harness.changeRecurrence.execute(
+        argThat(
+          isA<CalendarEventDto>().having(
+            (event) => event.id,
+            '予定ID',
+            'new-series',
+          ),
+        ),
+        any,
+        CalendarChangeScope.only,
+      ),
+    ).called(1);
+    expect(find.text('予定の照会'), findsNothing);
+    expect(find.text('この日の予定はありません'), findsOneWidget);
     verifyZeroInteractions(harness.update);
     verifyZeroInteractions(harness.delete);
     expect(tester.takeException(), isNull);

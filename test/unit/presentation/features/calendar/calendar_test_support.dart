@@ -109,6 +109,8 @@ class CalendarTestHarness {
       final id = call.positionalArguments.single;
       return savedEvents.where((event) => event.id == id).firstOrNull;
     });
+    when(changeRecurrence.execute(any, any, any, changes: anyNamed('changes')))
+        .thenAnswer((_) async => null);
     when(management.save(any, any)).thenAnswer((call) async {
       await saveLabel.execute(call.positionalArguments[0] as CalendarLabelDto);
     });

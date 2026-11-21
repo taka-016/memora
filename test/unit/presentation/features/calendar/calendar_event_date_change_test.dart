@@ -191,7 +191,6 @@ void main() {
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 300));
         await editCalendarTestEvent(tester);
-        await editCalendarTestEvent(tester);
         await calendarTapVisible(tester, find.text('開始日: 2026/10/2'));
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 300));
