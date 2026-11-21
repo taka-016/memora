@@ -17,7 +17,7 @@ final calendarMutationCoordinatorProvider =
 class CalendarMutationCoordinator {
   CalendarMutationCoordinator(this.ref);
   final Ref ref;
-  Future<void> save(
+  Future<String?> save(
     CalendarEventDto input, {
     CalendarEventDto? expected,
     CalendarEventDto? expectedSeries,
@@ -41,6 +41,7 @@ class CalendarMutationCoordinator {
       }
     }
     final moving = expected != null && expected.groupId != input.groupId;
+    String? savedId = input.id;
     if (moving) {
       final member = ref.read(currentMemberNotifierProvider).member;
       if (member == null) {
@@ -55,7 +56,7 @@ class CalendarMutationCoordinator {
           '変更する系列を確認できません。再読み込みしてください',
         );
       }
-      await ref
+      savedId = await ref
           .read(changeCalendarRecurrenceUsecaseProvider)
           .execute(
             expectedSeries,
@@ -64,11 +65,14 @@ class CalendarMutationCoordinator {
             changes: input,
           );
     } else if (input.id.isEmpty) {
-      await ref.read(createCalendarEventUsecaseProvider).execute(input);
+      savedId = await ref
+          .read(createCalendarEventUsecaseProvider)
+          .execute(input);
     } else {
       await ref.read(updateCalendarEventUsecaseProvider).execute(input);
     }
     await _refresh({if (expected != null) expected.groupId, input.groupId});
+    return savedId;
   }
 
   Future<void> delete(

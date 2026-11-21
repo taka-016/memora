@@ -5,7 +5,9 @@ abstract class CalendarEventRepository {
     CalendarEvent expected,
     CalendarEvent replacement,
   );
-  Future<void> replaceCalendarEvent(
+
+  /// 新規作成した予定のIDを、分割後の系列、維持する個別予定の順に返す。
+  Future<List<String>> replaceCalendarEvent(
     CalendarEvent expected,
     CalendarEvent? replacement,
     CalendarEvent? following, {

@@ -17,11 +17,11 @@ class CalendarDayEventsSheet extends ConsumerStatefulWidget {
   const CalendarDayEventsSheet({
     super.key,
     required this.date,
-    required this.onEdit,
+    required this.onOpen,
     required this.onAdd,
   });
   final DateTime date;
-  final ValueChanged<CalendarEventDto> onEdit;
+  final ValueChanged<CalendarEventDto> onOpen;
   final VoidCallback onAdd;
 
   @override
@@ -210,7 +210,7 @@ class _CalendarDayEventsSheetState
                                                 label?.name ?? '色ラベルを確認してください',
                                           )
                                         : canEdit
-                                        ? () => widget.onEdit(event)
+                                        ? () => widget.onOpen(event)
                                         : null,
                                   );
                                 },

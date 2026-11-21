@@ -1,3 +1,4 @@
+import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/application/usecases/calendar/move_calendar_event_usecase.dart';
 import 'package:memora/application/usecases/calendar/calendar_label_management_usecase.dart';
 import 'package:memora/composition_root/providers/group_providers.dart';
@@ -29,6 +30,12 @@ final getCalendarEventsUsecaseProvider = Provider<GetCalendarEventsUsecase>(
   (ref) =>
       GetCalendarEventsUsecase(ref.watch(calendarEventQueryServiceProvider)),
 );
+
+final getCalendarEventByIdProvider =
+    Provider<Future<CalendarEventDto?> Function(String)>(
+      (ref) =>
+          ref.watch(calendarEventQueryServiceProvider).getCalendarEventById,
+    );
 
 final getCalendarLabelsUsecaseProvider = Provider<GetCalendarLabelsUsecase>(
   (ref) =>

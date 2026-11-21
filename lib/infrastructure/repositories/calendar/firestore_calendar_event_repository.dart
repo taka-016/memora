@@ -101,7 +101,7 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
   }
 
   @override
-  Future<void> replaceCalendarEvent(
+  Future<List<String>> replaceCalendarEvent(
     CalendarEvent expected,
     CalendarEvent? replacement,
     CalendarEvent? following, {
@@ -213,6 +213,10 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
         transaction.set(preservedRefs[index], preservedData[index]);
       }
     });
+    return [
+      if (nextRef != null) nextRef.id,
+      ...preservedRefs.map((ref) => ref.id),
+    ];
   }
 
   @override
