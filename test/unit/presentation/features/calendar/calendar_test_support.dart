@@ -75,6 +75,7 @@ CalendarEventDto calendarTestEvent(String id, String title) => CalendarEventDto(
 class CalendarTestHarness {
   final management = MockCalendarLabelManagementUsecase();
   final events = MockGetCalendarEventsUsecase();
+  final eventQuery = MockCalendarEventQueryService();
   final labels = MockGetCalendarLabelsUsecase();
   final create = MockCreateCalendarEventUsecase();
   final update = MockUpdateCalendarEventUsecase();
@@ -104,7 +105,6 @@ class CalendarTestHarness {
     DateTime? now,
     MoveCalendarEventUsecase? move,
   }) async {
-    final eventQuery = MockCalendarEventQueryService();
     when(eventQuery.getCalendarEventById(any)).thenAnswer((call) async {
       final id = call.positionalArguments.single;
       return savedEvents.where((event) => event.id == id).firstOrNull;

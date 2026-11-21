@@ -36,6 +36,28 @@ Future<void> openEvent(WidgetTester tester) async {
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
+  testWidgets('更新後の照会取得に失敗したときは画面から再取得できる', (tester) async {
+    final harness = CalendarTestHarness()
+      ..savedEvents.add(calendarTestEvent('event', '予定'));
+    await harness.pump(tester);
+    when(harness.eventQuery.getCalendarEventById('event'))
+        .thenThrow(TestException('予定の取得失敗'));
+    await openEvent(tester);
+    await editCalendarTestEvent(tester);
+    await tester.enterText(field('タイトル'), '更新した予定');
+    await calendarTapVisible(tester, find.text('保存'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('予定の照会'), findsOneWidget);
+    expect(find.byTooltip('予定を編集'), findsNothing);
+    when(harness.eventQuery.getCalendarEventById('event'))
+        .thenAnswer((_) async => harness.savedEvents.single);
+    await tester.tap(find.text('予定を再取得'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('更新した予定'), findsOneWidget);
+    expect(find.byTooltip('予定を編集'), findsOneWidget);
+  });
   testWidgets('詳細を入力して保存し再表示・URL起動・解除できる', (tester) async {
     tester.view.physicalSize = const Size(1000, 1800);
     addTearDown(tester.view.resetPhysicalSize);
