@@ -2,7 +2,7 @@
 
 ## ステータス
 
-採用
+[ADR-013](adr-013-calendar-quarter-subscriptions.md)により置換
 
 ## 決定日
 
