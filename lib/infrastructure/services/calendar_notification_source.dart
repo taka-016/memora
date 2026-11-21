@@ -61,6 +61,7 @@ class DeviceCalendarNotificationSource implements CalendarNotificationSource {
     var period = CalendarEventPeriod.forNotifications(clock.now());
     var closed = false;
     var revision = 0;
+    Set<String>? memberGroupIds;
     var groupsReady = false;
     Object? failure;
     var ready = Completer<void>();
@@ -97,41 +98,57 @@ class DeviceCalendarNotificationSource implements CalendarNotificationSource {
       final subscriptions = <StreamSubscription<dynamic>>[];
       groupSubscriptions[id] = subscriptions;
       subscriptions.add(
-        firestore!.collection('groups').doc(id).snapshots().listen((doc) {
-          if (closed || !identical(groupSubscriptions[id], subscriptions)) {
-            return;
-          }
-          loadedGroups.add(id);
-          if (doc.exists) {
-            existing.add(id);
-          } else {
-            existing.remove(id);
-            received.remove(id);
-            groupSubscriptions.remove(id);
-            loadedGroups.remove(id);
-            for (final subscription in subscriptions) {
-              unawaited(subscription.cancel());
-            }
-          }
-          publish();
-        }, onError: error),
-      );
-      subscriptions.add(
-        watcher.execute(id, period: period).listen((events) {
-          if (closed || !identical(groupSubscriptions[id], subscriptions)) {
-            return;
-          }
-          received[id] = events;
-          publish();
-        }, onError: error),
+        firestore!
+            .collection('groups')
+            .doc(id)
+            .snapshots(includeMetadataChanges: true)
+            .listen((doc) {
+              if (closed || !identical(groupSubscriptions[id], subscriptions)) {
+                return;
+              }
+              if (!doc.exists && doc.metadata.isFromCache) {
+                loadedGroups.remove(id);
+                error(
+                  FirebaseException(
+                    plugin: 'cloud_firestore',
+                    code: 'unavailable',
+                    message: 'グループの存在を確認できません',
+                  ),
+                  StackTrace.current,
+                );
+                return;
+              }
+              loadedGroups.add(id);
+              if (doc.exists) {
+                if (existing.add(id)) {
+                  subscriptions.add(
+                    watcher.execute(id, period: period).listen((events) {
+                      if (closed ||
+                          !identical(groupSubscriptions[id], subscriptions)) {
+                        return;
+                      }
+                      received[id] = events;
+                      publish();
+                    }, onError: error),
+                  );
+                }
+              } else {
+                existing.remove(id);
+                received.remove(id);
+                groupSubscriptions.remove(id);
+                loadedGroups.remove(id);
+                for (final subscription in subscriptions) {
+                  unawaited(subscription.cancel());
+                }
+              }
+              publish();
+            }, onError: error),
       );
     }
 
-    Future<void> updateGroups() async {
+    Future<void> updateGroups(Set<String> ids) async {
       final current = ++revision;
       try {
-        final ids = await _groupIds();
-        if (closed || current != revision) return;
         for (final id in groupSubscriptions.keys.toList()) {
           if (!ids.contains(id)) {
             final removed = groupSubscriptions.remove(id)!;
@@ -168,8 +185,9 @@ class DeviceCalendarNotificationSource implements CalendarNotificationSource {
         for (final sub in previous) {
           await sub.cancel();
         }
-        if (!closed && current == revision) {
-          await updateGroups();
+        final ids = memberGroupIds;
+        if (!closed && current == revision && ids != null) {
+          await updateGroups(ids);
         }
       }
       await ready.future;
@@ -181,16 +199,23 @@ class DeviceCalendarNotificationSource implements CalendarNotificationSource {
     Future<void> start() async {
       try {
         final member = await currentMember.execute();
-        if (closed || member == null) return;
-        final uid = member.accountId;
-        if (uid == null) return;
+        if (closed) return;
+        if (member == null) {
+          memberGroupIds = {};
+          await updateGroups(memberGroupIds!);
+          return;
+        }
         subscriptions.add(
           firestore!
-              .collection('account_permissions')
-              .doc(uid)
+              .collection('group_members')
+              .where('memberId', isEqualTo: member.id)
               .snapshots()
-              .listen((_) {
-                unawaited(updateGroups());
+              .listen((snapshot) {
+                final ids = snapshot.docs
+                    .map((doc) => doc.data()['groupId'] as String)
+                    .toSet();
+                memberGroupIds = ids;
+                unawaited(updateGroups(ids));
               }, onError: error),
         );
       } catch (e, s) {

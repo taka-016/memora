@@ -119,6 +119,23 @@ void main() {
       verifyNever(groups.groupExists(any));
     });
 
+    test('所属を解除されたグループは旅程を取得せずキャッシュを消す', () async {
+      final storage = _FakeAndroidWidgetCacheStorage(
+        cache: _cacheWithItinerary(),
+      )..targetGroupId = 'group-1';
+      final trips = _FakeTripEntryQueryService()
+        ..exception = TestException('旅程を取得してはいけない');
+      final refresh = _buildRefreshUsecase(
+        storage,
+        trips,
+        _FakeItineraryItemQueryService(),
+        isGroupMembershipActive: (_) async => false,
+      );
+      await refresh.executeForSelectedGroup();
+      expect(storage.cache, isNull);
+      expect(storage.targetGroupId, isNull);
+    });
+
     for (final fails in [false, true]) {
       test('旅程取得${fails ? '失敗' : '成功'}を選択日とともに状態管理へ伝える', () async {
         final storage = _FakeAndroidWidgetCacheStorage()
@@ -550,6 +567,31 @@ void main() {
       expect(storage.cache, same(restoredCache));
     });
 
+    test('日付移動で取得する前に所属を解除されたグループの旅程を消す', () async {
+      final storage = _FakeAndroidWidgetCacheStorage(
+        cache: _cacheWithItinerary(),
+      )..targetGroupId = 'group-1';
+      final trips = _FakeTripEntryQueryService()
+        ..exception = TestException('旅程を取得してはいけない');
+      final items = _FakeItineraryItemQueryService();
+      final move = MoveAndroidWidgetSelectedItineraryDateUsecase(
+        cacheStorage: storage,
+        queryService: WidgetItineraryDayQueryFixture(trips, items),
+        refreshCacheUsecase: _buildRefreshUsecase(
+          storage,
+          trips,
+          items,
+          isGroupMembershipActive: (_) async => false,
+        ),
+      );
+      expect(
+        await move.execute(AndroidWidgetItineraryDateMoveDirection.next),
+        isTrue,
+      );
+      expect(storage.cache, isNull);
+      expect(storage.targetGroupId, isNull);
+    });
+
     test('リモート探索で失敗した場合は失敗を返してウィジェットを更新する', () async {
       final storage = _FakeAndroidWidgetCacheStorage(
         cache: AndroidWidgetItineraryCacheDto(
@@ -649,6 +691,7 @@ RefreshAndroidWidgetItineraryCacheUsecase _buildRefreshUsecase(
   ItineraryItemQueryService itineraryItemQueryService, {
   ReadTransaction? readTransaction,
   Future<bool> Function()? isWidgetInstalled,
+  Future<bool> Function(String)? isGroupMembershipActive,
   TrackAndroidWidgetItineraryLoading? trackLoading,
 }) {
   final groups = MockGroupQueryService();
@@ -658,6 +701,7 @@ RefreshAndroidWidgetItineraryCacheUsecase _buildRefreshUsecase(
     cacheStorage: storage,
     readTransaction: readTransaction,
     isWidgetInstalled: isWidgetInstalled,
+    isGroupMembershipActive: isGroupMembershipActive,
     trackLoading: trackLoading,
     getCacheUsecase: GetAndroidWidgetItineraryCacheUsecase(
       queryService: WidgetItineraryDayQueryFixture(

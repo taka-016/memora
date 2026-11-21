@@ -73,7 +73,8 @@ void main() {
     final fixture = _NotificationFixture(ids: ['g', 'other']);
     addTearDown(fixture.dispose);
     await fixture.start();
-    verify(fixture.firestore.collection('account_permissions')).called(1);
+    verify(fixture.firestore.collection('group_members')).called(1);
+    verifyZeroInteractions(fixture.groups);
     CalendarEventDto event(String groupId) => CalendarEventDto(
       id: groupId,
       groupId: groupId,
@@ -102,14 +103,10 @@ void main() {
     final fixture = _NotificationFixture();
     addTearDown(fixture.dispose);
     await fixture.start();
-    final pending = Completer<List<GroupDto>>();
-    when(fixture.groups.execute(any)).thenAnswer((_) => pending.future);
-    fixture.membership.add(fs.MockDocumentSnapshot());
-    await fixture.flush();
     fixture.now = DateTime(2026, 11, 11, 15);
+    fixture.ids = [];
     final result = expectLater(fixture.source.load(), completion(isEmpty));
-    await fixture.flush();
-    pending.complete([]);
+    fixture.publishMembership();
     await result;
   });
 
@@ -124,12 +121,13 @@ void main() {
       return cancellation.future;
     };
     fixture.ids = [];
-    fixture.membership.add(fs.MockDocumentSnapshot());
+    fixture.publishMembership();
     await cancelling.future;
     fixture.ids = ['retained'];
-    fixture.membership.add(fs.MockDocumentSnapshot());
+    fixture.publishMembership();
     await fixture.flush();
     cancellation.complete();
+    fixture.groupExists('retained', true);
     await fixture.flush();
     expect(fixture.eventStreams['retained']!.hasListener, isTrue);
   });
@@ -149,7 +147,7 @@ void main() {
     final loading = fixture.source.load();
     await cancelling.future;
     fixture.ids = [];
-    fixture.membership.add(fs.MockDocumentSnapshot());
+    fixture.publishMembership();
     await fixture.flush();
     cancellation.complete();
     await fixture.flush();
@@ -169,13 +167,13 @@ void main() {
         return cancellation.future;
       };
       fixture.ids = ['old'];
-      fixture.membership.add(fs.MockDocumentSnapshot());
+      fixture.publishMembership();
       await cancelling.future;
       if (closeDuringUpdate) {
         await fixture.subscription.cancel();
       } else {
         fixture.ids = ['new'];
-        fixture.membership.add(fs.MockDocumentSnapshot());
+        fixture.publishMembership();
         await fixture.flush();
       }
       cancellation.complete();
@@ -196,6 +194,51 @@ void main() {
     await fixture.dispose();
   });
 
+  test('退避済みグループの所属が残っていても予定を購読しない', () async {
+    final fixture = _NotificationFixture(ids: []);
+    addTearDown(fixture.dispose);
+    await fixture.start();
+
+    fixture.ids = ['archived'];
+    fixture.publishMembership();
+    await fixture.flush();
+    fixture.groupExists('archived', false);
+    await fixture.flush();
+
+    expect(await fixture.source.load(), isEmpty);
+    verifyNever(
+      fixture.watcher.execute('archived', period: anyNamed('period')),
+    );
+  });
+
+  test('グループのキャッシュが空でも通信復帰後に予定の購読を始める', () async {
+    final fixture = _NotificationFixture(ids: []);
+    addTearDown(fixture.dispose);
+    await fixture.start();
+
+    fixture.ids = ['g'];
+    fixture.publishMembership();
+    await fixture.flush();
+    fixture.groupExists('g', false, fromCache: true);
+    await fixture.flush();
+    await expectLater(fixture.source.load(), throwsA(isA<FirebaseException>()));
+    verifyNever(fixture.watcher.execute('g', period: anyNamed('period')));
+
+    fixture.groupExists('g', true);
+    await fixture.flush();
+    final event = CalendarEventDto(
+      id: 'event',
+      groupId: 'g',
+      title: '通信復帰後の予定',
+      startDateTime: DateTime(2026, 11, 12),
+      endDateTime: DateTime(2026, 11, 13),
+      isAllDay: true,
+    );
+    fixture.eventStreams['g']!.add([event]);
+    await fixture.flush();
+    expect(await fixture.source.load(), [event]);
+  });
+
   test('監視の初回受信と変更受信では全グループの予定を取り直さない', () async {
     final currentMember = MockGetCurrentMemberUseCase();
     final groups = MockGetGroupsWithMembersUsecase();
@@ -214,17 +257,16 @@ void main() {
     final groupDoc = fs.MockDocumentSnapshot();
     when(groupDoc.exists).thenReturn(true);
     final membership =
-        StreamController<DocumentSnapshot<Map<String, dynamic>>>.broadcast();
+        StreamController<QuerySnapshot<Map<String, dynamic>>>.broadcast();
     final snapshots =
         StreamController<QuerySnapshot<Map<String, dynamic>>>.broadcast();
     when(firestore.collection(any)).thenReturn(collection);
     when(collection.where('memberId', isEqualTo: 'm')).thenReturn(query);
     when(collection.where('ownerId', isEqualTo: 'm')).thenReturn(query);
-    final permission = fs.MockDocumentReference();
-    when(collection.doc('uid')).thenReturn(permission);
-    when(permission.snapshots()).thenAnswer((_) => membership.stream);
+    when(query.snapshots()).thenAnswer((_) => membership.stream);
     when(collection.doc('g')).thenReturn(group);
-    when(group.snapshots()).thenAnswer((_) => Stream.value(groupDoc));
+    when(group.snapshots(includeMetadataChanges: true))
+        .thenAnswer((_) => Stream.value(groupDoc));
     final eventQuery = fs.MockQuery();
     when(collection.where('groupId', isEqualTo: 'g')).thenReturn(eventQuery);
     when(
@@ -263,7 +305,7 @@ void main() {
     );
     final sub = source.changes().listen((_) {}, onError: (Object _) {});
     await Future<void>(() {});
-    membership.add(fs.MockDocumentSnapshot());
+    membership.add(_memberships(['g']));
     await Future<void>(() {});
     final empty = fs.MockQuerySnapshot();
     when(empty.docs).thenReturn([]);
@@ -319,15 +361,11 @@ class _NotificationFixture {
     );
     when(firestore.collection(any)).thenReturn(collection);
     when(collection.where('memberId', isEqualTo: 'm')).thenReturn(query);
-    when(collection.where('ownerId', isEqualTo: 'm')).thenReturn(query);
+    when(query.snapshots()).thenAnswer((_) => membership.stream);
 
     when(collection.doc(any)).thenAnswer((invocation) {
       final id = invocation.positionalArguments.single as String;
       final document = fs.MockDocumentReference();
-      if (id == 'uid') {
-        when(document.snapshots()).thenAnswer((_) => membership.stream);
-        return document;
-      }
       final stream = groupStreams.putIfAbsent(
         id,
         () =>
@@ -335,7 +373,8 @@ class _NotificationFixture {
               DocumentSnapshot<Map<String, dynamic>>
             >.broadcast(),
       );
-      when(document.snapshots()).thenAnswer((_) => stream.stream);
+      when(document.snapshots(includeMetadataChanges: true))
+          .thenAnswer((_) => stream.stream);
       return document;
     });
     when(watcher.execute(any, period: anyNamed('period')))
@@ -363,7 +402,7 @@ class _NotificationFixture {
   final collection = fs.MockCollectionReference();
   final query = fs.MockQuery();
   final membership =
-      StreamController<DocumentSnapshot<Map<String, dynamic>>>.broadcast();
+      StreamController<QuerySnapshot<Map<String, dynamic>>>.broadcast();
   final groupStreams =
       <String, StreamController<DocumentSnapshot<Map<String, dynamic>>>>{};
   final eventStreams = <String, StreamController<List<CalendarEventDto>>>{};
@@ -373,19 +412,25 @@ class _NotificationFixture {
   late DeviceCalendarNotificationSource source;
   late StreamSubscription<void> subscription;
   Future<void> flush() => Future<void>(() {});
-  void groupExists(String id, bool exists) {
+  void groupExists(String id, bool exists, {bool fromCache = false}) {
     final doc = fs.MockDocumentSnapshot();
     when(doc.exists).thenReturn(exists);
+    when(doc.metadata).thenReturn(_Metadata(fromCache));
     groupStreams[id]!.add(doc);
   }
+
+  void publishMembership() => membership.add(_memberships(ids));
 
   Future<void> start() async {
     subscription = source.changes().listen((_) {}, onError: (Object _) {});
     await flush();
-    membership.add(fs.MockDocumentSnapshot());
+    publishMembership();
     await flush();
     for (final id in ids) {
       groupExists(id, true);
+    }
+    await flush();
+    for (final id in ids) {
       eventStreams[id]!.add([]);
     }
     await flush();
@@ -402,4 +447,24 @@ class _NotificationFixture {
       await stream.close();
     }
   }
+}
+
+QuerySnapshot<Map<String, dynamic>> _memberships(List<String> ids) {
+  final snapshot = fs.MockQuerySnapshot();
+  final docs = [for (final id in ids) _membership(id)];
+  when(snapshot.docs).thenReturn(docs);
+  return snapshot;
+}
+
+QueryDocumentSnapshot<Map<String, dynamic>> _membership(String groupId) {
+  final doc = fs.MockQueryDocumentSnapshot();
+  when(doc.data()).thenReturn({'groupId': groupId});
+  return doc;
+}
+
+class _Metadata extends Fake implements SnapshotMetadata {
+  _Metadata(this.isFromCache);
+
+  @override
+  final bool isFromCache;
 }

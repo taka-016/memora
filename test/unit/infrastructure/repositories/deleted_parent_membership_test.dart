@@ -1,4 +1,3 @@
-import 'package:memora/infrastructure/services/firestore_account_permissions_source.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
@@ -20,8 +19,6 @@ void main() {
         'displayName': id,
         'version': 3,
         'accountId': id == 'a' ? 'uid' : null,
-        'groupIds': id == 'd' ? <String>[] : ['g'],
-        'managedGroupIds': ['a', 'b'].contains(id) ? ['g'] : <String>[],
       };
     }
     for (final id in ['a', 'b', 'c']) {
@@ -32,23 +29,12 @@ void main() {
         'orderIndex': id.codeUnitAt(0),
       };
     }
-    store.rows['account_permissions/uid'] = {
-      'memberId': 'a',
-      'memberGroupIds': ['g'],
-      'managedGroupIds': ['g'],
-    };
     final deleted = Map.of(store.rows['members/b']!);
     await FirestoreMemberRepository(firestore: store.firestore)
         .deleteMember('b', expectedVersion: 3);
     expect(store.rows['deleted_members/b'], deleted);
     final hidden = Map.of(store.rows['group_members/g:b']!);
-    final query = FirestoreGroupQueryService(
-      firestore: store.firestore,
-      permissions: FirestoreAccountPermissionsSource(
-        store.firestore,
-        accountId: () => 'uid',
-      ),
-    );
+    final query = FirestoreGroupQueryService(firestore: store.firestore);
     final repo = FirestoreGroupRepository(firestore: store.firestore);
     var group = (await query.getManagedGroupsWithMembersByOwnerId('a')).single;
     expect(group.members.map((m) => m.memberId), ['a', 'c']);
@@ -99,8 +85,6 @@ void main() {
         'ownerId': 'owner',
         'updatedAt': Timestamp(1, 0),
         'version': 3,
-        if (table == 'members') 'groupIds': <String>[],
-        if (table == 'members') 'managedGroupIds': <String>[],
       };
       for (final collection in [
         'group_members',

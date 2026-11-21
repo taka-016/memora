@@ -11,35 +11,34 @@ void main() {
   test('通知設定から独立して所属文書と所属グループの削除を監視する', () async {
     final firestore = MockFirebaseFirestore();
     final collection = MockCollectionReference();
-    final permission = MockDocumentReference();
+    final query = MockQuery();
     final group = MockDocumentReference();
-    final permissions =
-        StreamController<DocumentSnapshot<Map<String, dynamic>>>();
+    final permissions = StreamController<QuerySnapshot<Map<String, dynamic>>>();
     final groups = StreamController<DocumentSnapshot<Map<String, dynamic>>>();
     addTearDown(permissions.close);
     addTearDown(groups.close);
     when(firestore.collection(any)).thenReturn(collection);
-    when(collection.doc('uid')).thenReturn(permission);
+    when(collection.where('memberId', isEqualTo: 'm')).thenReturn(query);
     when(collection.doc('g')).thenReturn(group);
-    when(permission.snapshots()).thenAnswer((_) => permissions.stream);
+    when(query.snapshots()).thenAnswer((_) => permissions.stream);
     when(group.snapshots()).thenAnswer((_) => groups.stream);
     final source = DeviceCalendarMembershipSource(firestore: firestore);
     var updates = 0;
-    final subscription = source.changes('online:uid').listen((_) {
+    final subscription = source.changes('m').listen((_) {
       updates++;
     });
     addTearDown(subscription.cancel);
-    final membership = MockDocumentSnapshot();
-    when(membership.data()).thenReturn({
-      'memberGroupIds': ['g'],
-    });
+    final link = MockQueryDocumentSnapshot();
+    when(link.data()).thenReturn({'groupId': 'g'});
+    final membership = MockQuerySnapshot();
+    when(membership.docs).thenReturn([link]);
     permissions.add(membership);
     await pumpEventQueue();
     final first = updates;
     groups.add(MockDocumentSnapshot());
     await pumpEventQueue();
     expect(updates, greaterThan(first));
-    when(membership.data()).thenReturn({'memberGroupIds': []});
+    when(membership.docs).thenReturn([]);
     permissions.add(membership);
     await pumpEventQueue();
     expect(groups.hasListener, isFalse);

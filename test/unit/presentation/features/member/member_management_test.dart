@@ -526,6 +526,30 @@ void main() {
       expect(find.byIcon(Icons.person_add), findsOneWidget);
     });
 
+    testWidgets('アカウントに紐づいたメンバーには招待ボタンを表示しない', (tester) async {
+      when(
+        mockMemberQueryService.getMembersByOwnerId(
+          testMember.id,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer(
+        (_) async => [
+          MemberDto(
+            id: 'linked-member',
+            accountId: 'another-account',
+            ownerId: testMember.id,
+            displayName: '連携済みのメンバー',
+          ),
+        ],
+      );
+      await tester.pumpWidget(createApp());
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('連携済みのメンバー'));
+      await tester.pumpAndSettle();
+      expect(find.text('更新'), findsOneWidget);
+      expect(find.text('招待'), findsNothing);
+    });
+
     testWidgets('招待ボタンクリック時に招待コードが生成されダイアログが表示されること', (
       WidgetTester tester,
     ) async {

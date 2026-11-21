@@ -16,19 +16,12 @@ class FirestoreMemberRepository implements MemberRepository {
   Future<void> saveMember(Member member) async {
     final batch = _firestore.batch();
     final ref = _firestore.collection('members').doc();
-    batch.set(ref, {
-      ...FirestoreMemberMapper.toCreateFirestore(member),
-      'groupIds': <String>[],
-      'managedGroupIds': <String>[],
-    });
-    if (member.accountId != null) {
+    batch.set(ref, FirestoreMemberMapper.toCreateFirestore(member));
+    final accountId = member.accountId;
+    if (accountId != null) {
       batch.set(
-        _firestore.collection('account_permissions').doc(member.accountId),
-        {
-          'memberId': ref.id,
-          'memberGroupIds': <String>[],
-          'managedGroupIds': <String>[],
-        },
+        _firestore.collection('member_account_registrations').doc(accountId),
+        <String, dynamic>{},
       );
     }
     await batch.commit();
@@ -58,7 +51,7 @@ class FirestoreMemberRepository implements MemberRepository {
       final accountId = data['accountId'] as String?;
       if (accountId != null) {
         context.delete(
-          _firestore.collection('account_permissions').doc(accountId),
+          _firestore.collection('member_account_registrations').doc(accountId),
         );
       }
       await context.commit();

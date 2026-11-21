@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/member/member_invitation_dto.dart';
 import 'package:memora/application/queries/member/member_invitation_query_service.dart';
@@ -9,12 +8,8 @@ class FirestoreMemberInvitationQueryService
     implements MemberInvitationQueryService {
   final FirebaseFirestore _firestore;
 
-  FirestoreMemberInvitationQueryService({
-    FirebaseFirestore? firestore,
-    String? Function()? accountId,
-  }) : _firestore = firestore ?? FirebaseFirestore.instance,
-       _accountId = accountId ?? (() => FirebaseAuth.instance.currentUser?.uid);
-  final String? Function() _accountId;
+  FirestoreMemberInvitationQueryService({FirebaseFirestore? firestore})
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   @override
   Future<List<MemberInvitationDto>> getAllByInviteeId(String inviteeId) async {
@@ -62,11 +57,6 @@ class FirestoreMemberInvitationQueryService
           .doc(invitationCode)
           .get();
       if (!doc.exists) return null;
-      final uid = _accountId();
-      if (uid == null) throw StateError('ログインが必要です');
-      await _firestore.collection('member_invitation_claims').doc(uid).set({
-        'code': invitationCode,
-      });
       return FirestoreMemberInvitationMapper.fromFirestore(doc);
     } catch (e, stack) {
       logger.e(

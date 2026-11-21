@@ -8,7 +8,7 @@ class DeviceCalendarMembershipSource {
   final FirebaseFirestore? firestore;
   final OfflineDatabase? database;
 
-  Stream<void> changes(String ownerId) {
+  Stream<void> changes(String memberId) {
     final local = database;
     if (local != null) {
       return local
@@ -25,14 +25,14 @@ class DeviceCalendarMembershipSource {
           .map((_) {});
     }
     late StreamController<void> controller;
-    StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? permissions;
+    StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? memberships;
     final subscriptions =
         <String, StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>>{};
     var closed = false;
-    void update(DocumentSnapshot<Map<String, dynamic>> doc) {
+    void update(QuerySnapshot<Map<String, dynamic>> snapshot) {
       if (closed) return;
-      final ids = ((doc.data()?['memberGroupIds'] as List?) ?? [])
-          .cast<String>()
+      final ids = snapshot.docs
+          .map((doc) => doc.data()['groupId'] as String)
           .toSet();
       for (final id in subscriptions.keys.toList()) {
         if (!ids.contains(id)) unawaited(subscriptions.remove(id)!.cancel());
@@ -54,15 +54,15 @@ class DeviceCalendarMembershipSource {
 
     controller = StreamController<void>(
       onListen: () {
-        permissions = firestore!
-            .collection('account_permissions')
-            .doc(ownerId.substring('online:'.length))
+        memberships = firestore!
+            .collection('group_members')
+            .where('memberId', isEqualTo: memberId)
             .snapshots()
             .listen(update, onError: controller.addError);
       },
       onCancel: () async {
         closed = true;
-        await permissions?.cancel();
+        await memberships?.cancel();
         for (final sub in subscriptions.values) {
           await sub.cancel();
         }

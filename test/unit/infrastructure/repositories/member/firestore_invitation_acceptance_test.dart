@@ -37,12 +37,7 @@ void main() {
   setUp(() {
     store = FirestoreTransactionStore();
     store.rows.addAll({
-      'members/m': {
-        'version': 7,
-        'displayName': '本人',
-        'groupIds': ['g'],
-        'managedGroupIds': <String>[],
-      },
+      'members/m': {'version': 7, 'displayName': '本人'},
       'member_invitations/i': {
         'version': 2,
         'inviteeId': 'm',
@@ -66,11 +61,11 @@ void main() {
       unorderedEquals([
         'members/m',
         'member_invitations/else',
-        'account_permissions/user',
+        'member_account_registrations/user',
       ]),
     );
+    expect(store.rows['member_account_registrations/user'], isEmpty);
     expect(store.commits, 1);
-    expect(store.rows['account_permissions/user']!['memberGroupIds'], ['g']);
   });
   for (final path in [
     'members/m',
