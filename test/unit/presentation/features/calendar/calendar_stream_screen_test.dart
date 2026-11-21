@@ -79,7 +79,8 @@ void main() {
     await tester.runAsync(() => Future<void>(() {}));
     await tester.pump();
     final original = calendarTestEvent('e', '編集前').copyWith(version: 1);
-    events.streams.last.add([original]);
+    final displayedPeriodStream = events.streams.last;
+    displayedPeriodStream.add([original]);
     labels.streams.last.add([calendarTestFamily]);
     await tester.pump();
     await tester.pump();
@@ -92,7 +93,7 @@ void main() {
     await tester.pumpAndSettle();
     await editCalendarTestEvent(tester);
     await tester.enterText(find.widgetWithText(TextFormField, 'タイトル'), '入力中');
-    events.streams.last.add([original.copyWith(title: '他者の更新', version: 2)]);
+    displayedPeriodStream.add([original.copyWith(title: '他者の更新', version: 2)]);
     await tester.pump();
     expect(find.widgetWithText(TextFormField, '入力中'), findsOneWidget);
     when(update.execute(any)).thenThrow(TestException('競合'));
@@ -112,7 +113,7 @@ void main() {
     final container = ProviderScope.containerOf(
       tester.element(find.byType(CalendarScreen)),
     );
-    events.streams.last.addError(TestException('監視失敗'));
+    displayedPeriodStream.addError(TestException('監視失敗'));
     await tester.pump();
     await tester.pump();
     expect(find.textContaining('自動更新'), findsOneWidget);
