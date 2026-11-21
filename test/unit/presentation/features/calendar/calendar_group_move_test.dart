@@ -25,6 +25,7 @@ void main() {
     final harness = CalendarTestHarness()..savedEvents.add(source);
     await harness.pump(tester, move: move);
     await openEvent(tester);
+    await editCalendarTestEvent(tester);
     await tester.tap(find.widgetWithText(DropdownMenu<String>, '保存先グループ'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('友人').last);
@@ -62,6 +63,7 @@ void main() {
       ..savedEvents.add(calendarTestEvent('event', '予定'));
     await harness.pump(tester, move: move);
     await openEvent(tester);
+    await editCalendarTestEvent(tester);
     await tester.enterText(field('タイトル'), '入力中');
     await tester.tap(find.widgetWithText(DropdownMenu<String>, '保存先グループ'));
     await tester.pumpAndSettle();

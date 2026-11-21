@@ -289,20 +289,13 @@ void main() {
           expect(find.byType(CalendarEventInputPage), findsNothing);
           expect(find.text('指定された予定が見つかりませんでした'), findsOneWidget);
         } else {
-          final dialog = tester.widget<CalendarEventInputPage>(
-            find.byType(CalendarEventInputPage),
-          );
-          expect(dialog.event!.id, 'series');
-          expect(
-            dialog.event!.originalStartDateTime,
-            DateTime.utc(2026, 11, 3),
-          );
-          expect(dialog.event!.startDateTime, DateTime.utc(2026, 11, 3));
+          expect(find.text('予定の照会'), findsOneWidget);
+          expect(find.text('2026/11/3 〜 2026/11/3（終日）'), findsOneWidget);
         }
       },
     );
   }
-  testWidgets('単発予定はウィジェットの時刻が古くても同じ予定IDの最新内容で編集する', (tester) async {
+  testWidgets('単発予定はウィジェットの時刻が古くても同じ予定IDの最新内容で照会する', (tester) async {
     final loader = calendarTestGroupLoader();
     when(loader.execute('g1')).thenAnswer(
       (_) async =>
@@ -359,10 +352,7 @@ void main() {
     await tester.pump();
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-    final dialog = tester.widget<CalendarEventInputPage>(
-      find.byType(CalendarEventInputPage),
-    );
-    expect(dialog.event!.title, '時刻変更後の予定');
-    expect(dialog.event!.startDateTime, DateTime.utc(2026, 11, 3, 11));
+    expect(find.text('予定の照会'), findsOneWidget);
+    expect(find.text('時刻変更後の予定'), findsOneWidget);
   });
 }

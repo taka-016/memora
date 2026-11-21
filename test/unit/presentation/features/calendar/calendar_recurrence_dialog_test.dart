@@ -104,6 +104,7 @@ void main() {
     await calendarTapVisible(tester, find.widgetWithText(ListTile, '予定'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
+    await editCalendarTestEvent(tester);
     await tester.ensureVisible(find.text('繰り返さない'));
     await calendarTapVisible(tester, find.text('繰り返さない'));
     await tester.pump();
@@ -133,6 +134,7 @@ void main() {
     await calendarTapVisible(tester, find.widgetWithText(ListTile, '独立した予定'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
+    await editCalendarTestEvent(tester);
     expect(find.text('個別変更をリセット'), findsNothing);
     await tester.enterText(find.widgetWithText(TextFormField, 'タイトル'), '通常編集');
     await calendarTapVisible(tester, find.text('保存'));
@@ -169,6 +171,7 @@ void main() {
       await calendarTapVisible(tester, find.widgetWithText(ListTile, '系列'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
+      await editCalendarTestEvent(tester);
       await calendarTapVisible(tester, find.text(deleting ? '削除' : '保存'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
@@ -219,6 +222,7 @@ void main() {
         await calendarTapVisible(tester, find.widgetWithText(ListTile, '週の系列'));
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 300));
+        await editCalendarTestEvent(tester);
         await calendarTapVisible(tester, find.text('開始日: 2026/10/2'));
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 300));
@@ -283,6 +287,7 @@ void main() {
       await calendarTapVisible(tester, find.widgetWithText(ListTile, '夜の予定'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
+      await editCalendarTestEvent(tester);
       if (until) {
         final summary = find.text('毎日、2026/10/5まで');
         await tester.ensureVisible(summary);
@@ -418,6 +423,7 @@ void main() {
     await calendarTapVisible(tester, find.widgetWithText(ListTile, '定例'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
+    await editCalendarTestEvent(tester);
     await tester.enterText(find.widgetWithText(TextFormField, 'タイトル'), '変更');
     await calendarTapVisible(tester, find.text('保存'));
     await tester.pump();
@@ -436,9 +442,12 @@ void main() {
         changes: anyNamed('changes'),
       ),
     ).called(1);
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
     await calendarTapVisible(tester, find.widgetWithText(ListTile, '定例'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
+    await editCalendarTestEvent(tester);
     await calendarTapVisible(tester, find.text('削除'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));

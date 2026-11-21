@@ -141,8 +141,8 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.byType(CalendarEventInputPage), findsOneWidget);
-    expect(find.widgetWithText(TextFormField, '取得済みの予定'), findsOneWidget);
+    expect(find.text('予定の照会'), findsOneWidget);
+    expect(find.text('取得済みの予定'), findsOneWidget);
   });
   testWidgets('所属一覧の取得完了まで追加と表示選択を開始しない', (tester) async {
     final settings = _LoadingMemberships();

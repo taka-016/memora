@@ -1,3 +1,8 @@
+import 'package:memora/infrastructure/factories/query_service_factory.dart';
+
+import '../../../application/usecases/calendar/calendar_usecases_test.mocks.dart'
+    show MockCalendarEventQueryService;
+
 import 'package:memora/presentation/features/calendar/calendar_event_input_page.dart';
 import 'package:mockito/annotations.dart';
 import 'package:memora/application/usecases/calendar/calendar_label_management_usecase.dart';
@@ -99,6 +104,11 @@ class CalendarTestHarness {
     DateTime? now,
     MoveCalendarEventUsecase? move,
   }) async {
+    final eventQuery = MockCalendarEventQueryService();
+    when(eventQuery.getCalendarEventById(any)).thenAnswer((call) async {
+      final id = call.positionalArguments.single;
+      return savedEvents.where((event) => event.id == id).firstOrNull;
+    });
     when(management.save(any, any)).thenAnswer((call) async {
       await saveLabel.execute(call.positionalArguments[0] as CalendarLabelDto);
     });
@@ -163,6 +173,7 @@ class CalendarTestHarness {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          calendarEventQueryServiceProvider.overrideWithValue(eventQuery),
           calendarSettingsOwnerProvider.overrideWithValue('online:owner'),
           calendarGroupSettingsNotifierProvider.overrideWith(
             () => TestCalendarGroupSettingsNotifier(),
@@ -219,4 +230,9 @@ class CalendarTestHarness {
     await tester.pump();
     await tester.pump();
   }
+}
+
+Future<void> editCalendarTestEvent(WidgetTester tester) async {
+  await tester.tap(find.byTooltip('予定を編集'));
+  await tester.pumpAndSettle();
 }
