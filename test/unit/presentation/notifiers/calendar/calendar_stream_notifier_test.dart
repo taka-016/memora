@@ -30,7 +30,7 @@ void main() {
     labelId: 'l',
     title: '予定',
     startDateTime: DateTime(2026, 11, 2),
-    endDateTime: DateTime(2026, 11, 2),
+    endDateTime: DateTime(2026, 11, 3),
     isAllDay: true,
     version: 1,
   );
@@ -209,7 +209,11 @@ void main() {
         events.streams[received++].add([
           for (final day in days)
             if (!day.isBefore(period.from) && day.isBefore(period.to))
-              event.copyWith(startDateTime: day, endDateTime: day),
+              event.copyWith(
+                id: 'e-${day.year}-${day.month}',
+                startDateTime: day,
+                endDateTime: DateTime(day.year, day.month, day.day + 1),
+              ),
         ]);
         await flush();
       }
@@ -271,7 +275,7 @@ void main() {
     final nextEvent = event.copyWith(
       id: 'next',
       startDateTime: january,
-      endDateTime: january,
+      endDateTime: DateTime(2027, 1, 3),
     );
     events.streams.last.add([spanning, nextEvent]);
     await flush();
