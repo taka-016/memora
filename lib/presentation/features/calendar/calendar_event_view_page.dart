@@ -44,17 +44,13 @@ class _CalendarEventViewPageState extends ConsumerState<CalendarEventViewPage> {
 
     final start = saved.start;
     final nextDay = start.add(const Duration(days: 1));
-    final occurrence = expander
-        .expand(event, start, nextDay)
-        .where((value) => value.startDateTime.isAtSameMomentAs(start))
-        .firstOrNull;
-    if (occurrence != null) return (event: occurrence, series: event);
-
-    final first = event.startDateTime;
-    final firstOccurrence = expander
-        .expand(event, first, first.add(const Duration(days: 1)))
-        .firstOrNull;
-    return (event: firstOccurrence ?? event, series: event);
+    final occurrence =
+        expander
+            .expand(event, start, nextDay)
+            .where((value) => value.startDateTime.isAtSameMomentAs(start))
+            .firstOrNull ??
+        expander.firstOccurrence(event);
+    return occurrence == null ? null : (event: occurrence, series: event);
   }
 
   Future<void> _edit(CalendarEventDto event, CalendarEventDto? series) async {
@@ -113,11 +109,7 @@ class _CalendarEventViewPageState extends ConsumerState<CalendarEventViewPage> {
             if (data != null) ...[
               IconButton(
                 tooltip: '予定を編集',
-                onPressed:
-                    data.series != null &&
-                        data.event.originalStartDateTime == null
-                    ? null
-                    : () => _edit(data.event, data.series),
+                onPressed: () => _edit(data.event, data.series),
                 icon: const Icon(Icons.edit),
               ),
               IconButton(
@@ -165,8 +157,13 @@ class _CalendarEventViewPageState extends ConsumerState<CalendarEventViewPage> {
     final label = calendar?.displayLabels
         .where((label) => label.id == event.labelKey)
         .firstOrNull;
+    final savedLabel = _saved?.label;
     final labelName =
         label?.name ??
+        (savedLabel?.groupId == event.groupId &&
+                savedLabel?.id == event.labelKey
+            ? savedLabel?.name
+            : null) ??
         (event.labelType == 'group' && groupName != null
             ? '$groupNameの予定'
             : null);

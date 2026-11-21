@@ -99,6 +99,20 @@ class CalendarRecurrenceExpander {
     if (event.recurrenceRule == null) {
       return _overlaps(event, from, to) ? [event] : [];
     }
+    return _recurringOccurrences(event, from, to).toList()
+      ..sort((a, b) => a.startDateTime.compareTo(b.startDateTime));
+  }
+
+  CalendarEventDto? firstOccurrence(CalendarEventDto event) {
+    if (event.recurrenceRule == null) return event;
+    return _recurringOccurrences(event, event.startDateTime, null).firstOrNull;
+  }
+
+  Iterable<CalendarEventDto> _recurringOccurrences(
+    CalendarEventDto event,
+    DateTime from,
+    DateTime? to,
+  ) sync* {
     final rule = CalendarRecurrenceRule.parse(event.recurrenceRule!);
     final start = event.isAllDay
         ? _date(event.startDateTime)
@@ -156,10 +170,13 @@ class CalendarRecurrenceExpander {
     final overridden = event.overrides
         .map((v) => originalKey(v.originalStartDateTime))
         .toSet();
-    final result = <CalendarEventDto>[];
+    final end =
+        to ??
+        rule.until?.add(const Duration(days: 2)) ??
+        DateTime.utc(10000, 1, 2);
     final endDay = event.isAllDay
-        ? _date(to)
-        : _date(timeZone.local(to, event.timeZone!))
+        ? _date(end)
+        : _date(timeZone.local(end, event.timeZone!))
               .add(const Duration(days: 1));
     var day = _date(start);
     final lower =
@@ -183,9 +200,7 @@ class CalendarRecurrenceExpander {
             : instant.add(duration).toLocal(),
         originalStartDateTime: instant,
       );
-      if (_overlaps(value, from, to)) result.add(value);
+      if (_overlaps(value, from, end)) yield value;
     }
-    result.sort((a, b) => a.startDateTime.compareTo(b.startDateTime));
-    return result;
   }
 }

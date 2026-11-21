@@ -1,3 +1,4 @@
+import 'package:memora/application/dtos/calendar/calendar_label_dto.dart';
 import 'package:memora/presentation/features/calendar/calendar_event_details.dart';
 import 'package:memora/presentation/shared/dialogs/edit_discard_confirm_dialog.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_mutation_coordinator.dart';
@@ -28,10 +29,11 @@ sealed class CalendarEventEditResult {
 }
 
 class CalendarEventSaved extends CalendarEventEditResult {
-  const CalendarEventSaved(this.id, this.start);
+  const CalendarEventSaved(this.id, this.start, {this.label});
 
   final String? id;
   final DateTime start;
+  final CalendarLabelDto? label;
 }
 
 class CalendarEventDeleted extends CalendarEventEditResult {
@@ -485,6 +487,11 @@ class _CalendarEventInputPageState
         recurrenceRule: rule,
         timeZone: rule != null && !_allDay ? _zone : null,
       );
+      final label = ref
+          .read(calendarEventInputNotifierProvider(_session))
+          .displayLabels
+          .where((label) => label.id == input.labelKey)
+          .firstOrNull;
       final savedId = await ref
           .read(calendarMutationCoordinatorProvider)
           .save(
@@ -502,6 +509,7 @@ class _CalendarEventInputPageState
               : CalendarEventSaved(
                   savedId,
                   moving && recurring ? widget.event!.startDateTime : start,
+                  label: label,
                 );
           Navigator.of(context).pop(result);
         }
