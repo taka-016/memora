@@ -59,6 +59,18 @@ void main() {
     expect(await storage.loadScope(), 'latest');
   });
 
+  test('同じ表示対象でもキャッシュを公開するまで更新が必要になる', () async {
+    const storage = HomeWidgetCalendarCacheStorage();
+    expect(await storage.setScope('old'), isTrue);
+    await storage.save({'cacheScope': 'old', 'month': '2026-11-01'});
+
+    expect(await storage.setScope('new'), isTrue);
+    expect(await storage.setScope('new'), isTrue);
+
+    await storage.save({'cacheScope': 'new', 'month': '2026-11-01'});
+    expect(await storage.setScope('new'), isFalse);
+  });
+
   test('別Container相当のキャッシュ更新も直列に実行し失敗後に再開する', () async {
     const firstStorage = HomeWidgetCalendarCacheStorage();
     const secondStorage = HomeWidgetCalendarCacheStorage();

@@ -8,6 +8,8 @@ import 'package:memora/application/models/calendar_group_settings.dart';
 import 'package:memora/application/services/calendar_group_settings_storage.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/composition_root/providers/calendar_group_settings_providers.dart';
+import 'package:memora/composition_root/providers/startup_common_data_providers.dart';
+import 'package:memora/presentation/notifiers/startup/startup_common_data_notifier.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_group_settings_notifier.dart';
 import 'package:memora/presentation/notifiers/timeline/group_timeline_group_selection_notifier.dart';
 
@@ -39,6 +41,15 @@ class _RestoringBackup extends OfflineBackupNotifier {
   OfflineBackupState build() => const OfflineBackupState();
   void begin() {
     state = const OfflineBackupState(isWorking: true, isRestoring: true);
+  }
+}
+
+class _StartupCommonData extends StartupCommonDataNotifier {
+  @override
+  StartupCommonDataState build() => StartupCommonDataState();
+
+  void confirmGroups() {
+    state = StartupCommonDataState(groupsConfirmed: true);
   }
 }
 
@@ -250,6 +261,54 @@ void main() {
 
     expect(widgetScope, '["online","online:self",["b"]]');
     expect(widgetUpdates, 1);
+  });
+
+  test('起動時の未確認の所属でウィジェットの表示対象を上書きしない', () async {
+    container.dispose();
+    storage.value = CalendarGroupSettings(visibleGroupIds: {'a', 'b'});
+    widgetScope = '["online","online:self",["a"]]';
+    final common = _StartupCommonData();
+    container = ProviderContainer(
+      overrides: [
+        calendarWidgetGroupsChangedProvider.overrideWithValue(() async {
+          widgetUpdates++;
+        }),
+        calendarWidgetScopeChangedProvider.overrideWithValue(setWidgetScope),
+        calendarSettingsOwnerProvider.overrideWithValue('online:self'),
+        calendarSettingsMemberIdProvider.overrideWithValue('self'),
+        calendarGroupSettingsStorageProvider.overrideWithValue(storage),
+        startupCommonDataOwnerProvider.overrideWithValue('online:self'),
+        startupCommonDataNotifierProvider.overrideWith(() => common),
+      ],
+    );
+    container.read(startupCommonDataNotifierProvider);
+    container.listen(calendarGroupSettingsNotifierProvider, (_, _) {});
+    groups(['a', 'b']);
+    await pumpEventQueue();
+    expect(
+      container
+          .read(calendarGroupSettingsNotifierProvider)
+          .effectiveSettings
+          .visibleGroupIds,
+      {'a', 'b'},
+    );
+    expect(widgetScope, '["online","online:self",["a"]]');
+    common.confirmGroups();
+    groups(['a']);
+    await pumpEventQueue();
+    expect(widgetUpdates, 0);
+  });
+
+  test('起動中に非表示の所属グループだけが変わっても取得しない', () async {
+    widgetScope = '["online","online:self",["a"]]';
+    groups(['a', 'b']);
+    await pumpEventQueue();
+
+    groups(['a', 'c']);
+    await pumpEventQueue();
+
+    expect(widgetScope, '["online","online:self",["a"]]');
+    expect(widgetUpdates, 0);
   });
 
   test('起動時に保存済みの表示対象から所属グループが外れたら更新する', () async {
