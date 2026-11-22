@@ -44,11 +44,12 @@ class HomeWidgetCalendarCacheStorage {
       'com.example.memora.CalendarWidgetReceiver';
 
   static String loadStateKey(String groupId, DateTime date) {
-    return 'memora_widget_calendar_load_${groupId}_${_monthKey(date)}';
+    final month = DateTime(
+      date.year,
+      date.month,
+    ).toIso8601String().substring(0, 10);
+    return 'memora_widget_calendar_load_${groupId}_$month';
   }
-
-  static String _monthKey(DateTime date) =>
-      DateTime(date.year, date.month).toIso8601String().substring(0, 10);
 
   Future<void> refresh(
     String groupId,
@@ -66,35 +67,6 @@ class HomeWidgetCalendarCacheStorage {
     final path = await HomeWidget.getWidgetData<String>(cacheKey);
     if (path == null || !await File(path).exists()) return null;
     return jsonDecode(await File(path).readAsString()) as Map<String, dynamic>;
-  }
-
-  Future<bool> canReuseForAutomaticRefresh(String scope, DateTime now) async {
-    final Map<String, dynamic>? cache;
-    try {
-      cache = await _load();
-    } on FormatException {
-      return false;
-    } on FileSystemException {
-      return false;
-    }
-    if (cache == null || cache['cacheScope'] != scope) return false;
-    final timestamp = cache['lastUpdatedAt'];
-    final updatedAt = timestamp is String ? DateTime.tryParse(timestamp) : null;
-    if (updatedAt == null) return false;
-    final elapsed = now.difference(updatedAt);
-    if (elapsed.isNegative || elapsed >= const Duration(minutes: 1)) {
-      return false;
-    }
-
-    final selected = await loadSelectedDate();
-    final month = selected == null ? cache['month'] : _monthKey(selected);
-    final updatedMonths = cache['lastUpdatedMonths'];
-    final months = cache['months'];
-    return month is String &&
-        updatedMonths is List &&
-        updatedMonths.contains(month) &&
-        months is Map<String, dynamic> &&
-        months[month] is Map<String, dynamic>;
   }
 
   Future<DateTime?> loadMonth() async {
@@ -134,7 +106,6 @@ class HomeWidgetCalendarCacheStorage {
     final publishedCache = {
       ...cache,
       'months': {for (final key in keys.take(7)) key: months[key]},
-      'lastUpdatedMonths': incomingMonths?.keys.toList() ?? <String>[],
     };
     final directory = await getApplicationSupportDirectory();
     final folder = Directory('${directory.path}/home_widget');

@@ -16,16 +16,6 @@ typedef ShowAndroidWidgetToast = Future<void> Function(
   AndroidWidgetToastNotification notification,
 );
 
-typedef RefreshCalendarWidget = Future<void> Function(
-  DateTime? date, {
-  bool automatic,
-});
-
-bool isAutomaticCalendarWidgetRefresh(Uri? uri) =>
-    uri?.host == 'calendarrefresh' &&
-    uri?.queryParameters['automatic'] == 'true' &&
-    uri?.queryParameters['date']?.isNotEmpty != true;
-
 class AndroidWidgetActionHandler {
   const AndroidWidgetActionHandler({
     required this._cacheStorage,
@@ -39,7 +29,7 @@ class AndroidWidgetActionHandler {
   final RefreshAndroidWidgetCache _refreshCache;
   final MoveAndroidWidgetItineraryDate _moveDate;
   final ShowAndroidWidgetToast _showToast;
-  final RefreshCalendarWidget? refreshCalendar;
+  final Future<void> Function(DateTime? date)? refreshCalendar;
 
   Future<void> handle(Uri? uri) async {
     switch (uri?.host) {
@@ -61,7 +51,6 @@ class AndroidWidgetActionHandler {
         try {
           await refreshCalendar?.call(
             DateTime.tryParse(uri?.queryParameters['date'] ?? ''),
-            automatic: isAutomaticCalendarWidgetRefresh(uri),
           );
         } catch (_) {
           await _showToastSafely(

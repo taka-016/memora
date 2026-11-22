@@ -106,9 +106,9 @@ Future<void> withAndroidWidgetDependencies(
       refreshCache: refresh.execute,
       moveDate: move.execute,
       showToast: const MethodChannelAndroidWidgetToastNotifier().show,
-      refreshCalendar: (date, {automatic = false}) => container!.read(
-        refreshCalendarWidgetProvider,
-      )(date, automatic: automatic),
+      refreshCalendar: (date) async {
+        await container!.read(refreshCalendarWidgetProvider)(date);
+      },
     );
     final caches = RefreshAndroidWidgetCachesUsecase(
       loadTargetGroupId: storage.getTargetGroupId,
@@ -121,7 +121,7 @@ Future<void> withAndroidWidgetDependencies(
         updateWidgetAfterRefresh: false,
       ),
       refreshCalendar: () =>
-          container!.read(refreshCalendarWidgetProvider)(null, automatic: true),
+          container!.read(refreshCalendarWidgetProvider)(null),
     );
     if (database == null) {
       await container
