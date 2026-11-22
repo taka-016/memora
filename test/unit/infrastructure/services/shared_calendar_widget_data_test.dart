@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/application/dtos/calendar/calendar_label_dto.dart';
 import 'package:memora/application/models/calendar_event_period.dart';
+import 'package:memora/domain/entities/calendar/calendar_event_override.dart';
 import 'package:memora/infrastructure/services/shared_calendar_cache.dart';
 import 'package:memora/infrastructure/services/shared_calendar_widget_data.dart';
 
@@ -78,6 +79,51 @@ void main() {
     ]);
     expect(labelsRead, 2);
     expect((await appCache.loadLabels('online:a', 'g'))?.single.id, 'label');
+  });
+
+  test('不足月で系列を見つけたときは、表示対象の月で未取得の取消も取得する', () async {
+    final directory = await Directory.systemTemp.createTemp('calendar-cache-');
+    addTearDown(() => directory.delete(recursive: true));
+    final appCache = SharedCalendarCache(directory: () async => directory);
+    final october = CalendarEventPeriod.forCalendarMonth(DateTime(2026, 10));
+    final december = CalendarEventPeriod.forCalendarMonth(DateTime(2026, 12));
+    final series = CalendarEventDto(
+      id: 'series',
+      groupId: 'g',
+      title: '毎週の予定',
+      startDateTime: DateTime.utc(2026, 10, 2),
+      endDateTime: DateTime.utc(2026, 10, 3),
+      isAllDay: true,
+      recurrenceRule: 'FREQ=WEEKLY;BYDAY=FR',
+      version: 1,
+    );
+    final decemberSeries = series.copyWith(
+      overrides: [
+        CalendarEventOverride(originalStartDateTime: DateTime.utc(2026, 12, 4)),
+      ],
+    );
+    await appCache.saveEvents('online:a', 'g', december, []);
+    final requests = <CalendarEventPeriod>[];
+    final loader = SharedCalendarWidgetData(
+      cache: SharedCalendarCache(directory: () async => directory),
+      currentOwnerId: () => 'online:a',
+      fetchEvents: (_, {period}) async {
+        requests.add(period!);
+        return [period == december ? decemberSeries : series];
+      },
+      fetchLabels: (_) async => [],
+    );
+
+    final data = await loader.load('online:a', 'g', [
+      october,
+      december,
+    ], force: false);
+    expect(requests, [october, december]);
+    expect(data.eventsByPeriod, {
+      october: [series],
+      december: [decemberSeries],
+    });
+    expect(data.synchronizedPeriods, {october, december});
   });
 
   test('手動取得の途中で保存した予定は古い応答で描画し直さない', () async {
