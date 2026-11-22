@@ -303,6 +303,31 @@ void main() {
     );
   });
 
+  test('以前のカレンダーキャッシュが読めなくても新しい月を公開する', () async {
+    const storage = HomeWidgetCalendarCacheStorage();
+    final file = File('${directory.path}/previous_calendar.json');
+    final data = {
+      'cacheScope': 'offline:a',
+      'sourceMode': 'offline',
+      'month': '2026-11-01',
+      'months': {
+        '2026-11-01': {'days': <Object?>[]},
+      },
+    };
+    for (final previous in [
+      '{',
+      '[]',
+      '{"cacheScope":"offline:a","sourceMode":"offline","months":[]}',
+      '{"cacheScope":"offline:a","sourceMode":"offline","months":{"不正な日付":[]}}',
+    ]) {
+      await file.writeAsString(previous);
+      values[HomeWidgetCalendarCacheStorage.cacheKey] = file.path;
+      await storage.save(data, keepDistantMonths: false);
+      final path = values[HomeWidgetCalendarCacheStorage.cacheKey] as String;
+      expect(jsonDecode(await File(path).readAsString()), data);
+    }
+  });
+
   test('単一キャッシュを消去すると公開済みファイルも削除する', () async {
     const storage = HomeWidgetAndroidWidgetCacheStorage();
     await storage.saveItineraryCache(
