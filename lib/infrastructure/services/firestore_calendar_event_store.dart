@@ -21,6 +21,8 @@ class FirestoreCalendarEventStore {
     DocumentSnapshot<Map<String, dynamic>> event, {
     Transaction? transaction,
     CalendarEventPeriod? period,
+    GetOptions? options,
+    void Function(bool confirmed)? onOverrideCoverage,
   }) async {
     final data = event.data()!;
     final overrides = <CalendarEventOverride>[];
@@ -37,7 +39,12 @@ class FirestoreCalendarEventStore {
           endField: 'originalEndDateTime',
         );
       }
-      final snapshot = await query.get();
+      final snapshot = await query.get(options);
+      if (onOverrideCoverage != null) {
+        onOverrideCoverage(
+          !snapshot.metadata.isFromCache && !snapshot.metadata.hasPendingWrites,
+        );
+      }
       overrides.addAll(
         snapshot.docs.map(
           (doc) => FirestoreCalendarEventOverrideMapper.fromFirestore(

@@ -4,6 +4,7 @@ import 'package:memora/application/services/calendar/japanese_calendar.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/application/models/app_mode.dart';
 import 'package:memora/application/models/calendar_event_period.dart';
+import 'package:memora/application/models/calendar_event_slice.dart';
 import 'package:memora/application/services/current_user_service.dart';
 import 'package:memora/application/queries/calendar/calendar_event_query_service.dart';
 import 'package:memora/application/queries/calendar/calendar_label_query_service.dart';
@@ -18,6 +19,7 @@ class GetAndroidWidgetCalendarCacheUsecase {
     required this.expander,
     required this.mode,
     this.currentUser,
+    this.loadSharedGroup,
   });
 
   final CalendarEventQueryService events;
@@ -25,11 +27,22 @@ class GetAndroidWidgetCalendarCacheUsecase {
   final CalendarRecurrenceExpander expander;
   final AppMode mode;
   final CurrentUserService? currentUser;
+  final Future<
+    ({List<CalendarEventSlice> slices, List<CalendarLabelDto> labels})
+  >
+  Function(
+    String ownerId,
+    String groupId,
+    CalendarEventPeriod period, {
+    required bool force,
+  })?
+  loadSharedGroup;
 
   Future<Map<String, Object?>?> execute(
     List<GroupDto> groups,
     DateTime month, {
     String? ownerId,
+    bool force = false,
   }) async {
     DateTime gridStart(DateTime value) {
       final first = DateTime(value.year, value.month);
@@ -48,32 +61,54 @@ class GetAndroidWidgetCalendarCacheUsecase {
     ];
     final from = gridStart(months.first);
     final to = gridEnd(months.last);
-    final source = <CalendarEventDto>[];
+    final period = CalendarEventPeriod(from: from, to: to);
+    final occurrencesBySlice = <CalendarEventSlice>[];
     final displayLabels = <CalendarLabelDto>[];
     final visibleIds = <String>[];
     final sortedGroups = groups.toList()..sort((a, b) => a.id.compareTo(b.id));
     for (final group in sortedGroups) {
       final groupId = group.id;
       visibleIds.add(groupId);
-      final groupEvents = await events.getCalendarEventsByGroupId(
-        groupId,
-        period: CalendarEventPeriod(from: from, to: to),
-      );
-      source.addAll(groupEvents);
+      final load = loadSharedGroup;
+      final data = load != null && ownerId != null
+          ? await load(ownerId, groupId, period, force: force)
+          : (
+              slices: [
+                CalendarEventSlice(
+                  period,
+                  await events.getCalendarEventsByGroupId(
+                    groupId,
+                    period: period,
+                  ),
+                ),
+              ],
+              labels: await labels.getCalendarLabelsByGroupId(groupId),
+            );
       displayLabels.addAll(
         buildCalendarDisplayLabels(
           group,
-          await labels.getCalendarLabelsByGroupId(groupId),
-          events: groupEvents,
+          data.labels,
+          events: [for (final slice in data.slices) ...slice.events],
         ),
       );
+      occurrencesBySlice.addAll([
+        for (final slice in data.slices)
+          CalendarEventSlice(slice.period, [
+            for (final event in slice.events)
+              ...expander.expand(event, slice.period.from, slice.period.to),
+          ]),
+      ]);
     }
-    final occurrences =
-        [for (final event in source) ...expander.expand(event, from, to)]
-          ..sort((a, b) {
-            if (a.isAllDay != b.isAllDay) return a.isAllDay ? -1 : 1;
-            return a.startDateTime.compareTo(b.startDateTime);
-          });
+    List<CalendarEventDto> eventsOn(DateTime day) =>
+        [
+          for (final slice in occurrencesBySlice)
+            if (!day.isBefore(slice.period.from) &&
+                day.isBefore(slice.period.to))
+              ...slice.events.where((event) => _onDay(event, day)),
+        ]..sort((a, b) {
+          if (a.isAllDay != b.isAllDay) return a.isAllDay ? -1 : 1;
+          return a.startDateTime.compareTo(b.startDateTime);
+        });
     String dayFormat(DateTime date) => date.toIso8601String().substring(0, 10);
     String timeFormat(DateTime date) =>
         '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
@@ -111,10 +146,7 @@ class GetAndroidWidgetCalendarCacheUsecase {
           'date': dayFormat(day),
           'holidayName': JapaneseCalendar.holidayName(day),
           'rokuyo': JapaneseCalendar.rokuyo(day),
-          'events': occurrences
-              .where((event) => _onDay(event, day))
-              .map(item)
-              .toList(),
+          'events': eventsOn(day).map(item).toList(),
         });
       }
       return {'month': dayFormat(value), 'days': days};
