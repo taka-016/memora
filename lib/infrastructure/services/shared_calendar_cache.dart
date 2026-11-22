@@ -5,8 +5,10 @@ import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/application/dtos/calendar/calendar_label_dto.dart';
 import 'package:memora/application/models/calendar_event_period.dart';
 import 'package:memora/application/models/calendar_widget_group_data.dart';
+import 'package:memora/application/services/calendar/calendar_recurrence_expander.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/domain/entities/calendar/calendar_event_override.dart';
+import 'package:memora/infrastructure/services/iana_calendar_time_zone.dart';
 import 'package:memora/infrastructure/services/local_calendar_widget_lock.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -25,6 +27,8 @@ class SharedCalendarCache {
 
   final Future<Directory> Function() _directory;
   final LocalCalendarWidgetLock _lock;
+  static const _maxCachedMonths = 48;
+  static final _expander = CalendarRecurrenceExpander(IanaCalendarTimeZone());
 
   Future<List<CalendarEventDto>?> loadEvents(
     String ownerId,
@@ -32,11 +36,26 @@ class SharedCalendarCache {
     CalendarEventPeriod period,
   ) async {
     try {
-      return _events(
-        await _read(await _file(ownerId, groupId)),
-        groupId,
-        period,
-      );
+      final data = await _read(await _file(ownerId, groupId));
+      final eventsById = <String, CalendarEventDto>{};
+      for (final month in _monthsIn(period)) {
+        final events = _events(data, groupId, month);
+        if (events == null) return null;
+        for (final event in events) {
+          final previous = eventsById[event.id];
+          final version = event.version ?? 0;
+          final previousVersion = previous?.version ?? 0;
+          if (previous == null || version > previousVersion) {
+            eventsById[event.id] = event;
+          } else if (version == previousVersion &&
+              event.recurrenceRule != null) {
+            eventsById[event.id] = previous.copyWith(
+              overrides: {...previous.overrides, ...event.overrides}.toList(),
+            );
+          }
+        }
+      }
+      return eventsById.values.toList();
     } catch (_) {
       return null;
     }
@@ -111,20 +130,17 @@ class SharedCalendarCache {
               continue;
             }
             final event = change.event;
-            final end = event?.recurrenceRule == null
-                ? event?.endDateTime
-                : change.recurrenceEnd;
-            if (event != null &&
-                event.startDateTime.isBefore(period.queryTo) &&
-                (end == null || !end.isBefore(period.queryFrom))) {
-              final overrides = event.overrides.where((override) {
-                final start = override.originalStartDateTime;
-                return start.isBefore(period.queryTo) &&
-                    !start.add(event.duration).isBefore(period.queryFrom);
-              }).toList();
-              final updated = _encodeEvent(
-                event.copyWith(overrides: overrides),
-              );
+            final monthEvent = event == null
+                ? null
+                : _eventInMonth(
+                    event,
+                    period,
+                    event.recurrenceRule == null
+                        ? event.endDateTime
+                        : change.recurrenceEnd,
+                  );
+            if (monthEvent != null) {
+              final updated = _encodeEvent(monthEvent);
               if (existing == null ||
                   _event(existing, groupId) != _event(updated, groupId)) {
                 events[change.eventId] = updated;
@@ -191,6 +207,43 @@ class SharedCalendarCache {
     }
   }
 
+  static Iterable<CalendarEventPeriod> _monthsIn(
+    CalendarEventPeriod period,
+  ) sync* {
+    for (var start = period.from; start.isBefore(period.to);) {
+      final month = CalendarEventPeriod.forCalendarMonth(start);
+      yield month;
+      start = month.to;
+    }
+  }
+
+  static CalendarEventDto? _eventInMonth(
+    CalendarEventDto event,
+    CalendarEventPeriod month,
+    DateTime? end,
+  ) {
+    final from = event.isAllDay
+        ? DateTime.utc(month.from.year, month.from.month)
+        : month.from;
+    final to = event.isAllDay
+        ? DateTime.utc(month.to.year, month.to.month)
+        : month.to;
+    bool overlaps(DateTime start, DateTime? end) =>
+        start.isBefore(to) &&
+        (end == null ||
+            end.isAfter(from) ||
+            (event.duration == Duration.zero && end.isAtSameMomentAs(from)));
+
+    if (!overlaps(event.startDateTime, end)) return null;
+    if (event.overrides.isEmpty) return event;
+    return event.copyWith(
+      overrides: event.overrides.where((override) {
+        final start = override.originalStartDateTime;
+        return overlaps(start, start.add(event.duration));
+      }).toList(),
+    );
+  }
+
   Future<bool> saveEvents(
     String ownerId,
     String groupId,
@@ -198,38 +251,53 @@ class SharedCalendarCache {
     List<CalendarEventDto> events, {
     int? observedAt,
   }) async {
+    final seriesEnds = {
+      for (final event in events) event.id: _expander.seriesEndDateTime(event),
+    };
     var retryInitialFetch = false;
     await _update(ownerId, groupId, (data) {
       final timestamp = observedAt ?? DateTime.now().microsecondsSinceEpoch;
-      final key = _periodKey(period);
       final saved = data['events'];
       final rows = saved is Map<String, dynamic> ? saved : <String, dynamic>{};
-      final row = rows[key];
-      if (_observedAt(row) > timestamp) return false;
-      final updated = {
-        for (final event in events) event.id: _encodeEvent(event),
-      };
-      final commits = _eventCommits(data);
-      // 後着の取得結果でも、保存した予定以外の変更は反映する。
-      if (row is Map<String, dynamic> && row['data'] is List) {
-        final previous = _eventRows(row['data'] as List);
-        for (final entry in commits.entries) {
-          if (entry.value <= timestamp) continue;
-          final event = previous[entry.key];
-          if (event == null) {
-            updated.remove(entry.key);
-          } else {
-            updated[entry.key] = event;
-          }
-        }
-      } else if ((data['eventCommitAt'] as int? ?? 0) > timestamp) {
+      final months = _monthsIn(period)
+          .where((month) => _observedAt(rows[_periodKey(month)]) <= timestamp)
+          .toList();
+      if (months.isEmpty) return false;
+      if ((data['eventCommitAt'] as int? ?? 0) > timestamp &&
+          months.any((month) => rows[_periodKey(month)]?['data'] is! List)) {
         retryInitialFetch = true;
         return false;
       }
-      rows[key] = {'observedAt': timestamp, 'data': updated.values.toList()};
+      final commits = _eventCommits(data);
+      for (final month in months) {
+        final key = _periodKey(month);
+        final updated = {
+          for (final event in events)
+            if (_eventInMonth(event, month, seriesEnds[event.id])
+                case final CalendarEventDto monthEvent)
+              event.id: _encodeEvent(monthEvent),
+        };
+        // 後着の取得結果でも、保存した予定以外の変更は反映する。
+        final previous = rows[key]?['data'];
+        if (previous is List) {
+          final previousEvents = _eventRows(previous);
+          for (final entry in commits.entries) {
+            if (entry.value <= timestamp) continue;
+            final event = previousEvents[entry.key];
+            if (event == null) {
+              updated.remove(entry.key);
+            } else {
+              updated[entry.key] = event;
+            }
+          }
+        }
+        rows[key] = {'observedAt': timestamp, 'data': updated.values.toList()};
+      }
       final keys = rows.keys.toList()
         ..sort((a, b) => _observedAt(rows[b]).compareTo(_observedAt(rows[a])));
-      final retained = {for (final key in keys.take(16)) key: rows[key]};
+      final retained = {
+        for (final key in keys.take(_maxCachedMonths)) key: rows[key],
+      };
       data['events'] = retained;
       final oldestObservation = _observedAt(retained.values.last);
       commits.removeWhere((_, committedAt) => committedAt <= oldestObservation);
