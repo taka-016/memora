@@ -30,6 +30,62 @@ void main() {
     expect(await widget.loadEvents('account', 'group', previous), isNull);
   });
 
+  test('四半期の予定を月別に共有し、月またぎの予定と空の月も取り出せる', () async {
+    final october = CalendarEventPeriod(
+      from: DateTime(2026, 10),
+      to: DateTime(2026, 11),
+    );
+    final november = CalendarEventPeriod(
+      from: october.to,
+      to: DateTime(2026, 12),
+    );
+    final december = CalendarEventPeriod(from: november.to, to: quarter.to);
+    final trip = CalendarEventDto(
+      id: 'trip',
+      groupId: 'group',
+      title: '月をまたぐ旅行',
+      startDateTime: DateTime.utc(2026, 10, 31),
+      endDateTime: DateTime.utc(2026, 11, 2),
+      isAllDay: true,
+    );
+    final series = trip.copyWith(
+      id: 'series',
+      recurrenceRule: 'FREQ=DAILY;COUNT=2',
+      startDateTime: DateTime.utc(2026, 10, 31),
+      endDateTime: DateTime.utc(2026, 11, 1),
+      overrides: [
+        CalendarEventOverride(
+          originalStartDateTime: DateTime.utc(2026, 10, 31),
+        ),
+        CalendarEventOverride(originalStartDateTime: DateTime.utc(2026, 11, 1)),
+      ],
+    );
+
+    await app.saveEvents('account', 'group', quarter, [trip, series]);
+
+    final shared = await widget.loadGroup('account', 'group', [
+      october,
+      november,
+      december,
+    ]);
+    expect(shared.eventsByPeriod, {
+      october: [
+        trip,
+        series.copyWith(overrides: [series.overrides.first]),
+      ],
+      november: [
+        trip,
+        series.copyWith(overrides: [series.overrides.last]),
+      ],
+      december: isEmpty,
+    });
+    expect(shared.observedAt.keys, [october, november, december]);
+    expect(
+      await app.loadEvents('account', 'group', quarter),
+      unorderedEquals([trip, series]),
+    );
+  });
+
   test('ウィジェットで取得した繰り返し予定と取消をアプリで読み直せる', () async {
     final series = CalendarEventDto(
       id: 'series',

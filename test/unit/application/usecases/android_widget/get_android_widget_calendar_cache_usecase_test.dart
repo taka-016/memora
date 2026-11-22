@@ -76,10 +76,14 @@ void main() {
     });
   }
 
-  test('表示する四半期をすべて取得した場合だけ同期完了とする', () async {
+  test('全表示グループで表示月を取得した場合だけ同期完了とする', () async {
     final month = DateTime(2026, 10);
-    final displayed = CalendarEventPeriod.forQuarter(month);
-    final previous = CalendarEventPeriod.forQuarter(DateTime(2026, 9));
+    final previous = CalendarEventPeriod(from: DateTime(2026, 9), to: month);
+    final displayed = CalendarEventPeriod(from: month, to: DateTime(2026, 11));
+    final next = CalendarEventPeriod(
+      from: displayed.to,
+      to: DateTime(2026, 12),
+    );
     final anotherGroup = group.copyWith(id: 'another');
     var fetched = {previous};
     var skipSecondGroup = false;
@@ -90,7 +94,7 @@ void main() {
       mode: AppMode.online,
       loadSharedGroup:
           (_, groupId, periods, {required force, required forceLabels}) async {
-            expect(periods, [previous, displayed]);
+            expect(periods, [previous, displayed, next]);
             return CalendarWidgetGroupData(
               eventsByPeriod: {for (final period in periods) period: []},
               labels: [],
@@ -121,8 +125,11 @@ void main() {
   test('公開済みの別の月を共有キャッシュから一緒に描き直す', () async {
     final november = DateTime(2026, 11);
     final september = DateTime(2026, 9);
-    final earlier = CalendarEventPeriod.forQuarter(september);
-    final later = CalendarEventPeriod.forQuarter(november);
+    final earlier = CalendarEventPeriod(
+      from: september,
+      to: DateTime(2026, 10),
+    );
+    final later = CalendarEventPeriod(from: november, to: DateTime(2026, 12));
     final saved = event(
       '変更後の予定',
       DateTime.utc(2026, 9, 10),
