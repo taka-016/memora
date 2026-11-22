@@ -33,8 +33,10 @@ class CalendarWidgetUpdateNotificationTest {
             sourceFiles = mapOf(file.path to file.lastModified()))
         val months = mapOf(previous to monthly, current to monthly, current.plusMonths(1) to monthly)
         assertFalse(needsCalendarWidgetRefresh(previous, current, months))
+        assertFalse(needsCalendarWidgetRefresh(current, current.plusDays(1), months))
         assertTrue(file.setLastModified(file.lastModified() + 1000))
         assertTrue(needsCalendarWidgetRefresh(previous, current, months))
+        assertTrue(needsCalendarWidgetRefresh(current, current.plusDays(1), months))
     }
 
     @Test

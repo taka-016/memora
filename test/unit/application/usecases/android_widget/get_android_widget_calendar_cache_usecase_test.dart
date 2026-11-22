@@ -3,6 +3,7 @@ import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/models/app_mode.dart';
 import 'package:memora/application/models/calendar_event_period.dart';
+import 'package:memora/application/models/calendar_widget_group_data.dart';
 import 'package:memora/application/services/current_user_service.dart';
 import 'package:memora/domain/entities/account/user.dart';
 import 'package:memora/application/queries/calendar/calendar_event_query_service.dart';
@@ -74,6 +75,47 @@ void main() {
       expect(period.to, DateTime(month.year, month.month + 2, 7));
     });
   }
+
+  test('表示する四半期をすべて取得した場合だけ同期完了とする', () async {
+    final month = DateTime(2026, 10);
+    final displayed = CalendarEventPeriod.forQuarter(month);
+    final previous = CalendarEventPeriod.forQuarter(DateTime(2026, 9));
+    final anotherGroup = group.copyWith(id: 'another');
+    var fetched = {previous};
+    var skipSecondGroup = false;
+    final online = GetAndroidWidgetCalendarCacheUsecase(
+      events: events,
+      labels: labels,
+      expander: CalendarRecurrenceExpander(IanaCalendarTimeZone()),
+      mode: AppMode.online,
+      loadSharedGroup: (_, groupId, periods, {required force}) async {
+        expect(periods, [previous, displayed]);
+        return CalendarWidgetGroupData(
+          eventsByPeriod: {for (final period in periods) period: []},
+          labels: [],
+          synchronizedPeriods: skipSecondGroup && groupId == anotherGroup.id
+              ? {}
+              : fetched,
+        );
+      },
+    );
+    Future<Object?> synchronized() async {
+      final cache = await online.execute(
+        [group, anotherGroup],
+        month,
+        ownerId: 'online:account',
+      );
+      return cache!['synchronized'];
+    }
+
+    expect(await synchronized(), isFalse);
+    fetched = {displayed};
+    skipSecondGroup = true;
+    expect(await synchronized(), isFalse);
+    skipSecondGroup = false;
+    expect(await synchronized(), isTrue);
+    verifyZeroInteractions(events);
+  });
 
   test('前日開始の時刻付き予定より終日を先頭にし各分類内を開始日時順で保存する', () async {
     when(events.getCalendarEventsByGroupId('group', period: anyNamed('period')))
