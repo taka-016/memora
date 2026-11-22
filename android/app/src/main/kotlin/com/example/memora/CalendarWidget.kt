@@ -128,10 +128,11 @@ internal fun needsCalendarWidgetRefresh(
 ): Boolean {
     val month = selected.withDayOfMonth(1)
     val stored = months[month] ?: return true
+    if (stored.sourceFiles.any { (path, modifiedAt) -> File(path).lastModified() != modifiedAt }) {
+        return true
+    }
     if (previous.withDayOfMonth(1) == month) return false
-    return !months.containsKey(month.minusMonths(1)) ||
-        !months.containsKey(month.plusMonths(1)) ||
-        stored.sourceFiles.any { (path, modifiedAt) -> File(path).lastModified() != modifiedAt }
+    return !months.containsKey(month.minusMonths(1)) || !months.containsKey(month.plusMonths(1))
 }
 
 private fun Intent.isAutomaticCalendarWidgetUpdate(): Boolean =

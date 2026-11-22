@@ -70,7 +70,8 @@ class GetAndroidWidgetCalendarCacheUsecase {
     final displayLabels = <CalendarLabelDto>[];
     final sourceFiles = <String, int>{};
     final observedAt = <CalendarEventPeriod, int>{};
-    var synchronized = !useShared || (groups.isEmpty && force);
+    final selectedQuarter = CalendarEventPeriod.forQuarter(first);
+    var synchronized = !useShared || groups.isNotEmpty || force;
     final visibleIds = <String>[];
     final sortedGroups = groups.toList()..sort((a, b) => a.id.compareTo(b.id));
     for (final group in sortedGroups) {
@@ -88,7 +89,9 @@ class GetAndroidWidgetCalendarCacheUsecase {
               labels: await labels.getCalendarLabelsByGroupId(groupId),
             );
       sourceFiles.addAll(data.sourceFiles);
-      synchronized |= data.synchronized;
+      if (useShared) {
+        synchronized &= data.synchronizedPeriods.contains(selectedQuarter);
+      }
       for (final entry in data.observedAt.entries) {
         final current = observedAt[entry.key];
         if (current == null || entry.value < current) {

@@ -45,9 +45,7 @@ class SharedCalendarCache {
       final data = await _read(file);
       return CalendarWidgetGroupData(
         eventsByPeriod: {
-          for (final period in periods)
-            if (_events(data, groupId, period) case final events?)
-              period: events,
+          for (final period in periods) period: ?_events(data, groupId, period),
         },
         labels: _labels(data, groupId),
         labelsObservedAt: _observedAt(data['labels']),

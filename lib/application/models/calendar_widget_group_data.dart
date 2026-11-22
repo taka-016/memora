@@ -9,7 +9,7 @@ class CalendarWidgetGroupData {
     this.observedAt = const {},
     this.labelsObservedAt = 0,
     this.sourceFiles = const {},
-    this.synchronized = false,
+    this.synchronizedPeriods = const {},
   });
 
   final Map<CalendarEventPeriod, List<CalendarEventDto>> eventsByPeriod;
@@ -17,5 +17,5 @@ class CalendarWidgetGroupData {
   final int labelsObservedAt;
   final Map<CalendarEventPeriod, int> observedAt;
   final Map<String, int> sourceFiles;
-  final bool synchronized;
+  final Set<CalendarEventPeriod> synchronizedPeriods;
 }

@@ -96,7 +96,7 @@ class SharedCalendarWidgetData {
           : snapshot.labels,
       observedAt: observedAt,
       sourceFiles: snapshot.sourceFiles,
-      synchronized: fetchedEvents.isNotEmpty,
+      synchronizedPeriods: fetchedEvents.keys.toSet(),
     );
   }
 }
