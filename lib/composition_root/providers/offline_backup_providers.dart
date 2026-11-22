@@ -1,4 +1,5 @@
 import 'package:memora/composition_root/providers/calendar_group_settings_providers.dart';
+import 'package:memora/composition_root/providers/calendar_widget_providers.dart';
 import 'package:memora/application/usecases/android_widget/refresh_android_widget_caches_usecase.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_group_settings_notifier.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_display_settings_notifier.dart';
@@ -121,7 +122,10 @@ final synchronizeOfflineBackupRestoreUsecaseProvider =
             calendarGroupSettingsNotifierProvider.notifier,
           );
           await settings.reload(afterRestore: true);
-          await ref.read(refreshSelectedCalendarWidgetCacheProvider)();
+          await ref.read(refreshCalendarWidgetProvider)(
+            null,
+            afterRestore: true,
+          );
         },
         registerPeriodicUpdateTask: ref.watch(
           androidWidgetPeriodicUpdateRegistrarProvider,

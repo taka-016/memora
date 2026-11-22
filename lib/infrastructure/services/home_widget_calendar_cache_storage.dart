@@ -105,9 +105,9 @@ class HomeWidgetCalendarCacheStorage {
 
   Future<void> save(
     Map<String, Object?> cache, {
-    bool keepDistantMonths = true,
+    int? retainMonthsWithin,
   }) async {
-    final previous = await _load();
+    final previous = retainMonthsWithin == 0 ? null : await _load();
     final previousMonths = previous?['months'];
     final incomingMonths = cache['months'] as Map<String, Object?>?;
     final refreshedMonth = DateTime.parse(cache['month'] as String);
@@ -122,7 +122,8 @@ class HomeWidgetCalendarCacheStorage {
           previous?['sourceMode'] == cache['sourceMode'])
         for (final entry in previousMonths.entries)
           if (DateTime.tryParse(entry.key) case final date?)
-            if (keepDistantMonths || distance(date, refreshedMonth) <= 2)
+            if (retainMonthsWithin == null ||
+                distance(date, refreshedMonth) <= retainMonthsWithin)
               entry.key: entry.value,
       ...?incomingMonths,
     };
