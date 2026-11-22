@@ -73,7 +73,7 @@ void main() {
         calendarWidgetGroupsChangedProvider.overrideWithValue(() async {
           widgetUpdates++;
         }),
-        calendarWidgetScopeChangedProvider.overrideWithValue(setWidgetScope),
+        prepareCalendarWidgetRefreshProvider.overrideWithValue(setWidgetScope),
         calendarSettingsOwnerProvider.overrideWithValue('online:self'),
         calendarSettingsMemberIdProvider.overrideWithValue('self'),
         calendarGroupSettingsStorageProvider.overrideWithValue(storage),
@@ -173,7 +173,7 @@ void main() {
       calendarWidgetGroupsChangedProvider.overrideWithValue(() async {
         widgetUpdates++;
       }),
-      calendarWidgetScopeChangedProvider.overrideWithValue(setWidgetScope),
+      prepareCalendarWidgetRefreshProvider.overrideWithValue(setWidgetScope),
       calendarSettingsOwnerProvider.overrideWithValue('online:restored'),
       calendarSettingsMemberIdProvider.overrideWithValue('restored'),
       calendarGroupSettingsStorageProvider.overrideWithValue(storage),
@@ -273,7 +273,7 @@ void main() {
         calendarWidgetGroupsChangedProvider.overrideWithValue(() async {
           widgetUpdates++;
         }),
-        calendarWidgetScopeChangedProvider.overrideWithValue(setWidgetScope),
+        prepareCalendarWidgetRefreshProvider.overrideWithValue(setWidgetScope),
         calendarSettingsOwnerProvider.overrideWithValue('online:self'),
         calendarSettingsMemberIdProvider.overrideWithValue('self'),
         calendarGroupSettingsStorageProvider.overrideWithValue(storage),
@@ -564,7 +564,7 @@ void main() {
       calendarWidgetGroupsChangedProvider.overrideWithValue(() async {
         widgetUpdates++;
       }),
-      calendarWidgetScopeChangedProvider.overrideWithValue(setWidgetScope),
+      prepareCalendarWidgetRefreshProvider.overrideWithValue(setWidgetScope),
       calendarSettingsOwnerProvider.overrideWithValue('online:other'),
       calendarSettingsMemberIdProvider.overrideWithValue('other'),
       calendarGroupSettingsStorageProvider.overrideWithValue(storage),

@@ -47,7 +47,7 @@ final class CalendarGroupSettingsNotifierProvider
 }
 
 String _$calendarGroupSettingsNotifierHash() =>
-    r'77d77c40b4c7de35488d8b54d0a17ac9f520b5ab';
+    r'3e08630947b7f25c579a151b625475892db8f12d';
 
 abstract class _$CalendarGroupSettingsNotifier
     extends $Notifier<CalendarGroupSettingsState> {

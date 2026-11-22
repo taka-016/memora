@@ -70,7 +70,7 @@ final reloadCalendarMembershipsProvider =
               .getGroupsWithMembersByMemberId(memberId),
     );
 
-final calendarWidgetScopeChangedProvider =
+final prepareCalendarWidgetRefreshProvider =
     Provider<Future<bool> Function(String?)>(
       (ref) => (scope) async {
         if (!Platform.isAndroid) return false;

@@ -195,7 +195,7 @@ class CalendarGroupSettingsNotifier extends _$CalendarGroupSettingsNotifier {
               owner,
               state.effectiveSettings.visibleGroupIds.toList()..sort(),
             ]);
-      final needsRefresh = await ref.read(calendarWidgetScopeChangedProvider)(
+      final needsRefresh = await ref.read(prepareCalendarWidgetRefreshProvider)(
         scope,
       );
       if (!ref.mounted || generation != _generation) return;
