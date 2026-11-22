@@ -38,8 +38,23 @@ class SharedCalendarWidgetData {
     var snapshot = await cache.loadGroup(ownerId, groupId, periods);
     final fetchedEvents = <CalendarEventPeriod, List<CalendarEventDto>>{};
     final observedTimes = <CalendarEventPeriod, int>{};
-    for (final period in periods) {
-      if (!force && snapshot.eventsByPeriod.containsKey(period)) continue;
+    final requested =
+        periods
+            .where(
+              (period) => force || !snapshot.eventsByPeriod.containsKey(period),
+            )
+            .toList()
+          ..sort((a, b) => a.from.compareTo(b.from));
+    for (var first = 0; first < requested.length;) {
+      var last = first;
+      while (last + 1 < requested.length &&
+          requested[last].to == requested[last + 1].from) {
+        last++;
+      }
+      final period = CalendarEventPeriod(
+        from: requested[first].from,
+        to: requested[last].to,
+      );
       for (var attempt = 0; ; attempt++) {
         checkOwner();
         final observedAt = DateTime.now().microsecondsSinceEpoch;
@@ -52,14 +67,17 @@ class SharedCalendarWidgetData {
           events,
           observedAt: observedAt,
         )) {
-          fetchedEvents[period] = events;
-          observedTimes[period] = observedAt;
+          for (final month in requested.getRange(first, last + 1)) {
+            fetchedEvents[month] = events;
+            observedTimes[month] = observedAt;
+          }
           break;
         }
         if (attempt >= 1) {
           throw StateError('予定の取得中に変更が続いたため再取得できませんでした');
         }
       }
+      first = last + 1;
     }
     final cachedLabels = force || forceLabels ? null : snapshot.labels;
     List<CalendarLabelDto>? fetchedLabels;
