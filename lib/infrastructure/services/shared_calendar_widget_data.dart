@@ -39,19 +39,26 @@ class SharedCalendarWidgetData {
     final observedTimes = <CalendarEventPeriod, int>{};
     for (final period in periods) {
       if (!force && snapshot.eventsByPeriod.containsKey(period)) continue;
-      checkOwner();
-      final observedAt = DateTime.now().microsecondsSinceEpoch;
-      final events = await fetchEvents(groupId, period: period);
-      checkOwner();
-      await cache.saveEvents(
-        ownerId,
-        groupId,
-        period,
-        events,
-        observedAt: observedAt,
-      );
-      fetchedEvents[period] = events;
-      observedTimes[period] = observedAt;
+      for (var attempt = 0; ; attempt++) {
+        checkOwner();
+        final observedAt = DateTime.now().microsecondsSinceEpoch;
+        final events = await fetchEvents(groupId, period: period);
+        checkOwner();
+        if (await cache.saveEvents(
+          ownerId,
+          groupId,
+          period,
+          events,
+          observedAt: observedAt,
+        )) {
+          fetchedEvents[period] = events;
+          observedTimes[period] = observedAt;
+          break;
+        }
+        if (attempt >= 1) {
+          throw StateError('予定の取得中に変更が続いたため再取得できませんでした');
+        }
+      }
     }
     final cachedLabels = force ? null : snapshot.labels;
     List<CalendarLabelDto>? fetchedLabels;

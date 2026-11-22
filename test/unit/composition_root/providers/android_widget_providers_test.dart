@@ -73,8 +73,9 @@ void main() {
             }) async {
               expect(date, isNull);
               expect(force, entry.$1 != refreshEventWidget);
-              if (installed.contains(AndroidWidgetKind.calendar))
+              if (installed.contains(AndroidWidgetKind.calendar)) {
                 calendarCalls++;
+              }
             }),
           ],
         );

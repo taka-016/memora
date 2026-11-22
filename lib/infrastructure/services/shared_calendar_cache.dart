@@ -77,23 +77,28 @@ class SharedCalendarCache {
     for (final groupId in changes.map((change) => change.groupId).toSet()) {
       final groupChanges = changes.where((change) => change.groupId == groupId);
       await _update(ownerId, groupId, (data) {
+        final previousCommit = data['eventCommitAt'] as int? ?? 0;
+        if (committedAt > previousCommit) data['eventCommitAt'] = committedAt;
         final rows = data['events'];
-        if (rows is! Map<String, dynamic>) return false;
-        var changed = false;
+        var changed = committedAt > previousCommit;
+        if (rows is! Map<String, dynamic>) return changed;
         for (final entry in rows.entries.toList()) {
           final period = _parsePeriodKey(entry.key);
           final row = entry.value;
-          if (period == null || row is! Map<String, dynamic>) continue;
+          if (period == null ||
+              row is! Map<String, dynamic> ||
+              _observedAt(row) > committedAt) {
+            continue;
+          }
           final previous = row['data'];
           if (previous is! List) continue;
-          final events = {
-            for (final event in previous.whereType<Map<String, dynamic>>())
-              event['id']: event,
-          };
+          final events = _eventRows(previous);
+          final commits = _eventCommits(row);
           var periodChanged = false;
           for (final change in groupChanges) {
             final existing = events[change.eventId];
-            if (((existing?['version'] as int?) ?? 0) > (change.version ?? 0)) {
+            if ((commits[change.eventId] ?? 0) > committedAt ||
+                ((existing?['version'] as int?) ?? 0) > (change.version ?? 0)) {
               continue;
             }
             final event = change.event;
@@ -114,9 +119,11 @@ class SharedCalendarCache {
               if (existing == null ||
                   _event(existing, groupId) != _event(updated, groupId)) {
                 events[change.eventId] = updated;
+                commits[change.eventId] = committedAt;
                 periodChanged = true;
               }
             } else if (events.remove(change.eventId) != null) {
+              commits[change.eventId] = committedAt;
               periodChanged = true;
             }
           }
@@ -124,7 +131,7 @@ class SharedCalendarCache {
             rows[entry.key] = {
               ...row,
               'data': events.values.toList(),
-              if (_committedAt(row) < committedAt) 'committedAt': committedAt,
+              'commits': commits,
             };
             changed = true;
           }
@@ -146,8 +153,19 @@ class SharedCalendarCache {
     );
   }
 
-  static int _committedAt(dynamic row) =>
-      row is Map && row['committedAt'] is int ? row['committedAt'] as int : 0;
+  static Map<String, int> _eventCommits(Map<String, dynamic> row) {
+    final commits = row['commits'];
+    return {
+      if (commits is Map<String, dynamic>)
+        for (final entry in commits.entries)
+          if (entry.value is int) entry.key: entry.value as int,
+    };
+  }
+
+  static Map<String, Map<String, dynamic>> _eventRows(List<dynamic> events) => {
+    for (final event in events.whereType<Map<String, dynamic>>())
+      if (event['id'] case final String id) id: event,
+  };
 
   static dynamic _eventRow(
     Map<String, dynamic> data,
@@ -171,30 +189,54 @@ class SharedCalendarCache {
     }
   }
 
-  Future<void> saveEvents(
+  Future<bool> saveEvents(
     String ownerId,
     String groupId,
     CalendarEventPeriod period,
     List<CalendarEventDto> events, {
     int? observedAt,
-  }) => _update(ownerId, groupId, (data) {
-    final timestamp = observedAt ?? DateTime.now().microsecondsSinceEpoch;
-    final key = _periodKey(period);
-    final saved = data['events'];
-    final rows = saved is Map<String, dynamic> ? saved : <String, dynamic>{};
-    if (_observedAt(rows[key]) > timestamp ||
-        _committedAt(rows[key]) > timestamp) {
-      return false;
-    }
-    rows[key] = {
-      'observedAt': timestamp,
-      'data': events.map(_encodeEvent).toList(),
-    };
-    final keys = rows.keys.toList()
-      ..sort((a, b) => _observedAt(rows[b]).compareTo(_observedAt(rows[a])));
-    data['events'] = {for (final key in keys.take(16)) key: rows[key]};
-    return true;
-  });
+  }) async {
+    var retryInitialFetch = false;
+    await _update(ownerId, groupId, (data) {
+      final timestamp = observedAt ?? DateTime.now().microsecondsSinceEpoch;
+      final key = _periodKey(period);
+      final saved = data['events'];
+      final rows = saved is Map<String, dynamic> ? saved : <String, dynamic>{};
+      final row = rows[key];
+      if (_observedAt(row) > timestamp) return false;
+      final updated = {
+        for (final event in events) event.id: _encodeEvent(event),
+      };
+      final commits = <String, int>{};
+      // 後着の取得結果でも、保存した予定以外の変更は反映する。
+      if (row is Map<String, dynamic> && row['data'] is List) {
+        final previous = _eventRows(row['data'] as List);
+        for (final entry in _eventCommits(row).entries) {
+          if (entry.value <= timestamp) continue;
+          final event = previous[entry.key];
+          if (event == null) {
+            updated.remove(entry.key);
+          } else {
+            updated[entry.key] = event;
+          }
+          commits[entry.key] = entry.value;
+        }
+      } else if ((data['eventCommitAt'] as int? ?? 0) > timestamp) {
+        retryInitialFetch = true;
+        return false;
+      }
+      rows[key] = {
+        'observedAt': timestamp,
+        'data': updated.values.toList(),
+        if (commits.isNotEmpty) 'commits': commits,
+      };
+      final keys = rows.keys.toList()
+        ..sort((a, b) => _observedAt(rows[b]).compareTo(_observedAt(rows[a])));
+      data['events'] = {for (final key in keys.take(16)) key: rows[key]};
+      return true;
+    });
+    return !retryInitialFetch;
+  }
 
   static String _periodKey(CalendarEventPeriod period) =>
       '${period.from.microsecondsSinceEpoch}:${period.to.microsecondsSinceEpoch}';

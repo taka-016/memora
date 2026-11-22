@@ -305,8 +305,9 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
       _store.writeOverrides(transaction, event, ref.id, []);
       return ref.id;
     });
-    if (owner != null)
+    if (owner != null) {
       await _applyCacheChanges(owner, [_saved(event, id, data)]);
+    }
     return id;
   }
 
@@ -343,8 +344,9 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
         previousEvent: previousEvent,
       );
     });
-    if (owner != null)
+    if (owner != null) {
       await _applyCacheChanges(owner, [_saved(event, ref.id, data)]);
+    }
   }
 
   @override
