@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/application/dtos/calendar/calendar_label_dto.dart';
 import 'package:memora/application/models/calendar_event_period.dart';
 import 'package:memora/infrastructure/services/shared_calendar_cache.dart';
@@ -63,5 +64,44 @@ void main() {
     expect(requests, periods);
     expect(labelsRead, 1);
     expect((await appCache.loadLabels('online:a', 'g'))?.single.id, 'label');
+  });
+
+  test('手動取得の途中で保存した予定は古い応答で描画し直さない', () async {
+    final directory = await Directory.systemTemp.createTemp('calendar-cache-');
+    addTearDown(() => directory.delete(recursive: true));
+    final appCache = SharedCalendarCache(directory: () async => directory);
+    final quarter = CalendarEventPeriod.forQuarter(DateTime(2026, 11));
+    final original = CalendarEventDto(
+      id: 'event',
+      groupId: 'g',
+      title: '編集前',
+      version: 1,
+      startDateTime: DateTime(2026, 11, 1, 9),
+      endDateTime: DateTime(2026, 11, 1, 10),
+      isAllDay: false,
+    );
+    final edited = original.copyWith(title: '編集後', version: 2);
+    await appCache.saveEvents('online:a', 'g', quarter, [
+      original,
+    ], observedAt: 1);
+    final loader = SharedCalendarWidgetData(
+      cache: SharedCalendarCache(directory: () async => directory),
+      currentOwnerId: () => 'online:a',
+      fetchEvents: (_, {period}) async {
+        await appCache.applyEventChanges('online:a', [
+          (
+            groupId: 'g',
+            eventId: edited.id,
+            event: edited,
+            recurrenceEnd: null,
+            version: edited.version,
+          ),
+        ], committedAt: 1 << 60);
+        return [original];
+      },
+      fetchLabels: (_) async => [],
+    );
+    final data = await loader.load('online:a', 'g', [quarter], force: true);
+    expect(data.eventsByPeriod[quarter], [edited]);
   });
 }

@@ -109,4 +109,72 @@ void main() {
       isNull,
     );
   });
+
+  test('保存前に始まった取得でも、同じ四半期のほかの予定は反映する', () async {
+    final original = CalendarEventDto(
+      id: 'local',
+      groupId: 'group',
+      title: '編集前',
+      version: 1,
+      startDateTime: DateTime(2026, 11, 1, 9),
+      endDateTime: DateTime(2026, 11, 1, 10),
+      isAllDay: false,
+    );
+    final edited = original.copyWith(title: '編集後', version: 2);
+    final remote = original.copyWith(id: 'remote', title: '別端末で追加');
+    await app.saveEvents('account', 'group', quarter, [
+      original,
+    ], observedAt: 1);
+    await app.applyEventChanges('account', [
+      (
+        groupId: 'group',
+        eventId: original.id,
+        event: edited,
+        recurrenceEnd: null,
+        version: edited.version,
+      ),
+    ], committedAt: 3);
+    await widget.saveEvents('account', 'group', quarter, [
+      original,
+      remote,
+    ], observedAt: 2);
+    expect(
+      await app.loadEvents('account', 'group', quarter),
+      unorderedEquals([edited, remote]),
+    );
+  });
+
+  test('初回取得と保存が重なったときは変更前の応答を取得済みにしない', () async {
+    final created = CalendarEventDto(
+      id: 'new',
+      groupId: 'group',
+      title: '新しい予定',
+      version: 1,
+      startDateTime: DateTime(2026, 11, 1, 9),
+      endDateTime: DateTime(2026, 11, 1, 10),
+      isAllDay: false,
+    );
+    await app.applyEventChanges('account', [
+      (
+        groupId: 'group',
+        eventId: created.id,
+        event: created,
+        recurrenceEnd: null,
+        version: created.version,
+      ),
+    ], committedAt: 3);
+    final accepted = await widget.saveEvents(
+      'account',
+      'group',
+      quarter,
+      [],
+      observedAt: 2,
+    );
+    expect(accepted, isFalse);
+    expect(await app.loadEvents('account', 'group', quarter), isNull);
+    await widget.saveEvents('account', 'group', quarter, [
+      created,
+    ], observedAt: 4);
+    expect(await app.loadEvents('account', 'group', quarter), [created]);
+  });
 }
