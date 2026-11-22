@@ -107,7 +107,7 @@ class HomeWidgetCalendarCacheStorage {
     return [
       for (final entry in months.entries)
         if (entry.value case {'days': List<dynamic>()})
-          if (DateTime.tryParse(entry.key) case final month?) month,
+          ?DateTime.tryParse(entry.key),
     ];
   }
 
