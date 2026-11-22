@@ -263,7 +263,7 @@ void main() {
     expect(widgetUpdates, 1);
   });
 
-  test('起動時の未確認の所属でウィジェットの表示対象を上書きしない', () async {
+  Future<_StartupCommonData> startWithUnconfirmedGroups() async {
     container.dispose();
     storage.value = CalendarGroupSettings(visibleGroupIds: {'a', 'b'});
     widgetScope = '["online","online:self",["a"]]';
@@ -285,6 +285,11 @@ void main() {
     container.listen(calendarGroupSettingsNotifierProvider, (_, _) {});
     groups(['a', 'b']);
     await pumpEventQueue();
+    return common;
+  }
+
+  test('起動時の未確認の所属でウィジェットの表示対象を上書きしない', () async {
+    final common = await startWithUnconfirmedGroups();
     expect(
       container
           .read(calendarGroupSettingsNotifierProvider)
@@ -297,6 +302,19 @@ void main() {
     groups(['a']);
     await pumpEventQueue();
     expect(widgetUpdates, 0);
+  });
+
+  test('所属の確認前でも利用者が表示グループを変更したら更新する', () async {
+    await startWithUnconfirmedGroups();
+    widgetScope = '["online","online:self",["a","b"]]';
+
+    await container
+        .read(calendarGroupSettingsNotifierProvider.notifier)
+        .setVisibleGroups({'a'});
+    await pumpEventQueue();
+
+    expect(widgetScope, '["online","online:self",["a"]]');
+    expect(widgetUpdates, 1);
   });
 
   test('起動中に非表示の所属グループだけが変わっても取得しない', () async {
