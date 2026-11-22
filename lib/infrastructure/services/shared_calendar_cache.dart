@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/application/dtos/calendar/calendar_label_dto.dart';
 import 'package:memora/application/models/calendar_event_period.dart';
-import 'package:memora/application/models/calendar_event_slice.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/domain/entities/calendar/calendar_event_override.dart';
 import 'package:memora/infrastructure/services/local_calendar_widget_lock.dart';
@@ -18,37 +17,19 @@ class SharedCalendarCache {
   final Future<Directory> Function() _directory;
   final LocalCalendarWidgetLock _lock;
 
-  Future<({List<CalendarEventSlice> slices, List<CalendarEventPeriod> missing})>
-  loadEvents(String ownerId, String groupId, CalendarEventPeriod period) async {
+  Future<List<CalendarEventDto>?> loadEvents(
+    String ownerId,
+    String groupId,
+    CalendarEventPeriod period,
+  ) async {
     final data = await _read(ownerId, groupId);
-    final slices = <CalendarEventSlice>[];
-    final missing = <CalendarEventPeriod>[];
-    var cursor = period.from;
     try {
-      for (final entry in data['events'] as List? ?? const []) {
-        final row = entry as Map<String, dynamic>;
-        final bounds = _period(row);
-        final from = bounds.from.isAfter(cursor) ? bounds.from : cursor;
-        final to = bounds.to.isBefore(period.to) ? bounds.to : period.to;
-        if (!from.isBefore(to)) continue;
-        if (cursor.isBefore(from)) {
-          missing.add(CalendarEventPeriod(from: cursor, to: from));
-        }
-        slices.add(
-          CalendarEventSlice(
-            CalendarEventPeriod(from: from, to: to),
-            (row['data'] as List).map((v) => _event(v, groupId)).toList(),
-          ),
-        );
-        cursor = to;
-      }
+      final events = data['events']?[_periodKey(period)]?['data'];
+      if (events is! List) return null;
+      return events.map((value) => _event(value, groupId)).toList();
     } catch (_) {
-      return (slices: <CalendarEventSlice>[], missing: [period]);
+      return null;
     }
-    if (cursor.isBefore(period.to)) {
-      missing.add(CalendarEventPeriod(from: cursor, to: period.to));
-    }
-    return (slices: slices, missing: missing);
   }
 
   Future<void> saveEvents(
@@ -59,41 +40,35 @@ class SharedCalendarCache {
     int? observedAt,
   }) => _update(ownerId, groupId, (data) {
     final timestamp = observedAt ?? DateTime.now().microsecondsSinceEpoch;
-    final rows = <Map<String, dynamic>>[];
-    var incoming = [period];
-    for (final entry in data['events'] as List? ?? const []) {
-      final row = entry as Map<String, dynamic>;
-      final bounds = _period(row);
-      if ((row['observedAt'] as int) > timestamp) {
-        incoming = [for (final part in incoming) ..._subtract(part, bounds)];
-        rows.add(row);
-      } else {
-        rows.addAll([
-          for (final part in _subtract(bounds, period))
-            {...row, ..._bounds(part)},
-        ]);
-      }
-    }
-    final encoded = events.map(_encodeEvent).toList();
-    rows.addAll([
-      for (final part in incoming)
-        {..._bounds(part), 'observedAt': timestamp, 'data': encoded},
-    ]);
-    rows.sort(
-      (a, b) => (b['observedAt'] as int).compareTo(a['observedAt'] as int),
-    );
-    data['events'] = rows.take(32).toList()
-      ..sort((a, b) => _period(a).from.compareTo(_period(b).from));
+    final key = _periodKey(period);
+    final saved = data['events'];
+    final rows = saved is Map<String, dynamic> ? saved : <String, dynamic>{};
+    if (_observedAt(rows[key]) > timestamp) return;
+    rows[key] = {
+      'observedAt': timestamp,
+      'data': events.map(_encodeEvent).toList(),
+    };
+    final keys = rows.keys.toList()
+      ..sort((a, b) => _observedAt(rows[b]).compareTo(_observedAt(rows[a])));
+    data['events'] = {for (final key in keys.take(16)) key: rows[key]};
   });
+
+  static String _periodKey(CalendarEventPeriod period) =>
+      '${period.from.microsecondsSinceEpoch}:${period.to.microsecondsSinceEpoch}';
+
+  static int _observedAt(dynamic entry) =>
+      entry is Map && entry['observedAt'] is int
+      ? entry['observedAt'] as int
+      : 0;
 
   Future<List<CalendarLabelDto>?> loadLabels(
     String ownerId,
     String groupId,
   ) async {
     final data = await _read(ownerId, groupId);
-    final labels = data['labels']?['data'];
-    if (labels is! List) return null;
     try {
+      final labels = data['labels']?['data'];
+      if (labels is! List) return null;
       return labels.map((value) {
         final row = value as Map<String, dynamic>;
         return CalendarLabelDto(
@@ -117,7 +92,7 @@ class SharedCalendarCache {
     List<CalendarLabelDto> labels, {
     required int observedAt,
   }) => _update(ownerId, groupId, (data) {
-    if ((data['labels']?['observedAt'] as int? ?? 0) > observedAt) return;
+    if (_observedAt(data['labels']) > observedAt) return;
     data['labels'] = {
       'observedAt': observedAt,
       'data': [
@@ -170,34 +145,6 @@ class SharedCalendarCache {
         error: error,
         stackTrace: stackTrace,
       );
-    }
-  }
-
-  static CalendarEventPeriod _period(Map<String, dynamic> row) =>
-      CalendarEventPeriod(
-        from: DateTime.parse(row['from'] as String),
-        to: DateTime.parse(row['to'] as String),
-      );
-
-  static Map<String, String> _bounds(CalendarEventPeriod period) => {
-    'from': period.from.toIso8601String(),
-    'to': period.to.toIso8601String(),
-  };
-
-  static Iterable<CalendarEventPeriod> _subtract(
-    CalendarEventPeriod period,
-    CalendarEventPeriod removed,
-  ) sync* {
-    if (!period.from.isBefore(removed.to) ||
-        !removed.from.isBefore(period.to)) {
-      yield period;
-      return;
-    }
-    if (period.from.isBefore(removed.from)) {
-      yield CalendarEventPeriod(from: period.from, to: removed.from);
-    }
-    if (removed.to.isBefore(period.to)) {
-      yield CalendarEventPeriod(from: removed.to, to: period.to);
     }
   }
 

@@ -4,7 +4,6 @@ import 'package:memora/application/services/calendar/japanese_calendar.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/application/models/app_mode.dart';
 import 'package:memora/application/models/calendar_event_period.dart';
-import 'package:memora/application/models/calendar_event_slice.dart';
 import 'package:memora/application/services/current_user_service.dart';
 import 'package:memora/application/queries/calendar/calendar_event_query_service.dart';
 import 'package:memora/application/queries/calendar/calendar_label_query_service.dart';
@@ -28,12 +27,15 @@ class GetAndroidWidgetCalendarCacheUsecase {
   final AppMode mode;
   final CurrentUserService? currentUser;
   final Future<
-    ({List<CalendarEventSlice> slices, List<CalendarLabelDto> labels})
+    ({
+      Map<CalendarEventPeriod, List<CalendarEventDto>> eventsByPeriod,
+      List<CalendarLabelDto> labels,
+    })
   >
   Function(
     String ownerId,
     String groupId,
-    CalendarEventPeriod period, {
+    List<CalendarEventPeriod> periods, {
     required bool force,
   })?
   loadSharedGroup;
@@ -62,53 +64,62 @@ class GetAndroidWidgetCalendarCacheUsecase {
     final from = gridStart(months.first);
     final to = gridEnd(months.last);
     final period = CalendarEventPeriod(from: from, to: to);
-    final occurrencesBySlice = <CalendarEventSlice>[];
+    final load = loadSharedGroup;
+    final useShared = load != null && ownerId != null;
+    final quarters = {
+      for (final value in months)
+        if (value.year >= 1 && value.year <= 9999)
+          CalendarEventPeriod.forQuarter(value),
+    }.toList();
+    final occurrencesByPeriod = <CalendarEventPeriod, List<CalendarEventDto>>{};
     final displayLabels = <CalendarLabelDto>[];
     final visibleIds = <String>[];
     final sortedGroups = groups.toList()..sort((a, b) => a.id.compareTo(b.id));
     for (final group in sortedGroups) {
       final groupId = group.id;
       visibleIds.add(groupId);
-      final load = loadSharedGroup;
-      final data = load != null && ownerId != null
-          ? await load(ownerId, groupId, period, force: force)
+      final data = useShared
+          ? await load(ownerId, groupId, quarters, force: force)
           : (
-              slices: [
-                CalendarEventSlice(
-                  period,
-                  await events.getCalendarEventsByGroupId(
-                    groupId,
-                    period: period,
-                  ),
+              eventsByPeriod: {
+                period: await events.getCalendarEventsByGroupId(
+                  groupId,
+                  period: period,
                 ),
-              ],
+              },
               labels: await labels.getCalendarLabelsByGroupId(groupId),
             );
       displayLabels.addAll(
         buildCalendarDisplayLabels(
           group,
           data.labels,
-          events: [for (final slice in data.slices) ...slice.events],
+          events: data.eventsByPeriod.values
+              .expand((events) => events)
+              .toList(),
         ),
       );
-      occurrencesBySlice.addAll([
-        for (final slice in data.slices)
-          CalendarEventSlice(slice.period, [
-            for (final event in slice.events)
-              ...expander.expand(event, slice.period.from, slice.period.to),
-          ]),
-      ]);
+      for (final MapEntry(key: bounds, value: source)
+          in data.eventsByPeriod.entries) {
+        (occurrencesByPeriod[bounds] ??= []).addAll(
+          source.expand(
+            (event) => expander.expand(event, bounds.from, bounds.to),
+          ),
+        );
+      }
     }
-    List<CalendarEventDto> eventsOn(DateTime day) =>
-        [
-          for (final slice in occurrencesBySlice)
-            if (!day.isBefore(slice.period.from) &&
-                day.isBefore(slice.period.to))
-              ...slice.events.where((event) => _onDay(event, day)),
-        ]..sort((a, b) {
-          if (a.isAllDay != b.isAllDay) return a.isAllDay ? -1 : 1;
-          return a.startDateTime.compareTo(b.startDateTime);
-        });
+    for (final occurrences in occurrencesByPeriod.values) {
+      occurrences.sort((a, b) {
+        if (a.isAllDay != b.isAllDay) return a.isAllDay ? -1 : 1;
+        return a.startDateTime.compareTo(b.startDateTime);
+      });
+    }
+    Iterable<CalendarEventDto> eventsOn(DateTime day) {
+      final key = useShared ? CalendarEventPeriod.forQuarter(day) : period;
+      return (occurrencesByPeriod[key] ?? const []).where(
+        (event) => _onDay(event, day),
+      );
+    }
+
     String dayFormat(DateTime date) => date.toIso8601String().substring(0, 10);
     String timeFormat(DateTime date) =>
         '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';

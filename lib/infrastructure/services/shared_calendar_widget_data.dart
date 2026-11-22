@@ -1,7 +1,6 @@
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/application/dtos/calendar/calendar_label_dto.dart';
 import 'package:memora/application/models/calendar_event_period.dart';
-import 'package:memora/application/models/calendar_event_slice.dart';
 import 'package:memora/infrastructure/services/shared_calendar_cache.dart';
 
 class SharedCalendarWidgetData {
@@ -21,11 +20,16 @@ class SharedCalendarWidgetData {
   fetchEvents;
   final Future<List<CalendarLabelDto>> Function(String groupId) fetchLabels;
 
-  Future<({List<CalendarEventSlice> slices, List<CalendarLabelDto> labels})>
+  Future<
+    ({
+      Map<CalendarEventPeriod, List<CalendarEventDto>> eventsByPeriod,
+      List<CalendarLabelDto> labels,
+    })
+  >
   load(
     String ownerId,
     String groupId,
-    CalendarEventPeriod period, {
+    List<CalendarEventPeriod> periods, {
     required bool force,
   }) async {
     void checkOwner() {
@@ -35,23 +39,27 @@ class SharedCalendarWidgetData {
     }
 
     checkOwner();
-    final cached = force
-        ? null
-        : await cache.loadEvents(ownerId, groupId, period);
-    final slices = [...?cached?.slices];
-    for (final missing in cached?.missing ?? [period]) {
+    final eventsByPeriod = <CalendarEventPeriod, List<CalendarEventDto>>{};
+    for (final period in periods) {
+      final cached = force
+          ? null
+          : await cache.loadEvents(ownerId, groupId, period);
+      if (cached != null) {
+        eventsByPeriod[period] = cached;
+        continue;
+      }
       checkOwner();
       final observedAt = DateTime.now().microsecondsSinceEpoch;
-      final events = await fetchEvents(groupId, period: missing);
+      final events = await fetchEvents(groupId, period: period);
       checkOwner();
       await cache.saveEvents(
         ownerId,
         groupId,
-        missing,
+        period,
         events,
         observedAt: observedAt,
       );
-      slices.add(CalendarEventSlice(missing, events));
+      eventsByPeriod[period] = events;
     }
     var labels = force ? null : await cache.loadLabels(ownerId, groupId);
     if (labels == null) {
@@ -62,6 +70,6 @@ class SharedCalendarWidgetData {
       await cache.saveLabels(ownerId, groupId, labels, observedAt: observedAt);
     }
     checkOwner();
-    return (slices: slices, labels: labels);
+    return (eventsByPeriod: eventsByPeriod, labels: labels);
   }
 }

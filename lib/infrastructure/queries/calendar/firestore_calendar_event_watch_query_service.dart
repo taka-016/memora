@@ -8,15 +8,29 @@ import 'package:memora/application/queries/calendar/calendar_event_watch_query_s
 import 'package:memora/infrastructure/queries/calendar/firestore_calendar_event_queries.dart';
 import 'package:memora/infrastructure/queries/calendar/firestore_calendar_event_query_service.dart';
 import 'package:memora/infrastructure/services/firestore_calendar_event_store.dart';
+import 'package:memora/infrastructure/services/shared_calendar_cache.dart';
 
 typedef _EventDocument = DocumentSnapshot<Map<String, dynamic>>;
 typedef _EventDocuments = Map<String, _EventDocument>;
-typedef _EventRead = (_EventDocument, Future<CalendarEventDto>);
+typedef _DocumentBatch = ({_EventDocuments documents, bool confirmed});
+typedef _EventValue = ({CalendarEventDto event, bool confirmed});
+typedef _EventRead = (
+  _EventDocument,
+  Future<_EventValue>,
+  bool documentsConfirmed,
+);
+typedef _EventBatch = ({List<CalendarEventDto> events, bool confirmed});
 
 class FirestoreCalendarEventWatchQueryService
     implements CalendarEventWatchQueryService, CalendarEventQueryService {
-  FirestoreCalendarEventWatchQueryService({required this.firestore});
+  FirestoreCalendarEventWatchQueryService({
+    required this.firestore,
+    this.sharedCache,
+    this.currentOwnerId,
+  });
   final FirebaseFirestore firestore;
+  final SharedCalendarCache? sharedCache;
+  final String? Function()? currentOwnerId;
 
   @override
   Future<CalendarEventDto?> getCalendarEventById(String eventId) =>
@@ -25,19 +39,22 @@ class FirestoreCalendarEventWatchQueryService
 
   final _active =
       <
-        (String, CalendarEventPeriod?, bool),
-        _SharedEvents<List<CalendarEventDto>>
+        (String?, String, CalendarEventPeriod?, bool),
+        _SharedEvents<_EventBatch>
       >{};
-  final _recurringParents = <String, _SharedEvents<_EventDocuments>>{};
+  final _recurringParents =
+      <(String?, String), _SharedEvents<_DocumentBatch>>{};
 
-  _SharedEvents<List<CalendarEventDto>>? _covering(
+  _SharedEvents<_EventBatch>? _covering(
     String groupId,
     CalendarEventPeriod? period, {
     bool allRecurringParents = false,
+    required String? ownerId,
   }) {
     for (final entry in _active.entries) {
-      final (id, range, sharesRecurringParents) = entry.key;
-      if (id == groupId &&
+      final (owner, id, range, sharesRecurringParents) = entry.key;
+      if (owner == ownerId &&
+          id == groupId &&
           (!allRecurringParents || sharesRecurringParents) &&
           (range == null ||
               (period != null &&
@@ -54,8 +71,8 @@ class FirestoreCalendarEventWatchQueryService
     String groupId, {
     CalendarEventPeriod? period,
   }) async {
-    final shared = _covering(groupId, period);
-    if (shared != null) return shared.stream.first;
+    final shared = _covering(groupId, period, ownerId: currentOwnerId?.call());
+    if (shared != null) return (await shared.stream.first).events;
     return FirestoreCalendarEventQueryService(firestore: firestore)
         .getCalendarEventsByGroupId(groupId, period: period);
   }
@@ -64,28 +81,69 @@ class FirestoreCalendarEventWatchQueryService
   Stream<List<CalendarEventDto>> watchCalendarEventsByGroupId(
     String groupId, {
     CalendarEventPeriod? period,
-  }) => _watchShared(groupId, period, allRecurringParents: false);
+  }) => _watchShared(
+    groupId,
+    period,
+    allRecurringParents: false,
+    ownerId: currentOwnerId?.call(),
+  ).map((batch) => batch.events);
 
   Stream<List<CalendarEventDto>> watchCalendarScreenEvents(
     String groupId, {
     CalendarEventPeriod? period,
-  }) => _watchShared(groupId, period, allRecurringParents: true);
+  }) {
+    final ownerId = currentOwnerId?.call();
+    final cache = sharedCache;
+    final live = _watchShared(
+      groupId,
+      period,
+      allRecurringParents: true,
+      ownerId: ownerId,
+    );
+    if (cache == null || ownerId == null || period == null) {
+      return live.map((batch) => batch.events);
+    }
+    return _withCachedEvents(cache, ownerId, groupId, period, live);
+  }
 
-  Stream<List<CalendarEventDto>> _watchShared(
+  Stream<List<CalendarEventDto>> _withCachedEvents(
+    SharedCalendarCache cache,
+    String ownerId,
+    String groupId,
+    CalendarEventPeriod period,
+    Stream<_EventBatch> live,
+  ) async* {
+    final cached = await cache.loadEvents(ownerId, groupId, period);
+    if (currentOwnerId?.call() != ownerId) return;
+    var waitingForServer = cached != null;
+    if (cached != null) yield cached;
+
+    yield* live
+        .where((batch) {
+          if (currentOwnerId?.call() != ownerId) return false;
+          if (batch.confirmed) waitingForServer = false;
+          return !waitingForServer;
+        })
+        .map((batch) => batch.events);
+  }
+
+  Stream<_EventBatch> _watchShared(
     String groupId,
     CalendarEventPeriod? period, {
     required bool allRecurringParents,
+    required String? ownerId,
   }) {
     // 購読時に共有先を決め、生成しただけのStreamは保持しない。
-    late StreamController<List<CalendarEventDto>> controller;
-    StreamSubscription<List<CalendarEventDto>>? subscription;
-    controller = StreamController<List<CalendarEventDto>>(
+    late StreamController<_EventBatch> controller;
+    StreamSubscription<_EventBatch>? subscription;
+    controller = StreamController<_EventBatch>(
       onListen: () {
-        final key = (groupId, period, allRecurringParents);
+        final key = (ownerId, groupId, period, allRecurringParents);
         var shared = _covering(
           groupId,
           period,
           allRecurringParents: allRecurringParents,
+          ownerId: ownerId,
         );
         if (shared == null) {
           final created = _SharedEvents(
@@ -93,6 +151,7 @@ class FirestoreCalendarEventWatchQueryService
               groupId,
               period: period,
               allRecurringParents: allRecurringParents,
+              ownerId: ownerId,
             ),
           );
           created.onEmpty = () {
@@ -111,9 +170,14 @@ class FirestoreCalendarEventWatchQueryService
     return controller.stream;
   }
 
-  Stream<_EventDocuments> _watchDocuments(Query<Map<String, dynamic>> query) {
+  Stream<_DocumentBatch> _watchDocuments(
+    Query<Map<String, dynamic>> query, {
+    required bool trackCoverage,
+  }) {
     final documents = <String, _EventDocument>{};
-    return query.snapshots().map((snapshot) {
+    return query.snapshots(includeMetadataChanges: trackCoverage).map((
+      snapshot,
+    ) {
       for (final change in snapshot.docChanges) {
         final document = change.doc;
         if (change.type == DocumentChangeType.removed) {
@@ -122,22 +186,34 @@ class FirestoreCalendarEventWatchQueryService
           documents[document.id] = document;
         }
       }
-      return Map.of(documents);
+      return (
+        documents: Map.of(documents),
+        confirmed:
+            !trackCoverage ||
+            (!snapshot.metadata.isFromCache &&
+                !snapshot.metadata.hasPendingWrites),
+      );
     });
   }
 
-  Stream<_EventDocuments> _watchRecurringParents(String groupId) {
-    final shared = _recurringParents.putIfAbsent(groupId, () {
+  Stream<_DocumentBatch> _watchRecurringParents(
+    String groupId,
+    String? ownerId, {
+    required bool trackCoverage,
+  }) {
+    final key = (ownerId, groupId);
+    final shared = _recurringParents.putIfAbsent(key, () {
       final created = _SharedEvents(
         () => _watchDocuments(
           calendarEventGroupQuery(
             firestore,
             groupId,
           ).where('recurrenceRule', isNull: false),
+          trackCoverage: trackCoverage,
         ),
         retryOnListen: true,
       );
-      created.onEmpty = () => _recurringParents.remove(groupId);
+      created.onEmpty = () => _recurringParents.remove(key);
       return created;
     });
     return shared.stream;
@@ -152,11 +228,18 @@ class FirestoreCalendarEventWatchQueryService
         start.toDate().isBefore(period.queryTo);
   }
 
-  Stream<List<CalendarEventDto>> _watch(
+  Stream<_EventBatch> _watch(
     String groupId, {
     required CalendarEventPeriod? period,
     required bool allRecurringParents,
+    required String? ownerId,
   }) {
+    final cache = sharedCache;
+    final persist =
+        allRecurringParents &&
+        period != null &&
+        cache != null &&
+        ownerId != null;
     final sources = allRecurringParents && period != null
         ? [
             _watchDocuments(
@@ -164,61 +247,110 @@ class FirestoreCalendarEventWatchQueryService
                 calendarEventGroupQuery(firestore, groupId),
                 period,
               ),
+              trackCoverage: persist,
             ),
-            _watchRecurringParents(groupId).map(
-              (parents) => {
-                for (final entry in parents.entries)
-                  if (_overlapsPeriod(entry.value, period))
-                    entry.key: entry.value,
-              },
+            _watchRecurringParents(
+              groupId,
+              ownerId,
+              trackCoverage: persist,
+            ).map(
+              (batch) => (
+                documents: {
+                  for (final entry in batch.documents.entries)
+                    if (_overlapsPeriod(entry.value, period))
+                      entry.key: entry.value,
+                },
+                confirmed: batch.confirmed,
+              ),
             ),
           ]
-        : calendarEventQueries(
-            firestore,
-            groupId,
-            period,
-          ).map(_watchDocuments).toList();
+        : calendarEventQueries(firestore, groupId, period)
+              .map((query) => _watchDocuments(query, trackCoverage: false))
+              .toList();
     final received = List<Map<String, _EventRead>?>.filled(
       sources.length,
       null,
     );
+    final confirmed = List<bool>.filled(sources.length, false);
     final store = FirestoreCalendarEventStore(firestore);
-    final subscriptions = <StreamSubscription<_EventDocuments>>[];
+    final subscriptions = <StreamSubscription<_DocumentBatch>>[];
     var generation = 0;
     var cancelled = false;
-    late StreamController<List<CalendarEventDto>> controller;
-    controller = StreamController<List<CalendarEventDto>>(
+
+    Future<_EventValue> read(
+      _EventDocument document,
+      Future<_EventValue>? previous,
+    ) async {
+      final existing = await previous;
+      if (existing != null && existing.confirmed) return existing;
+      var complete = true;
+      final event = await store.read(
+        document,
+        period: period,
+        onOverrideCoverage: persist ? (value) => complete = value : null,
+      );
+      return (event: event, confirmed: complete);
+    }
+
+    late StreamController<_EventBatch> controller;
+    controller = StreamController<_EventBatch>(
       onListen: () {
         for (var index = 0; index < sources.length; index++) {
           final bucket = index;
           subscriptions.add(
             sources[index].listen(
-              (documents) async {
+              (batch) async {
                 final current = ++generation;
+                final observedAt = persist
+                    ? DateTime.now().microsecondsSinceEpoch
+                    : 0;
                 try {
                   final previous = received[bucket];
                   final pending = <String, _EventRead>{};
-                  for (final entry in documents.entries) {
-                    final existing = previous?[entry.key];
-                    pending[entry.key] =
-                        existing != null && identical(existing.$1, entry.value)
-                        ? existing
+                  for (final entry in batch.documents.entries) {
+                    final old = previous?[entry.key];
+                    final same = old != null && identical(old.$1, entry.value);
+                    pending[entry.key] = same && (!batch.confirmed || old.$3)
+                        ? old
                         : (
                             entry.value,
-                            store.read(entry.value, period: period),
+                            read(entry.value, same ? old.$2 : null),
+                            batch.confirmed,
                           );
                   }
                   received[bucket] = pending;
+                  confirmed[bucket] = batch.confirmed;
                   await Future.wait(pending.values.map((entry) => entry.$2));
-                  if (cancelled || received.any((value) => value == null)) {
+                  if (cancelled ||
+                      current != generation ||
+                      received.any((value) => value == null)) {
                     return;
                   }
                   final combined = {for (final values in received) ...values!};
-                  final events = await Future.wait(
+                  final values = await Future.wait(
                     combined.values.map((entry) => entry.$2),
                   );
-                  if (!cancelled && current == generation) {
-                    controller.add(events);
+                  if (cancelled ||
+                      current != generation ||
+                      currentOwnerId?.call() != ownerId)
+                    return;
+                  final events = values.map((value) => value.event).toList();
+                  final complete =
+                      confirmed.every((value) => value) &&
+                      values.every((value) => value.confirmed);
+                  if (persist && complete) {
+                    await cache.saveEvents(
+                      ownerId,
+                      groupId,
+                      period,
+                      events,
+                      observedAt: observedAt,
+                    );
+                  }
+                  if (!cancelled &&
+                      current == generation &&
+                      currentOwnerId?.call() == ownerId) {
+                    controller.add((events: events, confirmed: complete));
                   }
                 } catch (error, stack) {
                   if (!cancelled && current == generation) {
