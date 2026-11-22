@@ -80,8 +80,19 @@ class SharedCalendarCache {
         final previousCommit = data['eventCommitAt'] as int? ?? 0;
         if (committedAt > previousCommit) data['eventCommitAt'] = committedAt;
         final rows = data['events'];
-        var changed = committedAt > previousCommit;
-        if (rows is! Map<String, dynamic>) return changed;
+        if (rows is! Map<String, dynamic> || rows.isEmpty) {
+          return committedAt > previousCommit;
+        }
+        final commits = _eventCommits(data);
+        final applicable = [
+          for (final change in groupChanges)
+            if ((commits[change.eventId] ?? 0) <= committedAt) change,
+        ];
+        if (applicable.isEmpty) return committedAt > previousCommit;
+        for (final change in applicable) {
+          commits[change.eventId] = committedAt;
+        }
+        data['commits'] = commits;
         for (final entry in rows.entries.toList()) {
           final period = _parsePeriodKey(entry.key);
           final row = entry.value;
@@ -93,12 +104,10 @@ class SharedCalendarCache {
           final previous = row['data'];
           if (previous is! List) continue;
           final events = _eventRows(previous);
-          final commits = _eventCommits(row);
           var periodChanged = false;
-          for (final change in groupChanges) {
+          for (final change in applicable) {
             final existing = events[change.eventId];
-            if ((commits[change.eventId] ?? 0) > committedAt ||
-                ((existing?['version'] as int?) ?? 0) > (change.version ?? 0)) {
+            if (((existing?['version'] as int?) ?? 0) > (change.version ?? 0)) {
               continue;
             }
             final event = change.event;
@@ -119,24 +128,17 @@ class SharedCalendarCache {
               if (existing == null ||
                   _event(existing, groupId) != _event(updated, groupId)) {
                 events[change.eventId] = updated;
-                commits[change.eventId] = committedAt;
                 periodChanged = true;
               }
             } else if (events.remove(change.eventId) != null) {
-              commits[change.eventId] = committedAt;
               periodChanged = true;
             }
           }
           if (periodChanged) {
-            rows[entry.key] = {
-              ...row,
-              'data': events.values.toList(),
-              'commits': commits,
-            };
-            changed = true;
+            rows[entry.key] = {...row, 'data': events.values.toList()};
           }
         }
-        return changed;
+        return true;
       });
     }
   }
@@ -207,11 +209,11 @@ class SharedCalendarCache {
       final updated = {
         for (final event in events) event.id: _encodeEvent(event),
       };
-      final commits = <String, int>{};
+      final commits = _eventCommits(data);
       // 後着の取得結果でも、保存した予定以外の変更は反映する。
       if (row is Map<String, dynamic> && row['data'] is List) {
         final previous = _eventRows(row['data'] as List);
-        for (final entry in _eventCommits(row).entries) {
+        for (final entry in commits.entries) {
           if (entry.value <= timestamp) continue;
           final event = previous[entry.key];
           if (event == null) {
@@ -219,20 +221,19 @@ class SharedCalendarCache {
           } else {
             updated[entry.key] = event;
           }
-          commits[entry.key] = entry.value;
         }
       } else if ((data['eventCommitAt'] as int? ?? 0) > timestamp) {
         retryInitialFetch = true;
         return false;
       }
-      rows[key] = {
-        'observedAt': timestamp,
-        'data': updated.values.toList(),
-        if (commits.isNotEmpty) 'commits': commits,
-      };
+      rows[key] = {'observedAt': timestamp, 'data': updated.values.toList()};
       final keys = rows.keys.toList()
         ..sort((a, b) => _observedAt(rows[b]).compareTo(_observedAt(rows[a])));
-      data['events'] = {for (final key in keys.take(16)) key: rows[key]};
+      final retained = {for (final key in keys.take(16)) key: rows[key]};
+      data['events'] = retained;
+      final oldestObservation = _observedAt(retained.values.last);
+      commits.removeWhere((_, committedAt) => committedAt <= oldestObservation);
+      data['commits'] = commits;
       return true;
     });
     return !retryInitialFetch;
