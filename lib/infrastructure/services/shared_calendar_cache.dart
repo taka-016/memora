@@ -269,20 +269,18 @@ class SharedCalendarCache {
     Map<String, dynamic> data,
     String groupId,
   ) {
-    final rows = data['series'];
+    final rows = data['recurringParents'];
     if (rows is! Map<String, dynamic>) return {};
     return {
       for (final entry in rows.entries)
-        if (!entry.value.containsKey('months'))
-          entry.key: _CachedSeries(
-            _event(entry.value['parent'], groupId),
-            (entry.value['end'] as int?) == null
-                ? null
-                : DateTime.fromMicrosecondsSinceEpoch(
-                    entry.value['end'] as int,
-                  ),
-            _observedAt(entry.value),
-          ),
+        entry.key: _CachedSeries(
+          _event(entry.value['parent'], groupId),
+          switch (entry.value['end']) {
+            final int value => DateTime.fromMicrosecondsSinceEpoch(value),
+            _ => null,
+          },
+          _observedAt(entry.value),
+        ),
     };
   }
 
@@ -290,7 +288,8 @@ class SharedCalendarCache {
     Map<String, dynamic> data,
     Map<String, _CachedSeries> series,
   ) {
-    data['series'] = {
+    data.remove('series');
+    data['recurringParents'] = {
       for (final entry in series.entries)
         entry.key: {
           'parent': _encodeEvent(entry.value.parent),
@@ -347,7 +346,7 @@ class SharedCalendarCache {
       final saved = data['singleEvents'];
       final rows = saved is Map<String, dynamic> ? saved : <String, dynamic>{};
       final months = _monthsIn(period)
-          .where((month) => _observedAt(rows[_periodKey(month)]) <= timestamp)
+          .where((month) => _observedAt(rows[_periodKey(month)]) < timestamp)
           .toList();
       if ((data['eventCommitAt'] as int? ?? 0) > timestamp &&
           months.any((month) => rows[_periodKey(month)]?['data'] is! List)) {
@@ -356,7 +355,7 @@ class SharedCalendarCache {
       }
       final commits = _eventCommits(data);
       final seriesTimestamp = recurringObservedAt ?? timestamp;
-      final updateSeries = seriesTimestamp >= _seriesObservedAt(data);
+      final updateSeries = seriesTimestamp > _seriesObservedAt(data);
       if (updateSeries) {
         final series = _seriesRows(data, groupId);
         for (final id in {...series.keys, ...recurringEvents.keys}) {

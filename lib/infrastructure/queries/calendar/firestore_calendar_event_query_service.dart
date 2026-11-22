@@ -56,7 +56,7 @@ class FirestoreCalendarEventQueryService implements CalendarEventQueryService {
     final store = FirestoreCalendarEventStore(_firestore);
     return [
       for (final snapshot in snapshots)
-        for (final doc in snapshot.docs) store.readForDisplay(doc),
+        for (final doc in snapshot.docs) store.displayEvent(doc.id, doc.data()),
     ];
   }
 }

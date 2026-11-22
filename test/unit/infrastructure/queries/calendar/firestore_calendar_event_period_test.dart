@@ -97,6 +97,44 @@ void main() {
     verifyNever(base.get());
   });
 
+  test('ウィジェットの取得は時間指定の取消を含む親予定だけで判定できる', () async {
+    const server = GetOptions(source: Source.server);
+    final cancelledStart = DateTime.utc(2026, 12, 4, 13, 0, 0, 0, 123);
+    final parent = MockQueryDocumentSnapshot();
+    when(parent.id).thenReturn('series_id');
+    when(parent.data()).thenReturn({
+      'groupId': 'g',
+      'labelType': 'group',
+      'title': '毎週の予定',
+      'isAllDay': false,
+      'timeZone': 'Asia/Tokyo',
+      'startDateTime': Timestamp.fromDate(
+        DateTime.utc(2026, 10, 2, 13, 0, 0, 0, 123),
+      ),
+      'endDateTime': Timestamp.fromDate(DateTime.utc(2026, 10, 2, 14)),
+      'recurrenceEndDateTime': Timestamp.fromDate(DateTime.utc(2027, 1, 1)),
+      'recurrenceRule': 'FREQ=WEEKLY;BYDAY=FR',
+      'overrideIds': ['series_id_${cancelledStart.microsecondsSinceEpoch}'],
+    });
+    final parents = MockQuerySnapshot();
+    when(parents.docs).thenReturn([parent]);
+    when(recurring.get(server)).thenAnswer((_) async => parents);
+    when(bounded.get(server)).thenAnswer((_) async => empty);
+
+    final events = await FirestoreCalendarEventQueryService(
+      firestore: firestore,
+      options: server,
+    ).getCalendarEventsForWidget('g', period: period);
+
+    expect(
+      events.single.overrides.single.originalStartDateTime.toUtc(),
+      cancelledStart,
+    );
+    verify(bounded.get(server)).called(1);
+    verify(recurring.get(server)).called(1);
+    verifyNever(firestore.collection('calendar_event_overrides'));
+  });
+
   test('期間内の取消だけを検索し親の個別回IDをたどって過去の取消を取得しない', () async {
     final parent = MockQueryDocumentSnapshot();
     when(parent.id).thenReturn('series');

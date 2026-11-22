@@ -210,30 +210,20 @@ void main() {
     when(query.where('recurrenceRule', isNull: true)).thenReturn(query);
     when(query.where('recurrenceRule', isNull: false))
         .thenReturn(recurringQuery);
-    for (final (target, start, end) in [
-      (query, 'startDateTime', 'endDateTime'),
-      (cancellationQuery, 'originalStartDateTime', 'originalEndDateTime'),
-    ]) {
-      when(
-        target.where(
-          end,
-          isGreaterThanOrEqualTo: anyNamed('isGreaterThanOrEqualTo'),
-        ),
-      ).thenReturn(target);
-      when(target.where(start, isLessThan: anyNamed('isLessThan')))
-          .thenReturn(target);
-      when(target.orderBy(end)).thenReturn(target);
-      when(target.orderBy(start)).thenReturn(target);
-    }
+    when(
+      query.where(
+        'endDateTime',
+        isGreaterThanOrEqualTo: anyNamed('isGreaterThanOrEqualTo'),
+      ),
+    ).thenReturn(query);
+    when(query.where('startDateTime', isLessThan: anyNamed('isLessThan')))
+        .thenReturn(query);
+    when(query.orderBy('endDateTime')).thenReturn(query);
+    when(query.orderBy('startDateTime')).thenReturn(query);
     when(query.snapshots(includeMetadataChanges: true))
         .thenAnswer((_) => source.stream);
     when(recurringQuery.snapshots(includeMetadataChanges: true))
         .thenAnswer((_) => recurring.stream);
-    final emptyOverrides = MockQuerySnapshot();
-    when(emptyOverrides.docs).thenReturn([]);
-    when(emptyOverrides.metadata).thenReturn(_Metadata(isFromCache: false));
-    when(cancellationQuery.get()).thenAnswer((_) async => emptyOverrides);
-
     final document = MockQueryDocumentSnapshot();
     final cancelledStart = DateTime.utc(2026, 12, 4);
     when(document.id).thenReturn(parent.id);

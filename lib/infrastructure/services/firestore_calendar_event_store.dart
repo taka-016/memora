@@ -17,20 +17,17 @@ class FirestoreCalendarEventStore {
   List<String> overrideIds(Map<String, dynamic> data) =>
       (data['overrideIds'] as List? ?? []).cast<String>();
 
-  CalendarEventDto readForDisplay(
-    DocumentSnapshot<Map<String, dynamic>> parent,
-  ) {
-    final data = parent.data()!;
+  CalendarEventDto displayEvent(String eventId, Map<String, dynamic> data) {
     if (data['recurrenceRule'] == null) {
-      return FirestoreCalendarEventMapper.fromData(parent.id, data);
+      return FirestoreCalendarEventMapper.fromData(eventId, data);
     }
     return FirestoreCalendarEventMapper.fromData(
-      parent.id,
+      eventId,
       data,
       overrides: [
         for (final id in overrideIds(data))
           if (FirestoreCalendarEventOverrideMapper.originalStartFromDocumentId(
-                parent.id,
+                eventId,
                 id,
                 parentAllDay: data['isAllDay'] as bool,
               )

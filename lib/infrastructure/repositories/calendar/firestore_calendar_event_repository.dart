@@ -1,4 +1,3 @@
-import 'package:memora/infrastructure/mappers/calendar/firestore_calendar_event_mapper.dart';
 import 'package:memora/infrastructure/services/shared_calendar_cache.dart';
 import 'package:memora/infrastructure/services/firestore_version_check.dart';
 import 'package:memora/infrastructure/services/calendar_event_content.dart';
@@ -40,11 +39,7 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
   ) => (
     groupId: event.groupId,
     eventId: id,
-    event: FirestoreCalendarEventMapper.fromData(
-      id,
-      data,
-      overrides: event.overrides,
-    ),
+    event: _store.displayEvent(id, data),
     recurrenceEnd: (data['recurrenceEndDateTime'] as Timestamp).toDate(),
     version: data['version'] as int?,
   );

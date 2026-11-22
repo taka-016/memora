@@ -219,13 +219,11 @@ class FirestoreCalendarEventWatchQueryService
     return shared.stream;
   }
 
-  bool _overlapsPeriod(_EventDocument document, CalendarEventPeriod period) {
-    final data = document.data()!;
-    final end = data['recurrenceEndDateTime'] as Timestamp?;
-    final start = data['startDateTime'] as Timestamp;
+  bool _overlapsPeriod(CalendarEventDto event, CalendarEventPeriod period) {
+    final end = event.recurrenceEndDateTime;
     return end != null &&
-        !end.toDate().isBefore(period.queryFrom) &&
-        start.toDate().isBefore(period.queryTo);
+        !end.isBefore(period.queryFrom) &&
+        event.startDateTime.isBefore(period.queryTo);
   }
 
   Stream<_EventBatch> _watch(
@@ -286,7 +284,10 @@ class FirestoreCalendarEventWatchQueryService
                             entry.value,
                             allRecurringParents
                                 ? Future.sync(
-                                    () => store.readForDisplay(entry.value),
+                                    () => store.displayEvent(
+                                      entry.key,
+                                      entry.value.data()!,
+                                    ),
                                   )
                                 : store.read(entry.value, period: period),
                           );
@@ -301,9 +302,8 @@ class FirestoreCalendarEventWatchQueryService
                     return;
                   }
                   final combined = {for (final values in received) ...values!};
-                  final entries = combined.values.toList();
                   final events = await Future.wait(
-                    entries.map((entry) => entry.$2),
+                    combined.values.map((entry) => entry.$2),
                   );
                   if (cancelled ||
                       current != generation ||
@@ -326,12 +326,12 @@ class FirestoreCalendarEventWatchQueryService
                       currentOwnerId?.call() == ownerId) {
                     controller.add((
                       events: [
-                        for (var index = 0; index < events.length; index++)
+                        for (final event in events)
                           if (!allRecurringParents ||
                               period == null ||
-                              events[index].recurrenceRule == null ||
-                              _overlapsPeriod(entries[index].$1, period))
-                            events[index],
+                              event.recurrenceRule == null ||
+                              _overlapsPeriod(event, period))
+                            event,
                       ],
                       confirmed: complete,
                     ));
