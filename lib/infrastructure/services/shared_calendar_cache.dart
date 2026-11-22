@@ -126,15 +126,18 @@ class SharedCalendarCache {
           series[change.eventId] = current;
           for (final entry in rows.entries) {
             final month = _parsePeriodKey(entry.key);
-            if (month == null || _observedAt(entry.value) > committedAt) {
+            if (month == null || !current.overlaps(month)) continue;
+            final hasOlderCancellationCoverage =
+                previousVersion < version &&
+                previous?.overridesByMonth[entry.key] != null;
+            if (_observedAt(entry.value) > committedAt &&
+                !hasOlderCancellationCoverage) {
               continue;
             }
-            if (current.overlaps(month)) {
-              current.overridesByMonth[entry.key] = _overridesInMonth(
-                event,
-                month,
-              );
-            }
+            current.overridesByMonth[entry.key] = _overridesInMonth(
+              event,
+              month,
+            );
           }
         }
         _saveSeriesRows(data, series, rows.keys.toSet());
