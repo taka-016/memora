@@ -81,13 +81,21 @@ class HomeWidgetCalendarCacheStorage {
 
   Future<Map<String, dynamic>?> _load() async {
     final path = await HomeWidget.getWidgetData<String>(cacheKey);
-    if (path == null || !await File(path).exists()) return null;
-    return jsonDecode(await File(path).readAsString()) as Map<String, dynamic>;
+    if (path == null) return null;
+    try {
+      final data = jsonDecode(await File(path).readAsString());
+      return data is Map<String, dynamic> ? data : null;
+    } on FileSystemException {
+      return null;
+    } on FormatException {
+      return null;
+    }
   }
 
   Future<DateTime?> loadMonth() async {
     final data = await _load();
-    return DateTime.tryParse(data?['month'] as String? ?? '');
+    final month = data?['month'];
+    return month is String ? DateTime.tryParse(month) : null;
   }
 
   Future<DateTime?> loadSelectedDate() async {
@@ -100,28 +108,31 @@ class HomeWidgetCalendarCacheStorage {
     bool keepDistantMonths = true,
   }) async {
     final previous = await _load();
-    final previousMonths = previous?['months'] as Map<String, dynamic>?;
+    final previousMonths = previous?['months'];
     final incomingMonths = cache['months'] as Map<String, Object?>?;
     final refreshedMonth = DateTime.parse(cache['month'] as String);
-    int distance(String key, DateTime month) {
-      final date = DateTime.parse(key);
+    int distance(DateTime date, DateTime month) {
       return ((date.year - month.year) * 12 + date.month - month.month).abs();
     }
 
     final months = <String, Object?>{
-      if (previousMonths != null &&
+      if (previousMonths is Map<String, dynamic> &&
           previous?['cacheScope'] == cache['cacheScope'] &&
           previous?['groupId'] == cache['groupId'] &&
           previous?['sourceMode'] == cache['sourceMode'])
         for (final entry in previousMonths.entries)
-          if (keepDistantMonths || distance(entry.key, refreshedMonth) <= 2)
-            entry.key: entry.value,
+          if (DateTime.tryParse(entry.key) case final date?)
+            if (keepDistantMonths || distance(date, refreshedMonth) <= 2)
+              entry.key: entry.value,
       ...?incomingMonths,
     };
     final selected = await loadSelectedDate() ?? refreshedMonth;
     final keys = months.keys.toList()
       ..sort((a, b) {
-        final result = distance(a, selected).compareTo(distance(b, selected));
+        final result = distance(
+          DateTime.parse(a),
+          selected,
+        ).compareTo(distance(DateTime.parse(b), selected));
         return result != 0 ? result : a.compareTo(b);
       });
     final publishedCache = {
