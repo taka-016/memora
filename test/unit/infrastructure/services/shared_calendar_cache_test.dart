@@ -177,4 +177,33 @@ void main() {
     ], observedAt: 4);
     expect(await app.loadEvents('account', 'group', quarter), [created]);
   });
+
+  test('キャッシュにまだ載っていない削除済みの系列も後着の取得結果から除く', () async {
+    final series = CalendarEventDto(
+      id: 'series',
+      groupId: 'group',
+      title: '削除した系列',
+      version: 1,
+      startDateTime: DateTime.utc(2026, 1, 3),
+      endDateTime: DateTime.utc(2026, 1, 4),
+      isAllDay: true,
+      recurrenceRule: 'FREQ=WEEKLY;BYDAY=SA',
+    );
+    final unrelated = series.copyWith(id: 'other', title: '別の系列');
+    await widget.saveEvents('account', 'group', quarter, [], observedAt: 1);
+    await app.applyEventChanges('account', [
+      (
+        groupId: 'group',
+        eventId: series.id,
+        event: null,
+        recurrenceEnd: null,
+        version: series.version,
+      ),
+    ], committedAt: 3);
+    await widget.saveEvents('account', 'group', quarter, [
+      series,
+      unrelated,
+    ], observedAt: 2);
+    expect(await app.loadEvents('account', 'group', quarter), [unrelated]);
+  });
 }
