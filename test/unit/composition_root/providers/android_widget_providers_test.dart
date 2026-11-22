@@ -28,13 +28,18 @@ import 'android_widget_providers_test.mocks.dart';
   MockSpec<AndroidWidgetCacheStorage>(),
   MockSpec<RefreshAndroidWidgetItineraryCacheUsecase>(),
 ])
+final refreshEventWidget = Provider<Future<void> Function()>((ref) {
+  return () =>
+      ref.read(refreshSelectedCalendarWidgetCacheProvider)(force: false);
+});
+
 void main() {
   for (final entry in [
     (
       refreshSelectedAndroidWidgetCacheProvider,
       AndroidWidgetKind.values.toSet(),
     ),
-    (refreshSelectedCalendarWidgetCacheProvider, {AndroidWidgetKind.calendar}),
+    (refreshEventWidget, {AndroidWidgetKind.calendar}),
     (
       refreshSelectedItineraryWidgetCacheProvider,
       {AndroidWidgetKind.itinerary},
@@ -54,6 +59,7 @@ void main() {
         final container = ProviderContainer(
           overrides: [
             androidWidgetCacheStorageProvider.overrideWithValue(storage),
+            calendarWidgetSupportedProvider.overrideWithValue(true),
             loadInstalledAndroidWidgetKindsProvider.overrideWithValue(
               () async => installed,
             ),
@@ -66,7 +72,9 @@ void main() {
               bool force = false,
             }) async {
               expect(date, isNull);
-              calendarCalls++;
+              expect(force, entry.$1 != refreshEventWidget);
+              if (installed.contains(AndroidWidgetKind.calendar))
+                calendarCalls++;
             }),
           ],
         );

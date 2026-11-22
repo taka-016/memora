@@ -64,15 +64,49 @@ void main() {
     expect(await app.loadEvents('account', 'group', quarter), isEmpty);
   });
 
-  test('予定保存後は影響するグループの取得済み期間だけを無効化する', () async {
+  test('保存結果を該当する取得済み四半期だけに反映する', () async {
     final previous = CalendarEventPeriod.forQuarter(DateTime(2026, 9));
+    final unrelated = CalendarEventPeriod.forQuarter(DateTime(2026, 5));
+    final initial = CalendarEventDto(
+      id: 'event',
+      groupId: 'group',
+      title: '移動前',
+      version: 1,
+      startDateTime: DateTime(2026, 9, 20, 9),
+      endDateTime: DateTime(2026, 9, 20, 10),
+      isAllDay: false,
+    );
+    final moved = initial.copyWith(
+      title: '移動後',
+      version: 2,
+      startDateTime: DateTime(2026, 11, 20, 9),
+      endDateTime: DateTime(2026, 11, 20, 10),
+    );
+    await app.saveEvents('account', 'group', previous, [
+      initial,
+    ], observedAt: 1);
     await app.saveEvents('account', 'group', quarter, [], observedAt: 1);
-    await app.saveEvents('account', 'group', previous, [], observedAt: 1);
-    await app.saveEvents('account', 'other', quarter, [], observedAt: 1);
-    await app.invalidateEvents('account', 'group');
-    await widget.saveEvents('account', 'group', quarter, [], observedAt: 1);
-    expect(await widget.loadEvents('account', 'group', quarter), isNull);
-    expect(await widget.loadEvents('account', 'group', previous), isNull);
-    expect(await widget.loadEvents('account', 'other', quarter), isEmpty);
+    await app.saveEvents('account', 'group', unrelated, [], observedAt: 1);
+    await app.applyEventChanges('account', [
+      (
+        groupId: 'group',
+        eventId: 'event',
+        event: moved,
+        recurrenceEnd: null,
+        version: 2,
+      ),
+    ], committedAt: 3);
+    await widget.saveEvents('account', 'group', quarter, [], observedAt: 2);
+    expect(await widget.loadEvents('account', 'group', quarter), [moved]);
+    expect(await widget.loadEvents('account', 'group', previous), isEmpty);
+    expect(await widget.loadEvents('account', 'group', unrelated), isEmpty);
+    expect(
+      await widget.loadEvents(
+        'account',
+        'group',
+        CalendarEventPeriod.forQuarter(DateTime(2027, 2)),
+      ),
+      isNull,
+    );
   });
 }
