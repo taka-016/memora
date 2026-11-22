@@ -37,50 +37,12 @@ class SharedCalendarCache {
   ) async {
     try {
       final data = await _read(await _file(ownerId, groupId));
-      final eventsById = <String, CalendarEventDto>{};
-      final eventIdsByMonth = <CalendarEventPeriod, Set<String>>{};
-      final observations = <int>{};
-      for (final month in _monthsIn(period)) {
-        final events = _events(data, groupId, month);
-        if (events == null) return null;
-        eventIdsByMonth[month] = events.map((event) => event.id).toSet();
-        observations.add(_observedAt(_eventRow(data, month)));
-        for (final event in events) {
-          final previous = eventsById[event.id];
-          final version = event.version ?? 0;
-          final previousVersion = previous?.version ?? 0;
-          // 別の版の親予定を結合すると、月ごとの取消を正しく扱えない。
-          if (previous != null &&
-              version != previousVersion &&
-              (event.recurrenceRule != null ||
-                  previous.recurrenceRule != null)) {
-            return null;
-          }
-          if (previous == null || version > previousVersion) {
-            eventsById[event.id] = event;
-          } else if (version == previousVersion &&
-              event.recurrenceRule != null) {
-            eventsById[event.id] = previous.copyWith(
-              overrides: {...previous.overrides, ...event.overrides}.toList(),
-            );
-          }
-        }
-      }
-      if (observations.length > 1) {
-        for (final event in eventsById.values) {
-          final missing = eventIdsByMonth.entries.where(
-            (entry) => !entry.value.contains(event.id),
-          );
-          if (missing.isEmpty) continue;
-          final end = _expander.seriesEndDateTime(event);
-          if (missing.any(
-            (entry) => _eventInMonth(event, entry.key, end) != null,
-          )) {
-            return null;
-          }
-        }
-      }
-      return eventsById.values.toList();
+      return _events(
+        data,
+        groupId,
+        _monthsIn(period).toList(),
+        _seriesRows(data, groupId),
+      );
     } catch (_) {
       return null;
     }
@@ -95,9 +57,11 @@ class SharedCalendarCache {
       final file = await _file(ownerId, groupId);
       final modifiedAt = await _lastModified(file);
       final data = await _read(file);
+      final series = _seriesRows(data, groupId);
       return CalendarWidgetGroupData(
         eventsByPeriod: {
-          for (final period in periods) period: ?_events(data, groupId, period),
+          for (final period in periods)
+            period: ?_events(data, groupId, [period], series),
         },
         labels: _labels(data, groupId),
         labelsObservedAt: _observedAt(data['labels']),
@@ -123,7 +87,7 @@ class SharedCalendarCache {
       await _update(ownerId, groupId, (data) {
         final previousCommit = data['eventCommitAt'] as int? ?? 0;
         if (committedAt > previousCommit) data['eventCommitAt'] = committedAt;
-        final rows = data['events'];
+        final rows = data['singleEvents'];
         if (rows is! Map<String, dynamic> || rows.isEmpty) {
           return committedAt > previousCommit;
         }
@@ -133,9 +97,41 @@ class SharedCalendarCache {
             if ((commits[change.eventId] ?? 0) <= committedAt) change,
         ];
         if (applicable.isEmpty) return committedAt > previousCommit;
+        final series = _seriesRows(data, groupId);
         for (final change in applicable) {
           commits[change.eventId] = committedAt;
+          final previous = series[change.eventId];
+          final event = change.event;
+          if (previous != null &&
+              ((previous.parent.version ?? 0) > (change.version ?? 0) ||
+                  previous.observedAt > committedAt)) {
+            continue;
+          }
+          if (event == null || event.recurrenceRule == null) {
+            series.remove(change.eventId);
+            continue;
+          }
+
+          final current = series[change.eventId] = _updatedSeries(
+            event,
+            change.recurrenceEnd,
+            committedAt,
+            previous,
+          );
+          for (final entry in rows.entries) {
+            final month = _parsePeriodKey(entry.key);
+            if (month == null || _observedAt(entry.value) > committedAt) {
+              continue;
+            }
+            if (current.overlaps(month)) {
+              current.overridesByMonth[entry.key] = _overridesInMonth(
+                event,
+                month,
+              );
+            }
+          }
         }
+        _saveSeriesRows(data, series, rows.keys.toSet());
         data['commits'] = commits;
         for (final entry in rows.entries.toList()) {
           final period = _parsePeriodKey(entry.key);
@@ -155,15 +151,17 @@ class SharedCalendarCache {
               continue;
             }
             final event = change.event;
-            final monthEvent = event == null
-                ? null
-                : _eventInMonth(
-                    event,
-                    period,
-                    event.recurrenceRule == null
-                        ? event.endDateTime
-                        : change.recurrenceEnd,
-                  );
+            final monthEvent =
+                event != null &&
+                    event.recurrenceRule == null &&
+                    _overlapsMonth(
+                      event,
+                      period,
+                      event.startDateTime,
+                      event.endDateTime,
+                    )
+                ? event
+                : null;
             if (monthEvent != null) {
               final updated = _encodeEvent(monthEvent);
               if (existing == null ||
@@ -214,22 +212,163 @@ class SharedCalendarCache {
     Map<String, dynamic> data,
     CalendarEventPeriod period,
   ) {
-    final rows = data['events'];
+    final rows = data['singleEvents'];
     return rows is Map ? rows[_periodKey(period)] : null;
   }
 
   static List<CalendarEventDto>? _events(
     Map<String, dynamic> data,
     String groupId,
-    CalendarEventPeriod period,
+    List<CalendarEventPeriod> months,
+    Map<String, _CachedSeries> series,
   ) {
-    try {
-      final events = _eventRow(data, period)?['data'];
+    final singleEvents = <String, CalendarEventDto>{};
+    final singleEventIdsByMonth = <CalendarEventPeriod, Set<String>>{};
+    final observations = <int>{};
+    for (final month in months) {
+      final row = _eventRow(data, month);
+      final events = row?['data'];
       if (events is! List) return null;
-      return events.map((value) => _event(value, groupId)).toList();
-    } catch (_) {
-      return null;
+      final ids = singleEventIdsByMonth[month] = <String>{};
+      observations.add(_observedAt(row));
+      for (final value in events) {
+        final event = _event(value, groupId);
+        ids.add(event.id);
+        final previous = singleEvents[event.id];
+        if (previous == null ||
+            (event.version ?? 0) > (previous.version ?? 0)) {
+          singleEvents[event.id] = event;
+        }
+      }
     }
+    if (observations.length > 1) {
+      for (final event in singleEvents.values) {
+        if (singleEventIdsByMonth.entries.any(
+          (entry) =>
+              !entry.value.contains(event.id) &&
+              _overlapsMonth(
+                event,
+                entry.key,
+                event.startDateTime,
+                event.endDateTime,
+              ),
+        )) {
+          return null;
+        }
+      }
+    }
+
+    final recurringEvents = <CalendarEventDto>[];
+    for (final current in series.values) {
+      final overrides = <CalendarEventOverride>{};
+      var present = false;
+      var absent = false;
+      for (final month in months.where(current.overlaps)) {
+        final key = _periodKey(month);
+        if (!current.overridesByMonth.containsKey(key)) return null;
+        final fetched = current.overridesByMonth[key];
+        if (fetched == null) {
+          absent = true;
+        } else {
+          present = true;
+          overrides.addAll(fetched);
+        }
+      }
+      // 期間全体に対して親予定を展開できる場合だけ、先行表示に使う。
+      if (present && absent) return null;
+      if (present) {
+        recurringEvents.add(
+          current.parent.copyWith(overrides: overrides.toList()),
+        );
+      }
+    }
+    return [...singleEvents.values, ...recurringEvents];
+  }
+
+  static Map<String, _CachedSeries> _seriesRows(
+    Map<String, dynamic> data,
+    String groupId,
+  ) {
+    final rows = data['series'];
+    if (rows is! Map<String, dynamic>) return {};
+    return rows.map((id, value) {
+      final parent = _event(value['parent'], groupId);
+      final end = value['end'] as int?;
+      final months = value['months'] as Map<String, dynamic>;
+      return MapEntry(
+        id,
+        _CachedSeries(
+          parent,
+          end == null ? null : DateTime.fromMicrosecondsSinceEpoch(end),
+          _observedAt(value),
+          months.map(
+            (key, dates) => MapEntry(
+              key,
+              (dates as List?)
+                  ?.map(
+                    (date) => CalendarEventOverride(
+                      originalStartDateTime:
+                          DateTime.fromMicrosecondsSinceEpoch(
+                            date as int,
+                            isUtc: parent.isAllDay,
+                          ),
+                    ),
+                  )
+                  .toList(),
+            ),
+          ),
+        ),
+      );
+    });
+  }
+
+  static void _saveSeriesRows(
+    Map<String, dynamic> data,
+    Map<String, _CachedSeries> series,
+    Set<String> retainedMonths,
+  ) {
+    data['series'] = {
+      for (final entry in series.entries)
+        if (entry.value.overridesByMonth.keys.any(retainedMonths.contains))
+          entry.key: {
+            'parent': _encodeEvent(entry.value.parent),
+            'end': entry.value.end?.microsecondsSinceEpoch,
+            'observedAt': entry.value.observedAt,
+            'months': {
+              for (final month in entry.value.overridesByMonth.entries)
+                if (retainedMonths.contains(month.key))
+                  month.key: month.value
+                      ?.map(
+                        (override) => override
+                            .originalStartDateTime
+                            .microsecondsSinceEpoch,
+                      )
+                      .toList(),
+            },
+          },
+    };
+  }
+
+  static _CachedSeries _updatedSeries(
+    CalendarEventDto event,
+    DateTime? end,
+    int observedAt,
+    _CachedSeries? previous,
+  ) {
+    final parent = previous?.parent;
+    final sameSchedule =
+        parent != null &&
+        parent.startDateTime == event.startDateTime &&
+        parent.endDateTime == event.endDateTime &&
+        parent.recurrenceRule == event.recurrenceRule &&
+        parent.timeZone == event.timeZone &&
+        parent.isAllDay == event.isAllDay;
+    return _CachedSeries(
+      event.copyWith(overrides: const []),
+      end,
+      observedAt,
+      sameSchedule ? previous!.overridesByMonth : {},
+    );
   }
 
   static Iterable<CalendarEventPeriod> _monthsIn(
@@ -242,9 +381,10 @@ class SharedCalendarCache {
     }
   }
 
-  static CalendarEventDto? _eventInMonth(
+  static bool _overlapsMonth(
     CalendarEventDto event,
     CalendarEventPeriod month,
+    DateTime start,
     DateTime? end,
   ) {
     final from = event.isAllDay
@@ -253,21 +393,19 @@ class SharedCalendarCache {
     final to = event.isAllDay
         ? DateTime.utc(month.to.year, month.to.month)
         : month.to;
-    bool overlaps(DateTime start, DateTime? end) =>
-        start.isBefore(to) &&
+    return start.isBefore(to) &&
         (end == null ||
             end.isAfter(from) ||
             (event.duration == Duration.zero && end.isAtSameMomentAs(from)));
-
-    if (!overlaps(event.startDateTime, end)) return null;
-    if (event.overrides.isEmpty) return event;
-    return event.copyWith(
-      overrides: event.overrides.where((override) {
-        final start = override.originalStartDateTime;
-        return overlaps(start, start.add(event.duration));
-      }).toList(),
-    );
   }
+
+  static List<CalendarEventOverride> _overridesInMonth(
+    CalendarEventDto event,
+    CalendarEventPeriod month,
+  ) => event.overrides.where((override) {
+    final start = override.originalStartDateTime;
+    return _overlapsMonth(event, month, start, start.add(event.duration));
+  }).toList();
 
   Future<bool> saveEvents(
     String ownerId,
@@ -276,13 +414,15 @@ class SharedCalendarCache {
     List<CalendarEventDto> events, {
     int? observedAt,
   }) async {
-    final seriesEnds = {
-      for (final event in events) event.id: _expander.seriesEndDateTime(event),
+    final singleEvents = events.where((event) => event.recurrenceRule == null);
+    final recurringEvents = {
+      for (final event in events)
+        if (event.recurrenceRule != null) event.id: event,
     };
     var retryInitialFetch = false;
     await _update(ownerId, groupId, (data) {
       final timestamp = observedAt ?? DateTime.now().microsecondsSinceEpoch;
-      final saved = data['events'];
+      final saved = data['singleEvents'];
       final rows = saved is Map<String, dynamic> ? saved : <String, dynamic>{};
       final months = _monthsIn(period)
           .where((month) => _observedAt(rows[_periodKey(month)]) <= timestamp)
@@ -294,13 +434,51 @@ class SharedCalendarCache {
         return false;
       }
       final commits = _eventCommits(data);
+      final series = _seriesRows(data, groupId);
+      for (final id in {...series.keys, ...recurringEvents.keys}) {
+        if ((commits[id] ?? 0) > timestamp) continue;
+        final previous = series[id];
+        final event = recurringEvents[id];
+        if (event == null) {
+          if (previous == null || previous.observedAt > timestamp) continue;
+          for (final month in months.where(previous.overlaps)) {
+            previous.overridesByMonth[_periodKey(month)] = null;
+          }
+          continue;
+        }
+        final version = event.version ?? 0;
+        final previousVersion = previous?.parent.version ?? 0;
+        if (version < previousVersion) continue;
+        final current =
+            previous == null ||
+                version > previousVersion ||
+                timestamp >= previous.observedAt
+            ? _updatedSeries(
+                event,
+                _expander.seriesEndDateTime(event),
+                timestamp,
+                previous,
+              )
+            : previous;
+        series[id] = current;
+        for (final month in months.where(current.overlaps)) {
+          current.overridesByMonth[_periodKey(month)] = _overridesInMonth(
+            event,
+            month,
+          );
+        }
+      }
       for (final month in months) {
         final key = _periodKey(month);
         final updated = {
-          for (final event in events)
-            if (_eventInMonth(event, month, seriesEnds[event.id])
-                case final CalendarEventDto monthEvent)
-              event.id: _encodeEvent(monthEvent),
+          for (final event in singleEvents)
+            if (_overlapsMonth(
+              event,
+              month,
+              event.startDateTime,
+              event.endDateTime,
+            ))
+              event.id: _encodeEvent(event),
         };
         // 後着の取得結果でも、保存した予定以外の変更は反映する。
         final previous = rows[key]?['data'];
@@ -323,7 +501,8 @@ class SharedCalendarCache {
       final retained = {
         for (final key in keys.take(_maxCachedMonths)) key: rows[key],
       };
-      data['events'] = retained;
+      data['singleEvents'] = retained;
+      _saveSeriesRows(data, series, retained.keys.toSet());
       final oldestObservation = _observedAt(retained.values.last);
       commits.removeWhere((_, committedAt) => committedAt <= oldestObservation);
       data['commits'] = commits;
@@ -431,6 +610,7 @@ class SharedCalendarCache {
         final file = await _file(ownerId, groupId);
         final data = await _read(file);
         if (!update(data)) return;
+        data.remove('events');
         await file.parent.create(recursive: true);
         final temporary = File('${file.path}.tmp');
         await temporary.writeAsString(jsonEncode(data), flush: true);
@@ -505,4 +685,22 @@ class SharedCalendarCache {
       ],
     );
   }
+}
+
+class _CachedSeries {
+  _CachedSeries(this.parent, this.end, this.observedAt, this.overridesByMonth);
+
+  final CalendarEventDto parent;
+  final DateTime? end;
+  final int observedAt;
+  // キーなしは未取得、nullは親予定なし、空リストは取得済みで取消なし。
+  final Map<String, List<CalendarEventOverride>?> overridesByMonth;
+
+  bool overlaps(CalendarEventPeriod month) =>
+      SharedCalendarCache._overlapsMonth(
+        parent,
+        month,
+        parent.startDateTime,
+        end,
+      );
 }
