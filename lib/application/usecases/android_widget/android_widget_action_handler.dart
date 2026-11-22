@@ -21,6 +21,11 @@ typedef RefreshCalendarWidget = Future<void> Function(
   bool automatic,
 });
 
+bool isAutomaticCalendarWidgetRefresh(Uri? uri) =>
+    uri?.host == 'calendarrefresh' &&
+    uri?.queryParameters['automatic'] == 'true' &&
+    uri?.queryParameters['date']?.isNotEmpty != true;
+
 class AndroidWidgetActionHandler {
   const AndroidWidgetActionHandler({
     required this._cacheStorage,
@@ -56,7 +61,7 @@ class AndroidWidgetActionHandler {
         try {
           await refreshCalendar?.call(
             DateTime.tryParse(uri?.queryParameters['date'] ?? ''),
-            automatic: uri?.queryParameters['automatic'] == 'true',
+            automatic: isAutomaticCalendarWidgetRefresh(uri),
           );
         } catch (_) {
           await _showToastSafely(

@@ -121,7 +121,7 @@ Future<void> withAndroidWidgetDependencies(
         updateWidgetAfterRefresh: false,
       ),
       refreshCalendar: () =>
-          container!.read(refreshCalendarWidgetProvider)(null),
+          container!.read(refreshCalendarWidgetProvider)(null, automatic: true),
     );
     if (database == null) {
       await container

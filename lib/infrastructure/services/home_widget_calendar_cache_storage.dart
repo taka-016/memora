@@ -44,12 +44,11 @@ class HomeWidgetCalendarCacheStorage {
       'com.example.memora.CalendarWidgetReceiver';
 
   static String loadStateKey(String groupId, DateTime date) {
-    final month = DateTime(
-      date.year,
-      date.month,
-    ).toIso8601String().substring(0, 10);
-    return 'memora_widget_calendar_load_${groupId}_$month';
+    return 'memora_widget_calendar_load_${groupId}_${_monthKey(date)}';
   }
+
+  static String _monthKey(DateTime date) =>
+      DateTime(date.year, date.month).toIso8601String().substring(0, 10);
 
   Future<void> refresh(
     String groupId,
@@ -87,13 +86,10 @@ class HomeWidgetCalendarCacheStorage {
       return false;
     }
 
+    final month = cache['month'];
+    if (month is! String) return false;
     final selected = await loadSelectedDate();
-    final month = selected == null
-        ? cache['month']
-        : DateTime(
-            selected.year,
-            selected.month,
-          ).toIso8601String().substring(0, 10);
+    if (selected != null && _monthKey(selected) != month) return false;
     final months = cache['months'];
     return months is Map<String, dynamic> &&
         months[month] is Map<String, dynamic>;
