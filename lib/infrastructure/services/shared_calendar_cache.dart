@@ -38,9 +38,13 @@ class SharedCalendarCache {
     try {
       final data = await _read(await _file(ownerId, groupId));
       final eventsById = <String, CalendarEventDto>{};
+      final eventIdsByMonth = <CalendarEventPeriod, Set<String>>{};
+      final observations = <int>{};
       for (final month in _monthsIn(period)) {
         final events = _events(data, groupId, month);
         if (events == null) return null;
+        eventIdsByMonth[month] = events.map((event) => event.id).toSet();
+        observations.add(_observedAt(_eventRow(data, month)));
         for (final event in events) {
           final previous = eventsById[event.id];
           final version = event.version ?? 0;
@@ -59,6 +63,20 @@ class SharedCalendarCache {
             eventsById[event.id] = previous.copyWith(
               overrides: {...previous.overrides, ...event.overrides}.toList(),
             );
+          }
+        }
+      }
+      if (observations.length > 1) {
+        for (final event in eventsById.values) {
+          final missing = eventIdsByMonth.entries.where(
+            (entry) => !entry.value.contains(event.id),
+          );
+          if (missing.isEmpty) continue;
+          final end = _expander.seriesEndDateTime(event);
+          if (missing.any(
+            (entry) => _eventInMonth(event, entry.key, end) != null,
+          )) {
+            return null;
           }
         }
       }
