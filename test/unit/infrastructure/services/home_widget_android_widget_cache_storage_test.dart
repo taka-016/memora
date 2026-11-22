@@ -100,6 +100,21 @@ void main() {
       await storage.canReuseForAutomaticRefresh('scope', beforeLimit),
       isFalse,
     );
+
+    final januaryUpdate = savedAt.add(const Duration(minutes: 5));
+    await storage.save({
+      'cacheScope': 'scope',
+      'month': '2027-01-01',
+      'months': {
+        '2027-01-01': {'days': <Object?>[]},
+      },
+      'lastUpdatedAt': januaryUpdate.toIso8601String(),
+    });
+    values[HomeWidgetCalendarCacheStorage.selectedDateKey] = '2026-11-22';
+    expect(
+      await storage.canReuseForAutomaticRefresh('scope', januaryUpdate),
+      isFalse,
+    );
   });
 
   test('別Container相当のキャッシュ更新も直列に実行し失敗後に再開する', () async {

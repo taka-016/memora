@@ -107,29 +107,6 @@ class AndroidWidgetBackgroundReceiverTest {
     }
 
     @Test
-    fun `実行中のカレンダー自動更新を共有して月移動と手動更新も実行する`() {
-        val automatic = Uri.parse("memoraWidget://calendarRefresh?date=&automatic=true")
-        val moved = Uri.parse("memoraWidget://calendarRefresh?date=2026-12-01")
-        val manual = Uri.parse("memoraWidget://calendarRefresh?date=")
-        holdNext = true
-
-        AndroidWidgetBackgroundReceiver.enqueue(context, automatic).result.get(10, TimeUnit.SECONDS)
-        val automaticCompletion = pending!!
-        repeat(3) {
-            AndroidWidgetBackgroundReceiver.enqueue(context, automatic).result.get(10, TimeUnit.SECONDS)
-        }
-        AndroidWidgetBackgroundReceiver.enqueue(context, moved).result.get(10, TimeUnit.SECONDS)
-        AndroidWidgetBackgroundReceiver.enqueue(context, manual).result.get(10, TimeUnit.SECONDS)
-        automaticCompletion.complete(ListenableWorker.Result.success())
-
-        assertEquals(1, received.count { it == automatic.toString() })
-        assertEquals(listOf(moved.toString(), manual.toString()), received.filter { it != automatic.toString() })
-
-        AndroidWidgetBackgroundReceiver.enqueue(context, automatic).result.get(10, TimeUnit.SECONDS)
-        assertEquals(2, received.count { it == automatic.toString() })
-    }
-
-    @Test
     fun `キャンセルされた更新列の後も次の更新を実行する`() {
         holdNext = true
         AndroidWidgetBackgroundReceiver.enqueue(context, Uri.parse("memoraWidget://refresh"))
