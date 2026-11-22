@@ -275,6 +275,97 @@ void main() {
     verifyNever(firestore.collection('calendar_event_overrides'));
   });
 
+  test('系列を単発予定に変更して単発の通知が先に届いても共有キャッシュを更新する', () async {
+    final directory = await Directory.systemTemp.createTemp('calendar-watch-');
+    addTearDown(() => directory.delete(recursive: true));
+    final cache = SharedCalendarCache(directory: () async => directory);
+    final period = CalendarEventPeriod.forQuarter(DateTime(2026, 10));
+    const owner = 'online:a';
+    final parents = StreamController<QuerySnapshot<Map<String, dynamic>>>();
+    addTearDown(parents.close);
+    final recurringQuery = MockQuery();
+    when(query.where('recurrenceRule', isNull: true)).thenReturn(query);
+    when(query.where('recurrenceRule', isNull: false))
+        .thenReturn(recurringQuery);
+    when(
+      query.where(
+        'endDateTime',
+        isGreaterThanOrEqualTo: Timestamp.fromDate(period.queryFrom),
+      ),
+    ).thenReturn(query);
+    when(
+      query.where(
+        'startDateTime',
+        isLessThan: Timestamp.fromDate(period.queryTo),
+      ),
+    ).thenReturn(query);
+    when(query.orderBy('endDateTime')).thenReturn(query);
+    when(query.orderBy('startDateTime')).thenReturn(query);
+    when(query.snapshots(includeMetadataChanges: true))
+        .thenAnswer((_) => source.stream);
+    when(recurringQuery.snapshots(includeMetadataChanges: true))
+        .thenAnswer((_) => parents.stream);
+
+    MockQueryDocumentSnapshot event({required bool recurring}) {
+      final document = MockQueryDocumentSnapshot();
+      when(document.id).thenReturn('event');
+      when(document.data()).thenReturn({
+        'groupId': 'g',
+        'labelType': 'group',
+        'title': recurring ? '毎週の予定' : '単発の予定',
+        'isAllDay': true,
+        'startDateTime': Timestamp.fromDate(DateTime.utc(2026, 10, 2)),
+        'endDateTime': Timestamp.fromDate(DateTime.utc(2026, 10, 3)),
+        'recurrenceEndDateTime': Timestamp.fromDate(DateTime.utc(2027, 1, 1)),
+        'recurrenceRule': recurring ? 'FREQ=WEEKLY;BYDAY=FR' : null,
+        'version': recurring ? 1 : 2,
+      });
+      return document;
+    }
+
+    MockQuerySnapshot snapshot([
+      DocumentChangeType? type,
+      MockQueryDocumentSnapshot? document,
+    ]) {
+      final value = MockQuerySnapshot();
+      final changes = <DocumentChange<Map<String, dynamic>>>[];
+      if (type != null) {
+        final change = MockDocumentChange();
+        when(change.type).thenReturn(type);
+        when(change.doc).thenReturn(document!);
+        changes.add(change);
+      }
+      when(value.docChanges).thenReturn(changes);
+      when(value.metadata).thenReturn(_Metadata(isFromCache: false));
+      return value;
+    }
+
+    final service = FirestoreCalendarEventWatchQueryService(
+      firestore: firestore,
+      sharedCache: cache,
+      currentOwnerId: () => owner,
+    );
+    final stream = StreamIterator(
+      service.watchCalendarScreenEvents('g', period: period),
+    );
+    addTearDown(stream.cancel);
+    final parent = event(recurring: true);
+    final first = stream.moveNext();
+    source.add(snapshot());
+    parents.add(snapshot(DocumentChangeType.added, parent));
+    expect(await first, isTrue);
+    expect(stream.current.single.title, '毎週の予定');
+
+    final singleReceived = stream.moveNext();
+    source.add(snapshot(DocumentChangeType.added, event(recurring: false)));
+    expect(await singleReceived, isTrue);
+    final parentRemoved = stream.moveNext();
+    parents.add(snapshot(DocumentChangeType.removed, parent));
+    expect(await parentRemoved, isTrue);
+    expect(stream.current.single.title, '単発の予定');
+    expect(await cache.loadEvents(owner, 'g', period), stream.current);
+  });
+
   test('色ラベルも共有キャッシュを先に表示し、サーバー確認済みの結果で更新する', () async {
     final directory = await Directory.systemTemp.createTemp(
       'calendar-label-watch-',

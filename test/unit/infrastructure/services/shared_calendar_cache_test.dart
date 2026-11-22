@@ -419,6 +419,88 @@ void main() {
     expect(await app.loadEvents('account', 'group', quarter), [created]);
   });
 
+  test('先に開始した取得で新しい版の親予定が届いたらキャッシュ済みの月にも反映する', () async {
+    final october = CalendarEventPeriod.forCalendarMonth(DateTime(2026, 10));
+    final december = CalendarEventPeriod.forCalendarMonth(DateTime(2026, 12));
+    final series = CalendarEventDto(
+      id: 'series',
+      groupId: 'group',
+      title: '毎週の予定',
+      startDateTime: DateTime.utc(2026, 10, 2),
+      endDateTime: DateTime.utc(2026, 10, 3),
+      isAllDay: true,
+      recurrenceRule: 'FREQ=WEEKLY;BYDAY=FR',
+      version: 2,
+    );
+    final changed = series.copyWith(
+      version: 3,
+      overrides: [
+        CalendarEventOverride(originalStartDateTime: DateTime.utc(2026, 12, 4)),
+      ],
+    );
+    await app.saveEvents('account', 'group', december, [series], observedAt: 3);
+    await widget.saveEvents('account', 'group', october, [
+      changed,
+    ], observedAt: 2);
+
+    expect(await widget.loadEvents('account', 'group', december), [changed]);
+  });
+
+  test('単発予定の初回取得をやり直す場合も、新しい親予定は取得済みの月に反映する', () async {
+    final october = CalendarEventPeriod.forCalendarMonth(DateTime(2026, 10));
+    final december = CalendarEventPeriod.forCalendarMonth(DateTime(2026, 12));
+    final series = CalendarEventDto(
+      id: 'series',
+      groupId: 'group',
+      title: '変更前',
+      startDateTime: DateTime.utc(2026, 10, 2),
+      endDateTime: DateTime.utc(2026, 10, 3),
+      isAllDay: true,
+      recurrenceRule: 'FREQ=WEEKLY;BYDAY=FR',
+      version: 1,
+    );
+    final single = CalendarEventDto(
+      id: 'single',
+      groupId: 'group',
+      title: '追加した予定',
+      startDateTime: DateTime.utc(2026, 10, 5),
+      endDateTime: DateTime.utc(2026, 10, 6),
+      isAllDay: true,
+      version: 1,
+    );
+    final changed = series.copyWith(
+      title: '変更後',
+      version: 2,
+      overrides: [
+        CalendarEventOverride(originalStartDateTime: DateTime.utc(2026, 12, 4)),
+      ],
+    );
+
+    await app.saveEvents('account', 'group', december, [series], observedAt: 1);
+    await app.applyEventChanges('account', [
+      (
+        groupId: 'group',
+        eventId: single.id,
+        event: single,
+        recurrenceEnd: null,
+        version: single.version,
+      ),
+    ], committedAt: 3);
+
+    final accepted = await app.saveEvents(
+      'account',
+      'group',
+      october,
+      [changed],
+      observedAt: 2,
+      recurringObservedAt: 4,
+    );
+
+    expect(accepted, isFalse);
+    expect(await widget.loadEvents('account', 'group', october), isNull);
+    expect(await widget.loadEvents('account', 'group', december), [changed]);
+  });
+
   test('キャッシュにまだ載っていない削除済みの系列も後着の取得結果から除く', () async {
     final series = CalendarEventDto(
       id: 'series',
