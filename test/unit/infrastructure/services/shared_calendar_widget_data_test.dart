@@ -16,10 +16,8 @@ void main() {
       from: DateTime(2026, 10),
       to: DateTime(2027),
     );
-    final display = CalendarEventPeriod(
-      from: DateTime(2026, 9, 25),
-      to: DateTime(2027, 1, 7),
-    );
+    final previous = CalendarEventPeriod.forQuarter(DateTime(2026, 9));
+    final periods = [previous, quarter];
     await appCache.saveEvents('online:a', 'g', quarter, []);
     await appCache.saveLabels('online:a', 'g', const [], observedAt: 1);
     final requests = <CalendarEventPeriod>[];
@@ -45,25 +43,19 @@ void main() {
       },
     );
 
-    final data = await loader.load('online:a', 'g', display, force: false);
+    final data = await loader.load('online:a', 'g', periods, force: false);
     expect(data.labels, isEmpty);
-    expect(data.slices.length, 3);
-    expect(requests, [
-      CalendarEventPeriod(from: display.from, to: quarter.from),
-      CalendarEventPeriod(from: quarter.to, to: display.to),
-    ]);
+    expect(data.eventsByPeriod.keys, periods);
+    expect(requests, [previous]);
     expect(labelsRead, 0);
-    expect(
-      (await appCache.loadEvents('online:a', 'g', display)).missing,
-      isEmpty,
-    );
+    expect(await appCache.loadEvents('online:a', 'g', previous), isEmpty);
 
     requests.clear();
-    await loader.load('online:a', 'g', display, force: false);
+    await loader.load('online:a', 'g', periods, force: false);
     expect(requests, isEmpty);
 
-    await loader.load('online:a', 'g', display, force: true);
-    expect(requests, [display]);
+    await loader.load('online:a', 'g', periods, force: true);
+    expect(requests, periods);
     expect(labelsRead, 1);
     expect((await appCache.loadLabels('online:a', 'g'))?.single.id, 'label');
   });

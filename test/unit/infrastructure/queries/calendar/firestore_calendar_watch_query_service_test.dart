@@ -1,6 +1,10 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
+import 'package:memora/application/models/calendar_event_period.dart';
+import 'package:memora/infrastructure/services/shared_calendar_cache.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
@@ -105,6 +109,77 @@ void main() {
     });
     addTearDown(source.close);
   });
+  test('端末の共有キャッシュを先に表示し、サーバー確認済みの空期間で上書きする', () async {
+    final directory = await Directory.systemTemp.createTemp('calendar-watch-');
+    addTearDown(() => directory.delete(recursive: true));
+    final cache = SharedCalendarCache(directory: () async => directory);
+    final period = CalendarEventPeriod.forQuarter(DateTime(2026, 11));
+    const groupId = 'g';
+    const ownerId = 'online:a';
+    final saved = CalendarEventDto(
+      id: 'widget',
+      groupId: groupId,
+      title: 'ウィジェットで取得した予定',
+      startDateTime: DateTime.utc(2026, 11, 1),
+      endDateTime: DateTime.utc(2026, 11, 2),
+      isAllDay: true,
+    );
+    await cache.saveEvents(ownerId, groupId, period, [saved]);
+
+    final recurring = StreamController<QuerySnapshot<Map<String, dynamic>>>();
+    addTearDown(recurring.close);
+    final recurringQuery = MockQuery();
+    when(query.where('recurrenceRule', isNull: true)).thenReturn(query);
+    when(query.where('recurrenceRule', isNull: false))
+        .thenReturn(recurringQuery);
+    when(
+      query.where(
+        'endDateTime',
+        isGreaterThanOrEqualTo: anyNamed('isGreaterThanOrEqualTo'),
+      ),
+    ).thenReturn(query);
+    when(query.where('startDateTime', isLessThan: anyNamed('isLessThan')))
+        .thenReturn(query);
+    when(query.orderBy('endDateTime')).thenReturn(query);
+    when(query.orderBy('startDateTime')).thenReturn(query);
+    when(query.snapshots(includeMetadataChanges: true))
+        .thenAnswer((_) => source.stream);
+    when(recurringQuery.snapshots(includeMetadataChanges: true))
+        .thenAnswer((_) => recurring.stream);
+
+    MockQuerySnapshot empty({required bool isFromCache}) {
+      final snapshot = MockQuerySnapshot();
+      when(snapshot.docChanges).thenReturn([]);
+      when(snapshot.metadata).thenReturn(_Metadata(isFromCache: isFromCache));
+      return snapshot;
+    }
+
+    final service = FirestoreCalendarEventWatchQueryService(
+      firestore: firestore,
+      sharedCache: cache,
+      currentOwnerId: () => ownerId,
+    );
+    final stream = StreamIterator(
+      service.watchCalendarScreenEvents(groupId, period: period),
+    );
+    addTearDown(stream.cancel);
+    expect(await stream.moveNext(), isTrue);
+    expect(stream.current, [saved]);
+
+    final next = stream.moveNext();
+    source.add(empty(isFromCache: true));
+    recurring.add(empty(isFromCache: true));
+    await flush();
+    expect(await cache.loadEvents(ownerId, groupId, period), [saved]);
+
+    source.add(empty(isFromCache: false));
+    recurring.add(empty(isFromCache: false));
+    expect(await next, isTrue);
+    expect(stream.current, isEmpty);
+    final updated = await cache.loadEvents(ownerId, groupId, period);
+    expect(updated, isEmpty);
+  });
+
   test('共有相手の購読が残っていても監視失敗後の再試行で再接続する', () async {
     final service = FirestoreCalendarEventWatchQueryService(
       firestore: firestore,
@@ -271,4 +346,13 @@ void main() {
     await flush();
     expect(errors, hasLength(1));
   });
+}
+
+class _Metadata extends Fake implements SnapshotMetadata {
+  _Metadata({required this.isFromCache});
+
+  @override
+  final bool isFromCache;
+  @override
+  bool get hasPendingWrites => false;
 }
