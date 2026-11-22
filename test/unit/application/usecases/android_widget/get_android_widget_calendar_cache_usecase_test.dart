@@ -88,16 +88,17 @@ void main() {
       labels: labels,
       expander: CalendarRecurrenceExpander(IanaCalendarTimeZone()),
       mode: AppMode.online,
-      loadSharedGroup: (_, groupId, periods, {required force}) async {
-        expect(periods, [previous, displayed]);
-        return CalendarWidgetGroupData(
-          eventsByPeriod: {for (final period in periods) period: []},
-          labels: [],
-          synchronizedPeriods: skipSecondGroup && groupId == anotherGroup.id
-              ? {}
-              : fetched,
-        );
-      },
+      loadSharedGroup:
+          (_, groupId, periods, {required force, required forceLabels}) async {
+            expect(periods, [previous, displayed]);
+            return CalendarWidgetGroupData(
+              eventsByPeriod: {for (final period in periods) period: []},
+              labels: [],
+              synchronizedPeriods: skipSecondGroup && groupId == anotherGroup.id
+                  ? {}
+                  : fetched,
+            );
+          },
     );
     Future<Object?> synchronized() async {
       final cache = await online.execute(
@@ -114,6 +115,51 @@ void main() {
     expect(await synchronized(), isFalse);
     skipSecondGroup = false;
     expect(await synchronized(), isTrue);
+    verifyZeroInteractions(events);
+  });
+
+  test('公開済みの別の月を共有キャッシュから一緒に描き直す', () async {
+    final november = DateTime(2026, 11);
+    final september = DateTime(2026, 9);
+    final earlier = CalendarEventPeriod.forQuarter(september);
+    final later = CalendarEventPeriod.forQuarter(november);
+    final saved = event(
+      '変更後の予定',
+      DateTime.utc(2026, 9, 10),
+      DateTime.utc(2026, 9, 11),
+    );
+    final online = GetAndroidWidgetCalendarCacheUsecase(
+      events: events,
+      labels: labels,
+      expander: CalendarRecurrenceExpander(IanaCalendarTimeZone()),
+      mode: AppMode.online,
+      loadSharedGroup:
+          (_, groupId, periods, {required force, required forceLabels}) async {
+            expect(periods, [earlier, later]);
+            expect(force, isFalse);
+            expect(forceLabels, isTrue);
+            return CalendarWidgetGroupData(
+              eventsByPeriod: {
+                earlier: [saved],
+                later: [],
+              },
+              labels: [],
+            );
+          },
+    );
+    final result = (await online.execute(
+      [group],
+      november,
+      ownerId: 'online:a',
+      publishedMonths: [september],
+      forceLabels: true,
+    ))!;
+    final months = result['months'] as Map;
+    final day = (months['2026-09-01']['days'] as List).singleWhere(
+      (day) => day['date'] == '2026-09-10',
+    );
+    expect((day['events'] as List).single['title'], '変更後の予定');
+    expect(result['month'], '2026-11-01');
     verifyZeroInteractions(events);
   });
 

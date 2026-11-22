@@ -60,9 +60,19 @@ void main() {
     expect(cached.synchronizedPeriods, isEmpty);
     expect(cached.observedAt, data.observedAt);
 
+    await loader.load(
+      'online:a',
+      'g',
+      periods,
+      force: false,
+      forceLabels: true,
+    );
+    expect(requests, isEmpty);
+    expect(labelsRead, 1);
+
     await loader.load('online:a', 'g', periods, force: true);
     expect(requests, periods);
-    expect(labelsRead, 1);
+    expect(labelsRead, 2);
     expect((await appCache.loadLabels('online:a', 'g'))?.single.id, 'label');
   });
 

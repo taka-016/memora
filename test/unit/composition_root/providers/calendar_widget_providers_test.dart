@@ -90,6 +90,53 @@ void main() {
     verifyNoMoreInteractions(selection);
     verify(storage.save(any, retainMonthsWithin: null)).called(1);
   });
+  test('予定保存後は別のウィジェットで公開済みの月も保存前の表示に戻さない', () async {
+    final september = DateTime(2026, 9);
+    when(storage.loadSelectedDate()).thenAnswer((_) async => month);
+    when(storage.loadPublishedMonths(current.cacheScope))
+        .thenAnswer((_) async => [september]);
+    when(
+      cache.execute(
+        current.visibleGroups,
+        month,
+        ownerId: current.ownerId,
+        publishedMonths: anyNamed('publishedMonths'),
+      ),
+    ).thenAnswer(
+      (call) async => {
+        'cacheScope': current.cacheScope,
+        'month': '2026-11-01',
+        'months': {
+          '2026-09-01': {'days': []},
+          '2026-11-01': {'days': []},
+        },
+      },
+    );
+
+    await container.read(refreshCalendarWidgetProvider)(
+      null,
+      afterMutation: true,
+    );
+
+    final arguments = verify(
+      cache.execute(
+        current.visibleGroups,
+        month,
+        ownerId: current.ownerId,
+        publishedMonths: captureAnyNamed('publishedMonths'),
+      ),
+    ).captured;
+    expect(arguments.single, [september]);
+    final saved =
+        verify(storage.save(captureAny, retainMonthsWithin: null))
+                .captured
+                .single
+            as Map<String, Object?>;
+    expect((saved['months'] as Map).keys, ['2026-09-01', '2026-11-01']);
+    verify(selection.execute()).called(1);
+    verify(selection.loadCurrentScope()).called(1);
+  });
+
   test('バックアップ復元後は取得済み月を引き継がない', () async {
     await container.read(refreshCalendarWidgetProvider)(
       null,
