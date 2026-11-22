@@ -86,12 +86,14 @@ class HomeWidgetCalendarCacheStorage {
       return false;
     }
 
-    final month = cache['month'];
-    if (month is! String) return false;
     final selected = await loadSelectedDate();
-    if (selected != null && _monthKey(selected) != month) return false;
+    final month = selected == null ? cache['month'] : _monthKey(selected);
+    final updatedMonths = cache['lastUpdatedMonths'];
     final months = cache['months'];
-    return months is Map<String, dynamic> &&
+    return month is String &&
+        updatedMonths is List &&
+        updatedMonths.contains(month) &&
+        months is Map<String, dynamic> &&
         months[month] is Map<String, dynamic>;
   }
 
@@ -132,6 +134,7 @@ class HomeWidgetCalendarCacheStorage {
     final publishedCache = {
       ...cache,
       'months': {for (final key in keys.take(7)) key: months[key]},
+      'lastUpdatedMonths': incomingMonths?.keys.toList() ?? <String>[],
     };
     final directory = await getApplicationSupportDirectory();
     final folder = Directory('${directory.path}/home_widget');
