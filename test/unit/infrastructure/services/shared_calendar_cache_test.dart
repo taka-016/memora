@@ -63,4 +63,16 @@ void main() {
     await app.saveEvents('account', 'group', quarter, [event], observedAt: 2);
     expect(await app.loadEvents('account', 'group', quarter), isEmpty);
   });
+
+  test('予定保存後は影響するグループの取得済み期間だけを無効化する', () async {
+    final previous = CalendarEventPeriod.forQuarter(DateTime(2026, 9));
+    await app.saveEvents('account', 'group', quarter, [], observedAt: 1);
+    await app.saveEvents('account', 'group', previous, [], observedAt: 1);
+    await app.saveEvents('account', 'other', quarter, [], observedAt: 1);
+    await app.invalidateEvents('account', 'group');
+    await widget.saveEvents('account', 'group', quarter, [], observedAt: 1);
+    expect(await widget.loadEvents('account', 'group', quarter), isNull);
+    expect(await widget.loadEvents('account', 'group', previous), isNull);
+    expect(await widget.loadEvents('account', 'other', quarter), isEmpty);
+  });
 }

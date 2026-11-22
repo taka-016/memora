@@ -14,12 +14,28 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
+import java.io.File
+import java.time.LocalDate
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35], manifest = Config.NONE, application = Application::class)
 class CalendarWidgetUpdateNotificationTest {
     private val context = RuntimeEnvironment.getApplication()
     private val notification = Intent(AppWidgetManager.ACTION_APPWIDGET_UPDATE)
+
+    @Test
+    fun `取得済みの月へ移動しても共有キャッシュが変われば再描画を要求する`() {
+        val file = File(context.filesDir, "shared-calendar-test")
+        file.writeText("予定")
+        val current = LocalDate.of(2026, 11, 1)
+        val previous = current.minusMonths(1)
+        val monthly = CalendarWidgetMonth(current, emptyList(),
+            sourceFiles = mapOf(file.path to file.lastModified()))
+        val months = mapOf(previous to monthly, current to monthly, current.plusMonths(1) to monthly)
+        assertFalse(needsCalendarWidgetRefresh(previous, current, months))
+        assertTrue(file.setLastModified(file.lastModified() + 1000))
+        assertTrue(needsCalendarWidgetRefresh(previous, current, months))
+    }
 
     @Test
     fun `自動更新通知を受け付けてから1分間は後続の通知を無視する`() {

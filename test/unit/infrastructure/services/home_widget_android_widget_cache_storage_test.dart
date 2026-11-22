@@ -201,6 +201,22 @@ void main() {
     expect(values[HomeWidgetCalendarCacheStorage.scopeKey], 'calendar-owner');
   });
 
+  test('カレンダーのキャッシュ表示でウィジェットの同期時刻を更新しない', () async {
+    const oldSync = '2026-10-01T10:00:00.000';
+    values[HomeWidgetAndroidWidgetCacheStorage.lastUpdatedAtKey] = oldSync;
+    await const HomeWidgetCalendarCacheStorage().save({
+      'sourceMode': 'online',
+      'month': '2026-11-01',
+      'months': <String, Object?>{},
+      'lastUpdatedAt': '2026-11-01T10:00:00.000',
+      'synchronized': false,
+    });
+    expect(
+      values[HomeWidgetAndroidWidgetCacheStorage.lastUpdatedAtKey],
+      oldSync,
+    );
+  });
+
   test('カレンダーの月と全予定をファイルで公開し対象解除時に削除する', () async {
     const calendar = HomeWidgetCalendarCacheStorage();
     final data = <String, Object?>{

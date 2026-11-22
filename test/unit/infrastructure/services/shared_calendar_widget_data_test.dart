@@ -45,14 +45,19 @@ void main() {
 
     final data = await loader.load('online:a', 'g', periods, force: false);
     expect(data.labels, isEmpty);
+    expect(data.synchronized, isTrue);
+    expect(data.sourceFiles.entries.single.value, greaterThan(0));
+    expect(data.observedAt.keys, periods);
     expect(data.eventsByPeriod.keys, periods);
     expect(requests, [previous]);
     expect(labelsRead, 0);
     expect(await appCache.loadEvents('online:a', 'g', previous), isEmpty);
 
     requests.clear();
-    await loader.load('online:a', 'g', periods, force: false);
+    final cached = await loader.load('online:a', 'g', periods, force: false);
     expect(requests, isEmpty);
+    expect(cached.synchronized, isFalse);
+    expect(cached.observedAt, data.observedAt);
 
     await loader.load('online:a', 'g', periods, force: true);
     expect(requests, periods);
