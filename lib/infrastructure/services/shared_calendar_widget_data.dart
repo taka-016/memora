@@ -16,8 +16,7 @@ class SharedCalendarWidgetData {
   final String? Function() currentOwnerId;
   final Future<List<CalendarEventDto>> Function(
     String groupId, {
-    CalendarEventPeriod? period,
-    void Function(String eventId, List<DateTime> starts)? onCancellationStarts,
+    required CalendarEventPeriod period,
   })
   fetchEvents;
   final Future<List<CalendarLabelDto>> Function(String groupId) fetchLabels;
@@ -54,14 +53,7 @@ class SharedCalendarWidgetData {
         for (var attempt = 0; ; attempt++) {
           checkOwner();
           final observedAt = DateTime.now().microsecondsSinceEpoch;
-          final cancellationStartsBySeries = <String, List<DateTime>>{};
-          final events = await fetchEvents(
-            groupId,
-            period: period,
-            onCancellationStarts: (id, starts) {
-              cancellationStartsBySeries[id] = starts;
-            },
-          );
+          final events = await fetchEvents(groupId, period: period);
           checkOwner();
           if (await cache.saveEvents(
             ownerId,
@@ -69,7 +61,6 @@ class SharedCalendarWidgetData {
             period,
             events,
             observedAt: observedAt,
-            cancellationStartsBySeries: cancellationStartsBySeries,
           )) {
             for (final month in requested.getRange(first, last + 1)) {
               fetchedEvents[month] = events;
@@ -106,20 +97,6 @@ class SharedCalendarWidgetData {
     }
     if (fetchedEvents.isNotEmpty || fetchedLabels != null) {
       snapshot = await cache.loadGroup(ownerId, groupId, periods);
-    }
-    if (fetchedEvents.isNotEmpty) {
-      // 新たに取得した親予定によって、別の月にも取消情報が必要になる。
-      final missing = [
-        for (final period in periods)
-          if (!snapshot.eventsByPeriod.containsKey(period) &&
-              (snapshot.observedAt[period] ?? 0) >=
-                  (observedTimes[period] ?? 0))
-            period,
-      ];
-      if (missing.isNotEmpty) {
-        await fetchMonths(missing);
-        snapshot = await cache.loadGroup(ownerId, groupId, periods);
-      }
     }
     checkOwner();
     final eventsByPeriod = <CalendarEventPeriod, List<CalendarEventDto>>{};

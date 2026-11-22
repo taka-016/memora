@@ -12,13 +12,12 @@ import 'package:memora/infrastructure/services/shared_calendar_cache.dart';
 
 typedef _EventDocument = DocumentSnapshot<Map<String, dynamic>>;
 typedef _EventDocuments = Map<String, _EventDocument>;
-typedef _DocumentBatch = ({_EventDocuments documents, bool confirmed});
-typedef _EventValue = ({CalendarEventDto event, bool confirmed});
-typedef _EventRead = (
-  _EventDocument,
-  Future<_EventValue>,
-  bool documentsConfirmed,
-);
+typedef _DocumentBatch = ({
+  _EventDocuments documents,
+  bool confirmed,
+  int observedAt,
+});
+typedef _EventRead = (_EventDocument, Future<CalendarEventDto>);
 typedef _EventBatch = ({List<CalendarEventDto> events, bool confirmed});
 
 class FirestoreCalendarEventWatchQueryService
@@ -55,7 +54,7 @@ class FirestoreCalendarEventWatchQueryService
       final (owner, id, range, sharesRecurringParents) = entry.key;
       if (owner == ownerId &&
           id == groupId &&
-          (!allRecurringParents || sharesRecurringParents) &&
+          allRecurringParents == sharesRecurringParents &&
           (range == null ||
               (period != null &&
                   !range.queryFrom.isAfter(period.queryFrom) &&
@@ -188,6 +187,7 @@ class FirestoreCalendarEventWatchQueryService
       }
       return (
         documents: Map.of(documents),
+        observedAt: trackCoverage ? DateTime.now().microsecondsSinceEpoch : 0,
         confirmed:
             !trackCoverage ||
             (!snapshot.metadata.isFromCache &&
@@ -249,20 +249,7 @@ class FirestoreCalendarEventWatchQueryService
               ),
               trackCoverage: persist,
             ),
-            _watchRecurringParents(
-              groupId,
-              ownerId,
-              trackCoverage: persist,
-            ).map(
-              (batch) => (
-                documents: {
-                  for (final entry in batch.documents.entries)
-                    if (_overlapsPeriod(entry.value, period))
-                      entry.key: entry.value,
-                },
-                confirmed: batch.confirmed,
-              ),
-            ),
+            _watchRecurringParents(groupId, ownerId, trackCoverage: persist),
           ]
         : calendarEventQueries(firestore, groupId, period)
               .map((query) => _watchDocuments(query, trackCoverage: false))
@@ -272,25 +259,11 @@ class FirestoreCalendarEventWatchQueryService
       null,
     );
     final confirmed = List<bool>.filled(sources.length, false);
+    final observedAt = List<int>.filled(sources.length, 0);
     final store = FirestoreCalendarEventStore(firestore);
     final subscriptions = <StreamSubscription<_DocumentBatch>>[];
     var generation = 0;
     var cancelled = false;
-
-    Future<_EventValue> read(
-      _EventDocument document,
-      Future<_EventValue>? previous,
-    ) async {
-      final existing = await previous;
-      if (existing != null && existing.confirmed) return existing;
-      var complete = true;
-      final event = await store.read(
-        document,
-        period: period,
-        onOverrideCoverage: persist ? (value) => complete = value : null,
-      );
-      return (event: event, confirmed: complete);
-    }
 
     late StreamController<_EventBatch> controller;
     controller = StreamController<_EventBatch>(
@@ -301,25 +274,26 @@ class FirestoreCalendarEventWatchQueryService
             sources[index].listen(
               (batch) async {
                 final current = ++generation;
-                final observedAt = persist
-                    ? DateTime.now().microsecondsSinceEpoch
-                    : 0;
                 try {
                   final previous = received[bucket];
                   final pending = <String, _EventRead>{};
                   for (final entry in batch.documents.entries) {
                     final old = previous?[entry.key];
-                    final same = old != null && identical(old.$1, entry.value);
-                    pending[entry.key] = same && (!batch.confirmed || old.$3)
+                    pending[entry.key] =
+                        old != null && identical(old.$1, entry.value)
                         ? old
                         : (
                             entry.value,
-                            read(entry.value, same ? old.$2 : null),
-                            batch.confirmed,
+                            allRecurringParents
+                                ? Future.sync(
+                                    () => store.readForDisplay(entry.value),
+                                  )
+                                : store.read(entry.value, period: period),
                           );
                   }
                   received[bucket] = pending;
                   confirmed[bucket] = batch.confirmed;
+                  observedAt[bucket] = batch.observedAt;
                   await Future.wait(pending.values.map((entry) => entry.$2));
                   if (cancelled ||
                       current != generation ||
@@ -327,36 +301,40 @@ class FirestoreCalendarEventWatchQueryService
                     return;
                   }
                   final combined = {for (final values in received) ...values!};
-                  final values = await Future.wait(
-                    combined.values.map((entry) => entry.$2),
+                  final entries = combined.values.toList();
+                  final events = await Future.wait(
+                    entries.map((entry) => entry.$2),
                   );
                   if (cancelled ||
                       current != generation ||
                       currentOwnerId?.call() != ownerId) {
                     return;
                   }
-                  final events = values.map((value) => value.event).toList();
-                  final complete =
-                      confirmed.every((value) => value) &&
-                      values.every((value) => value.confirmed);
+                  final complete = confirmed.every((value) => value);
                   if (persist && complete) {
                     await cache.saveEvents(
                       ownerId,
                       groupId,
                       period,
                       events,
-                      observedAt: observedAt,
-                      cancellationStartsBySeries: {
-                        for (final entry in combined.entries)
-                          if (entry.value.$1.data()?['recurrenceRule'] != null)
-                            entry.key: store.cancellationStarts(entry.value.$1),
-                      },
+                      observedAt: observedAt[0],
+                      recurringObservedAt: observedAt[1],
                     );
                   }
                   if (!cancelled &&
                       current == generation &&
                       currentOwnerId?.call() == ownerId) {
-                    controller.add((events: events, confirmed: complete));
+                    controller.add((
+                      events: [
+                        for (var index = 0; index < events.length; index++)
+                          if (!allRecurringParents ||
+                              period == null ||
+                              events[index].recurrenceRule == null ||
+                              _overlapsPeriod(entries[index].$1, period))
+                            events[index],
+                      ],
+                      confirmed: complete,
+                    ));
                   }
                 } catch (error, stack) {
                   if (!cancelled && current == generation) {

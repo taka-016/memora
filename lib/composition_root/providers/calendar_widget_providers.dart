@@ -51,7 +51,7 @@ final getAndroidWidgetCalendarCacheUsecaseProvider =
           fetchEvents: FirestoreCalendarEventQueryService(
             firestore: firestore,
             options: server,
-          ).getCalendarEventsByGroupId,
+          ).getCalendarEventsForWidget,
           fetchLabels: FirestoreCalendarLabelQueryService(
             firestore: firestore,
             options: server,

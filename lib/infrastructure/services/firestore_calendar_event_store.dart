@@ -17,18 +17,30 @@ class FirestoreCalendarEventStore {
   List<String> overrideIds(Map<String, dynamic> data) =>
       (data['overrideIds'] as List? ?? []).cast<String>();
 
-  List<DateTime> cancellationStarts(
+  CalendarEventDto readForDisplay(
     DocumentSnapshot<Map<String, dynamic>> parent,
   ) {
     final data = parent.data()!;
-    return [
-      for (final id in overrideIds(data))
-        ?FirestoreCalendarEventOverrideMapper.originalStartFromDocumentId(
-          parent.id,
-          id,
-          parentAllDay: data['isAllDay'] as bool,
-        ),
-    ];
+    if (data['recurrenceRule'] == null) {
+      return FirestoreCalendarEventMapper.fromData(parent.id, data);
+    }
+    return FirestoreCalendarEventMapper.fromData(
+      parent.id,
+      data,
+      overrides: [
+        for (final id in overrideIds(data))
+          if (FirestoreCalendarEventOverrideMapper.originalStartFromDocumentId(
+                parent.id,
+                id,
+                parentAllDay: data['isAllDay'] as bool,
+              )
+              case final start?)
+            CalendarEventOverride(originalStartDateTime: start),
+      ],
+    ).copyWith(
+      recurrenceEndDateTime: (data['recurrenceEndDateTime'] as Timestamp?)
+          ?.toDate(),
+    );
   }
 
   Future<CalendarEventDto> read(
@@ -36,7 +48,6 @@ class FirestoreCalendarEventStore {
     Transaction? transaction,
     CalendarEventPeriod? period,
     GetOptions? options,
-    void Function(bool confirmed)? onOverrideCoverage,
   }) async {
     final data = event.data()!;
     final overrides = <CalendarEventOverride>[];
@@ -54,11 +65,6 @@ class FirestoreCalendarEventStore {
         );
       }
       final snapshot = await query.get(options);
-      if (onOverrideCoverage != null) {
-        onOverrideCoverage(
-          !snapshot.metadata.isFromCache && !snapshot.metadata.hasPendingWrites,
-        );
-      }
       overrides.addAll(
         snapshot.docs.map(
           (doc) => FirestoreCalendarEventOverrideMapper.fromFirestore(
