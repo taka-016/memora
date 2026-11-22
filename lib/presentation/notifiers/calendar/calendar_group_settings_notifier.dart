@@ -41,6 +41,10 @@ class CalendarGroupSettingsState {
       groupsReady && !isLoading && !isSaving && !loadFailed;
   CalendarGroupSettings get effectiveSettings =>
       settings.retainGroups(groups.map((g) => g.id).toSet());
+  Map<String, GroupDto> get _visibleGroups => {
+    for (final group in groups)
+      if (settings.visibleGroupIds.contains(group.id)) group.id: group,
+  };
   CalendarGroupSettingsState copyWith({
     CalendarGroupSettings? settings,
     List<GroupDto>? groups,
@@ -70,17 +74,23 @@ class CalendarGroupSettingsNotifier extends _$CalendarGroupSettingsNotifier {
   bool _skipInitialSelection = false;
   @override
   CalendarGroupSettingsState build() {
-    listenSelf((previous, next) {
-      if (!next.canUseSettings) return;
-      if (previous?.canUseSettings == true &&
+    CalendarGroupSettingsState? lastUsable;
+    listenSelf((_, next) {
+      if (!next.canUseSettings || !_groupsConfirmed) return;
+      final previous = lastUsable;
+      lastUsable = next;
+      final groupsChanged =
+          previous != null &&
+          !mapEquals(previous._visibleGroups, next._visibleGroups);
+      if (previous != null &&
+          !groupsChanged &&
           setEquals(
-            previous!.effectiveSettings.visibleGroupIds,
+            previous.effectiveSettings.visibleGroupIds,
             next.effectiveSettings.visibleGroupIds,
-          ) &&
-          listEquals(previous.groups, next.groups)) {
+          )) {
         return;
       }
-      unawaited(_refreshWidget());
+      unawaited(_refreshWidget(groupsChanged: groupsChanged));
     });
     ref.listen(offlineBackupNotifierProvider, (_, next) {
       if (next.isRestoring) _skipInitialSelection = true;
@@ -95,8 +105,7 @@ class CalendarGroupSettingsNotifier extends _$CalendarGroupSettingsNotifier {
         (_) async {
           final request = ++membershipRequest;
           try {
-            if (ref.exists(startupCommonDataNotifierProvider) &&
-                ref.read(startupCommonDataOwnerProvider) != null) {
+            if (_usesCommonData) {
               await ref
                   .read(startupCommonDataNotifierProvider.notifier)
                   .refreshAfterChange();
@@ -167,8 +176,17 @@ class CalendarGroupSettingsNotifier extends _$CalendarGroupSettingsNotifier {
     return CalendarGroupSettingsState();
   }
 
-  Future<void> _refreshWidget() async {
+  bool get _usesCommonData =>
+      ref.exists(startupCommonDataNotifierProvider) &&
+      ref.read(startupCommonDataOwnerProvider) != null;
+
+  bool get _groupsConfirmed =>
+      !_usesCommonData ||
+      ref.read(startupCommonDataNotifierProvider).groupsConfirmed;
+
+  Future<void> _refreshWidget({bool groupsChanged = false}) async {
     try {
+      final generation = _generation;
       final owner = _owner;
       final scope = owner == null
           ? null
@@ -177,9 +195,13 @@ class CalendarGroupSettingsNotifier extends _$CalendarGroupSettingsNotifier {
               owner,
               state.effectiveSettings.visibleGroupIds.toList()..sort(),
             ]);
-      await ref.read(calendarWidgetScopeChangedProvider)(scope);
-      if (!ref.mounted) return;
-      await ref.read(calendarWidgetGroupsChangedProvider)();
+      final needsRefresh = await ref.read(prepareCalendarWidgetRefreshProvider)(
+        scope,
+      );
+      if (!ref.mounted || generation != _generation) return;
+      if (needsRefresh || groupsChanged) {
+        await ref.read(calendarWidgetGroupsChangedProvider)();
+      }
     } catch (error, stack) {
       logger.w('表示設定変更後のウィジェット更新に失敗しました', error: error, stackTrace: stack);
     }
@@ -290,7 +312,12 @@ class CalendarGroupSettingsNotifier extends _$CalendarGroupSettingsNotifier {
           .read(calendarGroupSettingsStorageProvider)
           .save(owner, settings);
       if (!ref.mounted || generation != _generation) return false;
+      final previous = state.effectiveSettings.visibleGroupIds;
       state = state.copyWith(settings: settings, isSaving: false);
+      if (!_groupsConfirmed &&
+          !setEquals(previous, state.effectiveSettings.visibleGroupIds)) {
+        unawaited(_refreshWidget());
+      }
       return true;
     } catch (_) {
       if (ref.mounted && generation == _generation) {

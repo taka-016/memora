@@ -15,6 +15,8 @@ internal const val CALENDAR_SELECT_ACTION = "com.example.memora.action.CALENDAR_
 internal const val CALENDAR_REFRESH_ACTION = "com.example.memora.action.CALENDAR_REFRESH"
 private const val CALENDAR_DATE_EXTRA = "date"
 private const val CALENDAR_TODAY_EXTRA = "today"
+private const val CALENDAR_UPDATE_INTERVAL_MILLIS = 60_000L
+private const val LAST_CALENDAR_UPDATE_NOTIFICATION_KEY = "memora_widget_calendar_update_notification_at"
 
 open class CalendarWidgetReceiver : AppWidgetProvider() {
     override fun onUpdate(context: Context, manager: AppWidgetManager, widgetIds: IntArray) {
@@ -57,8 +59,9 @@ open class CalendarWidgetReceiver : AppWidgetProvider() {
         }
     }
 
-    private fun receive(context: Context, intent: Intent) {
+    internal fun receive(context: Context, intent: Intent) {
         super.onReceive(context, intent)
+        if (!shouldReceiveCalendarWidgetIntent(context, intent)) return
         when (intent.action) {
             CALENDAR_SELECT_ACTION -> selectDate(context, intent)
             CALENDAR_REFRESH_ACTION -> {
@@ -72,7 +75,7 @@ open class CalendarWidgetReceiver : AppWidgetProvider() {
                 requestCalendarRefresh(context)
             }
             AppWidgetManager.ACTION_APPWIDGET_UPDATE -> {
-                if (!intent.getBooleanExtra(HomeWidgetPlugin.TRIGGERED_FROM_HOME_WIDGET, false)) {
+                if (intent.isAutomaticCalendarWidgetUpdate()) {
                     AndroidWidgetUpdateFallbackScheduler.schedule(context)
                     AndroidWidgetUpdateFallbackScheduler.recoverIfOverdue(context)
                     requestCalendarRefresh(context)
@@ -120,6 +123,23 @@ open class CalendarWidgetReceiver : AppWidgetProvider() {
     private fun widgetId(intent: Intent): Int = intent.getIntExtra(
         AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID,
     )
+}
+
+private fun Intent.isAutomaticCalendarWidgetUpdate(): Boolean =
+    action == AppWidgetManager.ACTION_APPWIDGET_UPDATE &&
+        !getBooleanExtra(HomeWidgetPlugin.TRIGGERED_FROM_HOME_WIDGET, false)
+
+internal fun shouldReceiveCalendarWidgetIntent(
+    context: Context,
+    intent: Intent,
+    nowMillis: Long = System.currentTimeMillis(),
+): Boolean {
+    if (!intent.isAutomaticCalendarWidgetUpdate()) return true
+    val preferences = HomeWidgetPlugin.getData(context)
+    val last = preferences.getLong(LAST_CALENDAR_UPDATE_NOTIFICATION_KEY, -1L)
+    if (last >= 0 && nowMillis - last in 0 until CALENDAR_UPDATE_INTERVAL_MILLIS) return false
+    preferences.edit().putLong(LAST_CALENDAR_UPDATE_NOTIFICATION_KEY, nowMillis).apply()
+    return true
 }
 
 internal fun calendarWidgetAction(

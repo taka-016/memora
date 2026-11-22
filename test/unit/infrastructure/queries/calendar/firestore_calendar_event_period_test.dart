@@ -1,12 +1,19 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
+import 'package:memora/application/models/app_mode.dart';
+import 'package:memora/composition_root/providers/calendar_providers.dart';
+import 'package:memora/infrastructure/config/resolved_app_mode_provider.dart';
+import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/models/calendar_event_period.dart';
 import 'package:memora/infrastructure/queries/calendar/firestore_calendar_event_query_service.dart';
 import 'package:memora/infrastructure/queries/calendar/firestore_calendar_event_watch_query_service.dart';
 
+import '../../../../helpers/test_exception.dart';
 import 'firestore_calendar_watch_query_service_test.mocks.dart';
 
 void main() {
@@ -240,5 +247,268 @@ void main() {
     await subscription.cancel();
     expect(normalStream.hasListener, isFalse);
     expect(recurringStream.hasListener, isFalse);
+  });
+  test('画面の繰り返し親予定は未来分を含めて共有し取消は期間ごとに反映する', () async {
+    final futurePeriod = CalendarEventPeriod.forQuarter(DateTime(2027, 4));
+    final futureNormal = MockQuery();
+    final boundedRecurring = MockQuery();
+    when(
+      base.where(
+        'endDateTime',
+        isGreaterThanOrEqualTo: Timestamp.fromDate(futurePeriod.queryFrom),
+      ),
+    ).thenReturn(futureNormal);
+    when(
+      futureNormal.where(
+        'startDateTime',
+        isLessThan: Timestamp.fromDate(futurePeriod.queryTo),
+      ),
+    ).thenReturn(futureNormal);
+    when(futureNormal.orderBy('endDateTime')).thenReturn(futureNormal);
+    when(futureNormal.orderBy('startDateTime')).thenReturn(futureNormal);
+    for (final range in [period, futurePeriod]) {
+      when(
+        recurring.where(
+          'recurrenceEndDateTime',
+          isGreaterThanOrEqualTo: Timestamp.fromDate(range.queryFrom),
+        ),
+      ).thenReturn(boundedRecurring);
+      when(
+        boundedRecurring.where(
+          'startDateTime',
+          isLessThan: Timestamp.fromDate(range.queryTo),
+        ),
+      ).thenReturn(boundedRecurring);
+    }
+    for (final field in [
+      'recurrenceEndDateTime',
+      'startDateTime',
+      'recurrenceRule',
+    ]) {
+      when(boundedRecurring.orderBy(field)).thenReturn(boundedRecurring);
+    }
+    when(boundedRecurring.snapshots()).thenAnswer((_) => Stream.value(empty));
+    when(bounded.snapshots()).thenAnswer((_) => Stream.value(empty));
+    when(futureNormal.snapshots()).thenAnswer((_) => Stream.value(empty));
+    final parents =
+        StreamController<QuerySnapshot<Map<String, dynamic>>>.broadcast();
+    when(recurring.snapshots()).thenAnswer((_) => parents.stream);
+
+    final cancellations = MockCollectionReference();
+    final query = MockQuery();
+    final futureQuery = MockQuery();
+    when(firestore.collection('calendar_event_overrides'))
+        .thenReturn(cancellations);
+    when(cancellations.where('eventId', isEqualTo: 'series')).thenReturn(query);
+    when(query.where('groupId', isEqualTo: 'g')).thenReturn(query);
+    final cancelledOn = DateTime.utc(2027, 4, 5);
+    final cancelled = MockQueryDocumentSnapshot();
+    when(cancelled.data()).thenReturn({
+      'originalStartDateTime': Timestamp.fromDate(cancelledOn),
+      'isCancelled': true,
+    });
+    final futureRows = MockQuerySnapshot();
+    when(futureRows.docs).thenReturn([cancelled]);
+    for (final (range, boundedQuery, result) in [
+      (period, query, empty),
+      (futurePeriod, futureQuery, futureRows),
+    ]) {
+      when(
+        query.where(
+          'originalEndDateTime',
+          isGreaterThanOrEqualTo: Timestamp.fromDate(range.queryFrom),
+        ),
+      ).thenReturn(boundedQuery);
+      when(
+        boundedQuery.where(
+          'originalStartDateTime',
+          isLessThan: Timestamp.fromDate(range.queryTo),
+        ),
+      ).thenReturn(boundedQuery);
+      when(boundedQuery.orderBy('originalEndDateTime'))
+          .thenReturn(boundedQuery);
+      when(boundedQuery.orderBy('originalStartDateTime'))
+          .thenReturn(boundedQuery);
+      when(boundedQuery.get()).thenAnswer((_) async => result);
+    }
+    final futureParentQuery = MockQuery();
+    when(cancellations.where('eventId', isEqualTo: 'future'))
+        .thenReturn(futureParentQuery);
+    when(futureParentQuery.where('groupId', isEqualTo: 'g'))
+        .thenReturn(futureParentQuery);
+    when(
+      futureParentQuery.where(
+        'originalEndDateTime',
+        isGreaterThanOrEqualTo: Timestamp.fromDate(futurePeriod.queryFrom),
+      ),
+    ).thenReturn(futureParentQuery);
+    when(
+      futureParentQuery.where(
+        'originalStartDateTime',
+        isLessThan: Timestamp.fromDate(futurePeriod.queryTo),
+      ),
+    ).thenReturn(futureParentQuery);
+    when(futureParentQuery.orderBy('originalEndDateTime'))
+        .thenReturn(futureParentQuery);
+    when(futureParentQuery.orderBy('originalStartDateTime'))
+        .thenReturn(futureParentQuery);
+    when(futureParentQuery.get()).thenAnswer((_) async => empty);
+
+    final container = ProviderContainer.test(
+      overrides: [
+        appModeProvider.overrideWithValue(AppMode.online),
+        firebaseFirestoreProvider.overrideWithValue(firestore),
+      ],
+    );
+    final watcher = container.read(watchCalendarEventsUsecaseProvider)!;
+    final firstValues = <List<CalendarEventDto>>[];
+    final futureValues = <List<CalendarEventDto>>[];
+    final first = watcher.execute('g', period: period).listen(firstValues.add);
+    StreamSubscription<List<CalendarEventDto>>? future;
+    addTearDown(() async {
+      await first.cancel();
+      await future?.cancel();
+      await parents.close();
+    });
+
+    MockDocumentChange parentChange(
+      String id,
+      DateTime start, {
+      DocumentChangeType type = DocumentChangeType.added,
+      String title = '繰り返し予定',
+    }) {
+      final doc = MockQueryDocumentSnapshot();
+      when(doc.id).thenReturn(id);
+      when(doc.data()).thenReturn({
+        'groupId': 'g',
+        'labelType': 'group',
+        'title': title,
+        'isAllDay': true,
+        'startDateTime': Timestamp.fromDate(start),
+        'endDateTime': Timestamp.fromDate(start.add(const Duration(days: 1))),
+        'recurrenceEndDateTime': Timestamp.fromDate(DateTime.utc(9999, 12, 31)),
+        'recurrenceRule': 'FREQ=DAILY',
+      });
+      final change = MockDocumentChange();
+      when(change.doc).thenReturn(doc);
+      when(change.type).thenReturn(type);
+      return change;
+    }
+
+    await Future<void>(() {});
+    verify(recurring.snapshots()).called(1);
+    verifyNever(boundedRecurring.snapshots());
+    final currentStart = DateTime.utc(2026, 1, 1);
+    final initial = MockQuerySnapshot();
+    final initialChanges = [
+      parentChange('series', currentStart),
+      parentChange('future', DateTime.utc(2027, 4, 1)),
+    ];
+    when(initial.docChanges).thenReturn(initialChanges);
+    parents.add(initial);
+    await Future<void>(() {});
+    expect(firstValues.single.map((event) => event.id), ['series']);
+    expect(firstValues.single.single.overrides, isEmpty);
+    verifyNever(futureParentQuery.get());
+    future = watcher
+        .execute('g', period: futurePeriod)
+        .listen(futureValues.add);
+    await Future<void>(() {});
+    verifyNever(recurring.snapshots());
+    expect(futureValues.single.map((event) => event.id), ['series', 'future']);
+    expect(
+      futureValues.single.first.overrides.single.originalStartDateTime,
+      cancelledOn,
+    );
+    verify(query.get()).called(1);
+    verify(futureQuery.get()).called(1);
+    verify(futureParentQuery.get()).called(1);
+
+    final update = MockQuerySnapshot();
+    final change = parentChange(
+      'series',
+      currentStart,
+      type: DocumentChangeType.modified,
+      title: '変更後',
+    );
+    when(update.docChanges).thenReturn([change]);
+    parents.add(update);
+    await Future<void>(() {});
+    expect(firstValues.last.single.title, '変更後');
+    expect(futureValues.last.first.title, '変更後');
+    verify(query.get()).called(1);
+    verify(futureQuery.get()).called(1);
+    verifyNever(futureParentQuery.get());
+    await first.cancel();
+    expect(parents.hasListener, isTrue);
+    await future.cancel();
+    expect(parents.hasListener, isFalse);
+  });
+  test('親予定の購読失敗中は単発予定を受信しても再試行できる状態を維持する', () async {
+    final normal =
+        StreamController<QuerySnapshot<Map<String, dynamic>>>.broadcast();
+    final parents =
+        StreamController<QuerySnapshot<Map<String, dynamic>>>.broadcast();
+    final restartedParents =
+        StreamController<QuerySnapshot<Map<String, dynamic>>>.broadcast();
+    when(bounded.snapshots()).thenAnswer((_) => normal.stream);
+    when(recurring.snapshots()).thenAnswer((_) => parents.stream);
+    final service = FirestoreCalendarEventWatchQueryService(
+      firestore: firestore,
+    );
+    final values = <List<CalendarEventDto>>[];
+    final errors = <Object>[];
+    final subscription = service
+        .watchCalendarScreenEvents('g', period: period)
+        .listen(values.add, onError: errors.add);
+    StreamSubscription<List<CalendarEventDto>>? retry;
+    addTearDown(() async {
+      await subscription.cancel();
+      await retry?.cancel();
+      await normal.close();
+      await parents.close();
+      await restartedParents.close();
+    });
+    normal.add(empty);
+    parents.add(empty);
+    await Future<void>(() {});
+    expect(values, [isEmpty]);
+
+    final error = TestException('親予定の購読に失敗');
+    parents.addError(error);
+    await Future<void>(() {});
+    expect(errors, [error]);
+
+    final doc = MockQueryDocumentSnapshot();
+    when(doc.id).thenReturn('single');
+    when(doc.data()).thenReturn({
+      'groupId': 'g',
+      'labelType': 'group',
+      'title': '単発予定',
+      'isAllDay': true,
+      'startDateTime': Timestamp.fromDate(DateTime.utc(2026, 11, 12)),
+      'endDateTime': Timestamp.fromDate(DateTime.utc(2026, 11, 13)),
+    });
+    final change = MockDocumentChange();
+    when(change.type).thenReturn(DocumentChangeType.added);
+    when(change.doc).thenReturn(doc);
+    final snapshot = MockQuerySnapshot();
+    when(snapshot.docChanges).thenReturn([change]);
+    normal.add(snapshot);
+    await Future<void>(() {});
+    expect(values, hasLength(1));
+
+    when(recurring.snapshots()).thenAnswer((_) => restartedParents.stream);
+    final retried = <List<CalendarEventDto>>[];
+    retry = service
+        .watchCalendarScreenEvents('g', period: period)
+        .listen(retried.add);
+    normal.add(snapshot);
+    restartedParents.add(empty);
+    await Future<void>(() {});
+    expect(values.last.single.id, 'single');
+    expect(retried.single.single.id, 'single');
+    verify(recurring.snapshots()).called(2);
+    expect(parents.hasListener, isFalse);
   });
 }

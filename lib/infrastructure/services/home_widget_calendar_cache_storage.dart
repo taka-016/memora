@@ -22,12 +22,28 @@ class HomeWidgetCalendarCacheStorage {
   Future<T> _synchronizeScope<T>(Future<T> Function() action) =>
       LocalCalendarWidgetLock().run('scope', action);
 
-  Future<void> setScope(String? scope) async {
-    await _synchronizeScope(
-      () => HomeWidget.saveWidgetData<String>(scopeKey, scope),
+  /// 表示対象を保存し、公開済みキャッシュの更新が必要かを返す。
+  Future<bool> setScope(String? scope) async {
+    final changed = await _synchronizeScope(() async {
+      if (await loadScope() == scope) return false;
+      await HomeWidget.saveWidgetData<String>(scopeKey, scope);
+      return true;
+    });
+    if (changed) {
+      await update();
+      return true;
+    }
+    if (scope == null || await _hasPublishedScope(scope)) return false;
+    // 先に始まったウィジェット更新が公開するまで待ち、再取得の要否を確認する。
+    return LocalCalendarWidgetLock().run(
+      'refresh',
+      () async =>
+          await loadScope() == scope && !await _hasPublishedScope(scope),
     );
-    await update();
   }
+
+  Future<bool> _hasPublishedScope(String scope) async =>
+      (await _load())?['cacheScope'] == scope;
 
   Future<bool> setScopeIfCurrent(String? expected, String? scope) async {
     final changed = await _synchronizeScope(() async {
