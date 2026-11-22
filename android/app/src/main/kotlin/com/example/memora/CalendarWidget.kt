@@ -60,8 +60,8 @@ open class CalendarWidgetReceiver : AppWidgetProvider() {
     }
 
     internal fun receive(context: Context, intent: Intent) {
-        if (!shouldReceiveCalendarWidgetIntent(context, intent)) return
         super.onReceive(context, intent)
+        if (!shouldReceiveCalendarWidgetIntent(context, intent)) return
         when (intent.action) {
             CALENDAR_SELECT_ACTION -> selectDate(context, intent)
             CALENDAR_REFRESH_ACTION -> {
