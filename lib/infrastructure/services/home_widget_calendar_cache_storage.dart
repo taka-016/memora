@@ -69,6 +69,35 @@ class HomeWidgetCalendarCacheStorage {
     return jsonDecode(await File(path).readAsString()) as Map<String, dynamic>;
   }
 
+  Future<bool> canReuseForAutomaticRefresh(String scope, DateTime now) async {
+    final Map<String, dynamic>? cache;
+    try {
+      cache = await _load();
+    } on FormatException {
+      return false;
+    } on FileSystemException {
+      return false;
+    }
+    if (cache == null || cache['cacheScope'] != scope) return false;
+    final timestamp = cache['lastUpdatedAt'];
+    final updatedAt = timestamp is String ? DateTime.tryParse(timestamp) : null;
+    if (updatedAt == null) return false;
+    final elapsed = now.difference(updatedAt);
+    if (elapsed.isNegative || elapsed >= const Duration(minutes: 1))
+      return false;
+
+    final selected = await loadSelectedDate();
+    final month = selected == null
+        ? cache['month']
+        : DateTime(
+            selected.year,
+            selected.month,
+          ).toIso8601String().substring(0, 10);
+    final months = cache['months'];
+    return months is Map<String, dynamic> &&
+        months[month] is Map<String, dynamic>;
+  }
+
   Future<DateTime?> loadMonth() async {
     final data = await _load();
     return DateTime.tryParse(data?['month'] as String? ?? '');

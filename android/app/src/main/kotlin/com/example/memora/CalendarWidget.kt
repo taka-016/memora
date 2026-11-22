@@ -75,7 +75,7 @@ open class CalendarWidgetReceiver : AppWidgetProvider() {
                 if (!intent.getBooleanExtra(HomeWidgetPlugin.TRIGGERED_FROM_HOME_WIDGET, false)) {
                     AndroidWidgetUpdateFallbackScheduler.schedule(context)
                     AndroidWidgetUpdateFallbackScheduler.recoverIfOverdue(context)
-                    requestCalendarRefresh(context)
+                    requestCalendarRefresh(context, automatic = true)
                 }
             }
         }
@@ -145,9 +145,15 @@ internal fun calendarWidgetAction(
     )
 }
 
-private fun requestCalendarRefresh(context: Context, date: LocalDate? = null) {
-    AndroidWidgetBackgroundReceiver.request(
-        context,
-        Uri.parse("memoraWidget://calendarRefresh?date=${date?.toString().orEmpty()}"),
-    )
+private fun requestCalendarRefresh(
+    context: Context,
+    date: LocalDate? = null,
+    automatic: Boolean = false,
+) {
+    val uri = Uri.Builder()
+        .scheme("memoraWidget")
+        .authority("calendarRefresh")
+        .appendQueryParameter("date", date?.toString().orEmpty())
+    if (automatic) uri.appendQueryParameter("automatic", "true")
+    AndroidWidgetBackgroundReceiver.request(context, uri.build())
 }

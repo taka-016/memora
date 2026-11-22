@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:memora/application/usecases/android_widget/android_widget_action_handler.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/usecases/android_widget/get_calendar_widget_selection_usecase.dart';
 import 'package:memora/application/usecases/android_widget/get_android_widget_calendar_cache_usecase.dart';
@@ -47,82 +49,89 @@ final getAndroidWidgetCalendarCacheUsecaseProvider =
       ),
     );
 
-final refreshCalendarWidgetProvider =
-    Provider<Future<void> Function(DateTime?)>((ref) {
-      var generation = 0;
-      Future<void> pending = Future.value();
-      return (date) async {
-        if (!ref.read(calendarWidgetSupportedProvider)) return;
-        if (!(await ref.read(
-          loadInstalledAndroidWidgetKindsProvider,
-        )()).contains(AndroidWidgetKind.calendar)) {
+final refreshCalendarWidgetProvider = Provider<RefreshCalendarWidget>((ref) {
+  var generation = 0;
+  Future<void> pending = Future.value();
+  return (date, {automatic = false}) async {
+    if (!ref.read(calendarWidgetSupportedProvider)) return;
+    if (!(await ref.read(
+      loadInstalledAndroidWidgetKindsProvider,
+    )()).contains(AndroidWidgetKind.calendar)) {
+      return;
+    }
+    final request = ++generation;
+    final storage = ref.read(calendarWidgetCacheStorageProvider);
+    Future<void> refresh() async {
+      if (!ref.mounted || request != generation) return;
+      final previousScope = await storage.loadScope();
+      final clock = ref.read(appClockProvider);
+      if (automatic &&
+          previousScope != null &&
+          await storage.canReuseForAutomaticRefresh(
+            previousScope,
+            clock.now(),
+          )) {
+        await storage.update();
+        return;
+      }
+      if (!ref.mounted || request != generation) return;
+      final selectionUsecase = ref.read(
+        getCalendarWidgetSelectionUsecaseProvider,
+      );
+      final selection = await selectionUsecase.execute();
+      if (!ref.mounted || request != generation) return;
+      if (selection == null) {
+        await storage.clear();
+        await storage.update();
+        return;
+      }
+      if (!await storage.setScopeIfCurrent(
+        previousScope,
+        selection.cacheScope,
+      )) {
+        return;
+      }
+      if (!ref.mounted || request != generation) return;
+      final usecase = ref.read(getAndroidWidgetCalendarCacheUsecaseProvider);
+      final month =
+          date ??
+          await storage.loadSelectedDate() ??
+          await storage.loadMonth() ??
+          clock.now();
+      await storage.refresh(selection.cacheScope, month, () async {
+        final cache = await usecase.execute(
+          selection.visibleGroupIds,
+          month,
+          ownerId: selection.ownerId,
+        );
+        final latest = await selectionUsecase.execute();
+        if (!ref.mounted || request != generation) return;
+        if (latest?.cacheScope != selection.cacheScope) {
+          await storage.setScopeIfCurrent(
+            selection.cacheScope,
+            latest?.cacheScope,
+          );
           return;
         }
-        final request = ++generation;
-        final storage = ref.read(calendarWidgetCacheStorageProvider);
-        Future<void> refresh() async {
-          if (!ref.mounted || request != generation) return;
-          final previousScope = await storage.loadScope();
-          final selectionUsecase = ref.read(
-            getCalendarWidgetSelectionUsecaseProvider,
-          );
-          final selection = await selectionUsecase.execute();
-          if (!ref.mounted || request != generation) return;
-          if (selection == null) {
-            await storage.clear();
-            await storage.update();
-            return;
-          }
-          if (!await storage.setScopeIfCurrent(
-            previousScope,
-            selection.cacheScope,
-          )) {
-            return;
-          }
-          if (!ref.mounted || request != generation) return;
-          final usecase = ref.read(
-            getAndroidWidgetCalendarCacheUsecaseProvider,
-          );
-          final clock = ref.read(appClockProvider);
-          final month =
-              date ??
-              await storage.loadSelectedDate() ??
-              await storage.loadMonth() ??
-              clock.now();
-          await storage.refresh(selection.cacheScope, month, () async {
-            final cache = await usecase.execute(
-              selection.visibleGroupIds,
-              month,
-              ownerId: selection.ownerId,
-            );
-            final latest = await selectionUsecase.execute();
-            if (!ref.mounted || request != generation) return;
-            if (latest?.cacheScope != selection.cacheScope) {
-              await storage.setScopeIfCurrent(
-                selection.cacheScope,
-                latest?.cacheScope,
-              );
-              return;
-            }
-            if (await storage.loadScope() != selection.cacheScope) return;
-            if (cache == null) return;
-            await storage.save({
-              ...cache,
-              'lastUpdatedAt': clock.now().toIso8601String(),
-            }, merge: date != null);
-          });
-        }
+        if (await storage.loadScope() != selection.cacheScope) return;
+        if (cache == null) return;
+        await storage.save({
+          ...cache,
+          'lastUpdatedAt': clock.now().toIso8601String(),
+        }, merge: date != null);
+      });
+    }
 
-        final previous = pending;
-        Future<void> run() async {
-          try {
-            await previous;
-          } catch (_) {}
-          await storage.synchronize(refresh);
-        }
+    final previous = pending;
+    Future<void> run() async {
+      try {
+        await previous;
+      } catch (_) {}
+      await storage.synchronize(refresh);
+    }
 
-        final result = run();
-        pending = result;
-        await result;
-      };
-    });
+    final result = run();
+    pending = result;
+    await result;
+  };
+});
