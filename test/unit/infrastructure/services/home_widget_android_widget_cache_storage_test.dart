@@ -278,7 +278,7 @@ void main() {
     }
   });
 
-  test('カレンダー更新は既存月を置き換え設定と選択日を維持する', () async {
+  test('カレンダー更新は選択月から2か月以内の取得済み月と設定を維持する', () async {
     const storage = HomeWidgetCalendarCacheStorage();
     values[HomeWidgetCalendarCacheStorage.selectedDateKey] = '2026-11-03';
     values[HomeWidgetAndroidWidgetCacheStorage.targetGroupIdKey] = 'group';
@@ -291,10 +291,11 @@ void main() {
       },
     };
     await storage.save(month('2026-05-01'));
-    await storage.save(month('2026-11-01'), merge: false);
+    await storage.save(month('2027-01-01'));
+    await storage.save(month('2026-11-01'), keepDistantMonths: false);
     final path = values[HomeWidgetCalendarCacheStorage.cacheKey] as String;
     final saved = jsonDecode(await File(path).readAsString()) as Map;
-    expect((saved['months'] as Map).keys, ['2026-11-01']);
+    expect((saved['months'] as Map).keys, ['2026-11-01', '2027-01-01']);
     expect(await storage.loadSelectedDate(), DateTime(2026, 11, 3));
     expect(
       values[HomeWidgetAndroidWidgetCacheStorage.targetGroupIdKey],

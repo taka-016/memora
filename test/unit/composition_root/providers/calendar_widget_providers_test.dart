@@ -86,7 +86,7 @@ void main() {
       selection.loadCurrentScope(),
     ]);
     verifyNoMoreInteractions(selection);
-    verify(storage.save(any, merge: true)).called(1);
+    verify(storage.save(any, keepDistantMonths: true)).called(1);
   });
   test('取得中に所属が変われば旧スコープのキャッシュを公開しない', () async {
     final started = Completer<void>();
@@ -112,7 +112,9 @@ void main() {
     });
     await refresh;
     verify(storage.setScope(current.cacheScope)).called(1);
-    verifyNever(storage.save(any, merge: anyNamed('merge')));
+    verifyNever(
+      storage.save(any, keepDistantMonths: anyNamed('keepDistantMonths')),
+    );
   });
   test('取得に失敗しても次の要求を直列に実行し再公開できる', () async {
     when(cache.execute(any, any, ownerId: anyNamed('ownerId')))
@@ -129,7 +131,7 @@ void main() {
       },
     );
     await container.read(refreshCalendarWidgetProvider)(month);
-    verify(storage.save(any, merge: true)).called(1);
+    verify(storage.save(any, keepDistantMonths: true)).called(1);
     verify(storage.setScope(current.cacheScope)).called(2);
     verifyNever(storage.setScope(null));
   });
