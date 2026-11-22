@@ -10,6 +10,14 @@ import 'package:memora/domain/entities/calendar/calendar_event_override.dart';
 import 'package:memora/infrastructure/services/local_calendar_widget_lock.dart';
 import 'package:path_provider/path_provider.dart';
 
+typedef CalendarEventCacheChange = ({
+  String groupId,
+  String eventId,
+  CalendarEventDto? event,
+  DateTime? recurrenceEnd,
+  int? version,
+});
+
 class SharedCalendarCache {
   SharedCalendarCache({Future<Directory> Function()? directory})
     : _directory = directory ?? getApplicationSupportDirectory,
@@ -61,12 +69,85 @@ class SharedCalendarCache {
     }
   }
 
-  Future<void> invalidateEvents(String ownerId, String groupId) =>
-      _update(ownerId, groupId, (data) {
-        data.remove('events');
-        data['invalidatedAt'] = DateTime.now().microsecondsSinceEpoch;
-        return true;
+  Future<void> applyEventChanges(
+    String ownerId,
+    List<CalendarEventCacheChange> changes, {
+    required int committedAt,
+  }) async {
+    for (final groupId in changes.map((change) => change.groupId).toSet()) {
+      final groupChanges = changes.where((change) => change.groupId == groupId);
+      await _update(ownerId, groupId, (data) {
+        final rows = data['events'];
+        if (rows is! Map<String, dynamic>) return false;
+        var changed = false;
+        for (final entry in rows.entries.toList()) {
+          final period = _parsePeriodKey(entry.key);
+          final row = entry.value;
+          if (period == null || row is! Map<String, dynamic>) continue;
+          final previous = row['data'];
+          if (previous is! List) continue;
+          final events = {
+            for (final event in previous.whereType<Map<String, dynamic>>())
+              event['id']: event,
+          };
+          var periodChanged = false;
+          for (final change in groupChanges) {
+            final existing = events[change.eventId];
+            if (((existing?['version'] as int?) ?? 0) > (change.version ?? 0)) {
+              continue;
+            }
+            final event = change.event;
+            final end = event?.recurrenceRule == null
+                ? event?.endDateTime
+                : change.recurrenceEnd;
+            if (event != null &&
+                event.startDateTime.isBefore(period.queryTo) &&
+                (end == null || !end.isBefore(period.queryFrom))) {
+              final overrides = event.overrides.where((override) {
+                final start = override.originalStartDateTime;
+                return start.isBefore(period.queryTo) &&
+                    !start.add(event.duration).isBefore(period.queryFrom);
+              }).toList();
+              final updated = _encodeEvent(
+                event.copyWith(overrides: overrides),
+              );
+              if (existing == null ||
+                  _event(existing, groupId) != _event(updated, groupId)) {
+                events[change.eventId] = updated;
+                periodChanged = true;
+              }
+            } else if (events.remove(change.eventId) != null) {
+              periodChanged = true;
+            }
+          }
+          if (periodChanged) {
+            rows[entry.key] = {
+              ...row,
+              'data': events.values.toList(),
+              if (_committedAt(row) < committedAt) 'committedAt': committedAt,
+            };
+            changed = true;
+          }
+        }
+        return changed;
       });
+    }
+  }
+
+  static CalendarEventPeriod? _parsePeriodKey(String key) {
+    final parts = key.split(':');
+    if (parts.length != 2) return null;
+    final from = int.tryParse(parts.first);
+    final to = int.tryParse(parts.last);
+    if (from == null || to == null) return null;
+    return CalendarEventPeriod(
+      from: DateTime.fromMicrosecondsSinceEpoch(from),
+      to: DateTime.fromMicrosecondsSinceEpoch(to),
+    );
+  }
+
+  static int _committedAt(dynamic row) =>
+      row is Map && row['committedAt'] is int ? row['committedAt'] as int : 0;
 
   static dynamic _eventRow(
     Map<String, dynamic> data,
@@ -101,9 +182,8 @@ class SharedCalendarCache {
     final key = _periodKey(period);
     final saved = data['events'];
     final rows = saved is Map<String, dynamic> ? saved : <String, dynamic>{};
-    final invalidatedAt = data['invalidatedAt'];
     if (_observedAt(rows[key]) > timestamp ||
-        (invalidatedAt is int && invalidatedAt > timestamp)) {
+        _committedAt(rows[key]) > timestamp) {
       return false;
     }
     rows[key] = {

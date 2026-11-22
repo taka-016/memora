@@ -1,3 +1,5 @@
+import 'package:memora/infrastructure/mappers/calendar/firestore_calendar_event_mapper.dart';
+import 'package:memora/infrastructure/services/shared_calendar_cache.dart';
 import 'package:memora/infrastructure/services/firestore_version_check.dart';
 import 'package:memora/infrastructure/services/calendar_event_content.dart';
 import 'package:memora/application/mappers/calendar/calendar_event_mapper.dart';
@@ -9,8 +11,53 @@ import 'package:memora/infrastructure/services/firestore_calendar_event_store.da
 import 'package:memora/infrastructure/services/validate_calendar_recurrence.dart';
 
 class FirestoreCalendarEventRepository implements CalendarEventRepository {
-  FirestoreCalendarEventRepository({required this._firestore});
+  FirestoreCalendarEventRepository({
+    required this._firestore,
+    this.sharedCache,
+    this.currentOwnerId,
+  });
   final FirebaseFirestore _firestore;
+  final SharedCalendarCache? sharedCache;
+  final String? Function()? currentOwnerId;
+
+  Future<void> _applyCacheChanges(
+    String? owner,
+    List<CalendarEventCacheChange> changes,
+  ) async {
+    if (owner != null) {
+      await sharedCache?.applyEventChanges(
+        owner,
+        changes,
+        committedAt: DateTime.now().microsecondsSinceEpoch,
+      );
+    }
+  }
+
+  CalendarEventCacheChange _saved(
+    CalendarEvent event,
+    String id,
+    Map<String, dynamic> data,
+  ) => (
+    groupId: event.groupId,
+    eventId: id,
+    event: FirestoreCalendarEventMapper.fromData(
+      id,
+      data,
+      overrides: event.overrides,
+    ),
+    recurrenceEnd: (data['recurrenceEndDateTime'] as Timestamp).toDate(),
+    version: data['version'] as int?,
+  );
+
+  CalendarEventCacheChange _removed(String groupId, String id, int? version) =>
+      (
+        groupId: groupId,
+        eventId: id,
+        event: null,
+        recurrenceEnd: null,
+        version: version,
+      );
+
   late final _store = FirestoreCalendarEventStore(_firestore);
   DocumentReference<Map<String, dynamic>> _label(String id) =>
       _firestore.collection('calendar_labels').doc(id);
@@ -53,6 +100,8 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
     }
     validateCalendarRecurrence(replacement);
     final ref = _firestore.collection('calendar_events').doc(expected.id);
+    final owner = currentOwnerId?.call();
+    List<CalendarEventCacheChange> changes = const [];
     await _firestore.runTransaction<void>((transaction) async {
       final snapshot = await transaction.get(ref);
       FirestoreVersionCheck.requireMatch(snapshot.data(), expected.version);
@@ -97,7 +146,14 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
         _store.overrideIds(snapshot.data()!),
         previousEvent: current,
       );
+      if (owner != null) {
+        changes = [
+          _removed(expected.groupId, expected.id, data['version'] as int?),
+          _saved(moved, expected.id, data),
+        ];
+      }
     });
+    await _applyCacheChanges(owner, changes);
   }
 
   @override
@@ -140,6 +196,8 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
           create: true,
         ),
     ];
+    final owner = currentOwnerId?.call();
+    List<CalendarEventCacheChange> changes = const [];
     await _firestore.runTransaction<void>((transaction) async {
       final current = await transaction.get(ref);
       FirestoreVersionCheck.requireMatch(current.data(), expected.version);
@@ -212,7 +270,23 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
       for (var index = 0; index < preservedData.length; index++) {
         transaction.set(preservedRefs[index], preservedData[index]);
       }
+      if (owner != null) {
+        changes = [
+          if (head != null)
+            _saved(replacement!, ref.id, head)
+          else
+            _removed(expected.groupId, ref.id, expected.version),
+          if (tail != null) _saved(following!, nextRef!.id, tail),
+          for (var index = 0; index < preservedEvents.length; index++)
+            _saved(
+              preservedEvents[index],
+              preservedRefs[index].id,
+              preservedData[index],
+            ),
+        ];
+      }
     });
+    await _applyCacheChanges(owner, changes);
     return [
       if (nextRef != null) nextRef.id,
       ...preservedRefs.map((ref) => ref.id),
@@ -224,12 +298,16 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
     validateCalendarRecurrence(event);
     final ref = _firestore.collection('calendar_events').doc();
     final data = _store.data(event, ref.id, create: true);
-    return _firestore.runTransaction((transaction) async {
+    final owner = currentOwnerId?.call();
+    final id = await _firestore.runTransaction((transaction) async {
       await _adjustLabels(transaction, event.groupId, {}, _references(data));
       transaction.set(ref, data);
       _store.writeOverrides(transaction, event, ref.id, []);
       return ref.id;
     });
+    if (owner != null)
+      await _applyCacheChanges(owner, [_saved(event, id, data)]);
+    return id;
   }
 
   @override
@@ -237,6 +315,7 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
     validateCalendarRecurrence(event);
     final ref = _firestore.collection('calendar_events').doc(event.id);
     final data = _store.data(event, ref.id, create: false);
+    final owner = currentOwnerId?.call();
     await _firestore.runTransaction<void>((transaction) async {
       final existing = await transaction.get(ref);
       FirestoreVersionCheck.requireMatch(existing.data(), event.version);
@@ -264,6 +343,8 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
         previousEvent: previousEvent,
       );
     });
+    if (owner != null)
+      await _applyCacheChanges(owner, [_saved(event, ref.id, data)]);
   }
 
   @override
@@ -272,6 +353,8 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
     int? expectedVersion,
   }) async {
     final ref = _firestore.collection('calendar_events').doc(eventId);
+    final owner = currentOwnerId?.call();
+    List<CalendarEventCacheChange> changes = const [];
     await _firestore.runTransaction<void>((transaction) async {
       final existing = await transaction.get(ref);
       FirestoreVersionCheck.requireMatch(existing.data(), expectedVersion);
@@ -281,6 +364,15 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
         _references(existing.data()!),
         {},
       );
+      if (owner != null) {
+        changes = [
+          _removed(
+            existing.data()!['groupId'] as String,
+            ref.id,
+            existing.data()!['version'] as int?,
+          ),
+        ];
+      }
       transaction.delete(ref);
       _store.writeOverrides(
         transaction,
@@ -289,5 +381,6 @@ class FirestoreCalendarEventRepository implements CalendarEventRepository {
         _store.overrideIds(existing.data()!),
       );
     });
+    await _applyCacheChanges(owner, changes);
   }
 }

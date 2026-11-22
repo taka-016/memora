@@ -104,7 +104,7 @@ void main() {
               ),
               calendarMembershipChangesProvider.overrideWithValue(null),
               refreshSelectedCalendarWidgetCacheProvider.overrideWithValue(
-                () async {},
+                ({force = true}) async {},
               ),
               getCalendarEventsUsecaseProvider.overrideWithValue(events),
               getCalendarLabelsUsecaseProvider.overrideWithValue(labels),

@@ -163,7 +163,7 @@ void main() {
       parent: container,
       overrides: [
         refreshSelectedCalendarWidgetCacheProvider.overrideWithValue(
-          () async {},
+          ({force = true}) async {},
         ),
       ],
     );

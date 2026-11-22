@@ -5,7 +5,6 @@ import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/application/exceptions/application_validation_exception.dart';
 import 'package:memora/application/usecases/calendar/change_calendar_recurrence_usecase.dart';
 import 'package:memora/composition_root/providers/calendar_providers.dart';
-import 'package:memora/composition_root/providers/calendar_widget_providers.dart';
 import 'package:memora/composition_root/providers/android_widget_providers.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_notifier.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_notifications_notifier.dart';
@@ -136,17 +135,15 @@ class CalendarMutationCoordinator {
       if (!ref.mounted) return;
     }
     try {
-      if (eventsChanged) {
-        await ref.read(invalidateCalendarWidgetEventsProvider)(ids);
-      }
-      if (!ref.mounted) return;
       if (ref.exists(calendarNotificationsNotifierProvider)) {
         await ref
             .read(calendarNotificationsNotifierProvider.notifier)
             .refresh();
       }
       if (ref.mounted) {
-        await ref.read(refreshSelectedCalendarWidgetCacheProvider)();
+        await ref.read(refreshSelectedCalendarWidgetCacheProvider)(
+          force: !eventsChanged,
+        );
       }
     } catch (error, stack) {
       logger.w('保存後の予定表示更新に失敗しました', error: error, stackTrace: stack);

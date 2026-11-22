@@ -169,19 +169,3 @@ final refreshCalendarWidgetProvider =
         };
       },
     );
-
-final invalidateCalendarWidgetEventsProvider =
-    Provider<Future<void> Function(Iterable<String>)>((ref) {
-      return (groupIds) async {
-        if (!ref.read(calendarWidgetSupportedProvider) ||
-            ref.read(appModeProvider) != AppMode.online) {
-          return;
-        }
-        final owner = ref.read(onlineCalendarCacheOwnerProvider)();
-        if (owner == null) return;
-        final cache = ref.read(sharedCalendarCacheProvider);
-        for (final groupId in groupIds) {
-          await cache.invalidateEvents(owner, groupId);
-        }
-      };
-    });

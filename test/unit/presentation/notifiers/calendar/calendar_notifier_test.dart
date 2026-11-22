@@ -90,7 +90,7 @@ void main() {
     container = ProviderContainer(
       overrides: [
         refreshSelectedCalendarWidgetCacheProvider.overrideWithValue(
-          () => refreshWidget(),
+          ({force = true}) => refreshWidget(),
         ),
         getGroupWithMembersByIdUsecaseProvider.overrideWithValue(
           calendarTestGroupLoader(),

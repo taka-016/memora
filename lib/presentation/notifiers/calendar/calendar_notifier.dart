@@ -13,7 +13,6 @@ import 'package:memora/application/exceptions/application_validation_exception.d
 import 'package:memora/composition_root/providers/app_providers.dart';
 import 'package:memora/composition_root/providers/android_widget_providers.dart';
 import 'package:memora/composition_root/providers/calendar_providers.dart';
-import 'package:memora/composition_root/providers/calendar_widget_providers.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_state.dart';
 
@@ -353,17 +352,9 @@ class CalendarNotifier extends _$CalendarNotifier {
       }
       return false;
     }
-    if (eventsChanged && ref.mounted) {
-      final invalidate = ref.read(invalidateCalendarWidgetEventsProvider);
-      unawaited(
-        _refreshWidgetAfterMutation(() async {
-          await invalidate([groupId]);
-          await refreshWidget();
-        }),
-      );
-    } else {
-      unawaited(_refreshWidgetAfterMutation(refreshWidget));
-    }
+    unawaited(
+      _refreshWidgetAfterMutation(() => refreshWidget(force: !eventsChanged)),
+    );
     if (!ref.mounted) return true;
     if (ref.exists(calendarNotificationsNotifierProvider)) {
       unawaited(
