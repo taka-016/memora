@@ -60,10 +60,7 @@ void main() {
             refreshAndroidWidgetItineraryCacheUsecaseProvider.overrideWithValue(
               itinerary,
             ),
-            refreshCalendarWidgetProvider.overrideWithValue((
-              date, {
-              bool automatic = false,
-            }) async {
+            refreshCalendarWidgetProvider.overrideWithValue((date) async {
               expect(date, isNull);
               calendarCalls++;
             }),

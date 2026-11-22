@@ -59,72 +59,6 @@ void main() {
     expect(await storage.loadScope(), 'latest');
   });
 
-  test('同じ対象の表示月のキャッシュは取得成功から1分未満だけ再利用できる', () async {
-    const storage = HomeWidgetCalendarCacheStorage();
-    final savedAt = DateTime(2026, 11, 22, 9);
-    await storage.setScope('scope');
-    values[HomeWidgetCalendarCacheStorage.selectedDateKey] = '2026-11-22';
-    await storage.save({
-      'cacheScope': 'scope',
-      'month': '2026-11-01',
-      'months': {
-        '2026-10-01': {'days': <Object?>[]},
-        '2026-11-01': {'days': <Object?>[]},
-        '2026-12-01': {'days': <Object?>[]},
-      },
-      'lastUpdatedAt': savedAt.toIso8601String(),
-    });
-    final beforeLimit = savedAt.add(const Duration(seconds: 59));
-    expect(
-      await storage.canReuseForAutomaticRefresh('scope', beforeLimit),
-      isTrue,
-    );
-    expect(
-      await storage.canReuseForAutomaticRefresh(
-        'scope',
-        savedAt.add(const Duration(minutes: 1)),
-      ),
-      isFalse,
-    );
-    expect(
-      await storage.canReuseForAutomaticRefresh('other', beforeLimit),
-      isFalse,
-    );
-    expect(
-      await storage.canReuseForAutomaticRefresh(
-        'scope',
-        savedAt.subtract(const Duration(seconds: 1)),
-      ),
-      isFalse,
-    );
-    values[HomeWidgetCalendarCacheStorage.selectedDateKey] = '2026-12-01';
-    expect(
-      await storage.canReuseForAutomaticRefresh('scope', beforeLimit),
-      isTrue,
-    );
-    values[HomeWidgetCalendarCacheStorage.selectedDateKey] = '2027-04-01';
-    expect(
-      await storage.canReuseForAutomaticRefresh('scope', beforeLimit),
-      isFalse,
-    );
-
-    final januaryUpdate = savedAt.add(const Duration(minutes: 5));
-    await storage.save({
-      'cacheScope': 'scope',
-      'month': '2027-01-01',
-      'months': {
-        '2026-11-01': {'days': <Object?>[]},
-        '2027-01-01': {'days': <Object?>[]},
-      },
-      'lastUpdatedAt': januaryUpdate.toIso8601String(),
-    });
-    values[HomeWidgetCalendarCacheStorage.selectedDateKey] = '2026-10-15';
-    expect(
-      await storage.canReuseForAutomaticRefresh('scope', januaryUpdate),
-      isFalse,
-    );
-  });
-
   test('別Container相当のキャッシュ更新も直列に実行し失敗後に再開する', () async {
     const firstStorage = HomeWidgetCalendarCacheStorage();
     const secondStorage = HomeWidgetCalendarCacheStorage();
@@ -276,10 +210,7 @@ void main() {
     };
     await calendar.save(data);
     final path = values[HomeWidgetCalendarCacheStorage.cacheKey] as String;
-    expect(jsonDecode(await File(path).readAsString()), {
-      ...data,
-      'lastUpdatedMonths': ['2026-11-01'],
-    });
+    expect(jsonDecode(await File(path).readAsString()), data);
     expect(
       values[HomeWidgetAndroidWidgetCacheStorage.lastUpdatedAtKey],
       '2026-11-11T12:00:00.000',
