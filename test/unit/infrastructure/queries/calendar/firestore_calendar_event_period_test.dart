@@ -310,6 +310,7 @@ void main() {
     StreamSubscription<List<CalendarEventDto>>? future;
     addTearDown(() async {
       verifyNever(firestore.collection('calendar_event_overrides'));
+      verifyNever(firestore.collection('calendar_event_overrides'));
       await first.cancel();
       await future?.cancel();
       await parents.close();

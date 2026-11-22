@@ -29,11 +29,12 @@ void main() {
     final loader = SharedCalendarWidgetData(
       cache: widgetCache,
       currentOwnerId: () => 'online:a',
-      fetchEvents: (groupId, {period, onCancellationStarts}) async {
-        expect(groupId, 'g');
-        requests.add(period!);
-        return [];
-      },
+      fetchEvents:
+          (groupId, {CalendarEventPeriod? period, onCancellationStarts}) async {
+            expect(groupId, 'g');
+            requests.add(period!);
+            return [];
+          },
       fetchLabels: (groupId) async {
         labelsRead++;
         return [
@@ -107,10 +108,11 @@ void main() {
     final loader = SharedCalendarWidgetData(
       cache: SharedCalendarCache(directory: () async => directory),
       currentOwnerId: () => 'online:a',
-      fetchEvents: (_, {period, onCancellationStarts}) async {
-        requests.add(period!);
-        return [decemberSeries];
-      },
+      fetchEvents:
+          (_, {CalendarEventPeriod? period, onCancellationStarts}) async {
+            requests.add(period!);
+            return [decemberSeries];
+          },
       fetchLabels: (_) async => [],
     );
 
@@ -149,10 +151,11 @@ void main() {
     final loader = SharedCalendarWidgetData(
       cache: cache,
       currentOwnerId: () => 'online:a',
-      fetchEvents: (_, {period, onCancellationStarts}) async {
-        requests.add(period!);
-        return [requests.length == 1 ? series : updated];
-      },
+      fetchEvents:
+          (_, {CalendarEventPeriod? period, onCancellationStarts}) async {
+            requests.add(period!);
+            return [requests.length == 1 ? series : updated];
+          },
       fetchLabels: (_) async => [],
     );
 
@@ -186,18 +189,19 @@ void main() {
     final loader = SharedCalendarWidgetData(
       cache: SharedCalendarCache(directory: () async => directory),
       currentOwnerId: () => 'online:a',
-      fetchEvents: (_, {period, onCancellationStarts}) async {
-        await appCache.applyEventChanges('online:a', [
-          (
-            groupId: 'g',
-            eventId: edited.id,
-            event: edited,
-            recurrenceEnd: null,
-            version: edited.version,
-          ),
-        ], committedAt: 1 << 60);
-        return [original];
-      },
+      fetchEvents:
+          (_, {CalendarEventPeriod? period, onCancellationStarts}) async {
+            await appCache.applyEventChanges('online:a', [
+              (
+                groupId: 'g',
+                eventId: edited.id,
+                event: edited,
+                recurrenceEnd: null,
+                version: edited.version,
+              ),
+            ], committedAt: 1 << 60);
+            return [original];
+          },
       fetchLabels: (_) async => [],
     );
     final data = await loader.load('online:a', 'g', [month], force: true);
