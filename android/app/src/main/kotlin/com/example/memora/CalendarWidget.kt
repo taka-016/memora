@@ -59,7 +59,7 @@ open class CalendarWidgetReceiver : AppWidgetProvider() {
         }
     }
 
-    private fun receive(context: Context, intent: Intent) {
+    internal fun receive(context: Context, intent: Intent) {
         if (!shouldReceiveCalendarWidgetIntent(context, intent)) return
         super.onReceive(context, intent)
         when (intent.action) {
