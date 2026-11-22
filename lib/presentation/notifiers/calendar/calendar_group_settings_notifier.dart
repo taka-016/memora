@@ -76,11 +76,7 @@ class CalendarGroupSettingsNotifier extends _$CalendarGroupSettingsNotifier {
   CalendarGroupSettingsState build() {
     CalendarGroupSettingsState? lastUsable;
     listenSelf((_, next) {
-      if (!next.canUseSettings ||
-          (_usesCommonData &&
-              !ref.read(startupCommonDataNotifierProvider).groupsConfirmed)) {
-        return;
-      }
+      if (!next.canUseSettings || !_groupsConfirmed) return;
       final previous = lastUsable;
       lastUsable = next;
       final groupsChanged =
@@ -184,7 +180,11 @@ class CalendarGroupSettingsNotifier extends _$CalendarGroupSettingsNotifier {
       ref.exists(startupCommonDataNotifierProvider) &&
       ref.read(startupCommonDataOwnerProvider) != null;
 
-  Future<void> _refreshWidget({required bool groupsChanged}) async {
+  bool get _groupsConfirmed =>
+      !_usesCommonData ||
+      ref.read(startupCommonDataNotifierProvider).groupsConfirmed;
+
+  Future<void> _refreshWidget({bool groupsChanged = false}) async {
     try {
       final generation = _generation;
       final owner = _owner;
@@ -312,7 +312,12 @@ class CalendarGroupSettingsNotifier extends _$CalendarGroupSettingsNotifier {
           .read(calendarGroupSettingsStorageProvider)
           .save(owner, settings);
       if (!ref.mounted || generation != _generation) return false;
+      final previous = state.effectiveSettings.visibleGroupIds;
       state = state.copyWith(settings: settings, isSaving: false);
+      if (!_groupsConfirmed &&
+          !setEquals(previous, state.effectiveSettings.visibleGroupIds)) {
+        unawaited(_refreshWidget());
+      }
       return true;
     } catch (_) {
       if (ref.mounted && generation == _generation) {
