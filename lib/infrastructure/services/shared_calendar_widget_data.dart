@@ -38,46 +38,57 @@ class SharedCalendarWidgetData {
     var snapshot = await cache.loadGroup(ownerId, groupId, periods);
     final fetchedEvents = <CalendarEventPeriod, List<CalendarEventDto>>{};
     final observedTimes = <CalendarEventPeriod, int>{};
-    final requested =
-        periods
-            .where(
-              (period) => force || !snapshot.eventsByPeriod.containsKey(period),
-            )
-            .toList()
-          ..sort((a, b) => a.from.compareTo(b.from));
-    for (var first = 0; first < requested.length;) {
-      var last = first;
-      while (last + 1 < requested.length &&
-          requested[last].to == requested[last + 1].from) {
-        last++;
-      }
-      final period = CalendarEventPeriod(
-        from: requested[first].from,
-        to: requested[last].to,
-      );
-      for (var attempt = 0; ; attempt++) {
-        checkOwner();
-        final observedAt = DateTime.now().microsecondsSinceEpoch;
-        final events = await fetchEvents(groupId, period: period);
-        checkOwner();
-        if (await cache.saveEvents(
-          ownerId,
-          groupId,
-          period,
-          events,
-          observedAt: observedAt,
-        )) {
-          for (final month in requested.getRange(first, last + 1)) {
-            fetchedEvents[month] = events;
-            observedTimes[month] = observedAt;
+    Future<void> fetchMonths(List<CalendarEventPeriod> requested) async {
+      requested.sort((a, b) => a.from.compareTo(b.from));
+      for (var first = 0; first < requested.length;) {
+        var last = first;
+        while (last + 1 < requested.length &&
+            requested[last].to == requested[last + 1].from) {
+          last++;
+        }
+        final period = CalendarEventPeriod(
+          from: requested[first].from,
+          to: requested[last].to,
+        );
+        for (var attempt = 0; ; attempt++) {
+          checkOwner();
+          final observedAt = DateTime.now().microsecondsSinceEpoch;
+          final events = await fetchEvents(groupId, period: period);
+          checkOwner();
+          if (await cache.saveEvents(
+            ownerId,
+            groupId,
+            period,
+            events,
+            observedAt: observedAt,
+          )) {
+            for (final month in requested.getRange(first, last + 1)) {
+              fetchedEvents[month] = events;
+              observedTimes[month] = observedAt;
+            }
+            break;
           }
-          break;
+          if (attempt >= 1) {
+            throw StateError('予定の取得中に変更が続いたため再取得できませんでした');
+          }
         }
-        if (attempt >= 1) {
-          throw StateError('予定の取得中に変更が続いたため再取得できませんでした');
-        }
+        first = last + 1;
       }
-      first = last + 1;
+    }
+
+    await fetchMonths([
+      for (final period in periods)
+        if (force || !snapshot.eventsByPeriod.containsKey(period)) period,
+    ]);
+    if (fetchedEvents.isNotEmpty) {
+      snapshot = await cache.loadGroup(ownerId, groupId, periods);
+      // 新たに取得した親予定によって、別の月にも取消情報が必要になる。
+      await fetchMonths([
+        for (final period in periods)
+          if (!snapshot.eventsByPeriod.containsKey(period) &&
+              !fetchedEvents.containsKey(period))
+            period,
+      ]);
     }
     final cachedLabels = force || forceLabels ? null : snapshot.labels;
     List<CalendarLabelDto>? fetchedLabels;
@@ -95,11 +106,7 @@ class SharedCalendarWidgetData {
       );
     }
     if (fetchedEvents.isNotEmpty || fetchedLabels != null) {
-      final latest = await cache.loadGroup(ownerId, groupId, periods);
-      if (latest.labels != null &&
-          latest.eventsByPeriod.length == periods.length) {
-        snapshot = latest;
-      }
+      snapshot = await cache.loadGroup(ownerId, groupId, periods);
     }
     checkOwner();
     final eventsByPeriod = <CalendarEventPeriod, List<CalendarEventDto>>{};
@@ -107,12 +114,16 @@ class SharedCalendarWidgetData {
     for (final period in periods) {
       final cachedAt = snapshot.observedAt[period] ?? 0;
       final fetchedAt = observedTimes[period] ?? 0;
-      if (fetchedAt > cachedAt) {
-        eventsByPeriod[period] = fetchedEvents[period]!;
+      final cached = snapshot.eventsByPeriod[period];
+      final fetched = fetchedEvents[period];
+      if (fetched != null && (cached == null || fetchedAt > cachedAt)) {
+        eventsByPeriod[period] = fetched;
         observedAt[period] = fetchedAt;
-      } else {
-        eventsByPeriod[period] = snapshot.eventsByPeriod[period] ?? const [];
+      } else if (cached != null) {
+        eventsByPeriod[period] = cached;
         observedAt[period] = cachedAt;
+      } else {
+        throw StateError('表示する月の予定を取得できませんでした');
       }
     }
     return CalendarWidgetGroupData(
