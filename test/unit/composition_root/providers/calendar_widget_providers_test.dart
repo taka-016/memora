@@ -23,14 +23,18 @@ import 'calendar_widget_providers_test.mocks.dart';
 void main() {
   late MockGetCalendarWidgetSelectionUsecase selection;
   late MockGetAndroidWidgetCalendarCacheUsecase cache;
-  late _CalendarCacheStorage storage;
+  late MockHomeWidgetCalendarCacheStorage storage;
+  late bool hasRecentCache;
   late ProviderContainer container;
   late CalendarWidgetSelection current;
   final month = DateTime(2026, 11);
   setUp(() {
     selection = MockGetCalendarWidgetSelectionUsecase();
     cache = MockGetAndroidWidgetCalendarCacheUsecase();
-    storage = _CalendarCacheStorage();
+    storage = MockHomeWidgetCalendarCacheStorage();
+    hasRecentCache = false;
+    when(storage.canReuseForAutomaticRefresh(any, any))
+        .thenAnswer((_) async => hasRecentCache);
     current = CalendarWidgetSelection(
       mode: AppMode.online,
       ownerId: 'online:a',
@@ -118,7 +122,7 @@ void main() {
     verifyNever(storage.setScope(null));
   });
   test('自動更新だけ共有キャッシュを使い月移動と手動更新は取得する', () async {
-    storage.hasRecentCache = true;
+    hasRecentCache = true;
     when(storage.loadSelectedDate()).thenAnswer((_) async => month);
     final refresh = container.read(refreshCalendarWidgetProvider);
 
@@ -133,16 +137,8 @@ void main() {
         .called(1);
     verify(cache.execute({'a'}, month, ownerId: 'online:a')).called(1);
 
-    storage.hasRecentCache = false;
+    hasRecentCache = false;
     await refresh(null, automatic: true);
     verify(cache.execute({'a'}, month, ownerId: 'online:a')).called(1);
   });
-}
-
-class _CalendarCacheStorage extends MockHomeWidgetCalendarCacheStorage {
-  bool hasRecentCache = false;
-
-  @override
-  Future<bool> canReuseForAutomaticRefresh(String scope, DateTime now) async =>
-      hasRecentCache;
 }
