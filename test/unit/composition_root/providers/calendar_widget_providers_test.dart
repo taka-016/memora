@@ -23,14 +23,14 @@ import 'calendar_widget_providers_test.mocks.dart';
 void main() {
   late MockGetCalendarWidgetSelectionUsecase selection;
   late MockGetAndroidWidgetCalendarCacheUsecase cache;
-  late MockHomeWidgetCalendarCacheStorage storage;
+  late _CalendarCacheStorage storage;
   late ProviderContainer container;
   late CalendarWidgetSelection current;
   final month = DateTime(2026, 11);
   setUp(() {
     selection = MockGetCalendarWidgetSelectionUsecase();
     cache = MockGetAndroidWidgetCalendarCacheUsecase();
-    storage = MockHomeWidgetCalendarCacheStorage();
+    storage = _CalendarCacheStorage();
     current = CalendarWidgetSelection(
       mode: AppMode.online,
       ownerId: 'online:a',
@@ -117,4 +117,31 @@ void main() {
     verify(storage.setScope(current.cacheScope)).called(2);
     verifyNever(storage.setScope(null));
   });
+  test('自動更新だけ共有キャッシュを使い月移動と手動更新は取得する', () async {
+    storage.hasRecentCache = true;
+    when(storage.loadSelectedDate()).thenAnswer((_) async => month);
+    final refresh = container.read(refreshCalendarWidgetProvider);
+
+    await Function.apply(refresh, [null], {#automatic: true});
+    verify(storage.update()).called(1);
+    verifyNever(selection.execute());
+    verifyNever(cache.execute(any, any, ownerId: anyNamed('ownerId')));
+
+    await refresh(DateTime(2026, 12));
+    await refresh(null);
+    verify(cache.execute({'a'}, DateTime(2026, 12), ownerId: 'online:a'))
+        .called(1);
+    verify(cache.execute({'a'}, month, ownerId: 'online:a')).called(1);
+
+    storage.hasRecentCache = false;
+    await Function.apply(refresh, [null], {#automatic: true});
+    verify(cache.execute({'a'}, month, ownerId: 'online:a')).called(1);
+  });
+}
+
+class _CalendarCacheStorage extends MockHomeWidgetCalendarCacheStorage {
+  bool hasRecentCache = false;
+
+  Future<bool> canReuseForAutomaticRefresh(String scope, DateTime now) async =>
+      hasRecentCache;
 }

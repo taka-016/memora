@@ -59,6 +59,50 @@ void main() {
     expect(await storage.loadScope(), 'latest');
   });
 
+  test('同じ対象の表示月のキャッシュは取得成功から1分未満だけ再利用できる', () async {
+    const storage = HomeWidgetCalendarCacheStorage();
+    final dynamic automaticCache = storage;
+    final savedAt = DateTime(2026, 11, 22, 9);
+    await storage.setScope('scope');
+    values[HomeWidgetCalendarCacheStorage.selectedDateKey] = '2026-11-22';
+    await storage.save({
+      'cacheScope': 'scope',
+      'month': '2026-11-01',
+      'months': {
+        '2026-11-01': {'days': <Object?>[]},
+      },
+      'lastUpdatedAt': savedAt.toIso8601String(),
+    });
+    final beforeLimit = savedAt.add(const Duration(seconds: 59));
+    expect(
+      await automaticCache.canReuseForAutomaticRefresh('scope', beforeLimit),
+      isTrue,
+    );
+    expect(
+      await automaticCache.canReuseForAutomaticRefresh(
+        'scope',
+        savedAt.add(const Duration(minutes: 1)),
+      ),
+      isFalse,
+    );
+    expect(
+      await automaticCache.canReuseForAutomaticRefresh('other', beforeLimit),
+      isFalse,
+    );
+    expect(
+      await automaticCache.canReuseForAutomaticRefresh(
+        'scope',
+        savedAt.subtract(const Duration(seconds: 1)),
+      ),
+      isFalse,
+    );
+    values[HomeWidgetCalendarCacheStorage.selectedDateKey] = '2026-12-01';
+    expect(
+      await automaticCache.canReuseForAutomaticRefresh('scope', beforeLimit),
+      isFalse,
+    );
+  });
+
   test('別Container相当のキャッシュ更新も直列に実行し失敗後に再開する', () async {
     const firstStorage = HomeWidgetCalendarCacheStorage();
     const secondStorage = HomeWidgetCalendarCacheStorage();
