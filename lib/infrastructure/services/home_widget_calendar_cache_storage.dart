@@ -98,6 +98,19 @@ class HomeWidgetCalendarCacheStorage {
     return month is String ? DateTime.tryParse(month) : null;
   }
 
+  Future<List<DateTime>> loadPublishedMonths(String scope) async {
+    final data = await _load();
+    final months = data?['months'];
+    if (data?['cacheScope'] != scope || months is! Map<String, dynamic>) {
+      return const [];
+    }
+    return [
+      for (final entry in months.entries)
+        if (entry.value case {'days': List<dynamic>()})
+          if (DateTime.tryParse(entry.key) case final month?) month,
+    ];
+  }
+
   Future<DateTime?> loadSelectedDate() async {
     final value = await HomeWidget.getWidgetData<String>(selectedDateKey);
     return DateTime.tryParse(value ?? '');

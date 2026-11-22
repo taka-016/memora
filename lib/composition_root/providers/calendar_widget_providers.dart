@@ -70,102 +70,120 @@ final getAndroidWidgetCalendarCacheUsecaseProvider =
       );
     });
 
-final refreshCalendarWidgetProvider =
-    Provider<Future<void> Function(DateTime?, {bool afterRestore, bool force})>(
-      (ref) {
-        var generation = 0;
-        var discardPreviousMonths = false;
-        var forceRequested = false;
-        Future<void> pending = Future.value();
-        return (date, {afterRestore = false, force = false}) async {
-          if (!ref.read(calendarWidgetSupportedProvider)) return;
-          if (!(await ref.read(
-            loadInstalledAndroidWidgetKindsProvider,
-          )()).contains(AndroidWidgetKind.calendar)) {
-            return;
-          }
-          if (afterRestore) discardPreviousMonths = true;
-          if (force) forceRequested = true;
-          final request = ++generation;
-          final storage = ref.read(calendarWidgetCacheStorageProvider);
-          Future<void> refresh() async {
-            if (!ref.mounted || request != generation) return;
-            final previousScope = await storage.loadScope();
-            final selectionUsecase = ref.read(
-              getCalendarWidgetSelectionUsecaseProvider,
-            );
-            final selection = await selectionUsecase.execute();
-            if (!ref.mounted || request != generation) return;
-            if (selection == null) {
-              await storage.clear();
-              await storage.update();
-              return;
-            }
-            if (!await storage.setScopeIfCurrent(
-              previousScope,
-              selection.cacheScope,
-            )) {
-              return;
-            }
-            if (!ref.mounted || request != generation) return;
-            final usecase = ref.read(
-              getAndroidWidgetCalendarCacheUsecaseProvider,
-            );
-            final clock = ref.read(appClockProvider);
-            final month =
-                date ??
-                await storage.loadSelectedDate() ??
-                await storage.loadMonth() ??
-                clock.now();
-            await storage.refresh(selection.cacheScope, month, () async {
-              final cache = await usecase.execute(
-                selection.visibleGroups,
-                month,
-                ownerId: selection.ownerId,
-                force: forceRequested,
-              );
-              final latestScope = await selectionUsecase.loadCurrentScope();
-              if (!ref.mounted || request != generation) return;
-              if (latestScope != selection.cacheScope) {
-                await storage.setScopeIfCurrent(
-                  selection.cacheScope,
-                  latestScope,
-                );
-                return;
-              }
-              if (await storage.loadScope() != selection.cacheScope) return;
-              if (cache == null) return;
-              final synchronized = cache['synchronized'] != false;
-              final now = clock.now().toIso8601String();
-              await storage.save(
-                {
-                  ...cache,
-                  'lastUpdatedAt':
-                      cache['lastUpdatedAt'] ?? (synchronized ? now : ''),
-                  if (synchronized) 'synchronizedAt': now,
-                },
-                retainMonthsWithin: discardPreviousMonths
-                    ? 0
-                    : (date == null ? 2 : null),
-              );
-              if (request == generation) {
-                discardPreviousMonths = false;
-                forceRequested = false;
-              }
-            });
-          }
+typedef _RefreshCalendarWidget = Future<void> Function(
+  DateTime?, {
+  bool afterRestore,
+  bool force,
+  bool afterMutation,
+});
 
-          final previous = pending;
-          Future<void> run() async {
-            try {
-              await previous;
-            } catch (_) {}
-            await storage.synchronize(refresh);
-          }
+final refreshCalendarWidgetProvider = Provider<_RefreshCalendarWidget>((ref) {
+  var generation = 0;
+  var discardPreviousMonths = false;
+  var forceRequested = false;
+  var redrawPublishedMonths = false;
+  var refreshLabels = false;
+  Future<void> pending = Future.value();
+  return (
+    date, {
+    afterRestore = false,
+    force = false,
+    afterMutation = false,
+  }) async {
+    if (!ref.read(calendarWidgetSupportedProvider)) return;
+    if (!(await ref.read(
+      loadInstalledAndroidWidgetKindsProvider,
+    )()).contains(AndroidWidgetKind.calendar)) {
+      return;
+    }
+    if (afterRestore) discardPreviousMonths = true;
+    if (afterMutation) {
+      redrawPublishedMonths = true;
+      if (force) refreshLabels = true;
+    } else if (force) {
+      forceRequested = true;
+    }
+    final request = ++generation;
+    final storage = ref.read(calendarWidgetCacheStorageProvider);
+    Future<void> refresh() async {
+      if (!ref.mounted || request != generation) return;
+      final previousScope = await storage.loadScope();
+      final selectionUsecase = ref.read(
+        getCalendarWidgetSelectionUsecaseProvider,
+      );
+      final selection = await selectionUsecase.execute();
+      if (!ref.mounted || request != generation) return;
+      if (selection == null) {
+        await storage.clear();
+        await storage.update();
+        return;
+      }
+      if (!await storage.setScopeIfCurrent(
+        previousScope,
+        selection.cacheScope,
+      )) {
+        return;
+      }
+      if (!ref.mounted || request != generation) return;
+      final usecase = ref.read(getAndroidWidgetCalendarCacheUsecaseProvider);
+      final clock = ref.read(appClockProvider);
+      final month =
+          date ??
+          await storage.loadSelectedDate() ??
+          await storage.loadMonth() ??
+          clock.now();
+      final publishedMonths = redrawPublishedMonths && !discardPreviousMonths
+          ? await storage.loadPublishedMonths(selection.cacheScope)
+          : const <DateTime>[];
+      await storage.refresh(selection.cacheScope, month, () async {
+        final cache = await usecase.execute(
+          selection.visibleGroups,
+          month,
+          ownerId: selection.ownerId,
+          force: forceRequested,
+          forceLabels: refreshLabels,
+          publishedMonths: publishedMonths,
+        );
+        final latestScope = await selectionUsecase.loadCurrentScope();
+        if (!ref.mounted || request != generation) return;
+        if (latestScope != selection.cacheScope) {
+          await storage.setScopeIfCurrent(selection.cacheScope, latestScope);
+          return;
+        }
+        if (await storage.loadScope() != selection.cacheScope) return;
+        if (cache == null) return;
+        final synchronized = cache['synchronized'] != false;
+        final now = clock.now().toIso8601String();
+        await storage.save(
+          {
+            ...cache,
+            'lastUpdatedAt':
+                cache['lastUpdatedAt'] ?? (synchronized ? now : ''),
+            if (synchronized) 'synchronizedAt': now,
+          },
+          retainMonthsWithin: discardPreviousMonths
+              ? 0
+              : (date == null && !redrawPublishedMonths ? 2 : null),
+        );
+        if (request == generation) {
+          discardPreviousMonths = false;
+          forceRequested = false;
+          redrawPublishedMonths = false;
+          refreshLabels = false;
+        }
+      });
+    }
 
-          final result = run();
-          pending = result;
-          await result;
-        };
-      },
-    );
+    final previous = pending;
+    Future<void> run() async {
+      try {
+        await previous;
+      } catch (_) {}
+      await storage.synchronize(refresh);
+    }
+
+    final result = run();
+    pending = result;
+    await result;
+  };
+});

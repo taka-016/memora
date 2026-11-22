@@ -26,6 +26,7 @@ class SharedCalendarWidgetData {
     String groupId,
     List<CalendarEventPeriod> periods, {
     required bool force,
+    bool forceLabels = false,
   }) async {
     void checkOwner() {
       if (currentOwnerId() != ownerId) {
@@ -60,7 +61,7 @@ class SharedCalendarWidgetData {
         }
       }
     }
-    final cachedLabels = force ? null : snapshot.labels;
+    final cachedLabels = force || forceLabels ? null : snapshot.labels;
     List<CalendarLabelDto>? fetchedLabels;
     var labelsObservedAt = 0;
     if (cachedLabels == null) {

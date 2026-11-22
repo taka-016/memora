@@ -32,6 +32,7 @@ class GetAndroidWidgetCalendarCacheUsecase {
     String groupId,
     List<CalendarEventPeriod> periods, {
     required bool force,
+    required bool forceLabels,
   })?
   loadSharedGroup;
 
@@ -40,6 +41,8 @@ class GetAndroidWidgetCalendarCacheUsecase {
     DateTime month, {
     String? ownerId,
     bool force = false,
+    bool forceLabels = false,
+    Iterable<DateTime> publishedMonths = const [],
   }) async {
     DateTime gridStart(DateTime value) {
       final first = DateTime(value.year, value.month);
@@ -52,13 +55,14 @@ class GetAndroidWidgetCalendarCacheUsecase {
     }
 
     final first = DateTime(month.year, month.month);
-    final months = [
-      for (var offset = -1; offset <= 1; offset++)
-        DateTime(first.year, first.month + offset),
-    ];
-    final from = gridStart(months.first);
-    final to = gridEnd(months.last);
-    final period = CalendarEventPeriod(from: from, to: to);
+    final months = {
+      first,
+      if (publishedMonths.isEmpty) ...[
+        DateTime(first.year, first.month - 1),
+        DateTime(first.year, first.month + 1),
+      ],
+      for (final date in publishedMonths) DateTime(date.year, date.month),
+    }.toList()..sort();
     final load = loadSharedGroup;
     final useShared = load != null && ownerId != null;
     final quarters = {
@@ -66,6 +70,25 @@ class GetAndroidWidgetCalendarCacheUsecase {
         if (value.year >= 1 && value.year <= 9999)
           CalendarEventPeriod.forQuarter(value),
     }.toList();
+    final offlinePeriods = <DateTime, CalendarEventPeriod>{};
+    if (!useShared) {
+      var start = 0;
+      for (var end = 0; end < months.length; end++) {
+        final last = months[end];
+        if (end + 1 < months.length &&
+            months[end + 1] == DateTime(last.year, last.month + 1)) {
+          continue;
+        }
+        final period = CalendarEventPeriod(
+          from: gridStart(months[start]),
+          to: gridEnd(last),
+        );
+        for (var index = start; index <= end; index++) {
+          offlinePeriods[months[index]] = period;
+        }
+        start = end + 1;
+      }
+    }
     final occurrencesByPeriod = <CalendarEventPeriod, List<CalendarEventDto>>{};
     final displayLabels = <CalendarLabelDto>[];
     final sourceFiles = <String, int>{};
@@ -78,13 +101,20 @@ class GetAndroidWidgetCalendarCacheUsecase {
       final groupId = group.id;
       visibleIds.add(groupId);
       final data = useShared
-          ? await load(ownerId, groupId, quarters, force: force)
+          ? await load(
+              ownerId,
+              groupId,
+              quarters,
+              force: force,
+              forceLabels: forceLabels,
+            )
           : CalendarWidgetGroupData(
               eventsByPeriod: {
-                period: await events.getCalendarEventsByGroupId(
-                  groupId,
-                  period: period,
-                ),
+                for (final period in offlinePeriods.values.toSet())
+                  period: await events.getCalendarEventsByGroupId(
+                    groupId,
+                    period: period,
+                  ),
               },
               labels: await labels.getCalendarLabelsByGroupId(groupId),
             );
@@ -122,8 +152,10 @@ class GetAndroidWidgetCalendarCacheUsecase {
         return a.startDateTime.compareTo(b.startDateTime);
       });
     }
-    Iterable<CalendarEventDto> eventsOn(DateTime day) {
-      final key = useShared ? CalendarEventPeriod.forQuarter(day) : period;
+    Iterable<CalendarEventDto> eventsOn(DateTime day, DateTime month) {
+      final key = useShared
+          ? CalendarEventPeriod.forQuarter(day)
+          : offlinePeriods[month];
       return (occurrencesByPeriod[key] ?? const []).where(
         (event) => _onDay(event, day),
       );
@@ -166,7 +198,7 @@ class GetAndroidWidgetCalendarCacheUsecase {
           'date': dayFormat(day),
           'holidayName': JapaneseCalendar.holidayName(day),
           'rokuyo': JapaneseCalendar.rokuyo(day),
-          'events': eventsOn(day).map(item).toList(),
+          'events': eventsOn(day, value).map(item).toList(),
         });
       }
       final observed = observedAt[CalendarEventPeriod.forQuarter(value)] ?? 0;
