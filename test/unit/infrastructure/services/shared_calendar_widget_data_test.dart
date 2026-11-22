@@ -8,7 +8,7 @@ import 'package:memora/infrastructure/services/shared_calendar_cache.dart';
 import 'package:memora/infrastructure/services/shared_calendar_widget_data.dart';
 
 void main() {
-  test('通常表示は不足期間だけ取得し、手動更新は期間全体と色ラベルを取得する', () async {
+  test('通常表示は不足月だけ取得し、手動更新は連続する月と色ラベルをまとめて取得する', () async {
     final directory = await Directory.systemTemp.createTemp('calendar-cache-');
     addTearDown(() => directory.delete(recursive: true));
     final appCache = SharedCalendarCache(directory: () async => directory);
@@ -17,8 +17,10 @@ void main() {
       from: DateTime(2026, 10),
       to: DateTime(2027),
     );
-    final previous = CalendarEventPeriod.forQuarter(DateTime(2026, 9));
-    final periods = [previous, quarter];
+    final previous = CalendarEventPeriod.forCalendarMonth(DateTime(2026, 9));
+    final october = CalendarEventPeriod.forCalendarMonth(DateTime(2026, 10));
+    final november = CalendarEventPeriod.forCalendarMonth(DateTime(2026, 11));
+    final periods = [previous, october, november];
     await appCache.saveEvents('online:a', 'g', quarter, []);
     await appCache.saveLabels('online:a', 'g', const [], observedAt: 1);
     final requests = <CalendarEventPeriod>[];
@@ -71,7 +73,9 @@ void main() {
     expect(labelsRead, 1);
 
     await loader.load('online:a', 'g', periods, force: true);
-    expect(requests, periods);
+    expect(requests, [
+      CalendarEventPeriod(from: previous.from, to: november.to),
+    ]);
     expect(labelsRead, 2);
     expect((await appCache.loadLabels('online:a', 'g'))?.single.id, 'label');
   });
@@ -80,7 +84,7 @@ void main() {
     final directory = await Directory.systemTemp.createTemp('calendar-cache-');
     addTearDown(() => directory.delete(recursive: true));
     final appCache = SharedCalendarCache(directory: () async => directory);
-    final quarter = CalendarEventPeriod.forQuarter(DateTime(2026, 11));
+    final month = CalendarEventPeriod.forCalendarMonth(DateTime(2026, 11));
     final original = CalendarEventDto(
       id: 'event',
       groupId: 'g',
@@ -91,7 +95,7 @@ void main() {
       isAllDay: false,
     );
     final edited = original.copyWith(title: '編集後', version: 2);
-    await appCache.saveEvents('online:a', 'g', quarter, [
+    await appCache.saveEvents('online:a', 'g', month, [
       original,
     ], observedAt: 1);
     final loader = SharedCalendarWidgetData(
@@ -111,7 +115,7 @@ void main() {
       },
       fetchLabels: (_) async => [],
     );
-    final data = await loader.load('online:a', 'g', [quarter], force: true);
-    expect(data.eventsByPeriod[quarter], [edited]);
+    final data = await loader.load('online:a', 'g', [month], force: true);
+    expect(data.eventsByPeriod[month], [edited]);
   });
 }
