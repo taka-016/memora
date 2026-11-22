@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
+import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/models/app_mode.dart';
 import 'package:memora/application/usecases/android_widget/get_calendar_widget_selection_usecase.dart';
 import 'package:memora/application/usecases/android_widget/get_android_widget_calendar_cache_usecase.dart';
@@ -34,9 +35,13 @@ void main() {
     current = CalendarWidgetSelection(
       mode: AppMode.online,
       ownerId: 'online:a',
-      visibleGroupIds: {'a'},
+      visibleGroups: const [
+        GroupDto(id: 'a', ownerId: 'a', name: '家族', members: []),
+      ],
     );
     when(selection.execute()).thenAnswer((_) async => current);
+    when(selection.loadCurrentScope())
+        .thenAnswer((_) async => current.cacheScope);
     when(storage.synchronize(any)).thenAnswer(
       (call) async =>
           (call.positionalArguments[0] as Future<void> Function())(),
@@ -73,7 +78,17 @@ void main() {
     );
     addTearDown(container.dispose);
   });
-  test('取得中に他の処理が表示選択を変更したら旧スコープを公開しない', () async {
+  test('1回の更新で表示用のグループ・メンバー情報を一度だけ取得する', () async {
+    await container.read(refreshCalendarWidgetProvider)(month);
+    verifyInOrder([
+      selection.execute(),
+      cache.execute(current.visibleGroups, month, ownerId: current.ownerId),
+      selection.loadCurrentScope(),
+    ]);
+    verifyNoMoreInteractions(selection);
+    verify(storage.save(any, merge: true)).called(1);
+  });
+  test('取得中に所属が変われば旧スコープのキャッシュを公開しない', () async {
     final started = Completer<void>();
     final done = Completer<Map<String, Object?>?>();
     final old = current;
@@ -86,16 +101,17 @@ void main() {
     clearInteractions(storage);
     current = CalendarWidgetSelection(
       mode: AppMode.online,
-      ownerId: 'online:b',
-      visibleGroupIds: {},
+      ownerId: old.ownerId,
+      visibleGroups: const [],
     );
+    when(storage.loadScope()).thenAnswer((_) async => old.cacheScope);
     done.complete({
       'cacheScope': old.cacheScope,
       'month': '2026-11-01',
       'months': <String, Object?>{},
     });
     await refresh;
-    verifyNever(storage.setScope(old.cacheScope));
+    verify(storage.setScope(current.cacheScope)).called(1);
     verifyNever(storage.save(any, merge: anyNamed('merge')));
   });
   test('取得に失敗しても次の要求を直列に実行し再公開できる', () async {

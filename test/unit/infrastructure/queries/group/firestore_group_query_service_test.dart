@@ -82,6 +82,17 @@ void main() {
         'self',
       );
       expect(managed.map((group) => group.id), ['owned', 'admin']);
+      clearInteractions(mockGroupMembersCollection);
+      clearInteractions(mockFirestore);
+      expect(await service.getGroupIdsByMemberId('self'), {
+        'owned',
+        'admin',
+        'normal',
+      });
+      verify(mockGroupMembersCollection.where('memberId', isEqualTo: 'self'))
+          .called(1);
+      verifyNoMoreInteractions(mockGroupMembersCollection);
+      verifyNever(mockFirestore.collection('members'));
     });
 
     test('グループIDでグループとメンバーを正常に取得する', () async {
