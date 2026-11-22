@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/application/dtos/calendar/calendar_label_dto.dart';
 import 'package:memora/application/models/calendar_event_period.dart';
+import 'package:memora/application/models/calendar_widget_group_data.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/domain/entities/calendar/calendar_event_override.dart';
 import 'package:memora/infrastructure/services/local_calendar_widget_lock.dart';
@@ -22,9 +23,68 @@ class SharedCalendarCache {
     String groupId,
     CalendarEventPeriod period,
   ) async {
-    final data = await _read(ownerId, groupId);
     try {
-      final events = data['events']?[_periodKey(period)]?['data'];
+      return _events(
+        await _read(await _file(ownerId, groupId)),
+        groupId,
+        period,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<CalendarWidgetGroupData> loadGroup(
+    String ownerId,
+    String groupId,
+    List<CalendarEventPeriod> periods,
+  ) async {
+    try {
+      final file = await _file(ownerId, groupId);
+      final modifiedAt = await _lastModified(file);
+      final data = await _read(file);
+      return CalendarWidgetGroupData(
+        eventsByPeriod: {
+          for (final period in periods)
+            if (_events(data, groupId, period) case final events?)
+              period: events,
+        },
+        labels: _labels(data, groupId),
+        labelsObservedAt: _observedAt(data['labels']),
+        observedAt: {
+          for (final period in periods)
+            if (_observedAt(_eventRow(data, period)) case final at when at > 0)
+              period: at,
+        },
+        sourceFiles: {file.path: modifiedAt},
+      );
+    } catch (_) {
+      return const CalendarWidgetGroupData(eventsByPeriod: {}, labels: null);
+    }
+  }
+
+  Future<void> invalidateEvents(String ownerId, String groupId) =>
+      _update(ownerId, groupId, (data) {
+        data.remove('events');
+        data['invalidatedAt'] = DateTime.now().microsecondsSinceEpoch;
+        return true;
+      });
+
+  static dynamic _eventRow(
+    Map<String, dynamic> data,
+    CalendarEventPeriod period,
+  ) {
+    final rows = data['events'];
+    return rows is Map ? rows[_periodKey(period)] : null;
+  }
+
+  static List<CalendarEventDto>? _events(
+    Map<String, dynamic> data,
+    String groupId,
+    CalendarEventPeriod period,
+  ) {
+    try {
+      final events = _eventRow(data, period)?['data'];
       if (events is! List) return null;
       return events.map((value) => _event(value, groupId)).toList();
     } catch (_) {
@@ -43,7 +103,11 @@ class SharedCalendarCache {
     final key = _periodKey(period);
     final saved = data['events'];
     final rows = saved is Map<String, dynamic> ? saved : <String, dynamic>{};
-    if (_observedAt(rows[key]) > timestamp) return;
+    final invalidatedAt = data['invalidatedAt'];
+    if (_observedAt(rows[key]) > timestamp ||
+        (invalidatedAt is int && invalidatedAt > timestamp)) {
+      return false;
+    }
     rows[key] = {
       'observedAt': timestamp,
       'data': events.map(_encodeEvent).toList(),
@@ -51,6 +115,7 @@ class SharedCalendarCache {
     final keys = rows.keys.toList()
       ..sort((a, b) => _observedAt(rows[b]).compareTo(_observedAt(rows[a])));
     data['events'] = {for (final key in keys.take(16)) key: rows[key]};
+    return true;
   });
 
   static String _periodKey(CalendarEventPeriod period) =>
@@ -65,7 +130,17 @@ class SharedCalendarCache {
     String ownerId,
     String groupId,
   ) async {
-    final data = await _read(ownerId, groupId);
+    try {
+      return _labels(await _read(await _file(ownerId, groupId)), groupId);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static List<CalendarLabelDto>? _labels(
+    Map<String, dynamic> data,
+    String groupId,
+  ) {
     try {
       final labels = data['labels']?['data'];
       if (labels is! List) return null;
@@ -92,7 +167,7 @@ class SharedCalendarCache {
     List<CalendarLabelDto> labels, {
     required int observedAt,
   }) => _update(ownerId, groupId, (data) {
-    if (_observedAt(data['labels']) > observedAt) return;
+    if (_observedAt(data['labels']) > observedAt) return false;
     data['labels'] = {
       'observedAt': observedAt,
       'data': [
@@ -107,6 +182,7 @@ class SharedCalendarCache {
           },
       ],
     };
+    return true;
   });
 
   Future<File> _file(String ownerId, String groupId) async {
@@ -115,28 +191,41 @@ class SharedCalendarCache {
     return File('${directory.path}/calendar_cache_v1/$key.json');
   }
 
-  Future<Map<String, dynamic>> _read(String ownerId, String groupId) async {
+  Future<Map<String, dynamic>> _read(File file) async {
     try {
-      final file = await _file(ownerId, groupId);
       return jsonDecode(await file.readAsString()) as Map<String, dynamic>;
     } catch (_) {
       return {};
     }
   }
 
+  Future<int> _lastModified(File file) async {
+    try {
+      return (await file.lastModified()).millisecondsSinceEpoch;
+    } on FileSystemException {
+      return 0;
+    }
+  }
+
   Future<void> _update(
     String ownerId,
     String groupId,
-    void Function(Map<String, dynamic>) update,
+    bool Function(Map<String, dynamic>) update,
   ) async {
     try {
       await _lock.run('shared_cache', () async {
         final file = await _file(ownerId, groupId);
-        final data = await _read(ownerId, groupId);
-        update(data);
+        final data = await _read(file);
+        if (!update(data)) return;
         await file.parent.create(recursive: true);
         final temporary = File('${file.path}.tmp');
         await temporary.writeAsString(jsonEncode(data), flush: true);
+        final current = await _lastModified(file);
+        if (await _lastModified(temporary) <= current) {
+          await temporary.setLastModified(
+            DateTime.fromMillisecondsSinceEpoch(current + 1),
+          );
+        }
         await temporary.rename(file.path);
       });
     } catch (error, stackTrace) {

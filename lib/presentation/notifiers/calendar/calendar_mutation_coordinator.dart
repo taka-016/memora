@@ -5,6 +5,7 @@ import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/application/exceptions/application_validation_exception.dart';
 import 'package:memora/application/usecases/calendar/change_calendar_recurrence_usecase.dart';
 import 'package:memora/composition_root/providers/calendar_providers.dart';
+import 'package:memora/composition_root/providers/calendar_widget_providers.dart';
 import 'package:memora/composition_root/providers/android_widget_providers.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_notifier.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_notifications_notifier.dart';
@@ -71,7 +72,10 @@ class CalendarMutationCoordinator {
     } else {
       await ref.read(updateCalendarEventUsecaseProvider).execute(input);
     }
-    await _refresh({if (expected != null) expected.groupId, input.groupId});
+    await _refresh({
+      if (expected != null) expected.groupId,
+      input.groupId,
+    }, eventsChanged: true);
     return savedId;
   }
 
@@ -109,7 +113,7 @@ class CalendarMutationCoordinator {
           .read(deleteCalendarEventUsecaseProvider)
           .execute(expected.id, expectedVersion: expected.version);
     }
-    await _refresh({expected.groupId});
+    await _refresh({expected.groupId}, eventsChanged: true);
   }
 
   Future<void> labelsChanged(String groupId) async {
@@ -122,7 +126,7 @@ class CalendarMutationCoordinator {
     await _refresh({groupId});
   }
 
-  Future<void> _refresh(Set<String> ids) async {
+  Future<void> _refresh(Set<String> ids, {bool eventsChanged = false}) async {
     if (!ref.mounted) return;
     for (final id in ids) {
       final provider = calendarNotifierProvider(id);
@@ -132,6 +136,10 @@ class CalendarMutationCoordinator {
       if (!ref.mounted) return;
     }
     try {
+      if (eventsChanged) {
+        await ref.read(invalidateCalendarWidgetEventsProvider)(ids);
+      }
+      if (!ref.mounted) return;
       if (ref.exists(calendarNotificationsNotifierProvider)) {
         await ref
             .read(calendarNotificationsNotifierProvider.notifier)

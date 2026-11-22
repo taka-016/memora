@@ -38,6 +38,8 @@ internal data class CalendarWidgetDay(
 internal data class CalendarWidgetMonth(
     val month: LocalDate,
     val days: List<CalendarWidgetDay>,
+    val sourceFiles: Map<String, Long> = emptyMap(),
+    val lastUpdatedAt: String? = null,
 )
 
 internal data class CalendarWidgetCache(
@@ -100,7 +102,13 @@ internal object CalendarWidgetData {
                     )
                 }
                 val date = LocalDate.parse(key)
-                parsedMonths[date] = CalendarWidgetMonth(date, parsedDays)
+                val files = month.optJSONObject("sourceFiles")
+                val sourceFiles = files?.keys()?.asSequence()?.associateWith { files.getLong(it) }
+                    .orEmpty()
+                parsedMonths[date] = CalendarWidgetMonth(
+                    date, parsedDays, sourceFiles,
+                    month.optString("lastUpdatedAt").takeIf { it.isNotBlank() },
+                )
             }
             val loaded = CalendarWidgetCache(
                 root.getString("cacheScope"), root.getString("sourceMode"), parsedMonths,

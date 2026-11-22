@@ -135,8 +135,15 @@ final refreshCalendarWidgetProvider =
               }
               if (await storage.loadScope() != selection.cacheScope) return;
               if (cache == null) return;
+              final synchronized = cache['synchronized'] != false;
+              final now = clock.now().toIso8601String();
               await storage.save(
-                {...cache, 'lastUpdatedAt': clock.now().toIso8601String()},
+                {
+                  ...cache,
+                  'lastUpdatedAt':
+                      cache['lastUpdatedAt'] ?? (synchronized ? now : ''),
+                  if (synchronized) 'synchronizedAt': now,
+                },
                 retainMonthsWithin: discardPreviousMonths
                     ? 0
                     : (date == null ? 2 : null),
@@ -162,3 +169,19 @@ final refreshCalendarWidgetProvider =
         };
       },
     );
+
+final invalidateCalendarWidgetEventsProvider =
+    Provider<Future<void> Function(Iterable<String>)>((ref) {
+      return (groupIds) async {
+        if (!ref.read(calendarWidgetSupportedProvider) ||
+            ref.read(appModeProvider) != AppMode.online) {
+          return;
+        }
+        final owner = ref.read(onlineCalendarCacheOwnerProvider)();
+        if (owner == null) return;
+        final cache = ref.read(sharedCalendarCacheProvider);
+        for (final groupId in groupIds) {
+          await cache.invalidateEvents(owner, groupId);
+        }
+      };
+    });

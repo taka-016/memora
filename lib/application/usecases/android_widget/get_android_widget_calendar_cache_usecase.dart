@@ -4,6 +4,7 @@ import 'package:memora/application/services/calendar/japanese_calendar.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/application/models/app_mode.dart';
 import 'package:memora/application/models/calendar_event_period.dart';
+import 'package:memora/application/models/calendar_widget_group_data.dart';
 import 'package:memora/application/services/current_user_service.dart';
 import 'package:memora/application/queries/calendar/calendar_event_query_service.dart';
 import 'package:memora/application/queries/calendar/calendar_label_query_service.dart';
@@ -26,13 +27,7 @@ class GetAndroidWidgetCalendarCacheUsecase {
   final CalendarRecurrenceExpander expander;
   final AppMode mode;
   final CurrentUserService? currentUser;
-  final Future<
-    ({
-      Map<CalendarEventPeriod, List<CalendarEventDto>> eventsByPeriod,
-      List<CalendarLabelDto> labels,
-    })
-  >
-  Function(
+  final Future<CalendarWidgetGroupData> Function(
     String ownerId,
     String groupId,
     List<CalendarEventPeriod> periods, {
@@ -73,6 +68,9 @@ class GetAndroidWidgetCalendarCacheUsecase {
     }.toList();
     final occurrencesByPeriod = <CalendarEventPeriod, List<CalendarEventDto>>{};
     final displayLabels = <CalendarLabelDto>[];
+    final sourceFiles = <String, int>{};
+    final observedAt = <CalendarEventPeriod, int>{};
+    var synchronized = !useShared || (groups.isEmpty && force);
     final visibleIds = <String>[];
     final sortedGroups = groups.toList()..sort((a, b) => a.id.compareTo(b.id));
     for (final group in sortedGroups) {
@@ -80,7 +78,7 @@ class GetAndroidWidgetCalendarCacheUsecase {
       visibleIds.add(groupId);
       final data = useShared
           ? await load(ownerId, groupId, quarters, force: force)
-          : (
+          : CalendarWidgetGroupData(
               eventsByPeriod: {
                 period: await events.getCalendarEventsByGroupId(
                   groupId,
@@ -89,10 +87,18 @@ class GetAndroidWidgetCalendarCacheUsecase {
               },
               labels: await labels.getCalendarLabelsByGroupId(groupId),
             );
+      sourceFiles.addAll(data.sourceFiles);
+      synchronized |= data.synchronized;
+      for (final entry in data.observedAt.entries) {
+        final current = observedAt[entry.key];
+        if (current == null || entry.value < current) {
+          observedAt[entry.key] = entry.value;
+        }
+      }
       displayLabels.addAll(
         buildCalendarDisplayLabels(
           group,
-          data.labels,
+          data.labels ?? const [],
           events: data.eventsByPeriod.values
               .expand((events) => events)
               .toList(),
@@ -160,7 +166,15 @@ class GetAndroidWidgetCalendarCacheUsecase {
           'events': eventsOn(day).map(item).toList(),
         });
       }
-      return {'month': dayFormat(value), 'days': days};
+      final observed = observedAt[CalendarEventPeriod.forQuarter(value)] ?? 0;
+      return {
+        'month': dayFormat(value),
+        'days': days,
+        if (useShared) 'sourceFiles': sourceFiles,
+        if (observed > 0)
+          'lastUpdatedAt': DateTime.fromMicrosecondsSinceEpoch(observed)
+              .toIso8601String(),
+      };
     }
 
     final cachedMonths = {
@@ -177,6 +191,7 @@ class GetAndroidWidgetCalendarCacheUsecase {
       ),
       'visibleGroupIds': visibleIds,
       'sourceMode': mode.name,
+      if (useShared) 'synchronized': synchronized,
       'deviceCalendarOwnerId': deviceOwner,
       ...cachedMonths[dayFormat(first)]!,
       'months': cachedMonths,

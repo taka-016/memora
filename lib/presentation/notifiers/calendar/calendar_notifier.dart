@@ -13,6 +13,7 @@ import 'package:memora/application/exceptions/application_validation_exception.d
 import 'package:memora/composition_root/providers/app_providers.dart';
 import 'package:memora/composition_root/providers/android_widget_providers.dart';
 import 'package:memora/composition_root/providers/calendar_providers.dart';
+import 'package:memora/composition_root/providers/calendar_widget_providers.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_state.dart';
 
@@ -332,7 +333,10 @@ class CalendarNotifier extends _$CalendarNotifier {
     );
   }
 
-  Future<bool> _mutate(Future<void> Function() action) async {
+  Future<bool> _mutate(
+    Future<void> Function() action, {
+    bool eventsChanged = false,
+  }) async {
     if (state.isSaving) return false;
     final refreshWidget = ref.read(refreshSelectedCalendarWidgetCacheProvider);
     state = state.copyWith(isSaving: true, mutationError: '');
@@ -349,7 +353,17 @@ class CalendarNotifier extends _$CalendarNotifier {
       }
       return false;
     }
-    unawaited(_refreshWidgetAfterMutation(refreshWidget));
+    if (eventsChanged && ref.mounted) {
+      final invalidate = ref.read(invalidateCalendarWidgetEventsProvider);
+      unawaited(
+        _refreshWidgetAfterMutation(() async {
+          await invalidate([groupId]);
+          await refreshWidget();
+        }),
+      );
+    } else {
+      unawaited(_refreshWidgetAfterMutation(refreshWidget));
+    }
     if (!ref.mounted) return true;
     if (ref.exists(calendarNotificationsNotifierProvider)) {
       unawaited(
@@ -397,7 +411,7 @@ class CalendarNotifier extends _$CalendarNotifier {
           scope,
           changes: changes,
         );
-  });
+  }, eventsChanged: true);
 
   Future<bool> saveEvent(CalendarEventDto event) => _mutate(() async {
     if (event.originalStartDateTime != null ||
@@ -423,7 +437,7 @@ class CalendarNotifier extends _$CalendarNotifier {
     } else {
       await ref.read(updateCalendarEventUsecaseProvider).execute(event);
     }
-  });
+  }, eventsChanged: true);
 
   Future<bool> deleteEvent(String id, {int? expectedVersion}) =>
       _mutate(() async {
@@ -438,7 +452,7 @@ class CalendarNotifier extends _$CalendarNotifier {
         await ref
             .read(deleteCalendarEventUsecaseProvider)
             .execute(id, expectedVersion: expectedVersion);
-      });
+      }, eventsChanged: true);
 
   Future<bool> saveLabel(CalendarLabelDto label) => _mutate(() async {
     if (label.groupId != groupId) {

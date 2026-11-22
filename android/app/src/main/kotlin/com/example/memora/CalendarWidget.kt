@@ -8,6 +8,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import es.antonborri.home_widget.HomeWidgetPlugin
+import java.io.File
 import java.time.LocalDate
 import java.util.concurrent.Executors
 
@@ -67,12 +68,11 @@ open class CalendarWidgetReceiver : AppWidgetProvider() {
             CALENDAR_REFRESH_ACTION -> {
                 val widgetId = widgetId(intent)
                 if (!isCalendarWidget(context, widgetId)) return
-                CalendarWidgetData.selectDate(
-                    context, widgetId, CalendarWidgetData.selectedDate(context, widgetId),
-                )
-                CalendarWidgetData.startLoading(context, CalendarWidgetData.selectedDate(context, widgetId))
+                val date = CalendarWidgetData.selectedDate(context, widgetId)
+                CalendarWidgetData.selectDate(context, widgetId, date)
+                CalendarWidgetData.startLoading(context, date)
                 updateWidget(context, AppWidgetManager.getInstance(context), widgetId)
-                requestCalendarRefresh(context, force = true)
+                requestCalendarRefresh(context, date, force = true)
             }
             AppWidgetManager.ACTION_APPWIDGET_UPDATE -> {
                 if (intent.isAutomaticCalendarWidgetUpdate()) {
@@ -95,13 +95,9 @@ open class CalendarWidgetReceiver : AppWidgetProvider() {
             }.getOrNull() ?: return
         }
         val previous = CalendarWidgetData.selectedDate(context, widgetId)
-        val month = date.withDayOfMonth(1)
         val months = CalendarWidgetData.read(context)?.months.orEmpty()
         CalendarWidgetData.selectDate(context, widgetId, date)
-        val missingNeighbor = !months.containsKey(month.minusMonths(1)) ||
-            !months.containsKey(month.plusMonths(1))
-        val needsRefresh = !months.containsKey(month) ||
-            (previous.withDayOfMonth(1) != month && missingNeighbor)
+        val needsRefresh = needsCalendarWidgetRefresh(previous, date, months)
         if (needsRefresh) CalendarWidgetData.startLoading(context, date)
         updateWidget(context, AppWidgetManager.getInstance(context), widgetId)
         if (needsRefresh) requestCalendarRefresh(context, date)
@@ -123,6 +119,19 @@ open class CalendarWidgetReceiver : AppWidgetProvider() {
     private fun widgetId(intent: Intent): Int = intent.getIntExtra(
         AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID,
     )
+}
+
+internal fun needsCalendarWidgetRefresh(
+    previous: LocalDate,
+    selected: LocalDate,
+    months: Map<LocalDate, CalendarWidgetMonth>,
+): Boolean {
+    val month = selected.withDayOfMonth(1)
+    val stored = months[month] ?: return true
+    if (previous.withDayOfMonth(1) == month) return false
+    return !months.containsKey(month.minusMonths(1)) ||
+        !months.containsKey(month.plusMonths(1)) ||
+        stored.sourceFiles.any { (path, modifiedAt) -> File(path).lastModified() != modifiedAt }
 }
 
 private fun Intent.isAutomaticCalendarWidgetUpdate(): Boolean =

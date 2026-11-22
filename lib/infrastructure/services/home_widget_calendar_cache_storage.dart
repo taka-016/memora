@@ -155,11 +155,12 @@ class HomeWidgetCalendarCacheStorage {
         published.path,
         deleteFile: false,
       );
-      final lastUpdatedAt = cache['lastUpdatedAt'] as String?;
-      if (lastUpdatedAt != null) {
+      final synchronizedAt =
+          (cache['synchronizedAt'] ?? cache['lastUpdatedAt']) as String?;
+      if (cache['synchronized'] != false && synchronizedAt != null) {
         await HomeWidget.saveWidgetData<String>(
           HomeWidgetAndroidWidgetCacheStorage.lastUpdatedAtKey,
-          lastUpdatedAt,
+          synchronizedAt,
         );
       }
     } finally {
