@@ -105,6 +105,38 @@ void main() {
     expect(cached, [series]);
   });
 
+  test('月によって系列の版が異なる場合は取消が欠けた四半期を返さない', () async {
+    final decemberCancellation = CalendarEventOverride(
+      originalStartDateTime: DateTime.utc(2026, 12, 4),
+    );
+    final series = CalendarEventDto(
+      id: 'series',
+      groupId: 'group',
+      title: '変更前',
+      startDateTime: DateTime.utc(2026, 10, 2),
+      endDateTime: DateTime.utc(2026, 10, 3),
+      isAllDay: true,
+      recurrenceRule: 'FREQ=WEEKLY;BYDAY=FR',
+      version: 1,
+      overrides: [decemberCancellation],
+    );
+    final november = CalendarEventPeriod.forCalendarMonth(DateTime(2026, 11));
+    final december = CalendarEventPeriod.forCalendarMonth(DateTime(2026, 12));
+    final renamed = series.copyWith(title: '変更後', version: 2, overrides: []);
+    await app.saveEvents('account', 'group', quarter, [series], observedAt: 1);
+    await widget.saveEvents('account', 'group', november, [
+      renamed,
+    ], observedAt: 2);
+
+    final shared = await widget.loadGroup('account', 'group', [
+      november,
+      december,
+    ]);
+    expect(shared.eventsByPeriod[november], [renamed]);
+    expect(shared.eventsByPeriod[december], [series]);
+    expect(await app.loadEvents('account', 'group', quarter), isNull);
+  });
+
   test('最新の空結果で四半期を上書きし、遅れて届いた古い結果を破棄する', () async {
     final event = CalendarEventDto(
       id: 'event',
