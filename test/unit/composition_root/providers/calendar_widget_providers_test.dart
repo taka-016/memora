@@ -86,7 +86,14 @@ void main() {
       selection.loadCurrentScope(),
     ]);
     verifyNoMoreInteractions(selection);
-    verify(storage.save(any, keepDistantMonths: true)).called(1);
+    verify(storage.save(any, retainMonthsWithin: null)).called(1);
+  });
+  test('バックアップ復元後は取得済み月を引き継がない', () async {
+    await container.read(refreshCalendarWidgetProvider)(
+      null,
+      afterRestore: true,
+    );
+    verify(storage.save(any, retainMonthsWithin: 0)).called(1);
   });
   test('取得中に所属が変われば旧スコープのキャッシュを公開しない', () async {
     final started = Completer<void>();
@@ -113,7 +120,7 @@ void main() {
     await refresh;
     verify(storage.setScope(current.cacheScope)).called(1);
     verifyNever(
-      storage.save(any, keepDistantMonths: anyNamed('keepDistantMonths')),
+      storage.save(any, retainMonthsWithin: anyNamed('retainMonthsWithin')),
     );
   });
   test('取得に失敗しても次の要求を直列に実行し再公開できる', () async {
@@ -131,7 +138,7 @@ void main() {
       },
     );
     await container.read(refreshCalendarWidgetProvider)(month);
-    verify(storage.save(any, keepDistantMonths: true)).called(1);
+    verify(storage.save(any, retainMonthsWithin: null)).called(1);
     verify(storage.setScope(current.cacheScope)).called(2);
     verifyNever(storage.setScope(null));
   });

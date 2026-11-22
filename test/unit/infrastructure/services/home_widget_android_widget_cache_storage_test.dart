@@ -292,7 +292,7 @@ void main() {
     };
     await storage.save(month('2026-05-01'));
     await storage.save(month('2027-01-01'));
-    await storage.save(month('2026-11-01'), keepDistantMonths: false);
+    await storage.save(month('2026-11-01'), retainMonthsWithin: 2);
     final path = values[HomeWidgetCalendarCacheStorage.cacheKey] as String;
     final saved = jsonDecode(await File(path).readAsString()) as Map;
     expect((saved['months'] as Map).keys, ['2026-11-01', '2027-01-01']);
@@ -301,6 +301,9 @@ void main() {
       values[HomeWidgetAndroidWidgetCacheStorage.targetGroupIdKey],
       'group',
     );
+    await storage.save(month('2026-11-01'), retainMonthsWithin: 0);
+    final restored = jsonDecode(await File(path).readAsString()) as Map;
+    expect((restored['months'] as Map).keys, ['2026-11-01']);
   });
 
   test('以前のカレンダーキャッシュが読めなくても新しい月を公開する', () async {
@@ -322,7 +325,7 @@ void main() {
     ]) {
       await file.writeAsString(previous);
       values[HomeWidgetCalendarCacheStorage.cacheKey] = file.path;
-      await storage.save(data, keepDistantMonths: false);
+      await storage.save(data, retainMonthsWithin: 2);
       final path = values[HomeWidgetCalendarCacheStorage.cacheKey] as String;
       expect(jsonDecode(await File(path).readAsString()), data);
     }
