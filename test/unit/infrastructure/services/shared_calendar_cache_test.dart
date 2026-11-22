@@ -3,7 +3,9 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/application/models/calendar_event_period.dart';
+import 'package:memora/application/services/calendar/calendar_recurrence_expander.dart';
 import 'package:memora/domain/entities/calendar/calendar_event_override.dart';
+import 'package:memora/infrastructure/services/iana_calendar_time_zone.dart';
 import 'package:memora/infrastructure/services/shared_calendar_cache.dart';
 
 void main() {
@@ -105,7 +107,7 @@ void main() {
     expect(cached, [series]);
   });
 
-  test('月によって系列の版が異なる場合は取消が欠けた四半期を返さない', () async {
+  test('10月だけ再取得しても件名変更が12月に反映され、12月4日の回は表示されない', () async {
     final decemberCancellation = CalendarEventOverride(
       originalStartDateTime: DateTime.utc(2026, 12, 4),
     );
@@ -120,21 +122,58 @@ void main() {
       version: 1,
       overrides: [decemberCancellation],
     );
-    final november = CalendarEventPeriod.forCalendarMonth(DateTime(2026, 11));
+    final october = CalendarEventPeriod.forCalendarMonth(DateTime(2026, 10));
     final december = CalendarEventPeriod.forCalendarMonth(DateTime(2026, 12));
     final renamed = series.copyWith(title: '変更後', version: 2, overrides: []);
     await app.saveEvents('account', 'group', quarter, [series], observedAt: 1);
-    await widget.saveEvents('account', 'group', november, [
+    await widget.saveEvents('account', 'group', october, [
       renamed,
     ], observedAt: 2);
 
     final shared = await widget.loadGroup('account', 'group', [
-      november,
+      october,
       december,
     ]);
-    expect(shared.eventsByPeriod[november], [renamed]);
-    expect(shared.eventsByPeriod[december], [series]);
-    expect(await app.loadEvents('account', 'group', quarter), isNull);
+    final updated = renamed.copyWith(overrides: [decemberCancellation]);
+    expect(shared.eventsByPeriod[october], [renamed]);
+    expect(shared.eventsByPeriod[december], [updated]);
+    final cached = await app.loadEvents('account', 'group', quarter);
+    expect(cached, [updated]);
+    final occurrences = CalendarRecurrenceExpander(IanaCalendarTimeZone())
+        .expand(cached!.single, december.from, december.to);
+    expect(occurrences.map((event) => event.startDateTime.day), [11, 18, 25]);
+    expect(occurrences.map((event) => event.title), everyElement('変更後'));
+  });
+
+  test('単発予定が取得済みでも、系列の取消情報が未取得の月はキャッシュから返さない', () async {
+    final october = CalendarEventPeriod.forCalendarMonth(DateTime(2026, 10));
+    final december = CalendarEventPeriod.forCalendarMonth(DateTime(2026, 12));
+    final series = CalendarEventDto(
+      id: 'series',
+      groupId: 'group',
+      title: '毎週の予定',
+      startDateTime: DateTime.utc(2026, 10, 2),
+      endDateTime: DateTime.utc(2026, 10, 3),
+      isAllDay: true,
+      recurrenceRule: 'FREQ=WEEKLY;BYDAY=FR',
+      version: 1,
+    );
+    await app.saveEvents('account', 'group', quarter, [], observedAt: 1);
+    await widget.saveEvents('account', 'group', october, [
+      series,
+    ], observedAt: 2);
+
+    expect(await app.loadEvents('account', 'group', october), [series]);
+    expect(await app.loadEvents('account', 'group', december), isNull);
+    expect(
+      (await widget.loadGroup('account', 'group', [december])).eventsByPeriod,
+      isEmpty,
+    );
+
+    await widget.saveEvents('account', 'group', december, [
+      series,
+    ], observedAt: 3);
+    expect(await app.loadEvents('account', 'group', december), [series]);
   });
 
   test('更新済みの空の月に、別の月だけに残っている予定を表示しない', () async {
