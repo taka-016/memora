@@ -29,7 +29,7 @@ class AndroidWidgetActionHandler {
   final RefreshAndroidWidgetCache _refreshCache;
   final MoveAndroidWidgetItineraryDate _moveDate;
   final ShowAndroidWidgetToast _showToast;
-  final Future<void> Function(DateTime? date)? refreshCalendar;
+  final Future<void> Function(DateTime? date, {bool force})? refreshCalendar;
 
   Future<void> handle(Uri? uri) async {
     switch (uri?.host) {
@@ -51,6 +51,7 @@ class AndroidWidgetActionHandler {
         try {
           await refreshCalendar?.call(
             DateTime.tryParse(uri?.queryParameters['date'] ?? ''),
+            force: uri?.queryParameters['force'] == 'true',
           );
         } catch (_) {
           await _showToastSafely(

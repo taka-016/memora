@@ -213,7 +213,8 @@ void main() {
     when(local.metadata).thenReturn(_Metadata(isFromCache: true));
     source.add(local);
     final remote = MockQuerySnapshot();
-    when(remote.docs).thenReturn([doc('new')]);
+    final newLabel = doc('new');
+    when(remote.docs).thenReturn([newLabel]);
     when(remote.metadata).thenReturn(_Metadata(isFromCache: false));
     source.add(remote);
     expect(await next, isTrue);

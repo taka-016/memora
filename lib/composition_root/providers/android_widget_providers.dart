@@ -183,7 +183,8 @@ final refreshAndroidWidgetCachesUsecaseProvider =
                     .getSelectedItineraryDateId(),
               );
         },
-        refreshCalendar: () => ref.read(refreshCalendarWidgetProvider)(null),
+        refreshCalendar: () =>
+            ref.read(refreshCalendarWidgetProvider)(null, force: true),
       );
     });
 

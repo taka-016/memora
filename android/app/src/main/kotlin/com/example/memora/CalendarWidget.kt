@@ -72,7 +72,7 @@ open class CalendarWidgetReceiver : AppWidgetProvider() {
                 )
                 CalendarWidgetData.startLoading(context, CalendarWidgetData.selectedDate(context, widgetId))
                 updateWidget(context, AppWidgetManager.getInstance(context), widgetId)
-                requestCalendarRefresh(context)
+                requestCalendarRefresh(context, force = true)
             }
             AppWidgetManager.ACTION_APPWIDGET_UPDATE -> {
                 if (intent.isAutomaticCalendarWidgetUpdate()) {
@@ -165,9 +165,15 @@ internal fun calendarWidgetAction(
     )
 }
 
-private fun requestCalendarRefresh(context: Context, date: LocalDate? = null) {
-    AndroidWidgetBackgroundReceiver.request(
-        context,
-        Uri.parse("memoraWidget://calendarRefresh?date=${date?.toString().orEmpty()}"),
-    )
+private fun requestCalendarRefresh(
+    context: Context,
+    date: LocalDate? = null,
+    force: Boolean = false,
+) {
+    val uri = Uri.Builder().scheme("memoraWidget").authority("calendarRefresh")
+        .apply {
+            if (date != null) appendQueryParameter("date", date.toString())
+            if (force) appendQueryParameter("force", "true")
+        }.build()
+    AndroidWidgetBackgroundReceiver.request(context, uri)
 }

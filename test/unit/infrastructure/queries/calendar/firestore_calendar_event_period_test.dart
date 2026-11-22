@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/application/models/app_mode.dart';
 import 'package:memora/composition_root/providers/calendar_providers.dart';
+import 'package:memora/composition_root/providers/shared_calendar_cache_providers.dart';
 import 'package:memora/infrastructure/config/resolved_app_mode_provider.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:mockito/mockito.dart';
@@ -358,6 +359,7 @@ void main() {
       overrides: [
         appModeProvider.overrideWithValue(AppMode.online),
         firebaseFirestoreProvider.overrideWithValue(firestore),
+        onlineCalendarCacheOwnerProvider.overrideWithValue(() => null),
       ],
     );
     final watcher = container.read(watchCalendarEventsUsecaseProvider)!;

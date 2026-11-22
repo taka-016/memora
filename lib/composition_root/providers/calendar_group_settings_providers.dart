@@ -8,7 +8,7 @@ import 'package:memora/infrastructure/services/local_calendar_group_initializati
 import 'package:memora/infrastructure/services/device_calendar_membership_source.dart';
 import 'package:memora/composition_root/providers/offline_database_provider.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
-import 'package:memora/composition_root/providers/android_widget_providers.dart';
+import 'package:memora/composition_root/providers/calendar_widget_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/models/app_mode.dart';
 import 'package:memora/application/services/calendar_group_settings_storage.dart';
@@ -33,7 +33,8 @@ final calendarSettingsOwnerProvider = Provider<String?>((ref) {
 });
 
 final calendarWidgetGroupsChangedProvider = Provider<Future<void> Function()>(
-  (ref) => ref.read(refreshSelectedCalendarWidgetCacheProvider),
+  (ref) =>
+      () => ref.read(refreshCalendarWidgetProvider)(null),
 );
 
 final calendarGroupInitializationPolicyProvider =
