@@ -348,37 +348,44 @@ class SharedCalendarCache {
       final months = _monthsIn(period)
           .where((month) => _observedAt(rows[_periodKey(month)]) < timestamp)
           .toList();
+      final commits = _eventCommits(data);
+      final seriesTimestamp = recurringObservedAt ?? timestamp;
+      final replaceSeriesSnapshot = seriesTimestamp > _seriesObservedAt(data);
+      final series = _seriesRows(data, groupId);
+      var seriesChanged = replaceSeriesSnapshot;
+      final seriesIds = replaceSeriesSnapshot
+          ? {...series.keys, ...recurringEvents.keys}
+          : recurringEvents.keys;
+      for (final id in seriesIds) {
+        if ((commits[id] ?? 0) > seriesTimestamp) continue;
+        final previous = series[id];
+        final event = recurringEvents[id];
+        if (event == null) {
+          series.remove(id);
+          continue;
+        }
+        final version = event.version ?? 0;
+        final previousVersion = previous?.parent.version ?? 0;
+        if (version < previousVersion ||
+            (!replaceSeriesSnapshot &&
+                (previous == null || version == previousVersion))) {
+          continue;
+        }
+        seriesChanged = true;
+        series[id] = _CachedSeries(
+          event,
+          event.recurrenceEndDateTime ?? _expander.seriesEndDateTime(event),
+          seriesTimestamp,
+        );
+      }
+      if (replaceSeriesSnapshot) data['seriesObservedAt'] = seriesTimestamp;
+      if (seriesChanged) _saveSeriesRows(data, series);
       if ((data['eventCommitAt'] as int? ?? 0) > timestamp &&
           months.any((month) => rows[_periodKey(month)]?['data'] is! List)) {
         retryInitialFetch = true;
-        return false;
+        return seriesChanged;
       }
-      final commits = _eventCommits(data);
-      final seriesTimestamp = recurringObservedAt ?? timestamp;
-      final updateSeries = seriesTimestamp > _seriesObservedAt(data);
-      if (updateSeries) {
-        final series = _seriesRows(data, groupId);
-        for (final id in {...series.keys, ...recurringEvents.keys}) {
-          if ((commits[id] ?? 0) > seriesTimestamp) continue;
-          final previous = series[id];
-          final event = recurringEvents[id];
-          if (event == null) {
-            series.remove(id);
-            continue;
-          }
-          if ((previous?.parent.version ?? 0) > (event.version ?? 0)) {
-            continue;
-          }
-          series[id] = _CachedSeries(
-            event,
-            event.recurrenceEndDateTime ?? _expander.seriesEndDateTime(event),
-            seriesTimestamp,
-          );
-        }
-        data['seriesObservedAt'] = seriesTimestamp;
-        _saveSeriesRows(data, series);
-      }
-      if (months.isEmpty) return updateSeries;
+      if (months.isEmpty) return seriesChanged;
       for (final month in months) {
         final key = _periodKey(month);
         final updated = {

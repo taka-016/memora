@@ -301,9 +301,10 @@ class FirestoreCalendarEventWatchQueryService
                       received.any((value) => value == null)) {
                     return;
                   }
-                  final combined = {for (final values in received) ...values!};
                   final events = await Future.wait(
-                    combined.values.map((entry) => entry.$2),
+                    received.expand(
+                      (values) => values!.values.map((entry) => entry.$2),
+                    ),
                   );
                   if (cancelled ||
                       current != generation ||
@@ -326,7 +327,9 @@ class FirestoreCalendarEventWatchQueryService
                       currentOwnerId?.call() == ownerId) {
                     controller.add((
                       events: [
-                        for (final event in events)
+                        for (final event in {
+                          for (final event in events) event.id: event,
+                        }.values)
                           if (!allRecurringParents ||
                               period == null ||
                               event.recurrenceRule == null ||
