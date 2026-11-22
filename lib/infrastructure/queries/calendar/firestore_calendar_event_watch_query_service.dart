@@ -332,8 +332,9 @@ class FirestoreCalendarEventWatchQueryService
                   );
                   if (cancelled ||
                       current != generation ||
-                      currentOwnerId?.call() != ownerId)
+                      currentOwnerId?.call() != ownerId) {
                     return;
+                  }
                   final events = values.map((value) => value.event).toList();
                   final complete =
                       confirmed.every((value) => value) &&
