@@ -11,7 +11,6 @@ import 'package:memora/composition_root/providers/app_providers.dart';
 import 'package:memora/composition_root/providers/calendar_providers.dart';
 import 'package:memora/composition_root/providers/calendar_group_settings_providers.dart';
 import 'package:memora/composition_root/providers/member_providers.dart';
-import 'package:memora/composition_root/providers/group_providers.dart';
 import 'package:memora/infrastructure/config/resolved_app_mode_provider.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/infrastructure/services/home_widget_calendar_cache_storage.dart';
@@ -21,7 +20,7 @@ final getCalendarWidgetSelectionUsecaseProvider =
       (ref) => GetCalendarWidgetSelectionUsecase(
         mode: ref.watch(appModeProvider),
         currentMember: ref.watch(getCurrentMemberUsecaseProvider),
-        groups: ref.watch(getGroupsWithMembersUsecaseProvider),
+        groups: ref.watch(groupQueryServiceProvider),
         storage: ref.watch(calendarGroupSettingsStorageProvider),
       ),
     );
@@ -38,7 +37,6 @@ final getAndroidWidgetCalendarCacheUsecaseProvider =
       (ref) => GetAndroidWidgetCalendarCacheUsecase(
         events: ref.watch(calendarEventQueryServiceProvider),
         labels: ref.watch(calendarLabelQueryServiceProvider),
-        groups: ref.watch(groupQueryServiceProvider),
         expander: ref.watch(calendarRecurrenceExpanderProvider),
         mode: ref.watch(appModeProvider),
         currentUser: ref.watch(appModeProvider) == AppMode.online
@@ -91,16 +89,16 @@ final refreshCalendarWidgetProvider =
               clock.now();
           await storage.refresh(selection.cacheScope, month, () async {
             final cache = await usecase.execute(
-              selection.visibleGroupIds,
+              selection.visibleGroups,
               month,
               ownerId: selection.ownerId,
             );
-            final latest = await selectionUsecase.execute();
+            final latestScope = await selectionUsecase.loadCurrentScope();
             if (!ref.mounted || request != generation) return;
-            if (latest?.cacheScope != selection.cacheScope) {
+            if (latestScope != selection.cacheScope) {
               await storage.setScopeIfCurrent(
                 selection.cacheScope,
-                latest?.cacheScope,
+                latestScope,
               );
               return;
             }

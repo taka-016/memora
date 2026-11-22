@@ -11,9 +11,22 @@ class SqliteGroupQueryService implements GroupQueryService {
   SqliteGroupQueryService(this.db);
   final OfflineDatabase db;
 
+  static const _groupsForMemberCondition =
+      'owner_id = ? OR id IN (SELECT group_id FROM group_members WHERE member_id = ?)';
+
   @override
   Future<bool> groupExists(String groupId) async =>
       (await db.rows('groups', where: 'id = ?', args: [groupId])).isNotEmpty;
+
+  @override
+  Future<Set<String>> getGroupIdsByMemberId(String memberId) async {
+    final groups = await db.rows(
+      'groups',
+      where: _groupsForMemberCondition,
+      args: [memberId, memberId],
+    );
+    return {for (final group in groups) group['id'] as String};
+  }
 
   Future<GroupDto> _group(
     Map<String, Object?> row,
@@ -64,7 +77,7 @@ class SqliteGroupQueryService implements GroupQueryService {
     List<OrderBy>? groupsOrderBy,
     List<OrderBy>? membersOrderBy,
   }) async => _groups(
-    'owner_id = ? OR id IN (SELECT group_id FROM group_members WHERE member_id = ?)',
+    _groupsForMemberCondition,
     [memberId, memberId],
     groupsOrderBy,
     membersOrderBy,

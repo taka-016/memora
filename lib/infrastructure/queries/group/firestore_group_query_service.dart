@@ -27,6 +27,17 @@ class FirestoreGroupQueryService implements GroupQueryService {
           .exists;
 
   @override
+  Future<Set<String>> getGroupIdsByMemberId(String memberId) async {
+    final memberships = await _membershipsForMember(memberId);
+    final groupIds = <String>{};
+    for (final membership in memberships.docs) {
+      final groupId = membership.data()['groupId'] as String;
+      if (await groupExists(groupId)) groupIds.add(groupId);
+    }
+    return groupIds;
+  }
+
+  @override
   Future<List<GroupDto>> getGroupsWithMembersByMemberId(
     String memberId, {
     List<OrderBy>? groupsOrderBy,
@@ -115,10 +126,7 @@ class FirestoreGroupQueryService implements GroupQueryService {
     String memberId, {
     required bool managed,
   }) async {
-    final memberships = await _firestore
-        .collection('group_members')
-        .where('memberId', isEqualTo: memberId)
-        .get(_options);
+    final memberships = await _membershipsForMember(memberId);
     final groups = <GroupDto>[];
     for (final membership in memberships.docs) {
       final data = membership.data();
@@ -134,6 +142,13 @@ class FirestoreGroupQueryService implements GroupQueryService {
     }
     return groups;
   }
+
+  Future<QuerySnapshot<Map<String, dynamic>>> _membershipsForMember(
+    String memberId,
+  ) => _firestore
+      .collection('group_members')
+      .where('memberId', isEqualTo: memberId)
+      .get(_options);
 
   List<GroupDto> _sortGroups(List<GroupDto> groups, List<OrderBy>? orderBy) {
     if (orderBy == null || orderBy.isEmpty) {

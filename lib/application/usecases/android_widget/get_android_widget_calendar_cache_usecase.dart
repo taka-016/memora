@@ -1,6 +1,5 @@
-import 'dart:convert';
-
 import 'package:memora/application/dtos/calendar/calendar_label_dto.dart';
+import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/services/calendar/japanese_calendar.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/application/models/app_mode.dart';
@@ -8,15 +7,14 @@ import 'package:memora/application/models/calendar_event_period.dart';
 import 'package:memora/application/services/current_user_service.dart';
 import 'package:memora/application/queries/calendar/calendar_event_query_service.dart';
 import 'package:memora/application/queries/calendar/calendar_label_query_service.dart';
-import 'package:memora/application/queries/group/group_query_service.dart';
 import 'package:memora/application/services/calendar/calendar_display_labels.dart';
 import 'package:memora/application/services/calendar/calendar_recurrence_expander.dart';
+import 'package:memora/application/usecases/android_widget/get_calendar_widget_selection_usecase.dart';
 
 class GetAndroidWidgetCalendarCacheUsecase {
   const GetAndroidWidgetCalendarCacheUsecase({
     required this.events,
     required this.labels,
-    required this.groups,
     required this.expander,
     required this.mode,
     this.currentUser,
@@ -24,13 +22,12 @@ class GetAndroidWidgetCalendarCacheUsecase {
 
   final CalendarEventQueryService events;
   final CalendarLabelQueryService labels;
-  final GroupQueryService groups;
   final CalendarRecurrenceExpander expander;
   final AppMode mode;
   final CurrentUserService? currentUser;
 
   Future<Map<String, Object?>?> execute(
-    Set<String> groupIds,
+    List<GroupDto> groups,
     DateTime month, {
     String? ownerId,
   }) async {
@@ -46,7 +43,7 @@ class GetAndroidWidgetCalendarCacheUsecase {
 
     final first = DateTime(month.year, month.month);
     final months = [
-      for (var offset = -2; offset <= 2; offset++)
+      for (var offset = -1; offset <= 1; offset++)
         DateTime(first.year, first.month + offset),
     ];
     final from = gridStart(months.first);
@@ -54,9 +51,9 @@ class GetAndroidWidgetCalendarCacheUsecase {
     final source = <CalendarEventDto>[];
     final displayLabels = <CalendarLabelDto>[];
     final visibleIds = <String>[];
-    for (final groupId in groupIds.toList()..sort()) {
-      final group = await groups.getGroupWithMembersById(groupId);
-      if (group == null) continue;
+    final sortedGroups = groups.toList()..sort((a, b) => a.id.compareTo(b.id));
+    for (final group in sortedGroups) {
+      final groupId = group.id;
       visibleIds.add(groupId);
       final groupEvents = await events.getCalendarEventsByGroupId(
         groupId,
@@ -130,7 +127,11 @@ class GetAndroidWidgetCalendarCacheUsecase {
         ? (await currentUser?.getCurrentUser())?.id
         : null;
     return {
-      'cacheScope': jsonEncode([mode.name, ownerId ?? deviceOwner, visibleIds]),
+      'cacheScope': CalendarWidgetSelection.encodeScope(
+        mode,
+        ownerId ?? deviceOwner,
+        visibleIds,
+      ),
       'visibleGroupIds': visibleIds,
       'sourceMode': mode.name,
       'deviceCalendarOwnerId': deviceOwner,
