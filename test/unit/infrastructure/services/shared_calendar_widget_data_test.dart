@@ -81,7 +81,7 @@ void main() {
     expect((await appCache.loadLabels('online:a', 'g'))?.single.id, 'label');
   });
 
-  test('不足月で系列を見つけたときは、表示対象の月で未取得の取消も取得する', () async {
+  test('不足月で系列を見つけたときは親予定の取消を取得済みの月にも反映する', () async {
     final directory = await Directory.systemTemp.createTemp('calendar-cache-');
     addTearDown(() => directory.delete(recursive: true));
     final appCache = SharedCalendarCache(directory: () async => directory);
@@ -109,7 +109,7 @@ void main() {
       currentOwnerId: () => 'online:a',
       fetchEvents: (_, {period, onCancellationStarts}) async {
         requests.add(period!);
-        return [period == december ? decemberSeries : series];
+        return [decemberSeries];
       },
       fetchLabels: (_) async => [],
     );
@@ -118,15 +118,15 @@ void main() {
       october,
       december,
     ], force: false);
-    expect(requests, [october, december]);
+    expect(requests, [october]);
     expect(data.eventsByPeriod, {
-      october: [series],
+      october: [decemberSeries],
       december: [decemberSeries],
     });
-    expect(data.synchronizedPeriods, {october, december});
+    expect(data.synchronizedPeriods, {october});
   });
 
-  test('後で取得した月で繰り返し条件が変わったら、先に取得した月の取消も取得する', () async {
+  test('後で取得した月で繰り返し条件が変わったら、先に取得した月にも新しい親予定を反映する', () async {
     final directory = await Directory.systemTemp.createTemp('calendar-cache-');
     addTearDown(() => directory.delete(recursive: true));
     final cache = SharedCalendarCache(directory: () async => directory);
@@ -161,11 +161,7 @@ void main() {
       november,
       december,
     ], force: false);
-    expect(requests, [
-      october,
-      december,
-      CalendarEventPeriod(from: october.from, to: november.to),
-    ]);
+    expect(requests, [october, december]);
     expect(data.eventsByPeriod.values, everyElement([updated]));
   });
 

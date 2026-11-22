@@ -249,7 +249,7 @@ void main() {
     expect(normalStream.hasListener, isFalse);
     expect(recurringStream.hasListener, isFalse);
   });
-  test('画面の繰り返し親予定は未来分を含めて共有し取消は期間ごとに反映する', () async {
+  test('画面の繰り返し親予定は未来分を含めて共有し親予定の取消IDを使う', () async {
     final futurePeriod = CalendarEventPeriod.forQuarter(DateTime(2027, 4));
     final futureNormal = MockQuery();
     final boundedRecurring = MockQuery();
@@ -295,66 +295,7 @@ void main() {
         StreamController<QuerySnapshot<Map<String, dynamic>>>.broadcast();
     when(recurring.snapshots()).thenAnswer((_) => parents.stream);
 
-    final cancellations = MockCollectionReference();
-    final query = MockQuery();
-    final futureQuery = MockQuery();
-    when(firestore.collection('calendar_event_overrides'))
-        .thenReturn(cancellations);
-    when(cancellations.where('eventId', isEqualTo: 'series')).thenReturn(query);
-    when(query.where('groupId', isEqualTo: 'g')).thenReturn(query);
     final cancelledOn = DateTime.utc(2027, 4, 5);
-    final cancelled = MockQueryDocumentSnapshot();
-    when(cancelled.data()).thenReturn({
-      'originalStartDateTime': Timestamp.fromDate(cancelledOn),
-      'isCancelled': true,
-    });
-    final futureRows = MockQuerySnapshot();
-    when(futureRows.docs).thenReturn([cancelled]);
-    for (final (range, boundedQuery, result) in [
-      (period, query, empty),
-      (futurePeriod, futureQuery, futureRows),
-    ]) {
-      when(
-        query.where(
-          'originalEndDateTime',
-          isGreaterThanOrEqualTo: Timestamp.fromDate(range.queryFrom),
-        ),
-      ).thenReturn(boundedQuery);
-      when(
-        boundedQuery.where(
-          'originalStartDateTime',
-          isLessThan: Timestamp.fromDate(range.queryTo),
-        ),
-      ).thenReturn(boundedQuery);
-      when(boundedQuery.orderBy('originalEndDateTime'))
-          .thenReturn(boundedQuery);
-      when(boundedQuery.orderBy('originalStartDateTime'))
-          .thenReturn(boundedQuery);
-      when(boundedQuery.get()).thenAnswer((_) async => result);
-    }
-    final futureParentQuery = MockQuery();
-    when(cancellations.where('eventId', isEqualTo: 'future'))
-        .thenReturn(futureParentQuery);
-    when(futureParentQuery.where('groupId', isEqualTo: 'g'))
-        .thenReturn(futureParentQuery);
-    when(
-      futureParentQuery.where(
-        'originalEndDateTime',
-        isGreaterThanOrEqualTo: Timestamp.fromDate(futurePeriod.queryFrom),
-      ),
-    ).thenReturn(futureParentQuery);
-    when(
-      futureParentQuery.where(
-        'originalStartDateTime',
-        isLessThan: Timestamp.fromDate(futurePeriod.queryTo),
-      ),
-    ).thenReturn(futureParentQuery);
-    when(futureParentQuery.orderBy('originalEndDateTime'))
-        .thenReturn(futureParentQuery);
-    when(futureParentQuery.orderBy('originalStartDateTime'))
-        .thenReturn(futureParentQuery);
-    when(futureParentQuery.get()).thenAnswer((_) async => empty);
-
     final container = ProviderContainer.test(
       overrides: [
         appModeProvider.overrideWithValue(AppMode.online),
@@ -368,6 +309,7 @@ void main() {
     final first = watcher.execute('g', period: period).listen(firstValues.add);
     StreamSubscription<List<CalendarEventDto>>? future;
     addTearDown(() async {
+      verifyNever(firestore.collection('calendar_event_overrides'));
       await first.cancel();
       await future?.cancel();
       await parents.close();
@@ -390,6 +332,9 @@ void main() {
         'endDateTime': Timestamp.fromDate(start.add(const Duration(days: 1))),
         'recurrenceEndDateTime': Timestamp.fromDate(DateTime.utc(9999, 12, 31)),
         'recurrenceRule': 'FREQ=DAILY',
+        'overrideIds': [
+          if (id == 'series') 'series_${cancelledOn.microsecondsSinceEpoch}',
+        ],
       });
       final change = MockDocumentChange();
       when(change.doc).thenReturn(doc);
@@ -410,8 +355,10 @@ void main() {
     parents.add(initial);
     await Future<void>(() {});
     expect(firstValues.single.map((event) => event.id), ['series']);
-    expect(firstValues.single.single.overrides, isEmpty);
-    verifyNever(futureParentQuery.get());
+    expect(
+      firstValues.single.single.overrides.single.originalStartDateTime,
+      cancelledOn,
+    );
     future = watcher
         .execute('g', period: futurePeriod)
         .listen(futureValues.add);
@@ -422,9 +369,6 @@ void main() {
       futureValues.single.first.overrides.single.originalStartDateTime,
       cancelledOn,
     );
-    verify(query.get()).called(1);
-    verify(futureQuery.get()).called(1);
-    verify(futureParentQuery.get()).called(1);
 
     final update = MockQuerySnapshot();
     final change = parentChange(
@@ -438,9 +382,6 @@ void main() {
     await Future<void>(() {});
     expect(firstValues.last.single.title, '変更後');
     expect(futureValues.last.first.title, '変更後');
-    verify(query.get()).called(1);
-    verify(futureQuery.get()).called(1);
-    verifyNever(futureParentQuery.get());
     await first.cancel();
     expect(parents.hasListener, isTrue);
     await future.cancel();

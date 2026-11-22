@@ -6,6 +6,8 @@ import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/application/dtos/calendar/calendar_label_dto.dart';
 import 'package:memora/application/models/calendar_event_period.dart';
 import 'package:memora/infrastructure/services/shared_calendar_cache.dart';
+import 'package:memora/infrastructure/services/iana_calendar_time_zone.dart';
+import 'package:memora/application/services/calendar/calendar_recurrence_expander.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
@@ -181,7 +183,7 @@ void main() {
     expect(updated, isEmpty);
   });
 
-  test('一部の月だけ購読しても、別の月に追加された取消を未取得として扱う', () async {
+  test('取消なしでキャッシュ済みの12月に別端末で追加した取消と件名変更を親予定の受信で反映する', () async {
     final directory = await Directory.systemTemp.createTemp('calendar-watch-');
     addTearDown(() => directory.delete(recursive: true));
     final cache = SharedCalendarCache(directory: () async => directory);
@@ -274,9 +276,13 @@ void main() {
     final updated = stream.current.single;
     expect(updated.title, '変更後');
     expect(await cache.loadEvents(owner, 'g', november), [updated]);
-    expect(await cache.loadEvents(owner, 'g', december), isNull);
-    expect(await cache.loadEvents(owner, 'g', quarter), isNull);
-    verify(cancellationQuery.get()).called(1);
+    final cached = await cache.loadEvents(owner, 'g', december);
+    expect(cached, [updated]);
+    final occurrences = CalendarRecurrenceExpander(IanaCalendarTimeZone())
+        .expand(cached!.single, december.from, december.to);
+    expect(occurrences.map((event) => event.startDateTime.day), [11, 18, 25]);
+    expect(occurrences.map((event) => event.title), everyElement('変更後'));
+    verifyNever(firestore.collection('calendar_event_overrides'));
   });
 
   test('色ラベルも共有キャッシュを先に表示し、サーバー確認済みの結果で更新する', () async {

@@ -71,14 +71,8 @@ void main() {
       december,
     ]);
     expect(shared.eventsByPeriod, {
-      october: [
-        trip,
-        series.copyWith(overrides: [series.overrides.first]),
-      ],
-      november: [
-        trip,
-        series.copyWith(overrides: [series.overrides.last]),
-      ],
+      october: [trip, series],
+      november: [trip, series],
       december: isEmpty,
     });
     expect(shared.observedAt.keys, [october, november, december]);
@@ -124,7 +118,7 @@ void main() {
     );
     final october = CalendarEventPeriod.forCalendarMonth(DateTime(2026, 10));
     final december = CalendarEventPeriod.forCalendarMonth(DateTime(2026, 12));
-    final renamed = series.copyWith(title: '変更後', version: 2, overrides: []);
+    final renamed = series.copyWith(title: '変更後', version: 2);
     await app.saveEvents('account', 'group', quarter, [series], observedAt: 1);
     await widget.saveEvents('account', 'group', october, [
       renamed,
@@ -134,18 +128,17 @@ void main() {
       october,
       december,
     ]);
-    final updated = renamed.copyWith(overrides: [decemberCancellation]);
     expect(shared.eventsByPeriod[october], [renamed]);
-    expect(shared.eventsByPeriod[december], [updated]);
+    expect(shared.eventsByPeriod[december], [renamed]);
     final cached = await app.loadEvents('account', 'group', quarter);
-    expect(cached, [updated]);
+    expect(cached, [renamed]);
     final occurrences = CalendarRecurrenceExpander(IanaCalendarTimeZone())
         .expand(cached!.single, december.from, december.to);
     expect(occurrences.map((event) => event.startDateTime.day), [11, 18, 25]);
     expect(occurrences.map((event) => event.title), everyElement('変更後'));
   });
 
-  test('単発予定が取得済みでも、系列の取消情報が未取得の月はキャッシュから返さない', () async {
+  test('単発予定を取得済みの月は新しい系列の親予定を使って表示できる', () async {
     final october = CalendarEventPeriod.forCalendarMonth(DateTime(2026, 10));
     final december = CalendarEventPeriod.forCalendarMonth(DateTime(2026, 12));
     final series = CalendarEventDto(
@@ -164,15 +157,6 @@ void main() {
     ], observedAt: 2);
 
     expect(await app.loadEvents('account', 'group', october), [series]);
-    expect(await app.loadEvents('account', 'group', december), isNull);
-    expect(
-      (await widget.loadGroup('account', 'group', [december])).eventsByPeriod,
-      isEmpty,
-    );
-
-    await widget.saveEvents('account', 'group', december, [
-      series,
-    ], observedAt: 3);
     expect(await app.loadEvents('account', 'group', december), [series]);
   });
 
@@ -197,7 +181,7 @@ void main() {
     );
     await app.saveEvents('account', 'group', quarter, [series], observedAt: 1);
     await widget.saveEvents('account', 'group', october, [
-      updated,
+      cancelled,
     ], observedAt: 3);
     await app.applyEventChanges('account', [
       (
@@ -209,7 +193,7 @@ void main() {
       ),
     ], committedAt: 2);
 
-    expect(await widget.loadEvents('account', 'group', october), [updated]);
+    expect(await widget.loadEvents('account', 'group', october), [cancelled]);
     expect(await widget.loadEvents('account', 'group', december), [cancelled]);
     expect(await app.loadEvents('account', 'group', quarter), [cancelled]);
   });
@@ -247,7 +231,7 @@ void main() {
       ),
     ], committedAt: 2);
 
-    expect(await widget.loadEvents('account', 'group', october), [updated]);
+    expect(await widget.loadEvents('account', 'group', october), [cancelled]);
     expect(await widget.loadEvents('account', 'group', december), [cancelled]);
     expect(await app.loadEvents('account', 'group', quarter), [cancelled]);
   });
