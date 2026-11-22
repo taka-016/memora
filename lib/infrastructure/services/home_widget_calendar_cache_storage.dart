@@ -121,10 +121,11 @@ class HomeWidgetCalendarCacheStorage {
           previous?['groupId'] == cache['groupId'] &&
           previous?['sourceMode'] == cache['sourceMode'])
         for (final entry in previousMonths.entries)
-          if (DateTime.tryParse(entry.key) case final date?)
-            if (retainMonthsWithin == null ||
-                distance(date, refreshedMonth) <= retainMonthsWithin)
-              entry.key: entry.value,
+          if (entry.value case {'days': List<dynamic>()})
+            if (DateTime.tryParse(entry.key) case final date?)
+              if (retainMonthsWithin == null ||
+                  distance(date, refreshedMonth) <= retainMonthsWithin)
+                entry.key: entry.value,
       ...?incomingMonths,
     };
     final selected = await loadSelectedDate() ?? refreshedMonth;

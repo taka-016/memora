@@ -48,6 +48,7 @@ final getAndroidWidgetCalendarCacheUsecaseProvider =
 final refreshCalendarWidgetProvider =
     Provider<Future<void> Function(DateTime?, {bool afterRestore})>((ref) {
       var generation = 0;
+      var discardPreviousMonths = false;
       Future<void> pending = Future.value();
       return (date, {afterRestore = false}) async {
         if (!ref.read(calendarWidgetSupportedProvider)) return;
@@ -56,6 +57,7 @@ final refreshCalendarWidgetProvider =
         )()).contains(AndroidWidgetKind.calendar)) {
           return;
         }
+        if (afterRestore) discardPreviousMonths = true;
         final request = ++generation;
         final storage = ref.read(calendarWidgetCacheStorageProvider);
         Future<void> refresh() async {
@@ -106,8 +108,11 @@ final refreshCalendarWidgetProvider =
             if (cache == null) return;
             await storage.save(
               {...cache, 'lastUpdatedAt': clock.now().toIso8601String()},
-              retainMonthsWithin: afterRestore ? 0 : (date == null ? 2 : null),
+              retainMonthsWithin: discardPreviousMonths
+                  ? 0
+                  : (date == null ? 2 : null),
             );
+            if (request == generation) discardPreviousMonths = false;
           });
         }
 
