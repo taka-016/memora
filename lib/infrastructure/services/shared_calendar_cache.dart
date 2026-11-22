@@ -67,7 +67,8 @@ class SharedCalendarCache {
         labelsObservedAt: _observedAt(data['labels']),
         observedAt: {
           for (final period in periods)
-            if (_observedAt(_eventRow(data, period)) case final at when at > 0)
+            if (_observedAt(_singleEventRow(data, period)) case final at
+                when at > 0)
               period: at,
         },
         sourceFiles: {file.path: modifiedAt},
@@ -105,16 +106,16 @@ class SharedCalendarCache {
           final previousVersion = previous?.parent.version ?? 0;
           final version = change.version ?? 0;
           if (previousVersion > version) continue;
-          final sameOrNewerObservation =
+          final sameVersionObservedLater =
               previous != null &&
               previousVersion == version &&
               previous.observedAt > committedAt;
           if (event == null || event.recurrenceRule == null) {
-            if (!sameOrNewerObservation) series.remove(change.eventId);
+            if (!sameVersionObservedLater) series.remove(change.eventId);
             continue;
           }
 
-          final current = sameOrNewerObservation
+          final current = sameVersionObservedLater
               ? previous
               : _updatedSeries(
                   event,
@@ -213,7 +214,7 @@ class SharedCalendarCache {
       if (event['id'] case final String id) id: event,
   };
 
-  static dynamic _eventRow(
+  static dynamic _singleEventRow(
     Map<String, dynamic> data,
     CalendarEventPeriod period,
   ) {
@@ -231,7 +232,7 @@ class SharedCalendarCache {
     final singleEventIdsByMonth = <CalendarEventPeriod, Set<String>>{};
     final observations = <int>{};
     for (final month in months) {
-      final row = _eventRow(data, month);
+      final row = _singleEventRow(data, month);
       final events = row?['data'];
       if (events is! List) return null;
       final ids = singleEventIdsByMonth[month] = <String>{};

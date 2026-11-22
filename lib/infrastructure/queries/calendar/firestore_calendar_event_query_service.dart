@@ -24,7 +24,7 @@ class FirestoreCalendarEventQueryService implements CalendarEventQueryService {
   Future<List<CalendarEventDto>> getCalendarEventsByGroupId(
     String groupId, {
     CalendarEventPeriod? period,
-    void Function(String, List<DateTime>)? onCancellationStarts,
+    void Function(String eventId, List<DateTime> starts)? onCancellationStarts,
   }) async {
     final snapshots = await Future.wait(
       calendarEventQueries(

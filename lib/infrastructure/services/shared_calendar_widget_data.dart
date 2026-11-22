@@ -17,7 +17,7 @@ class SharedCalendarWidgetData {
   final Future<List<CalendarEventDto>> Function(
     String groupId, {
     CalendarEventPeriod? period,
-    void Function(String, List<DateTime>)? onCancellationStarts,
+    void Function(String eventId, List<DateTime> starts)? onCancellationStarts,
   })
   fetchEvents;
   final Future<List<CalendarLabelDto>> Function(String groupId) fetchLabels;
@@ -89,17 +89,6 @@ class SharedCalendarWidgetData {
       for (final period in periods)
         if (force || !snapshot.eventsByPeriod.containsKey(period)) period,
     ]);
-    if (fetchedEvents.isNotEmpty) {
-      snapshot = await cache.loadGroup(ownerId, groupId, periods);
-      // 新たに取得した親予定によって、別の月にも取消情報が必要になる。
-      await fetchMonths([
-        for (final period in periods)
-          if (!snapshot.eventsByPeriod.containsKey(period) &&
-              (!fetchedEvents.containsKey(period) ||
-                  (snapshot.observedAt[period] ?? 0) >= observedTimes[period]!))
-            period,
-      ]);
-    }
     final cachedLabels = force || forceLabels ? null : snapshot.labels;
     List<CalendarLabelDto>? fetchedLabels;
     var labelsObservedAt = 0;
@@ -117,6 +106,20 @@ class SharedCalendarWidgetData {
     }
     if (fetchedEvents.isNotEmpty || fetchedLabels != null) {
       snapshot = await cache.loadGroup(ownerId, groupId, periods);
+    }
+    if (fetchedEvents.isNotEmpty) {
+      // 新たに取得した親予定によって、別の月にも取消情報が必要になる。
+      final missing = [
+        for (final period in periods)
+          if (!snapshot.eventsByPeriod.containsKey(period) &&
+              (snapshot.observedAt[period] ?? 0) >=
+                  (observedTimes[period] ?? 0))
+            period,
+      ];
+      if (missing.isNotEmpty) {
+        await fetchMonths(missing);
+        snapshot = await cache.loadGroup(ownerId, groupId, periods);
+      }
     }
     checkOwner();
     final eventsByPeriod = <CalendarEventPeriod, List<CalendarEventDto>>{};
