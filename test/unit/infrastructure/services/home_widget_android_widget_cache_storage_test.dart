@@ -68,7 +68,9 @@ void main() {
       'cacheScope': 'scope',
       'month': '2026-11-01',
       'months': {
+        '2026-10-01': {'days': <Object?>[]},
         '2026-11-01': {'days': <Object?>[]},
+        '2026-12-01': {'days': <Object?>[]},
       },
       'lastUpdatedAt': savedAt.toIso8601String(),
     });
@@ -98,6 +100,11 @@ void main() {
     values[HomeWidgetCalendarCacheStorage.selectedDateKey] = '2026-12-01';
     expect(
       await storage.canReuseForAutomaticRefresh('scope', beforeLimit),
+      isTrue,
+    );
+    values[HomeWidgetCalendarCacheStorage.selectedDateKey] = '2027-04-01';
+    expect(
+      await storage.canReuseForAutomaticRefresh('scope', beforeLimit),
       isFalse,
     );
 
@@ -106,11 +113,12 @@ void main() {
       'cacheScope': 'scope',
       'month': '2027-01-01',
       'months': {
+        '2026-11-01': {'days': <Object?>[]},
         '2027-01-01': {'days': <Object?>[]},
       },
       'lastUpdatedAt': januaryUpdate.toIso8601String(),
     });
-    values[HomeWidgetCalendarCacheStorage.selectedDateKey] = '2026-11-22';
+    values[HomeWidgetCalendarCacheStorage.selectedDateKey] = '2026-10-15';
     expect(
       await storage.canReuseForAutomaticRefresh('scope', januaryUpdate),
       isFalse,
@@ -268,7 +276,10 @@ void main() {
     };
     await calendar.save(data);
     final path = values[HomeWidgetCalendarCacheStorage.cacheKey] as String;
-    expect(jsonDecode(await File(path).readAsString()), data);
+    expect(jsonDecode(await File(path).readAsString()), {
+      ...data,
+      'lastUpdatedMonths': ['2026-11-01'],
+    });
     expect(
       values[HomeWidgetAndroidWidgetCacheStorage.lastUpdatedAtKey],
       '2026-11-11T12:00:00.000',
