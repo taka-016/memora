@@ -41,6 +41,10 @@ class CalendarGroupSettingsState {
       groupsReady && !isLoading && !isSaving && !loadFailed;
   CalendarGroupSettings get effectiveSettings =>
       settings.retainGroups(groups.map((g) => g.id).toSet());
+  Map<String, GroupDto> get _visibleGroups => {
+    for (final group in groups)
+      if (settings.visibleGroupIds.contains(group.id)) group.id: group,
+  };
   CalendarGroupSettingsState copyWith({
     CalendarGroupSettings? settings,
     List<GroupDto>? groups,
@@ -72,11 +76,16 @@ class CalendarGroupSettingsNotifier extends _$CalendarGroupSettingsNotifier {
   CalendarGroupSettingsState build() {
     CalendarGroupSettingsState? lastUsable;
     listenSelf((_, next) {
-      if (!next.canUseSettings) return;
+      if (!next.canUseSettings ||
+          (_usesCommonData &&
+              !ref.read(startupCommonDataNotifierProvider).groupsConfirmed)) {
+        return;
+      }
       final previous = lastUsable;
       lastUsable = next;
       final groupsChanged =
-          previous != null && !listEquals(previous.groups, next.groups);
+          previous != null &&
+          !mapEquals(previous._visibleGroups, next._visibleGroups);
       if (previous != null &&
           !groupsChanged &&
           setEquals(
@@ -100,8 +109,7 @@ class CalendarGroupSettingsNotifier extends _$CalendarGroupSettingsNotifier {
         (_) async {
           final request = ++membershipRequest;
           try {
-            if (ref.exists(startupCommonDataNotifierProvider) &&
-                ref.read(startupCommonDataOwnerProvider) != null) {
+            if (_usesCommonData) {
               await ref
                   .read(startupCommonDataNotifierProvider.notifier)
                   .refreshAfterChange();
@@ -172,6 +180,10 @@ class CalendarGroupSettingsNotifier extends _$CalendarGroupSettingsNotifier {
     return CalendarGroupSettingsState();
   }
 
+  bool get _usesCommonData =>
+      ref.exists(startupCommonDataNotifierProvider) &&
+      ref.read(startupCommonDataOwnerProvider) != null;
+
   Future<void> _refreshWidget({required bool groupsChanged}) async {
     try {
       final generation = _generation;
@@ -183,11 +195,11 @@ class CalendarGroupSettingsNotifier extends _$CalendarGroupSettingsNotifier {
               owner,
               state.effectiveSettings.visibleGroupIds.toList()..sort(),
             ]);
-      final scopeChanged = await ref.read(calendarWidgetScopeChangedProvider)(
+      final needsRefresh = await ref.read(calendarWidgetScopeChangedProvider)(
         scope,
       );
       if (!ref.mounted || generation != _generation) return;
-      if (scopeChanged || groupsChanged) {
+      if (needsRefresh || groupsChanged) {
         await ref.read(calendarWidgetGroupsChangedProvider)();
       }
     } catch (error, stack) {
