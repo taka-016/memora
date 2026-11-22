@@ -45,6 +45,13 @@ class SharedCalendarCache {
           final previous = eventsById[event.id];
           final version = event.version ?? 0;
           final previousVersion = previous?.version ?? 0;
+          // 別の版の親予定を結合すると、月ごとの取消を正しく扱えない。
+          if (previous != null &&
+              version != previousVersion &&
+              (event.recurrenceRule != null ||
+                  previous.recurrenceRule != null)) {
+            return null;
+          }
           if (previous == null || version > previousVersion) {
             eventsById[event.id] = event;
           } else if (version == previousVersion &&
