@@ -29,7 +29,7 @@ void main() {
     final loader = SharedCalendarWidgetData(
       cache: widgetCache,
       currentOwnerId: () => 'online:a',
-      fetchEvents: (groupId, {period}) async {
+      fetchEvents: (groupId, {period, onCancellationStarts}) async {
         expect(groupId, 'g');
         requests.add(period!);
         return [];
@@ -107,7 +107,7 @@ void main() {
     final loader = SharedCalendarWidgetData(
       cache: SharedCalendarCache(directory: () async => directory),
       currentOwnerId: () => 'online:a',
-      fetchEvents: (_, {period}) async {
+      fetchEvents: (_, {period, onCancellationStarts}) async {
         requests.add(period!);
         return [period == december ? decemberSeries : series];
       },
@@ -124,6 +124,49 @@ void main() {
       december: [decemberSeries],
     });
     expect(data.synchronizedPeriods, {october, december});
+  });
+
+  test('後で取得した月で繰り返し条件が変わったら、先に取得した月の取消も取得する', () async {
+    final directory = await Directory.systemTemp.createTemp('calendar-cache-');
+    addTearDown(() => directory.delete(recursive: true));
+    final cache = SharedCalendarCache(directory: () async => directory);
+    final october = CalendarEventPeriod.forCalendarMonth(DateTime(2026, 10));
+    final november = CalendarEventPeriod.forCalendarMonth(DateTime(2026, 11));
+    final december = CalendarEventPeriod.forCalendarMonth(DateTime(2026, 12));
+    final series = CalendarEventDto(
+      id: 'series',
+      groupId: 'g',
+      title: '毎週の予定',
+      startDateTime: DateTime.utc(2026, 10, 2),
+      endDateTime: DateTime.utc(2026, 10, 3),
+      isAllDay: true,
+      recurrenceRule: 'FREQ=WEEKLY;BYDAY=FR',
+      version: 1,
+    );
+    final updated = series.copyWith(recurrenceRule: 'FREQ=DAILY', version: 2);
+    await cache.saveEvents('online:a', 'g', november, []);
+    final requests = <CalendarEventPeriod>[];
+    final loader = SharedCalendarWidgetData(
+      cache: cache,
+      currentOwnerId: () => 'online:a',
+      fetchEvents: (_, {period, onCancellationStarts}) async {
+        requests.add(period!);
+        return [requests.length == 1 ? series : updated];
+      },
+      fetchLabels: (_) async => [],
+    );
+
+    final data = await loader.load('online:a', 'g', [
+      october,
+      november,
+      december,
+    ], force: false);
+    expect(requests, [
+      october,
+      december,
+      CalendarEventPeriod(from: october.from, to: november.to),
+    ]);
+    expect(data.eventsByPeriod.values, everyElement([updated]));
   });
 
   test('手動取得の途中で保存した予定は古い応答で描画し直さない', () async {
@@ -147,7 +190,7 @@ void main() {
     final loader = SharedCalendarWidgetData(
       cache: SharedCalendarCache(directory: () async => directory),
       currentOwnerId: () => 'online:a',
-      fetchEvents: (_, {period}) async {
+      fetchEvents: (_, {period, onCancellationStarts}) async {
         await appCache.applyEventChanges('online:a', [
           (
             groupId: 'g',

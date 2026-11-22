@@ -181,6 +181,104 @@ void main() {
     expect(updated, isEmpty);
   });
 
+  test('一部の月だけ購読しても、別の月に追加された取消を未取得として扱う', () async {
+    final directory = await Directory.systemTemp.createTemp('calendar-watch-');
+    addTearDown(() => directory.delete(recursive: true));
+    final cache = SharedCalendarCache(directory: () async => directory);
+    final quarter = CalendarEventPeriod.forQuarter(DateTime(2026, 10));
+    final october = CalendarEventPeriod.forCalendarMonth(DateTime(2026, 10));
+    final november = CalendarEventPeriod.forCalendarMonth(DateTime(2026, 11));
+    final december = CalendarEventPeriod.forCalendarMonth(DateTime(2026, 12));
+    const owner = 'online:a';
+    final parent = CalendarEventDto(
+      id: 'series',
+      groupId: 'g',
+      title: '変更前',
+      startDateTime: DateTime.utc(2026, 10, 2),
+      endDateTime: DateTime.utc(2026, 10, 3),
+      isAllDay: true,
+      recurrenceRule: 'FREQ=WEEKLY;BYDAY=FR',
+      version: 1,
+    );
+    await cache.saveEvents(owner, 'g', quarter, [parent]);
+
+    final recurring = StreamController<QuerySnapshot<Map<String, dynamic>>>();
+    addTearDown(recurring.close);
+    final recurringQuery = MockQuery();
+    when(query.where('recurrenceRule', isNull: true)).thenReturn(query);
+    when(query.where('recurrenceRule', isNull: false))
+        .thenReturn(recurringQuery);
+    for (final (target, start, end) in [
+      (query, 'startDateTime', 'endDateTime'),
+      (cancellationQuery, 'originalStartDateTime', 'originalEndDateTime'),
+    ]) {
+      when(
+        target.where(
+          end,
+          isGreaterThanOrEqualTo: anyNamed('isGreaterThanOrEqualTo'),
+        ),
+      ).thenReturn(target);
+      when(target.where(start, isLessThan: anyNamed('isLessThan')))
+          .thenReturn(target);
+      when(target.orderBy(end)).thenReturn(target);
+      when(target.orderBy(start)).thenReturn(target);
+    }
+    when(query.snapshots(includeMetadataChanges: true))
+        .thenAnswer((_) => source.stream);
+    when(recurringQuery.snapshots(includeMetadataChanges: true))
+        .thenAnswer((_) => recurring.stream);
+    final emptyOverrides = MockQuerySnapshot();
+    when(emptyOverrides.docs).thenReturn([]);
+    when(emptyOverrides.metadata).thenReturn(_Metadata(isFromCache: false));
+    when(cancellationQuery.get()).thenAnswer((_) async => emptyOverrides);
+
+    final document = MockQueryDocumentSnapshot();
+    final cancelledStart = DateTime.utc(2026, 12, 4);
+    when(document.id).thenReturn(parent.id);
+    when(document.data()).thenReturn({
+      'groupId': 'g',
+      'title': '変更後',
+      'labelType': 'group',
+      'isAllDay': true,
+      'startDateTime': Timestamp.fromDate(parent.startDateTime),
+      'endDateTime': Timestamp.fromDate(parent.endDateTime),
+      'recurrenceEndDateTime': Timestamp.fromDate(DateTime.utc(9999, 12, 31)),
+      'recurrenceRule': parent.recurrenceRule,
+      'version': 3,
+      'overrideIds': ['series_${cancelledStart.microsecondsSinceEpoch}'],
+    });
+    final added = MockDocumentChange();
+    when(added.type).thenReturn(DocumentChangeType.added);
+    when(added.doc).thenReturn(document);
+    final singles = MockQuerySnapshot();
+    when(singles.docChanges).thenReturn([]);
+    when(singles.metadata).thenReturn(_Metadata(isFromCache: false));
+    final parents = MockQuerySnapshot();
+    when(parents.docChanges).thenReturn([added]);
+    when(parents.metadata).thenReturn(_Metadata(isFromCache: false));
+
+    final service = FirestoreCalendarEventWatchQueryService(
+      firestore: firestore,
+      sharedCache: cache,
+      currentOwnerId: () => owner,
+    );
+    final stream = StreamIterator(
+      service.watchCalendarScreenEvents('g', period: october),
+    );
+    addTearDown(stream.cancel);
+    expect(await stream.moveNext(), isTrue);
+    final live = stream.moveNext();
+    source.add(singles);
+    recurring.add(parents);
+    expect(await live, isTrue);
+    final updated = stream.current.single;
+    expect(updated.title, '変更後');
+    expect(await cache.loadEvents(owner, 'g', november), [updated]);
+    expect(await cache.loadEvents(owner, 'g', december), isNull);
+    expect(await cache.loadEvents(owner, 'g', quarter), isNull);
+    verify(cancellationQuery.get()).called(1);
+  });
+
   test('色ラベルも共有キャッシュを先に表示し、サーバー確認済みの結果で更新する', () async {
     final directory = await Directory.systemTemp.createTemp(
       'calendar-label-watch-',

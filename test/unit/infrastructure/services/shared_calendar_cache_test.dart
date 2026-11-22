@@ -176,6 +176,74 @@ void main() {
     expect(await app.loadEvents('account', 'group', december), [series]);
   });
 
+  test('別の月で保存後の親を先に受信しても、保存時の取消を反映する', () async {
+    final october = CalendarEventPeriod.forCalendarMonth(DateTime(2026, 10));
+    final december = CalendarEventPeriod.forCalendarMonth(DateTime(2026, 12));
+    final series = CalendarEventDto(
+      id: 'series',
+      groupId: 'group',
+      title: '毎週の予定',
+      startDateTime: DateTime.utc(2026, 10, 2),
+      endDateTime: DateTime.utc(2026, 10, 3),
+      isAllDay: true,
+      recurrenceRule: 'FREQ=WEEKLY;BYDAY=FR',
+      version: 1,
+    );
+    final updated = series.copyWith(version: 2);
+    final cancelled = updated.copyWith(
+      overrides: [
+        CalendarEventOverride(originalStartDateTime: DateTime.utc(2026, 12, 4)),
+      ],
+    );
+    await app.saveEvents('account', 'group', quarter, [series], observedAt: 1);
+    await widget.saveEvents('account', 'group', october, [
+      updated,
+    ], observedAt: 3);
+    await app.applyEventChanges('account', [
+      (
+        groupId: 'group',
+        eventId: series.id,
+        event: cancelled,
+        recurrenceEnd: null,
+        version: cancelled.version,
+      ),
+    ], committedAt: 2);
+
+    expect(await widget.loadEvents('account', 'group', october), [updated]);
+    expect(await widget.loadEvents('account', 'group', december), [cancelled]);
+    expect(await app.loadEvents('account', 'group', quarter), [cancelled]);
+  });
+
+  test('別の月に移して繰り返しにした予定を単発予定と重複して先行表示しない', () async {
+    final october = CalendarEventPeriod.forCalendarMonth(DateTime(2026, 10));
+    final november = CalendarEventPeriod.forCalendarMonth(DateTime(2026, 11));
+    final single = CalendarEventDto(
+      id: 'event',
+      groupId: 'group',
+      title: '予定',
+      startDateTime: DateTime.utc(2026, 10, 2),
+      endDateTime: DateTime.utc(2026, 10, 3),
+      isAllDay: true,
+      version: 1,
+    );
+    final recurring = single.copyWith(
+      startDateTime: DateTime.utc(2026, 11, 6),
+      endDateTime: DateTime.utc(2026, 11, 7),
+      recurrenceRule: 'FREQ=WEEKLY;BYDAY=FR',
+      version: 2,
+    );
+    await app.saveEvents('account', 'group', october, [single], observedAt: 1);
+    await widget.saveEvents(
+      'account',
+      'group',
+      CalendarEventPeriod(from: november.from, to: quarter.to),
+      [recurring],
+      observedAt: 2,
+    );
+
+    expect(await app.loadEvents('account', 'group', quarter), isNull);
+  });
+
   test('更新済みの空の月に、別の月だけに残っている予定を表示しない', () async {
     final october = CalendarEventPeriod.forCalendarMonth(DateTime(2026, 10));
     final november = CalendarEventPeriod.forCalendarMonth(DateTime(2026, 11));
