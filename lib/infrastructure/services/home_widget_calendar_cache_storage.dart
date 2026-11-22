@@ -95,28 +95,33 @@ class HomeWidgetCalendarCacheStorage {
     return DateTime.tryParse(value ?? '');
   }
 
-  Future<void> save(Map<String, Object?> cache, {bool merge = true}) async {
-    final previous = merge ? await _load() : null;
+  Future<void> save(
+    Map<String, Object?> cache, {
+    bool keepDistantMonths = true,
+  }) async {
+    final previous = await _load();
     final previousMonths = previous?['months'] as Map<String, dynamic>?;
     final incomingMonths = cache['months'] as Map<String, Object?>?;
-    final months = <String, Object?>{
-      if (previous?['cacheScope'] == cache['cacheScope'] &&
-          previous?['groupId'] == cache['groupId'] &&
-          previous?['sourceMode'] == cache['sourceMode'])
-        ...?previousMonths,
-      ...?incomingMonths,
-    };
-    final selected =
-        await loadSelectedDate() ?? DateTime.parse(cache['month'] as String);
-    int distance(String key) {
-      final month = DateTime.parse(key);
-      return ((month.year - selected.year) * 12 + month.month - selected.month)
-          .abs();
+    final refreshedMonth = DateTime.parse(cache['month'] as String);
+    int distance(String key, DateTime month) {
+      final date = DateTime.parse(key);
+      return ((date.year - month.year) * 12 + date.month - month.month).abs();
     }
 
+    final months = <String, Object?>{
+      if (previousMonths != null &&
+          previous?['cacheScope'] == cache['cacheScope'] &&
+          previous?['groupId'] == cache['groupId'] &&
+          previous?['sourceMode'] == cache['sourceMode'])
+        for (final entry in previousMonths.entries)
+          if (keepDistantMonths || distance(entry.key, refreshedMonth) <= 2)
+            entry.key: entry.value,
+      ...?incomingMonths,
+    };
+    final selected = await loadSelectedDate() ?? refreshedMonth;
     final keys = months.keys.toList()
       ..sort((a, b) {
-        final result = distance(a).compareTo(distance(b));
+        final result = distance(a, selected).compareTo(distance(b, selected));
         return result != 0 ? result : a.compareTo(b);
       });
     final publishedCache = {
