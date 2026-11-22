@@ -1,8 +1,7 @@
 import 'dart:io';
 
-import 'package:memora/application/usecases/android_widget/android_widget_action_handler.dart';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:memora/application/usecases/android_widget/android_widget_action_handler.dart';
 import 'package:memora/application/usecases/android_widget/get_calendar_widget_selection_usecase.dart';
 import 'package:memora/application/usecases/android_widget/get_android_widget_calendar_cache_usecase.dart';
 import 'package:memora/application/usecases/android_widget/refresh_android_widget_caches_usecase.dart';

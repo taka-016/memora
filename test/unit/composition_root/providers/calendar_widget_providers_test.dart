@@ -122,7 +122,7 @@ void main() {
     when(storage.loadSelectedDate()).thenAnswer((_) async => month);
     final refresh = container.read(refreshCalendarWidgetProvider);
 
-    await Function.apply(refresh, [null], {#automatic: true});
+    await refresh(null, automatic: true);
     verify(storage.update()).called(1);
     verifyNever(selection.execute());
     verifyNever(cache.execute(any, any, ownerId: anyNamed('ownerId')));
@@ -134,7 +134,7 @@ void main() {
     verify(cache.execute({'a'}, month, ownerId: 'online:a')).called(1);
 
     storage.hasRecentCache = false;
-    await Function.apply(refresh, [null], {#automatic: true});
+    await refresh(null, automatic: true);
     verify(cache.execute({'a'}, month, ownerId: 'online:a')).called(1);
   });
 }
@@ -142,6 +142,7 @@ void main() {
 class _CalendarCacheStorage extends MockHomeWidgetCalendarCacheStorage {
   bool hasRecentCache = false;
 
+  @override
   Future<bool> canReuseForAutomaticRefresh(String scope, DateTime now) async =>
       hasRecentCache;
 }

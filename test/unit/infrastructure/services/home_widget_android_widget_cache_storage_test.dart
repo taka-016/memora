@@ -61,7 +61,6 @@ void main() {
 
   test('同じ対象の表示月のキャッシュは取得成功から1分未満だけ再利用できる', () async {
     const storage = HomeWidgetCalendarCacheStorage();
-    final dynamic automaticCache = storage;
     final savedAt = DateTime(2026, 11, 22, 9);
     await storage.setScope('scope');
     values[HomeWidgetCalendarCacheStorage.selectedDateKey] = '2026-11-22';
@@ -75,22 +74,22 @@ void main() {
     });
     final beforeLimit = savedAt.add(const Duration(seconds: 59));
     expect(
-      await automaticCache.canReuseForAutomaticRefresh('scope', beforeLimit),
+      await storage.canReuseForAutomaticRefresh('scope', beforeLimit),
       isTrue,
     );
     expect(
-      await automaticCache.canReuseForAutomaticRefresh(
+      await storage.canReuseForAutomaticRefresh(
         'scope',
         savedAt.add(const Duration(minutes: 1)),
       ),
       isFalse,
     );
     expect(
-      await automaticCache.canReuseForAutomaticRefresh('other', beforeLimit),
+      await storage.canReuseForAutomaticRefresh('other', beforeLimit),
       isFalse,
     );
     expect(
-      await automaticCache.canReuseForAutomaticRefresh(
+      await storage.canReuseForAutomaticRefresh(
         'scope',
         savedAt.subtract(const Duration(seconds: 1)),
       ),
@@ -98,7 +97,7 @@ void main() {
     );
     values[HomeWidgetCalendarCacheStorage.selectedDateKey] = '2026-12-01';
     expect(
-      await automaticCache.canReuseForAutomaticRefresh('scope', beforeLimit),
+      await storage.canReuseForAutomaticRefresh('scope', beforeLimit),
       isFalse,
     );
   });

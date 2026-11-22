@@ -83,8 +83,9 @@ class HomeWidgetCalendarCacheStorage {
     final updatedAt = timestamp is String ? DateTime.tryParse(timestamp) : null;
     if (updatedAt == null) return false;
     final elapsed = now.difference(updatedAt);
-    if (elapsed.isNegative || elapsed >= const Duration(minutes: 1))
+    if (elapsed.isNegative || elapsed >= const Duration(minutes: 1)) {
       return false;
+    }
 
     final selected = await loadSelectedDate();
     final month = selected == null

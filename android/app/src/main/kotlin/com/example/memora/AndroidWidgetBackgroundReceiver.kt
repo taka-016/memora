@@ -30,11 +30,12 @@ class AndroidWidgetBackgroundReceiver : BroadcastReceiver() {
                 .build()
             val automaticCalendarRefresh = uri.host.equals("calendarRefresh", ignoreCase = true) &&
                 uri.getQueryParameter("automatic") == "true"
-            return WorkManager.getInstance(context).enqueueUniqueWork(
-                if (automaticCalendarRefresh) "memora_calendar_automatic_refresh" else "home_widget_background",
-                if (automaticCalendarRefresh) ExistingWorkPolicy.KEEP else ExistingWorkPolicy.APPEND_OR_REPLACE,
-                request,
-            )
+            val (workName, policy) = if (automaticCalendarRefresh) {
+                "memora_calendar_automatic_refresh" to ExistingWorkPolicy.KEEP
+            } else {
+                "home_widget_background" to ExistingWorkPolicy.APPEND_OR_REPLACE
+            }
+            return WorkManager.getInstance(context).enqueueUniqueWork(workName, policy, request)
         }
 
         fun request(context: Context, uri: Uri) {
