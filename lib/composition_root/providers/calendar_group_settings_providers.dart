@@ -71,10 +71,9 @@ final reloadCalendarMembershipsProvider =
     );
 
 final calendarWidgetScopeChangedProvider =
-    Provider<Future<void> Function(String?)>(
+    Provider<Future<bool> Function(String?)>(
       (ref) => (scope) async {
-        if (Platform.isAndroid) {
-          await const HomeWidgetCalendarCacheStorage().setScope(scope);
-        }
+        if (!Platform.isAndroid) return false;
+        return const HomeWidgetCalendarCacheStorage().setScope(scope);
       },
     );

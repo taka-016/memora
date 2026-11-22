@@ -22,11 +22,14 @@ class HomeWidgetCalendarCacheStorage {
   Future<T> _synchronizeScope<T>(Future<T> Function() action) =>
       LocalCalendarWidgetLock().run('scope', action);
 
-  Future<void> setScope(String? scope) async {
-    await _synchronizeScope(
-      () => HomeWidget.saveWidgetData<String>(scopeKey, scope),
-    );
-    await update();
+  Future<bool> setScope(String? scope) async {
+    final changed = await _synchronizeScope(() async {
+      if (await loadScope() == scope) return false;
+      await HomeWidget.saveWidgetData<String>(scopeKey, scope);
+      return true;
+    });
+    if (changed) await update();
+    return changed;
   }
 
   Future<bool> setScopeIfCurrent(String? expected, String? scope) async {

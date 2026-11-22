@@ -70,17 +70,22 @@ class CalendarGroupSettingsNotifier extends _$CalendarGroupSettingsNotifier {
   bool _skipInitialSelection = false;
   @override
   CalendarGroupSettingsState build() {
-    listenSelf((previous, next) {
+    CalendarGroupSettingsState? lastUsable;
+    listenSelf((_, next) {
       if (!next.canUseSettings) return;
-      if (previous?.canUseSettings == true &&
+      final previous = lastUsable;
+      lastUsable = next;
+      final groupsChanged =
+          previous != null && !listEquals(previous.groups, next.groups);
+      if (previous != null &&
+          !groupsChanged &&
           setEquals(
-            previous!.effectiveSettings.visibleGroupIds,
+            previous.effectiveSettings.visibleGroupIds,
             next.effectiveSettings.visibleGroupIds,
-          ) &&
-          listEquals(previous.groups, next.groups)) {
+          )) {
         return;
       }
-      unawaited(_refreshWidget());
+      unawaited(_refreshWidget(groupsChanged: groupsChanged));
     });
     ref.listen(offlineBackupNotifierProvider, (_, next) {
       if (next.isRestoring) _skipInitialSelection = true;
@@ -167,8 +172,9 @@ class CalendarGroupSettingsNotifier extends _$CalendarGroupSettingsNotifier {
     return CalendarGroupSettingsState();
   }
 
-  Future<void> _refreshWidget() async {
+  Future<void> _refreshWidget({required bool groupsChanged}) async {
     try {
+      final generation = _generation;
       final owner = _owner;
       final scope = owner == null
           ? null
@@ -177,9 +183,13 @@ class CalendarGroupSettingsNotifier extends _$CalendarGroupSettingsNotifier {
               owner,
               state.effectiveSettings.visibleGroupIds.toList()..sort(),
             ]);
-      await ref.read(calendarWidgetScopeChangedProvider)(scope);
-      if (!ref.mounted) return;
-      await ref.read(calendarWidgetGroupsChangedProvider)();
+      final scopeChanged = await ref.read(calendarWidgetScopeChangedProvider)(
+        scope,
+      );
+      if (!ref.mounted || generation != _generation) return;
+      if (scopeChanged || groupsChanged) {
+        await ref.read(calendarWidgetGroupsChangedProvider)();
+      }
     } catch (error, stack) {
       logger.w('表示設定変更後のウィジェット更新に失敗しました', error: error, stackTrace: stack);
     }
