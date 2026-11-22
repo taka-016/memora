@@ -137,6 +137,30 @@ void main() {
     expect(await app.loadEvents('account', 'group', quarter), isNull);
   });
 
+  test('更新済みの空の月に、別の月だけに残っている予定を表示しない', () async {
+    final october = CalendarEventPeriod.forCalendarMonth(DateTime(2026, 10));
+    final november = CalendarEventPeriod.forCalendarMonth(DateTime(2026, 11));
+    final event = CalendarEventDto(
+      id: 'event',
+      groupId: 'group',
+      title: '月をまたぐ予定',
+      startDateTime: DateTime.utc(2026, 10, 31),
+      endDateTime: DateTime.utc(2026, 11, 2),
+      isAllDay: true,
+      version: 1,
+    );
+    await app.saveEvents('account', 'group', quarter, [event], observedAt: 1);
+    await widget.saveEvents('account', 'group', october, [], observedAt: 2);
+
+    final shared = await widget.loadGroup('account', 'group', [
+      october,
+      november,
+    ]);
+    expect(shared.eventsByPeriod[october], isEmpty);
+    expect(shared.eventsByPeriod[november], [event]);
+    expect(await app.loadEvents('account', 'group', quarter), isNull);
+  });
+
   test('最新の空結果で四半期を上書きし、遅れて届いた古い結果を破棄する', () async {
     final event = CalendarEventDto(
       id: 'event',
