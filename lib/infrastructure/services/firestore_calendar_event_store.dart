@@ -17,6 +17,20 @@ class FirestoreCalendarEventStore {
   List<String> overrideIds(Map<String, dynamic> data) =>
       (data['overrideIds'] as List? ?? []).cast<String>();
 
+  List<DateTime> cancellationStarts(
+    DocumentSnapshot<Map<String, dynamic>> parent,
+  ) {
+    final data = parent.data()!;
+    return [
+      for (final id in overrideIds(data))
+        ?FirestoreCalendarEventOverrideMapper.originalStartFromDocumentId(
+          parent.id,
+          id,
+          parentAllDay: data['isAllDay'] as bool,
+        ),
+    ];
+  }
+
   Future<CalendarEventDto> read(
     DocumentSnapshot<Map<String, dynamic>> event, {
     Transaction? transaction,

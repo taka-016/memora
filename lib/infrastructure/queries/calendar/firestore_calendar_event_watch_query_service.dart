@@ -346,6 +346,11 @@ class FirestoreCalendarEventWatchQueryService
                       period,
                       events,
                       observedAt: observedAt,
+                      cancellationStartsBySeries: {
+                        for (final entry in combined.entries)
+                          if (entry.value.$1.data()?['recurrenceRule'] != null)
+                            entry.key: store.cancellationStarts(entry.value.$1),
+                      },
                     );
                   }
                   if (!cancelled &&

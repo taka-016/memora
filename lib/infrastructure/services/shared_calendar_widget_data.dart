@@ -17,6 +17,7 @@ class SharedCalendarWidgetData {
   final Future<List<CalendarEventDto>> Function(
     String groupId, {
     CalendarEventPeriod? period,
+    void Function(String, List<DateTime>)? onCancellationStarts,
   })
   fetchEvents;
   final Future<List<CalendarLabelDto>> Function(String groupId) fetchLabels;
@@ -53,7 +54,14 @@ class SharedCalendarWidgetData {
         for (var attempt = 0; ; attempt++) {
           checkOwner();
           final observedAt = DateTime.now().microsecondsSinceEpoch;
-          final events = await fetchEvents(groupId, period: period);
+          final cancellationStartsBySeries = <String, List<DateTime>>{};
+          final events = await fetchEvents(
+            groupId,
+            period: period,
+            onCancellationStarts: (id, starts) {
+              cancellationStartsBySeries[id] = starts;
+            },
+          );
           checkOwner();
           if (await cache.saveEvents(
             ownerId,
@@ -61,6 +69,7 @@ class SharedCalendarWidgetData {
             period,
             events,
             observedAt: observedAt,
+            cancellationStartsBySeries: cancellationStartsBySeries,
           )) {
             for (final month in requested.getRange(first, last + 1)) {
               fetchedEvents[month] = events;
@@ -86,7 +95,8 @@ class SharedCalendarWidgetData {
       await fetchMonths([
         for (final period in periods)
           if (!snapshot.eventsByPeriod.containsKey(period) &&
-              !fetchedEvents.containsKey(period))
+              (!fetchedEvents.containsKey(period) ||
+                  (snapshot.observedAt[period] ?? 0) >= observedTimes[period]!))
             period,
       ]);
     }
@@ -116,7 +126,7 @@ class SharedCalendarWidgetData {
       final fetchedAt = observedTimes[period] ?? 0;
       final cached = snapshot.eventsByPeriod[period];
       final fetched = fetchedEvents[period];
-      if (fetched != null && (cached == null || fetchedAt > cachedAt)) {
+      if (fetched != null && fetchedAt > cachedAt) {
         eventsByPeriod[period] = fetched;
         observedAt[period] = fetchedAt;
       } else if (cached != null) {

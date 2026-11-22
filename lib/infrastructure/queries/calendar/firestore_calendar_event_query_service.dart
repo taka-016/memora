@@ -24,6 +24,7 @@ class FirestoreCalendarEventQueryService implements CalendarEventQueryService {
   Future<List<CalendarEventDto>> getCalendarEventsByGroupId(
     String groupId, {
     CalendarEventPeriod? period,
+    void Function(String, List<DateTime>)? onCancellationStarts,
   }) async {
     final snapshots = await Future.wait(
       calendarEventQueries(
@@ -38,9 +39,13 @@ class FirestoreCalendarEventQueryService implements CalendarEventQueryService {
     };
     final store = FirestoreCalendarEventStore(_firestore);
     return Future.wait(
-      docs.values.map(
-        (doc) => store.read(doc, period: period, options: options),
-      ),
+      docs.values.map((doc) {
+        if (onCancellationStarts != null &&
+            doc.data()['recurrenceRule'] != null) {
+          onCancellationStarts(doc.id, store.cancellationStarts(doc));
+        }
+        return store.read(doc, period: period, options: options);
+      }),
     );
   }
 }
