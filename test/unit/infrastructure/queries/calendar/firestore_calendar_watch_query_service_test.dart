@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
+import 'package:memora/application/dtos/calendar/calendar_label_dto.dart';
 import 'package:memora/application/models/calendar_event_period.dart';
 import 'package:memora/infrastructure/services/shared_calendar_cache.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -178,6 +179,46 @@ void main() {
     expect(stream.current, isEmpty);
     final updated = await cache.loadEvents(ownerId, groupId, period);
     expect(updated, isEmpty);
+  });
+
+  test('色ラベルも共有キャッシュを先に表示し、サーバー確認済みの結果で更新する', () async {
+    final directory = await Directory.systemTemp.createTemp(
+      'calendar-label-watch-',
+    );
+    addTearDown(() => directory.delete(recursive: true));
+    final cache = SharedCalendarCache(directory: () async => directory);
+    const owner = 'online:a';
+    const cached = CalendarLabelDto(
+      id: 'old',
+      groupId: 'g',
+      name: '予定',
+      color: '#FFFFFF',
+    );
+    await cache.saveLabels(owner, 'g', [cached], observedAt: 1);
+    when(query.snapshots(includeMetadataChanges: true))
+        .thenAnswer((_) => source.stream);
+    final service = FirestoreCalendarLabelWatchQueryService(
+      firestore: firestore,
+      sharedCache: cache,
+      currentOwnerId: () => owner,
+    );
+    final stream = StreamIterator(service.watchCalendarLabelsByGroupId('g'));
+    addTearDown(stream.cancel);
+    expect(await stream.moveNext(), isTrue);
+    expect(stream.current, [cached]);
+
+    final next = stream.moveNext();
+    final local = MockQuerySnapshot();
+    when(local.docs).thenReturn([]);
+    when(local.metadata).thenReturn(_Metadata(isFromCache: true));
+    source.add(local);
+    final remote = MockQuerySnapshot();
+    when(remote.docs).thenReturn([doc('new')]);
+    when(remote.metadata).thenReturn(_Metadata(isFromCache: false));
+    source.add(remote);
+    expect(await next, isTrue);
+    expect(stream.current.single.id, 'new');
+    expect((await cache.loadLabels(owner, 'g'))?.single.id, 'new');
   });
 
   test('共有相手の購読が残っていても監視失敗後の再試行で再接続する', () async {

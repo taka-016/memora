@@ -31,10 +31,10 @@ void main() {
       expect(modes, [true, false, false]);
     });
 
-    test('カレンダーの月移動で指定月を取得し、失敗時には通知する', () async {
+    test('カレンダーの月移動と手動更新を区別し、失敗時には通知する', () async {
       final storage = _FakeAndroidWidgetCacheStorage(targetGroupId: 'group-1');
       final toast = _FakeAndroidWidgetToastNotifier();
-      final dates = <DateTime?>[];
+      final requests = <(DateTime?, bool)>[];
       final handler = AndroidWidgetActionHandler(
         cacheStorage: storage,
         refreshCache: ({
@@ -44,16 +44,18 @@ void main() {
         }) async {},
         moveDate: (_) async => true,
         showToast: toast.show,
-        refreshCalendar: (date) async {
-          dates.add(date);
-          if (dates.length == 2) throw TestException('取得失敗');
+        refreshCalendar: (date, {force = false}) async {
+          requests.add((date, force));
+          if (force) throw TestException('取得失敗');
         },
       );
       await handler.handle(
         Uri.parse('memoraWidget://calendarRefresh?date=2026-12-01'),
       );
-      expect(dates, [DateTime(2026, 12)]);
-      await handler.handle(Uri.parse('memoraWidget://calendarRefresh'));
+      await handler.handle(
+        Uri.parse('memoraWidget://calendarRefresh?force=true'),
+      );
+      expect(requests, [(DateTime(2026, 12), false), (null, true)]);
       expect(toast.notifications, [
         const AndroidWidgetToastNotification.error('更新に失敗しました'),
       ]);

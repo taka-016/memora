@@ -63,6 +63,7 @@ void main() {
             refreshCalendarWidgetProvider.overrideWithValue((
               date, {
               bool afterRestore = false,
+              bool force = false,
             }) async {
               expect(date, isNull);
               calendarCalls++;
