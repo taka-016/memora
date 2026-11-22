@@ -27,11 +27,13 @@ void main() {
   late MockHomeWidgetCalendarCacheStorage storage;
   late ProviderContainer container;
   late CalendarWidgetSelection current;
+  late Future<Set<AndroidWidgetKind>> Function() widgetKinds;
   final month = DateTime(2026, 11);
   setUp(() {
     selection = MockGetCalendarWidgetSelectionUsecase();
     cache = MockGetAndroidWidgetCalendarCacheUsecase();
     storage = MockHomeWidgetCalendarCacheStorage();
+    widgetKinds = () async => {AndroidWidgetKind.calendar};
     current = CalendarWidgetSelection(
       mode: AppMode.online,
       ownerId: 'online:a',
@@ -69,7 +71,7 @@ void main() {
       overrides: [
         calendarWidgetSupportedProvider.overrideWithValue(true),
         loadInstalledAndroidWidgetKindsProvider.overrideWithValue(
-          () async => {AndroidWidgetKind.calendar},
+          () => widgetKinds(),
         ),
         getCalendarWidgetSelectionUsecaseProvider.overrideWithValue(selection),
         getAndroidWidgetCalendarCacheUsecaseProvider.overrideWithValue(cache),
@@ -93,6 +95,31 @@ void main() {
       null,
       afterRestore: true,
     );
+    verify(storage.save(any, retainMonthsWithin: 0)).called(1);
+  });
+  test('復元後の取得中に通常更新が入っても復元前の月を破棄する', () async {
+    final started = Completer<void>();
+    final done = Completer<Map<String, Object?>?>();
+    when(cache.execute(any, any, ownerId: anyNamed('ownerId'))).thenAnswer((_) {
+      started.complete();
+      return done.future;
+    });
+    final refresh = container.read(refreshCalendarWidgetProvider);
+    final restored = refresh(null, afterRestore: true);
+    await started.future;
+    final nextRequest = Completer<void>();
+    when(cache.execute(any, any, ownerId: anyNamed('ownerId'))).thenAnswer(
+      (_) async => {'cacheScope': current.cacheScope, 'month': '2026-11-01'},
+    );
+    widgetKinds = () async {
+      nextRequest.complete();
+      return {AndroidWidgetKind.calendar};
+    };
+    final latest = refresh(null);
+    await nextRequest.future;
+    await Future<void>.value();
+    done.complete({'cacheScope': current.cacheScope, 'month': '2026-11-01'});
+    await Future.wait([restored, latest]);
     verify(storage.save(any, retainMonthsWithin: 0)).called(1);
   });
   test('取得中に所属が変われば旧スコープのキャッシュを公開しない', () async {

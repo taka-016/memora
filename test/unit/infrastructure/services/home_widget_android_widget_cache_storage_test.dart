@@ -322,6 +322,7 @@ void main() {
       '[]',
       '{"cacheScope":"offline:a","sourceMode":"offline","months":[]}',
       '{"cacheScope":"offline:a","sourceMode":"offline","months":{"不正な日付":[]}}',
+      '{"cacheScope":"offline:a","sourceMode":"offline","months":{"2027-01-01":[]}}',
     ]) {
       await file.writeAsString(previous);
       values[HomeWidgetCalendarCacheStorage.cacheKey] = file.path;
