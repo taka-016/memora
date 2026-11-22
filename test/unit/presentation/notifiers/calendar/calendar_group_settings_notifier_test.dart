@@ -46,14 +46,23 @@ void main() {
   late ProviderContainer container;
   late _Storage storage;
   var widgetUpdates = 0;
+  String? widgetScope;
+  Future<bool> setWidgetScope(String? scope) async {
+    final changed = widgetScope != scope;
+    widgetScope = scope;
+    return changed;
+  }
+
   setUp(() {
     storage = _Storage();
     widgetUpdates = 0;
+    widgetScope = null;
     container = ProviderContainer(
       overrides: [
         calendarWidgetGroupsChangedProvider.overrideWithValue(() async {
           widgetUpdates++;
         }),
+        calendarWidgetScopeChangedProvider.overrideWithValue(setWidgetScope),
         calendarSettingsOwnerProvider.overrideWithValue('online:self'),
         calendarSettingsMemberIdProvider.overrideWithValue('self'),
         calendarGroupSettingsStorageProvider.overrideWithValue(storage),
@@ -153,6 +162,7 @@ void main() {
       calendarWidgetGroupsChangedProvider.overrideWithValue(() async {
         widgetUpdates++;
       }),
+      calendarWidgetScopeChangedProvider.overrideWithValue(setWidgetScope),
       calendarSettingsOwnerProvider.overrideWithValue('online:restored'),
       calendarSettingsMemberIdProvider.overrideWithValue('restored'),
       calendarGroupSettingsStorageProvider.overrideWithValue(storage),
@@ -220,6 +230,35 @@ void main() {
       isEmpty,
     );
     container.dispose();
+  });
+
+  test('起動時にウィジェットの表示対象が同じなら取得を開始しない', () async {
+    widgetScope = '["online","online:self",["a"]]';
+    groups(['a', 'b']);
+    await pumpEventQueue();
+
+    expect(
+      container.read(calendarGroupSettingsNotifierProvider).canUseSettings,
+      isTrue,
+    );
+    expect(widgetUpdates, 0);
+
+    await container
+        .read(calendarGroupSettingsNotifierProvider.notifier)
+        .setVisibleGroups({'b'});
+    await pumpEventQueue();
+
+    expect(widgetScope, '["online","online:self",["b"]]');
+    expect(widgetUpdates, 1);
+  });
+
+  test('起動時に保存済みの表示対象から所属グループが外れたら更新する', () async {
+    widgetScope = '["online","online:self",["a","removed"]]';
+    groups(['a', 'b']);
+    await pumpEventQueue();
+
+    expect(widgetScope, '["online","online:self",["a"]]');
+    expect(widgetUpdates, 1);
   });
 
   test('表示選択と有効な所属の変更でウィジェットを更新する', () async {
@@ -466,6 +505,7 @@ void main() {
       calendarWidgetGroupsChangedProvider.overrideWithValue(() async {
         widgetUpdates++;
       }),
+      calendarWidgetScopeChangedProvider.overrideWithValue(setWidgetScope),
       calendarSettingsOwnerProvider.overrideWithValue('online:other'),
       calendarSettingsMemberIdProvider.overrideWithValue('other'),
       calendarGroupSettingsStorageProvider.overrideWithValue(storage),
