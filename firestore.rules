@@ -81,10 +81,6 @@ service cloud.firestore {
     }
 
     match /groups/{groupId}/shopping_list_items/{itemId} {
-      function validQuantity(value) {
-        return value is string && value.size() <= 100;
-      }
-
       function validTime(value) {
         return value is int && value > 0;
       }
@@ -95,12 +91,12 @@ service cloud.firestore {
                  'name', 'version', 'isPending', 'pendingQuantity',
                  'lastAddedAt', 'purchasedAt', 'purchasedQuantity'
                ])
-               && data.name is string && data.name.size() > 0 && data.name.size() <= 100
-               && ((data.isPending == true && validQuantity(data.pendingQuantity))
+               && data.name is string && data.name.size() > 0
+               && ((data.isPending == true && data.pendingQuantity is string)
                    || (data.isPending == false && data.pendingQuantity == null))
                && (data.lastAddedAt == null || validTime(data.lastAddedAt))
                && ((data.purchasedAt == null && data.purchasedQuantity == null)
-                   || (validTime(data.purchasedAt) && validQuantity(data.purchasedQuantity)));
+                   || (validTime(data.purchasedAt) && data.purchasedQuantity is string));
       }
 
       allow read: if isVerifiedUser();

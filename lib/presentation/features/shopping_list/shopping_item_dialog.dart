@@ -3,7 +3,6 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/shopping_list/shopping_list_item.dart';
 import 'package:memora/application/exceptions/application_validation_exception.dart';
-import 'package:memora/application/usecases/shopping_list/shopping_list.dart';
 import 'package:memora/composition_root/providers/shopping_list_providers.dart';
 
 Future<void> showShoppingItemDialog(
@@ -99,23 +98,17 @@ class _ShoppingItemDialog extends HookConsumerWidget {
               controller: name,
               enabled: !saving.value,
               readOnly: initialItem == null && item.value != null,
-              maxLength: ShoppingList.NAME_MAX_LENGTH,
               textInputAction: TextInputAction.next,
-              decoration: const InputDecoration(
-                labelText: '品物名',
-                counterText: '',
-              ),
+              decoration: const InputDecoration(labelText: '品物名'),
             ),
             TextField(
               controller: quantity,
               focusNode: quantityFocus,
               enabled: !saving.value,
-              maxLength: ShoppingList.QUANTITY_MAX_LENGTH,
               onSubmitted: (_) => save(),
               decoration: const InputDecoration(
                 labelText: '数量（任意）',
                 hintText: '2個、500g',
-                counterText: '',
               ),
             ),
             if (message.value case final message?)

@@ -85,7 +85,10 @@ class _ShoppingGroupList extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final provider = pendingShoppingListProvider(groupId);
     final items = ref.watch(provider);
-    final checking = ref.watch(shoppingListNotifierProvider(groupId));
+    final checking = ref.watch(
+      shoppingListNotifierProvider(groupId)
+          .select((state) => state.checkingItemIds),
+    );
     return ScaffoldMessenger(
       child: Scaffold(
         body: Builder(

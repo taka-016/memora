@@ -11,10 +11,6 @@ class ShoppingList {
 
   // ignore: constant_identifier_names
   static const PURCHASE_PAGE_SIZE = 30;
-  // ignore: constant_identifier_names
-  static const NAME_MAX_LENGTH = 100;
-  // ignore: constant_identifier_names
-  static const QUANTITY_MAX_LENGTH = 100;
 
   final ShoppingListStore _store;
   final AppClock _clock;
@@ -38,7 +34,6 @@ class ShoppingList {
     String quantity,
   ) async {
     final item = _newItem(groupId, name);
-    _validateQuantity(quantity);
     await _ensureAvailable();
     final addedAt = _clock.now();
     return _store.write(groupId, (scope) async {
@@ -62,7 +57,6 @@ class ShoppingList {
     String quantity,
   ) async {
     final target = _newItem(groupId, name);
-    _validateQuantity(quantity);
     await _ensureAvailable();
     return _store.write(groupId, (scope) async {
       final current = await _requireCurrent(scope, original);
@@ -130,20 +124,14 @@ class ShoppingList {
 
   ShoppingListItem _newItem(String groupId, String name) {
     final trimmedName = name.trim();
-    if (trimmedName.isEmpty || trimmedName.runes.length > NAME_MAX_LENGTH) {
-      throw const ApplicationValidationException('品物名は1〜100文字で入力してください。');
+    if (trimmedName.isEmpty) {
+      throw const ApplicationValidationException('品物名を入力してください。');
     }
     final id = const Uuid().v5(
       Namespace.url.value,
       jsonEncode([groupId, trimmedName]),
     );
     return ShoppingListItem(id: id, name: trimmedName);
-  }
-
-  void _validateQuantity(String quantity) {
-    if (quantity.trim().runes.length > QUANTITY_MAX_LENGTH) {
-      throw const ApplicationValidationException('数量は100文字以内で入力してください。');
-    }
   }
 
   Future<ShoppingListItem> _requireCurrent(

@@ -91,7 +91,7 @@ final class PendingShoppingListFamily extends $Family
 final shoppingListNotifierProvider = ShoppingListNotifierFamily._();
 
 final class ShoppingListNotifierProvider
-    extends $NotifierProvider<ShoppingListNotifier, Set<String>> {
+    extends $NotifierProvider<ShoppingListNotifier, ShoppingListState> {
   ShoppingListNotifierProvider._({
     required ShoppingListNotifierFamily super.from,
     required String super.argument,
@@ -118,10 +118,10 @@ final class ShoppingListNotifierProvider
   ShoppingListNotifier create() => ShoppingListNotifier();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(Set<String> value) {
+  Override overrideWithValue(ShoppingListState value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<Set<String>>(value),
+      providerOverride: $SyncValueProvider<ShoppingListState>(value),
     );
   }
 
@@ -137,15 +137,15 @@ final class ShoppingListNotifierProvider
 }
 
 String _$shoppingListNotifierHash() =>
-    r'411826c1be1f055797ca73fa17b0c003a9a15dba';
+    r'5b5fcc92955e3544ab9c7b6c5b0e637baaa2abe9';
 
 final class ShoppingListNotifierFamily extends $Family
     with
         $ClassFamilyOverride<
           ShoppingListNotifier,
-          Set<String>,
-          Set<String>,
-          Set<String>,
+          ShoppingListState,
+          ShoppingListState,
+          ShoppingListState,
           String
         > {
   ShoppingListNotifierFamily._()
@@ -164,20 +164,20 @@ final class ShoppingListNotifierFamily extends $Family
   String toString() => r'shoppingListNotifierProvider';
 }
 
-abstract class _$ShoppingListNotifier extends $Notifier<Set<String>> {
+abstract class _$ShoppingListNotifier extends $Notifier<ShoppingListState> {
   late final _$args = ref.$arg as String;
   String get groupId => _$args;
 
-  Set<String> build(String groupId);
+  ShoppingListState build(String groupId);
   @$mustCallSuper
   @override
   WhenComplete runBuild() {
-    final ref = this.ref as $Ref<Set<String>, Set<String>>;
+    final ref = this.ref as $Ref<ShoppingListState, ShoppingListState>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<Set<String>, Set<String>>,
-              Set<String>,
+              AnyNotifier<ShoppingListState, ShoppingListState>,
+              ShoppingListState,
               Object?,
               Object?
             >;

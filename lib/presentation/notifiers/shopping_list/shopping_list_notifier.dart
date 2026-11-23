@@ -11,19 +11,31 @@ Duration? _noRetry(int _, Object _) => null;
 Stream<List<ShoppingListItem>> pendingShoppingList(Ref ref, String groupId) =>
     ref.watch(shoppingListProvider).watchPending(groupId);
 
+class ShoppingListState {
+  const ShoppingListState({this.checkingItemIds = const {}});
+
+  final Set<String> checkingItemIds;
+}
+
 @riverpod
 class ShoppingListNotifier extends _$ShoppingListNotifier {
   @override
-  Set<String> build(String groupId) => const {};
+  ShoppingListState build(String groupId) => const ShoppingListState();
 
   Future<ShoppingListItem?> check(ShoppingListItem item) async {
-    if (state.contains(item.id)) return null;
-    state = Set.unmodifiable({...state, item.id});
+    if (state.checkingItemIds.contains(item.id)) return null;
+    state = ShoppingListState(
+      checkingItemIds: Set.unmodifiable({...state.checkingItemIds, item.id}),
+    );
     try {
       return await ref.read(shoppingListProvider).check(groupId, item);
     } finally {
       if (ref.mounted) {
-        state = Set.unmodifiable({...state}..remove(item.id));
+        state = ShoppingListState(
+          checkingItemIds: Set.unmodifiable(
+            {...state.checkingItemIds}..remove(item.id),
+          ),
+        );
       }
     }
   }
