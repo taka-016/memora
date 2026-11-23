@@ -6,10 +6,7 @@ import 'package:memora/application/usecases/android_widget/refresh_android_widge
 Future<Set<AndroidWidgetKind>> loadInstalledAndroidWidgetKinds() async {
   if (!Platform.isAndroid) return {};
   final widgets = await HomeWidget.getInstalledWidgets();
-  return {
-    for (final widget in widgets)
-      if (_widgetKind(widget) case final kind?) kind,
-  };
+  return {for (final widget in widgets) ?_widgetKind(widget)};
 }
 
 Future<List<int>> loadInstalledAndroidCalendarWidgetIds() async {
@@ -17,7 +14,7 @@ Future<List<int>> loadInstalledAndroidCalendarWidgetIds() async {
   return [
     for (final widget in widgets)
       if (_widgetKind(widget) == AndroidWidgetKind.calendar)
-        if (widget.androidWidgetId case final id?) id,
+        ?widget.androidWidgetId,
   ];
 }
 

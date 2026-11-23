@@ -71,9 +71,11 @@ void main() {
               bool afterRestore = false,
               bool force = false,
               bool afterMutation = false,
+              bool moveToToday = false,
             }) async {
               expect(date, isNull);
               expect(afterMutation, isTrue);
+              expect(moveToToday, isFalse);
               expect(force, entry.$1 != refreshEventWidget);
               if (installed.contains(AndroidWidgetKind.calendar)) {
                 calendarCalls++;
