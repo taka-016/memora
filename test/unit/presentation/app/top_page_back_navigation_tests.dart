@@ -393,7 +393,19 @@ extension TopPageBackNavigationTests on TopPageTestContext {
           await tester.tap(find.byIcon(Icons.menu));
           await tester.pumpAndSettle();
         }
-        await tester.tap(find.text(target.label));
+        if (target.label == 'メンバー' || target.label == 'グループ') {
+          await tester.tap(find.byKey(const Key('member_menu')));
+          await tester.pumpAndSettle();
+          await tester.tap(
+            find.byKey(
+              Key(
+                target.label == 'メンバー' ? 'member_menu_item' : 'group_menu_item',
+              ),
+            ),
+          );
+        } else {
+          await tester.tap(find.text(target.label));
+        }
         await tester.pumpAndSettle();
 
         if (target.label == '地図') {

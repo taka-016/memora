@@ -11,9 +11,9 @@ extension TopPageNavigationTests on TopPageTestContext {
       expect(navigation.items.map((item) => item.label), [
         '年表',
         'カレンダー',
+        '買い物リスト',
         '地図',
         'メンバー',
-        'グループ',
       ]);
       expect(navigation.showSelectedLabels, isTrue);
       expect(navigation.showUnselectedLabels, isTrue);
@@ -26,6 +26,13 @@ extension TopPageNavigationTests on TopPageTestContext {
             .currentIndex,
         1,
       );
+    });
+    testWidgets('カレンダーの横から買い物リストの所属グループを選べる', (tester) async {
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('買い物リスト'));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('shopping_list_groups')), findsOneWidget);
     });
     for (final route in [
       const SettingsRoute().location,
@@ -372,7 +379,9 @@ extension TopPageNavigationTests on TopPageTestContext {
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('メンバー'));
+      await tester.tap(find.byKey(const Key('member_menu')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('member_menu_item')));
       await tester.pumpAndSettle();
 
       // Assert
@@ -397,7 +406,9 @@ extension TopPageNavigationTests on TopPageTestContext {
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('グループ'));
+      await tester.tap(find.byKey(const Key('member_menu')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('group_menu_item')));
       await tester.pumpAndSettle();
 
       // Assert
