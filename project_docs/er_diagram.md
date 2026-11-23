@@ -73,6 +73,17 @@ erDiagram
         boolean isAdministrator "NOT NULL"
         number orderIndex "NOT NULL"
     }
+    shopping_list_items {
+        string id PK
+        string groupId FK, UK "NOT NULL、品物名との複合キー"
+        string name UK "NOT NULL、グループIDとの複合キー"
+        number version "NOT NULL"
+        boolean isPending "オンラインのみ"
+        string pendingQuantity "NULLは未チェックの品物なし、空欄は数量未入力"
+        timestamp lastAddedAt
+        timestamp purchasedAt
+        string purchasedQuantity
+    }
     group_events {
         string id PK
         string groupId FK "NOT NULL"
@@ -197,6 +208,7 @@ erDiagram
     locations |o--o{ itinerary_items : "id → locationId"
     groups ||--o{ group_members : "id → groupId"
     groups ||--o{ group_events : "id → groupId"
+    groups ||--o{ shopping_list_items : "id → groupId"
     groups ||--o{ member_events : "id → groupId"
     groups ||--o{ trip_entries : "id → groupId"
     groups ||--o{ locations : "id → groupId"

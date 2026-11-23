@@ -22,6 +22,7 @@ graph LR
             DeleteGroup([グループを削除し親を退避・関連データを保持する])
             DeleteMember([メンバーを削除し親を退避・関連データを保持する])
             Timeline([年表で記録を管理する])
+            ShoppingList([グループの買い物リストを使う])
             Trip([旅行を管理する])
             Dvc([DVCポイントを管理する])
             DvcContract([契約を管理する])
@@ -44,6 +45,7 @@ graph LR
     Group --> DeleteGroup
     Member --> DeleteMember
     User --> Timeline
+    User --> ShoppingList
     User --> Trip
     User --> Dvc
     Dvc --> DvcContract
