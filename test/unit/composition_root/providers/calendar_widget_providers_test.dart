@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:io';
 
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
@@ -11,7 +13,11 @@ import 'package:memora/application/usecases/android_widget/get_android_widget_ca
 import 'package:memora/application/usecases/android_widget/refresh_android_widget_caches_usecase.dart';
 import 'package:memora/composition_root/providers/calendar_widget_providers.dart';
 import 'package:memora/composition_root/providers/android_widget_providers.dart';
+import 'package:memora/composition_root/providers/app_providers.dart';
 import 'package:memora/infrastructure/services/home_widget_calendar_cache_storage.dart';
+import 'package:memora/infrastructure/time/fixed_app_clock.dart';
+// ignore: depend_on_referenced_packages
+import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 
 import '../../../helpers/test_exception.dart';
 import 'calendar_widget_providers_test.mocks.dart';
@@ -22,17 +28,21 @@ import 'calendar_widget_providers_test.mocks.dart';
   MockSpec<HomeWidgetCalendarCacheStorage>(),
 ])
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   late MockGetCalendarWidgetSelectionUsecase selection;
   late MockGetAndroidWidgetCalendarCacheUsecase cache;
   late MockHomeWidgetCalendarCacheStorage storage;
+  late HomeWidgetCalendarCacheStorage activeStorage;
   late ProviderContainer container;
   late CalendarWidgetSelection current;
   late Future<Set<AndroidWidgetKind>> Function() widgetKinds;
   final month = DateTime(2026, 11);
+  final today = DateTime(2026, 12, 1);
   setUp(() {
     selection = MockGetCalendarWidgetSelectionUsecase();
     cache = MockGetAndroidWidgetCalendarCacheUsecase();
     storage = MockHomeWidgetCalendarCacheStorage();
+    activeStorage = storage;
     widgetKinds = () async => {AndroidWidgetKind.calendar};
     current = CalendarWidgetSelection(
       mode: AppMode.online,
@@ -75,10 +85,68 @@ void main() {
         ),
         getCalendarWidgetSelectionUsecaseProvider.overrideWithValue(selection),
         getAndroidWidgetCalendarCacheUsecaseProvider.overrideWithValue(cache),
-        calendarWidgetCacheStorageProvider.overrideWithValue(storage),
+        calendarWidgetCacheStorageProvider.overrideWith((_) => activeStorage),
+        appClockProvider.overrideWithValue(FixedAppClock(today)),
       ],
     );
     addTearDown(container.dispose);
+  });
+  test('定期更新では各カレンダーウィジェットを今日へ移動して今月の予定を取得する', () async {
+    activeStorage = const HomeWidgetCalendarCacheStorage();
+    final directory = await Directory.systemTemp.createTemp('calendar-widget-');
+    final previousPathProvider = PathProviderPlatform.instance;
+    PathProviderPlatform.instance = _CalendarTestPathProvider(directory.path);
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    const channel = MethodChannel('home_widget');
+    addTearDown(() async {
+      messenger.setMockMethodCallHandler(channel, null);
+      PathProviderPlatform.instance = previousPathProvider;
+      await directory.delete(recursive: true);
+    });
+    final preferences = <String, Object?>{
+      HomeWidgetCalendarCacheStorage.scopeKey: current.cacheScope,
+      HomeWidgetCalendarCacheStorage.selectedDateKey: '2026-11-01',
+      'memora_calendar_date_1': '2026-08-15',
+      'memora_calendar_group_1': current.cacheScope,
+      'memora_calendar_date_2': '2026-11-01',
+      'memora_calendar_group_2': '以前の表示対象',
+    };
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      if (call.method == 'getInstalledWidgets') {
+        return [
+          {'widgetId': 1, 'androidClassName': '.CalendarWidgetReceiver'},
+          {
+            'widgetId': 2,
+            'androidClassName': '.DailyCalendarDarkWidgetReceiver',
+          },
+          {'widgetId': 3, 'androidClassName': '.ItineraryWidgetReceiver'},
+        ];
+      }
+      final id = call.arguments['id'] as String;
+      if (call.method == 'getWidgetData') return preferences[id];
+      if (call.method == 'saveWidgetData') {
+        preferences[id] = call.arguments['data'];
+        return true;
+      }
+      throw UnimplementedError(call.method);
+    });
+
+    await container.read(refreshCalendarWidgetProvider)(null, force: true);
+
+    verify(
+      cache.execute(
+        current.visibleGroups,
+        today,
+        ownerId: current.ownerId,
+        force: true,
+      ),
+    ).called(1);
+    expect(await activeStorage.loadSelectedDate(), today);
+    expect(preferences['memora_calendar_date_1'], '2026-12-01');
+    expect(preferences['memora_calendar_date_2'], '2026-12-01');
+    expect(preferences['memora_calendar_group_2'], current.cacheScope);
+    expect(preferences, isNot(contains('memora_calendar_date_3')));
   });
   test('1回の更新で表示用のグループ・メンバー情報を一度だけ取得する', () async {
     await container.read(refreshCalendarWidgetProvider)(month);
@@ -216,4 +284,13 @@ void main() {
     verify(storage.setScope(current.cacheScope)).called(2);
     verifyNever(storage.setScope(null));
   });
+}
+
+class _CalendarTestPathProvider extends PathProviderPlatform {
+  _CalendarTestPathProvider(this.path);
+
+  final String path;
+
+  @override
+  Future<String?> getApplicationSupportPath() async => path;
 }
