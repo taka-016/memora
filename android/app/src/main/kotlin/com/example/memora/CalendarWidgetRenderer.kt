@@ -108,13 +108,14 @@ internal object CalendarWidgetRenderer {
             ),
         )
         val settings = CalendarWidgetDisplaySettings.read(context)
+        val lastUpdatedAt = cachedMonth?.lastUpdatedAt ?: cache.lastUpdatedAt
         val next = RenderedState(
             groupId, cachedMonth ?: CalendarWidgetData.emptyMonth(month, settings.weekStartsOnMonday), cachedMonth != null,
-            loadState, sizes, LocalDate.now(), selected, cache.lastUpdatedAt, appearance, settings,
+            loadState, sizes, LocalDate.now(), selected, lastUpdatedAt, appearance, settings,
         )
         val previous = states[widgetId]
         val full = forceFull || previous == null || monthViews[widgetId] == null ||
-            previous.copy(selected = selected, lastUpdatedAt = cache.lastUpdatedAt) != next
+            previous.copy(selected = selected, lastUpdatedAt = lastUpdatedAt) != next
         if (!full && previous == next) return
         if (full) {
             val portrait = RemoteViews(context.packageName, appearance.calendarLayout)

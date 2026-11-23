@@ -48,7 +48,9 @@ void main() {
         getCalendarLabelsUsecaseProvider.overrideWithValue(labels),
         calendarLabelManagementUsecaseProvider.overrideWithValue(management),
         calendarNotifierProvider('g1').overrideWith(() => calendar),
-        refreshSelectedCalendarWidgetCacheProvider.overrideWithValue(() async {
+        refreshSelectedCalendarWidgetCacheProvider.overrideWithValue(({
+          force = true,
+        }) async {
           widgetUpdates++;
         }),
       ],

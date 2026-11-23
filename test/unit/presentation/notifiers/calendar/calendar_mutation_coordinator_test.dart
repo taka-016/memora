@@ -30,7 +30,7 @@ void main() {
           ),
         ),
         refreshSelectedCalendarWidgetCacheProvider.overrideWithValue(
-          () async {},
+          ({force = true}) async {},
         ),
       ],
     );
@@ -72,7 +72,9 @@ void main() {
             const MemberDto(id: 'self', displayName: '本人'),
           ),
         ),
-        refreshSelectedCalendarWidgetCacheProvider.overrideWithValue(() async {
+        refreshSelectedCalendarWidgetCacheProvider.overrideWithValue(({
+          force = true,
+        }) async {
           calls.add('widget');
         }),
         calendarNotifierProvider('a').overrideWith(() => _Calendar(calls)),

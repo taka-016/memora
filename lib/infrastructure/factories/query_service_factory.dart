@@ -1,3 +1,4 @@
+import 'package:memora/composition_root/providers/shared_calendar_cache_providers.dart';
 import 'package:memora/infrastructure/queries/calendar/firestore_calendar_label_query_service.dart';
 import 'package:memora/infrastructure/queries/calendar/firestore_calendar_event_watch_query_service.dart';
 import 'package:memora/application/queries/calendar/calendar_label_query_service.dart';
@@ -278,5 +279,7 @@ final firestoreCalendarEventQueriesProvider =
     Provider<FirestoreCalendarEventWatchQueryService>(
       (ref) => FirestoreCalendarEventWatchQueryService(
         firestore: ref.watch(firebaseFirestoreProvider),
+        sharedCache: ref.watch(sharedCalendarCacheProvider),
+        currentOwnerId: ref.watch(onlineCalendarCacheOwnerProvider),
       ),
     );

@@ -4,6 +4,8 @@ import 'package:memora/application/queries/order_by.dart';
 abstract class GroupQueryService {
   Future<bool> groupExists(String groupId);
 
+  Future<Set<String>> getGroupIdsByMemberId(String memberId);
+
   Future<List<GroupDto>> getGroupsWithMembersByMemberId(
     String memberId, {
     List<OrderBy>? groupsOrderBy,

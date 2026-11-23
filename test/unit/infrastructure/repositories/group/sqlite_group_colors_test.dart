@@ -73,6 +73,7 @@ void main() {
       ],
     );
     await repo.updateGroup(withNew);
+    expect(await query.getGroupIdsByMemberId('b'), {firstId});
     final saved = (await query.getGroupWithMembersById(
       firstId,
       membersOrderBy: const [OrderBy('orderIndex')],

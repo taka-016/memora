@@ -201,6 +201,22 @@ void main() {
     expect(values[HomeWidgetCalendarCacheStorage.scopeKey], 'calendar-owner');
   });
 
+  test('カレンダーのキャッシュ表示でウィジェットの同期時刻を更新しない', () async {
+    const oldSync = '2026-10-01T10:00:00.000';
+    values[HomeWidgetAndroidWidgetCacheStorage.lastUpdatedAtKey] = oldSync;
+    await const HomeWidgetCalendarCacheStorage().save({
+      'sourceMode': 'online',
+      'month': '2026-11-01',
+      'months': <String, Object?>{},
+      'lastUpdatedAt': '2026-11-01T10:00:00.000',
+      'synchronized': false,
+    });
+    expect(
+      values[HomeWidgetAndroidWidgetCacheStorage.lastUpdatedAtKey],
+      oldSync,
+    );
+  });
+
   test('カレンダーの月と全予定をファイルで公開し対象解除時に削除する', () async {
     const calendar = HomeWidgetCalendarCacheStorage();
     final data = <String, Object?>{
@@ -278,7 +294,7 @@ void main() {
     }
   });
 
-  test('カレンダー更新は既存月を置き換え設定と選択日を維持する', () async {
+  test('カレンダー更新は選択月から2か月以内の取得済み月と設定を維持する', () async {
     const storage = HomeWidgetCalendarCacheStorage();
     values[HomeWidgetCalendarCacheStorage.selectedDateKey] = '2026-11-03';
     values[HomeWidgetAndroidWidgetCacheStorage.targetGroupIdKey] = 'group';
@@ -291,15 +307,45 @@ void main() {
       },
     };
     await storage.save(month('2026-05-01'));
-    await storage.save(month('2026-11-01'), merge: false);
+    await storage.save(month('2027-01-01'));
+    await storage.save(month('2026-11-01'), retainMonthsWithin: 2);
     final path = values[HomeWidgetCalendarCacheStorage.cacheKey] as String;
     final saved = jsonDecode(await File(path).readAsString()) as Map;
-    expect((saved['months'] as Map).keys, ['2026-11-01']);
+    expect((saved['months'] as Map).keys, ['2026-11-01', '2027-01-01']);
     expect(await storage.loadSelectedDate(), DateTime(2026, 11, 3));
     expect(
       values[HomeWidgetAndroidWidgetCacheStorage.targetGroupIdKey],
       'group',
     );
+    await storage.save(month('2026-11-01'), retainMonthsWithin: 0);
+    final restored = jsonDecode(await File(path).readAsString()) as Map;
+    expect((restored['months'] as Map).keys, ['2026-11-01']);
+  });
+
+  test('以前のカレンダーキャッシュが読めなくても新しい月を公開する', () async {
+    const storage = HomeWidgetCalendarCacheStorage();
+    final file = File('${directory.path}/previous_calendar.json');
+    final data = {
+      'cacheScope': 'offline:a',
+      'sourceMode': 'offline',
+      'month': '2026-11-01',
+      'months': {
+        '2026-11-01': {'days': <Object?>[]},
+      },
+    };
+    for (final previous in [
+      '{',
+      '[]',
+      '{"cacheScope":"offline:a","sourceMode":"offline","months":[]}',
+      '{"cacheScope":"offline:a","sourceMode":"offline","months":{"不正な日付":[]}}',
+      '{"cacheScope":"offline:a","sourceMode":"offline","months":{"2027-01-01":[]}}',
+    ]) {
+      await file.writeAsString(previous);
+      values[HomeWidgetCalendarCacheStorage.cacheKey] = file.path;
+      await storage.save(data, retainMonthsWithin: 2);
+      final path = values[HomeWidgetCalendarCacheStorage.cacheKey] as String;
+      expect(jsonDecode(await File(path).readAsString()), data);
+    }
   });
 
   test('単一キャッシュを消去すると公開済みファイルも削除する', () async {

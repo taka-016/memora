@@ -11,6 +11,20 @@ class FirestoreCalendarEventOverrideMapper {
     bool parentAllDay,
   ) =>
       '${eventId}_${normalize(value.originalStartDateTime, parentAllDay).microsecondsSinceEpoch}';
+
+  static DateTime? originalStartFromDocumentId(
+    String eventId,
+    String documentId, {
+    required bool parentAllDay,
+  }) {
+    final prefix = '${eventId}_';
+    if (!documentId.startsWith(prefix)) return null;
+    final micros = int.tryParse(documentId.substring(prefix.length));
+    return micros == null
+        ? null
+        : DateTime.fromMicrosecondsSinceEpoch(micros, isUtc: parentAllDay);
+  }
+
   static Map<String, dynamic> toFirestore(
     CalendarEventOverride value, {
     required String eventId,

@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:home_widget/home_widget.dart';
+import 'package:memora/infrastructure/services/home_widget_installed_kinds.dart';
 import 'package:memora/infrastructure/services/home_widget_load_state_storage.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -81,13 +82,34 @@ class HomeWidgetCalendarCacheStorage {
 
   Future<Map<String, dynamic>?> _load() async {
     final path = await HomeWidget.getWidgetData<String>(cacheKey);
-    if (path == null || !await File(path).exists()) return null;
-    return jsonDecode(await File(path).readAsString()) as Map<String, dynamic>;
+    if (path == null) return null;
+    try {
+      final data = jsonDecode(await File(path).readAsString());
+      return data is Map<String, dynamic> ? data : null;
+    } on FileSystemException {
+      return null;
+    } on FormatException {
+      return null;
+    }
   }
 
   Future<DateTime?> loadMonth() async {
     final data = await _load();
-    return DateTime.tryParse(data?['month'] as String? ?? '');
+    final month = data?['month'];
+    return month is String ? DateTime.tryParse(month) : null;
+  }
+
+  Future<List<DateTime>> loadPublishedMonths(String scope) async {
+    final data = await _load();
+    final months = data?['months'];
+    if (data?['cacheScope'] != scope || months is! Map<String, dynamic>) {
+      return const [];
+    }
+    return [
+      for (final entry in months.entries)
+        if (entry.value case {'days': List<dynamic>()})
+          ?DateTime.tryParse(entry.key),
+    ];
   }
 
   Future<DateTime?> loadSelectedDate() async {
@@ -95,28 +117,50 @@ class HomeWidgetCalendarCacheStorage {
     return DateTime.tryParse(value ?? '');
   }
 
-  Future<void> save(Map<String, Object?> cache, {bool merge = true}) async {
-    final previous = merge ? await _load() : null;
-    final previousMonths = previous?['months'] as Map<String, dynamic>?;
+  Future<void> selectDateForAllWidgets(String scope, DateTime date) async {
+    final widgetIds = await loadInstalledAndroidCalendarWidgetIds();
+    final value = date.toIso8601String().substring(0, 10);
+    await Future.wait([
+      HomeWidget.saveWidgetData<String>(selectedDateKey, value),
+      for (final id in widgetIds) ...[
+        HomeWidget.saveWidgetData<String>('memora_calendar_group_$id', scope),
+        HomeWidget.saveWidgetData<String>('memora_calendar_date_$id', value),
+      ],
+    ]);
+  }
+
+  Future<void> save(
+    Map<String, Object?> cache, {
+    int? retainMonthsWithin,
+  }) async {
+    final previous = retainMonthsWithin == 0 ? null : await _load();
+    final previousMonths = previous?['months'];
     final incomingMonths = cache['months'] as Map<String, Object?>?;
-    final months = <String, Object?>{
-      if (previous?['cacheScope'] == cache['cacheScope'] &&
-          previous?['groupId'] == cache['groupId'] &&
-          previous?['sourceMode'] == cache['sourceMode'])
-        ...?previousMonths,
-      ...?incomingMonths,
-    };
-    final selected =
-        await loadSelectedDate() ?? DateTime.parse(cache['month'] as String);
-    int distance(String key) {
-      final month = DateTime.parse(key);
-      return ((month.year - selected.year) * 12 + month.month - selected.month)
-          .abs();
+    final refreshedMonth = DateTime.parse(cache['month'] as String);
+    int distance(DateTime date, DateTime month) {
+      return ((date.year - month.year) * 12 + date.month - month.month).abs();
     }
 
+    final months = <String, Object?>{
+      if (previousMonths is Map<String, dynamic> &&
+          previous?['cacheScope'] == cache['cacheScope'] &&
+          previous?['groupId'] == cache['groupId'] &&
+          previous?['sourceMode'] == cache['sourceMode'])
+        for (final entry in previousMonths.entries)
+          if (entry.value case {'days': List<dynamic>()})
+            if (DateTime.tryParse(entry.key) case final date?)
+              if (retainMonthsWithin == null ||
+                  distance(date, refreshedMonth) <= retainMonthsWithin)
+                entry.key: entry.value,
+      ...?incomingMonths,
+    };
+    final selected = await loadSelectedDate() ?? refreshedMonth;
     final keys = months.keys.toList()
       ..sort((a, b) {
-        final result = distance(a).compareTo(distance(b));
+        final result = distance(
+          DateTime.parse(a),
+          selected,
+        ).compareTo(distance(DateTime.parse(b), selected));
         return result != 0 ? result : a.compareTo(b);
       });
     final publishedCache = {
@@ -137,11 +181,12 @@ class HomeWidgetCalendarCacheStorage {
         published.path,
         deleteFile: false,
       );
-      final lastUpdatedAt = cache['lastUpdatedAt'] as String?;
-      if (lastUpdatedAt != null) {
+      final synchronizedAt =
+          (cache['synchronizedAt'] ?? cache['lastUpdatedAt']) as String?;
+      if (cache['synchronized'] != false && synchronizedAt != null) {
         await HomeWidget.saveWidgetData<String>(
           HomeWidgetAndroidWidgetCacheStorage.lastUpdatedAtKey,
-          lastUpdatedAt,
+          synchronizedAt,
         );
       }
     } finally {

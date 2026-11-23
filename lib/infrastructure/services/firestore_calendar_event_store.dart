@@ -17,10 +17,34 @@ class FirestoreCalendarEventStore {
   List<String> overrideIds(Map<String, dynamic> data) =>
       (data['overrideIds'] as List? ?? []).cast<String>();
 
+  CalendarEventDto displayEvent(String eventId, Map<String, dynamic> data) {
+    if (data['recurrenceRule'] == null) {
+      return FirestoreCalendarEventMapper.fromData(eventId, data);
+    }
+    return FirestoreCalendarEventMapper.fromData(
+      eventId,
+      data,
+      overrides: [
+        for (final id in overrideIds(data))
+          if (FirestoreCalendarEventOverrideMapper.originalStartFromDocumentId(
+                eventId,
+                id,
+                parentAllDay: data['isAllDay'] as bool,
+              )
+              case final start?)
+            CalendarEventOverride(originalStartDateTime: start),
+      ],
+    ).copyWith(
+      recurrenceEndDateTime: (data['recurrenceEndDateTime'] as Timestamp?)
+          ?.toDate(),
+    );
+  }
+
   Future<CalendarEventDto> read(
     DocumentSnapshot<Map<String, dynamic>> event, {
     Transaction? transaction,
     CalendarEventPeriod? period,
+    GetOptions? options,
   }) async {
     final data = event.data()!;
     final overrides = <CalendarEventOverride>[];
@@ -37,7 +61,7 @@ class FirestoreCalendarEventStore {
           endField: 'originalEndDateTime',
         );
       }
-      final snapshot = await query.get();
+      final snapshot = await query.get(options);
       overrides.addAll(
         snapshot.docs.map(
           (doc) => FirestoreCalendarEventOverrideMapper.fromFirestore(

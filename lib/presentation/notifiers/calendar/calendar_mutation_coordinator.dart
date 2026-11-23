@@ -71,7 +71,10 @@ class CalendarMutationCoordinator {
     } else {
       await ref.read(updateCalendarEventUsecaseProvider).execute(input);
     }
-    await _refresh({if (expected != null) expected.groupId, input.groupId});
+    await _refresh({
+      if (expected != null) expected.groupId,
+      input.groupId,
+    }, eventsChanged: true);
     return savedId;
   }
 
@@ -109,7 +112,7 @@ class CalendarMutationCoordinator {
           .read(deleteCalendarEventUsecaseProvider)
           .execute(expected.id, expectedVersion: expected.version);
     }
-    await _refresh({expected.groupId});
+    await _refresh({expected.groupId}, eventsChanged: true);
   }
 
   Future<void> labelsChanged(String groupId) async {
@@ -122,7 +125,7 @@ class CalendarMutationCoordinator {
     await _refresh({groupId});
   }
 
-  Future<void> _refresh(Set<String> ids) async {
+  Future<void> _refresh(Set<String> ids, {bool eventsChanged = false}) async {
     if (!ref.mounted) return;
     for (final id in ids) {
       final provider = calendarNotifierProvider(id);
@@ -138,7 +141,9 @@ class CalendarMutationCoordinator {
             .refresh();
       }
       if (ref.mounted) {
-        await ref.read(refreshSelectedCalendarWidgetCacheProvider)();
+        await ref.read(refreshSelectedCalendarWidgetCacheProvider)(
+          force: !eventsChanged,
+        );
       }
     } catch (error, stack) {
       logger.w('保存後の予定表示更新に失敗しました', error: error, stackTrace: stack);

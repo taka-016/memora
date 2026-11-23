@@ -6,18 +6,25 @@ import 'package:memora/application/usecases/android_widget/refresh_android_widge
 Future<Set<AndroidWidgetKind>> loadInstalledAndroidWidgetKinds() async {
   if (!Platform.isAndroid) return {};
   final widgets = await HomeWidget.getInstalledWidgets();
-  final kinds = <AndroidWidgetKind>{};
-  for (final widget in widgets) {
-    switch (widget.androidClassName?.split('.').last) {
-      case 'ItineraryWidgetReceiver':
-      case 'ItineraryDarkWidgetReceiver':
-        kinds.add(AndroidWidgetKind.itinerary);
-      case 'CalendarWidgetReceiver':
-      case 'CalendarDarkWidgetReceiver':
-      case 'DailyCalendarWidgetReceiver':
-      case 'DailyCalendarDarkWidgetReceiver':
-        kinds.add(AndroidWidgetKind.calendar);
-    }
-  }
-  return kinds;
+  return {for (final widget in widgets) ?_widgetKind(widget)};
 }
+
+Future<List<int>> loadInstalledAndroidCalendarWidgetIds() async {
+  final widgets = await HomeWidget.getInstalledWidgets();
+  return [
+    for (final widget in widgets)
+      if (_widgetKind(widget) == AndroidWidgetKind.calendar)
+        ?widget.androidWidgetId,
+  ];
+}
+
+AndroidWidgetKind? _widgetKind(HomeWidgetInfo widget) =>
+    switch (widget.androidClassName?.split('.').last) {
+      'ItineraryWidgetReceiver' ||
+      'ItineraryDarkWidgetReceiver' => AndroidWidgetKind.itinerary,
+      'CalendarWidgetReceiver' ||
+      'CalendarDarkWidgetReceiver' ||
+      'DailyCalendarWidgetReceiver' ||
+      'DailyCalendarDarkWidgetReceiver' => AndroidWidgetKind.calendar,
+      _ => null,
+    };

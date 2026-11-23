@@ -765,6 +765,10 @@ String? _selectedDropdownValue(WidgetTester tester) {
 
 class _FakeGroupQueryService implements GroupQueryService {
   @override
+  Future<Set<String>> getGroupIdsByMemberId(String memberId) async =>
+      groups.map((group) => group.id).toSet();
+
+  @override
   Future<bool> groupExists(String groupId) async =>
       await getGroupWithMembersById(groupId) != null;
 

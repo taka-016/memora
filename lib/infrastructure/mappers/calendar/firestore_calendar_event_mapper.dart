@@ -11,37 +11,40 @@ class FirestoreCalendarEventMapper {
   static CalendarEventDto fromFirestore(
     DocumentSnapshot<Map<String, dynamic>> doc, {
     List<CalendarEventOverride> overrides = const [],
-  }) {
-    final data = doc.data()!;
-    return CalendarEventDto(
-      version: data['version'] as int?,
-      recurrenceRule: data['recurrenceRule'] as String?,
-      timeZone: data['timeZone'] as String?,
-      overrides: overrides,
-      id: doc.id,
-      groupId: data['groupId'] as String,
-      labelId: data['labelId'] as String? ?? '',
-      labelType: data['labelType'] as String,
-      memberId: data['memberId'] as String? ?? '',
-      notificationMinutesBefore:
-          (data['notificationMinutesBefore'] as List? ?? const []).cast<int>(),
-      url: data['url'] as String? ?? '',
-      memo: data['memo'] as String? ?? '',
-      locationName: data['locationName'] as String? ?? '',
-      latitude: (data['latitude'] as num?)?.toDouble(),
-      longitude: (data['longitude'] as num?)?.toDouble(),
-      title: data['title'] as String,
-      startDateTime: _date(
-        data['startDateTime'] as Timestamp,
-        data['isAllDay'] as bool,
-      ),
-      endDateTime: _date(
-        data['endDateTime'] as Timestamp,
-        data['isAllDay'] as bool,
-      ),
-      isAllDay: data['isAllDay'] as bool,
-    );
-  }
+  }) => fromData(doc.id, doc.data()!, overrides: overrides);
+
+  static CalendarEventDto fromData(
+    String id,
+    Map<String, dynamic> data, {
+    List<CalendarEventOverride> overrides = const [],
+  }) => CalendarEventDto(
+    version: data['version'] as int?,
+    recurrenceRule: data['recurrenceRule'] as String?,
+    timeZone: data['timeZone'] as String?,
+    overrides: overrides,
+    id: id,
+    groupId: data['groupId'] as String,
+    labelId: data['labelId'] as String? ?? '',
+    labelType: data['labelType'] as String,
+    memberId: data['memberId'] as String? ?? '',
+    notificationMinutesBefore:
+        (data['notificationMinutesBefore'] as List? ?? const []).cast<int>(),
+    url: data['url'] as String? ?? '',
+    memo: data['memo'] as String? ?? '',
+    locationName: data['locationName'] as String? ?? '',
+    latitude: (data['latitude'] as num?)?.toDouble(),
+    longitude: (data['longitude'] as num?)?.toDouble(),
+    title: data['title'] as String,
+    startDateTime: _date(
+      data['startDateTime'] as Timestamp,
+      data['isAllDay'] as bool,
+    ),
+    endDateTime: _date(
+      data['endDateTime'] as Timestamp,
+      data['isAllDay'] as bool,
+    ),
+    isAllDay: data['isAllDay'] as bool,
+  );
 
   static DateTime _date(Timestamp value, bool allDay) =>
       allDay ? value.toDate().toUtc() : value.toDate();

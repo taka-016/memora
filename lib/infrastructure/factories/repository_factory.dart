@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:memora/composition_root/providers/shared_calendar_cache_providers.dart';
 import 'package:memora/application/decorators/repository_guards.g.dart';
 import 'package:memora/composition_root/providers/app_availability_providers.dart';
 import 'package:memora/infrastructure/repositories/calendar/firestore_calendar_label_repository.dart';
@@ -159,6 +162,12 @@ class RepositoryFactory {
     if (T == CalendarEventRepository) {
       return FirestoreCalendarEventRepository(
         firestore: ref.watch(firebaseFirestoreProvider),
+        sharedCache: Platform.isAndroid
+            ? ref.watch(sharedCalendarCacheProvider)
+            : null,
+        currentOwnerId: Platform.isAndroid
+            ? ref.watch(onlineCalendarCacheOwnerProvider)
+            : null,
       ) as T;
     }
     if (T == CalendarLabelRepository) {

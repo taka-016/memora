@@ -158,6 +158,10 @@ class _LoadedGroupSelectionNotifier
 
 class _CountingGroupQueryService implements GroupQueryService {
   @override
+  Future<Set<String>> getGroupIdsByMemberId(String memberId) async =>
+      result.map((group) => group.id).toSet();
+
+  @override
   Future<bool> groupExists(String groupId) async =>
       await getGroupWithMembersById(groupId) != null;
 

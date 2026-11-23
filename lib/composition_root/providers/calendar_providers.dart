@@ -1,3 +1,4 @@
+import 'package:memora/composition_root/providers/shared_calendar_cache_providers.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/application/usecases/calendar/move_calendar_event_usecase.dart';
 import 'package:memora/application/usecases/calendar/calendar_label_management_usecase.dart';
@@ -107,6 +108,8 @@ final watchCalendarLabelsUsecaseProvider =
       return WatchCalendarLabelsUsecase(
         FirestoreCalendarLabelWatchQueryService(
           firestore: ref.watch(firebaseFirestoreProvider),
+          sharedCache: ref.watch(sharedCalendarCacheProvider),
+          currentOwnerId: ref.watch(onlineCalendarCacheOwnerProvider),
         ),
       );
     });

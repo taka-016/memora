@@ -183,7 +183,11 @@ final refreshAndroidWidgetCachesUsecaseProvider =
                     .getSelectedItineraryDateId(),
               );
         },
-        refreshCalendar: () => ref.read(refreshCalendarWidgetProvider)(null),
+        refreshCalendar: () => ref.read(refreshCalendarWidgetProvider)(
+          null,
+          force: true,
+          afterMutation: true,
+        ),
       );
     });
 
@@ -194,10 +198,18 @@ final refreshSelectedAndroidWidgetCacheProvider =
     });
 
 final refreshSelectedCalendarWidgetCacheProvider =
-    Provider<Future<void> Function()>((ref) {
-      return () => ref
-          .read(refreshAndroidWidgetCachesUsecaseProvider)
-          .execute(kinds: const {AndroidWidgetKind.calendar});
+    Provider<Future<void> Function({bool force})>((ref) {
+      return ({force = true}) {
+        if (!force) {
+          return ref.read(refreshCalendarWidgetProvider)(
+            null,
+            afterMutation: true,
+          );
+        }
+        return ref
+            .read(refreshAndroidWidgetCachesUsecaseProvider)
+            .execute(kinds: const {AndroidWidgetKind.calendar});
+      };
     });
 
 final refreshSelectedItineraryWidgetCacheProvider =
