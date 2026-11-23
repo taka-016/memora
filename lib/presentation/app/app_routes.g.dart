@@ -179,6 +179,11 @@ RouteBase get $appShellRoute => ShellRouteData.$route(
       factory: $CalendarRoute._fromState,
     ),
     GoRouteData.$route(
+      path: '/shopping-list',
+      hasOverriddenOnExit: false,
+      factory: $ShoppingListRoute._fromState,
+    ),
+    GoRouteData.$route(
       path: '/map',
       hasOverriddenOnExit: false,
       factory: $MapRoute._fromState,
@@ -342,6 +347,27 @@ mixin $CalendarRoute on GoRouteData {
       if (_self.occurrence != null) 'occurrence': _self.occurrence,
     },
   );
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $ShoppingListRoute on GoRouteData {
+  static ShoppingListRoute _fromState(GoRouterState state) =>
+      const ShoppingListRoute();
+
+  @override
+  String get location => GoRouteData.$location('/shopping-list');
 
   @override
   void go(BuildContext context) => context.go(location);

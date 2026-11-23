@@ -16,6 +16,7 @@ import 'package:memora/presentation/features/group/group_management.dart';
 import 'package:memora/presentation/features/map/map_screen.dart';
 import 'package:memora/presentation/features/member/member_management.dart';
 import 'package:memora/presentation/features/setting/settings.dart';
+import 'package:memora/presentation/features/shopping_list/shopping_list_screen.dart';
 import 'package:memora/presentation/features/timeline/group_timeline_navigation_view.dart';
 import 'package:memora/presentation/features/trip/trip_management.dart';
 import 'package:memora/presentation/notifiers/member/current_member_notifier.dart';
@@ -28,6 +29,7 @@ List<RouteBase> get appRoutes => $appRoutes;
 enum AppNavigationItem {
   groupTimeline,
   calendar,
+  shoppingList,
   map,
   memberManagement,
   groupManagement,
@@ -49,6 +51,9 @@ AppNavigationItem appNavigationItemForLocation(String location) {
   if (location == const CalendarRoute().location ||
       location.startsWith('${const CalendarRoute().location}/')) {
     return AppNavigationItem.calendar;
+  }
+  if (location == const ShoppingListRoute().location) {
+    return AppNavigationItem.shoppingList;
   }
   if (location == const MapRoute().location) {
     return AppNavigationItem.map;
@@ -127,6 +132,7 @@ class MemberSetupRoute extends GoRouteData with $MemberSetupRoute {
       ],
     ),
     TypedGoRoute<CalendarRoute>(path: '/calendar'),
+    TypedGoRoute<ShoppingListRoute>(path: '/shopping-list'),
     TypedGoRoute<MapRoute>(path: '/map'),
     TypedGoRoute<MemberManagementRoute>(path: '/members'),
     TypedGoRoute<GroupManagementRoute>(path: '/group-management'),
@@ -301,6 +307,15 @@ class _CalendarEventInputRoutePageState
       onCancelled: () =>
           CalendarRoute(date: _date.toIso8601String()).go(context),
     );
+  }
+}
+
+class ShoppingListRoute extends GoRouteData with $ShoppingListRoute {
+  const ShoppingListRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return const Material(child: ShoppingListScreen());
   }
 }
 

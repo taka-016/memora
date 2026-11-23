@@ -37,6 +37,7 @@ class TopPage extends HookConsumerWidget {
         .isAvailable;
     final scaffoldKey = useMemoized(GlobalKey<ScaffoldState>.new);
     final isDrawerOpen = useState(false);
+    final memberMenu = useMemoized(MenuController.new);
     final drawerCloseCompleter = useRef<Completer<void>?>(null);
 
     Future<void> closeDrawer() {
@@ -180,8 +181,7 @@ class TopPage extends HookConsumerWidget {
     useEffect(
       () {
         if (!isAuthenticated ||
-            (selectedItem != AppNavigationItem.groupTimeline &&
-                selectedItem != AppNavigationItem.calendar) ||
+            !_isPrimaryNavigation(selectedItem) ||
             currentMember == null ||
             shouldHideForAndroidWidgetLaunch) {
           return null;
@@ -240,7 +240,7 @@ class TopPage extends HookConsumerWidget {
             : _buildDrawer(context, ref, closeDrawer),
         bottomNavigationBar: isCalendarInput
             ? null
-            : _buildBottomNavigationBar(context, ref, closeDrawer),
+            : _buildBottomNavigationBar(context, ref, closeDrawer, memberMenu),
         body:
             currentMemberState.status == CurrentMemberStatus.error &&
                 (!authenticationAvailable || currentMemberState.canRetry)
@@ -352,8 +352,7 @@ class TopPage extends HookConsumerWidget {
     if (selectedItem == item) {
       return;
     }
-    if (item == AppNavigationItem.groupTimeline ||
-        item == AppNavigationItem.calendar) {
+    if (_isPrimaryNavigation(item)) {
       final currentMember = ref.read(currentMemberNotifierProvider).member;
       if (currentMember != null) {
         unawaited(
@@ -365,10 +364,13 @@ class TopPage extends HookConsumerWidget {
         ref.read(groupTimelineGroupSelectionNotifierProvider.notifier).reset();
       }
 
-      if (item == AppNavigationItem.calendar) {
-        const CalendarRoute().go(context);
-      } else {
-        const GroupListRoute().go(context);
+      switch (item) {
+        case AppNavigationItem.calendar:
+          const CalendarRoute().go(context);
+        case AppNavigationItem.shoppingList:
+          const ShoppingListRoute().go(context);
+        default:
+          const GroupListRoute().go(context);
       }
       return;
     }
@@ -376,6 +378,7 @@ class TopPage extends HookConsumerWidget {
     final location = switch (item) {
       AppNavigationItem.groupTimeline => null,
       AppNavigationItem.calendar => null,
+      AppNavigationItem.shoppingList => null,
       AppNavigationItem.map => const MapRoute().location,
       AppNavigationItem.memberManagement =>
         const MemberManagementRoute().location,
@@ -388,8 +391,7 @@ class TopPage extends HookConsumerWidget {
     if (location == null) {
       return;
     }
-    if (selectedItem == AppNavigationItem.groupTimeline ||
-        selectedItem == AppNavigationItem.calendar) {
+    if (_isPrimaryNavigation(selectedItem)) {
       unawaited(context.push<void>(location));
     } else {
       context.pushReplacement(location);
@@ -485,40 +487,71 @@ class TopPage extends HookConsumerWidget {
     );
   }
 
+  bool _isPrimaryNavigation(AppNavigationItem item) =>
+      item == AppNavigationItem.groupTimeline ||
+      item == AppNavigationItem.calendar ||
+      item == AppNavigationItem.shoppingList;
+
   Widget _buildBottomNavigationBar(
     BuildContext context,
     WidgetRef ref,
     Future<void> Function() closeDrawer,
+    MenuController memberMenu,
   ) {
+    void navigate(AppNavigationItem item) {
+      unawaited(_onNavigationItemSelected(context, ref, item, closeDrawer));
+    }
+
     final destinations = [
       (
         item: AppNavigationItem.groupTimeline,
-        icon: Icons.timeline,
+        icon: const Icon(Icons.timeline),
         label: '年表',
       ),
       (
         item: AppNavigationItem.calendar,
-        icon: Icons.calendar_month,
+        icon: const Icon(Icons.calendar_month),
         label: 'カレンダー',
+      ),
+      (
+        item: AppNavigationItem.shoppingList,
+        icon: const Icon(Icons.shopping_cart_outlined),
+        label: '買い物リスト',
       ),
       if (ref
           .watch(appCapabilitiesProvider)
           .availability(AppFeature.maps)
           .isAvailable)
-        (item: AppNavigationItem.map, icon: Icons.map, label: '地図'),
+        (item: AppNavigationItem.map, icon: const Icon(Icons.map), label: '地図'),
       (
         item: AppNavigationItem.memberManagement,
-        icon: Icons.people,
+        icon: MenuAnchor(
+          controller: memberMenu,
+          alignmentOffset: const Offset(0, 20),
+          menuChildren: [
+            MenuItemButton(
+              key: const Key('member_menu_item'),
+              leadingIcon: const Icon(Icons.people_outline),
+              onPressed: () => navigate(AppNavigationItem.memberManagement),
+              child: const Text('メンバー'),
+            ),
+            MenuItemButton(
+              key: const Key('group_menu_item'),
+              leadingIcon: const Icon(Icons.group_work_outlined),
+              onPressed: () => navigate(AppNavigationItem.groupManagement),
+              child: const Text('グループ'),
+            ),
+          ],
+          child: const Icon(Icons.people, key: Key('member_menu')),
+        ),
         label: 'メンバー',
       ),
-      (
-        item: AppNavigationItem.groupManagement,
-        icon: Icons.group_work,
-        label: 'グループ',
-      ),
     ];
+    final bottomItem = selectedItem == AppNavigationItem.groupManagement
+        ? AppNavigationItem.memberManagement
+        : selectedItem;
     final selectedIndex = destinations.indexWhere(
-      (destination) => destination.item == selectedItem,
+      (destination) => destination.item == bottomItem,
     );
     return BottomNavigationBar(
       type: BottomNavigationBarType.fixed,
@@ -528,19 +561,17 @@ class TopPage extends HookConsumerWidget {
       items: [
         for (final destination in destinations)
           BottomNavigationBarItem(
-            icon: Icon(destination.icon),
+            icon: destination.icon,
             label: destination.label,
           ),
       ],
       onTap: (index) {
-        unawaited(
-          _onNavigationItemSelected(
-            context,
-            ref,
-            destinations[index].item,
-            closeDrawer,
-          ),
-        );
+        final item = destinations[index].item;
+        if (item == AppNavigationItem.memberManagement) {
+          memberMenu.isOpen ? memberMenu.close() : memberMenu.open();
+        } else {
+          navigate(item);
+        }
       },
     );
   }

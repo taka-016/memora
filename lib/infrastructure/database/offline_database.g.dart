@@ -8526,6 +8526,564 @@ class DeletedGroupsCompanion extends UpdateCompanion<SqliteDeletedGroupRow> {
   }
 }
 
+class ShoppingListItems extends Table
+    with TableInfo<ShoppingListItems, SqliteShoppingListItemRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  ShoppingListItems(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL PRIMARY KEY',
+  );
+  static const VerificationMeta _groupIdMeta = const VerificationMeta(
+    'groupId',
+  );
+  late final GeneratedColumn<String> groupId = GeneratedColumn<String>(
+    'group_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _versionMeta = const VerificationMeta(
+    'version',
+  );
+  late final GeneratedColumn<int> version = GeneratedColumn<int>(
+    'version',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL CHECK (version >= 1)',
+  );
+  static const VerificationMeta _pendingQuantityMeta = const VerificationMeta(
+    'pendingQuantity',
+  );
+  late final GeneratedColumn<String> pendingQuantity = GeneratedColumn<String>(
+    'pending_quantity',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  static const VerificationMeta _lastAddedAtMeta = const VerificationMeta(
+    'lastAddedAt',
+  );
+  late final GeneratedColumn<int> lastAddedAt = GeneratedColumn<int>(
+    'last_added_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  static const VerificationMeta _purchasedAtMeta = const VerificationMeta(
+    'purchasedAt',
+  );
+  late final GeneratedColumn<int> purchasedAt = GeneratedColumn<int>(
+    'purchased_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  static const VerificationMeta _purchasedQuantityMeta = const VerificationMeta(
+    'purchasedQuantity',
+  );
+  late final GeneratedColumn<String> purchasedQuantity =
+      GeneratedColumn<String>(
+        'purchased_quantity',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        $customConstraints: '',
+      );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    groupId,
+    name,
+    version,
+    pendingQuantity,
+    lastAddedAt,
+    purchasedAt,
+    purchasedQuantity,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'shopping_list_items';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SqliteShoppingListItemRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('group_id')) {
+      context.handle(
+        _groupIdMeta,
+        groupId.isAcceptableOrUnknown(data['group_id']!, _groupIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_groupIdMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('version')) {
+      context.handle(
+        _versionMeta,
+        version.isAcceptableOrUnknown(data['version']!, _versionMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_versionMeta);
+    }
+    if (data.containsKey('pending_quantity')) {
+      context.handle(
+        _pendingQuantityMeta,
+        pendingQuantity.isAcceptableOrUnknown(
+          data['pending_quantity']!,
+          _pendingQuantityMeta,
+        ),
+      );
+    }
+    if (data.containsKey('last_added_at')) {
+      context.handle(
+        _lastAddedAtMeta,
+        lastAddedAt.isAcceptableOrUnknown(
+          data['last_added_at']!,
+          _lastAddedAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('purchased_at')) {
+      context.handle(
+        _purchasedAtMeta,
+        purchasedAt.isAcceptableOrUnknown(
+          data['purchased_at']!,
+          _purchasedAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('purchased_quantity')) {
+      context.handle(
+        _purchasedQuantityMeta,
+        purchasedQuantity.isAcceptableOrUnknown(
+          data['purchased_quantity']!,
+          _purchasedQuantityMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {groupId, name},
+  ];
+  @override
+  SqliteShoppingListItemRow map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SqliteShoppingListItemRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      groupId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}group_id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      version: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}version'],
+      )!,
+      pendingQuantity: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}pending_quantity'],
+      ),
+      lastAddedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}last_added_at'],
+      ),
+      purchasedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}purchased_at'],
+      ),
+      purchasedQuantity: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}purchased_quantity'],
+      ),
+    );
+  }
+
+  @override
+  ShoppingListItems createAlias(String alias) {
+    return ShoppingListItems(attachedDatabase, alias);
+  }
+
+  @override
+  List<String> get customConstraints => const [
+    'UNIQUE(group_id, name)',
+    'CHECK((purchased_at IS NULL)=(purchased_quantity IS NULL))',
+  ];
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class SqliteShoppingListItemRow extends DataClass
+    implements Insertable<SqliteShoppingListItemRow> {
+  final String id;
+  final String groupId;
+  final String name;
+  final int version;
+  final String? pendingQuantity;
+  final int? lastAddedAt;
+  final int? purchasedAt;
+  final String? purchasedQuantity;
+  const SqliteShoppingListItemRow({
+    required this.id,
+    required this.groupId,
+    required this.name,
+    required this.version,
+    this.pendingQuantity,
+    this.lastAddedAt,
+    this.purchasedAt,
+    this.purchasedQuantity,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['group_id'] = Variable<String>(groupId);
+    map['name'] = Variable<String>(name);
+    map['version'] = Variable<int>(version);
+    if (!nullToAbsent || pendingQuantity != null) {
+      map['pending_quantity'] = Variable<String>(pendingQuantity);
+    }
+    if (!nullToAbsent || lastAddedAt != null) {
+      map['last_added_at'] = Variable<int>(lastAddedAt);
+    }
+    if (!nullToAbsent || purchasedAt != null) {
+      map['purchased_at'] = Variable<int>(purchasedAt);
+    }
+    if (!nullToAbsent || purchasedQuantity != null) {
+      map['purchased_quantity'] = Variable<String>(purchasedQuantity);
+    }
+    return map;
+  }
+
+  ShoppingListItemsCompanion toCompanion(bool nullToAbsent) {
+    return ShoppingListItemsCompanion(
+      id: Value(id),
+      groupId: Value(groupId),
+      name: Value(name),
+      version: Value(version),
+      pendingQuantity: pendingQuantity == null && nullToAbsent
+          ? const Value.absent()
+          : Value(pendingQuantity),
+      lastAddedAt: lastAddedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastAddedAt),
+      purchasedAt: purchasedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(purchasedAt),
+      purchasedQuantity: purchasedQuantity == null && nullToAbsent
+          ? const Value.absent()
+          : Value(purchasedQuantity),
+    );
+  }
+
+  factory SqliteShoppingListItemRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SqliteShoppingListItemRow(
+      id: serializer.fromJson<String>(json['id']),
+      groupId: serializer.fromJson<String>(json['group_id']),
+      name: serializer.fromJson<String>(json['name']),
+      version: serializer.fromJson<int>(json['version']),
+      pendingQuantity: serializer.fromJson<String?>(json['pending_quantity']),
+      lastAddedAt: serializer.fromJson<int?>(json['last_added_at']),
+      purchasedAt: serializer.fromJson<int?>(json['purchased_at']),
+      purchasedQuantity: serializer.fromJson<String?>(
+        json['purchased_quantity'],
+      ),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'group_id': serializer.toJson<String>(groupId),
+      'name': serializer.toJson<String>(name),
+      'version': serializer.toJson<int>(version),
+      'pending_quantity': serializer.toJson<String?>(pendingQuantity),
+      'last_added_at': serializer.toJson<int?>(lastAddedAt),
+      'purchased_at': serializer.toJson<int?>(purchasedAt),
+      'purchased_quantity': serializer.toJson<String?>(purchasedQuantity),
+    };
+  }
+
+  SqliteShoppingListItemRow copyWith({
+    String? id,
+    String? groupId,
+    String? name,
+    int? version,
+    Value<String?> pendingQuantity = const Value.absent(),
+    Value<int?> lastAddedAt = const Value.absent(),
+    Value<int?> purchasedAt = const Value.absent(),
+    Value<String?> purchasedQuantity = const Value.absent(),
+  }) => SqliteShoppingListItemRow(
+    id: id ?? this.id,
+    groupId: groupId ?? this.groupId,
+    name: name ?? this.name,
+    version: version ?? this.version,
+    pendingQuantity: pendingQuantity.present
+        ? pendingQuantity.value
+        : this.pendingQuantity,
+    lastAddedAt: lastAddedAt.present ? lastAddedAt.value : this.lastAddedAt,
+    purchasedAt: purchasedAt.present ? purchasedAt.value : this.purchasedAt,
+    purchasedQuantity: purchasedQuantity.present
+        ? purchasedQuantity.value
+        : this.purchasedQuantity,
+  );
+  SqliteShoppingListItemRow copyWithCompanion(ShoppingListItemsCompanion data) {
+    return SqliteShoppingListItemRow(
+      id: data.id.present ? data.id.value : this.id,
+      groupId: data.groupId.present ? data.groupId.value : this.groupId,
+      name: data.name.present ? data.name.value : this.name,
+      version: data.version.present ? data.version.value : this.version,
+      pendingQuantity: data.pendingQuantity.present
+          ? data.pendingQuantity.value
+          : this.pendingQuantity,
+      lastAddedAt: data.lastAddedAt.present
+          ? data.lastAddedAt.value
+          : this.lastAddedAt,
+      purchasedAt: data.purchasedAt.present
+          ? data.purchasedAt.value
+          : this.purchasedAt,
+      purchasedQuantity: data.purchasedQuantity.present
+          ? data.purchasedQuantity.value
+          : this.purchasedQuantity,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SqliteShoppingListItemRow(')
+          ..write('id: $id, ')
+          ..write('groupId: $groupId, ')
+          ..write('name: $name, ')
+          ..write('version: $version, ')
+          ..write('pendingQuantity: $pendingQuantity, ')
+          ..write('lastAddedAt: $lastAddedAt, ')
+          ..write('purchasedAt: $purchasedAt, ')
+          ..write('purchasedQuantity: $purchasedQuantity')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    groupId,
+    name,
+    version,
+    pendingQuantity,
+    lastAddedAt,
+    purchasedAt,
+    purchasedQuantity,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SqliteShoppingListItemRow &&
+          other.id == this.id &&
+          other.groupId == this.groupId &&
+          other.name == this.name &&
+          other.version == this.version &&
+          other.pendingQuantity == this.pendingQuantity &&
+          other.lastAddedAt == this.lastAddedAt &&
+          other.purchasedAt == this.purchasedAt &&
+          other.purchasedQuantity == this.purchasedQuantity);
+}
+
+class ShoppingListItemsCompanion
+    extends UpdateCompanion<SqliteShoppingListItemRow> {
+  final Value<String> id;
+  final Value<String> groupId;
+  final Value<String> name;
+  final Value<int> version;
+  final Value<String?> pendingQuantity;
+  final Value<int?> lastAddedAt;
+  final Value<int?> purchasedAt;
+  final Value<String?> purchasedQuantity;
+  final Value<int> rowid;
+  const ShoppingListItemsCompanion({
+    this.id = const Value.absent(),
+    this.groupId = const Value.absent(),
+    this.name = const Value.absent(),
+    this.version = const Value.absent(),
+    this.pendingQuantity = const Value.absent(),
+    this.lastAddedAt = const Value.absent(),
+    this.purchasedAt = const Value.absent(),
+    this.purchasedQuantity = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ShoppingListItemsCompanion.insert({
+    required String id,
+    required String groupId,
+    required String name,
+    required int version,
+    this.pendingQuantity = const Value.absent(),
+    this.lastAddedAt = const Value.absent(),
+    this.purchasedAt = const Value.absent(),
+    this.purchasedQuantity = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       groupId = Value(groupId),
+       name = Value(name),
+       version = Value(version);
+  static Insertable<SqliteShoppingListItemRow> custom({
+    Expression<String>? id,
+    Expression<String>? groupId,
+    Expression<String>? name,
+    Expression<int>? version,
+    Expression<String>? pendingQuantity,
+    Expression<int>? lastAddedAt,
+    Expression<int>? purchasedAt,
+    Expression<String>? purchasedQuantity,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (groupId != null) 'group_id': groupId,
+      if (name != null) 'name': name,
+      if (version != null) 'version': version,
+      if (pendingQuantity != null) 'pending_quantity': pendingQuantity,
+      if (lastAddedAt != null) 'last_added_at': lastAddedAt,
+      if (purchasedAt != null) 'purchased_at': purchasedAt,
+      if (purchasedQuantity != null) 'purchased_quantity': purchasedQuantity,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ShoppingListItemsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? groupId,
+    Value<String>? name,
+    Value<int>? version,
+    Value<String?>? pendingQuantity,
+    Value<int?>? lastAddedAt,
+    Value<int?>? purchasedAt,
+    Value<String?>? purchasedQuantity,
+    Value<int>? rowid,
+  }) {
+    return ShoppingListItemsCompanion(
+      id: id ?? this.id,
+      groupId: groupId ?? this.groupId,
+      name: name ?? this.name,
+      version: version ?? this.version,
+      pendingQuantity: pendingQuantity ?? this.pendingQuantity,
+      lastAddedAt: lastAddedAt ?? this.lastAddedAt,
+      purchasedAt: purchasedAt ?? this.purchasedAt,
+      purchasedQuantity: purchasedQuantity ?? this.purchasedQuantity,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (groupId.present) {
+      map['group_id'] = Variable<String>(groupId.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (version.present) {
+      map['version'] = Variable<int>(version.value);
+    }
+    if (pendingQuantity.present) {
+      map['pending_quantity'] = Variable<String>(pendingQuantity.value);
+    }
+    if (lastAddedAt.present) {
+      map['last_added_at'] = Variable<int>(lastAddedAt.value);
+    }
+    if (purchasedAt.present) {
+      map['purchased_at'] = Variable<int>(purchasedAt.value);
+    }
+    if (purchasedQuantity.present) {
+      map['purchased_quantity'] = Variable<String>(purchasedQuantity.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ShoppingListItemsCompanion(')
+          ..write('id: $id, ')
+          ..write('groupId: $groupId, ')
+          ..write('name: $name, ')
+          ..write('version: $version, ')
+          ..write('pendingQuantity: $pendingQuantity, ')
+          ..write('lastAddedAt: $lastAddedAt, ')
+          ..write('purchasedAt: $purchasedAt, ')
+          ..write('purchasedQuantity: $purchasedQuantity, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$OfflineDatabase extends GeneratedDatabase {
   _$OfflineDatabase(QueryExecutor e) : super(e);
   late final Members members = Members(this);
@@ -8625,6 +9183,19 @@ abstract class _$OfflineDatabase extends GeneratedDatabase {
   );
   late final DeletedMembers deletedMembers = DeletedMembers(this);
   late final DeletedGroups deletedGroups = DeletedGroups(this);
+  late final ShoppingListItems shoppingListItems = ShoppingListItems(this);
+  late final Index shoppingListPendingIdx = Index(
+    'shopping_list_pending_idx',
+    'CREATE INDEX shopping_list_pending_idx ON shopping_list_items (group_id) WHERE pending_quantity IS NOT NULL',
+  );
+  late final Index shoppingListAdditionsIdx = Index(
+    'shopping_list_additions_idx',
+    'CREATE INDEX shopping_list_additions_idx ON shopping_list_items (group_id, last_added_at DESC, id DESC) WHERE last_added_at IS NOT NULL',
+  );
+  late final Index shoppingListPurchasesIdx = Index(
+    'shopping_list_purchases_idx',
+    'CREATE INDEX shopping_list_purchases_idx ON shopping_list_items (group_id, purchased_at DESC, id DESC) WHERE purchased_at IS NOT NULL',
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -8666,6 +9237,10 @@ abstract class _$OfflineDatabase extends GeneratedDatabase {
     calendarOverridesGroupPeriodIdx,
     deletedMembers,
     deletedGroups,
+    shoppingListItems,
+    shoppingListPendingIdx,
+    shoppingListAdditionsIdx,
+    shoppingListPurchasesIdx,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([

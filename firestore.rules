@@ -80,6 +80,35 @@ service cloud.firestore {
       allow delete: if isVerifiedUser() && isStoredVersion();
     }
 
+    match /groups/{groupId}/shopping_list_items/{itemId} {
+      function validQuantity(value) {
+        return value is string && value.size() <= 100;
+      }
+
+      function validTime(value) {
+        return value is int && value > 0;
+      }
+
+      function validShoppingListItem() {
+        let data = request.resource.data;
+        return data.keys().hasOnly([
+                 'name', 'version', 'isPending', 'pendingQuantity',
+                 'lastAddedAt', 'purchasedAt', 'purchasedQuantity'
+               ])
+               && data.name is string && data.name.size() > 0 && data.name.size() <= 100
+               && ((data.isPending == true && validQuantity(data.pendingQuantity))
+                   || (data.isPending == false && data.pendingQuantity == null))
+               && (data.lastAddedAt == null || validTime(data.lastAddedAt))
+               && ((data.purchasedAt == null && data.purchasedQuantity == null)
+                   || (validTime(data.purchasedAt) && validQuantity(data.purchasedQuantity)));
+      }
+
+      allow read: if isVerifiedUser();
+      allow create: if isVerifiedUser() && isInitialVersion() && validShoppingListItem();
+      allow update: if isVerifiedUser() && isNextVersion() && validShoppingListItem()
+                       && request.resource.data.name == resource.data.name;
+    }
+
     match /group_members/{document} {
       allow read, delete: if isVerifiedUser();
       function validMembershipWrite() {
