@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:home_widget/home_widget.dart';
+import 'package:memora/infrastructure/services/home_widget_installed_kinds.dart';
 import 'package:memora/infrastructure/services/home_widget_load_state_storage.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -114,6 +115,18 @@ class HomeWidgetCalendarCacheStorage {
   Future<DateTime?> loadSelectedDate() async {
     final value = await HomeWidget.getWidgetData<String>(selectedDateKey);
     return DateTime.tryParse(value ?? '');
+  }
+
+  Future<void> selectDateForAllWidgets(String scope, DateTime date) async {
+    final widgetIds = await loadInstalledAndroidCalendarWidgetIds();
+    final value = date.toIso8601String().substring(0, 10);
+    await Future.wait([
+      HomeWidget.saveWidgetData<String>(selectedDateKey, value),
+      for (final id in widgetIds) ...[
+        HomeWidget.saveWidgetData<String>('memora_calendar_group_$id', scope),
+        HomeWidget.saveWidgetData<String>('memora_calendar_date_$id', value),
+      ],
+    ]);
   }
 
   Future<void> save(

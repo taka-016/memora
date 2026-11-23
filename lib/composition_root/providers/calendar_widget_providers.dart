@@ -97,6 +97,8 @@ final refreshCalendarWidgetProvider = Provider<_RefreshCalendarWidget>((ref) {
       return;
     }
     if (afterRestore) discardPreviousMonths = true;
+    final periodicUpdate =
+        date == null && force && !afterMutation && !afterRestore;
     if (afterMutation) {
       redrawPublishedMonths = true;
       if (force) refreshLabels = true;
@@ -127,7 +129,14 @@ final refreshCalendarWidgetProvider = Provider<_RefreshCalendarWidget>((ref) {
       if (!ref.mounted || request != generation) return;
       final usecase = ref.read(getAndroidWidgetCalendarCacheUsecaseProvider);
       final clock = ref.read(appClockProvider);
+      DateTime? today;
+      if (periodicUpdate) {
+        final now = clock.now();
+        today = DateTime(now.year, now.month, now.day);
+        await storage.selectDateForAllWidgets(selection.cacheScope, today);
+      }
       final month =
+          today ??
           date ??
           await storage.loadSelectedDate() ??
           await storage.loadMonth() ??
