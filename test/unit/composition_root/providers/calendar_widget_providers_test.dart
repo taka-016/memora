@@ -132,7 +132,11 @@ void main() {
       throw UnimplementedError(call.method);
     });
 
-    await container.read(refreshCalendarWidgetProvider)(null, force: true);
+    await container.read(refreshCalendarWidgetProvider)(
+      null,
+      force: true,
+      moveToToday: true,
+    );
 
     verify(
       cache.execute(

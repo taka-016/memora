@@ -75,6 +75,7 @@ typedef _RefreshCalendarWidget = Future<void> Function(
   bool afterRestore,
   bool force,
   bool afterMutation,
+  bool moveToToday,
 });
 
 final refreshCalendarWidgetProvider = Provider<_RefreshCalendarWidget>((ref) {
@@ -89,6 +90,7 @@ final refreshCalendarWidgetProvider = Provider<_RefreshCalendarWidget>((ref) {
     afterRestore = false,
     force = false,
     afterMutation = false,
+    moveToToday = false,
   }) async {
     if (!ref.read(calendarWidgetSupportedProvider)) return;
     if (!(await ref.read(
@@ -97,8 +99,6 @@ final refreshCalendarWidgetProvider = Provider<_RefreshCalendarWidget>((ref) {
       return;
     }
     if (afterRestore) discardPreviousMonths = true;
-    final periodicUpdate =
-        date == null && force && !afterMutation && !afterRestore;
     if (afterMutation) {
       redrawPublishedMonths = true;
       if (force) refreshLabels = true;
@@ -130,7 +130,7 @@ final refreshCalendarWidgetProvider = Provider<_RefreshCalendarWidget>((ref) {
       final usecase = ref.read(getAndroidWidgetCalendarCacheUsecaseProvider);
       final clock = ref.read(appClockProvider);
       DateTime? today;
-      if (periodicUpdate) {
+      if (moveToToday) {
         final now = clock.now();
         today = DateTime(now.year, now.month, now.day);
         await storage.selectDateForAllWidgets(selection.cacheScope, today);

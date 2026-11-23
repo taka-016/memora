@@ -123,8 +123,11 @@ Future<void> withAndroidWidgetDependencies(
         selectedItineraryDateId: await storage.getSelectedItineraryDateId(),
         updateWidgetAfterRefresh: false,
       ),
-      refreshCalendar: () =>
-          container!.read(refreshCalendarWidgetProvider)(null, force: true),
+      refreshCalendar: () => container!.read(refreshCalendarWidgetProvider)(
+        null,
+        force: true,
+        moveToToday: true,
+      ),
     );
     if (database == null) {
       await container
