@@ -64,7 +64,13 @@ extension TopPageBackNavigationTests on TopPageTestContext {
           expect(find.byKey(const Key('group_timeline')), findsOneWidget);
           expect(find.text('太郎'), findsOneWidget);
 
-          await tester.tap(find.text(deleteGroup ? 'グループ' : 'メンバー'));
+          await tester.tap(find.byKey(const Key('member_menu')));
+          await tester.pumpAndSettle();
+          await tester.tap(
+            find.byKey(
+              Key(deleteGroup ? 'group_menu_item' : 'member_menu_item'),
+            ),
+          );
           await tester.pumpAndSettle();
           await tester.tap(find.byIcon(Icons.delete).first);
           await tester.pumpAndSettle();

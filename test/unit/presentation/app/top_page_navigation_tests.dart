@@ -408,7 +408,12 @@ extension TopPageNavigationTests on TopPageTestContext {
 
       await tester.tap(find.byKey(const Key('member_menu')));
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('group_menu_item')));
+      final groupMenuItem = find.byKey(const Key('group_menu_item'));
+      expect(
+        tester.getBottomLeft(groupMenuItem).dy,
+        lessThan(tester.getTopLeft(find.byKey(const Key('member_menu'))).dy),
+      );
+      await tester.tap(groupMenuItem);
       await tester.pumpAndSettle();
 
       // Assert

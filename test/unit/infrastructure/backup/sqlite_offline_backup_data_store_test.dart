@@ -319,6 +319,16 @@ void main() {
   });
 
   test('全業務テーブルと端末内本人と復元対象設定を論理データとして往復復元する', () async {
+    await db.insertRow('shopping_list_items', {
+      'id': 'shopping-item',
+      'group_id': 'group-1',
+      'name': '牛乳',
+      'version': 1,
+      'pending_quantity': '2本',
+      'last_added_at': 100,
+      'purchased_at': 50,
+      'purchased_quantity': '1本',
+    });
     final snapshot = await dataStore.exportSnapshot();
 
     expect(snapshot.formatVersion, OfflineBackupSnapshot.currentFormatVersion);
@@ -329,6 +339,7 @@ void main() {
     expect(snapshot.tables['groups']!.single['name'], '家族');
 
     await db.updateRow('groups', 'group-1', {'name': '変更後'});
+    await db.deleteRows('shopping_list_items', 'id', 'shopping-item');
     memberStorage.value = const OfflineBackupCurrentMember(
       id: 'other',
       accountId: 'other-account',
@@ -344,6 +355,14 @@ void main() {
     await dataStore.restoreSnapshot(snapshot);
 
     expect((await db.rows('groups')).single['name'], '家族');
+    expect(
+      await db.rows('shopping_list_items'),
+      snapshot.tables['shopping_list_items'],
+    );
+    expect(
+      (await db.rows('shopping_list_items')).single['purchased_quantity'],
+      '1本',
+    );
     expect(memberStorage.value, originalMember);
     expect(settingsStorage.value, originalSettings);
     expect(await syncStorage.isPending(), isTrue);

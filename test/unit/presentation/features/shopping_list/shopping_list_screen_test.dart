@@ -1,0 +1,82 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/dtos/shopping_list/shopping_list_item.dart';
+import 'package:memora/application/usecases/shopping_list/shopping_list.dart';
+import 'package:memora/composition_root/providers/shopping_list_providers.dart';
+import 'package:memora/presentation/app/app_router.dart';
+import 'package:mockito/annotations.dart';
+import 'package:mockito/mockito.dart';
+
+import '../../../../helpers/test_exception.dart';
+import '../../app/top_page_test_support.dart';
+import 'shopping_list_screen_test.mocks.dart';
+
+@GenerateNiceMocks([MockSpec<ShoppingList>()])
+void main() {
+  final app = TopPageTestContext();
+  setUp(app.setUpContext);
+
+  testWidgets('チェックの保存に失敗した品物は残り、再試行後は元に戻せる', (tester) async {
+    final group = app.groupsWithMembers.first;
+    const item = ShoppingListItem(
+      id: 'milk',
+      name: '牛乳',
+      version: 1,
+      pendingQuantity: '2本',
+    );
+    final checked = item.copyWith(version: 2, pendingQuantity: null);
+    final stream = StreamController<List<ShoppingListItem>>();
+    addTearDown(stream.close);
+    final list = MockShoppingList();
+    var save = Completer<ShoppingListItem>();
+    when(list.watchPending(group.id)).thenAnswer((_) => stream.stream);
+    when(list.check(group.id, item)).thenAnswer((_) => save.future);
+    when(list.undo(group.id, item, checked)).thenAnswer((_) async {
+      stream.add([item]);
+    });
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          ...app.createTopPageTestOverrides(
+            initialLocation: '/shopping-list',
+            availableGroupsWithMembers: [group],
+          ),
+          shoppingListProvider.overrideWithValue(list),
+        ],
+        child: Consumer(
+          builder: (context, ref, _) => MaterialApp.router(
+            routerConfig: ref.watch(appRouterConfigProvider),
+          ),
+        ),
+      ),
+    );
+    stream.add([item]);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(Checkbox));
+    await tester.pump();
+    expect(find.text('牛乳'), findsOneWidget);
+    save.completeError(TestException());
+    await tester.pumpAndSettle();
+    expect(find.text('牛乳'), findsOneWidget);
+    expect(find.text('チェックを保存できませんでした。再試行してください。'), findsOneWidget);
+
+    save = Completer<ShoppingListItem>();
+    await tester.tap(find.byType(Checkbox));
+    await tester.pump();
+    stream.add([]);
+    await tester.pump();
+    save.complete(checked);
+    await tester.pumpAndSettle();
+    expect(find.text('牛乳'), findsNothing);
+
+    await tester.tap(find.text('元に戻す'));
+    await tester.pumpAndSettle();
+    expect(find.text('牛乳'), findsOneWidget);
+    expect(find.text('2本'), findsOneWidget);
+    verify(list.undo(group.id, item, checked)).called(1);
+  });
+}
