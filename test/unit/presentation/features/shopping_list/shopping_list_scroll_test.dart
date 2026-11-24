@@ -63,7 +63,7 @@ void main() {
   testWidgets('品物の一覧をスクロールしても追加フォームと履歴の入口は固定される', (tester) async {
     await openShoppingList(tester);
     final add = find.widgetWithText(ElevatedButton, '追加');
-    final history = find.text('購入済み履歴');
+    final history = find.text('購入履歴');
     final addPosition = tester.getTopLeft(add);
     final historyPosition = tester.getTopLeft(history);
 
@@ -92,14 +92,14 @@ void main() {
     expect(add.hitTestable(), findsOneWidget);
   });
 
-  testWidgets('購入済み履歴は指定の高さで一覧だけスクロールできる', (tester) async {
+  testWidgets('購入履歴は指定の高さで一覧だけスクロールできる', (tester) async {
     await openShoppingList(tester);
-    await tester.tap(find.text('購入済み履歴'));
+    await tester.tap(find.text('購入履歴'));
     await tester.pumpAndSettle();
 
     final modal = find.byType(BottomSheet);
     final scroll = find.descendant(of: modal, matching: verticalScroll);
-    final heading = find.descendant(of: modal, matching: find.text('購入済み履歴'));
+    final heading = find.descendant(of: modal, matching: find.text('購入履歴'));
     final headingPosition = tester.getTopLeft(heading);
     final historyHeight = tester.getBottomLeft(scroll).dy - headingPosition.dy;
     expect(historyHeight, greaterThan(640 * 0.6));

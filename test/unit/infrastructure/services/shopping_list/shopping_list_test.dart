@@ -44,7 +44,7 @@ void main() {
     expect((await list.watchPending('家族').first).single.pendingQuantity, '1本');
   });
 
-  test('再チェックを元に戻すと前回の購入済み履歴と今回の数量に戻る', () async {
+  test('再チェックを元に戻すと前回の購入履歴と今回の数量に戻る', () async {
     await list.add('家族', '牛乳', '1本');
     await list.check('家族', (await list.watchPending('家族').first).single);
     final firstPurchase = (await list.purchases('家族')).single;
@@ -96,7 +96,7 @@ void main() {
     expect(added.version, greaterThan(pending.version));
   });
 
-  test('購入済み履歴から再登録した品物があっても購入済み履歴だけ削除できる', () async {
+  test('購入履歴から再登録した品物があっても購入履歴だけ削除できる', () async {
     await list.add('家族', '牛乳', '1本');
     await list.check('家族', (await list.watchPending('家族').first).single);
     await list.add('家族', '牛乳', '');
@@ -108,7 +108,7 @@ void main() {
     expect((await list.watchPending('家族').first).single.pendingQuantity, '');
   });
 
-  test('購入済み履歴を新しい順に最大30件ずつ取得する', () async {
+  test('購入履歴を新しい順に最大30件ずつ取得する', () async {
     for (var i = 0; i < 33; i++) {
       clock.time = DateTime.utc(2026, 11, 24, 0, i == 32 ? 31 : i);
       await list.add('家族', '品物$i', '');
@@ -117,6 +117,11 @@ void main() {
     final first = await list.purchases('家族');
     final second = await list.purchases('家族', after: first.last);
     expect(first, hasLength(30));
+    final purchaseDates = [
+      ...first,
+      ...second,
+    ].map((item) => item.purchasedAt!).toList();
+    expect(purchaseDates, [...purchaseDates]..sort((a, b) => b.compareTo(a)));
     expect(
       first.take(2).map((item) => item.name),
       unorderedEquals(['品物31', '品物32']),

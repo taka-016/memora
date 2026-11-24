@@ -244,7 +244,7 @@ void main() {
     expect(find.text('牛乳'), findsNothing);
   });
 
-  testWidgets('購入済み履歴から数量を空欄で再登録し、履歴を確認して削除できる', (tester) async {
+  testWidgets('購入履歴から数量を空欄で再登録し、履歴を確認して削除できる', (tester) async {
     final group = app.groupsWithMembers.first;
     final item = ShoppingListItem(
       id: 'milk',
@@ -282,7 +282,7 @@ void main() {
     stream.add([]);
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('購入済み履歴'));
+    await tester.tap(find.text('購入履歴'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('再登録'));
     await tester.pumpAndSettle();
@@ -290,9 +290,9 @@ void main() {
     expect(find.byType(Checkbox), findsOneWidget);
     expect(find.text('追加履歴から選ぶ'), findsNothing);
 
-    await tester.tap(find.text('購入済み履歴'));
+    await tester.tap(find.text('購入履歴'));
     await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('購入済み履歴から削除'));
+    await tester.tap(find.byTooltip('購入履歴から削除'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('キャンセル'));
     await tester.pumpAndSettle();
@@ -302,12 +302,98 @@ void main() {
     );
     verifyNever(list.deletePurchase(group.id, item));
 
-    await tester.tap(find.byTooltip('購入済み履歴から削除'));
+    await tester.tap(find.byTooltip('購入履歴から削除'));
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(FilledButton, '削除'));
     await tester.pumpAndSettle();
-    expect(find.text('購入済み履歴がありません'), findsOneWidget);
+    expect(find.text('購入履歴がありません'), findsOneWidget);
     verify(list.deletePurchase(group.id, item)).called(1);
+  });
+
+  testWidgets('再登録の保存を待たず購入履歴を閉じても買い物リストに留まる', (tester) async {
+    final group = app.groupsWithMembers.first;
+    final item = ShoppingListItem(
+      id: 'milk',
+      name: '牛乳',
+      purchasedAt: app.fixedNow,
+      purchasedQuantity: '2本',
+    );
+    final save = Completer<ShoppingListItem?>();
+    final list = MockShoppingList();
+    when(list.watchPending(group.id)).thenAnswer((_) => Stream.value([]));
+    when(list.purchases(group.id)).thenAnswer((_) async => [item]);
+    when(list.add(group.id, item.name, '')).thenAnswer((_) => save.future);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          ...app.createTopPageTestOverrides(
+            initialLocation: '/shopping-list',
+            availableGroupsWithMembers: [group],
+          ),
+          shoppingListProvider.overrideWithValue(list),
+        ],
+        child: Consumer(
+          builder: (context, ref, _) => MaterialApp.router(
+            routerConfig: ref.watch(appRouterConfigProvider),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.history));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('再登録'));
+    await tester.pump();
+    await tester.tap(find.byTooltip('閉じる'));
+    await tester.pump();
+    save.complete(null);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(BottomSheet), findsNothing);
+    expect(find.widgetWithText(ElevatedButton, '追加'), findsOneWidget);
+  });
+
+  testWidgets('買い物リストから移動した後に追加結果の重複ダイアログが開かない', (tester) async {
+    final group = app.groupsWithMembers.first;
+    const item = ShoppingListItem(id: 'milk', name: '牛乳', pendingQuantity: '');
+    final save = Completer<ShoppingListItem?>();
+    final list = MockShoppingList();
+    when(list.watchPending(group.id)).thenAnswer((_) => Stream.value([item]));
+    when(list.add(group.id, item.name, '')).thenAnswer((_) => save.future);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          ...app.createTopPageTestOverrides(
+            initialLocation: '/shopping-list',
+            availableGroupsWithMembers: [group],
+          ),
+          shoppingListProvider.overrideWithValue(list),
+        ],
+        child: Consumer(
+          builder: (context, ref, _) => MaterialApp.router(
+            routerConfig: ref.watch(appRouterConfigProvider),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final addName = find.descendant(
+      of: find.byType(ShoppingItemAddForm),
+      matching: find.widgetWithText(TextField, '品物名'),
+    );
+    await tester.enterText(addName, '牛乳');
+    await tester.tap(find.widgetWithText(ElevatedButton, '追加'));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('hamburger_menu')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('設定'));
+    await tester.pumpAndSettle();
+    save.complete(item);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('settings')), findsOneWidget);
+    expect(find.text('品物を編集'), findsNothing);
   });
 
   testWidgets('チェックの保存に失敗した品物は残り、再試行後は元に戻せる', (tester) async {
