@@ -120,6 +120,67 @@ void main() {
     verify(list.add(group.id, '牛乳', '2本')).called(1);
   });
 
+  testWidgets('一覧の行で品物名と数量を編集し、入力の確定でまとめて保存できる', (tester) async {
+    final group = app.groupsWithMembers.first;
+    const item = ShoppingListItem(
+      id: 'milk',
+      name: '牛乳',
+      version: 1,
+      pendingQuantity: '',
+    );
+    const edited = ShoppingListItem(
+      id: 'low-fat-milk',
+      name: '低脂肪乳',
+      version: 1,
+      pendingQuantity: '2本',
+    );
+    final stream = StreamController<List<ShoppingListItem>>();
+    addTearDown(stream.close);
+    final list = MockShoppingList();
+    when(list.watchPending(group.id)).thenAnswer((_) => stream.stream);
+    when(list.edit(group.id, item, edited.name, edited.pendingQuantity!))
+        .thenAnswer((_) async {
+          stream.add([edited]);
+          return null;
+        });
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          ...app.createTopPageTestOverrides(
+            initialLocation: '/shopping-list',
+            availableGroupsWithMembers: [group],
+          ),
+          shoppingListProvider.overrideWithValue(list),
+        ],
+        child: Consumer(
+          builder: (context, ref, _) => MaterialApp.router(
+            routerConfig: ref.watch(appRouterConfigProvider),
+          ),
+        ),
+      ),
+    );
+    stream.add([item]);
+    await tester.pumpAndSettle();
+
+    final row = find.ancestor(
+      of: find.byType(Checkbox),
+      matching: find.byType(ListTile),
+    );
+    final fields = find.descendant(of: row, matching: find.byType(TextField));
+    expect(fields, findsNWidgets(2));
+    expect(find.byIcon(Icons.edit_outlined), findsNothing);
+    await tester.enterText(fields.at(0), edited.name);
+    await tester.enterText(fields.at(1), edited.pendingQuantity!);
+    verifyNever(list.edit(any, any, any, any));
+
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+    verify(list.edit(group.id, item, edited.name, edited.pendingQuantity!))
+        .called(1);
+    expect(find.text(edited.name), findsOneWidget);
+    expect(find.text(edited.pendingQuantity!), findsOneWidget);
+  });
+
   testWidgets('チェックの保存に失敗した品物は残り、再試行後は元に戻せる', (tester) async {
     final group = app.groupsWithMembers.first;
     const item = ShoppingListItem(
