@@ -155,6 +155,7 @@ RUN curl -fsSL https://just.systems/install.sh -o /tmp/install-just.sh && \
   rm /tmp/install-just.sh
 
 COPY start.sh /usr/local/bin/start-dev
+COPY --chmod=755 codex_alt.sh /usr/local/bin/codex-alt
 WORKDIR /workspaces/memora
 ENTRYPOINT ["bash", "/usr/local/bin/start-dev"]
 CMD ["/usr/sbin/sshd", "-D", "-e"]
