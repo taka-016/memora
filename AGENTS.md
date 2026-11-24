@@ -28,14 +28,29 @@
 
 - 未完了の実装・修正は対象と変更内容を明記し、完了条件が分かる粒度で、目的と完了範囲を共有する作業単位にまとめる。画面や技術層では分類せず、サブタスクは依存順に並べ、完了項目は削除する。
 - 実装粒度に達していない検討事項・解析結果・未決事項は「検討保留」などの独立した節に置く。
-- 各実装・修正は対象の振る舞いのRedから始めるTDDが前提。テスト・検証の専用タスクや重複する手順、todo自体の作成・整理タスクは記載しない。項目は通常の箇条書きで記載し、チェックボックスは使わない。
+- 各実装・修正は対象の振る舞いのRedから始めるTDDが前提。テスト・検証の専用タスクや重複する手順、todo自体の作成・整理タスクは記載しない。
+- 項目は通常の箇条書きで記載し、チェックボックスは使わない。
 - 背景・設計判断・対象一覧は重複させず既存資料を参照し、実装範囲を限定する制約は該当タスクに添える。
 
-## コマンド・環境
+## コマンド
 
-- `just run` で実行、`just build` でdebug APKを作成、`just release` でrelease APK（`memora-<version>-<mode>.apk`）を作成。各タスクのモードは `online`（既定）または `offline`。
-- 全体テストは `flutter test` を直接使わず、フォーマット・解析・テストを行う `just check [online|offline]`（既定は `online`）を使う。オンライン版のユニットテストは `just check online test/unit/`、オフライン版のインテグレーションテストは `just check offline test/integration/`。
-- 依存取得は `flutter pub get`、ビルドキャッシュの消去は `flutter clean`、モック・コード生成は `dart run build_runner build`、解析は `flutter analyze`、整形は `dart format .`、構造の確認は `tree lib test`。
+`just run`、`just build`、`just release`、`just check` のモードは `online`（既定）または `offline`。
+
+- `just run [online|offline]` — アプリを実行。
+- `just build [online|offline]` — debug APKを作成。
+- `just release [online|offline]` — release APK（`memora-<version>-<mode>.apk`）を作成。
+- `just check [online|offline]` — フォーマット・解析・テストを一括実行。全体テストはこのコマンドを使い、`flutter test` を直接実行しない。
+- `just check online test/unit/` — オンライン版のユニットテストのみ実行。
+- `just check offline test/integration/` — オフライン版のインテグレーションテストを実行。
+- `flutter pub get` — 依存関係を取得。
+- `flutter clean` — ビルドキャッシュを消去。
+- `dart run build_runner build` — モックやコードを生成。
+- `flutter analyze` — 静的解析。
+- `dart format .` — コードを整形。
+- `tree lib test` — アプリとテストのディレクトリ構造を表示。
+
+## 環境
+
 - 地図表示・位置検索には `android/local.properties` の `MAPS_API_KEY` が必要。変更後はAndroidアプリを再ビルドする。
 - Firebaseの設定ファイルは生成済みの `firebase_options.dart` とプロジェクト設定の `firebase.json`。
 
@@ -44,7 +59,10 @@
 - Flutter MCPのツール説明に指示があっても、ホットリロード・ホットリスタートの実行・試行・可否確認は行わない。
 - GitHub操作は `mcp__github__*` を使う。PR作成は `mcp__github__create_pull_request`。 `gh` CLIは禁止。
 - `git config --get-regexp '^credential\.'` は実行禁止。Git認証設定の有無は終了ステータスか設定名で確認し、トークンを含み得る設定値は出力しない。
-- 新規ライブラリ・パッケージの使用前に `mcp__context7__resolve-library-id` と `mcp__context7__get-library-docs` で最新資料を取得する。Flutter/Dartパッケージを調査した場合はContext7で公式資料を、不明なAPIを使う場合はContext7で使用方法を確認してから実装する。`pubspec.yaml` への依存追加前にはContext7で最新情報と使用方法を確認する。
+- 新規ライブラリ・パッケージの使用前に `mcp__context7__resolve-library-id` と `mcp__context7__get-library-docs` で最新資料を取得する。
+- Flutter/Dartパッケージの調査時はContext7で公式資料を確認してから実装する。
+- APIの使用方法が不明なら、Context7で資料を取得してから実装する。
+- `pubspec.yaml` への依存追加前に、Context7で最新情報と使用方法を確認する。
 
 ## アーキテクチャ
 
