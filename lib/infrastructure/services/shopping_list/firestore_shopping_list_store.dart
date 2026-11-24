@@ -7,14 +7,15 @@ class FirestoreShoppingListStore implements ShoppingListStore {
 
   final FirebaseFirestore _firestore;
 
-  CollectionReference<Map<String, dynamic>> _items(String groupId) => _firestore
-      .collection('groups')
-      .doc(groupId)
-      .collection('shopping_list_items');
+  CollectionReference<Map<String, dynamic>> get _items =>
+      _firestore.collection('shopping_list_items');
+
+  Query<Map<String, dynamic>> _itemsForGroup(String groupId) =>
+      _items.where('groupId', isEqualTo: groupId);
 
   @override
   Stream<List<ShoppingListItem>> watchPending(String groupId) =>
-      _items(groupId)
+      _itemsForGroup(groupId)
           .where('isPending', isEqualTo: true)
           .snapshots()
           .map((snapshot) => snapshot.docs.map(_toItem).toList());
@@ -37,7 +38,7 @@ class FirestoreShoppingListStore implements ShoppingListStore {
   }
 
   Query<Map<String, dynamic>> _purchaseHistory(String groupId) =>
-      _items(groupId)
+      _itemsForGroup(groupId)
           .where('purchasedAt', isGreaterThan: 0)
           .orderBy('purchasedAt', descending: true)
           .orderBy(FieldPath.documentId, descending: true);
@@ -48,7 +49,7 @@ class FirestoreShoppingListStore implements ShoppingListStore {
     Future<T> Function(ShoppingListWriteScope) action,
   ) => _firestore.runTransaction(
     (transaction) =>
-        action(_FirestoreShoppingListWriteScope(_items(groupId), transaction)),
+        action(_FirestoreShoppingListWriteScope(_items, transaction, groupId)),
   );
 }
 
@@ -69,15 +70,21 @@ DateTime? _date(int? value) => value == null
     : DateTime.fromMicrosecondsSinceEpoch(value, isUtc: true);
 
 class _FirestoreShoppingListWriteScope implements ShoppingListWriteScope {
-  const _FirestoreShoppingListWriteScope(this._items, this._transaction);
+  const _FirestoreShoppingListWriteScope(
+    this._items,
+    this._transaction,
+    this._groupId,
+  );
 
   final CollectionReference<Map<String, dynamic>> _items;
   final Transaction _transaction;
+  final String _groupId;
 
   @override
   Future<ShoppingListItem?> read(String id) async {
     final snapshot = await _transaction.get(_items.doc(id));
-    return snapshot.exists ? _toItem(snapshot) : null;
+    if (snapshot.data()?['groupId'] != _groupId) return null;
+    return _toItem(snapshot);
   }
 
   @override
@@ -88,6 +95,7 @@ class _FirestoreShoppingListWriteScope implements ShoppingListWriteScope {
   @override
   Future<void> save(ShoppingListItem item) async {
     _transaction.set(_items.doc(item.id), {
+      'groupId': _groupId,
       'name': item.name,
       'version': item.version,
       'isPending': item.pendingQuantity != null,
