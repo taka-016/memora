@@ -96,6 +96,7 @@ void main() {
     final name = find.widgetWithText(TextField, '品物名');
     final quantity = find.widgetWithText(TextField, '数量');
     final add = find.widgetWithText(ElevatedButton, '追加');
+    expect(tester.widget<TextField>(quantity).decoration?.hintText, isNull);
     expect(name, findsOneWidget);
     expect(add, findsOneWidget);
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
@@ -179,6 +180,56 @@ void main() {
         .called(1);
     expect(find.text(edited.name), findsOneWidget);
     expect(find.text(edited.pendingQuantity!), findsOneWidget);
+  });
+
+  testWidgets('品物の削除は確認でキャンセルでき、確定した品物だけ一覧から消える', (tester) async {
+    final group = app.groupsWithMembers.first;
+    const item = ShoppingListItem(
+      id: 'milk',
+      name: '牛乳',
+      version: 1,
+      pendingQuantity: '',
+    );
+    final stream = StreamController<List<ShoppingListItem>>();
+    addTearDown(stream.close);
+    final list = MockShoppingList();
+    when(list.watchPending(group.id)).thenAnswer((_) => stream.stream);
+    when(list.delete(group.id, item)).thenAnswer((_) async {
+      stream.add([]);
+    });
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          ...app.createTopPageTestOverrides(
+            initialLocation: '/shopping-list',
+            availableGroupsWithMembers: [group],
+          ),
+          shoppingListProvider.overrideWithValue(list),
+        ],
+        child: Consumer(
+          builder: (context, ref, _) => MaterialApp.router(
+            routerConfig: ref.watch(appRouterConfigProvider),
+          ),
+        ),
+      ),
+    );
+    stream.add([item]);
+    await tester.pumpAndSettle();
+
+    final delete = find.byTooltip('削除');
+    await tester.tap(delete);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('キャンセル'));
+    await tester.pumpAndSettle();
+    expect(find.text('牛乳'), findsOneWidget);
+    verifyNever(list.delete(group.id, item));
+
+    await tester.tap(delete);
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, '削除'));
+    await tester.pumpAndSettle();
+    verify(list.delete(group.id, item)).called(1);
+    expect(find.text('牛乳'), findsNothing);
   });
 
   testWidgets('チェックの保存に失敗した品物は残り、再試行後は元に戻せる', (tester) async {

@@ -67,6 +67,43 @@ void main() {
     expect(restored.purchasedAt, firstPurchase.purchasedAt);
   });
 
+  test('未チェックの品物を物理削除して履歴を保ち、再追加しても以前の品物とは区別する', () async {
+    await list.add('家族', '牛乳', '1本');
+    await list.check('家族', (await list.watchPending('家族').first).single);
+    final purchased = (await list.purchases('家族')).single;
+    clock.time = DateTime.utc(2026, 11, 25);
+    await list.add('家族', '牛乳', '2本');
+    final pending = (await list.watchPending('家族').first).single;
+    await list.delete('家族', pending);
+
+    expect(await list.watchPending('家族').first, isEmpty);
+    expect(
+      await database.rows(
+        'shopping_list_items',
+        where: 'id = ?',
+        args: [pending.id],
+      ),
+      isEmpty,
+    );
+    expect(
+      (await list.additions('家族')).single.lastAddedAt,
+      pending.lastAddedAt,
+    );
+    expect(
+      (await list.purchases('家族')).single.purchasedAt,
+      purchased.purchasedAt,
+    );
+    expect((await list.purchases('家族')).single.purchasedQuantity, '1本');
+
+    clock.time = DateTime.utc(2026, 11, 26);
+    await list.add('家族', '牛乳', '3本');
+    final added = (await list.watchPending('家族').first).single;
+    expect(added.pendingQuantity, '3本');
+    expect((await list.additions('家族')).single.lastAddedAt, clock.time);
+    expect((await list.purchases('家族')).single.purchasedQuantity, '1本');
+    expect(added.version, greaterThan(pending.version));
+  });
+
   test('購入済み履歴を新しい順に最大30件ずつ取得する', () async {
     for (var i = 0; i < 33; i++) {
       clock.time = DateTime.utc(2026, 11, 24, 0, i == 32 ? 31 : i);
