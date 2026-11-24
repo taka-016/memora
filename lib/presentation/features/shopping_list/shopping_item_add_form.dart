@@ -6,9 +6,14 @@ import 'package:memora/composition_root/providers/shopping_list_providers.dart';
 import 'package:memora/presentation/features/shopping_list/shopping_item_dialog.dart';
 
 class ShoppingItemAddForm extends HookConsumerWidget {
-  const ShoppingItemAddForm({super.key, required this.groupId});
+  const ShoppingItemAddForm({
+    super.key,
+    required this.groupId,
+    this.compact = false,
+  });
 
   final String groupId;
+  final bool compact;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -100,13 +105,20 @@ class ShoppingItemAddForm extends HookConsumerWidget {
                 onPressed: saving.value ? null : add,
                 child: const Text('追加'),
               ),
+              if (compact)
+                IconButton(
+                  onPressed: saving.value ? null : chooseFromHistory,
+                  icon: const Icon(Icons.history),
+                  tooltip: '追加履歴から選ぶ',
+                ),
             ],
           ),
-          TextButton.icon(
-            onPressed: saving.value ? null : chooseFromHistory,
-            icon: const Icon(Icons.history),
-            label: const Text('追加履歴から選ぶ'),
-          ),
+          if (!compact)
+            TextButton.icon(
+              onPressed: saving.value ? null : chooseFromHistory,
+              icon: const Icon(Icons.history),
+              label: const Text('追加履歴から選ぶ'),
+            ),
           if (message.value case final error?)
             Padding(
               padding: const EdgeInsets.only(bottom: 8),

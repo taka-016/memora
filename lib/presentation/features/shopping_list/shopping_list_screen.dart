@@ -147,87 +147,99 @@ class _ShoppingGroupList extends ConsumerWidget {
     );
     return ScaffoldMessenger(
       child: Scaffold(
-        body: Builder(
-          builder: (context) => Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              SizedBox(
-                height: kMinInteractiveDimension,
-                child: NavigationToolbar(
-                  leading: IconButton(
-                    icon: const Icon(Icons.arrow_back),
-                    tooltip: '戻る',
-                    onPressed: () {
-                      if (context.canPop()) {
-                        context.pop();
-                      } else {
-                        const ShoppingListRoute().go(context);
-                      }
-                    },
-                  ),
-                  middle: Text(
-                    groupName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Wrap(
-                  alignment: WrapAlignment.spaceBetween,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    Text(
-                      '買い物リスト',
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            final compact = constraints.maxHeight < 220;
+            void showHistory() => showShoppingPurchaseHistory(context, groupId);
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SizedBox(
+                  height: kMinInteractiveDimension,
+                  child: NavigationToolbar(
+                    leading: IconButton(
+                      icon: const Icon(Icons.arrow_back),
+                      tooltip: '戻る',
+                      onPressed: () {
+                        if (context.canPop()) {
+                          context.pop();
+                        } else {
+                          const ShoppingListRoute().go(context);
+                        }
+                      },
+                    ),
+                    middle: Text(
+                      groupName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
-                    TextButton.icon(
-                      onPressed: () =>
-                          showShoppingPurchaseHistory(context, groupId),
-                      icon: const Icon(Icons.history),
-                      label: const Text('購入済み履歴'),
-                    ),
-                  ],
-                ),
-              ),
-              ShoppingItemAddForm(groupId: groupId),
-              Expanded(
-                child: items.when(
-                  data: (items) => items.isEmpty
-                      ? const Center(child: Text('購入が必要な品物はありません'))
-                      : ListView.builder(
-                          itemCount: items.length,
-                          findChildIndexCallback: (key) {
-                            final id = (key as ValueKey<String>).value;
-                            final index = items.indexWhere(
-                              (item) => item.id == id,
-                            );
-                            return index < 0 ? null : index;
-                          },
-                          itemBuilder: (_, index) {
-                            final item = items[index];
-                            return ShoppingListRow(
-                              key: ValueKey(item.id),
-                              groupId: groupId,
-                              item: item,
-                              isChecking: checking.contains(item.id),
-                              onCheck: (current) =>
-                                  _check(context, ref, current),
-                            );
-                          },
-                        ),
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
-                  error: (_, _) => ShoppingListRetry(
-                    message: '買い物リストを読み込めませんでした。',
-                    onRetry: () => ref.invalidate(provider),
+                    trailing: compact
+                        ? IconButton(
+                            onPressed: showHistory,
+                            icon: const Icon(Icons.history),
+                            tooltip: '購入済み履歴',
+                          )
+                        : null,
                   ),
                 ),
-              ),
-            ],
-          ),
+                if (!compact)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Wrap(
+                      alignment: WrapAlignment.spaceBetween,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Text(
+                          '買い物リスト',
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                        TextButton.icon(
+                          onPressed: showHistory,
+                          icon: const Icon(Icons.history),
+                          label: const Text('購入済み履歴'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ShoppingItemAddForm(groupId: groupId, compact: compact),
+                Expanded(
+                  child: items.when(
+                    data: (items) => items.isEmpty
+                        ? const Center(child: Text('購入が必要な品物はありません'))
+                        : ListView.builder(
+                            itemCount: items.length,
+                            findChildIndexCallback: (key) {
+                              final id = (key as ValueKey<String>).value;
+                              final index = items.indexWhere(
+                                (item) => item.id == id,
+                              );
+                              return index < 0 ? null : index;
+                            },
+                            itemBuilder: (_, index) {
+                              final item = items[index];
+                              return ShoppingListRow(
+                                key: ValueKey(item.id),
+                                groupId: groupId,
+                                item: item,
+                                isChecking: checking.contains(item.id),
+                                onCheck: (current) =>
+                                    _check(context, ref, current),
+                              );
+                            },
+                          ),
+                    loading: () =>
+                        const Center(child: CircularProgressIndicator()),
+                    error: (_, _) => ShoppingListRetry(
+                      message: '買い物リストを読み込めませんでした。',
+                      onRetry: () => ref.invalidate(provider),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );

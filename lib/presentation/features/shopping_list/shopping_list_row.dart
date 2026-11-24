@@ -127,11 +127,7 @@ class _ShoppingListRowState extends ConsumerState<ShoppingListRow> {
     try {
       await list.delete(widget.groupId, item);
       if (!mounted) return;
-      if (widget.item.version > item.version) {
-        _load(widget.item);
-      } else {
-        _awaitingUpdate = true;
-      }
+      _awaitingUpdate = true;
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -145,7 +141,14 @@ class _ShoppingListRowState extends ConsumerState<ShoppingListRow> {
         );
       }
     } finally {
-      if (mounted) setState(() => _isSaving = false);
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+          if (widget.item.version > _original.version && !_hasChanges) {
+            _load(widget.item);
+          }
+        });
+      }
     }
   }
 
