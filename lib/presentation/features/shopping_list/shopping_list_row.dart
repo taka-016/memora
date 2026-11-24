@@ -189,7 +189,7 @@ class _ShoppingListRowState extends ConsumerState<ShoppingListRow> {
                     controller: _quantity,
                     focusNode: _quantityFocus,
                     label: '数量',
-                    hint: '数量を入力',
+                    hint: '数量',
                     enabled: !busy,
                   ),
                 ),
