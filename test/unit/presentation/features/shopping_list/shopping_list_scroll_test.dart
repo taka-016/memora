@@ -118,6 +118,11 @@ void main() {
         greaterThan(0),
       );
       expect(tester.getTopLeft(heading), headingPosition);
+      if (!isPurchase) {
+        final gap =
+            tester.getTopLeft(scroll).dy - tester.getBottomLeft(heading).dy;
+        expect(gap, greaterThanOrEqualTo(12));
+      }
     });
   }
 }
