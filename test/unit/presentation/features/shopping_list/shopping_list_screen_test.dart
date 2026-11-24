@@ -44,7 +44,7 @@ void main() {
     await tester.tap(find.text(group.name));
     await tester.pumpAndSettle();
 
-    expect(find.text('品物を追加'), findsOneWidget);
+    expect(find.widgetWithText(ElevatedButton, '追加'), findsOneWidget);
     expect(find.text('グループを選択'), findsNothing);
     await tester.tap(find.byTooltip('戻る'));
     await tester.pumpAndSettle();
@@ -56,6 +56,68 @@ void main() {
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
     expect(find.text('グループを選択'), findsOneWidget);
+  });
+
+  testWidgets('一覧の上で品物を入力して追加でき、追加履歴から選ぶと数量は空欄になる', (tester) async {
+    final group = app.groupsWithMembers.first;
+    const item = ShoppingListItem(
+      id: 'milk',
+      name: '牛乳',
+      pendingQuantity: '2本',
+    );
+    final stream = StreamController<List<ShoppingListItem>>();
+    addTearDown(stream.close);
+    final list = MockShoppingList();
+    when(list.watchPending(group.id)).thenAnswer((_) => stream.stream);
+    when(list.additions(group.id)).thenAnswer((_) async => [item]);
+    when(list.add(group.id, '牛乳', '2本')).thenAnswer((_) async {
+      stream.add([item]);
+      return null;
+    });
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          ...app.createTopPageTestOverrides(
+            initialLocation: '/shopping-list',
+            availableGroupsWithMembers: [group],
+          ),
+          shoppingListProvider.overrideWithValue(list),
+        ],
+        child: Consumer(
+          builder: (context, ref, _) => MaterialApp.router(
+            routerConfig: ref.watch(appRouterConfigProvider),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 350));
+
+    final name = find.widgetWithText(TextField, '品物名');
+    final quantity = find.widgetWithText(TextField, '数量');
+    final add = find.widgetWithText(ElevatedButton, '追加');
+    expect(name, findsOneWidget);
+    expect(add, findsOneWidget);
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    stream.add([]);
+    await tester.pumpAndSettle();
+
+    await tester.enterText(quantity, '3本');
+    await tester.tap(find.text('追加履歴から選ぶ'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('牛乳'));
+    await tester.pumpAndSettle();
+    expect(tester.widget<TextField>(name).controller!.text, '牛乳');
+    expect(tester.widget<TextField>(quantity).controller!.text, isEmpty);
+
+    await tester.enterText(quantity, '2本');
+    await tester.tap(add);
+    await tester.pumpAndSettle();
+    expect(find.text('牛乳'), findsOneWidget);
+    expect(find.text('2本'), findsOneWidget);
+    expect(tester.widget<TextField>(name).controller!.text, isEmpty);
+    expect(tester.widget<TextField>(quantity).controller!.text, isEmpty);
+    verify(list.add(group.id, '牛乳', '2本')).called(1);
   });
 
   testWidgets('チェックの保存に失敗した品物は残り、再試行後は元に戻せる', (tester) async {
@@ -122,6 +184,6 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('グループを選択'), findsOneWidget);
     expect(find.text(group.name), findsOneWidget);
-    expect(find.text('品物を追加'), findsNothing);
+    expect(find.widgetWithText(ElevatedButton, '追加'), findsNothing);
   });
 }
