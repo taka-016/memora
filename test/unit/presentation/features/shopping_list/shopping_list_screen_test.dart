@@ -19,6 +19,45 @@ void main() {
   final app = TopPageTestContext();
   setUp(app.setUpContext);
 
+  testWidgets('所属グループ一覧で選択し、戻る操作で一覧に戻れる', (tester) async {
+    final group = app.groupsWithMembers.first;
+    final list = MockShoppingList();
+    when(list.watchPending(group.id)).thenAnswer((_) => Stream.value([]));
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          ...app.createTopPageTestOverrides(initialLocation: '/shopping-list'),
+          shoppingListProvider.overrideWithValue(list),
+        ],
+        child: Consumer(
+          builder: (context, ref, _) => MaterialApp.router(
+            routerConfig: ref.watch(appRouterConfigProvider),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('グループを選択'), findsOneWidget);
+    expect(find.text('グループ2'), findsOneWidget);
+    expect(find.text('${group.members.length}人のメンバー'), findsWidgets);
+    await tester.tap(find.text(group.name));
+    await tester.pumpAndSettle();
+
+    expect(find.text('品物を追加'), findsOneWidget);
+    expect(find.text('グループを選択'), findsNothing);
+    await tester.tap(find.byTooltip('戻る'));
+    await tester.pumpAndSettle();
+    expect(find.text('グループを選択'), findsOneWidget);
+    expect(find.text('グループ2'), findsOneWidget);
+
+    await tester.tap(find.text(group.name));
+    await tester.pumpAndSettle();
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.text('グループを選択'), findsOneWidget);
+  });
+
   testWidgets('チェックの保存に失敗した品物は残り、再試行後は元に戻せる', (tester) async {
     final group = app.groupsWithMembers.first;
     const item = ShoppingListItem(
@@ -78,5 +117,11 @@ void main() {
     expect(find.text('牛乳'), findsOneWidget);
     expect(find.text('2本'), findsOneWidget);
     verify(list.undo(group.id, item, checked)).called(1);
+
+    await tester.tap(find.byTooltip('戻る'));
+    await tester.pumpAndSettle();
+    expect(find.text('グループを選択'), findsOneWidget);
+    expect(find.text(group.name), findsOneWidget);
+    expect(find.text('品物を追加'), findsNothing);
   });
 }
