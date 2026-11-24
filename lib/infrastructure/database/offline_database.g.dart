@@ -8583,17 +8583,6 @@ class ShoppingListItems extends Table
     requiredDuringInsert: false,
     $customConstraints: '',
   );
-  static const VerificationMeta _lastAddedAtMeta = const VerificationMeta(
-    'lastAddedAt',
-  );
-  late final GeneratedColumn<int> lastAddedAt = GeneratedColumn<int>(
-    'last_added_at',
-    aliasedName,
-    true,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-    $customConstraints: '',
-  );
   static const VerificationMeta _purchasedAtMeta = const VerificationMeta(
     'purchasedAt',
   );
@@ -8624,7 +8613,6 @@ class ShoppingListItems extends Table
     name,
     version,
     pendingQuantity,
-    lastAddedAt,
     purchasedAt,
     purchasedQuantity,
   ];
@@ -8675,15 +8663,6 @@ class ShoppingListItems extends Table
         pendingQuantity.isAcceptableOrUnknown(
           data['pending_quantity']!,
           _pendingQuantityMeta,
-        ),
-      );
-    }
-    if (data.containsKey('last_added_at')) {
-      context.handle(
-        _lastAddedAtMeta,
-        lastAddedAt.isAcceptableOrUnknown(
-          data['last_added_at']!,
-          _lastAddedAtMeta,
         ),
       );
     }
@@ -8741,10 +8720,6 @@ class ShoppingListItems extends Table
         DriftSqlType.string,
         data['${effectivePrefix}pending_quantity'],
       ),
-      lastAddedAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}last_added_at'],
-      ),
       purchasedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}purchased_at'],
@@ -8777,9 +8752,6 @@ class SqliteShoppingListItemRow extends DataClass
   final String name;
   final int version;
   final String? pendingQuantity;
-
-  /// DBスキーマとバックアップ形式を維持するために残す列。
-  final int? lastAddedAt;
   final int? purchasedAt;
   final String? purchasedQuantity;
   const SqliteShoppingListItemRow({
@@ -8788,7 +8760,6 @@ class SqliteShoppingListItemRow extends DataClass
     required this.name,
     required this.version,
     this.pendingQuantity,
-    this.lastAddedAt,
     this.purchasedAt,
     this.purchasedQuantity,
   });
@@ -8801,9 +8772,6 @@ class SqliteShoppingListItemRow extends DataClass
     map['version'] = Variable<int>(version);
     if (!nullToAbsent || pendingQuantity != null) {
       map['pending_quantity'] = Variable<String>(pendingQuantity);
-    }
-    if (!nullToAbsent || lastAddedAt != null) {
-      map['last_added_at'] = Variable<int>(lastAddedAt);
     }
     if (!nullToAbsent || purchasedAt != null) {
       map['purchased_at'] = Variable<int>(purchasedAt);
@@ -8823,9 +8791,6 @@ class SqliteShoppingListItemRow extends DataClass
       pendingQuantity: pendingQuantity == null && nullToAbsent
           ? const Value.absent()
           : Value(pendingQuantity),
-      lastAddedAt: lastAddedAt == null && nullToAbsent
-          ? const Value.absent()
-          : Value(lastAddedAt),
       purchasedAt: purchasedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(purchasedAt),
@@ -8846,7 +8811,6 @@ class SqliteShoppingListItemRow extends DataClass
       name: serializer.fromJson<String>(json['name']),
       version: serializer.fromJson<int>(json['version']),
       pendingQuantity: serializer.fromJson<String?>(json['pending_quantity']),
-      lastAddedAt: serializer.fromJson<int?>(json['last_added_at']),
       purchasedAt: serializer.fromJson<int?>(json['purchased_at']),
       purchasedQuantity: serializer.fromJson<String?>(
         json['purchased_quantity'],
@@ -8862,7 +8826,6 @@ class SqliteShoppingListItemRow extends DataClass
       'name': serializer.toJson<String>(name),
       'version': serializer.toJson<int>(version),
       'pending_quantity': serializer.toJson<String?>(pendingQuantity),
-      'last_added_at': serializer.toJson<int?>(lastAddedAt),
       'purchased_at': serializer.toJson<int?>(purchasedAt),
       'purchased_quantity': serializer.toJson<String?>(purchasedQuantity),
     };
@@ -8874,7 +8837,6 @@ class SqliteShoppingListItemRow extends DataClass
     String? name,
     int? version,
     Value<String?> pendingQuantity = const Value.absent(),
-    Value<int?> lastAddedAt = const Value.absent(),
     Value<int?> purchasedAt = const Value.absent(),
     Value<String?> purchasedQuantity = const Value.absent(),
   }) => SqliteShoppingListItemRow(
@@ -8885,7 +8847,6 @@ class SqliteShoppingListItemRow extends DataClass
     pendingQuantity: pendingQuantity.present
         ? pendingQuantity.value
         : this.pendingQuantity,
-    lastAddedAt: lastAddedAt.present ? lastAddedAt.value : this.lastAddedAt,
     purchasedAt: purchasedAt.present ? purchasedAt.value : this.purchasedAt,
     purchasedQuantity: purchasedQuantity.present
         ? purchasedQuantity.value
@@ -8900,9 +8861,6 @@ class SqliteShoppingListItemRow extends DataClass
       pendingQuantity: data.pendingQuantity.present
           ? data.pendingQuantity.value
           : this.pendingQuantity,
-      lastAddedAt: data.lastAddedAt.present
-          ? data.lastAddedAt.value
-          : this.lastAddedAt,
       purchasedAt: data.purchasedAt.present
           ? data.purchasedAt.value
           : this.purchasedAt,
@@ -8920,7 +8878,6 @@ class SqliteShoppingListItemRow extends DataClass
           ..write('name: $name, ')
           ..write('version: $version, ')
           ..write('pendingQuantity: $pendingQuantity, ')
-          ..write('lastAddedAt: $lastAddedAt, ')
           ..write('purchasedAt: $purchasedAt, ')
           ..write('purchasedQuantity: $purchasedQuantity')
           ..write(')'))
@@ -8934,7 +8891,6 @@ class SqliteShoppingListItemRow extends DataClass
     name,
     version,
     pendingQuantity,
-    lastAddedAt,
     purchasedAt,
     purchasedQuantity,
   );
@@ -8947,7 +8903,6 @@ class SqliteShoppingListItemRow extends DataClass
           other.name == this.name &&
           other.version == this.version &&
           other.pendingQuantity == this.pendingQuantity &&
-          other.lastAddedAt == this.lastAddedAt &&
           other.purchasedAt == this.purchasedAt &&
           other.purchasedQuantity == this.purchasedQuantity);
 }
@@ -8959,7 +8914,6 @@ class ShoppingListItemsCompanion
   final Value<String> name;
   final Value<int> version;
   final Value<String?> pendingQuantity;
-  final Value<int?> lastAddedAt;
   final Value<int?> purchasedAt;
   final Value<String?> purchasedQuantity;
   final Value<int> rowid;
@@ -8969,7 +8923,6 @@ class ShoppingListItemsCompanion
     this.name = const Value.absent(),
     this.version = const Value.absent(),
     this.pendingQuantity = const Value.absent(),
-    this.lastAddedAt = const Value.absent(),
     this.purchasedAt = const Value.absent(),
     this.purchasedQuantity = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -8980,7 +8933,6 @@ class ShoppingListItemsCompanion
     required String name,
     required int version,
     this.pendingQuantity = const Value.absent(),
-    this.lastAddedAt = const Value.absent(),
     this.purchasedAt = const Value.absent(),
     this.purchasedQuantity = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -8994,7 +8946,6 @@ class ShoppingListItemsCompanion
     Expression<String>? name,
     Expression<int>? version,
     Expression<String>? pendingQuantity,
-    Expression<int>? lastAddedAt,
     Expression<int>? purchasedAt,
     Expression<String>? purchasedQuantity,
     Expression<int>? rowid,
@@ -9005,7 +8956,6 @@ class ShoppingListItemsCompanion
       if (name != null) 'name': name,
       if (version != null) 'version': version,
       if (pendingQuantity != null) 'pending_quantity': pendingQuantity,
-      if (lastAddedAt != null) 'last_added_at': lastAddedAt,
       if (purchasedAt != null) 'purchased_at': purchasedAt,
       if (purchasedQuantity != null) 'purchased_quantity': purchasedQuantity,
       if (rowid != null) 'rowid': rowid,
@@ -9018,7 +8968,6 @@ class ShoppingListItemsCompanion
     Value<String>? name,
     Value<int>? version,
     Value<String?>? pendingQuantity,
-    Value<int?>? lastAddedAt,
     Value<int?>? purchasedAt,
     Value<String?>? purchasedQuantity,
     Value<int>? rowid,
@@ -9029,7 +8978,6 @@ class ShoppingListItemsCompanion
       name: name ?? this.name,
       version: version ?? this.version,
       pendingQuantity: pendingQuantity ?? this.pendingQuantity,
-      lastAddedAt: lastAddedAt ?? this.lastAddedAt,
       purchasedAt: purchasedAt ?? this.purchasedAt,
       purchasedQuantity: purchasedQuantity ?? this.purchasedQuantity,
       rowid: rowid ?? this.rowid,
@@ -9054,9 +9002,6 @@ class ShoppingListItemsCompanion
     if (pendingQuantity.present) {
       map['pending_quantity'] = Variable<String>(pendingQuantity.value);
     }
-    if (lastAddedAt.present) {
-      map['last_added_at'] = Variable<int>(lastAddedAt.value);
-    }
     if (purchasedAt.present) {
       map['purchased_at'] = Variable<int>(purchasedAt.value);
     }
@@ -9077,7 +9022,6 @@ class ShoppingListItemsCompanion
           ..write('name: $name, ')
           ..write('version: $version, ')
           ..write('pendingQuantity: $pendingQuantity, ')
-          ..write('lastAddedAt: $lastAddedAt, ')
           ..write('purchasedAt: $purchasedAt, ')
           ..write('purchasedQuantity: $purchasedQuantity, ')
           ..write('rowid: $rowid')
@@ -9190,10 +9134,6 @@ abstract class _$OfflineDatabase extends GeneratedDatabase {
     'shopping_list_pending_idx',
     'CREATE INDEX shopping_list_pending_idx ON shopping_list_items (group_id) WHERE pending_quantity IS NOT NULL',
   );
-  late final Index shoppingListAdditionsIdx = Index(
-    'shopping_list_additions_idx',
-    'CREATE INDEX shopping_list_additions_idx ON shopping_list_items (group_id, last_added_at DESC, id DESC) WHERE last_added_at IS NOT NULL',
-  );
   late final Index shoppingListPurchasesIdx = Index(
     'shopping_list_purchases_idx',
     'CREATE INDEX shopping_list_purchases_idx ON shopping_list_items (group_id, purchased_at DESC, id DESC) WHERE purchased_at IS NOT NULL',
@@ -9241,7 +9181,6 @@ abstract class _$OfflineDatabase extends GeneratedDatabase {
     deletedGroups,
     shoppingListItems,
     shoppingListPendingIdx,
-    shoppingListAdditionsIdx,
     shoppingListPurchasesIdx,
   ];
   @override

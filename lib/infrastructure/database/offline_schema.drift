@@ -229,8 +229,6 @@ CREATE TABLE shopping_list_items (
   name TEXT NOT NULL,
   version INTEGER NOT NULL CHECK (version >= 1),
   pending_quantity TEXT,
-  -- DBスキーマとバックアップ形式を維持するために残す列。
-  last_added_at INTEGER,
   purchased_at INTEGER,
   purchased_quantity TEXT,
   UNIQUE (group_id, name),
@@ -238,5 +236,4 @@ CREATE TABLE shopping_list_items (
 ) AS SqliteShoppingListItemRow;
 
 CREATE INDEX shopping_list_pending_idx ON shopping_list_items (group_id) WHERE pending_quantity IS NOT NULL;
-CREATE INDEX shopping_list_additions_idx ON shopping_list_items (group_id, last_added_at DESC, id DESC) WHERE last_added_at IS NOT NULL;
 CREATE INDEX shopping_list_purchases_idx ON shopping_list_items (group_id, purchased_at DESC, id DESC) WHERE purchased_at IS NOT NULL;

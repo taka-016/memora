@@ -92,8 +92,6 @@ class _FirestoreShoppingListWriteScope implements ShoppingListWriteScope {
       'version': item.version,
       'isPending': item.pendingQuantity != null,
       'pendingQuantity': item.pendingQuantity,
-      // 既存のFirestoreルールが検証するフィールド。
-      'lastAddedAt': null,
       'purchasedAt': item.purchasedAt?.microsecondsSinceEpoch,
       'purchasedQuantity': item.purchasedQuantity,
     });
