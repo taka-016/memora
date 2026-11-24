@@ -516,7 +516,7 @@ class TopPage extends HookConsumerWidget {
       (
         item: AppNavigationItem.shoppingList,
         icon: const Icon(Icons.shopping_cart_outlined),
-        label: '買い物リスト',
+        label: '買い物',
       ),
       if (ref
           .watch(appCapabilitiesProvider)
