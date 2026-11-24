@@ -42,29 +42,46 @@ void main() {
     expect(duplicate?.pendingQuantity, '2本');
     await other.edit('家族', duplicate!, '牛乳', '1本');
     expect((await list.watchPending('家族').first).single.pendingQuantity, '1本');
-    expect((await list.additions('家族')).map((item) => item.name), ['牛乳']);
   });
 
-  test('チェックを元に戻すと前回の購入済み履歴と今回の数量に戻る', () async {
+  test('新しい品物はチェックしたときにだけ追加履歴に残り、取り消すと履歴から消える', () async {
+    await list.add('家族', '牛乳', '1本');
+    final pending = (await list.watchPending('家族').first).single;
+    expect(await list.additions('家族'), isEmpty);
+
+    clock.time = DateTime.utc(2026, 11, 25);
+    final checked = await list.check('家族', pending);
+    final history = (await list.additions('家族')).single;
+    expect(history.name, '牛乳');
+    expect(history.lastAddedAt, clock.time);
+
+    await list.undo('家族', pending, checked);
+    expect(await list.additions('家族'), isEmpty);
+    expect((await list.watchPending('家族').first).single.name, '牛乳');
+  });
+
+  test('再チェックを元に戻すと追加履歴と購入済み履歴が前回の状態に戻る', () async {
     await list.add('家族', '牛乳', '1本');
     await list.check('家族', (await list.watchPending('家族').first).single);
     final firstPurchase = (await list.purchases('家族')).single;
+    final firstHistoryAt = (await list.additions('家族')).single.lastAddedAt;
     clock.time = DateTime.utc(2026, 11, 25);
     await list.add('家族', '牛乳', '2本');
-    final addedAt = (await list.additions('家族')).single.lastAddedAt;
+    expect((await list.additions('家族')).single.lastAddedAt, firstHistoryAt);
     final pending = (await list.watchPending('家族').first).single;
 
     clock.time = DateTime.utc(2026, 11, 26);
     final checked = await list.check('家族', pending);
     expect(await list.watchPending('家族').first, isEmpty);
     expect((await list.purchases('家族')).single.purchasedQuantity, '2本');
-    expect((await list.additions('家族')).single.lastAddedAt, addedAt);
+    expect((await list.additions('家族')).single.lastAddedAt, clock.time);
 
     await list.undo('家族', pending, checked);
     expect((await list.watchPending('家族').first).single.pendingQuantity, '2本');
     final restored = (await list.purchases('家族')).single;
     expect(restored.purchasedQuantity, '1本');
     expect(restored.purchasedAt, firstPurchase.purchasedAt);
+    expect((await list.additions('家族')).single.lastAddedAt, firstHistoryAt);
   });
 
   test('未チェックの品物を物理削除して履歴を保ち、再追加しても以前の品物とは区別する', () async {
@@ -99,7 +116,10 @@ void main() {
     await list.add('家族', '牛乳', '3本');
     final added = (await list.watchPending('家族').first).single;
     expect(added.pendingQuantity, '3本');
-    expect((await list.additions('家族')).single.lastAddedAt, clock.time);
+    expect(
+      (await list.additions('家族')).single.lastAddedAt,
+      pending.lastAddedAt,
+    );
     expect((await list.purchases('家族')).single.purchasedQuantity, '1本');
     expect(added.version, greaterThan(pending.version));
   });
@@ -115,7 +135,10 @@ void main() {
     expect((await list.watchPending('家族').first).single.pendingQuantity, '2本');
 
     final current = (await list.watchPending('家族').first).single;
+    clock.time = DateTime.utc(2026, 11, 25);
     await list.check('家族', current);
+    expect((await list.additions('家族')).single.lastAddedAt, clock.time);
+
     await list.add('家族', '牛乳', '3本');
     final addedAt = (await list.additions('家族')).single.lastAddedAt;
     await list.deletePurchase('家族', (await list.purchases('家族')).single);
