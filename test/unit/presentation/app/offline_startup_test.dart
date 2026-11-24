@@ -177,7 +177,7 @@ void main() {
       expect(navigation.items.map((item) => item.label), [
         '年表',
         'カレンダー',
-        '買い物',
+        '買い物リスト',
         'メンバー',
       ]);
       await tester.tap(find.byKey(const Key('hamburger_menu')));
