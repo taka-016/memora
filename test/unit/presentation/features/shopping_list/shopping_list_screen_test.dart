@@ -7,6 +7,7 @@ import 'package:memora/application/dtos/shopping_list/shopping_list_item.dart';
 import 'package:memora/application/usecases/shopping_list/shopping_list.dart';
 import 'package:memora/composition_root/providers/shopping_list_providers.dart';
 import 'package:memora/presentation/app/app_router.dart';
+import 'package:memora/presentation/features/shopping_list/shopping_item_add_form.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
@@ -94,7 +95,10 @@ void main() {
     await tester.pump(const Duration(milliseconds: 350));
 
     final name = find.widgetWithText(TextField, '品物名');
-    final quantity = find.widgetWithText(TextField, '数量');
+    final quantity = find.descendant(
+      of: find.byType(ShoppingItemAddForm),
+      matching: find.widgetWithText(TextField, '数量'),
+    );
     final add = find.widgetWithText(ElevatedButton, '追加');
     expect(tester.widget<TextField>(quantity).decoration?.hintText, isNull);
     expect(name, findsOneWidget);
@@ -169,6 +173,7 @@ void main() {
     );
     final fields = find.descendant(of: row, matching: find.byType(TextField));
     expect(fields, findsNWidgets(2));
+    expect(tester.widget<TextField>(fields.at(1)).decoration?.hintText, '数量');
     expect(find.byIcon(Icons.edit_outlined), findsNothing);
     await tester.enterText(fields.at(0), edited.name);
     await tester.enterText(fields.at(1), edited.pendingQuantity!);
