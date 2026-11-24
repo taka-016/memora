@@ -18,19 +18,6 @@ class SqliteShoppingListStore implements ShoppingListStore {
           .map((rows) => rows.map(_toItem).toList());
 
   @override
-  Future<List<ShoppingListItem>> additions(String groupId) async {
-    final query = _db.select(_db.shoppingListItems)
-      ..where(
-        (row) => row.groupId.equals(groupId) & row.lastAddedAt.isNotNull(),
-      )
-      ..orderBy([
-        (row) => OrderingTerm.desc(row.lastAddedAt),
-        (row) => OrderingTerm.desc(row.id),
-      ]);
-    return (await query.get()).map(_toItem).toList();
-  }
-
-  @override
   Future<List<ShoppingListItem>> purchases(
     String groupId, {
     required int limit,
@@ -71,7 +58,6 @@ ShoppingListItem _toItem(SqliteShoppingListItemRow row) => ShoppingListItem(
   name: row.name,
   version: row.version,
   pendingQuantity: row.pendingQuantity,
-  lastAddedAt: _date(row.lastAddedAt),
   purchasedAt: _date(row.purchasedAt),
   purchasedQuantity: row.purchasedQuantity,
 );
@@ -113,7 +99,6 @@ class _SqliteShoppingListWriteScope implements ShoppingListWriteScope {
             name: item.name,
             version: item.version,
             pendingQuantity: item.pendingQuantity,
-            lastAddedAt: item.lastAddedAt?.microsecondsSinceEpoch,
             purchasedAt: item.purchasedAt?.microsecondsSinceEpoch,
             purchasedQuantity: item.purchasedQuantity,
           ).toCompanion(false),

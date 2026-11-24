@@ -20,37 +20,22 @@ class ShoppingList {
       .watchPending(groupId)
       .map((items) => [...items]..sort((a, b) => a.name.compareTo(b.name)));
 
-  Future<List<ShoppingListItem>> additions(String groupId) =>
-      _store.additions(groupId);
-
   Future<List<ShoppingListItem>> purchases(
     String groupId, {
     ShoppingListItem? after,
   }) => _store.purchases(groupId, limit: PURCHASE_PAGE_SIZE, after: after);
 
-  Future<void> deleteAddition(String groupId, ShoppingListItem original) =>
-      _changeHistory(
-        groupId,
-        original,
-        (item) => item.copyWith(lastAddedAt: null),
-      );
-
-  Future<void> deletePurchase(String groupId, ShoppingListItem original) =>
-      _changeHistory(
-        groupId,
-        original,
-        (item) => item.copyWith(purchasedAt: null, purchasedQuantity: null),
-      );
-
-  Future<void> _changeHistory(
-    String groupId,
-    ShoppingListItem original,
-    ShoppingListItem Function(ShoppingListItem) change,
-  ) async {
+  Future<void> deletePurchase(String groupId, ShoppingListItem original) async {
     await _ensureAvailable();
     await _store.write(groupId, (scope) async {
       final current = await _requireCurrent(scope, original);
-      await scope.save(change(current).copyWith(version: current.version + 1));
+      await scope.save(
+        current.copyWith(
+          version: current.version + 1,
+          purchasedAt: null,
+          purchasedQuantity: null,
+        ),
+      );
     });
   }
 
@@ -122,7 +107,6 @@ class ShoppingList {
       final checked = current.copyWith(
         version: current.version + 1,
         pendingQuantity: null,
-        lastAddedAt: purchasedAt,
         purchasedAt: purchasedAt,
         purchasedQuantity: current.pendingQuantity,
       );
@@ -143,7 +127,6 @@ class ShoppingList {
         current.copyWith(
           version: current.version + 1,
           pendingQuantity: original.pendingQuantity,
-          lastAddedAt: original.lastAddedAt,
           purchasedAt: original.purchasedAt,
           purchasedQuantity: original.purchasedQuantity,
         ),

@@ -2,7 +2,6 @@ import 'package:memora/application/dtos/shopping_list/shopping_list_item.dart';
 
 abstract interface class ShoppingListStore {
   Stream<List<ShoppingListItem>> watchPending(String groupId);
-  Future<List<ShoppingListItem>> additions(String groupId);
   Future<List<ShoppingListItem>> purchases(
     String groupId, {
     required int limit,

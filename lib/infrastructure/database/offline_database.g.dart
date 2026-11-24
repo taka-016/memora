@@ -8777,6 +8777,8 @@ class SqliteShoppingListItemRow extends DataClass
   final String name;
   final int version;
   final String? pendingQuantity;
+
+  /// DBスキーマとバックアップ形式を維持するために残す列。
   final int? lastAddedAt;
   final int? purchasedAt;
   final String? purchasedQuantity;

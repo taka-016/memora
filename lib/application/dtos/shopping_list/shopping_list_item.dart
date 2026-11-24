@@ -6,7 +6,6 @@ class ShoppingListItem {
     required this.name,
     this.version = 0,
     this.pendingQuantity,
-    this.lastAddedAt,
     this.purchasedAt,
     this.purchasedQuantity,
   });
@@ -15,7 +14,6 @@ class ShoppingListItem {
   final String name;
   final int version;
   final String? pendingQuantity;
-  final DateTime? lastAddedAt;
   final DateTime? purchasedAt;
   final String? purchasedQuantity;
 
@@ -23,7 +21,6 @@ class ShoppingListItem {
     String? id,
     int? version,
     Object? pendingQuantity = copyWithPlaceholder,
-    Object? lastAddedAt = copyWithPlaceholder,
     Object? purchasedAt = copyWithPlaceholder,
     Object? purchasedQuantity = copyWithPlaceholder,
   }) => ShoppingListItem(
@@ -34,11 +31,6 @@ class ShoppingListItem {
       pendingQuantity,
       this.pendingQuantity,
       'pendingQuantity',
-    ),
-    lastAddedAt: resolveCopyWithValue(
-      lastAddedAt,
-      this.lastAddedAt,
-      'lastAddedAt',
     ),
     purchasedAt: resolveCopyWithValue(
       purchasedAt,

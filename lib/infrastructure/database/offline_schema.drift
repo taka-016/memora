@@ -229,6 +229,7 @@ CREATE TABLE shopping_list_items (
   name TEXT NOT NULL,
   version INTEGER NOT NULL CHECK (version >= 1),
   pending_quantity TEXT,
+  -- DBスキーマとバックアップ形式を維持するために残す列。
   last_added_at INTEGER,
   purchased_at INTEGER,
   purchased_quantity TEXT,

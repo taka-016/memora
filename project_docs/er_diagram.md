@@ -80,7 +80,6 @@ erDiagram
         number version "NOT NULL"
         boolean isPending "オンラインのみ"
         string pendingQuantity "NULLは未チェックの品物なし、空欄は数量未入力"
-        timestamp lastAddedAt
         timestamp purchasedAt
         string purchasedQuantity
     }

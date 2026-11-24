@@ -4,7 +4,6 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/shopping_list/shopping_list_item.dart';
 import 'package:memora/application/exceptions/application_validation_exception.dart';
 import 'package:memora/composition_root/providers/shopping_list_providers.dart';
-import 'package:memora/presentation/features/shopping_list/shopping_history_delete_button.dart';
 
 Future<bool?> showShoppingItemEditDialog(
   BuildContext context,
@@ -18,15 +17,6 @@ Future<bool?> showShoppingItemEditDialog(
     item: item,
     editQuantityOnly: editQuantityOnly,
   ),
-);
-
-Future<String?> showShoppingAdditionsDialog(
-  BuildContext context, {
-  required Future<List<ShoppingListItem>> Function() load,
-  required Future<void> Function(ShoppingListItem) delete,
-}) => showDialog<String>(
-  context: context,
-  builder: (_) => _ShoppingAdditionsDialog(load: load, delete: delete),
 );
 
 class _ShoppingItemDialog extends HookConsumerWidget {
@@ -121,55 +111,6 @@ class _ShoppingItemDialog extends HookConsumerWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _ShoppingAdditionsDialog extends HookWidget {
-  const _ShoppingAdditionsDialog({required this.load, required this.delete});
-
-  final Future<List<ShoppingListItem>> Function() load;
-  final Future<void> Function(ShoppingListItem) delete;
-
-  @override
-  Widget build(BuildContext context) {
-    final retry = useState(0);
-    final history = useFuture(useMemoized(load, [retry.value]));
-    final dialogConstraints =
-        DialogTheme.of(context).constraints ??
-        const BoxConstraints(minWidth: 280);
-    return SimpleDialog(
-      title: const Text('追加履歴'),
-      titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
-      contentPadding: const EdgeInsets.only(bottom: 16),
-      constraints: dialogConstraints.enforce(
-        BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.6),
-      ),
-      children: [
-        if (history.connectionState != ConnectionState.done)
-          const Center(child: CircularProgressIndicator())
-        else if (history.hasError)
-          SimpleDialogOption(
-            onPressed: () => retry.value++,
-            child: const Text('読み込めませんでした。再読み込み'),
-          )
-        else if (history.data!.isEmpty)
-          const Padding(padding: EdgeInsets.all(16), child: Text('追加履歴がありません'))
-        else
-          for (final item in history.data!)
-            ListTile(
-              title: Text(item.name),
-              onTap: () => Navigator.of(context).pop(item.name),
-              trailing: ShoppingHistoryDeleteButton(
-                itemName: item.name,
-                historyName: '追加履歴',
-                onDelete: () async {
-                  await delete(item);
-                  if (context.mounted) retry.value++;
-                },
-              ),
-            ),
-      ],
     );
   }
 }

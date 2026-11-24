@@ -6,14 +6,9 @@ import 'package:memora/composition_root/providers/shopping_list_providers.dart';
 import 'package:memora/presentation/features/shopping_list/shopping_item_dialog.dart';
 
 class ShoppingItemAddForm extends HookConsumerWidget {
-  const ShoppingItemAddForm({
-    super.key,
-    required this.groupId,
-    this.compact = false,
-  });
+  const ShoppingItemAddForm({super.key, required this.groupId});
 
   final String groupId;
-  final bool compact;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -51,20 +46,6 @@ class ShoppingItemAddForm extends HookConsumerWidget {
       } finally {
         if (context.mounted) saving.value = false;
       }
-    }
-
-    Future<void> chooseFromHistory() async {
-      final list = ref.read(shoppingListProvider);
-      final chosenName = await showShoppingAdditionsDialog(
-        context,
-        load: () => list.additions(groupId),
-        delete: (item) => list.deleteAddition(groupId, item),
-      );
-      if (!context.mounted || chosenName == null) return;
-      name.text = chosenName;
-      quantity.clear();
-      message.value = null;
-      quantityFocus.requestFocus();
     }
 
     return Padding(
@@ -105,20 +86,8 @@ class ShoppingItemAddForm extends HookConsumerWidget {
                 onPressed: saving.value ? null : add,
                 child: const Text('追加'),
               ),
-              if (compact)
-                IconButton(
-                  onPressed: saving.value ? null : chooseFromHistory,
-                  icon: const Icon(Icons.history),
-                  tooltip: '追加履歴から選ぶ',
-                ),
             ],
           ),
-          if (!compact)
-            TextButton.icon(
-              onPressed: saving.value ? null : chooseFromHistory,
-              icon: const Icon(Icons.history),
-              label: const Text('追加履歴から選ぶ'),
-            ),
           if (message.value case final error?)
             Padding(
               padding: const EdgeInsets.only(bottom: 8),

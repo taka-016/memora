@@ -12,20 +12,22 @@ class ShoppingHistoryDeleteButton extends StatelessWidget {
 
   final String itemName;
   final String historyName;
-  final Future<void> Function() onDelete;
+  final Future<void> Function()? onDelete;
 
   @override
   Widget build(BuildContext context) => IconButton(
     icon: const Icon(Icons.delete_outline),
     tooltip: '$historyNameから削除',
-    onPressed: () => showDialog<void>(
-      context: context,
-      builder: (_) => _ShoppingHistoryDeleteDialog(
-        itemName: itemName,
-        historyName: historyName,
-        onDelete: onDelete,
-      ),
-    ),
+    onPressed: onDelete == null
+        ? null
+        : () => showDialog<void>(
+            context: context,
+            builder: (_) => _ShoppingHistoryDeleteDialog(
+              itemName: itemName,
+              historyName: historyName,
+              onDelete: onDelete!,
+            ),
+          ),
   );
 }
 

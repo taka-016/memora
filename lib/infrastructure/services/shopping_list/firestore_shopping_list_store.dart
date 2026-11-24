@@ -20,18 +20,12 @@ class FirestoreShoppingListStore implements ShoppingListStore {
           .map((snapshot) => snapshot.docs.map(_toItem).toList());
 
   @override
-  Future<List<ShoppingListItem>> additions(String groupId) async {
-    final snapshot = await _history(groupId, 'lastAddedAt').get();
-    return snapshot.docs.map(_toItem).toList();
-  }
-
-  @override
   Future<List<ShoppingListItem>> purchases(
     String groupId, {
     required int limit,
     ShoppingListItem? after,
   }) async {
-    var query = _history(groupId, 'purchasedAt').limit(limit);
+    var query = _purchaseHistory(groupId).limit(limit);
     if (after != null) {
       query = query.startAfter([
         after.purchasedAt!.microsecondsSinceEpoch,
@@ -42,10 +36,10 @@ class FirestoreShoppingListStore implements ShoppingListStore {
     return snapshot.docs.map(_toItem).toList();
   }
 
-  Query<Map<String, dynamic>> _history(String groupId, String field) =>
+  Query<Map<String, dynamic>> _purchaseHistory(String groupId) =>
       _items(groupId)
-          .where(field, isGreaterThan: 0)
-          .orderBy(field, descending: true)
+          .where('purchasedAt', isGreaterThan: 0)
+          .orderBy('purchasedAt', descending: true)
           .orderBy(FieldPath.documentId, descending: true);
 
   @override
@@ -65,7 +59,6 @@ ShoppingListItem _toItem(DocumentSnapshot<Map<String, dynamic>> snapshot) {
     name: data['name'] as String,
     version: data['version'] as int,
     pendingQuantity: data['pendingQuantity'] as String?,
-    lastAddedAt: _date(data['lastAddedAt'] as int?),
     purchasedAt: _date(data['purchasedAt'] as int?),
     purchasedQuantity: data['purchasedQuantity'] as String?,
   );
@@ -99,7 +92,8 @@ class _FirestoreShoppingListWriteScope implements ShoppingListWriteScope {
       'version': item.version,
       'isPending': item.pendingQuantity != null,
       'pendingQuantity': item.pendingQuantity,
-      'lastAddedAt': item.lastAddedAt?.microsecondsSinceEpoch,
+      // 既存のFirestoreルールが検証するフィールド。
+      'lastAddedAt': null,
       'purchasedAt': item.purchasedAt?.microsecondsSinceEpoch,
       'purchasedQuantity': item.purchasedQuantity,
     });

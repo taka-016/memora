@@ -203,7 +203,7 @@ class _ShoppingGroupList extends ConsumerWidget {
                       ],
                     ),
                   ),
-                ShoppingItemAddForm(groupId: groupId, compact: compact),
+                ShoppingItemAddForm(groupId: groupId),
                 Expanded(
                   child: items.when(
                     data: (items) => items.isEmpty

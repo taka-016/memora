@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:memora/application/dtos/shopping_list/shopping_list_item.dart';
+import 'package:memora/application/exceptions/application_validation_exception.dart';
+import 'package:memora/composition_root/providers/shopping_list_providers.dart';
+import 'package:memora/presentation/features/shopping_list/shopping_item_dialog.dart';
 import 'package:memora/presentation/features/shopping_list/shopping_history_delete_button.dart';
 import 'package:memora/presentation/features/shopping_list/shopping_list_retry.dart';
 import 'package:memora/presentation/notifiers/shopping_list/shopping_list_notifier.dart';
@@ -18,7 +23,7 @@ Future<void> showShoppingPurchaseHistory(
   ),
 );
 
-class _ShoppingPurchaseHistory extends ConsumerWidget {
+class _ShoppingPurchaseHistory extends HookConsumerWidget {
   const _ShoppingPurchaseHistory({required this.groupId});
 
   final String groupId;
@@ -28,6 +33,38 @@ class _ShoppingPurchaseHistory extends ConsumerWidget {
     final provider = shoppingPurchasesNotifierProvider(groupId);
     final history = ref.watch(provider);
     final localizations = MaterialLocalizations.of(context);
+    final registering = useState(false);
+    final message = useState<String?>(null);
+
+    Future<void> registerAgain(ShoppingListItem item) async {
+      if (registering.value) return;
+      final list = ref.read(shoppingListProvider);
+      registering.value = true;
+      message.value = null;
+      try {
+        final existing = await list.add(groupId, item.name, '');
+        if (!context.mounted) return;
+        if (existing != null) {
+          final edited = await showShoppingItemEditDialog(
+            context,
+            groupId,
+            item: existing,
+            editQuantityOnly: true,
+          );
+          if (!context.mounted || edited != true) return;
+        }
+        Navigator.of(context).pop();
+      } catch (error) {
+        if (context.mounted) {
+          message.value = error is ApplicationValidationException
+              ? error.message
+              : '品物を再登録できませんでした。再試行してください。';
+        }
+      } finally {
+        if (context.mounted) registering.value = false;
+      }
+    }
+
     return SafeArea(
       top: false,
       child: Column(
@@ -50,6 +87,14 @@ class _ShoppingPurchaseHistory extends ConsumerWidget {
               ],
             ),
           ),
+          if (message.value case final error?)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                error,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ),
           Expanded(
             child: history.when(
               loading: () => const Center(child: CircularProgressIndicator()),
@@ -99,10 +144,23 @@ class _ShoppingPurchaseHistory extends ConsumerWidget {
                           '${localizations.formatCompactDate(time)} '
                           '${localizations.formatTimeOfDay(TimeOfDay.fromDateTime(time))}',
                         ),
-                        trailing: ShoppingHistoryDeleteButton(
-                          itemName: item.name,
-                          historyName: '購入済み履歴',
-                          onDelete: () => notifier.delete(item),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            TextButton(
+                              onPressed: registering.value
+                                  ? null
+                                  : () => registerAgain(item),
+                              child: const Text('再登録'),
+                            ),
+                            ShoppingHistoryDeleteButton(
+                              itemName: item.name,
+                              historyName: '購入済み履歴',
+                              onDelete: registering.value
+                                  ? null
+                                  : () => notifier.delete(item),
+                            ),
+                          ],
                         ),
                       );
                     },
