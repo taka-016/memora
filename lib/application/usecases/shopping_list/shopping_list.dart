@@ -37,15 +37,9 @@ class ShoppingList {
     await _ensureAvailable();
     final addedAt = _clock.now();
     return _store.write(groupId, (scope) async {
-      final current = await scope.read(item.id) ?? item;
+      final current = await _readByName(scope, item);
       if (current.pendingQuantity != null) return current;
-      await scope.save(
-        current.copyWith(
-          version: current.version + 1,
-          pendingQuantity: quantity.trim(),
-          lastAddedAt: addedAt,
-        ),
-      );
+      await _savePending(scope, item.id, current, quantity, addedAt: addedAt);
       return null;
     });
   }
@@ -61,26 +55,34 @@ class ShoppingList {
     return _store.write(groupId, (scope) async {
       final current = await _requireCurrent(scope, original);
       if (current.id == target.id) {
-        await scope.save(
-          current.copyWith(
-            version: current.version + 1,
-            pendingQuantity: quantity.trim(),
-          ),
-        );
+        await _savePending(scope, target.id, current, quantity);
         return null;
       }
-      final destination = await scope.read(target.id) ?? target;
+      final destination = await _readByName(scope, target);
       if (destination.pendingQuantity != null) return destination;
       await scope.save(
         current.copyWith(version: current.version + 1, pendingQuantity: null),
       );
+      await _savePending(scope, target.id, destination, quantity);
+      return null;
+    });
+  }
+
+  Future<void> delete(String groupId, ShoppingListItem original) async {
+    await _ensureAvailable();
+    await _store.write(groupId, (scope) async {
+      final current = await _requireCurrent(scope, original);
+      if (current.pendingQuantity == null) {
+        throw const ApplicationValidationException('未チェックの品物が見つかりませんでした。');
+      }
+      await scope.delete(current.id);
       await scope.save(
-        destination.copyWith(
-          version: destination.version + 1,
-          pendingQuantity: quantity.trim(),
+        current.copyWith(
+          id: _historyId(current.id),
+          version: current.version + 1,
+          pendingQuantity: null,
         ),
       );
-      return null;
     });
   }
 
@@ -120,6 +122,36 @@ class ShoppingList {
         ),
       );
     });
+  }
+
+  String _historyId(String id) => '$id-history';
+
+  Future<ShoppingListItem> _readByName(
+    ShoppingListWriteScope scope,
+    ShoppingListItem item,
+  ) async =>
+      await scope.read(item.id) ??
+      await scope.read(_historyId(item.id)) ??
+      item;
+
+  Future<void> _savePending(
+    ShoppingListWriteScope scope,
+    String id,
+    ShoppingListItem item,
+    String quantity, {
+    DateTime? addedAt,
+  }) async {
+    if (item.id != id) {
+      await scope.delete(item.id);
+    }
+    await scope.save(
+      item.copyWith(
+        id: id,
+        version: item.version + 1,
+        pendingQuantity: quantity.trim(),
+        lastAddedAt: addedAt,
+      ),
+    );
   }
 
   ShoppingListItem _newItem(String groupId, String name) {

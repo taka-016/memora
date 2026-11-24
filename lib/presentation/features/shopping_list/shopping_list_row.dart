@@ -101,6 +101,54 @@ class _ShoppingListRowState extends ConsumerState<ShoppingListRow> {
     }
   }
 
+  Future<void> _delete() async {
+    final item = _original;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('品物を削除'),
+        content: Text('「${item.name}」を買い物リストから削除しますか？'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('削除'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted || confirmed != true) return;
+
+    final list = ref.read(shoppingListProvider);
+    setState(() => _isSaving = true);
+    try {
+      await list.delete(widget.groupId, item);
+      if (!mounted) return;
+      if (widget.item.version > item.version) {
+        _load(widget.item);
+      } else {
+        _awaitingUpdate = true;
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              error is ApplicationValidationException
+                  ? error.message
+                  : '品物を削除できませんでした。再試行してください。',
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final busy = _isSaving || _awaitingUpdate || widget.isChecking;
@@ -115,6 +163,11 @@ class _ShoppingListRowState extends ConsumerState<ShoppingListRow> {
           onChanged: busy || _hasChanges
               ? null
               : (_) => widget.onCheck(_original),
+        ),
+        trailing: IconButton(
+          icon: const Icon(Icons.delete_outline),
+          tooltip: '削除',
+          onPressed: busy || _hasChanges ? null : _delete,
         ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

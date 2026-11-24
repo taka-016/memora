@@ -90,7 +90,6 @@ class ShoppingItemAddForm extends HookConsumerWidget {
                   onSubmitted: (_) => add(),
                   decoration: const InputDecoration(
                     labelText: '数量',
-                    hintText: '2個、500g',
                     border: OutlineInputBorder(),
                   ),
                 ),

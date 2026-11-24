@@ -17,4 +17,5 @@ abstract interface class ShoppingListStore {
 abstract interface class ShoppingListWriteScope {
   Future<ShoppingListItem?> read(String id);
   Future<void> save(ShoppingListItem item);
+  Future<void> delete(String id);
 }

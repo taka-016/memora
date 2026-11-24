@@ -100,9 +100,9 @@ class ShoppingPurchasesNotifier extends _$ShoppingPurchasesNotifier {
     List<ShoppingListItem> items,
     List<ShoppingListItem> page,
   ) {
-    final existingIds = items.map((item) => item.id).toSet();
+    final existingNames = items.map((item) => item.name).toSet();
     return ShoppingPurchasesState(
-      [...items, ...page.where((item) => !existingIds.contains(item.id))],
+      [...items, ...page.where((item) => !existingNames.contains(item.name))],
       nextCursor: page.length == ShoppingList.PURCHASE_PAGE_SIZE
           ? page.last
           : null,

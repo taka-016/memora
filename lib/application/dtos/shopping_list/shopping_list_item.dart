@@ -20,13 +20,14 @@ class ShoppingListItem {
   final String? purchasedQuantity;
 
   ShoppingListItem copyWith({
+    String? id,
     int? version,
     Object? pendingQuantity = copyWithPlaceholder,
     DateTime? lastAddedAt,
     Object? purchasedAt = copyWithPlaceholder,
     Object? purchasedQuantity = copyWithPlaceholder,
   }) => ShoppingListItem(
-    id: id,
+    id: id ?? this.id,
     name: name,
     version: version ?? this.version,
     pendingQuantity: resolveCopyWithValue(

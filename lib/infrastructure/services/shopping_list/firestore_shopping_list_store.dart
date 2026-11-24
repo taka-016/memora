@@ -88,6 +88,11 @@ class _FirestoreShoppingListWriteScope implements ShoppingListWriteScope {
   }
 
   @override
+  Future<void> delete(String id) async {
+    _transaction.delete(_items.doc(id));
+  }
+
+  @override
   Future<void> save(ShoppingListItem item) async {
     _transaction.set(_items.doc(item.id), {
       'name': item.name,

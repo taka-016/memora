@@ -96,6 +96,13 @@ class _SqliteShoppingListWriteScope implements ShoppingListWriteScope {
   }
 
   @override
+  Future<void> delete(String id) async {
+    await (_db.delete(
+      _db.shoppingListItems,
+    )..where((row) => row.groupId.equals(groupId) & row.id.equals(id))).go();
+  }
+
+  @override
   Future<void> save(ShoppingListItem item) async {
     await _db
         .into(_db.shoppingListItems)
