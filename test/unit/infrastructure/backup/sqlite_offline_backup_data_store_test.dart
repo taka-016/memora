@@ -325,7 +325,6 @@ void main() {
       'name': '牛乳',
       'version': 1,
       'pending_quantity': '2本',
-      'last_added_at': 100,
       'purchased_at': 50,
       'purchased_quantity': '1本',
     });
@@ -337,6 +336,18 @@ void main() {
     expect(snapshot.settings, originalSettings);
     expect(snapshot.tables.keys, OfflineBackupSnapshot.tableNames);
     expect(snapshot.tables['groups']!.single['name'], '家族');
+    expect(
+      snapshot.tables['shopping_list_items']!.single.keys,
+      unorderedEquals([
+        'id',
+        'group_id',
+        'name',
+        'version',
+        'pending_quantity',
+        'purchased_at',
+        'purchased_quantity',
+      ]),
+    );
 
     await db.updateRow('groups', 'group-1', {'name': '変更後'});
     await db.deleteRows('shopping_list_items', 'id', 'shopping-item');
