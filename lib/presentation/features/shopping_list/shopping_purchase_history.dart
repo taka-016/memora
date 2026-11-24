@@ -38,12 +38,13 @@ class _ShoppingPurchaseHistory extends HookConsumerWidget {
 
     Future<void> registerAgain(ShoppingListItem item) async {
       if (registering.value) return;
+      final route = ModalRoute.of(context);
       final list = ref.read(shoppingListProvider);
       registering.value = true;
       message.value = null;
       try {
         final existing = await list.add(groupId, item.name, '');
-        if (!context.mounted) return;
+        if (!context.mounted || route?.isCurrent != true) return;
         if (existing != null) {
           final edited = await showShoppingItemEditDialog(
             context,
@@ -51,11 +52,13 @@ class _ShoppingPurchaseHistory extends HookConsumerWidget {
             item: existing,
             editQuantityOnly: true,
           );
-          if (!context.mounted || edited != true) return;
+          if (!context.mounted || route?.isCurrent != true || edited != true) {
+            return;
+          }
         }
         Navigator.of(context).pop();
       } catch (error) {
-        if (context.mounted) {
+        if (context.mounted && route?.isCurrent == true) {
           message.value = error is ApplicationValidationException
               ? error.message
               : '品物を再登録できませんでした。再試行してください。';
@@ -75,7 +78,7 @@ class _ShoppingPurchaseHistory extends HookConsumerWidget {
               children: [
                 Expanded(
                   child: Text(
-                    '購入済み履歴',
+                    '購入履歴',
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                 ),
@@ -99,12 +102,12 @@ class _ShoppingPurchaseHistory extends HookConsumerWidget {
             child: history.when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (_, _) => ShoppingListRetry(
-                message: '購入済み履歴を読み込めませんでした。',
+                message: '購入履歴を読み込めませんでした。',
                 onRetry: () => ref.invalidate(provider),
               ),
               data: (data) {
                 if (data.items.isEmpty && data.nextCursor == null) {
-                  return const Center(child: Text('購入済み履歴がありません'));
+                  return const Center(child: Text('購入履歴がありません'));
                 }
                 final notifier = ref.read(provider.notifier);
                 return NotificationListener<ScrollEndNotification>(
@@ -155,7 +158,7 @@ class _ShoppingPurchaseHistory extends HookConsumerWidget {
                             ),
                             ShoppingHistoryDeleteButton(
                               itemName: item.name,
-                              historyName: '購入済み履歴',
+                              historyName: '購入履歴',
                               onDelete: registering.value
                                   ? null
                                   : () => notifier.delete(item),

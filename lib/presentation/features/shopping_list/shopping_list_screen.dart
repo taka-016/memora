@@ -179,7 +179,7 @@ class _ShoppingGroupList extends ConsumerWidget {
                         ? IconButton(
                             onPressed: showHistory,
                             icon: const Icon(Icons.history),
-                            tooltip: '購入済み履歴',
+                            tooltip: '購入履歴',
                           )
                         : null,
                   ),
@@ -198,7 +198,7 @@ class _ShoppingGroupList extends ConsumerWidget {
                         TextButton.icon(
                           onPressed: showHistory,
                           icon: const Icon(Icons.history),
-                          label: const Text('購入済み履歴'),
+                          label: const Text('購入履歴'),
                         ),
                       ],
                     ),

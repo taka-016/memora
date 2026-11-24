@@ -20,6 +20,7 @@ class ShoppingItemAddForm extends HookConsumerWidget {
 
     Future<void> add() async {
       if (saving.value) return;
+      final route = ModalRoute.of(context);
       final list = ref.read(shoppingListProvider);
       saving.value = true;
       message.value = null;
@@ -27,6 +28,7 @@ class ShoppingItemAddForm extends HookConsumerWidget {
         final existing = await list.add(groupId, name.text, quantity.text);
         if (!context.mounted) return;
         if (existing != null) {
+          if (route?.isCurrent != true) return;
           final edited = await showShoppingItemEditDialog(
             context,
             groupId,
