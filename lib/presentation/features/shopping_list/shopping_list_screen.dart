@@ -7,8 +7,8 @@ import 'package:memora/application/exceptions/application_validation_exception.d
 import 'package:memora/composition_root/providers/shopping_list_providers.dart';
 import 'package:memora/presentation/app/app_routes.dart';
 import 'package:memora/presentation/features/shopping_list/shopping_item_add_form.dart';
-import 'package:memora/presentation/features/shopping_list/shopping_item_dialog.dart';
 import 'package:memora/presentation/features/shopping_list/shopping_list_retry.dart';
+import 'package:memora/presentation/features/shopping_list/shopping_list_row.dart';
 import 'package:memora/presentation/features/shopping_list/shopping_purchase_history.dart';
 import 'package:memora/presentation/notifiers/member/current_member_notifier.dart';
 import 'package:memora/presentation/notifiers/shopping_list/shopping_list_notifier.dart';
@@ -208,34 +208,22 @@ class _ShoppingGroupList extends ConsumerWidget {
                             )
                           : SliverList.builder(
                               itemCount: items.length,
+                              findChildIndexCallback: (key) {
+                                final id = (key as ValueKey<String>).value;
+                                final index = items.indexWhere(
+                                  (item) => item.id == id,
+                                );
+                                return index < 0 ? null : index;
+                              },
                               itemBuilder: (_, index) {
                                 final item = items[index];
-                                final isChecking = checking.contains(item.id);
-                                return ListTile(
-                                  leading: Checkbox(
-                                    value: false,
-                                    semanticLabel: '${item.name}を購入済みにする',
-                                    onChanged: isChecking
-                                        ? null
-                                        : (_) => _check(context, ref, item),
-                                  ),
-                                  title: Row(
-                                    children: [
-                                      Expanded(flex: 2, child: Text(item.name)),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Text(item.pendingQuantity!),
-                                      ),
-                                    ],
-                                  ),
-                                  trailing: const Icon(Icons.edit_outlined),
-                                  onTap: isChecking
-                                      ? null
-                                      : () => showShoppingItemEditDialog(
-                                          context,
-                                          groupId,
-                                          item: item,
-                                        ),
+                                return ShoppingListRow(
+                                  key: ValueKey(item.id),
+                                  groupId: groupId,
+                                  item: item,
+                                  isChecking: checking.contains(item.id),
+                                  onCheck: (current) =>
+                                      _check(context, ref, current),
                                 );
                               },
                             ),
