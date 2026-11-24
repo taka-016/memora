@@ -27,12 +27,27 @@ extension TopPageNavigationTests on TopPageTestContext {
         1,
       );
     });
-    testWidgets('カレンダーの横から買い物リストの所属グループを選べる', (tester) async {
+    testWidgets('幅の狭い画面でも買い物リストのラベルを省略せず移動できる', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(320, 640));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
-      await tester.tap(find.text('買い物リスト'));
+
+      final label = find.descendant(
+        of: find.byType(BottomNavigationBar),
+        matching: find.text('買い物リスト'),
+      );
+      expect(
+        tester.renderObject<RenderParagraph>(label).didExceedMaxLines,
+        isFalse,
+      );
+      await tester.tap(label);
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('shopping_list_groups')), findsOneWidget);
+      expect(
+        tester.renderObject<RenderParagraph>(label).didExceedMaxLines,
+        isFalse,
+      );
     });
     for (final route in [
       const SettingsRoute().location,
