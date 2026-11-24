@@ -124,6 +124,14 @@ Robert C.Martinが提唱した『クリーンアーキテクチャの原則』�
 - テスタビリティ: フレームワークやデータベースに依存しない設計
 - 独立性: ビジネスルールは外部要因から独立している
 
+### 機能実装の構成
+
+- 単一のEntityが常に満たす不変条件は `lib/domain/entities/` のEntityに置き、書き込みの契約は `lib/domain/repositories/` のRepositoryに定義する。
+- 読み取りは `lib/application/queries/` のQueryServiceに分け、結果と画面からの入力は `lib/application/dtos/` のDTOで受け渡す。DTOとEntityの変換は `lib/application/mappers/` に置く。
+- `lib/application/usecases/` に操作別のUseCaseを置く。読み取りにはQueryService、書き込みにはRepositoryを使う。複数の書き込みを一括で保存する操作は、既存のトランザクションの構成に揃える。
+- FirestoreとSQLiteの具象実装は `lib/infrastructure/` に置き、モード別の組み立ては既存のRepositoryFactoryとQueryServiceFactoryを使う。書き込みには既存の利用可否ガードを適用する。
+- Presentation層はUseCaseを利用する。新機能の構成は、実装前に同じ責務を持つ既存機能のEntityから画面までの経路をたどって揃える。
+
 ## コーディング規約
 
 - インデントは2スペース
@@ -149,7 +157,7 @@ Robert C.Martinが提唱した『クリーンアーキテクチャの原則』�
 - スクロール、フォーカス、ルーティング判定など、Riverpodで監視しないUI固有の制御を担当するクラスは`XxxController`とする
 - 複数機能にまたがる更新処理と、更新後に必要なProviderの再取得を調整するクラスは`XxxMutationCoordinator`とする
 - Viewは状態の描画、入力、Dialog・Snackbarの実表示を担当し、Notifierは`BuildContext`やWidgetを参照しない
-- 画面状態の整合性維持に必要なオーケストレーションはNotifierへ分離し、複数画面で再利用する業務フローや業務上の不変条件はApplication層のUseCaseへ配置する
+- 画面状態の整合性維持に必要なオーケストレーションはNotifierへ分離し、複数画面で再利用する業務フローや、複数の処理にまたがって守る条件はApplication層のUseCaseへ配置する
 
 ## ブランチ名
 
@@ -253,6 +261,9 @@ BREAKING CHANGE: /api/v1/users を /api/v2/users に変更
 ## Firebase設定
 
 アプリはFirestoreを使用してデータを永続化する。
+
+- Firestoreの保存先はトップレベルのコレクションに限る。サブコレクションは禁止し、例外を設けない。アプリ、Firestoreルール、運用スクリプトに適用する。
+- 関連する親やグループのIDはドキュメントのフィールドに持たせ、親やグループ単位で範囲を絞る取得では、そのフィールドを条件に使う。
 
 - 設定ファイル:
   - `firebase_options.dart` - 生成されたFirebase設定
