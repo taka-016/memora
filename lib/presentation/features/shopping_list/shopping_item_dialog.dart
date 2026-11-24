@@ -4,6 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/shopping_list/shopping_list_item.dart';
 import 'package:memora/application/exceptions/application_validation_exception.dart';
 import 'package:memora/composition_root/providers/shopping_list_providers.dart';
+import 'package:memora/presentation/features/shopping_list/shopping_history_delete_button.dart';
 
 Future<bool?> showShoppingItemEditDialog(
   BuildContext context,
@@ -20,11 +21,12 @@ Future<bool?> showShoppingItemEditDialog(
 );
 
 Future<String?> showShoppingAdditionsDialog(
-  BuildContext context,
-  Future<List<ShoppingListItem>> Function() load,
-) => showDialog<String>(
+  BuildContext context, {
+  required Future<List<ShoppingListItem>> Function() load,
+  required Future<void> Function(ShoppingListItem) delete,
+}) => showDialog<String>(
   context: context,
-  builder: (_) => _ShoppingAdditionsDialog(load: load),
+  builder: (_) => _ShoppingAdditionsDialog(load: load, delete: delete),
 );
 
 class _ShoppingItemDialog extends HookConsumerWidget {
@@ -124,9 +126,10 @@ class _ShoppingItemDialog extends HookConsumerWidget {
 }
 
 class _ShoppingAdditionsDialog extends HookWidget {
-  const _ShoppingAdditionsDialog({required this.load});
+  const _ShoppingAdditionsDialog({required this.load, required this.delete});
 
   final Future<List<ShoppingListItem>> Function() load;
+  final Future<void> Function(ShoppingListItem) delete;
 
   @override
   Widget build(BuildContext context) {
@@ -146,9 +149,17 @@ class _ShoppingAdditionsDialog extends HookWidget {
           const Padding(padding: EdgeInsets.all(16), child: Text('追加履歴がありません'))
         else
           for (final item in history.data!)
-            SimpleDialogOption(
-              onPressed: () => Navigator.of(context).pop(item.name),
-              child: Text(item.name),
+            ListTile(
+              title: Text(item.name),
+              onTap: () => Navigator.of(context).pop(item.name),
+              trailing: ShoppingHistoryDeleteButton(
+                itemName: item.name,
+                historyName: '追加履歴',
+                onDelete: () async {
+                  await delete(item);
+                  if (context.mounted) retry.value++;
+                },
+              ),
             ),
       ],
     );

@@ -52,7 +52,8 @@ class ShoppingItemAddForm extends HookConsumerWidget {
       final list = ref.read(shoppingListProvider);
       final chosenName = await showShoppingAdditionsDialog(
         context,
-        () => list.additions(groupId),
+        load: () => list.additions(groupId),
+        delete: (item) => list.deleteAddition(groupId, item),
       );
       if (!context.mounted || chosenName == null) return;
       name.text = chosenName;

@@ -28,6 +28,32 @@ class ShoppingList {
     ShoppingListItem? after,
   }) => _store.purchases(groupId, limit: PURCHASE_PAGE_SIZE, after: after);
 
+  Future<void> deleteAddition(String groupId, ShoppingListItem original) =>
+      _changeHistory(
+        groupId,
+        original,
+        (item) => item.copyWith(lastAddedAt: null),
+      );
+
+  Future<void> deletePurchase(String groupId, ShoppingListItem original) =>
+      _changeHistory(
+        groupId,
+        original,
+        (item) => item.copyWith(purchasedAt: null, purchasedQuantity: null),
+      );
+
+  Future<void> _changeHistory(
+    String groupId,
+    ShoppingListItem original,
+    ShoppingListItem Function(ShoppingListItem) change,
+  ) async {
+    await _ensureAvailable();
+    await _store.write(groupId, (scope) async {
+      final current = await _requireCurrent(scope, original);
+      await scope.save(change(current).copyWith(version: current.version + 1));
+    });
+  }
+
   Future<ShoppingListItem?> add(
     String groupId,
     String name,
@@ -149,7 +175,7 @@ class ShoppingList {
         id: id,
         version: item.version + 1,
         pendingQuantity: quantity.trim(),
-        lastAddedAt: addedAt,
+        lastAddedAt: addedAt ?? item.lastAddedAt,
       ),
     );
   }

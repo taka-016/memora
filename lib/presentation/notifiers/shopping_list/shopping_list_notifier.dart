@@ -81,19 +81,34 @@ class ShoppingPurchasesNotifier extends _$ShoppingPurchasesNotifier {
           .read(shoppingListProvider)
           .purchases(groupId, after: current.nextCursor);
       if (operationRef.mounted) {
-        state = AsyncData(_withPage(current.items, page));
+        state = AsyncData(_withPage(state.requireValue.items, page));
       }
     } catch (_) {
       if (operationRef.mounted) {
         state = AsyncData(
           ShoppingPurchasesState(
-            current.items,
+            state.requireValue.items,
             nextCursor: current.nextCursor,
             hasError: true,
           ),
         );
       }
     }
+  }
+
+  Future<void> delete(ShoppingListItem item) async {
+    final operationRef = ref;
+    await ref.read(shoppingListProvider).deletePurchase(groupId, item);
+    final current = operationRef.mounted ? state.asData?.value : null;
+    if (current == null) return;
+    state = AsyncData(
+      ShoppingPurchasesState(
+        current.items.where((entry) => entry.id != item.id).toList(),
+        nextCursor: current.nextCursor,
+        isLoading: current.isLoading,
+        hasError: current.hasError,
+      ),
+    );
   }
 
   ShoppingPurchasesState _withPage(

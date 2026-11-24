@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:memora/presentation/features/shopping_list/shopping_history_delete_button.dart';
 import 'package:memora/presentation/features/shopping_list/shopping_list_retry.dart';
 import 'package:memora/presentation/notifiers/shopping_list/shopping_list_notifier.dart';
 
@@ -57,7 +58,7 @@ class _ShoppingPurchaseHistory extends ConsumerWidget {
                 onRetry: () => ref.invalidate(provider),
               ),
               data: (data) {
-                if (data.items.isEmpty) {
+                if (data.items.isEmpty && data.nextCursor == null) {
                   return const Center(child: Text('購入済み履歴がありません'));
                 }
                 final notifier = ref.read(provider.notifier);
@@ -97,6 +98,11 @@ class _ShoppingPurchaseHistory extends ConsumerWidget {
                         subtitle: Text(
                           '${localizations.formatCompactDate(time)} '
                           '${localizations.formatTimeOfDay(TimeOfDay.fromDateTime(time))}',
+                        ),
+                        trailing: ShoppingHistoryDeleteButton(
+                          itemName: item.name,
+                          historyName: '購入済み履歴',
+                          onDelete: () => notifier.delete(item),
                         ),
                       );
                     },
