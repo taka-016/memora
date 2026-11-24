@@ -555,6 +555,9 @@ class TopPage extends HookConsumerWidget {
     );
     return BottomNavigationBar(
       type: BottomNavigationBarType.fixed,
+      iconSize: 28,
+      selectedFontSize: 10,
+      unselectedFontSize: 10,
       currentIndex: selectedIndex < 0 ? 0 : selectedIndex,
       showSelectedLabels: true,
       showUnselectedLabels: true,
