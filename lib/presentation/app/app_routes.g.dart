@@ -182,6 +182,13 @@ RouteBase get $appShellRoute => ShellRouteData.$route(
       path: '/shopping-list',
       hasOverriddenOnExit: false,
       factory: $ShoppingListRoute._fromState,
+      routes: [
+        GoRouteData.$route(
+          path: ':groupId',
+          hasOverriddenOnExit: false,
+          factory: $ShoppingGroupRoute._fromState,
+        ),
+      ],
     ),
     GoRouteData.$route(
       path: '/map',
@@ -368,6 +375,31 @@ mixin $ShoppingListRoute on GoRouteData {
 
   @override
   String get location => GoRouteData.$location('/shopping-list');
+
+  @override
+  void go(BuildContext context) => context.go(location);
+
+  @override
+  Future<T?> push<T>(BuildContext context) => context.push<T>(location);
+
+  @override
+  void pushReplacement(BuildContext context) =>
+      context.pushReplacement(location);
+
+  @override
+  void replace(BuildContext context) => context.replace(location);
+}
+
+mixin $ShoppingGroupRoute on GoRouteData {
+  static ShoppingGroupRoute _fromState(GoRouterState state) =>
+      ShoppingGroupRoute(groupId: state.pathParameters['groupId']!);
+
+  ShoppingGroupRoute get _self => this as ShoppingGroupRoute;
+
+  @override
+  String get location => GoRouteData.$location(
+    '/shopping-list/${Uri.encodeComponent(_self.groupId)}',
+  );
 
   @override
   void go(BuildContext context) => context.go(location);

@@ -128,6 +128,7 @@ bool _isProtectedLocation(String path) {
       path == const GroupListRoute().location ||
       path.startsWith('${const GroupListRoute().location}/') ||
       path == const ShoppingListRoute().location ||
+      path.startsWith('${const ShoppingListRoute().location}/') ||
       path == const MapRoute().location ||
       path == const MemberManagementRoute().location ||
       path == const GroupManagementRoute().location ||

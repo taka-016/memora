@@ -52,7 +52,8 @@ AppNavigationItem appNavigationItemForLocation(String location) {
       location.startsWith('${const CalendarRoute().location}/')) {
     return AppNavigationItem.calendar;
   }
-  if (location == const ShoppingListRoute().location) {
+  if (location == const ShoppingListRoute().location ||
+      location.startsWith('${const ShoppingListRoute().location}/')) {
     return AppNavigationItem.shoppingList;
   }
   if (location == const MapRoute().location) {
@@ -132,7 +133,12 @@ class MemberSetupRoute extends GoRouteData with $MemberSetupRoute {
       ],
     ),
     TypedGoRoute<CalendarRoute>(path: '/calendar'),
-    TypedGoRoute<ShoppingListRoute>(path: '/shopping-list'),
+    TypedGoRoute<ShoppingListRoute>(
+      path: '/shopping-list',
+      routes: <TypedRoute<RouteData>>[
+        TypedGoRoute<ShoppingGroupRoute>(path: ':groupId'),
+      ],
+    ),
     TypedGoRoute<MapRoute>(path: '/map'),
     TypedGoRoute<MemberManagementRoute>(path: '/members'),
     TypedGoRoute<GroupManagementRoute>(path: '/group-management'),
@@ -316,6 +322,17 @@ class ShoppingListRoute extends GoRouteData with $ShoppingListRoute {
   @override
   Widget build(BuildContext context, GoRouterState state) {
     return const Material(child: ShoppingListScreen());
+  }
+}
+
+class ShoppingGroupRoute extends GoRouteData with $ShoppingGroupRoute {
+  const ShoppingGroupRoute({required this.groupId});
+
+  final String groupId;
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) {
+    return Material(child: ShoppingGroupScreen(groupId: groupId));
   }
 }
 

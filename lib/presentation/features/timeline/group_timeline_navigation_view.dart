@@ -10,6 +10,7 @@ import 'package:memora/presentation/app/app_routes.dart';
 import 'package:memora/presentation/features/timeline/timeline.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
 import 'package:memora/presentation/features/timeline/timeline_rows.dart';
+import 'package:memora/presentation/shared/group_selection/group_selection_view.dart';
 import 'package:memora/presentation/notifiers/timeline/group_timeline_group_selection_notifier.dart';
 import 'package:memora/presentation/notifiers/timeline/group_timeline_refresh_notifier.dart';
 
@@ -209,52 +210,11 @@ class GroupTimelineNavigationView extends HookConsumerWidget {
           ),
         );
       case GroupTimelineGroupSelectionStatus.loaded:
-        if (state.groups.isEmpty) {
-          return RefreshIndicator(
-            onRefresh: onRefresh,
-            child: LayoutBuilder(
-              builder: (context, constraints) => ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                children: [
-                  SizedBox(
-                    height: constraints.maxHeight,
-                    child: const Center(
-                      child: Text('グループがありません', style: TextStyle(fontSize: 18)),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }
-        return Column(
-          key: const Key('group_list'),
-          children: [
-            const Padding(
-              padding: EdgeInsets.all(16),
-              child: Text(
-                'グループを選択',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-            ),
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: onRefresh,
-                child: ListView.builder(
-                  itemCount: state.groups.length,
-                  itemBuilder: (context, index) {
-                    final group = state.groups[index];
-                    return ListTile(
-                      title: Text(group.name),
-                      subtitle: Text('${group.members.length}人のメンバー'),
-                      trailing: const Icon(Icons.arrow_forward_ios),
-                      onTap: () => onGroupSelected(group),
-                    );
-                  },
-                ),
-              ),
-            ),
-          ],
+        return GroupSelectionView(
+          key: state.groups.isEmpty ? null : const Key('group_list'),
+          groups: state.groups,
+          onGroupSelected: onGroupSelected,
+          onRefresh: onRefresh,
         );
     }
   }

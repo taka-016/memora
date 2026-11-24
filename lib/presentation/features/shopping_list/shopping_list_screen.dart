@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/shopping_list/shopping_list_item.dart';
 import 'package:memora/application/exceptions/application_validation_exception.dart';
 import 'package:memora/composition_root/providers/shopping_list_providers.dart';
+import 'package:memora/presentation/app/app_routes.dart';
 import 'package:memora/presentation/features/shopping_list/shopping_item_dialog.dart';
 import 'package:memora/presentation/features/shopping_list/shopping_list_retry.dart';
 import 'package:memora/presentation/features/shopping_list/shopping_purchase_history.dart';
 import 'package:memora/presentation/notifiers/member/current_member_notifier.dart';
 import 'package:memora/presentation/notifiers/shopping_list/shopping_list_notifier.dart';
 import 'package:memora/presentation/notifiers/timeline/group_timeline_group_selection_notifier.dart';
+import 'package:memora/presentation/shared/group_selection/group_selection_view.dart';
 
 class ShoppingListScreen extends HookConsumerWidget {
   const ShoppingListScreen({super.key});
@@ -18,13 +21,92 @@ class ShoppingListScreen extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final member = ref.watch(currentMemberNotifierProvider).member;
     final selection = ref.watch(groupTimelineGroupSelectionNotifierProvider);
-    final selectedGroupId = useState<String?>(null);
+    final isCurrent = ModalRoute.isCurrentOf(context) ?? true;
+    final hasOpenedGroup = useRef(false);
+    final isLoaded =
+        member != null &&
+        selection.memberId == member.id &&
+        selection.status == GroupTimelineGroupSelectionStatus.loaded;
+    final autoGroup = isLoaded && isCurrent && !hasOpenedGroup.value
+        ? selection.groups.singleOrNull
+        : null;
+
+    useEffect(() {
+      if (!isCurrent) {
+        hasOpenedGroup.value = true;
+      }
+      if (autoGroup != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (context.mounted && ModalRoute.isCurrentOf(context) == true) {
+            hasOpenedGroup.value = true;
+            ShoppingGroupRoute(groupId: autoGroup.id).go(context);
+          }
+        });
+      }
+      return null;
+    }, [isCurrent, autoGroup?.id]);
+
     if (member == null ||
         selection.memberId != member.id ||
-        selection.status == GroupTimelineGroupSelectionStatus.loading) {
+        selection.status == GroupTimelineGroupSelectionStatus.loading ||
+        autoGroup != null) {
       return const Center(child: CircularProgressIndicator());
     }
+    final selectionNotifier = ref.read(
+      groupTimelineGroupSelectionNotifierProvider.notifier,
+    );
     if (selection.status == GroupTimelineGroupSelectionStatus.error) {
+      return ShoppingListRetry(
+        message: selection.message,
+        onRetry: () => selectionNotifier.load(member),
+      );
+    }
+
+    return GroupSelectionView(
+      key: const Key('shopping_list_groups'),
+      groups: selection.groups,
+      onGroupSelected: (group) =>
+          ShoppingGroupRoute(groupId: group.id).go(context),
+      onRefresh: () => selectionNotifier.refreshSilently(member),
+    );
+  }
+}
+
+class ShoppingGroupScreen extends HookConsumerWidget {
+  const ShoppingGroupScreen({super.key, required this.groupId});
+
+  final String groupId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final member = ref.watch(currentMemberNotifierProvider).member;
+    final selection = ref.watch(groupTimelineGroupSelectionNotifierProvider);
+    final belongsToCurrentMember =
+        member != null && selection.memberId == member.id;
+    final selectedGroup = belongsToCurrentMember
+        ? selection.groups.where((group) => group.id == groupId).firstOrNull
+        : null;
+    final missingGroup =
+        belongsToCurrentMember &&
+        selection.status == GroupTimelineGroupSelectionStatus.loaded &&
+        selectedGroup == null;
+
+    useEffect(() {
+      if (missingGroup) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!context.mounted) return;
+          final messenger = ScaffoldMessenger.of(context);
+          const ShoppingListRoute().go(context);
+          messenger.showSnackBar(
+            const SnackBar(content: Text('指定されたグループが見つかりませんでした')),
+          );
+        });
+      }
+      return null;
+    }, [groupId, missingGroup]);
+
+    if (belongsToCurrentMember &&
+        selection.status == GroupTimelineGroupSelectionStatus.error) {
       return ShoppingListRetry(
         message: selection.message,
         onRetry: () => ref
@@ -32,54 +114,27 @@ class ShoppingListScreen extends HookConsumerWidget {
             .load(member),
       );
     }
-    final groups = selection.groups;
-    if (groups.isEmpty) {
-      return const Center(
-        key: Key('shopping_list_groups'),
-        child: Text('所属グループがありません'),
-      );
+    if (selectedGroup == null) {
+      return const Center(child: CircularProgressIndicator());
     }
-    final groupId = groups.length == 1
-        ? groups.single.id
-        : groups
-              .where((group) => group.id == selectedGroupId.value)
-              .firstOrNull
-              ?.id;
-    return Column(
-      key: const Key('shopping_list_groups'),
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-          child: DropdownButton<String>(
-            isExpanded: true,
-            hint: const Text('グループを選択'),
-            value: groupId,
-            onChanged: (value) => selectedGroupId.value = value,
-            items: [
-              for (final group in groups)
-                DropdownMenuItem(
-                  value: group.id,
-                  child: Text(group.name, overflow: TextOverflow.ellipsis),
-                ),
-            ],
-          ),
-        ),
-        if (groupId != null)
-          Expanded(
-            child: _ShoppingGroupList(
-              key: ValueKey((member.id, groupId)),
-              groupId: groupId,
-            ),
-          ),
-      ],
+
+    return _ShoppingGroupList(
+      key: ValueKey((member!.id, groupId)),
+      groupId: groupId,
+      groupName: selectedGroup.name,
     );
   }
 }
 
 class _ShoppingGroupList extends ConsumerWidget {
-  const _ShoppingGroupList({super.key, required this.groupId});
+  const _ShoppingGroupList({
+    super.key,
+    required this.groupId,
+    required this.groupName,
+  });
 
   final String groupId;
+  final String groupName;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -95,6 +150,28 @@ class _ShoppingGroupList extends ConsumerWidget {
           builder: (context) => Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              SizedBox(
+                height: kMinInteractiveDimension,
+                child: NavigationToolbar(
+                  leading: IconButton(
+                    icon: const Icon(Icons.arrow_back),
+                    tooltip: '戻る',
+                    onPressed: () {
+                      if (context.canPop()) {
+                        context.pop();
+                      } else {
+                        const ShoppingListRoute().go(context);
+                      }
+                    },
+                  ),
+                  middle: Text(
+                    groupName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                ),
+              ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Wrap(
