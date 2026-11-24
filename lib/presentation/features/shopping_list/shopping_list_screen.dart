@@ -6,6 +6,7 @@ import 'package:memora/application/dtos/shopping_list/shopping_list_item.dart';
 import 'package:memora/application/exceptions/application_validation_exception.dart';
 import 'package:memora/composition_root/providers/shopping_list_providers.dart';
 import 'package:memora/presentation/app/app_routes.dart';
+import 'package:memora/presentation/features/shopping_list/shopping_item_add_form.dart';
 import 'package:memora/presentation/features/shopping_list/shopping_item_dialog.dart';
 import 'package:memora/presentation/features/shopping_list/shopping_list_retry.dart';
 import 'package:memora/presentation/features/shopping_list/shopping_purchase_history.dart';
@@ -172,80 +173,87 @@ class _ShoppingGroupList extends ConsumerWidget {
                   ),
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Wrap(
-                  alignment: WrapAlignment.spaceBetween,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    Text(
-                      '買い物リスト',
-                      style: Theme.of(context).textTheme.titleLarge,
+              Expanded(
+                child: CustomScrollView(
+                  slivers: [
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Wrap(
+                          alignment: WrapAlignment.spaceBetween,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            Text(
+                              '買い物リスト',
+                              style: Theme.of(context).textTheme.titleLarge,
+                            ),
+                            TextButton.icon(
+                              onPressed: () =>
+                                  showShoppingPurchaseHistory(context, groupId),
+                              icon: const Icon(Icons.history),
+                              label: const Text('購入済み履歴'),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                    TextButton.icon(
-                      onPressed: () =>
-                          showShoppingPurchaseHistory(context, groupId),
-                      icon: const Icon(Icons.history),
-                      label: const Text('購入済み履歴'),
+                    SliverToBoxAdapter(
+                      child: ShoppingItemAddForm(groupId: groupId),
+                    ),
+                    items.when(
+                      data: (items) => items.isEmpty
+                          ? const SliverFillRemaining(
+                              hasScrollBody: false,
+                              child: Center(child: Text('購入が必要な品物はありません')),
+                            )
+                          : SliverList.builder(
+                              itemCount: items.length,
+                              itemBuilder: (_, index) {
+                                final item = items[index];
+                                final isChecking = checking.contains(item.id);
+                                return ListTile(
+                                  leading: Checkbox(
+                                    value: false,
+                                    semanticLabel: '${item.name}を購入済みにする',
+                                    onChanged: isChecking
+                                        ? null
+                                        : (_) => _check(context, ref, item),
+                                  ),
+                                  title: Row(
+                                    children: [
+                                      Expanded(flex: 2, child: Text(item.name)),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Text(item.pendingQuantity!),
+                                      ),
+                                    ],
+                                  ),
+                                  trailing: const Icon(Icons.edit_outlined),
+                                  onTap: isChecking
+                                      ? null
+                                      : () => showShoppingItemEditDialog(
+                                          context,
+                                          groupId,
+                                          item: item,
+                                        ),
+                                );
+                              },
+                            ),
+                      loading: () => const SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: Center(child: CircularProgressIndicator()),
+                      ),
+                      error: (_, _) => SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: ShoppingListRetry(
+                          message: '買い物リストを読み込めませんでした。',
+                          onRetry: () => ref.invalidate(provider),
+                        ),
+                      ),
                     ),
                   ],
                 ),
               ),
-              Expanded(
-                child: items.when(
-                  data: (items) => items.isEmpty
-                      ? const Center(child: Text('購入が必要な品物はありません'))
-                      : ListView.builder(
-                          itemCount: items.length,
-                          itemBuilder: (_, index) {
-                            final item = items[index];
-                            final isChecking = checking.contains(item.id);
-                            return ListTile(
-                              leading: Checkbox(
-                                value: false,
-                                semanticLabel: '${item.name}を購入済みにする',
-                                onChanged: isChecking
-                                    ? null
-                                    : (_) => _check(context, ref, item),
-                              ),
-                              title: Row(
-                                children: [
-                                  Expanded(flex: 2, child: Text(item.name)),
-                                  const SizedBox(width: 12),
-                                  Expanded(child: Text(item.pendingQuantity!)),
-                                ],
-                              ),
-                              trailing: const Icon(Icons.edit_outlined),
-                              onTap: isChecking
-                                  ? null
-                                  : () => showShoppingItemDialog(
-                                      context,
-                                      groupId,
-                                      item: item,
-                                    ),
-                            );
-                          },
-                        ),
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
-                  error: (_, _) => ShoppingListRetry(
-                    message: '買い物リストを読み込めませんでした。',
-                    onRetry: () => ref.invalidate(provider),
-                  ),
-                ),
-              ),
-              if (items.hasValue)
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Align(
-                    alignment: AlignmentDirectional.centerEnd,
-                    child: FilledButton.icon(
-                      onPressed: () => showShoppingItemDialog(context, groupId),
-                      icon: const Icon(Icons.add),
-                      label: const Text('品物を追加'),
-                    ),
-                  ),
-                ),
             ],
           ),
         ),

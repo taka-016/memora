@@ -5,30 +5,44 @@ import 'package:memora/application/dtos/shopping_list/shopping_list_item.dart';
 import 'package:memora/application/exceptions/application_validation_exception.dart';
 import 'package:memora/composition_root/providers/shopping_list_providers.dart';
 
-Future<void> showShoppingItemDialog(
+Future<bool?> showShoppingItemEditDialog(
   BuildContext context,
   String groupId, {
-  ShoppingListItem? item,
-}) => showDialog<void>(
+  required ShoppingListItem item,
+  bool editQuantityOnly = false,
+}) => showDialog<bool>(
   context: context,
-  builder: (_) => _ShoppingItemDialog(groupId: groupId, initialItem: item),
+  builder: (_) => _ShoppingItemDialog(
+    groupId: groupId,
+    item: item,
+    editQuantityOnly: editQuantityOnly,
+  ),
+);
+
+Future<String?> showShoppingAdditionsDialog(
+  BuildContext context,
+  Future<List<ShoppingListItem>> Function() load,
+) => showDialog<String>(
+  context: context,
+  builder: (_) => _ShoppingAdditionsDialog(load: load),
 );
 
 class _ShoppingItemDialog extends HookConsumerWidget {
-  const _ShoppingItemDialog({required this.groupId, this.initialItem});
+  const _ShoppingItemDialog({
+    required this.groupId,
+    required this.item,
+    required this.editQuantityOnly,
+  });
 
   final String groupId;
-  final ShoppingListItem? initialItem;
+  final ShoppingListItem item;
+  final bool editQuantityOnly;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final list = ref.watch(shoppingListProvider);
-    final item = useState(initialItem);
-    final name = useTextEditingController(text: initialItem?.name);
-    final quantity = useTextEditingController(
-      text: initialItem?.pendingQuantity,
-    );
-    final quantityFocus = useFocusNode();
+    final name = useTextEditingController(text: item.name);
+    final quantity = useTextEditingController(text: item.pendingQuantity);
     final saving = useState(false);
     final message = useState<String?>(null);
 
@@ -37,21 +51,15 @@ class _ShoppingItemDialog extends HookConsumerWidget {
       saving.value = true;
       message.value = null;
       try {
-        final current = item.value;
-        final duplicate = current == null
-            ? await list.add(groupId, name.text, quantity.text)
-            : await list.edit(groupId, current, name.text, quantity.text);
+        final duplicate = await list.edit(
+          groupId,
+          item,
+          name.text,
+          quantity.text,
+        );
         if (!context.mounted) return;
         if (duplicate == null) {
-          Navigator.of(context).pop();
-          return;
-        }
-        if (current == null) {
-          item.value = duplicate;
-          name.text = duplicate.name;
-          quantity.text = duplicate.pendingQuantity!;
-          quantityFocus.requestFocus();
-          message.value = 'この品物は一覧にあります。既存の数量を編集できます。';
+          Navigator.of(context).pop(true);
         } else {
           message.value = '同じ品物名が一覧にあります。';
         }
@@ -69,41 +77,23 @@ class _ShoppingItemDialog extends HookConsumerWidget {
     return PopScope(
       canPop: !saving.value,
       child: AlertDialog(
-        title: Text(item.value == null ? '品物を追加' : '品物を編集'),
+        title: const Text('品物を編集'),
         scrollable: true,
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (item.value == null)
-              TextButton.icon(
-                onPressed: saving.value
-                    ? null
-                    : () async {
-                        final chosenName = await showDialog<String>(
-                          context: context,
-                          builder: (_) => _ShoppingAdditionsDialog(
-                            load: () => list.additions(groupId),
-                          ),
-                        );
-                        if (!context.mounted || chosenName == null) return;
-                        name.text = chosenName;
-                        quantity.clear();
-                        quantityFocus.requestFocus();
-                      },
-                icon: const Icon(Icons.history),
-                label: const Text('追加履歴から選ぶ'),
-              ),
+            if (editQuantityOnly) const Text('この品物は一覧にあります。既存の数量を編集できます。'),
             TextField(
               controller: name,
               enabled: !saving.value,
-              readOnly: initialItem == null && item.value != null,
+              readOnly: editQuantityOnly,
               textInputAction: TextInputAction.next,
               decoration: const InputDecoration(labelText: '品物名'),
             ),
             TextField(
               controller: quantity,
-              focusNode: quantityFocus,
+              autofocus: editQuantityOnly,
               enabled: !saving.value,
               onSubmitted: (_) => save(),
               decoration: const InputDecoration(
