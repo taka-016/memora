@@ -59,7 +59,7 @@ void main() {
     expect(find.text('グループを選択'), findsOneWidget);
   });
 
-  testWidgets('一覧の上で品物を入力して追加でき、追加履歴から選ぶと数量は空欄になる', (tester) async {
+  testWidgets('一覧の上で品物名と数量を入力して追加できる', (tester) async {
     final group = app.groupsWithMembers.first;
     const item = ShoppingListItem(
       id: 'milk',
@@ -70,7 +70,6 @@ void main() {
     addTearDown(stream.close);
     final list = MockShoppingList();
     when(list.watchPending(group.id)).thenAnswer((_) => stream.stream);
-    when(list.additions(group.id)).thenAnswer((_) async => [item]);
     when(list.add(group.id, '牛乳', '2本')).thenAnswer((_) async {
       stream.add([item]);
       return null;
@@ -107,14 +106,7 @@ void main() {
     stream.add([]);
     await tester.pumpAndSettle();
 
-    await tester.enterText(quantity, '3本');
-    await tester.tap(find.text('追加履歴から選ぶ'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('牛乳'));
-    await tester.pumpAndSettle();
-    expect(tester.widget<TextField>(name).controller!.text, '牛乳');
-    expect(tester.widget<TextField>(quantity).controller!.text, isEmpty);
-
+    await tester.enterText(name, '牛乳');
     await tester.enterText(quantity, '2本');
     await tester.tap(add);
     await tester.pumpAndSettle();
@@ -252,24 +244,23 @@ void main() {
     expect(find.text('牛乳'), findsNothing);
   });
 
-  testWidgets('追加履歴と購入済み履歴のそれぞれから選んだ品物を確認して削除できる', (tester) async {
+  testWidgets('購入済み履歴から数量を空欄で再登録し、履歴を確認して削除できる', (tester) async {
     final group = app.groupsWithMembers.first;
     final item = ShoppingListItem(
       id: 'milk',
       name: '牛乳',
       version: 1,
-      lastAddedAt: app.fixedNow,
       purchasedAt: app.fixedNow,
       purchasedQuantity: '2本',
     );
     final list = MockShoppingList();
-    var hasAddition = true;
-    when(list.watchPending(group.id)).thenAnswer((_) => Stream.value([]));
-    when(list.additions(group.id))
-        .thenAnswer((_) async => hasAddition ? [item] : []);
+    final stream = StreamController<List<ShoppingListItem>>();
+    addTearDown(stream.close);
+    when(list.watchPending(group.id)).thenAnswer((_) => stream.stream);
     when(list.purchases(group.id)).thenAnswer((_) async => [item]);
-    when(list.deleteAddition(group.id, item)).thenAnswer((_) async {
-      hasAddition = false;
+    when(list.add(group.id, item.name, '')).thenAnswer((_) async {
+      stream.add([item.copyWith(pendingQuantity: '')]);
+      return null;
     });
     when(list.deletePurchase(group.id, item)).thenAnswer((_) async {});
     await tester.pumpWidget(
@@ -288,19 +279,16 @@ void main() {
         ),
       ),
     );
+    stream.add([]);
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('追加履歴から選ぶ'));
+    await tester.tap(find.text('購入済み履歴'));
     await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('追加履歴から削除'));
+    await tester.tap(find.text('再登録'));
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(FilledButton, '削除'));
-    await tester.pumpAndSettle();
-    expect(find.text('追加履歴がありません'), findsOneWidget);
-    verify(list.deleteAddition(group.id, item)).called(1);
-    verifyNever(list.deletePurchase(group.id, item));
-    await tester.binding.handlePopRoute();
-    await tester.pumpAndSettle();
+    verify(list.add(group.id, item.name, '')).called(1);
+    expect(find.byType(Checkbox), findsOneWidget);
+    expect(find.text('追加履歴から選ぶ'), findsNothing);
 
     await tester.tap(find.text('購入済み履歴'));
     await tester.pumpAndSettle();
@@ -308,7 +296,10 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('キャンセル'));
     await tester.pumpAndSettle();
-    expect(find.text('牛乳'), findsOneWidget);
+    expect(
+      find.descendant(of: find.byType(BottomSheet), matching: find.text('牛乳')),
+      findsOneWidget,
+    );
     verifyNever(list.deletePurchase(group.id, item));
 
     await tester.tap(find.byTooltip('購入済み履歴から削除'));

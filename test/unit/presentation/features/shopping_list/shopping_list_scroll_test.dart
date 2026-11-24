@@ -40,7 +40,6 @@ void main() {
     );
     final list = MockShoppingList();
     when(list.watchPending(group.id)).thenAnswer((_) => Stream.value(items));
-    when(list.additions(group.id)).thenAnswer((_) async => items);
     when(list.purchases(group.id)).thenAnswer((_) async => items);
     await tester.pumpWidget(
       ProviderScope(
@@ -93,40 +92,25 @@ void main() {
     expect(add.hitTestable(), findsOneWidget);
   });
 
-  for (final isPurchase in [false, true]) {
-    final title = isPurchase ? '購入済み履歴' : '追加履歴';
-    testWidgets('$titleはそれぞれの高さで一覧だけスクロールできる', (tester) async {
-      await openShoppingList(tester);
-      await tester.tap(find.text(isPurchase ? title : '追加履歴から選ぶ'));
-      await tester.pumpAndSettle();
+  testWidgets('購入済み履歴は指定の高さで一覧だけスクロールできる', (tester) async {
+    await openShoppingList(tester);
+    await tester.tap(find.text('購入済み履歴'));
+    await tester.pumpAndSettle();
 
-      final modal = isPurchase
-          ? find.byType(BottomSheet)
-          : find.byType(SimpleDialog);
-      final scroll = find.descendant(of: modal, matching: verticalScroll);
-      final heading = find.descendant(of: modal, matching: find.text(title));
-      final headingPosition = tester.getTopLeft(heading);
-      final historyHeight =
-          tester.getBottomLeft(scroll).dy - headingPosition.dy;
-      if (isPurchase) {
-        expect(historyHeight, greaterThan(640 * 0.6));
-      } else {
-        expect(historyHeight, lessThan(640 * 0.7));
-      }
+    final modal = find.byType(BottomSheet);
+    final scroll = find.descendant(of: modal, matching: verticalScroll);
+    final heading = find.descendant(of: modal, matching: find.text('購入済み履歴'));
+    final headingPosition = tester.getTopLeft(heading);
+    final historyHeight = tester.getBottomLeft(scroll).dy - headingPosition.dy;
+    expect(historyHeight, greaterThan(640 * 0.6));
 
-      await tester.drag(scroll, const Offset(0, -200));
-      await tester.pumpAndSettle();
+    await tester.drag(scroll, const Offset(0, -200));
+    await tester.pumpAndSettle();
 
-      expect(
-        tester.state<ScrollableState>(scroll).position.pixels,
-        greaterThan(0),
-      );
-      expect(tester.getTopLeft(heading), headingPosition);
-      if (!isPurchase) {
-        final gap =
-            tester.getTopLeft(scroll).dy - tester.getBottomLeft(heading).dy;
-        expect(gap, greaterThanOrEqualTo(12));
-      }
-    });
-  }
+    expect(
+      tester.state<ScrollableState>(scroll).position.pixels,
+      greaterThan(0),
+    );
+    expect(tester.getTopLeft(heading), headingPosition);
+  });
 }
