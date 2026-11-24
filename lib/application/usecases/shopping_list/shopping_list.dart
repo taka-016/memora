@@ -61,11 +61,10 @@ class ShoppingList {
   ) async {
     final item = _newItem(groupId, name);
     await _ensureAvailable();
-    final addedAt = _clock.now();
     return _store.write(groupId, (scope) async {
       final current = await _readByName(scope, item);
       if (current.pendingQuantity != null) return current;
-      await _savePending(scope, item.id, current, quantity, addedAt: addedAt);
+      await _savePending(scope, item.id, current, quantity);
       return null;
     });
   }
@@ -123,6 +122,7 @@ class ShoppingList {
       final checked = current.copyWith(
         version: current.version + 1,
         pendingQuantity: null,
+        lastAddedAt: purchasedAt,
         purchasedAt: purchasedAt,
         purchasedQuantity: current.pendingQuantity,
       );
@@ -143,6 +143,7 @@ class ShoppingList {
         current.copyWith(
           version: current.version + 1,
           pendingQuantity: original.pendingQuantity,
+          lastAddedAt: original.lastAddedAt,
           purchasedAt: original.purchasedAt,
           purchasedQuantity: original.purchasedQuantity,
         ),
@@ -164,9 +165,8 @@ class ShoppingList {
     ShoppingListWriteScope scope,
     String id,
     ShoppingListItem item,
-    String quantity, {
-    DateTime? addedAt,
-  }) async {
+    String quantity,
+  ) async {
     if (item.id != id) {
       await scope.delete(item.id);
     }
@@ -175,7 +175,6 @@ class ShoppingList {
         id: id,
         version: item.version + 1,
         pendingQuantity: quantity.trim(),
-        lastAddedAt: addedAt ?? item.lastAddedAt,
       ),
     );
   }
