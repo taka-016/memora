@@ -187,7 +187,7 @@ void main() {
     expect(find.text(edited.pendingQuantity!), findsOneWidget);
   });
 
-  testWidgets('品物の削除は確認でキャンセルでき、確定した品物だけ一覧から消える', (tester) async {
+  testWidgets('品物の削除はキャンセルでき、競合後は最新の品物を削除できる', (tester) async {
     final group = app.groupsWithMembers.first;
     const item = ShoppingListItem(
       id: 'milk',
@@ -199,7 +199,10 @@ void main() {
     addTearDown(stream.close);
     final list = MockShoppingList();
     when(list.watchPending(group.id)).thenAnswer((_) => stream.stream);
-    when(list.delete(group.id, item)).thenAnswer((_) async {
+    final updated = item.copyWith(version: 2, pendingQuantity: '3本');
+    final deletion = Completer<void>();
+    when(list.delete(group.id, item)).thenAnswer((_) => deletion.future);
+    when(list.delete(group.id, updated)).thenAnswer((_) async {
       stream.add([]);
     });
     await tester.pumpWidget(
@@ -233,7 +236,19 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(FilledButton, '削除'));
     await tester.pumpAndSettle();
+    stream.add([updated]);
+    await tester.pumpAndSettle();
+    expect(find.text('3本'), findsNothing);
+    deletion.completeError(TestException('削除の競合'));
+    await tester.pumpAndSettle();
     verify(list.delete(group.id, item)).called(1);
+    expect(find.text('3本'), findsOneWidget);
+
+    await tester.tap(delete);
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, '削除'));
+    await tester.pumpAndSettle();
+    verify(list.delete(group.id, updated)).called(1);
     expect(find.text('牛乳'), findsNothing);
   });
 

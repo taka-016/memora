@@ -82,7 +82,7 @@ void main() {
   });
 
   testWidgets('小さい画面でキーボードを開いても追加フォームを操作できる', (tester) async {
-    await openShoppingList(tester, size: const Size(320, 568));
+    await openShoppingList(tester, size: const Size(320, 480));
     final add = find.widgetWithText(ElevatedButton, '追加');
     await tester.tap(find.widgetWithText(TextField, '品物名').first);
     tester.view.viewInsets = const FakeViewPadding(bottom: 280);
