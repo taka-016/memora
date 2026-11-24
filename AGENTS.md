@@ -1,270 +1,85 @@
 # AGENTS.md
 
+## 作業ルール
+
+- 会話、レビュー、コメント、テスト名、ドキュメントは日本語で記載する。
+- 会話・設計資料・コード・テストで業務用語を統一する。ユーザー、ユーザーストーリー、ユースケース図、ER図の用語に従い、独自の言い換えや略称を作らない。意味や対象が曖昧なら認識をそろえてから進める。
+- データ整合性の水準を上げる前に、不整合の発生条件と影響、対応による性能・通信・実装の複雑性への影響を説明し、ユーザーの判断を仰ぐ。
+- 差分が生じる作業を `main` で始める場合は、先に作業ブランチを作成する。新機能は `feature/`、バグ修正は `bugfix/`、リファクタリングは `refactor/`、文書は `docs/`、テストは `test/`、その他は `chore/`。
+- `.gitignore` の対象は `git add -f` で追加せず、そのための処理変更も不要。
+- 必要に応じて「MCP使用ルール」に従ってMCPを使う。
+- コミットはConventional Commitsの `<type>(<scope>): <subject>` 形式。typeと50文字以内のsubjectは必須。scope（変更範囲）、body（詳細）、footer（破壊的変更やIssue参照）は任意。破壊的変更はtypeの後の `!`、またはfooterの `BREAKING CHANGE:` で示す。
+- typeは `feat`（新機能）、`fix`（バグ修正）、`docs`（文書）、`style`（意味を変えない変更）、`refactor`（機能追加・バグ修正以外のコード変更）、`perf`（性能改善）、`test`（テスト）、`build`（ビルド・外部依存）、`ci`（CI）、`chore`（その他）。
+
 ## 設計資料
 
-- ユーザーストーリー: project_docs/user_stories.md
-- ユースケース図: project_docs/usecase_diagram.md
-- ER図: project_docs/er_diagram.md
-- ADR: project_docs/adr/
-- todo: project_docs/todo.md
+- `project_docs/` 配下の `user_stories.md`、`usecase_diagram.md`、`er_diagram.md`、`adr/`、`todo.md` を参照する。
+- ER図はエンティティ・属性・キー・関連に限る。取得・保存方式、保証範囲など、維持するアーキテクチャ上の判断は機能を問わずADRに1件1ファイルで記録する。機能別の設計資料は新設しない。
+- ADRの追加・追記はユーザーの明示指示がある場合のみ。新規ファイルは `adr-008-example-decision.md` の形式とし、既存の最大番号に続く3桁の番号と小文字の英単語をハイフンでつないだ短いタイトルを使う。
+- ADRのセクションは「ステータス」（提案・採用・置換など）「決定日」「コンテキスト」（背景・前提・課題）「検討した選択肢」（比較案と各案の採否）「決定事項」（方式・保証範囲）「決定理由」（根拠・比較・トレードオフ）「結果」（効果・制約・影響）。細かな処理手順、API呼び出し順、実装の段取りは記載しない。
 
-ER図の記載範囲は、エンティティ・属性・キー・関連に限る。データの取得・保存方式や保証範囲などの設計判断は、ADRに記録すること。
+### README・justfile
 
-今後も維持するアーキテクチャ上の判断は、機能領域を問わず`project_docs/adr/`へ1件ずつADRファイルとして記録すること。ファイル名は`adr-連番-短い英語タイトル.md`とし、連番は3桁のゼロ埋め、英語タイトルは小文字の単語をハイフンで区切る（例: `adr-008-example-decision.md`）。新しい判断には既存の最大番号に続く連番を付け、機能ごとの設計資料を新たに作成しないこと。
+- READMEには概要、導入前提、セットアップ、手動設定、必要な注意事項、関連資料へのリンクを簡潔に記載する。詳細仕様・内部構成・スクリプト内部処理・設計判断・変更経緯は既存資料やソースを参照し、実行や判断に不要な説明は省く。
+- タスクのコマンドと目的はjustfileにまとめ、READMEで一覧や実行内容を重複させない。
+- 単発の移行・補完スクリプトは、直接実行するコマンドと注意事項をスクリプトと同じフォルダの専用文書に記載する。README・justfileには追加しない。
 
-ADRには維持する設計判断として、採用する方式・保証範囲・選択の理由・影響を記載する。細かな処理手順、APIの呼び出し順序、実装作業の段取りは記載しない。
+### todo
 
-各ADRには以下の項目を別セクションで記載する。
+- 未完了の実装・修正は対象と変更内容を明記し、完了条件が分かる粒度で、目的と完了範囲を共有する作業単位にまとめる。画面や技術層では分類せず、サブタスクは依存順に並べ、完了項目は削除する。
+- 実装粒度に達していない検討事項・解析結果・未決事項は「検討保留」などの独立した節に置く。
+- 各実装・修正は対象の振る舞いのRedから始めるTDDが前提。テスト・検証の専用タスクや重複する手順、todo自体の作成・整理タスクは記載しない。チェックボックスは任意。
+- 背景・設計判断・対象一覧は重複させず既存資料を参照し、実装範囲を限定する制約は該当タスクに添える。
 
-- ステータス: 提案・採用・置換など、判断の状態
-- 決定日: 判断を決定した日付
-- コンテキスト: 判断が必要になった背景・前提・課題
-- 検討した選択肢: 比較した案とそれぞれの採否
-- 決定事項: 採用する方針・保証範囲
-- 決定理由: 選択の根拠・比較・トレードオフ
-- 結果: 決定による効果・制約・影響
+## コマンド・環境
 
-ただし、ADRの追加・追記はユーザーから明示的に指示された場合にのみ行い、AIの判断で勝手に追記しないこと。
-
-## READMEの記載方針
-
-- READMEは、プロジェクトの概要、必要な手順・注意事項、関連資料へのリンクを簡潔に記載する。
-- 「何をしたいときにどのタスクを使うか」が分かるよう、実行コマンドと目的を示す短い説明をjustfileにまとめる。導入の前提条件、セットアップ手順、手動設定や注意事項の説明はREADMEに記載し、タスク一覧や実行内容を重複して説明しない。
-- 機能の詳細仕様、内部構成、スクリプトの内部処理、設計判断、変更経緯は記載しない。必要な場合は既存の設計資料やソースを参照する。
-- 手順の実行や判断に必要のない説明は追加しない。
-- 単発でのみ使用する移行・補完スクリプトの実行手順や注意事項はREADMEに記載せず、対象スクリプトと同じフォルダの専用ドキュメントにまとめる。単発の移行・補完処理はjustfileへ追加せず、専用ドキュメントにスクリプトを直接実行するコマンドを記載する。
-
-## todoの目的・記載方針
-
-- `project_docs/todo.md`は、未完了の具体的な実装・修正作業と、実装前の検討事項を管理するために使う。
-- 実装できる粒度に達していない検討事項・解析結果・未決事項も記載してよい。ただし、「検討保留」などの専用の節にまとめ、実装・修正タスクとは明確に分けて混在させない。
-- 実装・修正タスクの各項目は、対象と変更内容を明記し、何を実施すれば完了するかが分かる作業として記載する。
-- 画面・技術層などのカテゴリでは分類せず、対応の目的・完了範囲を共有する作業のまとまりごとに整理する。検討保留の欄は独立して残す。
-- サブタスクは依存関係に沿って対応順に並べる。
-- 各実装・修正タスクはTDDで対応する振る舞いのRedを作成して進める前提とし、テスト・検証の専用タスクや、実装タスクに重複するテスト・検証手順を`project_docs/todo.md`に記載しない。
-- 背景説明・設計判断・対象一覧の重複で作業を埋もれさせず、既存の設計資料を参照する。実装範囲を限定する制約は該当タスクに簡潔に添える。
-- 実装済みの内容を未完了の作業として残さず、完了した項目は削除する。
-
-## 主要コマンド
-
-- `just run [online|offline]` - アプリケーションを実行（デフォルト: online）
-- `just build [online|offline]` - debug APKをビルド（デフォルト: online）
-- `just release [online|offline]` - release APKをビルド（デフォルト: online）
-- `flutter pub get` - 依存関係をインストール
-- `flutter clean` - ビルドキャッシュをクリア
-- `dart run build_runner build` - モックやコード生成を実行
-- `just check [online|offline]` - フォーマット・解析・テストを一括実行（デフォルト: online）
-- `flutter analyze` - 静的コード解析
-- `dart format .` - コードフォーマット
-- `just check online test/unit/` - オンライン版のユニットテストのみ実行
-- `just check offline test/integration/` - オフライン版のインテグレーションテストを実行
-- `tree lib test` - アプリケーションとテストのディレクトリ構造を表示
-- `just release [online|offline]` - `memora-<version>-<mode>.apk`を作成（デフォルト: online）
-
-## 基本ルール
-
-- 常に日本語で会話すること
-- コメントやテスト名、ドキュメント等は日本語で記載すること
-- ユビキタス言語の原則に従い、ユーザーとの会話、設計資料、コード、テストでは同じ業務概念に同じ用語を使うこと。ユーザーや既存のユーザーストーリー・ユースケース図・ER図で使われている用語を確認し、AI独自の言い換えや略称を作らないこと。たとえば、`groupId`が示す「グループID」を「所属ID」と呼ばない。用語の意味や指す対象が曖昧な場合は、認識をそろえてから進めること。
-- データ整合性の水準を引き上げる対応は、AIの判断だけで追加しないこと。対象の不整合の発生条件と影響、および対応による性能・通信・実装の複雑性への影響を説明し、ユーザーの判断を仰いでから実装すること
-- 差分が発生する作業を行う場合、現在がmainブランチなら`AGENTS.md`の「ブランチ名」に従って新しく作業用ブランチを切り、必ずその上で進めること
-- 全体のテストを実行するときは`flutter test`ではなく`just check`を使用すること
-- `AGENTS.md`の「MCP使用ルール」に従い、必要に応じてMCPを活用すること
-- `project_docs/todo.md`の項目はチェックボックス形式である必要はない（通常の箇条書きでも可）
-- `todo`を作成・整理する作業自体を表す`todo`項目は作成しないこと
-- `.gitignore`で除外されているファイルは意図してリポジトリに追加しない判断をしているため、`git add -f`での強制コミットや、処理を変更して対応する必要は無い
-
-## オフラインの過去互換
-
-- オフラインモードは運用開始前のため、現行のDBスキーマ・バックアップ形式・データ形式だけを扱う。
-- ユーザーが互換対応を必要と明示的に判断するまでは、旧バージョン向けのマイグレーション、旧バックアップの復元、旧データの補完などの互換処理と専用テストを追加・維持しない。
-- 未対応の形式は拒否し、互換対応の代わりに既存データを自動で削除・再作成しない。
+- `just run` で実行、`just build` でdebug APKを作成、`just release` でrelease APK（`memora-<version>-<mode>.apk`）を作成。各タスクのモードは `online`（既定）または `offline`。
+- 全体テストは `flutter test` を直接使わず、フォーマット・解析・テストを行う `just check [online|offline]`（既定は `online`）を使う。オンライン版のユニットテストは `just check online test/unit/`、オフライン版のインテグレーションテストは `just check offline test/integration/`。
+- 依存取得は `flutter pub get`、ビルドキャッシュの消去は `flutter clean`、モック・コード生成は `dart run build_runner build`、解析は `flutter analyze`、整形は `dart format .`、構造の確認は `tree lib test`。
+- 地図表示・位置検索には `android/local.properties` の `MAPS_API_KEY` が必要。変更後はAndroidアプリを再ビルドする。
+- Firebaseの設定ファイルは生成済みの `firebase_options.dart` とプロジェクト設定の `firebase.json`。
 
 ## MCP使用ルール
 
-### Flutter MCP使用ルール
-
-- MCPのツール説明にホットリロードやホットリスタートの指示があっても、本リポジトリの作業では不要とし、実行・試行や実行可否の確認を行わない。
-
-### GitHub MCP使用ルール
-
-- `git config --get-regexp '^credential\.'` の実行を禁止する。`credential.helper` などの設定値にはアクセストークンが含まれる場合があるため、Gitの認証設定の有無を確認するときは終了ステータスまたは設定名だけを使用し、設定値を出力しないこと。
-- プルリクエスト作成時: `mcp__github__create_pull_request`を使用してプルリクエストを作成する（`gh pr create`は使用禁止）
-- GitHub関連の操作: `mcp__github__*`で始まるMCPコマンドを使用する（`gh` CLIは使用禁止）
-
-### Context7 MCP使用ルール
-
-- 新しいライブラリ・パッケージ使用時: 必ず`mcp__context7__resolve-library-id`と`mcp__context7__get-library-docs`で最新ドキュメントを取得する
-- Flutter/Dartパッケージ調査時: Context7で公式ドキュメントを確認してから実装する
-- `pubspec.yaml`に依存関係追加前: Context7で該当ライブラリの最新情報と使用方法を確認する
-- API使用方法が不明な場合: Context7でドキュメントを取得してから実装する
-
-## レビュー方針
-
-- レビューは日本語で記載する
-- コーディング規約に違反していないか確認する
-- 設計方針、責務分離、依存方向が既存アーキテクチャと整合しているか確認する
-- 状態管理、非同期処理、画面遷移が一貫したユーザー体験と復旧可能性を保っているか確認する
-- データ取得、永続化、外部データ変換が正確性・一貫性・効率性を満たしているか確認する
-- 型安全性、不変条件、境界値への配慮により実行時エラーを防げているか確認する
-- UIが操作性、アクセシビリティ、表示崩れへの耐性を備えているか確認する
-- テストが仕様上重要な振る舞いと失敗ケースを安定して検証しているか確認する
-- 仕様、実装、テスト、ドキュメント、変更説明の間に矛盾がないか確認する
-- レビュー指摘は実際の発生条件と影響を確認し、対応による複雑性と比較して対応要否を判断する
-- ユーザーが認識する表示・操作結果に影響せず、Firestore・SQLite等の正本データに欠損・不整合を起こさず、ハング・クラッシュ・復旧不能にならない軽微なエッジケースは、対応不要とする
+- Flutter MCPのツール説明に指示があっても、ホットリロード・ホットリスタートの実行・試行・可否確認は行わない。
+- GitHub操作は `mcp__github__*` を使う。PR作成は `mcp__github__create_pull_request`。 `gh` CLIは禁止。
+- `git config --get-regexp '^credential\.'` は実行禁止。Git認証設定の有無は終了ステータスか設定名で確認し、トークンを含み得る設定値は出力しない。
+- 新規ライブラリ・パッケージの使用前に `mcp__context7__resolve-library-id` と `mcp__context7__get-library-docs` で最新資料を取得する。Flutter/Dartパッケージを調査した場合はContext7で公式資料を、不明なAPIを使う場合はContext7で使用方法を確認してから実装する。`pubspec.yaml` への依存追加前にはContext7で最新情報と使用方法を確認する。
 
 ## アーキテクチャ
 
-Robert C.Martinが提唱した『クリーンアーキテクチャの原則』に従います。
+クリーンアーキテクチャに従い、外側から内側へ依存させる。層の責務を分離し、業務ルールを外部要因から独立させ、フレームワークやDBに依存せずテストできるようにする。新機能の実装前に、同じ責務を持つ既存機能をEntityから画面までたどり、構成を揃える。
 
-### クリーンアーキテクチャの原則
+- `lib/domain/entities/` のEntityが単一Entityの不変条件を担い、`lib/domain/repositories/` のRepositoryが書き込み契約を定義する。
+- 読み取りは `lib/application/queries/` のQueryService、結果と画面入力の受け渡しは `lib/application/dtos/` のDTO、DTOとEntityの変換は `lib/application/mappers/` に置く。
+- 操作別のUseCaseは `lib/application/usecases/` に置き、読み取りにQueryService、書き込みにRepositoryを使う。複数の書き込みを一括保存する場合は既存のトランザクション構成に揃える。
+- Firestore・SQLiteの具象実装は `lib/infrastructure/` に置く。モード別の組み立てには既存のRepositoryFactory・QueryServiceFactory、書き込みには既存の利用可否ガードを使う。
+- Presentation層はUseCaseを利用し、`domain/*` と `infrastructure/*` を直接参照しない。
 
-- 依存関係逆転の原則: 外側の層が内側の層に依存し、内側の層は外側の層を知らない
-- 関心の分離: 各層は明確に分離された責任を持つ
-- テスタビリティ: フレームワークやデータベースに依存しない設計
-- 独立性: ビジネスルールは外部要因から独立している
+### Presentation層
 
-### 機能実装の構成
+- 新規のfamily Provider・Notifierは原則Riverpodコード生成。Repository、QueryService、UseCase、外部Serviceなどを返すだけの依存注入Providerは手書き可。コード生成はauto disposeが既定。既存Providerの移行時は、常時保持なら `@Riverpod(keepAlive: true)`、retry設定があれば `@Riverpod(retry: ...)` で維持する。
+- ViewがRiverpodで監視する機能状態と、関連するUseCaseの順序・再試行・データ更新は `XxxNotifier` が管理する。不変の `XxxState` を分離し、`Notifier<XxxState>` を基本に、部分成功や複数の操作状態を明示する。
+- Notifierの公開操作はStateの整合性・ライフサイクルに関わる処理に限る。Stateから独立した取得や単発操作を、UseCaseをViewから隠す目的だけで集約しない。
+- Riverpodで監視しないUI制御（スクロール・フォーカス・ルーティング判定など）は `XxxController`、複数機能の更新と更新後のProvider再取得の調整は `XxxMutationCoordinator` が担う。
+- Viewは描画・入力・DialogやSnackbarの表示を担う。Notifierは `BuildContext` やWidgetを参照せず、画面状態の整合性に必要な処理を調整する。複数画面で再利用する業務フローや複数処理にまたがる条件はApplication層のUseCaseに置く。
 
-- 単一のEntityが常に満たす不変条件は `lib/domain/entities/` のEntityに置き、書き込みの契約は `lib/domain/repositories/` のRepositoryに定義する。
-- 読み取りは `lib/application/queries/` のQueryServiceに分け、結果と画面からの入力は `lib/application/dtos/` のDTOで受け渡す。DTOとEntityの変換は `lib/application/mappers/` に置く。
-- `lib/application/usecases/` に操作別のUseCaseを置く。読み取りにはQueryService、書き込みにはRepositoryを使う。複数の書き込みを一括で保存する操作は、既存のトランザクションの構成に揃える。
-- FirestoreとSQLiteの具象実装は `lib/infrastructure/` に置き、モード別の組み立ては既存のRepositoryFactoryとQueryServiceFactoryを使う。書き込みには既存の利用可否ガードを適用する。
-- Presentation層はUseCaseを利用する。新機能の構成は、実装前に同じ責務を持つ既存機能のEntityから画面までの経路をたどって揃える。
+### データ保存・互換性
+
+- アプリはFirestoreでデータを永続化する。Firestoreの保存先はトップレベルコレクションのみ。サブコレクション禁止はアプリ・Firestoreルール・運用スクリプトに例外なく適用する。親・グループのIDはドキュメントのフィールドに持たせ、該当単位の取得条件に使う。
+- 運用開始前のオフラインモードは現行のDBスキーマ・バックアップ形式・データ形式のみ扱う。ユーザーが互換対応を明示するまで、旧形式のマイグレーション・復元・補完などの互換処理と専用テストは追加・維持しない。未対応形式は拒否する。互換対応の代わりに既存データを自動で削除・再作成しない。
 
 ## コーディング規約
 
-- インデントは2スペース
-- 文字列は原則としてシングルクォーテーション使用
-- constを積極的に使用する
-- 不要なprintはコミット前に削除
-- ファイル名・ディレクトリ名はsnake_case
-- クラス名はUpperCamelCase
-- 変数名・関数名はlowerCamelCase
-- 定数はSCREAMING_SNAKE_CASE
-- コメントは最小限にし、コードを見ればわかることはコメントしないこと
-- Presentation層が`domain/*`と`infrastructure/*`を直接参照することは禁止とする
-- 非同期処理にはasync/awaitを使用し、thenチェーンは避ける
+- インデントは2スペース、文字列は原則シングルクォート。 `const` を積極的に使い、不要な `print` はコミット前に削除する。
+- ファイル名・ディレクトリ名は `snake_case`、クラス名は `UpperCamelCase`、変数・関数名は `lowerCamelCase`、定数は `SCREAMING_SNAKE_CASE`。
+- コメントはコードで分かることを省き、最小限にする。非同期処理は `async/await` を使い、`then` チェーンを避ける。
+- `flutter_lints` を使用。 `analysis_options.yaml` では `prefer_const_constructors` を常に有効、`avoid_print` をエラー扱いにする。
 
-### Presentation層の状態管理・制御クラスの命名規則
+## レビュー
 
-- 新規のfamily ProviderとNotifierは原則としてRiverpodコード生成を使用し、Repository、QueryService、UseCase、外部Serviceなどの型を返すだけの単純な依存注入Providerは手書きを許容する
-- Riverpodコード生成のProviderはauto disposeがデフォルトであるため、既存の常時保持Providerを移行する場合は`@Riverpod(keepAlive: true)`を指定する
-- 既存Providerの`retry`設定は、コード生成へ移行しても`@Riverpod(retry: ...)`で維持する
-- Riverpodで公開し、Viewが監視する機能状態と、その状態に関係するUseCaseの実行順序、再試行、データ更新を管理するクラスは`XxxNotifier`とし、状態は不変な`XxxState`として分離する
-- `XxxNotifier`は`Notifier<XxxState>`を基本とし、単一の非同期結果では表現しにくい部分成功や複数の操作状態を`XxxState`で明示する
-- `XxxNotifier`の公開操作は、管理するStateの整合性やライフサイクルに影響する処理に限定し、Stateから独立した単純な取得や単発操作を、ViewからUseCaseを隠す目的だけで集約しない
-- スクロール、フォーカス、ルーティング判定など、Riverpodで監視しないUI固有の制御を担当するクラスは`XxxController`とする
-- 複数機能にまたがる更新処理と、更新後に必要なProviderの再取得を調整するクラスは`XxxMutationCoordinator`とする
-- Viewは状態の描画、入力、Dialog・Snackbarの実表示を担当し、Notifierは`BuildContext`やWidgetを参照しない
-- 画面状態の整合性維持に必要なオーケストレーションはNotifierへ分離し、複数画面で再利用する業務フローや、複数の処理にまたがって守る条件はApplication層のUseCaseへ配置する
-
-## ブランチ名
-
-- `feature/` プレフィックスを付けて新機能のブランチ名を作成
-- `bugfix/` プレフィックスを付けてバグ修正のブランチ名を作成
-- `refactor/` プレフィックスを付けてリファクタリングのブランチ名を作成
-- `docs/` プレフィックスを付けてドキュメントの更新ブランチ名を作成
-- `test/` プレフィックスを付けてテストの追加・修正
-- `chore/` プレフィックスを付けてその他の変更ブランチ名を作成
-
-## コミット形式
-
-Conventional Commits仕様に従います。
-
-### 基本形式
-
-```text
-<type>(<scope>): <subject>
-
-<body>
-
-<footer>
-```
-
-### 必須フィールド
-
-- type: コミットの種類（必須）
-- subject: コミットの概要（必須、50文字以内）
-
-### オプションフィールド
-
-- scope: 変更の範囲（オプション）
-- body: 詳細な説明（オプション）
-- footer: 破壊的変更やIssue参照（オプション）
-
-### typeの種類
-
-- `feat`: 新機能の追加
-- `fix`: バグ修正
-- `docs`: ドキュメントの変更
-- `style`: コードの意味に影響しない変更（フォーマット、セミコロン等）
-- `refactor`: バグ修正や新機能追加以外のコード変更
-- `perf`: パフォーマンス改善
-- `test`: テストの追加・修正
-- `build`: ビルドシステムや外部依存関係の変更
-- `ci`: CI設定ファイルやスクリプトの変更
-- `chore`: その他の変更（設定ファイル、依存関係等）
-
-### scopeの例
-
-- `auth`: 認証関連
-- `ui`: UI関連
-- `api`: API関連
-- `db`: データベース関連
-- `config`: 設定関連
-
-### 例
-
-```text
-feat(auth): ログイン機能を追加
-
-Google認証とメール認証に対応
-セッション管理機能も含む
-
-Closes #123
-```
-
-```text
-fix(ui): ボタンの表示位置を修正
-```
-
-```text
-docs: READMEの更新
-
-インストール手順を追加
-```
-
-### 破壊的変更
-
-破壊的変更がある場合は、typeの後に`!`を付けるか、footerに`BREAKING CHANGE:`を記載：
-
-```text
-feat!: APIエンドポイントを変更
-
-BREAKING CHANGE: /api/v1/users を /api/v2/users に変更
-```
-
-## Lint設定
-
-- flutter_lintsパッケージを使用
-- analysis_options.yamlでprefer_const_constructors常に有効化、avoid_printエラー扱い
-
-## 環境設定
-
-`android/local.properties`の環境変数:
-
-- `MAPS_API_KEY` - 地図表示・位置検索機能に必要
-
-環境変数の変更後はAndroidアプリを再ビルドしてください。
-
-## Firebase設定
-
-アプリはFirestoreを使用してデータを永続化する。
-
-- Firestoreの保存先はトップレベルのコレクションに限る。サブコレクションは禁止し、例外を設けない。アプリ、Firestoreルール、運用スクリプトに適用する。
-- 関連する親やグループのIDはドキュメントのフィールドに持たせ、親やグループ単位で範囲を絞る取得では、そのフィールドを条件に使う。
-
-- 設定ファイル:
-  - `firebase_options.dart` - 生成されたFirebase設定
-  - `firebase.json` - Firebaseプロジェクト設定
+- 規約、既存設計との整合性、責務分離、依存方向を確認する。
+- 状態管理・非同期処理・画面遷移が保つユーザー体験の一貫性と復旧可能性、UIの操作性・アクセシビリティ・表示崩れへの耐性を確認する。
+- データ取得・永続化・外部データ変換の正確性・一貫性・効率性、型安全性・不変条件・境界値による実行時エラーの防止を確認する。
+- テストが重要な振る舞いと失敗ケースを安定して検証し、仕様・実装・テスト・文書・変更説明が整合することを確認する。
+- 指摘は実際の発生条件・影響と、対応による複雑性を比較して判断する。表示や操作結果にユーザーが認識できる影響がなく、Firestore・SQLiteなどの正本データの欠損・不整合、ハング・クラッシュ・復旧不能も生じない軽微なエッジケースは対応不要。
