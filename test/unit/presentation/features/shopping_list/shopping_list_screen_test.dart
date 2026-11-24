@@ -237,6 +237,73 @@ void main() {
     expect(find.text('牛乳'), findsNothing);
   });
 
+  testWidgets('追加履歴と購入済み履歴のそれぞれから選んだ品物を確認して削除できる', (tester) async {
+    final group = app.groupsWithMembers.first;
+    final item = ShoppingListItem(
+      id: 'milk',
+      name: '牛乳',
+      version: 1,
+      lastAddedAt: app.fixedNow,
+      purchasedAt: app.fixedNow,
+      purchasedQuantity: '2本',
+    );
+    final list = MockShoppingList();
+    var hasAddition = true;
+    when(list.watchPending(group.id)).thenAnswer((_) => Stream.value([]));
+    when(list.additions(group.id))
+        .thenAnswer((_) async => hasAddition ? [item] : []);
+    when(list.purchases(group.id)).thenAnswer((_) async => [item]);
+    when(list.deleteAddition(group.id, item)).thenAnswer((_) async {
+      hasAddition = false;
+    });
+    when(list.deletePurchase(group.id, item)).thenAnswer((_) async {});
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          ...app.createTopPageTestOverrides(
+            initialLocation: '/shopping-list',
+            availableGroupsWithMembers: [group],
+          ),
+          shoppingListProvider.overrideWithValue(list),
+        ],
+        child: Consumer(
+          builder: (context, ref, _) => MaterialApp.router(
+            routerConfig: ref.watch(appRouterConfigProvider),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('追加履歴から選ぶ'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('追加履歴から削除'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, '削除'));
+    await tester.pumpAndSettle();
+    expect(find.text('追加履歴がありません'), findsOneWidget);
+    verify(list.deleteAddition(group.id, item)).called(1);
+    verifyNever(list.deletePurchase(group.id, item));
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('購入済み履歴'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('購入済み履歴から削除'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('キャンセル'));
+    await tester.pumpAndSettle();
+    expect(find.text('牛乳'), findsOneWidget);
+    verifyNever(list.deletePurchase(group.id, item));
+
+    await tester.tap(find.byTooltip('購入済み履歴から削除'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, '削除'));
+    await tester.pumpAndSettle();
+    expect(find.text('購入済み履歴がありません'), findsOneWidget);
+    verify(list.deletePurchase(group.id, item)).called(1);
+  });
+
   testWidgets('チェックの保存に失敗した品物は残り、再試行後は元に戻せる', (tester) async {
     final group = app.groupsWithMembers.first;
     const item = ShoppingListItem(
