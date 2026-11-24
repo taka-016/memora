@@ -95,7 +95,7 @@ void main() {
 
   for (final isPurchase in [false, true]) {
     final title = isPurchase ? '購入済み履歴' : '追加履歴';
-    testWidgets('$titleは画面の一部に収まり、一覧だけスクロールできる', (tester) async {
+    testWidgets('$titleはそれぞれの高さで一覧だけスクロールできる', (tester) async {
       await openShoppingList(tester);
       await tester.tap(find.text(isPurchase ? title : '追加履歴から選ぶ'));
       await tester.pumpAndSettle();
@@ -108,7 +108,11 @@ void main() {
       final headingPosition = tester.getTopLeft(heading);
       final historyHeight =
           tester.getBottomLeft(scroll).dy - headingPosition.dy;
-      expect(historyHeight, lessThan(640 * 0.7));
+      if (isPurchase) {
+        expect(historyHeight, greaterThan(640 * 0.6));
+      } else {
+        expect(historyHeight, lessThan(640 * 0.7));
+      }
 
       await tester.drag(scroll, const Offset(0, -200));
       await tester.pumpAndSettle();
