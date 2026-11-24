@@ -140,6 +140,8 @@ class _ShoppingAdditionsDialog extends HookWidget {
         const BoxConstraints(minWidth: 280);
     return SimpleDialog(
       title: const Text('追加履歴'),
+      titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
+      contentPadding: const EdgeInsets.only(bottom: 16),
       constraints: dialogConstraints.enforce(
         BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.6),
       ),
