@@ -173,73 +173,57 @@ class _ShoppingGroupList extends ConsumerWidget {
                   ),
                 ),
               ),
-              Expanded(
-                child: CustomScrollView(
-                  slivers: [
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Wrap(
-                          alignment: WrapAlignment.spaceBetween,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          children: [
-                            Text(
-                              '買い物リスト',
-                              style: Theme.of(context).textTheme.titleLarge,
-                            ),
-                            TextButton.icon(
-                              onPressed: () =>
-                                  showShoppingPurchaseHistory(context, groupId),
-                              icon: const Icon(Icons.history),
-                              label: const Text('購入済み履歴'),
-                            ),
-                          ],
-                        ),
-                      ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text(
+                      '買い物リスト',
+                      style: Theme.of(context).textTheme.titleLarge,
                     ),
-                    SliverToBoxAdapter(
-                      child: ShoppingItemAddForm(groupId: groupId),
-                    ),
-                    items.when(
-                      data: (items) => items.isEmpty
-                          ? const SliverFillRemaining(
-                              hasScrollBody: false,
-                              child: Center(child: Text('購入が必要な品物はありません')),
-                            )
-                          : SliverList.builder(
-                              itemCount: items.length,
-                              findChildIndexCallback: (key) {
-                                final id = (key as ValueKey<String>).value;
-                                final index = items.indexWhere(
-                                  (item) => item.id == id,
-                                );
-                                return index < 0 ? null : index;
-                              },
-                              itemBuilder: (_, index) {
-                                final item = items[index];
-                                return ShoppingListRow(
-                                  key: ValueKey(item.id),
-                                  groupId: groupId,
-                                  item: item,
-                                  isChecking: checking.contains(item.id),
-                                  onCheck: (current) =>
-                                      _check(context, ref, current),
-                                );
-                              },
-                            ),
-                      loading: () => const SliverFillRemaining(
-                        hasScrollBody: false,
-                        child: Center(child: CircularProgressIndicator()),
-                      ),
-                      error: (_, _) => SliverFillRemaining(
-                        hasScrollBody: false,
-                        child: ShoppingListRetry(
-                          message: '買い物リストを読み込めませんでした。',
-                          onRetry: () => ref.invalidate(provider),
-                        ),
-                      ),
+                    TextButton.icon(
+                      onPressed: () =>
+                          showShoppingPurchaseHistory(context, groupId),
+                      icon: const Icon(Icons.history),
+                      label: const Text('購入済み履歴'),
                     ),
                   ],
+                ),
+              ),
+              ShoppingItemAddForm(groupId: groupId),
+              Expanded(
+                child: items.when(
+                  data: (items) => items.isEmpty
+                      ? const Center(child: Text('購入が必要な品物はありません'))
+                      : ListView.builder(
+                          itemCount: items.length,
+                          findChildIndexCallback: (key) {
+                            final id = (key as ValueKey<String>).value;
+                            final index = items.indexWhere(
+                              (item) => item.id == id,
+                            );
+                            return index < 0 ? null : index;
+                          },
+                          itemBuilder: (_, index) {
+                            final item = items[index];
+                            return ShoppingListRow(
+                              key: ValueKey(item.id),
+                              groupId: groupId,
+                              item: item,
+                              isChecking: checking.contains(item.id),
+                              onCheck: (current) =>
+                                  _check(context, ref, current),
+                            );
+                          },
+                        ),
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                  error: (_, _) => ShoppingListRetry(
+                    message: '買い物リストを読み込めませんでした。',
+                    onRetry: () => ref.invalidate(provider),
+                  ),
                 ),
               ),
             ],

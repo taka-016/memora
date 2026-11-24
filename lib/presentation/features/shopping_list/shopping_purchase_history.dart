@@ -12,8 +12,10 @@ Future<void> showShoppingPurchaseHistory(
   isScrollControlled: true,
   useSafeArea: true,
   showDragHandle: true,
-  builder: (_) => FractionallySizedBox(
-    heightFactor: 0.85,
+  builder: (context) => ConstrainedBox(
+    constraints: BoxConstraints(
+      maxHeight: MediaQuery.sizeOf(context).height * 0.6,
+    ),
     child: _ShoppingPurchaseHistory(groupId: groupId),
   ),
 );
@@ -31,6 +33,7 @@ class _ShoppingPurchaseHistory extends ConsumerWidget {
     return SafeArea(
       top: false,
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Padding(
             padding: const EdgeInsetsDirectional.only(start: 16, end: 8),
@@ -50,16 +53,25 @@ class _ShoppingPurchaseHistory extends ConsumerWidget {
               ],
             ),
           ),
-          Expanded(
+          Flexible(
             child: history.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => const Padding(
+                padding: EdgeInsets.all(16),
+                child: Center(
+                  heightFactor: 1,
+                  child: CircularProgressIndicator(),
+                ),
+              ),
               error: (_, _) => ShoppingListRetry(
                 message: '購入済み履歴を読み込めませんでした。',
                 onRetry: () => ref.invalidate(provider),
               ),
               data: (data) {
                 if (data.items.isEmpty && data.nextCursor == null) {
-                  return const Center(child: Text('購入済み履歴がありません'));
+                  return const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Center(heightFactor: 1, child: Text('購入済み履歴がありません')),
+                  );
                 }
                 final notifier = ref.read(provider.notifier);
                 return NotificationListener<ScrollEndNotification>(
@@ -72,6 +84,7 @@ class _ShoppingPurchaseHistory extends ConsumerWidget {
                     return false;
                   },
                   child: ListView.builder(
+                    shrinkWrap: true,
                     itemCount:
                         data.items.length + (data.nextCursor != null ? 1 : 0),
                     itemBuilder: (context, index) {

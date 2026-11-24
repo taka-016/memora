@@ -135,8 +135,14 @@ class _ShoppingAdditionsDialog extends HookWidget {
   Widget build(BuildContext context) {
     final retry = useState(0);
     final history = useFuture(useMemoized(load, [retry.value]));
+    final dialogConstraints =
+        DialogTheme.of(context).constraints ??
+        const BoxConstraints(minWidth: 280);
     return SimpleDialog(
       title: const Text('追加履歴'),
+      constraints: dialogConstraints.enforce(
+        BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.6),
+      ),
       children: [
         if (history.connectionState != ConnectionState.done)
           const Center(child: CircularProgressIndicator())
