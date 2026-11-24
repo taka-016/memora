@@ -254,6 +254,10 @@ BREAKING CHANGE: /api/v1/users を /api/v2/users に変更
 
 アプリはFirestoreを使用してデータを永続化する。
 
+- Firestoreの保存先はトップレベルのコレクションに限る。サブコレクションは禁止し、例外を設けない。
+- 親子関係やグループとの関連は、親のIDやグループIDをドキュメントのフィールドに持たせて表す。この方針はアプリ、Firestoreルール、運用スクリプトに適用する。
+- 設計判断は[ADR-014](project_docs/adr/adr-014-firestore-top-level-collections.md)を参照する。
+
 - 設定ファイル:
   - `firebase_options.dart` - 生成されたFirebase設定
   - `firebase.json` - Firebaseプロジェクト設定
