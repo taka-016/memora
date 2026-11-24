@@ -11,7 +11,7 @@ extension TopPageNavigationTests on TopPageTestContext {
       expect(navigation.items.map((item) => item.label), [
         '年表',
         'カレンダー',
-        '買い物リスト',
+        '買い物',
         '地図',
         'メンバー',
       ]);
@@ -30,7 +30,7 @@ extension TopPageNavigationTests on TopPageTestContext {
     testWidgets('カレンダーの横から買い物リストの所属グループを選べる', (tester) async {
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
-      await tester.tap(find.text('買い物リスト'));
+      await tester.tap(find.text('買い物'));
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('shopping_list_groups')), findsOneWidget);
     });
