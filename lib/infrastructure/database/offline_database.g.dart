@@ -8526,6 +8526,422 @@ class DeletedGroupsCompanion extends UpdateCompanion<SqliteDeletedGroupRow> {
   }
 }
 
+class ShoppingListItems extends Table
+    with TableInfo<ShoppingListItems, ShoppingListItem> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  ShoppingListItems(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL PRIMARY KEY',
+  );
+  static const VerificationMeta _groupIdMeta = const VerificationMeta(
+    'groupId',
+  );
+  late final GeneratedColumn<String> groupId = GeneratedColumn<String>(
+    'group_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL CHECK (length(trim(name)) > 0)',
+  );
+  static const VerificationMeta _quantityMeta = const VerificationMeta(
+    'quantity',
+  );
+  late final GeneratedColumn<String> quantity = GeneratedColumn<String>(
+    'quantity',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: 'NOT NULL DEFAULT \'\'',
+    defaultValue: const CustomExpression('\'\''),
+  );
+  static const VerificationMeta _purchasedAtMeta = const VerificationMeta(
+    'purchasedAt',
+  );
+  late final GeneratedColumn<int> purchasedAt = GeneratedColumn<int>(
+    'purchased_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  static const VerificationMeta _versionMeta = const VerificationMeta(
+    'version',
+  );
+  late final GeneratedColumn<int> version = GeneratedColumn<int>(
+    'version',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL CHECK (version >= 1)',
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    groupId,
+    name,
+    quantity,
+    purchasedAt,
+    version,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'shopping_list_items';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ShoppingListItem> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('group_id')) {
+      context.handle(
+        _groupIdMeta,
+        groupId.isAcceptableOrUnknown(data['group_id']!, _groupIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_groupIdMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('quantity')) {
+      context.handle(
+        _quantityMeta,
+        quantity.isAcceptableOrUnknown(data['quantity']!, _quantityMeta),
+      );
+    }
+    if (data.containsKey('purchased_at')) {
+      context.handle(
+        _purchasedAtMeta,
+        purchasedAt.isAcceptableOrUnknown(
+          data['purchased_at']!,
+          _purchasedAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('version')) {
+      context.handle(
+        _versionMeta,
+        version.isAcceptableOrUnknown(data['version']!, _versionMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_versionMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ShoppingListItem map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ShoppingListItem(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      groupId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}group_id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      quantity: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}quantity'],
+      )!,
+      purchasedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}purchased_at'],
+      ),
+      version: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}version'],
+      )!,
+    );
+  }
+
+  @override
+  ShoppingListItems createAlias(String alias) {
+    return ShoppingListItems(attachedDatabase, alias);
+  }
+
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class ShoppingListItem extends DataClass
+    implements Insertable<ShoppingListItem> {
+  final String id;
+  final String groupId;
+  final String name;
+  final String quantity;
+  final int? purchasedAt;
+  final int version;
+  const ShoppingListItem({
+    required this.id,
+    required this.groupId,
+    required this.name,
+    required this.quantity,
+    this.purchasedAt,
+    required this.version,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['group_id'] = Variable<String>(groupId);
+    map['name'] = Variable<String>(name);
+    map['quantity'] = Variable<String>(quantity);
+    if (!nullToAbsent || purchasedAt != null) {
+      map['purchased_at'] = Variable<int>(purchasedAt);
+    }
+    map['version'] = Variable<int>(version);
+    return map;
+  }
+
+  ShoppingListItemsCompanion toCompanion(bool nullToAbsent) {
+    return ShoppingListItemsCompanion(
+      id: Value(id),
+      groupId: Value(groupId),
+      name: Value(name),
+      quantity: Value(quantity),
+      purchasedAt: purchasedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(purchasedAt),
+      version: Value(version),
+    );
+  }
+
+  factory ShoppingListItem.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ShoppingListItem(
+      id: serializer.fromJson<String>(json['id']),
+      groupId: serializer.fromJson<String>(json['group_id']),
+      name: serializer.fromJson<String>(json['name']),
+      quantity: serializer.fromJson<String>(json['quantity']),
+      purchasedAt: serializer.fromJson<int?>(json['purchased_at']),
+      version: serializer.fromJson<int>(json['version']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'group_id': serializer.toJson<String>(groupId),
+      'name': serializer.toJson<String>(name),
+      'quantity': serializer.toJson<String>(quantity),
+      'purchased_at': serializer.toJson<int?>(purchasedAt),
+      'version': serializer.toJson<int>(version),
+    };
+  }
+
+  ShoppingListItem copyWith({
+    String? id,
+    String? groupId,
+    String? name,
+    String? quantity,
+    Value<int?> purchasedAt = const Value.absent(),
+    int? version,
+  }) => ShoppingListItem(
+    id: id ?? this.id,
+    groupId: groupId ?? this.groupId,
+    name: name ?? this.name,
+    quantity: quantity ?? this.quantity,
+    purchasedAt: purchasedAt.present ? purchasedAt.value : this.purchasedAt,
+    version: version ?? this.version,
+  );
+  ShoppingListItem copyWithCompanion(ShoppingListItemsCompanion data) {
+    return ShoppingListItem(
+      id: data.id.present ? data.id.value : this.id,
+      groupId: data.groupId.present ? data.groupId.value : this.groupId,
+      name: data.name.present ? data.name.value : this.name,
+      quantity: data.quantity.present ? data.quantity.value : this.quantity,
+      purchasedAt: data.purchasedAt.present
+          ? data.purchasedAt.value
+          : this.purchasedAt,
+      version: data.version.present ? data.version.value : this.version,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ShoppingListItem(')
+          ..write('id: $id, ')
+          ..write('groupId: $groupId, ')
+          ..write('name: $name, ')
+          ..write('quantity: $quantity, ')
+          ..write('purchasedAt: $purchasedAt, ')
+          ..write('version: $version')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, groupId, name, quantity, purchasedAt, version);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ShoppingListItem &&
+          other.id == this.id &&
+          other.groupId == this.groupId &&
+          other.name == this.name &&
+          other.quantity == this.quantity &&
+          other.purchasedAt == this.purchasedAt &&
+          other.version == this.version);
+}
+
+class ShoppingListItemsCompanion extends UpdateCompanion<ShoppingListItem> {
+  final Value<String> id;
+  final Value<String> groupId;
+  final Value<String> name;
+  final Value<String> quantity;
+  final Value<int?> purchasedAt;
+  final Value<int> version;
+  final Value<int> rowid;
+  const ShoppingListItemsCompanion({
+    this.id = const Value.absent(),
+    this.groupId = const Value.absent(),
+    this.name = const Value.absent(),
+    this.quantity = const Value.absent(),
+    this.purchasedAt = const Value.absent(),
+    this.version = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ShoppingListItemsCompanion.insert({
+    required String id,
+    required String groupId,
+    required String name,
+    this.quantity = const Value.absent(),
+    this.purchasedAt = const Value.absent(),
+    required int version,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       groupId = Value(groupId),
+       name = Value(name),
+       version = Value(version);
+  static Insertable<ShoppingListItem> custom({
+    Expression<String>? id,
+    Expression<String>? groupId,
+    Expression<String>? name,
+    Expression<String>? quantity,
+    Expression<int>? purchasedAt,
+    Expression<int>? version,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (groupId != null) 'group_id': groupId,
+      if (name != null) 'name': name,
+      if (quantity != null) 'quantity': quantity,
+      if (purchasedAt != null) 'purchased_at': purchasedAt,
+      if (version != null) 'version': version,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ShoppingListItemsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? groupId,
+    Value<String>? name,
+    Value<String>? quantity,
+    Value<int?>? purchasedAt,
+    Value<int>? version,
+    Value<int>? rowid,
+  }) {
+    return ShoppingListItemsCompanion(
+      id: id ?? this.id,
+      groupId: groupId ?? this.groupId,
+      name: name ?? this.name,
+      quantity: quantity ?? this.quantity,
+      purchasedAt: purchasedAt ?? this.purchasedAt,
+      version: version ?? this.version,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (groupId.present) {
+      map['group_id'] = Variable<String>(groupId.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (quantity.present) {
+      map['quantity'] = Variable<String>(quantity.value);
+    }
+    if (purchasedAt.present) {
+      map['purchased_at'] = Variable<int>(purchasedAt.value);
+    }
+    if (version.present) {
+      map['version'] = Variable<int>(version.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ShoppingListItemsCompanion(')
+          ..write('id: $id, ')
+          ..write('groupId: $groupId, ')
+          ..write('name: $name, ')
+          ..write('quantity: $quantity, ')
+          ..write('purchasedAt: $purchasedAt, ')
+          ..write('version: $version, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$OfflineDatabase extends GeneratedDatabase {
   _$OfflineDatabase(QueryExecutor e) : super(e);
   late final Members members = Members(this);
@@ -8625,6 +9041,11 @@ abstract class _$OfflineDatabase extends GeneratedDatabase {
   );
   late final DeletedMembers deletedMembers = DeletedMembers(this);
   late final DeletedGroups deletedGroups = DeletedGroups(this);
+  late final ShoppingListItems shoppingListItems = ShoppingListItems(this);
+  late final Index shoppingListPurchaseHistory = Index(
+    'shopping_list_purchase_history',
+    'CREATE INDEX shopping_list_purchase_history ON shopping_list_items (group_id, purchased_at DESC, id DESC)',
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -8666,6 +9087,8 @@ abstract class _$OfflineDatabase extends GeneratedDatabase {
     calendarOverridesGroupPeriodIdx,
     deletedMembers,
     deletedGroups,
+    shoppingListItems,
+    shoppingListPurchaseHistory,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
