@@ -178,7 +178,7 @@ void main() {
         '年表',
         'カレンダー',
         '買い物リスト',
-        'メンバー',
+        '管理',
       ]);
       await tester.tap(find.byKey(const Key('hamburger_menu')));
       await tester.pump();

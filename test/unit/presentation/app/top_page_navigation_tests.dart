@@ -13,7 +13,7 @@ extension TopPageNavigationTests on TopPageTestContext {
         'カレンダー',
         '買い物リスト',
         '地図',
-        'メンバー',
+        '管理',
       ]);
       expect(navigation.showSelectedLabels, isTrue);
       expect(navigation.showUnselectedLabels, isTrue);
