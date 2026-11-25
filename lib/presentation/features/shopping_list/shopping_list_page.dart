@@ -62,7 +62,9 @@ class ShoppingListPage extends HookConsumerWidget {
             title: const Text('買い物リスト'),
             subtitle: Text(groupName),
             trailing: TextButton(
-              onPressed: () => _showHistory(context, groupId),
+              onPressed: state.saving
+                  ? null
+                  : () => _showHistory(context, groupId),
               child: const Text('購入履歴'),
             ),
           ),
@@ -112,6 +114,12 @@ class ShoppingListPage extends HookConsumerWidget {
                       keyboardDismissBehavior:
                           ScrollViewKeyboardDismissBehavior.onDrag,
                       itemCount: items.length,
+                      findChildIndexCallback: (key) {
+                        final index = items.indexWhere(
+                          (item) => ValueKey(item.id) == key,
+                        );
+                        return index < 0 ? null : index;
+                      },
                       itemBuilder: (_, index) {
                         final item = items[index];
                         return _ShoppingItemRow(
@@ -473,12 +481,19 @@ class _ShoppingHistory extends HookConsumerWidget {
                               ? null
                               : () async {
                                   final existing = state.unchecked.requireValue
-                                      .where((entry) => entry.name == item.name)
+                                      .where(
+                                        (entry) =>
+                                            entry.id == item.id &&
+                                            entry.name == item.name,
+                                      )
                                       .firstOrNull;
                                   final saved = existing == null
                                       ? await _save(
                                           context,
-                                          () => notifier.add(item.name, ''),
+                                          () => notifier.registerFromHistory(
+                                            item,
+                                          ),
+                                          retry: false,
                                           modal: true,
                                         )
                                       : await _editExistingQuantity(
@@ -492,8 +507,9 @@ class _ShoppingHistory extends HookConsumerWidget {
                                     if (existing == null) {
                                       message.value =
                                           '${item.name}を買い物リストに追加しました';
+                                    } else {
+                                      await notifier.loadHistory(refresh: true);
                                     }
-                                    await notifier.loadHistory(refresh: true);
                                   }
                                 },
                           child: const Text('再登録'),
@@ -511,6 +527,7 @@ class _ShoppingHistory extends HookConsumerWidget {
                                     await _save(
                                       context,
                                       () => notifier.deleteHistory(item),
+                                      retry: false,
                                       modal: true,
                                     );
                                   }

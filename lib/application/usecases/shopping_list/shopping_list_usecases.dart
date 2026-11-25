@@ -37,6 +37,11 @@ class AddShoppingItemUseCase {
           quantity: quantity,
         ),
       );
+
+  Future<void> registerFromHistory(ShoppingListItemDto item) {
+    final expected = ShoppingListItemMapper.toEntity(item);
+    return _repository.update(expected, expected.register(''));
+  }
 }
 
 class EditShoppingItemUseCase {

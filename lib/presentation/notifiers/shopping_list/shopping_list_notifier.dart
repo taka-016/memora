@@ -75,9 +75,13 @@ class ShoppingListNotifier extends _$ShoppingListNotifier {
           .read(getShoppingHistoryUseCaseProvider)
           .execute(groupId, after: previous.next);
       if (generation != _historyGeneration) return;
+      final receivedIds = page.items.map((item) => item.id).toSet();
       state = state.copyWith(
         history: ShoppingHistoryState(
-          items: List.unmodifiable([...previous.items, ...page.items]),
+          items: List.unmodifiable([
+            ...previous.items.where((item) => !receivedIds.contains(item.id)),
+            ...page.items,
+          ]),
           next: page.next,
         ),
       );
@@ -133,8 +137,22 @@ class ShoppingListNotifier extends _$ShoppingListNotifier {
         .execute(item, previousPurchase),
   );
 
-  Future<void> deleteHistory(ShoppingListItemDto item) => _save(() async {
-    await ref.read(deleteShoppingHistoryUseCaseProvider).execute(item);
-    if (ref.mounted) await loadHistory(refresh: true);
-  });
+  Future<void> registerFromHistory(ShoppingListItemDto item) =>
+      _saveHistoryChange(
+        () =>
+            ref.read(addShoppingItemUseCaseProvider).registerFromHistory(item),
+      );
+
+  Future<void> deleteHistory(ShoppingListItemDto item) => _saveHistoryChange(
+    () => ref.read(deleteShoppingHistoryUseCaseProvider).execute(item),
+  );
+
+  Future<void> _saveHistoryChange(Future<void> Function() save) =>
+      _save(() async {
+        try {
+          await save();
+        } finally {
+          if (ref.mounted) await loadHistory(refresh: true);
+        }
+      });
 }
