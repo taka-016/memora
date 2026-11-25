@@ -63,8 +63,6 @@ ssh -i ssh_keys/memora_ed25519 -p 2222 root@localhost
 cd /workspaces/memora
 ```
 
-Codex CLIで2つのChatGPTアカウントを使う場合は、2つ目のアカウントで初回に `codex-alt login --device-auth` を実行します。以降は `codex` と `codex-alt` で使い分けます。ログイン情報はDockerボリュームに保存され、コンテナ再作成後も利用できます。会話の再開には、その会話を作成したアカウントを使ってください。
-
 ### 紹介ページ・ポリシーの公開
 
 紹介ページ、プライバシーポリシー、利用規約は`docs/`の静的ページです。開発用の設計資料やtodoは`project_docs/`に置き、公開対象に含めません。運営者名・問い合わせ先・情報の取扱いが実際の運用と一致することを確認してから公開してください。
