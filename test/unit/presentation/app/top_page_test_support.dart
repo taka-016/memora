@@ -1,3 +1,8 @@
+import 'package:memora/application/dtos/shopping_list_item_dto.dart';
+import 'package:memora/application/queries/shopping_list_query_service.dart';
+import 'package:memora/application/usecases/shopping_list/shopping_list_usecases.dart';
+import 'package:memora/composition_root/providers/shopping_list_providers.dart';
+import 'package:memora/presentation/features/shopping_list/shopping_list_page.dart';
 import 'package:memora/infrastructure/time/fixed_app_clock.dart';
 import 'package:memora/composition_root/providers/location_providers.dart';
 import 'package:memora/presentation/shared/map_views/placeholder_map_view_builder.dart';
@@ -501,6 +506,9 @@ class TopPageTestContext {
         FakeCurrentMemberNotifier.loaded(currentMember ?? defaultMember);
 
     return [
+      watchUncheckedShoppingItemsUseCaseProvider.overrideWithValue(
+        const WatchUncheckedShoppingItemsUseCase(_EmptyShoppingListQuery()),
+      ),
       appClockProvider.overrideWithValue(FixedAppClock(fixedNow)),
       authNotifierProvider.overrideWith(
         () => authNotifier ?? FakeAuthNotifier.authenticated(),
@@ -630,4 +638,27 @@ class TopPageTestContext {
       ),
     ).thenAnswer((_) async => List<GroupDto>.of(groups));
   }
+}
+
+Future<void> selectMemberMenuItem(WidgetTester tester, String label) async {
+  await tester.tap(find.byIcon(Icons.people));
+  await tester.pumpAndSettle();
+  await tester.tap(
+    find.widgetWithText(PopupMenuItem<AppNavigationItem>, label),
+  );
+  await tester.pumpAndSettle();
+}
+
+class _EmptyShoppingListQuery implements ShoppingListQueryService {
+  const _EmptyShoppingListQuery();
+
+  @override
+  Stream<List<ShoppingListItemDto>> watchUnchecked(String groupId) =>
+      Stream.value([]);
+
+  @override
+  Future<ShoppingHistoryPage> getHistory(
+    String groupId, {
+    ShoppingHistoryCursor? after,
+  }) => throw UnimplementedError();
 }

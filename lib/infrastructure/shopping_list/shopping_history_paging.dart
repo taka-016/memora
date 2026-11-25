@@ -12,16 +12,17 @@ Future<ShoppingHistoryPage> readShoppingHistoryPage(
   while (true) {
     final batch = await readBatch(position);
     for (final item in batch) {
-      if (names.contains(item.name)) continue;
-      if (items.length == shoppingHistoryPageSize) {
-        return (items: items, next: ShoppingHistoryCursor(items.last, names));
+      if (!names.contains(item.name)) {
+        if (items.length == shoppingHistoryPageSize) {
+          return (items: items, next: ShoppingHistoryCursor(position!, names));
+        }
+        names.add(item.name);
+        items.add(item);
       }
-      names.add(item.name);
-      items.add(item);
+      position = item;
     }
     if (batch.length < shoppingHistoryPageSize) {
       return (items: items, next: null);
     }
-    position = batch.last;
   }
 }

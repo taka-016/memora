@@ -1,3 +1,5 @@
+import 'package:memora/presentation/features/shopping_list/shopping_list_group_selection.dart';
+import 'package:memora/presentation/features/shopping_list/shopping_list_page.dart';
 import 'package:memora/presentation/features/calendar/calendar_event_input_page.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_group_settings_notifier.dart';
 import 'package:memora/composition_root/providers/app_providers.dart';
@@ -28,6 +30,7 @@ List<RouteBase> get appRoutes => $appRoutes;
 enum AppNavigationItem {
   groupTimeline,
   calendar,
+  shoppingList,
   map,
   memberManagement,
   groupManagement,
@@ -49,6 +52,10 @@ AppNavigationItem appNavigationItemForLocation(String location) {
   if (location == const CalendarRoute().location ||
       location.startsWith('${const CalendarRoute().location}/')) {
     return AppNavigationItem.calendar;
+  }
+  if (location == const ShoppingListGroupsRoute().location ||
+      location.startsWith('${const ShoppingListGroupsRoute().location}/')) {
+    return AppNavigationItem.shoppingList;
   }
   if (location == const MapRoute().location) {
     return AppNavigationItem.map;
@@ -127,6 +134,10 @@ class MemberSetupRoute extends GoRouteData with $MemberSetupRoute {
       ],
     ),
     TypedGoRoute<CalendarRoute>(path: '/calendar'),
+    TypedGoRoute<ShoppingListGroupsRoute>(
+      path: '/shopping-list',
+      routes: [TypedGoRoute<ShoppingListRoute>(path: ':groupId')],
+    ),
     TypedGoRoute<MapRoute>(path: '/map'),
     TypedGoRoute<MemberManagementRoute>(path: '/members'),
     TypedGoRoute<GroupManagementRoute>(path: '/group-management'),
@@ -302,6 +313,59 @@ class _CalendarEventInputRoutePageState
           CalendarRoute(date: _date.toIso8601String()).go(context),
     );
   }
+}
+
+class ShoppingListGroupsRoute extends GoRouteData
+    with $ShoppingListGroupsRoute {
+  const ShoppingListGroupsRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) => Material(
+    child: ShoppingListGroupSelection(
+      onSelect: (group) => ShoppingListRoute(groupId: group.id).go(context),
+    ),
+  );
+}
+
+class ShoppingListRoute extends GoRouteData with $ShoppingListRoute {
+  const ShoppingListRoute({required this.groupId});
+
+  final String groupId;
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) => Consumer(
+    builder: (context, ref, _) {
+      final member = ref.watch(currentMemberNotifierProvider).member;
+      final selection = ref.watch(groupTimelineGroupSelectionNotifierProvider);
+      void goBack() => const ShoppingListGroupsRoute().go(context);
+      if (member != null &&
+          selection.memberId == member.id &&
+          selection.status == GroupTimelineGroupSelectionStatus.loaded) {
+        final group = selection.groups
+            .where((group) => group.id == groupId)
+            .firstOrNull;
+        if (group != null) {
+          return ShoppingListPage(
+            groupId: groupId,
+            groupName: group.name,
+            onBack: goBack,
+          );
+        }
+        return Material(
+          child: Center(
+            child: TextButton(
+              onPressed: goBack,
+              child: const Text('グループ一覧へ戻る'),
+            ),
+          ),
+        );
+      }
+      return _GroupRouteGuard(
+        groupId: groupId,
+        builder: (_) => const SizedBox.shrink(),
+      );
+    },
+  );
 }
 
 class MapRoute extends GoRouteData with $MapRoute {

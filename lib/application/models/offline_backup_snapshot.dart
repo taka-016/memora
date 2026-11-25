@@ -157,7 +157,7 @@ class OfflineBackupSnapshot extends Equatable {
     );
   }
 
-  static const currentFormatVersion = 3;
+  static const currentFormatVersion = 4;
   static const tableNames = <String>{
     'members',
     'groups',
@@ -175,6 +175,7 @@ class OfflineBackupSnapshot extends Equatable {
     'calendar_labels',
     'calendar_events',
     'calendar_event_overrides',
+    'shopping_list_items',
   };
 
   final int formatVersion;

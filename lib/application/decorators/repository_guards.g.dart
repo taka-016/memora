@@ -11,6 +11,7 @@ import 'package:memora/domain/entities/group/group_event.dart';
 import 'package:memora/domain/entities/member/member.dart';
 import 'package:memora/domain/entities/member/member_event.dart';
 import 'package:memora/domain/entities/member/member_invitation.dart';
+import 'package:memora/domain/entities/shopping_list_item.dart';
 import 'package:memora/domain/entities/trip/trip_entry.dart';
 import 'package:memora/domain/repositories/calendar/calendar_event_repository.dart';
 import 'package:memora/domain/repositories/calendar/calendar_label_repository.dart';
@@ -22,6 +23,7 @@ import 'package:memora/domain/repositories/group/group_repository.dart';
 import 'package:memora/domain/repositories/member/member_event_repository.dart';
 import 'package:memora/domain/repositories/member/member_invitation_repository.dart';
 import 'package:memora/domain/repositories/member/member_repository.dart';
+import 'package:memora/domain/repositories/shopping_list_repository.dart';
 import 'package:memora/domain/repositories/trip/trip_entry_repository.dart';
 
 T guardRepository<T extends Object>(
@@ -85,6 +87,12 @@ T guardRepository<T extends Object>(
   if (T == MemberRepository) {
     return GuardedMemberRepository(
       repository as MemberRepository,
+      ensureAvailable,
+    ) as T;
+  }
+  if (T == ShoppingListRepository) {
+    return GuardedShoppingListRepository(
+      repository as ShoppingListRepository,
       ensureAvailable,
     ) as T;
   }
@@ -457,6 +465,29 @@ class GuardedMemberRepository implements MemberRepository {
       memberId,
       expectedVersion: expectedVersion,
     );
+  }
+}
+
+class GuardedShoppingListRepository implements ShoppingListRepository {
+  const GuardedShoppingListRepository(this._delegate, this._ensureAvailable);
+  final ShoppingListRepository _delegate;
+  final Future<void> Function() _ensureAvailable;
+  @override
+  Future<void> add(ShoppingListItem item) async {
+    await _ensureAvailable();
+    return await _delegate.add(item);
+  }
+
+  @override
+  Future<void> update(ShoppingListItem item) async {
+    await _ensureAvailable();
+    return await _delegate.update(item);
+  }
+
+  @override
+  Future<void> delete(ShoppingListItem expected) async {
+    await _ensureAvailable();
+    return await _delegate.delete(expected);
   }
 }
 
