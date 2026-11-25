@@ -64,7 +64,7 @@ extension TopPageBackNavigationTests on TopPageTestContext {
           expect(find.byKey(const Key('group_timeline')), findsOneWidget);
           expect(find.text('太郎'), findsOneWidget);
 
-          await tester.tap(find.text(deleteGroup ? 'グループ' : 'メンバー'));
+          await selectMemberMenuItem(tester, deleteGroup ? 'グループ' : 'メンバー');
           await tester.pumpAndSettle();
           await tester.tap(find.byIcon(Icons.delete).first);
           await tester.pumpAndSettle();
@@ -393,8 +393,12 @@ extension TopPageBackNavigationTests on TopPageTestContext {
           await tester.tap(find.byIcon(Icons.menu));
           await tester.pumpAndSettle();
         }
-        await tester.tap(find.text(target.label));
-        await tester.pumpAndSettle();
+        if (target.label == 'グループ' || target.label == 'メンバー') {
+          await selectMemberMenuItem(tester, target.label);
+        } else {
+          await tester.tap(find.text(target.label));
+          await tester.pumpAndSettle();
+        }
 
         if (target.label == '地図') {
           expect(find.byKey(const Key('map_group_list')), findsOneWidget);

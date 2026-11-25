@@ -12,6 +12,7 @@ import 'package:memora/presentation/features/timeline/timeline_row_definition.da
 import 'package:memora/presentation/features/timeline/timeline_rows.dart';
 import 'package:memora/presentation/notifiers/timeline/group_timeline_group_selection_notifier.dart';
 import 'package:memora/presentation/notifiers/timeline/group_timeline_refresh_notifier.dart';
+import 'package:memora/presentation/shared/group_selection/group_selection_list.dart';
 
 int groupTimelineStackIndex({required String? groupId}) {
   return groupId == null ? 0 : 1;
@@ -193,71 +194,18 @@ class GroupTimelineNavigationView extends HookConsumerWidget {
     required ValueChanged<GroupDto> onGroupSelected,
     required RefreshCallback onRefresh,
     required VoidCallback onRetry,
-  }) {
-    switch (state.status) {
-      case GroupTimelineGroupSelectionStatus.loading:
-        return const Center(child: CircularProgressIndicator());
-      case GroupTimelineGroupSelectionStatus.error:
-        return Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(state.message, style: const TextStyle(fontSize: 18)),
-              const SizedBox(height: 16),
-              ElevatedButton(onPressed: onRetry, child: const Text('再読み込み')),
-            ],
-          ),
-        );
-      case GroupTimelineGroupSelectionStatus.loaded:
-        if (state.groups.isEmpty) {
-          return RefreshIndicator(
-            onRefresh: onRefresh,
-            child: LayoutBuilder(
-              builder: (context, constraints) => ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                children: [
-                  SizedBox(
-                    height: constraints.maxHeight,
-                    child: const Center(
-                      child: Text('グループがありません', style: TextStyle(fontSize: 18)),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }
-        return Column(
-          key: const Key('group_list'),
-          children: [
-            const Padding(
-              padding: EdgeInsets.all(16),
-              child: Text(
-                'グループを選択',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-            ),
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: onRefresh,
-                child: ListView.builder(
-                  itemCount: state.groups.length,
-                  itemBuilder: (context, index) {
-                    final group = state.groups[index];
-                    return ListTile(
-                      title: Text(group.name),
-                      subtitle: Text('${group.members.length}人のメンバー'),
-                      trailing: const Icon(Icons.arrow_forward_ios),
-                      onTap: () => onGroupSelected(group),
-                    );
-                  },
-                ),
-              ),
-            ),
-          ],
-        );
-    }
-  }
+  }) => GroupSelectionView(
+    groups: state.status == GroupTimelineGroupSelectionStatus.loaded
+        ? state.groups
+        : null,
+    errorMessage: state.status == GroupTimelineGroupSelectionStatus.error
+        ? state.message
+        : null,
+    listKey: const Key('group_list'),
+    onGroupSelected: onGroupSelected,
+    onRefresh: onRefresh,
+    onRetry: onRetry,
+  );
 }
 
 class GroupTimelineLifecycleObserver extends ConsumerStatefulWidget {

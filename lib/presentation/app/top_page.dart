@@ -181,7 +181,8 @@ class TopPage extends HookConsumerWidget {
       () {
         if (!isAuthenticated ||
             (selectedItem != AppNavigationItem.groupTimeline &&
-                selectedItem != AppNavigationItem.calendar) ||
+                selectedItem != AppNavigationItem.calendar &&
+                selectedItem != AppNavigationItem.shoppingList) ||
             currentMember == null ||
             shouldHideForAndroidWidgetLaunch) {
           return null;
@@ -373,9 +374,15 @@ class TopPage extends HookConsumerWidget {
       return;
     }
 
+    if (item == AppNavigationItem.shoppingList) {
+      const ShoppingListGroupsRoute().go(context);
+      return;
+    }
+
     final location = switch (item) {
       AppNavigationItem.groupTimeline => null,
       AppNavigationItem.calendar => null,
+      AppNavigationItem.shoppingList => null,
       AppNavigationItem.map => const MapRoute().location,
       AppNavigationItem.memberManagement =>
         const MemberManagementRoute().location,
@@ -389,7 +396,8 @@ class TopPage extends HookConsumerWidget {
       return;
     }
     if (selectedItem == AppNavigationItem.groupTimeline ||
-        selectedItem == AppNavigationItem.calendar) {
+        selectedItem == AppNavigationItem.calendar ||
+        selectedItem == AppNavigationItem.shoppingList) {
       unawaited(context.push<void>(location));
     } else {
       context.pushReplacement(location);
@@ -490,6 +498,7 @@ class TopPage extends HookConsumerWidget {
     WidgetRef ref,
     Future<void> Function() closeDrawer,
   ) {
+    final memberMenuAnchor = GlobalKey();
     final destinations = [
       (
         item: AppNavigationItem.groupTimeline,
@@ -501,6 +510,11 @@ class TopPage extends HookConsumerWidget {
         icon: Icons.calendar_month,
         label: 'カレンダー',
       ),
+      (
+        item: AppNavigationItem.shoppingList,
+        icon: Icons.shopping_cart_outlined,
+        label: '買い物リスト',
+      ),
       if (ref
           .watch(appCapabilitiesProvider)
           .availability(AppFeature.maps)
@@ -509,18 +523,23 @@ class TopPage extends HookConsumerWidget {
       (
         item: AppNavigationItem.memberManagement,
         icon: Icons.people,
-        label: 'メンバー',
-      ),
-      (
-        item: AppNavigationItem.groupManagement,
-        icon: Icons.group_work,
-        label: 'グループ',
+        label: '管理',
       ),
     ];
     final selectedIndex = destinations.indexWhere(
-      (destination) => destination.item == selectedItem,
+      (destination) =>
+          destination.item == selectedItem ||
+          (selectedItem == AppNavigationItem.groupManagement &&
+              destination.item == AppNavigationItem.memberManagement),
     );
+    final labelSize =
+        (MediaQuery.sizeOf(context).width / destinations.length / 7).clamp(
+          1.0,
+          12.0,
+        );
     return BottomNavigationBar(
+      selectedFontSize: labelSize,
+      unselectedFontSize: labelSize,
       type: BottomNavigationBarType.fixed,
       currentIndex: selectedIndex < 0 ? 0 : selectedIndex,
       showSelectedLabels: true,
@@ -528,19 +547,47 @@ class TopPage extends HookConsumerWidget {
       items: [
         for (final destination in destinations)
           BottomNavigationBarItem(
-            icon: Icon(destination.icon),
+            icon: Icon(
+              destination.icon,
+              key: destination.item == AppNavigationItem.memberManagement
+                  ? memberMenuAnchor
+                  : null,
+            ),
             label: destination.label,
           ),
       ],
-      onTap: (index) {
-        unawaited(
-          _onNavigationItemSelected(
-            context,
-            ref,
-            destinations[index].item,
-            closeDrawer,
+      onTap: (index) async {
+        final item = destinations[index].item;
+        if (item != AppNavigationItem.memberManagement) {
+          await _onNavigationItemSelected(context, ref, item, closeDrawer);
+          return;
+        }
+        final anchor =
+            memberMenuAnchor.currentContext!.findRenderObject()! as RenderBox;
+        final overlay =
+            Navigator.of(context).overlay!.context.findRenderObject()!
+                as RenderBox;
+        final offset = anchor.localToGlobal(Offset.zero, ancestor: overlay);
+        final selection = await showMenu<AppNavigationItem>(
+          context: context,
+          position: RelativeRect.fromSize(
+            Rect.fromLTWH(offset.dx, offset.dy - 112, anchor.size.width, 0),
+            overlay.size,
           ),
+          items: const [
+            PopupMenuItem(
+              value: AppNavigationItem.memberManagement,
+              child: Text('メンバー'),
+            ),
+            PopupMenuItem(
+              value: AppNavigationItem.groupManagement,
+              child: Text('グループ'),
+            ),
+          ],
         );
+        if (selection != null && context.mounted) {
+          await _onNavigationItemSelected(context, ref, selection, closeDrawer);
+        }
       },
     );
   }

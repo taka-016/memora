@@ -143,6 +143,17 @@ void main() {
           'is_cancelled': 1,
         },
       ],
+      'shopping_list_items': [
+        {
+          'id': 'item',
+          'group_id': 'group-1',
+          'name': '牛乳',
+          'quantity': '2本',
+          'is_listed': 0,
+          'purchased_at': 1234,
+          'version': 2,
+        },
+      ],
       'dvc_point_contracts': [
         {
           'id': 'contract',
@@ -329,6 +340,7 @@ void main() {
     expect(snapshot.tables['groups']!.single['name'], '家族');
 
     await db.updateRow('groups', 'group-1', {'name': '変更後'});
+    await db.deleteRows('shopping_list_items', 'id', 'item');
     memberStorage.value = const OfflineBackupCurrentMember(
       id: 'other',
       accountId: 'other-account',

@@ -1,3 +1,7 @@
+import 'package:memora/domain/repositories/shopping_list_repository.dart';
+import 'package:memora/infrastructure/shopping_list/firestore_shopping_list_store.dart';
+import 'package:memora/infrastructure/shopping_list/sqlite_shopping_list_store.dart';
+
 import 'dart:io';
 
 import 'package:memora/composition_root/providers/shared_calendar_cache_providers.dart';
@@ -104,6 +108,10 @@ class RepositoryFactory {
       case AppMode.online:
         return _createFirestoreRepository<T>(ref: ref);
       case AppMode.offline:
+        if (T == ShoppingListRepository) {
+          return SqliteShoppingListStore(ref.watch(offlineDatabaseProvider))
+              as T;
+        }
         if (T == CalendarLabelRepository) {
           return SqliteCalendarLabelRepository(
             ref.watch(offlineDatabaseProvider),
@@ -159,6 +167,10 @@ class RepositoryFactory {
   }
 
   static T _createFirestoreRepository<T>({required Ref ref}) {
+    if (T == ShoppingListRepository) {
+      return FirestoreShoppingListStore(ref.watch(firebaseFirestoreProvider))
+          as T;
+    }
     if (T == CalendarEventRepository) {
       return FirestoreCalendarEventRepository(
         firestore: ref.watch(firebaseFirestoreProvider),

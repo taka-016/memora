@@ -11,9 +11,9 @@ extension TopPageNavigationTests on TopPageTestContext {
       expect(navigation.items.map((item) => item.label), [
         '年表',
         'カレンダー',
+        '買い物リスト',
         '地図',
-        'メンバー',
-        'グループ',
+        '管理',
       ]);
       expect(navigation.showSelectedLabels, isTrue);
       expect(navigation.showUnselectedLabels, isTrue);
@@ -27,6 +27,37 @@ extension TopPageNavigationTests on TopPageTestContext {
         1,
       );
     });
+    for (final singleGroup in [true, false]) {
+      testWidgets('買い物リストで所属が${singleGroup ? '1件' : '複数'}の場合もグループ一覧へ戻れる', (
+        tester,
+      ) async {
+        final groups = singleGroup
+            ? [groupsWithMembers.first]
+            : groupsWithMembers;
+        await tester.pumpWidget(
+          createTestWidget(
+            initialLocation: const CalendarRoute().location,
+            availableGroupsWithMembers: groups,
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('買い物リスト'));
+        await tester.pumpAndSettle();
+        if (!singleGroup) {
+          expect(find.text('グループを選択'), findsOneWidget);
+          expect(find.byType(ShoppingListPage), findsNothing);
+          await tester.tap(find.text(groups.first.name));
+          await tester.pumpAndSettle();
+        }
+        expect(find.byType(ShoppingListPage), findsOneWidget);
+        expect(find.text('未チェックの品物はありません'), findsOneWidget);
+
+        await tester.binding.handlePopRoute();
+        await tester.pumpAndSettle();
+        expect(find.byType(ShoppingListPage), findsNothing);
+        expect(find.text(groups.first.name), findsOneWidget);
+      });
+    }
     for (final route in [
       const SettingsRoute().location,
       const AccountSettingsRoute().location,
@@ -372,7 +403,7 @@ extension TopPageNavigationTests on TopPageTestContext {
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('メンバー'));
+      await selectMemberMenuItem(tester, 'メンバー');
       await tester.pumpAndSettle();
 
       // Assert
@@ -397,7 +428,7 @@ extension TopPageNavigationTests on TopPageTestContext {
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('グループ'));
+      await selectMemberMenuItem(tester, 'グループ');
       await tester.pumpAndSettle();
 
       // Assert

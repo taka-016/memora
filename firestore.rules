@@ -107,6 +107,29 @@ service cloud.firestore {
       allow delete: if scopedCollection(collection) && isVerifiedUser() && isStoredVersion();
     }
 
+    match /shopping_list_items/{document} {
+      function validItem(data) {
+        return data.keys().hasOnly(['id', 'groupId', 'name', 'quantity', 'isListed', 'purchasedAt', 'version'])
+               && data.id is string && data.id.size() > 0
+               && data.isListed is bool
+               && data.groupId is string && data.groupId.size() > 0
+               && data.name is string && data.name.size() > 0
+               && data.quantity is string
+               && (data.purchasedAt == null || data.purchasedAt is timestamp)
+               && (data.isListed || data.purchasedAt != null);
+      }
+      allow read: if isVerifiedUser();
+      allow create: if isVerifiedUser() && validItem(request.resource.data)
+                       && request.resource.data.version is int
+                       && request.resource.data.version >= 1;
+      allow update: if isVerifiedUser() && isNextVersion()
+                       && validItem(request.resource.data)
+                       && request.resource.data.id == resource.data.id
+                       && request.resource.data.groupId == resource.data.groupId
+                       && request.resource.data.name == resource.data.name;
+      allow delete: if isVerifiedUser() && isStoredVersion();
+    }
+
     match /calendar_labels/{document} {
       allow read: if isVerifiedUser();
       allow create: if isVerifiedUser() && isInitialVersion();

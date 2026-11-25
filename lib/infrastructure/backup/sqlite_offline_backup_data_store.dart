@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart';
 import 'package:memora/application/mappers/calendar/calendar_event_mapper.dart';
 import 'package:memora/infrastructure/mappers/calendar/sqlite_calendar_event_mapper.dart';
 import 'package:memora/infrastructure/mappers/calendar/calendar_override_mapper.dart';
@@ -28,6 +29,7 @@ class SqliteOfflineBackupDataStore implements OfflineBackupDataStore {
 
   static const _deleteOrder = <String>[
     'calendar_event_overrides',
+    'shopping_list_items',
     'calendar_events',
     'calendar_labels',
     'tasks',
@@ -53,6 +55,7 @@ class SqliteOfflineBackupDataStore implements OfflineBackupDataStore {
     'calendar_labels',
     'calendar_events',
     'calendar_event_overrides',
+    'shopping_list_items',
     'group_members',
     'trip_entries',
     'tasks',
@@ -125,6 +128,7 @@ class SqliteOfflineBackupDataStore implements OfflineBackupDataStore {
         await database.customStatement('PRAGMA defer_foreign_keys = ON');
         for (final table in _deleteOrder) {
           await database.customStatement('DELETE FROM "$table"');
+          database.notifyUpdates({TableUpdate(table)});
         }
         for (final table in _insertOrder) {
           for (final row in snapshot.tables[table]!) {

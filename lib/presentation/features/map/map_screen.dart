@@ -17,6 +17,7 @@ import 'package:memora/presentation/features/map/map_pin_bottom_sheet.dart';
 import 'package:memora/presentation/features/trip/trip_edit_modal.dart';
 import 'package:memora/presentation/notifiers/member/current_member_notifier.dart';
 import 'package:memora/presentation/notifiers/map/map_notifier.dart';
+import 'package:memora/presentation/shared/group_selection/group_selection_list.dart';
 
 class MapScreen extends HookConsumerWidget {
   final MapViewBuilder? mapViewBuilder;
@@ -72,8 +73,14 @@ class MapScreen extends HookConsumerWidget {
     }
 
     if (selectedGroup == null) {
-      return _MapGroupSelection(
-        state: state,
+      return GroupSelectionView(
+        key: const Key('map_group_list'),
+        groups: state.groupsStatus == MapLoadStatus.success
+            ? state.groups
+            : null,
+        errorMessage: state.groupsStatus == MapLoadStatus.error
+            ? 'エラーが発生しました'
+            : null,
         onGroupSelected: handleGroupSelected,
         onRetry: handleGroupsRetry,
       );
@@ -244,68 +251,6 @@ class _MapReloadButton extends StatelessWidget {
       tooltip: '再読み込み',
       onPressed: isLoading ? null : onReload,
       icon: const Icon(Icons.refresh),
-    );
-  }
-}
-
-class _MapGroupSelection extends StatelessWidget {
-  const _MapGroupSelection({
-    required this.state,
-    required this.onGroupSelected,
-    required this.onRetry,
-  });
-
-  final MapState state;
-  final ValueChanged<GroupDto> onGroupSelected;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      key: const Key('map_group_list'),
-      child: switch (state.groupsStatus) {
-        MapLoadStatus.initial || MapLoadStatus.loading => const Center(
-          child: CircularProgressIndicator(),
-        ),
-        MapLoadStatus.error => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text('エラーが発生しました', style: TextStyle(fontSize: 18)),
-              const SizedBox(height: 16),
-              ElevatedButton(onPressed: onRetry, child: const Text('再読み込み')),
-            ],
-          ),
-        ),
-        MapLoadStatus.success when state.groups.isEmpty => const Center(
-          child: Text('グループがありません', style: TextStyle(fontSize: 18)),
-        ),
-        MapLoadStatus.success => Column(
-          children: [
-            const Padding(
-              padding: EdgeInsets.all(16),
-              child: Text(
-                'グループを選択',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-            ),
-            Expanded(
-              child: ListView.builder(
-                itemCount: state.groups.length,
-                itemBuilder: (context, index) {
-                  final group = state.groups[index];
-                  return ListTile(
-                    title: Text(group.name),
-                    subtitle: Text('${group.members.length}人のメンバー'),
-                    trailing: const Icon(Icons.arrow_forward_ios),
-                    onTap: () => onGroupSelected(group),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      },
     );
   }
 }

@@ -1,3 +1,6 @@
+import 'package:memora/application/queries/shopping_list_query_service.dart';
+import 'package:memora/infrastructure/shopping_list/firestore_shopping_list_store.dart';
+import 'package:memora/infrastructure/shopping_list/sqlite_shopping_list_store.dart';
 import 'package:memora/composition_root/providers/shared_calendar_cache_providers.dart';
 import 'package:memora/infrastructure/queries/calendar/firestore_calendar_label_query_service.dart';
 import 'package:memora/infrastructure/queries/calendar/firestore_calendar_event_watch_query_service.dart';
@@ -127,6 +130,10 @@ class QueryServiceFactory {
       case AppMode.online:
         return _createFirestoreQueryService<T>(ref: ref);
       case AppMode.offline:
+        if (T == ShoppingListQueryService) {
+          return SqliteShoppingListStore(ref.watch(offlineDatabaseProvider))
+              as T;
+        }
         if (T == CalendarLabelQueryService) {
           return SqliteCalendarLabelQueryService(
             ref.watch(offlineDatabaseProvider),
@@ -213,6 +220,10 @@ class QueryServiceFactory {
   }
 
   static T _createFirestoreQueryService<T>({required Ref ref}) {
+    if (T == ShoppingListQueryService) {
+      return FirestoreShoppingListStore(ref.watch(firebaseFirestoreProvider))
+          as T;
+    }
     if (T == CalendarEventQueryService) {
       return ref.watch(firestoreCalendarEventQueriesProvider) as T;
     }
