@@ -21,6 +21,13 @@
 | Google Play（配布済みの場合） | application IDが変わると別アプリとなり、既存掲載への更新として配布できない。新規掲載・配布先を用意するか、既存IDを維持するかを実装前に判断する。[application IDの扱い](https://developer.android.com/build/configure-app-module) |
 | Apple側の登録（利用済みの場合） | iOS・macOSのBundle ID変更に合わせ、Apple DeveloperのApp ID・署名プロファイル・利用中の外部サービスのアプリ登録を更新する。未登録のサービスをこの作業だけのために新規導入しない。 |
 
+## Androidのデバッグ版とリリース版を同じ端末にインストールできるようにする
+
+- Androidの`debug`ビルドタイプに`applicationIdSuffix = ".debug"`を追加する。オンラインのデバッグ版はベースのアプリ識別子に`.debug`、オフラインのデバッグ版は`.offline.debug`を付ける。リリース版には`.debug`を付けず、正式なアプリ識別子への変更と前後する場合は、その時点で使うベースのアプリ識別子にそろえる。
+- オンラインのデバッグ版を既存のFirebaseプロジェクトにAndroidアプリとして登録し、利用するデバッグ署名証明書を登録する。両方のパッケージ名を含む`google-services.json`をダウンロードし、`android/app/google-services.json`をデバッグ版とリリース版で共用する。Dart側の`FirebaseOptions`は1ファイルにまとめ、オンライン版の初期化時にビルドタイプに対応する設定を使う。
+- 地図表示・位置検索に使う既存の`MAPS_API_KEY`のAndroidアプリ制限に、オンラインのデバッグ版のパッケージ名とデバッグ署名証明書のSHA-1の組を追加する。リリース版の許可設定を維持する。オフライン版の変更範囲はビルド時のアプリ識別子に限る。
+- オンライン・オフラインの各モードでデバッグ版とリリース版を同じ端末にインストールして起動でき、オンラインの両ビルドで既存のFirebaseプロジェクトへの接続、地図表示、位置検索ができるようにする。
+
 ## 外部プラグインのbuilt-in Kotlin対応版への更新
 
 - KGP未対応の外部プラグイン（home_widget、workmanager_android）がbuilt-in Kotlin対応版に更新されたら対応する
