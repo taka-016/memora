@@ -1,15 +1,6 @@
 {
   "indexes": [
     {
-      "collectionGroup": "shopping_list_items",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {"fieldPath": "groupId", "order": "ASCENDING"},
-        {"fieldPath": "purchasedAt", "order": "DESCENDING"},
-        {"fieldPath": "__name__", "order": "DESCENDING"}
-      ]
-    },
-    {
       "collectionGroup": "calendar_event_overrides",
       "queryScope": "COLLECTION",
       "fields": [
@@ -483,6 +474,25 @@
         {
           "fieldPath": "__name__",
           "order": "ASCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "shopping_list_items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "groupId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "purchasedAt",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
         }
       ],
       "density": "SPARSE_ALL"
