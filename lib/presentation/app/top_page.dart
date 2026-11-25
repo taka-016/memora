@@ -523,7 +523,7 @@ class TopPage extends HookConsumerWidget {
       (
         item: AppNavigationItem.memberManagement,
         icon: Icons.people,
-        label: 'メンバー',
+        label: '管理',
       ),
     ];
     final selectedIndex = destinations.indexWhere(
