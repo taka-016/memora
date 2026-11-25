@@ -91,7 +91,7 @@ class _ShoppingListStore
   List<ShoppingListItemDto> get unchecked {
     final current = item;
     return [
-      if (current != null && current.purchasedAt == null)
+      if (current != null && current.isListed)
         ShoppingListItemMapper.toDto(current),
     ];
   }
@@ -115,7 +115,7 @@ class _ShoppingListStore
   }
 
   @override
-  Future<void> update(ShoppingListItem item) async {
+  Future<void> update(ShoppingListItem expected, ShoppingListItem item) async {
     if (failNextUpdate) {
       failNextUpdate = false;
       throw TestException('買い物リストの保存に失敗しました');

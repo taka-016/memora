@@ -8,6 +8,7 @@ class ShoppingListItemMapper {
         groupId: item.groupId,
         name: item.name,
         quantity: item.quantity,
+        isListed: item.isListed,
         purchasedAt: item.purchasedAt,
         version: item.version,
       );
@@ -18,6 +19,7 @@ class ShoppingListItemMapper {
         groupId: item.groupId,
         name: item.name,
         quantity: item.quantity,
+        isListed: item.isListed,
         purchasedAt: item.purchasedAt,
         version: item.version,
       );

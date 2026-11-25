@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 import 'package:memora/application/dtos/shopping_list_item_dto.dart';
+import 'package:memora/application/mappers/shopping_list_item_mapper.dart';
 import 'package:memora/application/queries/shopping_list_query_service.dart';
 import 'package:memora/domain/entities/shopping_list_item.dart';
 import 'package:memora/domain/exceptions/validation_exception.dart';
@@ -20,27 +21,56 @@ class SqliteShoppingListStore
     'group_id': item.groupId,
     'name': item.name,
     'quantity': item.quantity,
+    'is_listed': item.isListed ? 1 : 0,
     'purchased_at': item.purchasedAt?.microsecondsSinceEpoch,
     'version': item.version,
   };
 
-  ShoppingListItemDto _dto(QueryRow row) => ShoppingListItemDto(
-    id: row.read<String>('id'),
-    groupId: row.read<String>('group_id'),
-    name: row.read<String>('name'),
-    quantity: row.read<String>('quantity'),
-    purchasedAt: SqliteValues.date(row.data['purchased_at']),
-    version: row.read<int>('version'),
+  ShoppingListItemDto _dto(Map<String, Object?> row) => ShoppingListItemDto(
+    id: row['id'] as String,
+    groupId: row['group_id'] as String,
+    name: row['name'] as String,
+    quantity: row['quantity'] as String,
+    isListed: row['is_listed'] == 1,
+    purchasedAt: SqliteValues.date(row['purchased_at']),
+    version: row['version'] as int,
   );
 
   @override
-  Future<void> add(ShoppingListItem item) =>
-      _database.insertRow(_table, _row(item));
+  Future<void> add(ShoppingListItem item) => _database.transaction(() async {
+    final matches = await _database.rows(
+      _table,
+      where: 'group_id = ? AND name = ?',
+      args: [item.groupId, item.name],
+    );
+    final row = matches.singleOrNull;
+    if (row == null) {
+      await _database.insertRow(_table, _row(item));
+      return;
+    }
+    final existing = ShoppingListItemMapper.toEntity(_dto(row));
+    await _database.updateRow(
+      _table,
+      existing.id,
+      _row(existing.register(item.quantity)),
+    );
+  });
 
   @override
-  Future<void> update(ShoppingListItem item) => _database.transaction(() async {
-    await _requireVersion(item, item.version - 1);
-    await _database.updateRow(_table, item.id, _row(item));
+  Future<void> update(
+    ShoppingListItem expected,
+    ShoppingListItem replacement,
+  ) => _database.transaction(() async {
+    await _requireVersion(expected, expected.version);
+    if (expected.name != replacement.name &&
+        (await _database.rows(
+          _table,
+          where: 'group_id = ? AND name = ?',
+          args: [expected.groupId, replacement.name],
+        )).isNotEmpty) {
+      throw ValidationException('同名の品物は登録済みです');
+    }
+    await _database.updateRow(_table, expected.id, _row(replacement));
   });
 
   @override
@@ -64,19 +94,20 @@ class SqliteShoppingListStore
   @override
   Stream<List<ShoppingListItemDto>> watchUnchecked(String groupId) => _database
       .customSelect(
-        'SELECT * FROM $_table WHERE group_id = ? AND purchased_at IS NULL '
+        'SELECT * FROM $_table WHERE group_id = ? AND is_listed = 1 '
         'ORDER BY name, id',
         variables: [Variable(groupId)],
         readsFrom: {_database.shoppingListItems},
       )
       .watch()
-      .map((rows) => rows.map(_dto).toList());
+      .map((rows) => rows.map((row) => _dto(row.data)).toList());
 
   @override
   Future<ShoppingHistoryPage> getHistory(
     String groupId, {
     ShoppingHistoryCursor? after,
-  }) => readShoppingHistoryPage(after, (last) async {
+  }) async {
+    final last = after?.lastItem;
     final date = last?.purchasedAt?.microsecondsSinceEpoch;
     final rows = await _database
         .customSelect(
@@ -86,10 +117,10 @@ class SqliteShoppingListStore
           variables: [
             Variable(groupId),
             if (date != null) ...[Variable(date), Variable(last!.id)],
-            const Variable(shoppingHistoryPageSize),
+            const Variable(shoppingHistoryPageSize + 1),
           ],
         )
         .get();
-    return rows.map(_dto).toList();
-  });
+    return shoppingHistoryPage(rows.map((row) => _dto(row.data)).toList());
+  }
 }

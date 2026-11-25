@@ -479,9 +479,12 @@ class GuardedShoppingListRepository implements ShoppingListRepository {
   }
 
   @override
-  Future<void> update(ShoppingListItem item) async {
+  Future<void> update(
+    ShoppingListItem expected,
+    ShoppingListItem replacement,
+  ) async {
     await _ensureAvailable();
-    return await _delegate.update(item);
+    return await _delegate.update(expected, replacement);
   }
 
   @override

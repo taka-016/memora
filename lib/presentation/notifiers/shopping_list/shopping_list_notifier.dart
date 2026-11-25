@@ -124,8 +124,14 @@ class ShoppingListNotifier extends _$ShoppingListNotifier {
   Future<ShoppingListItemDto> check(ShoppingListItemDto item) =>
       _save(() => ref.read(checkShoppingItemUseCaseProvider).execute(item));
 
-  Future<void> undoCheck(ShoppingListItemDto item) =>
-      _save(() => ref.read(undoShoppingItemCheckUseCaseProvider).execute(item));
+  Future<void> undoCheck(
+    ShoppingListItemDto item,
+    DateTime? previousPurchase,
+  ) => _save(
+    () => ref
+        .read(undoShoppingItemCheckUseCaseProvider)
+        .execute(item, previousPurchase),
+  );
 
   Future<void> deleteHistory(ShoppingListItemDto item) => _save(() async {
     await ref.read(deleteShoppingHistoryUseCaseProvider).execute(item);

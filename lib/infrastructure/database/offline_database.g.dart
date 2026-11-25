@@ -8573,6 +8573,18 @@ class ShoppingListItems extends Table
     $customConstraints: 'NOT NULL DEFAULT \'\'',
     defaultValue: const CustomExpression('\'\''),
   );
+  static const VerificationMeta _isListedMeta = const VerificationMeta(
+    'isListed',
+  );
+  late final GeneratedColumn<int> isListed = GeneratedColumn<int>(
+    'is_listed',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    $customConstraints: 'NOT NULL DEFAULT 1 CHECK (is_listed IN (0, 1))',
+    defaultValue: const CustomExpression('1'),
+  );
   static const VerificationMeta _purchasedAtMeta = const VerificationMeta(
     'purchasedAt',
   );
@@ -8601,6 +8613,7 @@ class ShoppingListItems extends Table
     groupId,
     name,
     quantity,
+    isListed,
     purchasedAt,
     version,
   ];
@@ -8643,6 +8656,12 @@ class ShoppingListItems extends Table
         quantity.isAcceptableOrUnknown(data['quantity']!, _quantityMeta),
       );
     }
+    if (data.containsKey('is_listed')) {
+      context.handle(
+        _isListedMeta,
+        isListed.isAcceptableOrUnknown(data['is_listed']!, _isListedMeta),
+      );
+    }
     if (data.containsKey('purchased_at')) {
       context.handle(
         _purchasedAtMeta,
@@ -8666,6 +8685,10 @@ class ShoppingListItems extends Table
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {groupId, name},
+  ];
+  @override
   SqliteShoppingListItemRow map(
     Map<String, dynamic> data, {
     String? tablePrefix,
@@ -8688,6 +8711,10 @@ class ShoppingListItems extends Table
         DriftSqlType.string,
         data['${effectivePrefix}quantity'],
       )!,
+      isListed: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}is_listed'],
+      )!,
       purchasedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}purchased_at'],
@@ -8705,6 +8732,11 @@ class ShoppingListItems extends Table
   }
 
   @override
+  List<String> get customConstraints => const [
+    'UNIQUE(group_id, name)',
+    'CHECK(is_listed = 1 OR purchased_at IS NOT NULL)',
+  ];
+  @override
   bool get dontWriteConstraints => true;
 }
 
@@ -8714,6 +8746,7 @@ class SqliteShoppingListItemRow extends DataClass
   final String groupId;
   final String name;
   final String quantity;
+  final int isListed;
   final int? purchasedAt;
   final int version;
   const SqliteShoppingListItemRow({
@@ -8721,6 +8754,7 @@ class SqliteShoppingListItemRow extends DataClass
     required this.groupId,
     required this.name,
     required this.quantity,
+    required this.isListed,
     this.purchasedAt,
     required this.version,
   });
@@ -8731,6 +8765,7 @@ class SqliteShoppingListItemRow extends DataClass
     map['group_id'] = Variable<String>(groupId);
     map['name'] = Variable<String>(name);
     map['quantity'] = Variable<String>(quantity);
+    map['is_listed'] = Variable<int>(isListed);
     if (!nullToAbsent || purchasedAt != null) {
       map['purchased_at'] = Variable<int>(purchasedAt);
     }
@@ -8744,6 +8779,7 @@ class SqliteShoppingListItemRow extends DataClass
       groupId: Value(groupId),
       name: Value(name),
       quantity: Value(quantity),
+      isListed: Value(isListed),
       purchasedAt: purchasedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(purchasedAt),
@@ -8761,6 +8797,7 @@ class SqliteShoppingListItemRow extends DataClass
       groupId: serializer.fromJson<String>(json['group_id']),
       name: serializer.fromJson<String>(json['name']),
       quantity: serializer.fromJson<String>(json['quantity']),
+      isListed: serializer.fromJson<int>(json['is_listed']),
       purchasedAt: serializer.fromJson<int?>(json['purchased_at']),
       version: serializer.fromJson<int>(json['version']),
     );
@@ -8773,6 +8810,7 @@ class SqliteShoppingListItemRow extends DataClass
       'group_id': serializer.toJson<String>(groupId),
       'name': serializer.toJson<String>(name),
       'quantity': serializer.toJson<String>(quantity),
+      'is_listed': serializer.toJson<int>(isListed),
       'purchased_at': serializer.toJson<int?>(purchasedAt),
       'version': serializer.toJson<int>(version),
     };
@@ -8783,6 +8821,7 @@ class SqliteShoppingListItemRow extends DataClass
     String? groupId,
     String? name,
     String? quantity,
+    int? isListed,
     Value<int?> purchasedAt = const Value.absent(),
     int? version,
   }) => SqliteShoppingListItemRow(
@@ -8790,6 +8829,7 @@ class SqliteShoppingListItemRow extends DataClass
     groupId: groupId ?? this.groupId,
     name: name ?? this.name,
     quantity: quantity ?? this.quantity,
+    isListed: isListed ?? this.isListed,
     purchasedAt: purchasedAt.present ? purchasedAt.value : this.purchasedAt,
     version: version ?? this.version,
   );
@@ -8799,6 +8839,7 @@ class SqliteShoppingListItemRow extends DataClass
       groupId: data.groupId.present ? data.groupId.value : this.groupId,
       name: data.name.present ? data.name.value : this.name,
       quantity: data.quantity.present ? data.quantity.value : this.quantity,
+      isListed: data.isListed.present ? data.isListed.value : this.isListed,
       purchasedAt: data.purchasedAt.present
           ? data.purchasedAt.value
           : this.purchasedAt,
@@ -8813,6 +8854,7 @@ class SqliteShoppingListItemRow extends DataClass
           ..write('groupId: $groupId, ')
           ..write('name: $name, ')
           ..write('quantity: $quantity, ')
+          ..write('isListed: $isListed, ')
           ..write('purchasedAt: $purchasedAt, ')
           ..write('version: $version')
           ..write(')'))
@@ -8821,7 +8863,7 @@ class SqliteShoppingListItemRow extends DataClass
 
   @override
   int get hashCode =>
-      Object.hash(id, groupId, name, quantity, purchasedAt, version);
+      Object.hash(id, groupId, name, quantity, isListed, purchasedAt, version);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -8830,6 +8872,7 @@ class SqliteShoppingListItemRow extends DataClass
           other.groupId == this.groupId &&
           other.name == this.name &&
           other.quantity == this.quantity &&
+          other.isListed == this.isListed &&
           other.purchasedAt == this.purchasedAt &&
           other.version == this.version);
 }
@@ -8840,6 +8883,7 @@ class ShoppingListItemsCompanion
   final Value<String> groupId;
   final Value<String> name;
   final Value<String> quantity;
+  final Value<int> isListed;
   final Value<int?> purchasedAt;
   final Value<int> version;
   final Value<int> rowid;
@@ -8848,6 +8892,7 @@ class ShoppingListItemsCompanion
     this.groupId = const Value.absent(),
     this.name = const Value.absent(),
     this.quantity = const Value.absent(),
+    this.isListed = const Value.absent(),
     this.purchasedAt = const Value.absent(),
     this.version = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -8857,6 +8902,7 @@ class ShoppingListItemsCompanion
     required String groupId,
     required String name,
     this.quantity = const Value.absent(),
+    this.isListed = const Value.absent(),
     this.purchasedAt = const Value.absent(),
     required int version,
     this.rowid = const Value.absent(),
@@ -8869,6 +8915,7 @@ class ShoppingListItemsCompanion
     Expression<String>? groupId,
     Expression<String>? name,
     Expression<String>? quantity,
+    Expression<int>? isListed,
     Expression<int>? purchasedAt,
     Expression<int>? version,
     Expression<int>? rowid,
@@ -8878,6 +8925,7 @@ class ShoppingListItemsCompanion
       if (groupId != null) 'group_id': groupId,
       if (name != null) 'name': name,
       if (quantity != null) 'quantity': quantity,
+      if (isListed != null) 'is_listed': isListed,
       if (purchasedAt != null) 'purchased_at': purchasedAt,
       if (version != null) 'version': version,
       if (rowid != null) 'rowid': rowid,
@@ -8889,6 +8937,7 @@ class ShoppingListItemsCompanion
     Value<String>? groupId,
     Value<String>? name,
     Value<String>? quantity,
+    Value<int>? isListed,
     Value<int?>? purchasedAt,
     Value<int>? version,
     Value<int>? rowid,
@@ -8898,6 +8947,7 @@ class ShoppingListItemsCompanion
       groupId: groupId ?? this.groupId,
       name: name ?? this.name,
       quantity: quantity ?? this.quantity,
+      isListed: isListed ?? this.isListed,
       purchasedAt: purchasedAt ?? this.purchasedAt,
       version: version ?? this.version,
       rowid: rowid ?? this.rowid,
@@ -8919,6 +8969,9 @@ class ShoppingListItemsCompanion
     if (quantity.present) {
       map['quantity'] = Variable<String>(quantity.value);
     }
+    if (isListed.present) {
+      map['is_listed'] = Variable<int>(isListed.value);
+    }
     if (purchasedAt.present) {
       map['purchased_at'] = Variable<int>(purchasedAt.value);
     }
@@ -8938,6 +8991,7 @@ class ShoppingListItemsCompanion
           ..write('groupId: $groupId, ')
           ..write('name: $name, ')
           ..write('quantity: $quantity, ')
+          ..write('isListed: $isListed, ')
           ..write('purchasedAt: $purchasedAt, ')
           ..write('version: $version, ')
           ..write('rowid: $rowid')

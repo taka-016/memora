@@ -1,5 +1,4 @@
 import 'package:memora/application/dtos/shopping_list_item_dto.dart';
-import 'package:memora/application/exceptions/application_validation_exception.dart';
 import 'package:memora/application/mappers/shopping_list_item_mapper.dart';
 import 'package:memora/application/queries/shopping_list_query_service.dart';
 import 'package:memora/core/time/app_clock.dart';
@@ -44,13 +43,10 @@ class EditShoppingItemUseCase {
   const EditShoppingItemUseCase(this._repository);
   final ShoppingListRepository _repository;
 
-  Future<void> execute(
-    ShoppingListItemDto item,
-    String name,
-    String quantity,
-  ) => _repository.update(
-    ShoppingListItemMapper.toEntity(item).edit(name, quantity),
-  );
+  Future<void> execute(ShoppingListItemDto item, String name, String quantity) {
+    final expected = ShoppingListItemMapper.toEntity(item);
+    return _repository.update(expected, expected.edit(name, quantity));
+  }
 }
 
 class DeleteShoppingItemUseCase {
@@ -58,10 +54,11 @@ class DeleteShoppingItemUseCase {
   final ShoppingListRepository _repository;
 
   Future<void> execute(ShoppingListItemDto item) {
-    if (item.purchasedAt != null) {
-      throw const ApplicationValidationException('未チェックの品物を指定してください');
-    }
-    return _repository.delete(ShoppingListItemMapper.toEntity(item));
+    final expected = ShoppingListItemMapper.toEntity(item);
+    final removed = expected.removeFromList();
+    return removed.purchasedAt == null
+        ? _repository.delete(expected)
+        : _repository.update(expected, removed);
   }
 }
 
@@ -71,8 +68,9 @@ class CheckShoppingItemUseCase {
   final AppClock _clock;
 
   Future<ShoppingListItemDto> execute(ShoppingListItemDto item) async {
-    final checked = ShoppingListItemMapper.toEntity(item).check(_clock.now());
-    await _repository.update(checked);
+    final expected = ShoppingListItemMapper.toEntity(item);
+    final checked = expected.check(_clock.now());
+    await _repository.update(expected, checked);
     return ShoppingListItemMapper.toDto(checked);
   }
 }
@@ -81,8 +79,10 @@ class UndoShoppingItemCheckUseCase {
   const UndoShoppingItemCheckUseCase(this._repository);
   final ShoppingListRepository _repository;
 
-  Future<void> execute(ShoppingListItemDto item) =>
-      _repository.update(ShoppingListItemMapper.toEntity(item).undoCheck());
+  Future<void> execute(ShoppingListItemDto item, DateTime? previousPurchase) {
+    final expected = ShoppingListItemMapper.toEntity(item);
+    return _repository.update(expected, expected.undoCheck(previousPurchase));
+  }
 }
 
 class DeleteShoppingHistoryUseCase {
@@ -90,9 +90,10 @@ class DeleteShoppingHistoryUseCase {
   final ShoppingListRepository _repository;
 
   Future<void> execute(ShoppingListItemDto item) {
-    if (item.purchasedAt == null) {
-      throw const ApplicationValidationException('購入履歴の品物を指定してください');
-    }
-    return _repository.delete(ShoppingListItemMapper.toEntity(item));
+    final expected = ShoppingListItemMapper.toEntity(item);
+    final cleared = expected.clearPurchase();
+    return cleared.isListed
+        ? _repository.update(expected, cleared)
+        : _repository.delete(expected);
   }
 }

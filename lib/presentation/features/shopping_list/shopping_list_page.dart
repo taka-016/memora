@@ -133,7 +133,10 @@ class ShoppingListPage extends HookConsumerWidget {
                                   label: '元に戻す',
                                   onPressed: () => _save(
                                     context,
-                                    () => notifier.undoCheck(purchased),
+                                    () => notifier.undoCheck(
+                                      purchased,
+                                      item.purchasedAt,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -485,11 +488,12 @@ class _ShoppingHistory extends HookConsumerWidget {
                                           '',
                                           modal: true,
                                         );
-                                  if (saved &&
-                                      context.mounted &&
-                                      existing == null) {
-                                    message.value =
-                                        '${item.name}を買い物リストに追加しました';
+                                  if (saved && context.mounted) {
+                                    if (existing == null) {
+                                      message.value =
+                                          '${item.name}を買い物リストに追加しました';
+                                    }
+                                    await notifier.loadHistory(refresh: true);
                                   }
                                 },
                           child: const Text('再登録'),

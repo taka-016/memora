@@ -6,6 +6,7 @@ class ShoppingListItem {
     required this.groupId,
     required String name,
     String quantity = '',
+    this.isListed = true,
     this.purchasedAt,
     this.version = 1,
   }) : name = name.trim(),
@@ -22,41 +23,63 @@ class ShoppingListItem {
   final String groupId;
   final String name;
   final String quantity;
+  final bool isListed;
   final DateTime? purchasedAt;
   final int version;
 
   ShoppingListItem edit(String name, String quantity) {
-    _requireUnchecked();
-    return _change(name, quantity);
+    _requireListed();
+    return _change(name, quantity, true, purchasedAt);
+  }
+
+  ShoppingListItem register(String quantity) {
+    if (isListed) {
+      throw ValidationException('同名の品物は追加済みです');
+    }
+    return _change(name, quantity, true, purchasedAt);
+  }
+
+  ShoppingListItem removeFromList() {
+    _requireListed();
+    return _change(name, quantity, false, purchasedAt);
   }
 
   ShoppingListItem check(DateTime now) {
-    _requireUnchecked();
-    return _change(name, quantity, now);
+    _requireListed();
+    return _change(name, quantity, false, now);
   }
 
-  ShoppingListItem undoCheck() {
+  ShoppingListItem undoCheck(DateTime? previousPurchase) {
+    if (isListed || purchasedAt == null) {
+      throw ValidationException('購入済みの品物を指定してください');
+    }
+    return _change(name, quantity, true, previousPurchase);
+  }
+
+  ShoppingListItem clearPurchase() {
     if (purchasedAt == null) {
       throw ValidationException('購入履歴の品物を指定してください');
     }
-    return _change(name, quantity);
+    return _change(name, quantity, isListed, null);
   }
 
-  void _requireUnchecked() {
-    if (purchasedAt != null) {
-      throw ValidationException('未チェックの品物を指定してください');
+  void _requireListed() {
+    if (!isListed) {
+      throw ValidationException('買い物リストにある品物を指定してください');
     }
   }
 
   ShoppingListItem _change(
     String name,
-    String quantity, [
+    String quantity,
+    bool isListed,
     DateTime? purchasedAt,
-  ]) => ShoppingListItem(
+  ) => ShoppingListItem(
     id: id,
     groupId: groupId,
     name: name,
     quantity: quantity,
+    isListed: isListed,
     purchasedAt: purchasedAt,
     version: version + 1,
   );

@@ -4,6 +4,7 @@ import 'package:memora/domain/entities/shopping_list_item.dart';
 import 'package:memora/infrastructure/database/offline_database.dart';
 import 'package:memora/infrastructure/shopping_list/sqlite_shopping_list_store.dart';
 import 'package:memora/application/mappers/shopping_list_item_mapper.dart';
+import 'package:memora/application/usecases/shopping_list/shopping_list_usecases.dart';
 
 void main() {
   late OfflineDatabase database;
@@ -37,7 +38,7 @@ void main() {
     expect(active.id, item.id);
     expect(active.quantity, isEmpty);
     expect(
-      (await store.getHistory('group')).items.single.purchasedAt,
+      (await store.getHistory('group')).items.single.purchasedAt!.toUtc(),
       checked.purchasedAt,
     );
     expect(await database.rows('shopping_list_items'), hasLength(1));
@@ -48,10 +49,28 @@ void main() {
     final restored = ShoppingListItemMapper.toEntity(
       (await store.watchUnchecked('group').first).single,
     );
-    expect(restored.purchasedAt, checked.purchasedAt);
-    await store.update(restored, restored.clearPurchase());
+    expect(restored.purchasedAt!.toUtc(), checked.purchasedAt);
+    await DeleteShoppingHistoryUseCase(store)
+        .execute(ShoppingListItemMapper.toDto(restored));
     expect((await store.getHistory('group')).items, isEmpty);
     expect((await store.watchUnchecked('group').first).single.name, '牛乳');
+  });
+
+  test('一覧から削除しても購入履歴は残り、履歴を削除すると品物も消える', () async {
+    const groupId = 'group';
+    await AddShoppingItemUseCase(store).execute(groupId, '牛乳', '2本');
+    final original = ShoppingListItemMapper.toEntity(
+      (await store.watchUnchecked(groupId).first).single,
+    );
+    await store.update(original, original.check(DateTime.utc(2026, 11, 25)));
+    await AddShoppingItemUseCase(store).execute(groupId, '牛乳', '');
+    final listed = (await store.watchUnchecked(groupId).first).single;
+    await DeleteShoppingItemUseCase(store).execute(listed);
+    expect(await store.watchUnchecked(groupId).first, isEmpty);
+    final history = (await store.getHistory(groupId)).items.single;
+    expect(history.id, listed.id);
+    await DeleteShoppingHistoryUseCase(store).execute(history);
+    expect(await database.rows('shopping_list_items'), isEmpty);
   });
 
   test('購入履歴をグループ別に購入日の降順で30件ずつ取得する', () async {

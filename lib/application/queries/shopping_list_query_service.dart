@@ -3,11 +3,9 @@ import 'package:memora/application/dtos/shopping_list_item_dto.dart';
 const shoppingHistoryPageSize = 30;
 
 class ShoppingHistoryCursor {
-  ShoppingHistoryCursor(this.lastItem, Set<String> names)
-    : names = Set.unmodifiable(names);
+  const ShoppingHistoryCursor(this.lastItem);
 
   final ShoppingListItemDto lastItem;
-  final Set<String> names;
 }
 
 typedef ShoppingHistoryPage = ({

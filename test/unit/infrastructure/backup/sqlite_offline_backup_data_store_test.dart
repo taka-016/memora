@@ -149,6 +149,7 @@ void main() {
           'group_id': 'group-1',
           'name': '牛乳',
           'quantity': '2本',
+          'is_listed': 0,
           'purchased_at': 1234,
           'version': 2,
         },

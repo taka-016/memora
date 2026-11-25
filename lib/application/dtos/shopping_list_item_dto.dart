@@ -4,6 +4,7 @@ class ShoppingListItemDto {
     required this.groupId,
     required this.name,
     required this.quantity,
+    required this.isListed,
     required this.purchasedAt,
     required this.version,
   });
@@ -12,6 +13,7 @@ class ShoppingListItemDto {
   final String groupId;
   final String name;
   final String quantity;
+  final bool isListed;
   final DateTime? purchasedAt;
   final int version;
 }

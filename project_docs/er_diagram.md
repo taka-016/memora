@@ -184,7 +184,8 @@ erDiagram
         string groupId FK "NOT NULL"
         string name "NOT NULL"
         string quantity "未入力は空文字"
-        timestamp purchasedAt "未チェックはnull"
+        boolean isListed "一覧表示中はtrue"
+        timestamp purchasedAt "最終購入日時、履歴がなければnull"
         integer version "NOT NULL、1以上"
     }
     calendar_labels {
