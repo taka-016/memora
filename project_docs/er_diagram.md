@@ -179,6 +179,14 @@ erDiagram
         timestamp originalEndDateTime "NOT NULL、元の回の終了・期間検索用"
         boolean isCancelled "NOT NULL、常にtrue"
     }
+    shopping_list_items {
+        string id PK
+        string groupId FK "NOT NULL"
+        string name "NOT NULL"
+        string quantity "未入力は空文字"
+        timestamp purchasedAt "未チェックはnull"
+        integer version "NOT NULL、1以上"
+    }
     calendar_labels {
         string id PK
         string groupId FK "NOT NULL"
@@ -211,6 +219,7 @@ erDiagram
     dvc_point_contracts ||--o{ dvc_point_usages : "id → contractId"
     groups ||--o{ calendar_events : "id → groupId"
     groups ||--o{ calendar_labels : "id → groupId"
+    groups ||--o{ shopping_list_items : "id → groupId"
     calendar_labels ||--o{ calendar_events : "id → labelId"
     calendar_events ||--o{ calendar_event_overrides : "id → eventId"
     externally_managed_accounts ||--|| members : "id → accountId"
