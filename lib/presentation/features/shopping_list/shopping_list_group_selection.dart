@@ -4,6 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/presentation/notifiers/member/current_member_notifier.dart';
 import 'package:memora/presentation/notifiers/timeline/group_timeline_group_selection_notifier.dart';
+import 'package:memora/presentation/shared/group_selection/group_selection_list.dart';
 
 class ShoppingListGroupSelection extends HookConsumerWidget {
   const ShoppingListGroupSelection({super.key, required this.onSelect});
@@ -15,12 +16,13 @@ class ShoppingListGroupSelection extends HookConsumerWidget {
     final state = ref.watch(groupTimelineGroupSelectionNotifierProvider);
     final member = ref.watch(currentMemberNotifierProvider).member;
     final autoSelectedGroup = useRef<String?>(null);
+    final hasCurrentGroupState = member != null && state.memberId == member.id;
     final groups =
-        state.memberId == member?.id &&
+        hasCurrentGroupState &&
             state.status == GroupTimelineGroupSelectionStatus.loaded
         ? state.groups
-        : const <GroupDto>[];
-    final single = groups.length == 1 ? groups.single : null;
+        : null;
+    final single = groups?.length == 1 ? groups!.single : null;
     useEffect(() {
       if (single != null && single.id != autoSelectedGroup.value) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -34,33 +36,21 @@ class ShoppingListGroupSelection extends HookConsumerWidget {
       return null;
     }, [single?.id]);
 
-    if (member == null ||
-        state.memberId != member.id ||
-        state.status == GroupTimelineGroupSelectionStatus.loading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    if (state.status == GroupTimelineGroupSelectionStatus.error) {
-      return Center(
-        child: TextButton(
-          onPressed: () => ref
-              .read(groupTimelineGroupSelectionNotifierProvider.notifier)
-              .load(member),
-          child: Text('${state.message}。再試行'),
-        ),
-      );
-    }
-    if (groups.isEmpty) {
-      return const Center(child: Text('所属グループがありません'));
-    }
-    return ListView(
-      children: [
-        for (final group in groups)
-          ListTile(
-            title: Text(group.name),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => onSelect(group),
-          ),
-      ],
+    final notifier = ref.read(
+      groupTimelineGroupSelectionNotifierProvider.notifier,
+    );
+    return GroupSelectionView(
+      groups: groups,
+      errorMessage:
+          hasCurrentGroupState &&
+              state.status == GroupTimelineGroupSelectionStatus.error
+          ? state.message
+          : null,
+      onGroupSelected: onSelect,
+      onRetry: () {
+        if (member != null) notifier.load(member);
+      },
+      onRefresh: member == null ? null : () => notifier.refreshSilently(member),
     );
   }
 }
