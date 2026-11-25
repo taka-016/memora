@@ -51,6 +51,7 @@ ssh -n -i /tmp/memora-test-key -o StrictHostKeyChecking=no -o UserKnownHostsFile
   docker compose version
   docker buildx version
   command -v codex
+  codex-alt --version
   command -v firebase
   command -v flutterfire
   command -v very_good
@@ -64,10 +65,13 @@ LOGIN
 BASH
 fingerprint="$("${compose[@]}" exec -T dev ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub)"
 "${compose[@]}" exec -T dev bash -c 'echo memora-dev-check > /root/.android/memora-dev-check'
+"${compose[@]}" exec -T dev touch /root/.codex/account-alt/memora-dev-check
 "${compose[@]}" up --detach --force-recreate --wait --wait-timeout 120 dev
 just dev-up
 "${compose[@]}" exec -T dev test -f /var/lib/memora/setup-complete
 [[ "$("${compose[@]}" exec -T dev ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub)" == "$fingerprint" ]]
 [[ "$("${compose[@]}" exec -T dev cat /root/.android/memora-dev-check)" == memora-dev-check ]]
 "${compose[@]}" exec -T dev rm /root/.android/memora-dev-check
+"${compose[@]}" exec -T dev test -f /root/.codex/account-alt/memora-dev-check
+"${compose[@]}" exec -T dev rm /root/.codex/account-alt/memora-dev-check
 printf '%s\n' '開発環境の起動・セットアップ・SSH・各CLI・Docker接続・再作成後の保持を確認しました'
