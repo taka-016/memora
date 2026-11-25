@@ -44,6 +44,7 @@ extension TopPageNavigationTests on TopPageTestContext {
         await tester.tap(find.text('買い物リスト'));
         await tester.pumpAndSettle();
         if (!singleGroup) {
+          expect(find.text('グループを選択'), findsOneWidget);
           expect(find.byType(ShoppingListPage), findsNothing);
           await tester.tap(find.text(groups.first.name));
           await tester.pumpAndSettle();
