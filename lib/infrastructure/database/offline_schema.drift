@@ -230,7 +230,7 @@ CREATE TABLE shopping_list_items (
   quantity TEXT NOT NULL DEFAULT '',
   purchased_at INTEGER,
   version INTEGER NOT NULL CHECK (version >= 1)
-);
+) AS SqliteShoppingListItemRow;
 
 CREATE INDEX shopping_list_purchase_history
   ON shopping_list_items (group_id, purchased_at DESC, id DESC);

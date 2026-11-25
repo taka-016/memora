@@ -8527,7 +8527,7 @@ class DeletedGroupsCompanion extends UpdateCompanion<SqliteDeletedGroupRow> {
 }
 
 class ShoppingListItems extends Table
-    with TableInfo<ShoppingListItems, ShoppingListItem> {
+    with TableInfo<ShoppingListItems, SqliteShoppingListItemRow> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
@@ -8611,7 +8611,7 @@ class ShoppingListItems extends Table
   static const String $name = 'shopping_list_items';
   @override
   VerificationContext validateIntegrity(
-    Insertable<ShoppingListItem> instance, {
+    Insertable<SqliteShoppingListItemRow> instance, {
     bool isInserting = false,
   }) {
     final context = VerificationContext();
@@ -8666,9 +8666,12 @@ class ShoppingListItems extends Table
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  ShoppingListItem map(Map<String, dynamic> data, {String? tablePrefix}) {
+  SqliteShoppingListItemRow map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return ShoppingListItem(
+    return SqliteShoppingListItemRow(
       id: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}id'],
@@ -8705,15 +8708,15 @@ class ShoppingListItems extends Table
   bool get dontWriteConstraints => true;
 }
 
-class ShoppingListItem extends DataClass
-    implements Insertable<ShoppingListItem> {
+class SqliteShoppingListItemRow extends DataClass
+    implements Insertable<SqliteShoppingListItemRow> {
   final String id;
   final String groupId;
   final String name;
   final String quantity;
   final int? purchasedAt;
   final int version;
-  const ShoppingListItem({
+  const SqliteShoppingListItemRow({
     required this.id,
     required this.groupId,
     required this.name,
@@ -8748,12 +8751,12 @@ class ShoppingListItem extends DataClass
     );
   }
 
-  factory ShoppingListItem.fromJson(
+  factory SqliteShoppingListItemRow.fromJson(
     Map<String, dynamic> json, {
     ValueSerializer? serializer,
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return ShoppingListItem(
+    return SqliteShoppingListItemRow(
       id: serializer.fromJson<String>(json['id']),
       groupId: serializer.fromJson<String>(json['group_id']),
       name: serializer.fromJson<String>(json['name']),
@@ -8775,14 +8778,14 @@ class ShoppingListItem extends DataClass
     };
   }
 
-  ShoppingListItem copyWith({
+  SqliteShoppingListItemRow copyWith({
     String? id,
     String? groupId,
     String? name,
     String? quantity,
     Value<int?> purchasedAt = const Value.absent(),
     int? version,
-  }) => ShoppingListItem(
+  }) => SqliteShoppingListItemRow(
     id: id ?? this.id,
     groupId: groupId ?? this.groupId,
     name: name ?? this.name,
@@ -8790,8 +8793,8 @@ class ShoppingListItem extends DataClass
     purchasedAt: purchasedAt.present ? purchasedAt.value : this.purchasedAt,
     version: version ?? this.version,
   );
-  ShoppingListItem copyWithCompanion(ShoppingListItemsCompanion data) {
-    return ShoppingListItem(
+  SqliteShoppingListItemRow copyWithCompanion(ShoppingListItemsCompanion data) {
+    return SqliteShoppingListItemRow(
       id: data.id.present ? data.id.value : this.id,
       groupId: data.groupId.present ? data.groupId.value : this.groupId,
       name: data.name.present ? data.name.value : this.name,
@@ -8805,7 +8808,7 @@ class ShoppingListItem extends DataClass
 
   @override
   String toString() {
-    return (StringBuffer('ShoppingListItem(')
+    return (StringBuffer('SqliteShoppingListItemRow(')
           ..write('id: $id, ')
           ..write('groupId: $groupId, ')
           ..write('name: $name, ')
@@ -8822,7 +8825,7 @@ class ShoppingListItem extends DataClass
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is ShoppingListItem &&
+      (other is SqliteShoppingListItemRow &&
           other.id == this.id &&
           other.groupId == this.groupId &&
           other.name == this.name &&
@@ -8831,7 +8834,8 @@ class ShoppingListItem extends DataClass
           other.version == this.version);
 }
 
-class ShoppingListItemsCompanion extends UpdateCompanion<ShoppingListItem> {
+class ShoppingListItemsCompanion
+    extends UpdateCompanion<SqliteShoppingListItemRow> {
   final Value<String> id;
   final Value<String> groupId;
   final Value<String> name;
@@ -8860,7 +8864,7 @@ class ShoppingListItemsCompanion extends UpdateCompanion<ShoppingListItem> {
        groupId = Value(groupId),
        name = Value(name),
        version = Value(version);
-  static Insertable<ShoppingListItem> custom({
+  static Insertable<SqliteShoppingListItemRow> custom({
     Expression<String>? id,
     Expression<String>? groupId,
     Expression<String>? name,
