@@ -6,17 +6,12 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/location/location_candidate_dto.dart';
 import 'package:memora/application/dtos/trip/location_dto.dart';
-import 'package:memora/core/app_logger.dart';
 import 'package:memora/core/models/coordinate.dart';
-import 'package:memora/presentation/notifiers/map/coordinate_notifier.dart';
-import 'package:memora/presentation/shared/inputs/custom_search_bar.dart';
 import 'package:memora/presentation/shared/map_views/map_view_builder.dart';
-import 'package:memora/presentation/shared/sheets/location_detail_bottom_sheet.dart';
 
-class GoogleMapView extends HookConsumerWidget {
+class GoogleMapView extends HookWidget {
   final List<LocationDto> locations;
   final ValueChanged<Coordinate>? onMapLongTapped;
   final ValueChanged<LocationCandidateDto>? onSearchedLocationSelected;
@@ -25,10 +20,10 @@ class GoogleMapView extends HookConsumerWidget {
   final LocationDto? focusedLocation;
   final Widget? topLeadingOverlay;
   final bool highlightSelectedLocation;
-  final LocationDetailBuilder? locationDetailBuilder;
-  final double? locationDetailBottomSheetHeight;
-  final DateTime? tripStartDate;
-  final bool isReadOnly;
+  final LocationDetailBuilder locationDetailBuilder;
+  final Coordinate? Function() currentCoordinate;
+  final Future<Coordinate?> Function() getCurrentLocation;
+  final Widget Function(ValueChanged<LocationCandidateDto>) searchBarBuilder;
 
   const GoogleMapView({
     super.key,
@@ -40,14 +35,14 @@ class GoogleMapView extends HookConsumerWidget {
     this.focusedLocation,
     this.topLeadingOverlay,
     this.highlightSelectedLocation = false,
-    this.locationDetailBuilder,
-    this.locationDetailBottomSheetHeight,
-    this.tripStartDate,
-    this.isReadOnly = false,
+    required this.locationDetailBuilder,
+    required this.currentCoordinate,
+    required this.getCurrentLocation,
+    required this.searchBarBuilder,
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     const fallbackPosition = LatLng(35.681236, 139.767125); // 東京駅
 
     final mapController = useState<GoogleMapController?>(null);
@@ -60,11 +55,6 @@ class GoogleMapView extends HookConsumerWidget {
     final grayMarkerIcon = useFuture(
       useMemoized(() => createGrayMarkerIcon(), const []),
     );
-
-    void showErrorSnackBar(String message) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(message)));
-    }
 
     void animateToPosition(LatLng position) {
       mapController.value?.animateCamera(
@@ -87,30 +77,16 @@ class GoogleMapView extends HookConsumerWidget {
         final firstLocation = locations.first;
         return LatLng(firstLocation.latitude, firstLocation.longitude);
       }
-      final coordinate = ref.read(coordinateProvider).coordinate;
+      final coordinate = currentCoordinate();
       return coordinate != null
           ? LatLng(coordinate.latitude, coordinate.longitude)
           : fallbackPosition;
     }
 
     Future<void> moveToCurrentLocation() async {
-      try {
-        await ref.read(coordinateProvider.notifier).getCurrentLocation();
-        final coordinate = ref.read(coordinateProvider).coordinate;
-
-        if (coordinate == null) {
-          showErrorSnackBar('現在地が取得できませんでした');
-          return;
-        }
-
+      final coordinate = await getCurrentLocation();
+      if (coordinate != null) {
         animateToPosition(LatLng(coordinate.latitude, coordinate.longitude));
-      } catch (e, stack) {
-        logger.e(
-          'GoogleMapView.moveToCurrentLocation: ${e.toString()}',
-          error: e,
-          stackTrace: stack,
-        );
-        showErrorSnackBar('現在地取得に失敗: $e');
       }
     }
 
@@ -252,12 +228,7 @@ class GoogleMapView extends HookConsumerWidget {
           children: [
             SizedBox(
               width: double.infinity,
-              child: CustomSearchBar(
-                hintText: '場所を検索',
-                onCandidateSelected: (candidate) async {
-                  await handleSearchedLocationSelected(candidate);
-                },
-              ),
+              child: searchBarBuilder(handleSearchedLocationSelected),
             ),
             if (overlay != null) ...[const SizedBox(height: 8), overlay],
           ],
@@ -357,24 +328,9 @@ class GoogleMapView extends HookConsumerWidget {
 
       final navigationLocations = _uniqueLocationsByCoordinate(locations);
       final hasMultipleNavigationTargets = navigationLocations.length >= 2;
-      final detailBuilder = locationDetailBuilder;
-      if (detailBuilder != null) {
-        return detailBuilder(
-          selectedLocationState.value!,
-          hideLocationDetailBottomSheet,
-          onPreviousLocation: hasMultipleNavigationTargets
-              ? moveToPreviousLocation
-              : null,
-          onNextLocation: hasMultipleNavigationTargets
-              ? moveToNextLocation
-              : null,
-        );
-      }
-
-      return LocationDetailBottomSheet(
-        location: selectedLocationState.value!,
-        onClose: hideLocationDetailBottomSheet,
-        height: locationDetailBottomSheetHeight,
+      return locationDetailBuilder(
+        selectedLocationState.value!,
+        hideLocationDetailBottomSheet,
         onPreviousLocation: hasMultipleNavigationTargets
             ? moveToPreviousLocation
             : null,

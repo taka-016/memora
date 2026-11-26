@@ -1,16 +1,25 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:memora/application/models/app_capabilities.dart';
+import 'package:memora/application/models/app_mode.dart';
 import 'package:memora/application/usecases/location/get_current_location_usecase.dart';
 import 'package:memora/application/usecases/location/get_nearby_location_name_usecase.dart';
 import 'package:memora/application/usecases/location/search_locations_usecase.dart';
 import 'package:memora/infrastructure/config/resolved_app_mode_provider.dart';
 import 'package:memora/infrastructure/factories/current_location_service_factory.dart';
 import 'package:memora/infrastructure/factories/location_search_service_factory.dart';
-import 'package:memora/infrastructure/factories/map_view_factory.dart';
 import 'package:memora/infrastructure/factories/nearby_location_service_factory.dart';
+import 'package:memora/presentation/shared/map_views/google_map_view_builder.dart';
 import 'package:memora/presentation/shared/map_views/map_view_builder.dart';
+import 'package:memora/presentation/shared/map_views/unavailable_map_view_builder.dart';
 
 final mapViewBuilderProvider = Provider<MapViewBuilder>((ref) {
-  return MapViewFactory.create(ref.watch(appModeProvider));
+  final mode = ref.watch(appModeProvider);
+  return switch (mode) {
+    AppMode.online => const GoogleMapViewBuilder(),
+    AppMode.offline => UnavailableMapViewBuilder(
+      AppCapabilities.forMode(mode).availability(AppFeature.maps).reason!,
+    ),
+  };
 });
 
 final getCurrentLocationUsecaseProvider = Provider<GetCurrentLocationUsecase>((

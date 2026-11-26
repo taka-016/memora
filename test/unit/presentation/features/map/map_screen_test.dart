@@ -1,4 +1,4 @@
-import 'package:memora/infrastructure/map_views/google_map_view_builder.dart';
+import 'package:memora/presentation/shared/map_views/google_map_view_builder.dart';
 import 'package:memora/presentation/shared/map_views/placeholder_map_view_builder.dart';
 import 'package:memora/composition_root/providers/group_providers.dart';
 import 'package:memora/composition_root/providers/trip_providers.dart';
