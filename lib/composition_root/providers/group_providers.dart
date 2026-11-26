@@ -1,3 +1,4 @@
+import 'package:memora/application/usecases/group/edit_group_event_usecase.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/usecases/group/create_group_usecase.dart';
 import 'package:memora/application/usecases/group/delete_group_event_usecase.dart';
@@ -54,4 +55,8 @@ final saveGroupEventUsecaseProvider = Provider<SaveGroupEventUsecase>((ref) {
 
 final updateGroupUsecaseProvider = Provider<UpdateGroupUsecase>((ref) {
   return UpdateGroupUsecase(ref.watch(groupRepositoryProvider));
+});
+
+final editGroupEventUsecaseProvider = Provider<EditGroupEventUsecase>((ref) {
+  return EditGroupEventUsecase(ref.watch(groupEventRepositoryProvider));
 });
