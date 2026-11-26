@@ -126,3 +126,12 @@ sync-main:
     --format='%(refname:short) %(upstream:track) %(worktreepath)' refs/heads/ \
     | awk '$2 == "[gone]" && NF == 2 {printf "%s%c", $1, 0}' \
     | xargs -0 -r git branch -d
+
+# GitHub Pagesのブラウザテスト環境を準備する（Node.js・npmが必要、Linuxの依存導入には管理者権限を使用）
+setup-pages-tests:
+  npm ci --prefix test/integration/pages
+  npm exec --prefix test/integration/pages -- playwright install --with-deps --only-shell chromium
+
+# GitHub Pagesの表示・キーボード操作・目次を検証する（初回はsetup-pages-tests）
+check-pages:
+  npm test --prefix test/integration/pages
