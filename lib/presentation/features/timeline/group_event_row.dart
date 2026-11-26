@@ -1,11 +1,8 @@
-import 'package:memora/composition_root/providers/group_providers.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:memora/application/dtos/group/group_event_dto.dart';
 import 'package:memora/presentation/features/group/group_event_edit_modal.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
-import 'package:memora/presentation/features/timeline/timeline_rows_refresh_provider.dart';
+import 'package:memora/presentation/notifiers/timeline/timeline_group_events_notifier.dart';
 
 class GroupEventRow extends TimelineRowDefinition {
   const GroupEventRow({required this.groupId, required this.initialHeight});
@@ -39,16 +36,7 @@ class GroupEventRow extends TimelineRowDefinition {
   }
 }
 
-final _groupEventsByYearProvider = FutureProvider.autoDispose
-    .family<Map<int, GroupEventDto>, String>((ref, groupId) async {
-      ref.watch(timelineRowsRefreshProvider);
-      final events = await ref
-          .watch(getGroupEventsUsecaseProvider)
-          .execute(groupId);
-      return {for (final event in events) event.year: event};
-    }, retry: (_, _) => null);
-
-class _GroupEventYearCell extends HookConsumerWidget {
+class _GroupEventYearCell extends ConsumerWidget {
   const _GroupEventYearCell({
     required this.groupId,
     required this.year,
@@ -63,81 +51,31 @@ class _GroupEventYearCell extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final eventsByYear = ref.watch(_groupEventsByYearProvider(groupId));
-    final localEvent = useState<GroupEventDto?>(null);
-    final hasLoadedEvents = useState(false);
-    final loadedEvent = eventsByYear.value?[year];
+    final provider = timelineGroupEventsNotifierProvider(groupId);
+    final eventsByYear = ref.watch(provider).eventsByYear;
+    if (eventsByYear == null) return const SizedBox.expand();
+    final currentEvent = eventsByYear[year];
 
-    useEffect(() {
-      if (eventsByYear.hasValue) {
-        localEvent.value = loadedEvent;
-        hasLoadedEvents.value = true;
-      }
-      return null;
-    }, [loadedEvent, eventsByYear.hasValue]);
-
-    final currentEvent = localEvent.value;
-
-    Widget buildDataCell() {
-      return GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () async {
-          final eventAtOpen = localEvent.value;
-          await showGroupEventEditModal(
-            context: context,
-            selectedYear: year,
-            initialMemo: eventAtOpen?.memo ?? '',
-            onSave: (memo) async {
-              if (memo.isEmpty) {
-                if (eventAtOpen != null) {
-                  await ref
-                      .read(deleteGroupEventUsecaseProvider)
-                      .execute(
-                        eventAtOpen.id,
-                        expectedVersion: eventAtOpen.version,
-                      );
-                }
-                if (!context.mounted) {
-                  return;
-                }
-                localEvent.value = null;
-              } else {
-                final savedEvent = await ref
-                    .read(saveGroupEventUsecaseProvider)
-                    .execute(
-                      GroupEventDto(
-                        version: eventAtOpen?.version,
-                        id: eventAtOpen?.id ?? '',
-                        groupId: groupId,
-                        year: year,
-                        memo: memo,
-                      ),
-                    );
-                if (!context.mounted) {
-                  return;
-                }
-                localEvent.value = savedEvent;
-              }
-              ref.invalidate(_groupEventsByYearProvider(groupId));
-            },
-          );
-        },
-        child: currentEvent == null
-            ? const SizedBox.expand()
-            : GroupEventCell(
-                memo: currentEvent.memo,
-                availableHeight: availableHeight,
-                availableWidth: availableWidth,
-              ),
-      );
-    }
-
-    return eventsByYear.when(
-      data: (_) => buildDataCell(),
-      error: (_, _) =>
-          hasLoadedEvents.value ? buildDataCell() : const SizedBox.expand(),
-      loading: () =>
-          hasLoadedEvents.value ? buildDataCell() : const SizedBox.expand(),
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () async {
+        final notifier = ref.read(provider.notifier);
+        final eventAtOpen = currentEvent;
+        await showGroupEventEditModal(
+          context: context,
+          selectedYear: year,
+          initialMemo: eventAtOpen?.memo ?? '',
+          onSave: (memo) =>
+              notifier.save(year: year, memo: memo, eventAtOpen: eventAtOpen),
+        );
+      },
+      child: currentEvent == null
+          ? const SizedBox.expand()
+          : GroupEventCell(
+              memo: currentEvent.memo,
+              availableHeight: availableHeight,
+              availableWidth: availableWidth,
+            ),
     );
   }
 }
