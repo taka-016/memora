@@ -11,12 +11,12 @@ import 'package:memora/application/dtos/trip/location_dto.dart';
 import 'package:memora/application/usecases/location/get_current_location_usecase.dart';
 import 'package:memora/application/usecases/location/search_locations_usecase.dart';
 import 'package:memora/core/models/coordinate.dart';
-import 'package:memora/infrastructure/map_views/google_map_view.dart';
+import 'package:memora/presentation/shared/map_views/location_map_view.dart';
 import 'package:memora/presentation/shared/sheets/location_detail_bottom_sheet.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
-import 'google_map_view_test.mocks.dart';
+import 'location_map_view_test.mocks.dart';
 
 @GenerateMocks([
   GetCurrentLocationUsecase,
@@ -59,7 +59,7 @@ Widget _createApp(
 }
 
 void main() {
-  group('GoogleMapView', () {
+  group('LocationMapView', () {
     testWidgets('地図本体の配色もテーマの明暗変更に追従する', (tester) async {
       for (final brightness in [
         Brightness.light,
@@ -68,7 +68,7 @@ void main() {
       ]) {
         await tester.pumpWidget(
           _createApp(
-            const GoogleMapView(locations: []),
+            const LocationMapView(locations: []),
             theme: ThemeData(brightness: brightness),
           ),
         );
@@ -84,7 +84,7 @@ void main() {
       }
     });
     testWidgets('地図ボタン下の余白では背後の地図へタッチが届く', (tester) async {
-      await tester.pumpWidget(_createApp(const GoogleMapView(locations: [])));
+      await tester.pumpWidget(_createApp(const LocationMapView(locations: [])));
       final googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
       final mapRenderBox = tester.renderObject<RenderBox>(
         find.byType(GoogleMap),
@@ -110,7 +110,7 @@ void main() {
     });
 
     testWidgets('回転中は北を指すコンパスが検索バーに重ならず現在地ボタンの上に表示される', (tester) async {
-      await tester.pumpWidget(_createApp(const GoogleMapView(locations: [])));
+      await tester.pumpWidget(_createApp(const LocationMapView(locations: [])));
 
       final googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
       expect(googleMap.compassEnabled, isFalse);
@@ -157,7 +157,7 @@ void main() {
     testWidgets('コンパスを押すと最新の表示位置とズームと傾きを保って北向きに戻す', (tester) async {
       final controller = MockGoogleMapController();
       when(controller.animateCamera(any)).thenAnswer((_) async {});
-      await tester.pumpWidget(_createApp(const GoogleMapView(locations: [])));
+      await tester.pumpWidget(_createApp(const LocationMapView(locations: [])));
       final googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
       googleMap.onMapCreated!(controller);
       await tester.pump();
@@ -200,7 +200,7 @@ void main() {
         final groupSelector = find.byKey(const Key('compact_group_selector'));
         await tester.pumpWidget(
           _createApp(
-            GoogleMapView(
+            LocationMapView(
               locations: const [],
               topLeadingOverlay: TextButton(
                 key: const Key('compact_group_selector'),
@@ -259,7 +259,7 @@ void main() {
       LocationCandidateDto? selected;
       await tester.pumpWidget(
         _createApp(
-          GoogleMapView(
+          LocationMapView(
             locations: const [],
             onSearchedLocationSelected: (candidate) => selected = candidate,
           ),
@@ -284,8 +284,8 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('GoogleMapViewが正しく表示される', (tester) async {
-      await tester.pumpWidget(_createApp(const GoogleMapView(locations: [])));
+    testWidgets('LocationMapViewが正しく表示される', (tester) async {
+      await tester.pumpWidget(_createApp(const LocationMapView(locations: [])));
 
       expect(find.byKey(const Key('map_view')), findsOneWidget);
       expect(find.byType(TextField), findsOneWidget);
@@ -299,7 +299,7 @@ void main() {
         _createApp(
           MediaQuery(
             data: const MediaQueryData(textScaler: TextScaler.linear(2)),
-            child: GoogleMapView(
+            child: LocationMapView(
               locations: const [],
               topLeadingOverlay: SizedBox(
                 width: 160,
@@ -329,7 +329,7 @@ void main() {
     });
 
     testWidgets('locationがない場合、デフォルト位置を使用する', (tester) async {
-      await tester.pumpWidget(_createApp(const GoogleMapView(locations: [])));
+      await tester.pumpWidget(_createApp(const LocationMapView(locations: [])));
 
       final googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
       final initialPosition = googleMap.initialCameraPosition;
@@ -351,7 +351,7 @@ void main() {
       ];
 
       await tester.pumpWidget(
-        _createApp(const GoogleMapView(locations: locations)),
+        _createApp(const LocationMapView(locations: locations)),
       );
 
       final googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
@@ -383,7 +383,10 @@ void main() {
 
       await tester.pumpWidget(
         _createApp(
-          GoogleMapView(locations: locations, selectedLocation: locations.last),
+          LocationMapView(
+            locations: locations,
+            selectedLocation: locations.last,
+          ),
         ),
       );
 
@@ -406,7 +409,7 @@ void main() {
       ];
 
       await tester.pumpWidget(
-        _createApp(const GoogleMapView(locations: locations)),
+        _createApp(const LocationMapView(locations: locations)),
       );
 
       final googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
@@ -432,7 +435,7 @@ void main() {
 
       await tester.pumpWidget(
         _createApp(
-          const GoogleMapView(
+          const LocationMapView(
             locations: [selectedLocation, otherLocation],
             selectedLocation: selectedLocation,
             highlightSelectedLocation: true,
@@ -468,7 +471,7 @@ void main() {
 
       await tester.pumpWidget(
         _createApp(
-          const GoogleMapView(
+          const LocationMapView(
             locations: [location],
             selectedLocation: location,
             isReadOnly: true,
@@ -513,7 +516,7 @@ void main() {
 
       await tester.pumpWidget(
         _createApp(
-          GoogleMapView(
+          LocationMapView(
             locations: locations,
             selectedLocation: locations.first,
             onLocationTapped: (location) => tappedLocationIds.add(location.id),
@@ -565,7 +568,7 @@ void main() {
 
       await tester.pumpWidget(
         _createApp(
-          GoogleMapView(
+          LocationMapView(
             locations: const [location],
             selectedLocation: location,
             locationDetailBuilder:

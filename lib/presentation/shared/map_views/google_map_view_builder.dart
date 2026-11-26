@@ -3,7 +3,7 @@ import 'package:memora/application/dtos/location/location_candidate_dto.dart';
 import 'package:memora/application/dtos/trip/location_dto.dart';
 import 'package:memora/presentation/shared/map_views/map_view_builder.dart';
 import 'package:memora/core/models/coordinate.dart';
-import 'package:memora/infrastructure/map_views/google_map_view.dart';
+import 'package:memora/presentation/shared/map_views/location_map_view.dart';
 
 class GoogleMapViewBuilder implements MapViewBuilder {
   const GoogleMapViewBuilder();
@@ -23,7 +23,7 @@ class GoogleMapViewBuilder implements MapViewBuilder {
     DateTime? tripStartDate,
     bool isReadOnly = false,
   }) {
-    return GoogleMapView(
+    return LocationMapView(
       locations: locations,
       onMapLongTapped: onMapLongTapped,
       onSearchedLocationSelected: onSearchedLocationSelected,
