@@ -1,5 +1,12 @@
+# run / build / release / checkのモードはonline（既定）またはoffline。
+# テスト対象・追加オプションはモードの後ろに指定する。
+# 例: just check online test/unit/、just check offline test/integration/
+# 全体テストはjust checkを使い、flutter testを直接実行しない。
 set shell := ['bash', '-euo', 'pipefail', '-c']
 set positional-arguments
+
+alias sm := sync-main
+alias sc := setup-cloud
 
 # 利用できるタスクを表示する
 default:
@@ -13,6 +20,7 @@ run mode='online' *args:
 build mode='online' *args:
   bash scripts/app/run_flutter_app.sh build "$@"
 
+# 出力先: build/app/outputs/flutter-apk/memora-<version>-<mode>.apk
 # release APKを作成する（online / offline、オンラインは毎回Firestoreで採番）
 release mode='online' *args:
   bash scripts/app/release_android_apk.sh "$@"
@@ -28,6 +36,30 @@ maintenance state:
 # フォーマット・コード生成・解析・テストを実行する（online / offline）
 check mode='online' *args:
   bash scripts/app/check.sh "$@"
+
+# 依存関係を取得する
+pub-get:
+  flutter pub get
+
+# ビルドキャッシュを消去する
+clean:
+  flutter clean
+
+# モック・設定などのコードを生成する（例: just generate --delete-conflicting-outputs）
+generate *args:
+  dart run build_runner build "$@"
+
+# 静的解析を実行する
+analyze:
+  flutter analyze
+
+# コードを整形する
+format:
+  dart format .
+
+# アプリとテストのディレクトリ構造を表示する
+tree:
+  tree lib test
 
 # 開発コンテナを起動する（ホストで実行）
 dev-up:
@@ -64,7 +96,7 @@ emulator-stop:
 test-dev *configs:
   bash scripts/test/dev.sh "$@"
 
-# エミュレータ環境を検証する（開発コンテナで実行）
+# エミュレータ環境を検証する（開発コンテナで実行、終了時にエミュレータを停止）
 test-emulator:
   bash scripts/test/emulator.sh
 
@@ -82,9 +114,6 @@ setup-cloud *actions:
 # SSH鍵を作成する（省略時はssh_keys/memora_ed25519）
 ssh-key *args:
   bash scripts/dev/generate_ssh_public_key.sh "$@"
-
-alias sm := sync-main
-alias sc := setup-cloud
 
 # mainを更新し、追跡先が削除されたローカルブランチを整理する
 sync-main:
