@@ -1,13 +1,10 @@
-import 'package:memora/presentation/notifiers/startup/startup_common_data_notifier.dart';
-import 'package:memora/composition_root/providers/startup_common_data_providers.dart';
-import 'package:memora/composition_root/providers/android_widget_providers.dart';
+import 'package:memora/presentation/notifiers/group/group_mutation_coordinator.dart';
 import 'package:memora/composition_root/providers/group_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/notifiers/group/group_management_state.dart';
-import 'package:memora/presentation/notifiers/timeline/group_timeline_group_selection_notifier.dart';
 
 export 'group_management_state.dart';
 
@@ -42,55 +39,34 @@ class GroupManagementNotifier extends AsyncNotifier<GroupManagementState> {
     return _runExclusiveOperation(execute: _refreshGroups);
   }
 
-  Future<bool> createGroup(GroupDto group) async {
+  Future<bool> createGroup(GroupDto group) {
     return _runMutation(
       operationName: 'createGroup',
-      execute: () async {
-        await ref.read(createGroupUsecaseProvider).execute(group);
-      },
+      execute: () => ref
+          .read(groupMutationCoordinatorProvider)
+          .createGroup(group, refreshGroups: _refreshGroups),
     );
   }
 
-  Future<bool> updateGroup(GroupDto group) async {
-    final succeeded = await _runMutation(
+  Future<bool> updateGroup(GroupDto group) {
+    return _runMutation(
       operationName: 'updateGroup',
-      execute: () => ref.read(updateGroupUsecaseProvider).execute(group),
+      execute: () => ref
+          .read(groupMutationCoordinatorProvider)
+          .updateGroup(group, refreshGroups: _refreshGroups),
     );
-    if (!succeeded || !ref.mounted) return succeeded;
-    final refreshed = state.value?.groups
-        .where((value) => value.id == group.id)
-        .firstOrNull;
-    final selection = ref.read(groupTimelineGroupSelectionNotifierProvider);
-    if (refreshed != null &&
-        selection.status == GroupTimelineGroupSelectionStatus.loaded) {
-      ref
-          .read(groupTimelineGroupSelectionNotifierProvider.notifier)
-          .setLoadedGroups(
-            memberId: selection.memberId!,
-            groups: [
-              for (final value in selection.groups)
-                value.id == refreshed.id ? refreshed : value,
-            ],
-          );
-    }
-    return succeeded;
   }
 
-  Future<bool> deleteGroup(String groupId, {int? expectedVersion}) async {
+  Future<bool> deleteGroup(String groupId, {int? expectedVersion}) {
     return _runMutation(
       operationName: 'deleteGroup',
-      execute: () async {
-        await ref
-            .read(deleteGroupUsecaseProvider)
-            .execute(groupId, expectedVersion: expectedVersion);
-        if (!ref.mounted) return;
-        ref.read(groupTimelineGroupSelectionNotifierProvider.notifier).reset();
-        try {
-          await ref.read(refreshSelectedAndroidWidgetCacheProvider)();
-        } catch (error, stackTrace) {
-          logger.w('削除後のウィジェット更新に失敗しました', error: error, stackTrace: stackTrace);
-        }
-      },
+      execute: () => ref
+          .read(groupMutationCoordinatorProvider)
+          .deleteGroup(
+            groupId,
+            expectedVersion: expectedVersion,
+            refreshGroups: _refreshGroups,
+          ),
     );
   }
 
@@ -113,16 +89,6 @@ class GroupManagementNotifier extends AsyncNotifier<GroupManagementState> {
             stackTrace: stack,
           );
           rethrow;
-        }
-        if (ref.mounted) {
-          await _refreshGroups();
-          if (ref.mounted &&
-              ref.exists(startupCommonDataNotifierProvider) &&
-              ref.read(startupCommonDataOwnerProvider) != null) {
-            await ref
-                .read(startupCommonDataNotifierProvider.notifier)
-                .refreshAfterChange();
-          }
         }
       },
     );
@@ -149,13 +115,14 @@ class GroupManagementNotifier extends AsyncNotifier<GroupManagementState> {
     }
   }
 
-  Future<void> _refreshGroups() async {
+  Future<List<GroupDto>> _refreshGroups() async {
     ref.invalidateSelf();
     try {
       await future;
     } catch (_) {
       // 読み込み失敗はbuildで記録し、AsyncErrorをViewへ通知する。
     }
+    return ref.mounted ? state.value?.groups ?? const [] : const [];
   }
 
   Future<List<GroupDto>> _getManagedGroupsWithMembers() {
