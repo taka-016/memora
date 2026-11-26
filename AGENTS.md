@@ -1,10 +1,11 @@
 # AGENTS.md
 
-## AGENTS.mdの記載方針
+## ドキュメントの記載方針
 
-- AIが判断や実行に必要な指示を迷わず読み取れることを優先し、コンテキストの消費を抑えるため簡潔に書く。
-- 独立した指示は箇条書きに分け、コマンドは1項目に1コマンドとその用途を書く。適用条件・禁止事項・例外は該当する指示と一緒に書き、共通の前提や既定値は一箇所にまとめる。
-- 整理するときはルールの意味や適用範囲を保ち、重複する説明や判断に不要な例を省く。
+- すべてのドキュメントは、読み手が必要な情報をすぐ理解できるよう、要点を簡潔に書く。冗長な説明・重複・判断に不要な例を省く。
+- AGENTS.mdは、AIが判断や実行に必要な指示を迷わず読み取れることを優先する。
+- 独立した指示は箇条書きに分ける。適用条件・禁止事項・例外は該当する指示と一緒に書き、共通の前提や既定値は一箇所にまとめる。
+- 整理するときは、ルールの意味・適用範囲と実行・判断に必要な情報を保つ。
 
 ## 作業ルール
 
@@ -27,7 +28,7 @@
 ### README・justfile
 
 - READMEには概要、導入前提、セットアップ、手動設定、必要な注意事項、関連資料へのリンクを簡潔に記載する。詳細仕様・内部構成・スクリプト内部処理・設計判断・変更経緯は既存資料やソースを参照し、実行や判断に不要な説明は省く。
-- タスクのコマンドと目的はjustfileにまとめ、READMEで一覧や実行内容を重複させない。
+- タスクのコマンドと目的はjustfileにまとめ、README・AGENTS.mdで一覧や実行内容を重複させない。
 - 単発の移行・補完スクリプトは、直接実行するコマンドと注意事項をスクリプトと同じフォルダの専用文書に記載する。README・justfileには追加しない。
 
 ### todo
@@ -40,20 +41,7 @@
 
 ## コマンド
 
-`just run`、`just build`、`just release`、`just check` のモードは `online`（既定）または `offline`。
-
-- `just run [online|offline]` — アプリを実行。
-- `just build [online|offline]` — debug APKを作成。
-- `just release [online|offline]` — release APK（`memora-<version>-<mode>.apk`）を作成。
-- `just check [online|offline]` — フォーマット・解析・テストを一括実行。全体テストはこのコマンドを使い、`flutter test` を直接実行しない。
-- `just check online test/unit/` — オンライン版のユニットテストのみ実行。
-- `just check offline test/integration/` — オフライン版のインテグレーションテストを実行。
-- `flutter pub get` — 依存関係を取得。
-- `flutter clean` — ビルドキャッシュを消去。
-- `dart run build_runner build` — モックやコードを生成。
-- `flutter analyze` — 静的解析。
-- `dart format .` — コードを整形。
-- `tree lib test` — アプリとテストのディレクトリ構造を表示。
+コマンド・用途・実行条件は[justfile](./justfile)を参照する。
 
 ## 環境
 

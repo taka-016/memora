@@ -17,23 +17,21 @@ Memoraは、家族や友人などのグループで思い出を記録・整理�
 
 ## ドキュメント
 
-詳細設計は以下を参照してください。
-
-- [ユーザーストーリー](./project_docs/user_stories.md) - 利用シナリオと受け入れ条件
-- [ER図](./project_docs/er_diagram.md) - データベース設計
-- [ユースケース図](./project_docs/usecase_diagram.md) - 主要な利用目的とアプリモードごとの利用可否
-- [ADR](./project_docs/adr/) - 今後も維持するアーキテクチャ上の判断
-- [TODO一覧](./project_docs/todo.md) - 開発進捗
+- [ユーザーストーリー](./project_docs/user_stories.md) — 利用シナリオ・受け入れ条件
+- [ユースケース図](./project_docs/usecase_diagram.md) — 利用目的・モード別の機能
+- [ER図](./project_docs/er_diagram.md) — データモデル
+- [ADR](./project_docs/adr/) — アーキテクチャ上の判断
+- [TODO一覧](./project_docs/todo.md) — 未完了の作業
 
 ## 開発
 
-日常の操作は[justfile](./justfile)にまとめています。`just`または`just --list`で目的に合うタスクを確認し、`just --show <タスク名>`で実行内容を確認できます。
+コマンド・用途・実行条件は[justfile](./justfile)を参照してください。`just`で一覧、`just --show <タスク名>`で実行内容を確認できます。
 
-### 前提条件とjustの導入
+### 前提条件
 
-ホストにDocker Engine・Compose・Git・SSHクライアントを用意し、`~/.gitconfig`を設定してください。WSL2でも利用できます。初回の構築にはインターネット接続が必要です。
-
-ホストにjust 1.59.0をインストールします。開発コンテナにはjustが含まれます。
+- ホスト：Docker Engine・Compose・Git・SSHクライアント、設定済みの`~/.gitconfig`。WSL2も利用可。
+- 初回構築にはインターネット接続が必要。
+- ホストにjust 1.59.0を導入（開発コンテナには導入済み）。
 
 ```bash
 mkdir -p "$HOME/.local/bin"
@@ -45,7 +43,7 @@ export PATH="$HOME/.local/bin:$PATH"
 
 PATHの設定はシェルの設定ファイルにも追加してください。
 
-### 開発コンテナの初回起動
+### 開発コンテナ
 
 ホストのリポジトリルートで実行します。
 
@@ -54,80 +52,67 @@ just dev-up
 just dev-shell
 ```
 
-コンテナへ渡す環境変数は、初回起動時に作成される`docker/.env`に設定します。アプリのコード生成用の`.env`とは別です。
-
-SSH接続を使う場合は、次のコマンドで接続し、作業ディレクトリへ移動してください。VS CodeのRemote-SSHも利用できます。
+- コンテナ用の環境変数：初回起動時に作成される`docker/.env`に設定。
+- 作業ディレクトリ：`/workspaces/memora`。
+- SSH接続（VS CodeのRemote-SSHも利用可）：
 
 ```bash
 ssh -i ssh_keys/memora_ed25519 -p 2222 root@localhost
 cd /workspaces/memora
 ```
 
-### 紹介ページ・ポリシーの公開
-
-紹介ページ、プライバシーポリシー、利用規約は`docs/`の静的ページです。開発用の設計資料やtodoは`project_docs/`に置き、公開対象に含めません。運営者名・問い合わせ先・情報の取扱いが実際の運用と一致することを確認してから公開してください。
-
-1. ページを含む変更を`main`へ反映する。
-2. [リポジトリのPages設定](https://github.com/taka-016/memora/settings/pages)で、Sourceを「Deploy from a branch」、Branchを`main`、フォルダを`/docs`にして保存する。
-3. デプロイ完了後、以下の3ページが開けることを確認する。
-
-| 項目 | 公開後のURL |
-| --- | --- |
-| アプリのホームページ | `https://taka-016.github.io/memora/` |
-| プライバシーポリシー | `https://taka-016.github.io/memora/privacy.html` |
-| 利用規約 | `https://taka-016.github.io/memora/terms.html` |
-
 ### アプリの初期設定
 
-開発コンテナの`/workspaces/memora`で、次の手順を実施します。
+開発コンテナのリポジトリルートで実施します。
 
-1. `cp .env.example .env`で設定ファイルを作成し、`GOOGLE_PLACES_APIKEY`を設定する。
-2. `flutter pub get`で依存関係をインストールする。
-3. `dart run build_runner build --delete-conflicting-outputs`で設定コードを生成する。
-4. 生成に成功したら、機密情報を含む設定ファイルを`rm .env`で削除する。
+1. `cp .env.example .env`でアプリ設定を作り、`GOOGLE_PLACES_APIKEY`を設定する（`docker/.env`とは別）。
+2. `just pub-get`で依存関係を取得する。
+3. `just generate --delete-conflicting-outputs`で設定コードを生成する。
+4. 成功後、機密情報を含む設定ファイルを`rm .env`で削除する。
+5. Google Cloud ConsoleでMaps SDK for Android・Places API (New)を有効にする。
+6. `android/local.properties`に`MAPS_API_KEY=<APIキー>`を設定し、アプリを再ビルドする。
 
-Google Cloud ConsoleでMaps SDK for AndroidとPlaces API (New)を有効にし、`android/local.properties`にも`MAPS_API_KEY=<APIキー>`を設定してください。変更後はアプリの再ビルドが必要です。
+### オンライン版の設定
 
-オンライン版はFirebaseの設定も必要です。[Firebase Console](https://console.firebase.google.com/)でプロジェクトを作成し、次を有効にしてください。
+1. [Firebase Console](https://console.firebase.google.com/)でプロジェクトを作成する。
+2. Authentication（Google・メールアドレス/パスワード）、Firestore Database（本番モード）、Identity Toolkit API、Token Service APIを有効にする。
+3. [Google Cloud CLI](https://cloud.google.com/sdk/docs/install)を用意し、必要なFirestoreセキュリティルールを設定する。
+4. `just setup-cloud`で「すべて実行」を選び、ログイン・プロジェクト選択・設定生成を進める。
+5. 設定更新後、アプリを再ビルドする。
 
-- Authentication（Google・メールアドレス/パスワード）
-- Firestore Database（本番モード）
-- Identity Toolkit API
-- Token Service API
+設定・認証時の注意：
 
-[Google Cloud CLI](https://cloud.google.com/sdk/docs/install)を用意し、必要に応じてFirestoreのセキュリティルールを設定した後、`just setup-cloud`を実行します。初回は「すべて実行」を選択し、画面の案内に従ってGoogle Cloud・Firebaseへのログインとプロジェクト選択を行ってください。Google Cloudの認証だけを行う場合は`just setup-cloud gcloud-auth`を使用します。認証済みなら再ログインは省略します。処理の選択肢は[justfile](./justfile)を参照してください。
+- Firebase用APIキーはGoogle Cloudの「APIとサービス → 認証情報」から取得し、案内に従って入力する。環境変数`FIREBASE_API_KEY`でも指定可。
+- キーの反映先は`android/app/google-services.json`と`lib/firebase_options.dart`。既存ファイルの削除は不要。
+- Google Cloud認証にはFirestore読み書き権限（`roles/datastore.user`など）のある管理用アカウントを使う。Firebase CLIとは別認証で、表示URLと認証コードでログインする。認証済みなら再ログインは不要。
+- 接続先は`.firebaserc`の`projects.default`。アクセストークンは自動取得する。CIでは`FIRESTORE_ACCESS_TOKEN`に有効なOAuthアクセストークンを指定可。
+- 初回のビルド番号変更・Firestore文書登録は不要。最低対応ビルド番号は配布後に旧版を停止するときだけ設定する。
 
-設定の生成・更新時は、Google Cloudの「APIとサービス → 認証情報」からFirebase用APIキーをコピーして入力してください（環境変数`FIREBASE_API_KEY`でも指定可）。指定したキーは`android/app/google-services.json`と`lib/firebase_options.dart`の両方へ反映されます。既存ファイルの削除は不要です。設定更新後はアプリを再ビルドしてください。
+### アプリモード・配布
 
-Google Cloudの認証では、対象プロジェクトのFirestore読み書き権限（`roles/datastore.user`など）を持つ管理用アカウントを使用してください。Firebase CLIとは別の認証です。表示されたURLを手元のブラウザーで開き、認証コードを入力して完了できます。コマンド実行時にアクセストークンを自動取得します。CI等では、有効なOAuthアクセストークンを環境変数`FIRESTORE_ACCESS_TOKEN`に設定する方法も使用できます。接続先は`.firebaserc`の`projects.default`です。
+- 実行・ビルドはAndroid向け。オンライン版とオフライン版は同じ端末にインストールでき、データは共有しない。機能差は[ユースケース図](./project_docs/usecase_diagram.md)を参照。
+- バージョン名は`pubspec.yaml`で管理。オンライン版のビルド番号はリリース時に自動採番し、デバッグでは現在値を使う。`--build-number`は指定不可。
+- オフライン版はFirestoreに接続せず、`pubspec.yaml`のビルド番号を使う。
+- APKのインストール：`adb install -r <APKのパス>`。
+- 初期化：`adb shell pm clear <application ID>`。アンインストール：`adb uninstall <application ID>`。どちらも対象アプリのデータを削除する。
 
-初回はビルド番号の変更やFirestoreへの文書登録は不要です。`just release`で自動採番されます。最低対応ビルド番号は、配布後に旧版を利用停止にしたいときだけ設定してください。
+| モード | application ID |
+| --- | --- |
+| オンライン | `com.example.memora` |
+| オフライン | `com.example.memora.offline` |
 
 ### 端末カレンダー連携
 
-Androidのオンライン版では、カレンダー画面の「端末カレンダー連携」から読み取りを許可し、アカウントごとに表示対象を選びます。Google等の予定は、あらかじめ端末のカレンダー同期を有効にしてください。端末に同期された範囲だけを表示し、予定の編集や他メンバーへの共有は行いません。選択した予定はホーム画面のカレンダーウィジェットにも表示し、ウィジェットの更新時に端末から読み直します。
-
-Androidのカレンダー権限を取り消した場合は、端末の設定から再度許可してください。
-
-### アプリモードと成果物
-
-以下の実行・ビルド手順はAndroid向けです。
-
-`run`・`build`・`release`・`check`の第1引数は`online`または`offline`で、省略時は`online`です。両モードは同じ端末にインストールできますが、データは共有しません。機能の違いは[ユースケース図](./project_docs/usecase_diagram.md)を参照してください。
-
-テスト対象や追加オプションはモードの後ろへ指定します（例: `just check offline test/unit/`）。
-
-表示用のバージョン名は`pubspec.yaml`で管理します。オンライン版のビルド番号はリリースごとに自動採番し、デバッグ実行・ビルドでは現在の採番値を使用します。オフライン版はFirestoreに接続せず、`pubspec.yaml`のビルド番号を使用します。オンライン版への`--build-number`の指定はできません。
-
-release APKの出力先は`build/app/outputs/flutter-apk/memora-<version>-<mode>.apk`です。生成したバージョンとモードに合わせて、`adb install -r <APKのパス>`でインストールできます。
-
-アプリの初期化は`adb shell pm clear <application ID>`、アンインストールは`adb uninstall <application ID>`で行います。application IDはオンライン版が`com.example.memora`、オフライン版が`com.example.memora.offline`です。どちらの操作も対象アプリのデータを削除します。
+- Androidオンライン版のカレンダー画面で「端末カレンダー連携」を開き、読み取りを許可してアカウントごとの表示対象を選ぶ。
+- Google等の予定は端末側の同期を有効にする。表示は同期済みの範囲のみで、編集・他メンバーへの共有は不可。
+- 選択した予定はホーム画面のカレンダーウィジェットにも表示し、更新時に端末から再取得する。
+- 権限を取り消した場合は、Androidの設定から再度許可する。
 
 ### ヘッドレスAndroidエミュレータ
 
-ホストはx86_64のLinux環境とし、Dockerから`/dev/kvm`へアクセスできるようにしてください。WSL2でもDocker Engineを動かす環境で`ls -l /dev/kvm`を確認します。
-
-外部通信とGoogleサービスは利用できないため、オフライン版の確認に使用します。開発コンテナで起動し、ADBを接続します。実機の誤操作を避けるため、端末IDを指定してください。
+- ホストはx86_64 Linux。Dockerから`/dev/kvm`へアクセスできること（WSL2もDocker Engine側で確認）。
+- 外部通信・Googleサービスは利用不可。オフライン版の確認に使う。
+- 開発コンテナで実行し、実機の誤操作を避けるため端末IDを指定する。
 
 ```bash
 just emulator-up
@@ -137,16 +122,25 @@ just run offline -d "$emulator_serial"
 adb -s "$emulator_serial" exec-out screencap -p > /tmp/memora-screen.png
 ```
 
-`just run`を終了してから、切断・停止します。端末内のデータは次回起動時も残ります。
+実行終了後に切断・停止します。端末データは次回起動時も保持されます。
 
 ```bash
 adb disconnect "$emulator_serial"
 just emulator-stop
 ```
 
-環境検証用の`just test-emulator`も終了時にエミュレータを停止します。
+### 紹介ページ・ポリシーの公開
+
+公開対象は`docs/`のみ。運営者名・問い合わせ先・情報の取扱いを確認してから公開してください。
+
+1. ページの変更を`main`へ反映する。
+2. [Pages設定](https://github.com/taka-016/memora/settings/pages)を「Deploy from a branch」・`main`・`/docs`にする。
+3. 公開後に以下のページが開けることを確認する。
+
+- [ホームページ](https://taka-016.github.io/memora/)
+- [プライバシーポリシー](https://taka-016.github.io/memora/privacy.html)
+- [利用規約](https://taka-016.github.io/memora/terms.html)
 
 ## ライセンス
 
-このプロジェクトはGNU Affero General Public License v3.0（AGPL-3.0）の下で公開されています。  
-詳細は[LICENSE](./LICENSE)を参照してください。
+[GNU Affero General Public License v3.0（AGPL-3.0）](./LICENSE)
