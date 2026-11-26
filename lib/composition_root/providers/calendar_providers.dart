@@ -1,3 +1,4 @@
+import 'package:memora/application/usecases/calendar/calendar_event_mutation_usecase.dart';
 import 'package:memora/composition_root/providers/shared_calendar_cache_providers.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/application/usecases/calendar/move_calendar_event_usecase.dart';
@@ -136,5 +137,17 @@ final calendarLabelManagementUsecaseProvider =
       (ref) => CalendarLabelManagementUsecase(
         ref.watch(calendarLabelRepositoryProvider),
         ref.watch(getGroupWithMembersByIdUsecaseProvider),
+      ),
+    );
+
+final calendarEventMutationUsecaseProvider =
+    Provider<CalendarEventMutationUsecase>(
+      (ref) => CalendarEventMutationUsecase(
+        create: () => ref.read(createCalendarEventUsecaseProvider),
+        update: () => ref.read(updateCalendarEventUsecaseProvider),
+        deleteEvent: () => ref.read(deleteCalendarEventUsecaseProvider),
+        move: () => ref.read(moveCalendarEventUsecaseProvider),
+        changeRecurrence: () =>
+            ref.read(changeCalendarRecurrenceUsecaseProvider),
       ),
     );
