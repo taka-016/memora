@@ -8,7 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/models/app_mode.dart';
 import 'package:memora/composition_root/app_composition_root.dart';
 import 'package:memora/composition_root/providers/offline_backup_providers.dart';
-import 'package:memora/infrastructure/android_widget/android_widget_interactivity_callback.dart';
+import 'package:memora/composition_root/android_widget_interactivity_callback.dart';
 
 Future<void> initializeAppDisplay() async {
   WidgetsFlutterBinding.ensureInitialized();

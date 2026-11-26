@@ -10,7 +10,7 @@ import 'package:memora/application/usecases/account/signup_usecase.dart';
 import 'package:memora/application/usecases/account/update_email_usecase.dart';
 import 'package:memora/application/usecases/account/update_password_usecase.dart';
 import 'package:memora/composition_root/providers/android_widget_providers.dart';
-import 'package:memora/infrastructure/factories/auth_service_factory.dart';
+import 'package:memora/composition_root/factories/auth_service_factory.dart';
 
 final deleteUserUseCaseProvider = Provider<DeleteUserUseCase>((ref) {
   return DeleteUserUseCase(authService: ref.watch(authServiceProvider));

@@ -5,7 +5,7 @@ import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/queries/dvc/dvc_point_usage_query_service.dart';
 import 'package:memora/application/queries/order_by.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
-import 'package:memora/infrastructure/factories/query_service_factory.dart';
+import 'package:memora/composition_root/factories/query_service_factory.dart';
 import 'package:memora/presentation/features/timeline/timeline_dvc_point_usages_provider.dart';
 import 'package:memora/presentation/features/timeline/timeline_rows_refresh_provider.dart';
 import 'package:memora/presentation/features/timeline/timeline_trip_entries_provider.dart';

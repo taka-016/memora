@@ -15,13 +15,13 @@ import 'package:memora/application/models/app_mode.dart';
 import 'package:memora/application/models/app_capabilities.dart';
 import 'package:memora/application/exceptions/feature_unavailable_exception.dart';
 import 'package:memora/infrastructure/config/resolved_app_mode_provider.dart';
-import 'package:memora/infrastructure/factories/auth_service_factory.dart';
+import 'package:memora/composition_root/factories/auth_service_factory.dart';
 import 'package:memora/infrastructure/factories/current_location_service_factory.dart';
 import 'package:memora/infrastructure/factories/location_search_service_factory.dart';
 import 'package:memora/infrastructure/factories/nearby_location_service_factory.dart';
-import 'package:memora/infrastructure/factories/query_service_factory.dart';
-import 'package:memora/infrastructure/factories/repository_factory.dart';
-import 'package:memora/infrastructure/factories/transaction_factory.dart';
+import 'package:memora/composition_root/factories/query_service_factory.dart';
+import 'package:memora/composition_root/factories/repository_factory.dart';
+import 'package:memora/composition_root/factories/transaction_factory.dart';
 import 'package:memora/infrastructure/factories/app_services_factory.dart';
 import 'package:memora/core/models/coordinate.dart';
 

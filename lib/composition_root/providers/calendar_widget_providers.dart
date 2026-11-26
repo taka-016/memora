@@ -11,14 +11,14 @@ import 'package:memora/application/usecases/android_widget/get_calendar_widget_s
 import 'package:memora/application/usecases/android_widget/get_android_widget_calendar_cache_usecase.dart';
 import 'package:memora/application/usecases/android_widget/refresh_android_widget_caches_usecase.dart';
 import 'package:memora/application/models/app_mode.dart';
-import 'package:memora/infrastructure/factories/auth_service_factory.dart';
+import 'package:memora/composition_root/factories/auth_service_factory.dart';
 import 'package:memora/composition_root/providers/android_widget_providers.dart';
 import 'package:memora/composition_root/providers/app_providers.dart';
 import 'package:memora/composition_root/providers/calendar_providers.dart';
 import 'package:memora/composition_root/providers/calendar_group_settings_providers.dart';
 import 'package:memora/composition_root/providers/member_providers.dart';
 import 'package:memora/infrastructure/config/resolved_app_mode_provider.dart';
-import 'package:memora/infrastructure/factories/query_service_factory.dart';
+import 'package:memora/composition_root/factories/query_service_factory.dart';
 import 'package:memora/infrastructure/services/home_widget_calendar_cache_storage.dart';
 
 final getCalendarWidgetSelectionUsecaseProvider =

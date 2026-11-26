@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/misc.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/trip/task_dto.dart';
 import 'package:memora/application/queries/trip/task_query_service.dart';
-import 'package:memora/infrastructure/factories/query_service_factory.dart';
+import 'package:memora/composition_root/factories/query_service_factory.dart';
 import 'package:memora/presentation/features/trip/task_view.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';

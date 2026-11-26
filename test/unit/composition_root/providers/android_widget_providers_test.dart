@@ -9,7 +9,7 @@ import 'package:memora/application/services/android_widget_cache_storage.dart';
 import 'package:memora/composition_root/providers/android_widget_providers.dart';
 import 'package:memora/composition_root/providers/app_providers.dart';
 import 'package:memora/infrastructure/config/resolved_app_mode_provider.dart';
-import 'package:memora/infrastructure/factories/query_service_factory.dart';
+import 'package:memora/composition_root/factories/query_service_factory.dart';
 import 'package:memora/infrastructure/time/fixed_app_clock.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';

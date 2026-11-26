@@ -13,7 +13,7 @@ import 'package:memora/composition_root/providers/calendar_providers.dart';
 import 'package:memora/composition_root/providers/group_providers.dart';
 import 'package:memora/composition_root/providers/member_providers.dart';
 import 'package:memora/composition_root/providers/offline_database_provider.dart';
-import 'package:memora/infrastructure/factories/query_service_factory.dart';
+import 'package:memora/composition_root/factories/query_service_factory.dart';
 import 'package:memora/infrastructure/config/resolved_app_mode_provider.dart';
 import 'package:memora/infrastructure/services/calendar_notification_source.dart';
 import 'package:memora/infrastructure/services/local_calendar_notification_gateway.dart';

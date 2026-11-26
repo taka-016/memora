@@ -8,7 +8,7 @@ import 'package:memora/application/models/app_mode.dart';
 import 'package:memora/composition_root/providers/calendar_providers.dart';
 import 'package:memora/composition_root/providers/shared_calendar_cache_providers.dart';
 import 'package:memora/infrastructure/config/resolved_app_mode_provider.dart';
-import 'package:memora/infrastructure/factories/query_service_factory.dart';
+import 'package:memora/composition_root/factories/query_service_factory.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/models/calendar_event_period.dart';
 import 'package:memora/infrastructure/queries/calendar/firestore_calendar_event_query_service.dart';

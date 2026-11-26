@@ -8,8 +8,8 @@ import 'package:memora/application/usecases/group/get_groups_with_members_usecas
 import 'package:memora/application/usecases/group/get_managed_groups_with_members_usecase.dart';
 import 'package:memora/application/usecases/group/save_group_event_usecase.dart';
 import 'package:memora/application/usecases/group/update_group_usecase.dart';
-import 'package:memora/infrastructure/factories/query_service_factory.dart';
-import 'package:memora/infrastructure/factories/repository_factory.dart';
+import 'package:memora/composition_root/factories/query_service_factory.dart';
+import 'package:memora/composition_root/factories/repository_factory.dart';
 
 final createGroupUsecaseProvider = Provider<CreateGroupUsecase>((ref) {
   return CreateGroupUsecase(ref.watch(groupRepositoryProvider));

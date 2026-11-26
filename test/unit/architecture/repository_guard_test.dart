@@ -25,7 +25,7 @@ void main() {
 
   test('具象RepositoryはFactoryとトランザクション内だけで参照する', () {
     const allowed = {
-      'lib/infrastructure/factories/repository_factory.dart',
+      'lib/composition_root/factories/repository_factory.dart',
       'lib/infrastructure/transactions/firestore_write_transaction.dart',
       'lib/infrastructure/transactions/sqlite_write_transaction.dart',
     };

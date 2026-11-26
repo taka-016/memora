@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/composition_root/calendar_notification_background.dart';
 import 'package:memora/composition_root/providers/android_widget_providers.dart';
 import 'package:memora/composition_root/startup_background_registration.dart';
-import 'package:memora/infrastructure/android_widget/android_widget_background_update.dart';
+import 'package:memora/composition_root/android_widget_background_update.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 final startupBackgroundRegistrationProvider =

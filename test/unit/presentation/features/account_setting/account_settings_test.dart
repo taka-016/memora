@@ -6,7 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/exceptions/reauthentication_required_exception.dart';
 import 'package:memora/application/services/auth_service.dart';
 import 'package:memora/domain/entities/account/user.dart';
-import 'package:memora/infrastructure/factories/auth_service_factory.dart';
+import 'package:memora/composition_root/factories/auth_service_factory.dart';
 import 'package:memora/presentation/features/account_setting/account_delete_modal.dart';
 import 'package:memora/presentation/features/account_setting/account_settings.dart';
 import 'package:memora/presentation/features/account_setting/email_change_modal.dart';

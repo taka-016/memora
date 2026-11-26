@@ -1,4 +1,4 @@
-import 'package:memora/infrastructure/factories/query_service_factory.dart';
+import 'package:memora/composition_root/factories/query_service_factory.dart';
 
 import '../../../application/usecases/calendar/calendar_usecases_test.mocks.dart'
     show MockCalendarEventQueryService;

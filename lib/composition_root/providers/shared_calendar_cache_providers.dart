@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:memora/infrastructure/factories/auth_service_factory.dart';
+import 'package:memora/composition_root/factories/auth_service_factory.dart';
 import 'package:memora/infrastructure/services/shared_calendar_cache.dart';
 
 final sharedCalendarCacheProvider = Provider<SharedCalendarCache>(

@@ -24,7 +24,7 @@ import 'package:memora/infrastructure/backup/local_offline_backup_restore_sync_s
 import 'package:memora/infrastructure/backup/shared_preferences_offline_backup_settings_storage.dart';
 import 'package:memora/infrastructure/backup/sqlite_offline_backup_data_store.dart';
 import 'package:memora/infrastructure/config/resolved_app_mode_provider.dart';
-import 'package:memora/infrastructure/factories/query_service_factory.dart';
+import 'package:memora/composition_root/factories/query_service_factory.dart';
 import 'package:memora/presentation/features/timeline/timeline_rows_refresh_provider.dart';
 import 'package:memora/presentation/notifiers/dvc/dvc_point_calculation_notifier.dart';
 import 'package:memora/presentation/notifiers/group/group_management_notifier.dart';

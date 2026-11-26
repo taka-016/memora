@@ -9,8 +9,8 @@ import 'package:memora/application/usecases/trip/get_tasks_by_trip_id_usecase.da
 import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
 import 'package:memora/application/usecases/trip/get_trip_entry_by_id_usecase.dart';
 import 'package:memora/application/usecases/trip/update_trip_entry_usecase.dart';
-import 'package:memora/infrastructure/factories/query_service_factory.dart';
-import 'package:memora/infrastructure/factories/repository_factory.dart';
+import 'package:memora/composition_root/factories/query_service_factory.dart';
+import 'package:memora/composition_root/factories/repository_factory.dart';
 
 final createTripEntryUsecaseProvider = Provider<CreateTripEntryUsecase>((ref) {
   return CreateTripEntryUsecase(ref.watch(tripEntryRepositoryProvider));

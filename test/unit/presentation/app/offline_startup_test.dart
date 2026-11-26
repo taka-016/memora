@@ -15,7 +15,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/models/app_mode.dart';
 import 'package:memora/infrastructure/config/resolved_app_mode_provider.dart';
-import 'package:memora/infrastructure/factories/auth_service_factory.dart';
+import 'package:memora/composition_root/factories/auth_service_factory.dart';
 import 'package:memora/main.dart';
 import 'package:memora/presentation/app/app_router.dart';
 import 'package:memora/presentation/notifiers/android_widget/android_widget_launch_notifier.dart';

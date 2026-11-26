@@ -21,9 +21,9 @@ import 'package:memora/application/usecases/member/get_member_events_usecase.dar
 import 'package:memora/application/usecases/member/save_member_event_usecase.dart';
 import 'package:memora/application/usecases/member/update_member_usecase.dart';
 import 'package:memora/composition_root/providers/app_providers.dart';
-import 'package:memora/infrastructure/factories/auth_service_factory.dart';
-import 'package:memora/infrastructure/factories/query_service_factory.dart';
-import 'package:memora/infrastructure/factories/repository_factory.dart';
+import 'package:memora/composition_root/factories/auth_service_factory.dart';
+import 'package:memora/composition_root/factories/query_service_factory.dart';
+import 'package:memora/composition_root/factories/repository_factory.dart';
 
 final acceptInvitationUseCaseProvider = Provider<AcceptInvitationUseCase>((
   ref,
