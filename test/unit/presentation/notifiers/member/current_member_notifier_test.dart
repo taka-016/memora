@@ -15,7 +15,7 @@ import 'package:memora/application/models/app_mode.dart';
 import 'package:memora/application/usecases/member/get_current_member_usecase.dart';
 import 'package:memora/composition_root/providers/member_providers.dart';
 import 'package:memora/infrastructure/config/resolved_app_mode_provider.dart';
-import 'package:memora/infrastructure/factories/auth_service_factory.dart';
+import 'package:memora/composition_root/factories/auth_service_factory.dart';
 import 'package:memora/presentation/notifiers/member/current_member_notifier.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';

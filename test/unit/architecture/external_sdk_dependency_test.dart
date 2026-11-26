@@ -3,13 +3,13 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('外部SDKの初期化と具象実装はInfrastructure層へ閉じ込める', () {
+  test('起動入口とCoreはオンラインSDKの初期化と具象クエリを直接参照しない', () {
     final paths = [
       'lib/main.dart',
       'lib/core/app_logger.dart',
       'lib/core/time/app_clock.dart',
-      'lib/infrastructure/android_widget/android_widget_background_update.dart',
-      'lib/infrastructure/android_widget/android_widget_interactivity_callback.dart',
+      'lib/composition_root/android_widget_background_update.dart',
+      'lib/composition_root/android_widget_interactivity_callback.dart',
     ];
     final violations = <String>[];
     for (final path in paths) {

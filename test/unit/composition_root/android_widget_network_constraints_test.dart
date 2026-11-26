@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/models/app_mode.dart';
-import 'package:memora/infrastructure/android_widget/android_widget_background_update.dart';
+import 'package:memora/composition_root/android_widget_background_update.dart';
 import 'package:workmanager/workmanager.dart';
 
 void main() {

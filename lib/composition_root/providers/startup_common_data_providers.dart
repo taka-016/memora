@@ -3,7 +3,7 @@ import 'package:memora/application/models/app_mode.dart';
 import 'package:memora/application/services/startup_common_data_source.dart';
 import 'package:memora/application/services/startup_common_data_storage.dart';
 import 'package:memora/infrastructure/config/resolved_app_mode_provider.dart';
-import 'package:memora/infrastructure/factories/query_service_factory.dart';
+import 'package:memora/composition_root/factories/query_service_factory.dart';
 import 'package:memora/infrastructure/services/firestore_startup_common_data_source.dart';
 import 'package:memora/infrastructure/services/shared_preferences_startup_common_data_storage.dart';
 import 'package:memora/presentation/notifiers/auth/auth_notifier.dart';

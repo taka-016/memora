@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/composition_root/providers/android_widget_providers.dart';
 import 'package:memora/domain/repositories/trip/trip_entry_repository.dart';
-import 'package:memora/infrastructure/factories/repository_factory.dart';
+import 'package:memora/composition_root/factories/repository_factory.dart';
 import 'package:memora/presentation/features/trip/trip_entry_mutation_coordinator.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';

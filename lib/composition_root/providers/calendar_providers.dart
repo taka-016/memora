@@ -17,8 +17,8 @@ import 'package:memora/application/usecases/calendar/reorder_calendar_labels_use
 import 'package:memora/application/services/calendar_default_duration_storage.dart';
 import 'package:memora/infrastructure/services/shared_preferences_calendar_default_duration_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:memora/infrastructure/factories/query_service_factory.dart';
-import 'package:memora/infrastructure/factories/repository_factory.dart';
+import 'package:memora/composition_root/factories/query_service_factory.dart';
+import 'package:memora/composition_root/factories/repository_factory.dart';
 import 'package:memora/application/usecases/calendar/get_calendar_events_usecase.dart';
 import 'package:memora/application/usecases/calendar/get_calendar_labels_usecase.dart';
 import 'package:memora/application/usecases/calendar/create_calendar_event_usecase.dart';

@@ -7,7 +7,7 @@ import 'package:memora/application/services/calendar_group_initialization_policy
 import 'package:memora/infrastructure/services/local_calendar_group_initialization_policy.dart';
 import 'package:memora/infrastructure/services/device_calendar_membership_source.dart';
 import 'package:memora/composition_root/providers/offline_database_provider.dart';
-import 'package:memora/infrastructure/factories/query_service_factory.dart';
+import 'package:memora/composition_root/factories/query_service_factory.dart';
 import 'package:memora/composition_root/providers/calendar_widget_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/models/app_mode.dart';

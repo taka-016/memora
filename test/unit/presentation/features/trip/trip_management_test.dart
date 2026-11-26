@@ -13,11 +13,11 @@ import 'package:memora/application/dtos/trip/task_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/queries/group/group_query_service.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
-import 'package:memora/infrastructure/factories/query_service_factory.dart';
+import 'package:memora/composition_root/factories/query_service_factory.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/domain/repositories/trip/trip_entry_repository.dart';
-import 'package:memora/infrastructure/factories/repository_factory.dart';
+import 'package:memora/composition_root/factories/repository_factory.dart';
 import 'package:memora/presentation/features/trip/trip_management.dart';
 import 'package:memora/presentation/notifiers/trip/trip_management_notifier.dart';
 

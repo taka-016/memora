@@ -6,7 +6,7 @@ import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/queries/group/group_query_service.dart';
 import 'package:memora/application/queries/order_by.dart';
 import 'package:memora/core/time/app_clock.dart';
-import 'package:memora/infrastructure/factories/query_service_factory.dart';
+import 'package:memora/composition_root/factories/query_service_factory.dart';
 import 'package:memora/presentation/features/timeline/timeline_rows_refresh_provider.dart';
 import 'package:memora/presentation/notifiers/timeline/group_timeline_group_selection_notifier.dart';
 import 'package:memora/presentation/notifiers/timeline/group_timeline_refresh_notifier.dart';

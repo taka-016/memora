@@ -20,7 +20,7 @@ import 'package:memora/application/usecases/android_widget/android_widget_itiner
 import 'package:memora/composition_root/app_composition_root.dart';
 import 'package:memora/composition_root/providers/android_widget_providers.dart';
 import 'package:memora/infrastructure/backup/offline_backup_restore_recovery.dart';
-import 'package:memora/infrastructure/factories/query_service_factory.dart';
+import 'package:memora/composition_root/factories/query_service_factory.dart';
 import 'package:memora/infrastructure/services/method_channel_android_widget_toast_notifier.dart';
 
 Future<void> withAndroidWidgetDependencies(

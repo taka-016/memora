@@ -18,8 +18,8 @@ import 'package:memora/domain/repositories/calendar/calendar_event_repository.da
 import 'package:memora/domain/repositories/calendar/calendar_label_repository.dart';
 import 'package:memora/infrastructure/config/resolved_app_mode_provider.dart';
 import 'package:memora/infrastructure/database/offline_database.dart';
-import 'package:memora/infrastructure/factories/query_service_factory.dart';
-import 'package:memora/infrastructure/factories/repository_factory.dart';
+import 'package:memora/composition_root/factories/query_service_factory.dart';
+import 'package:memora/composition_root/factories/repository_factory.dart';
 
 void main() {
   late OfflineDatabase db;

@@ -6,7 +6,7 @@ import 'package:memora/application/dtos/account/user_dto.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/composition_root/providers/account_providers.dart';
 import 'package:memora/composition_root/providers/member_providers.dart';
-import 'package:memora/infrastructure/factories/query_service_factory.dart';
+import 'package:memora/composition_root/factories/query_service_factory.dart';
 import 'package:memora/presentation/notifiers/auth/auth_notifier.dart';
 import 'package:memora/presentation/notifiers/member/current_member_notifier.dart';
 import 'package:mockito/mockito.dart';

@@ -1,7 +1,7 @@
 import 'package:drift/native.dart';
 import 'package:memora/infrastructure/database/offline_database.dart';
 import 'package:memora/composition_root/providers/offline_database_provider.dart';
-import 'package:memora/infrastructure/factories/auth_service_factory.dart';
+import 'package:memora/composition_root/factories/auth_service_factory.dart';
 
 import '../infrastructure/services/firebase_auth_service_test.mocks.dart';
 
@@ -17,9 +17,9 @@ import 'package:memora/application/models/app_mode.dart';
 import 'package:memora/composition_root/providers/app_availability_providers.dart';
 import 'package:memora/domain/entities/group/group.dart';
 import 'package:memora/infrastructure/config/resolved_app_mode_provider.dart';
-import 'package:memora/infrastructure/factories/query_service_factory.dart';
-import 'package:memora/infrastructure/factories/repository_factory.dart';
-import 'package:memora/infrastructure/factories/transaction_factory.dart';
+import 'package:memora/composition_root/factories/query_service_factory.dart';
+import 'package:memora/composition_root/factories/repository_factory.dart';
+import 'package:memora/composition_root/factories/transaction_factory.dart';
 import 'package:memora/presentation/notifiers/app_availability/app_availability_notifier.dart';
 import 'package:mockito/mockito.dart';
 

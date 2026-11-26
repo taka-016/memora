@@ -3,8 +3,8 @@ import 'package:memora/application/queries/shopping_list_query_service.dart';
 import 'package:memora/application/usecases/shopping_list/shopping_list_usecases.dart';
 import 'package:memora/composition_root/providers/app_providers.dart';
 import 'package:memora/domain/repositories/shopping_list_repository.dart';
-import 'package:memora/infrastructure/factories/query_service_factory.dart';
-import 'package:memora/infrastructure/factories/repository_factory.dart';
+import 'package:memora/composition_root/factories/query_service_factory.dart';
+import 'package:memora/composition_root/factories/repository_factory.dart';
 
 final _shoppingListRepositoryProvider = Provider(
   (ref) => RepositoryFactory.create<ShoppingListRepository>(ref: ref),
