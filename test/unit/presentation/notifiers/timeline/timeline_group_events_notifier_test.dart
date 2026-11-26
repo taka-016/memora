@@ -46,8 +46,11 @@ void main() {
         groupEventRepositoryProvider.overrideWithValue(repository),
       ],
     );
-    container.listen(provider, (_, _) {});
-    await container.pump();
+    final loaded = Completer<void>();
+    container.listen(provider, (_, next) {
+      if (next.eventsByYear != null && !loaded.isCompleted) loaded.complete();
+    });
+    await loaded.future;
   });
   tearDown(() => container.dispose());
 
@@ -56,8 +59,11 @@ void main() {
       2026: original,
       2025: other,
     });
-    container.listen(timelineGroupEventsProvider('g2'), (_, _) {});
-    await container.pump();
+    final loaded = Completer<void>();
+    container.listen(timelineGroupEventsProvider('g2'), (_, next) {
+      if (next.eventsByYear != null && !loaded.isCompleted) loaded.complete();
+    });
+    await loaded.future;
     verify(query.getGroupEventsByGroupId('g', orderBy: anyNamed('orderBy')))
         .called(1);
     verify(query.getGroupEventsByGroupId('g2', orderBy: anyNamed('orderBy')))
