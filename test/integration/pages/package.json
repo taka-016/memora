@@ -1,0 +1,11 @@
+{
+  "name": "memora-pages-tests",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test site_test.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.65.1"
+  }
+}

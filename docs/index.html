@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="memoraは家族の予定や買い物リスト、思い出を記録・共有するAndroidアプリです。カレンダーで家族の予定を確認し、必要な品物を共有。旅行や成長の記録も年表で振り返れます。">
   <meta name="color-scheme" content="light">
-  <meta name="theme-color" content="#03a9f4">
+  <meta name="theme-color" content="#0017c1">
   <title>家族の毎日と、思い出をひとつに | memora</title>
   <link rel="icon" type="image/png" href="assets/memora_logo.png">
   <link rel="apple-touch-icon" href="assets/memora_logo.png">
@@ -14,16 +14,21 @@
 <body>
   <a class="skip-link" href="#main">本文へ移動</a>
   <header class="site-header">
-    <a class="brand" href="./" aria-label="memora ホーム"><img class="brand-mark" src="assets/memora_logo.png" width="40" height="40" alt="">memora</a>
-    <nav aria-label="メインナビゲーション"><a href="index.html" aria-current="page">ホーム</a><a href="privacy.html">プライバシーポリシー</a><a href="terms.html">利用規約</a></nav>
+    <div class="header-inner">
+      <a class="brand" href="./" aria-label="memora ホーム"><img class="brand-mark" src="assets/memora_logo.png" width="48" height="48" alt="">memora</a>
+      <nav aria-label="メインナビゲーション"><a href="index.html" aria-current="page">ホーム</a><a href="privacy.html">プライバシーポリシー</a><a href="terms.html">利用規約</a></nav>
+    </div>
   </header>
   <main id="main">
     <section class="hero" aria-labelledby="hero-title">
-      <p class="eyebrow">予定も、買い物も、思い出も。家族で共有。</p>
-      <h1 id="hero-title">家族の毎日と、<br>思い出をひとつに。</h1>
-      <p class="lead">memoraは、家族の予定や買い物リストを共有し、<br class="wide-only">旅行や成長の記録も振り返れるAndroidアプリです。</p>
-      <a class="button" href="https://github.com/taka-016/memora">GitHubでプロジェクトを見る <span aria-hidden="true">↗</span></a>
-      <p class="hero-note">オープンソースで開発しています。</p>
+      <div class="hero-content">
+        <p class="eyebrow">予定も、買い物も、思い出も。家族で共有。</p>
+        <h1 id="hero-title">家族の毎日と、<br>思い出をひとつに。</h1>
+        <p class="lead">memoraは、家族の予定や買い物リストを共有し、<br class="wide-only">旅行や成長の記録も振り返れるAndroidアプリです。</p>
+        <a class="button" href="https://github.com/taka-016/memora">GitHubでプロジェクトを見る <span aria-hidden="true">↗</span></a>
+        <p class="hero-note">オープンソースで開発しています。</p>
+      </div>
+      <div class="hero-brand" aria-hidden="true"><img src="assets/memora_logo.png" width="200" height="200" alt=""><p>memora</p></div>
     </section>
     <section class="section" aria-labelledby="features-title">
       <p class="eyebrow">memoraでできること</p>
@@ -48,12 +53,14 @@
       <div class="document-links"><a href="privacy.html">プライバシーポリシー <span aria-hidden="true">→</span></a><a href="terms.html">利用規約 <span aria-hidden="true">→</span></a></div>
       <p>お問い合わせは<a href="https://github.com/taka-016/memora/issues">GitHub Issues</a>で受け付けます。公開の場のため、予定の内容・メールアドレス・認証情報などを記載しないでください。</p>
     </section>
-</main>
+  </main>
   <footer class="site-footer">
-    <p class="footer-brand">memora</p>
-    <nav aria-label="フッターナビゲーション"><a href="index.html" aria-current="page">ホーム</a><a href="privacy.html">プライバシーポリシー</a><a href="terms.html">利用規約</a></nav>
-    <p>運営者：taka-016 · <a href="https://github.com/taka-016/memora/issues">お問い合わせ（GitHub Issues）</a></p>
-    <p><small>© 2026 taka-016</small></p>
+    <div class="footer-inner">
+      <p class="footer-brand">memora</p>
+      <nav aria-label="フッターナビゲーション"><a href="index.html" aria-current="page">ホーム</a><a href="privacy.html">プライバシーポリシー</a><a href="terms.html">利用規約</a></nav>
+      <p>運営者：taka-016 · <a href="https://github.com/taka-016/memora/issues">お問い合わせ（GitHub Issues）</a></p>
+      <p><small>© 2026 taka-016</small></p>
+    </div>
   </footer>
 </body>
 </html>

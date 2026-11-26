@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="memoraで扱う登録情報、端末カレンダー連携、外部サービス、情報の保存・削除について説明します。">
   <meta name="color-scheme" content="light">
-  <meta name="theme-color" content="#03a9f4">
+  <meta name="theme-color" content="#0017c1">
   <title>プライバシーポリシー | memora</title>
   <link rel="icon" type="image/png" href="assets/memora_logo.png">
   <link rel="apple-touch-icon" href="assets/memora_logo.png">
@@ -14,16 +14,29 @@
 <body>
   <a class="skip-link" href="#main">本文へ移動</a>
   <header class="site-header">
-    <a class="brand" href="./" aria-label="memora ホーム"><img class="brand-mark" src="assets/memora_logo.png" width="40" height="40" alt="">memora</a>
-    <nav aria-label="メインナビゲーション"><a href="index.html">ホーム</a><a href="privacy.html" aria-current="page">プライバシーポリシー</a><a href="terms.html">利用規約</a></nav>
+    <div class="header-inner">
+      <a class="brand" href="./" aria-label="memora ホーム"><img class="brand-mark" src="assets/memora_logo.png" width="48" height="48" alt="">memora</a>
+      <nav aria-label="メインナビゲーション"><a href="index.html">ホーム</a><a href="privacy.html" aria-current="page">プライバシーポリシー</a><a href="terms.html">利用規約</a></nav>
+    </div>
   </header>
   <main id="main">
+    <nav class="breadcrumb" aria-label="パンくずリスト"><ol><li><a href="index.html">ホーム</a></li><li aria-current="page">プライバシーポリシー</li></ol></nav>
     <article class="document">
-      <p class="eyebrow">memora / Privacy</p>
       <h1>プライバシーポリシー</h1>
       <p class="updated">制定日・最終更新日：2026年11月4日</p>
       <p>taka-016（以下「運営者」）は、memoraアプリおよびこの紹介サイトで扱う情報について、次のとおり説明します。</p>
-      <nav class="contents" aria-label="このページの目次"><a href="#data">取得する情報と目的</a><a href="#device-calendar">端末カレンダー連携</a><a href="#storage">保存・削除</a><a href="#providers">外部サービス</a><a href="#contact">お問い合わせ</a></nav>
+      <nav class="contents" aria-label="このページの目次">
+        <p>目次</p>
+        <ol>
+          <li><a href="#data">1. 取得する情報と利用目的</a></li>
+          <li><a href="#device-calendar">2. 端末カレンダー連携</a></li>
+          <li><a href="#storage">3. 保存、共有、削除</a></li>
+          <li><a href="#providers">4. 外部サービスへの通信と提供</a></li>
+          <li><a href="#website">5. このWebサイト</a></li>
+          <li><a href="#changes">6. ポリシーの変更</a></li>
+          <li><a href="#contact">7. 運営者・お問い合わせ</a></li>
+        </ol>
+      </nav>
       <section id="data"><h2>1. 取得する情報と利用目的</h2>
         <ul>
           <li><strong>アカウント情報：</strong>オンライン版へのログイン・本人の識別のため、メールアドレス、アカウントの識別情報などをFirebase Authenticationで扱います。</li>
@@ -58,18 +71,20 @@
         <p>登録情報は、利用者が指定した共有・外部サービスの利用、法令上必要な対応を除き、第三者への販売・貸与を目的に提供しません。運営者が障害解析やお問い合わせ対応を行う際は、目的に必要な範囲で情報を扱います。</p>
         <ul><li><a href="https://policies.google.com/privacy?hl=ja">Google プライバシーポリシー</a></li><li><a href="https://firebase.google.com/support/privacy">Firebaseのプライバシーとセキュリティ</a></li></ul>
       </section>
-      <section><h2>5. このWebサイト</h2>
+      <section id="website"><h2>5. このWebサイト</h2>
         <p>このサイトはGitHub Pagesで配信します。運営者独自のアクセス解析ツール、広告、Cookieを利用した追跡は設置していません。GitHubは配信・セキュリティのため、IPアドレス等のアクセス情報を処理します。詳細は<a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">GitHubのプライバシーステートメント</a>をご確認ください。</p>
       </section>
-      <section><h2>6. ポリシーの変更</h2><p>機能や情報の取扱いを変更するときは、このページを更新します。Googleユーザーデータの利用目的やアクセス範囲を変更する場合は、必要な説明と同意を得てから適用します。</p></section>
+      <section id="changes"><h2>6. ポリシーの変更</h2><p>機能や情報の取扱いを変更するときは、このページを更新します。Googleユーザーデータの利用目的やアクセス範囲を変更する場合は、必要な説明と同意を得てから適用します。</p></section>
       <section id="contact"><h2>7. 運営者・お問い合わせ</h2><p>運営者：<a href="https://github.com/taka-016">taka-016</a></p><p>お問い合わせ：<a href="https://github.com/taka-016/memora/issues">memoraのGitHub Issues</a></p><p>Issuesは公開されます。予定の内容、他人の情報、メールアドレス、パスワード、トークン等は書き込まないでください。個別の確認が必要な場合は、運営者から確認方法を案内します。</p></section>
     </article>
-</main>
+  </main>
   <footer class="site-footer">
-    <p class="footer-brand">memora</p>
-    <nav aria-label="フッターナビゲーション"><a href="index.html">ホーム</a><a href="privacy.html" aria-current="page">プライバシーポリシー</a><a href="terms.html">利用規約</a></nav>
-    <p>運営者：taka-016 · <a href="https://github.com/taka-016/memora/issues">お問い合わせ（GitHub Issues）</a></p>
-    <p><small>© 2026 taka-016</small></p>
+    <div class="footer-inner">
+      <p class="footer-brand">memora</p>
+      <nav aria-label="フッターナビゲーション"><a href="index.html">ホーム</a><a href="privacy.html" aria-current="page">プライバシーポリシー</a><a href="terms.html">利用規約</a></nav>
+      <p>運営者：taka-016 · <a href="https://github.com/taka-016/memora/issues">お問い合わせ（GitHub Issues）</a></p>
+      <p><small>© 2026 taka-016</small></p>
+    </div>
   </footer>
 </body>
 </html>
