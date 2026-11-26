@@ -1,11 +1,9 @@
-import 'package:memora/presentation/notifiers/startup/startup_common_data_notifier.dart';
-import 'package:memora/composition_root/providers/startup_common_data_providers.dart';
+import 'package:memora/presentation/notifiers/member/member_mutation_coordinator.dart';
 import 'package:memora/composition_root/providers/member_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/notifiers/member/member_management_state.dart';
-import 'package:memora/presentation/notifiers/timeline/group_timeline_group_selection_notifier.dart';
 
 export 'member_management_state.dart';
 
@@ -43,28 +41,34 @@ class MemberManagementNotifier extends AsyncNotifier<MemberManagementState> {
     return _runMutation(
       operationName: 'createMember',
       execute: () => ref
-          .read(createMemberUsecaseProvider)
-          .execute(member, _currentMember.id),
+          .read(memberMutationCoordinatorProvider)
+          .createMember(
+            member,
+            ownerId: _currentMember.id,
+            refreshMembers: _refreshMembers,
+          ),
     );
   }
 
   Future<bool> updateMember(MemberDto member) {
     return _runMutation(
       operationName: 'updateMember',
-      execute: () => ref.read(updateMemberUsecaseProvider).execute(member),
+      execute: () => ref
+          .read(memberMutationCoordinatorProvider)
+          .updateMember(member, refreshMembers: _refreshMembers),
     );
   }
 
   Future<bool> deleteMember(String memberId, {int? expectedVersion}) {
     return _runMutation(
       operationName: 'deleteMember',
-      execute: () async {
-        await ref
-            .read(deleteMemberUsecaseProvider)
-            .execute(memberId, expectedVersion: expectedVersion);
-        if (!ref.mounted) return;
-        ref.read(groupTimelineGroupSelectionNotifierProvider.notifier).reset();
-      },
+      execute: () => ref
+          .read(memberMutationCoordinatorProvider)
+          .deleteMember(
+            memberId,
+            expectedVersion: expectedVersion,
+            refreshMembers: _refreshMembers,
+          ),
     );
   }
 
@@ -87,16 +91,6 @@ class MemberManagementNotifier extends AsyncNotifier<MemberManagementState> {
             stackTrace: stack,
           );
           rethrow;
-        }
-        if (ref.mounted) {
-          await _refreshMembers();
-          if (ref.mounted &&
-              ref.exists(startupCommonDataNotifierProvider) &&
-              ref.read(startupCommonDataOwnerProvider) != null) {
-            await ref
-                .read(startupCommonDataNotifierProvider.notifier)
-                .refreshAfterChange();
-          }
         }
       },
     );

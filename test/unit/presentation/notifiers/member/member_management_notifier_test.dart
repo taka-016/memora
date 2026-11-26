@@ -1,3 +1,5 @@
+import 'package:memora/composition_root/providers/startup_common_data_providers.dart';
+import 'package:memora/presentation/notifiers/startup/startup_common_data_notifier.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/presentation/notifiers/timeline/group_timeline_group_selection_notifier.dart';
@@ -34,6 +36,7 @@ void main() {
   late _FakeUpdateMemberUsecase updateMemberUsecase;
   late _FakeDeleteMemberUsecase deleteMemberUsecase;
   late ProviderContainer container;
+  late List<String> relatedUpdates;
 
   setUp(() {
     AppLogger.suppressLogging(true);
@@ -42,8 +45,13 @@ void main() {
     createMemberUsecase = _FakeCreateMemberUsecase();
     updateMemberUsecase = _FakeUpdateMemberUsecase();
     deleteMemberUsecase = _FakeDeleteMemberUsecase();
+    relatedUpdates = [];
     container = ProviderContainer(
       overrides: [
+        startupCommonDataOwnerProvider.overrideWithValue('account'),
+        startupCommonDataNotifierProvider.overrideWith(
+          () => _StartupCommonDataNotifier(relatedUpdates),
+        ),
         getManagedMembersUsecaseProvider.overrideWithValue(
           getManagedMembersUsecase,
         ),
@@ -66,10 +74,26 @@ void main() {
     final subscription = container.listen(provider, (_, _) {});
     addTearDown(subscription.close);
     await container.read(provider.future);
+    container.read(startupCommonDataNotifierProvider);
     return container.read(provider.notifier);
   }
 
   group('MemberManagementNotifier', () {
+    for (final operation in ['作成', '更新', '削除']) {
+      test('$operation後は一覧の再取得後に共通データを更新する', () async {
+        final notifier = await startNotifier();
+        getManagedMembersUsecase.calls = relatedUpdates;
+        getMemberByIdUseCase.calls = relatedUpdates;
+        final result = switch (operation) {
+          '作成' => notifier.createMember(createdMember),
+          '更新' => notifier.updateMember(updatedManagedMember),
+          _ => notifier.deleteMember(managedMember.id),
+        };
+        expect(await result, isTrue);
+        expect(relatedUpdates, ['管理対象メンバー取得', '本人メンバー取得', '共通データ']);
+      });
+    }
+
     test('管理対象メンバーと最新の本人メンバーを統合して保持する', () async {
       final calls = <String>[];
       getManagedMembersUsecase
@@ -188,6 +212,7 @@ void main() {
         throwsA(isA<TestException>()),
       );
 
+      expect(relatedUpdates, isEmpty);
       expect(container.read(provider).requireValue, initialState);
       expect(getManagedMembersUsecase.callCount, 0);
       expect(getMemberByIdUseCase.callCount, 0);
@@ -302,6 +327,7 @@ void main() {
         container.read(groupTimelineGroupSelectionNotifierProvider),
         same(sharedBefore),
       );
+      expect(relatedUpdates, isEmpty);
       expect(container.read(provider).requireValue, initialState);
       expect(getManagedMembersUsecase.callCount, 0);
       expect(getMemberByIdUseCase.callCount, 0);
@@ -320,6 +346,7 @@ void main() {
         throwsA(isA<TestException>()),
       );
 
+      expect(relatedUpdates, isEmpty);
       expect(container.read(provider).requireValue, initialState);
       expect(getManagedMembersUsecase.callCount, 0);
       expect(getMemberByIdUseCase.callCount, 0);
@@ -456,5 +483,18 @@ class _FakeDeleteMemberUsecase implements DeleteMemberUsecase {
     if (error case final error?) {
       throw error;
     }
+  }
+}
+
+class _StartupCommonDataNotifier extends StartupCommonDataNotifier {
+  _StartupCommonDataNotifier(this.calls);
+  final List<String> calls;
+
+  @override
+  StartupCommonDataState build() => StartupCommonDataState();
+
+  @override
+  Future<void> refreshAfterChange() async {
+    calls.add('共通データ');
   }
 }

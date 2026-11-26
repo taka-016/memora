@@ -1,3 +1,5 @@
+import 'package:memora/composition_root/providers/startup_common_data_providers.dart';
+import 'package:memora/presentation/notifiers/startup/startup_common_data_notifier.dart';
 import 'package:memora/presentation/notifiers/timeline/group_timeline_group_selection_notifier.dart';
 import 'package:memora/composition_root/providers/android_widget_providers.dart';
 import 'package:memora/composition_root/providers/group_providers.dart';
@@ -58,7 +60,9 @@ void main() {
   late MockUpdateGroupUsecase updateGroupUsecase;
   late MockDeleteGroupUsecase deleteGroupUsecase;
   late ProviderContainer container;
+  late List<String> relatedUpdates;
   late List<String> widgetUpdates;
+  var failWidgetRefresh = false;
 
   setUp(() {
     getGroupsUsecase = MockGetManagedGroupsWithMembersUsecase();
@@ -66,10 +70,20 @@ void main() {
     updateGroupUsecase = MockUpdateGroupUsecase();
     deleteGroupUsecase = MockDeleteGroupUsecase();
     widgetUpdates = [];
+    failWidgetRefresh = false;
+    relatedUpdates = [];
     container = ProviderContainer(
       overrides: [
+        startupCommonDataOwnerProvider.overrideWithValue('account'),
+        startupCommonDataNotifierProvider.overrideWith(
+          () => _StartupCommonDataNotifier(relatedUpdates),
+        ),
         refreshSelectedAndroidWidgetCacheProvider.overrideWithValue(() async {
           widgetUpdates.add('更新');
+          if (failWidgetRefresh) {
+            relatedUpdates.add('ウィジェット');
+            throw TestException('ウィジェット更新失敗');
+          }
         }),
         getManagedGroupsWithMembersUsecaseProvider.overrideWithValue(
           getGroupsUsecase,
@@ -94,10 +108,72 @@ void main() {
     final subscription = container.listen(provider, (_, _) {});
     addTearDown(subscription.close);
     await container.read(provider.future);
+    container.read(startupCommonDataNotifierProvider);
     return container.read(provider.notifier);
   }
 
   group('GroupManagementNotifier', () {
+    test('削除後は年表リセット・ウィジェット・一覧・共通データの順に更新しウィジェット失敗でも成功する', () async {
+      final notifier = await startNotifier();
+      container
+          .read(groupTimelineGroupSelectionNotifierProvider.notifier)
+          .setLoadedGroups(
+            memberId: currentMember.id,
+            groups: const [managedGroup],
+          );
+      final subscription = container.listen(
+        groupTimelineGroupSelectionNotifierProvider,
+        (_, next) {
+          if (next.status == GroupTimelineGroupSelectionStatus.loading) {
+            relatedUpdates.add('年表リセット');
+          }
+        },
+      );
+      addTearDown(subscription.close);
+      failWidgetRefresh = true;
+      when(deleteGroupUsecase.execute(managedGroup.id, expectedVersion: 3))
+          .thenAnswer((_) async {
+            relatedUpdates.add('削除');
+          });
+      when(getGroupsUsecase.execute(currentMember)).thenAnswer((_) async {
+        relatedUpdates.add('一覧');
+        return [];
+      });
+
+      expect(
+        await notifier.deleteGroup(managedGroup.id, expectedVersion: 3),
+        isTrue,
+      );
+      expect(relatedUpdates, ['削除', '年表リセット', 'ウィジェット', '一覧', '共通データ']);
+      expect(
+        container
+            .read(groupManagementNotifierProvider(currentMember))
+            .requireValue
+            .groups,
+        isEmpty,
+      );
+    });
+
+    for (final creating in [true, false]) {
+      test('${creating ? '作成' : '更新'}後は一覧の再取得後に共通データを更新する', () async {
+        final notifier = await startNotifier();
+        when(createGroupUsecase.execute(createdGroup))
+            .thenAnswer((_) async => 'new');
+        when(updateGroupUsecase.execute(updatedGroup)).thenAnswer((_) async {});
+        when(getGroupsUsecase.execute(currentMember)).thenAnswer((_) async {
+          relatedUpdates.add('一覧');
+          return [updatedGroup];
+        });
+        expect(
+          await (creating
+              ? notifier.createGroup(createdGroup)
+              : notifier.updateGroup(updatedGroup)),
+          isTrue,
+        );
+        expect(relatedUpdates, ['一覧', '共通データ']);
+      });
+    }
+
     test('色変更後の再取得結果を表示中の年表グループにも反映する', () async {
       final notifier = await startNotifier();
       container
@@ -259,6 +335,7 @@ void main() {
         throwsA(isA<TestException>()),
       );
 
+      expect(relatedUpdates, isEmpty);
       expect(container.read(provider).requireValue, initialState);
       verifyNever(getGroupsUsecase.execute(any));
     });
@@ -296,6 +373,7 @@ void main() {
         throwsA(isA<TestException>()),
       );
 
+      expect(relatedUpdates, isEmpty);
       expect(container.read(provider).requireValue, initialState);
       verifyNever(getGroupsUsecase.execute(any));
     });
@@ -422,6 +500,7 @@ void main() {
         container.read(groupTimelineGroupSelectionNotifierProvider),
         same(sharedBefore),
       );
+      expect(relatedUpdates, isEmpty);
       expect(container.read(provider).requireValue, initialState);
       verifyNever(getGroupsUsecase.execute(any));
     });
@@ -472,4 +551,17 @@ void main() {
       ]);
     });
   });
+}
+
+class _StartupCommonDataNotifier extends StartupCommonDataNotifier {
+  _StartupCommonDataNotifier(this.calls);
+  final List<String> calls;
+
+  @override
+  StartupCommonDataState build() => StartupCommonDataState();
+
+  @override
+  Future<void> refreshAfterChange() async {
+    calls.add('共通データ');
+  }
 }
