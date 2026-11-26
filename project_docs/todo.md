@@ -86,9 +86,6 @@
 
 以下の順に着手する。保存形式・競合検出の保証範囲・画面の操作結果は現行どおりとする。
 
-- **1. アプリとAndroidウィジェットの依存の組み立てをComposition Rootに集約する（優先度 高）**
-  - [ADR-001](adr/adr-001-app-mode-composition-root.md)に沿って、`RepositoryFactory`・`QueryServiceFactory`・`TransactionFactory`と関連ProviderをComposition Rootへ移す。オフラインDB、利用可否ガード、カレンダーの共有キャッシュを同じ場所で組み立て、Factoryから各モードの具象実装へ渡す。
-  - アプリの機能別ProviderとAndroidウィジェットのバックグラウンド起動経路を新しい配置にそろえる。バックグラウンド処理からのComposition Root参照は起動入口に置く。アプリとウィジェットの両方で、オンラインはFirestore、オフラインはSQLiteを選び、既存の書き込みガード・トランザクション・キャッシュ共有を維持する。
 - **2. 繰り返し予定の変更可否をUseCaseで判定する（優先度 中）**
   - `CalendarMutationCoordinator`にある、編集中の予定と系列のバージョン・例外情報などの照合、系列と変更範囲の必須判定、別グループへの移動と繰り返し予定の変更の振り分けをApplication層へ移す。既存の予定作成・更新・削除・移動・繰り返し変更のUseCaseを再利用する。
   - `CalendarMutationCoordinator`は処理結果を受けて、対象グループのカレンダー、通知、Androidウィジェットの更新を調整する。編集開始時の予定と系列が一致しない場合のエラー表示と、保存・削除・移動に成功した場合の反映先を維持する。
