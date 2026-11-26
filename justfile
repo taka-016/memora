@@ -5,6 +5,9 @@
 set shell := ['bash', '-euo', 'pipefail', '-c']
 set positional-arguments
 
+alias sm := sync-main
+alias sc := setup-cloud
+
 # 利用できるタスクを表示する
 default:
   @just --list
@@ -111,9 +114,6 @@ setup-cloud *actions:
 # SSH鍵を作成する（省略時はssh_keys/memora_ed25519）
 ssh-key *args:
   bash scripts/dev/generate_ssh_public_key.sh "$@"
-
-alias sm := sync-main
-alias sc := setup-cloud
 
 # mainを更新し、追跡先が削除されたローカルブランチを整理する
 sync-main:
