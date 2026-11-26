@@ -9,35 +9,40 @@ part of 'timeline_group_events_notifier.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
-@ProviderFor(TimelineGroupEvents)
-final timelineGroupEventsProvider = TimelineGroupEventsFamily._();
+@ProviderFor(TimelineGroupEventsNotifier)
+final timelineGroupEventsNotifierProvider =
+    TimelineGroupEventsNotifierFamily._();
 
-final class TimelineGroupEventsProvider
-    extends $NotifierProvider<TimelineGroupEvents, TimelineGroupEventsState> {
-  TimelineGroupEventsProvider._({
-    required TimelineGroupEventsFamily super.from,
+final class TimelineGroupEventsNotifierProvider
+    extends
+        $NotifierProvider<
+          TimelineGroupEventsNotifier,
+          TimelineGroupEventsState
+        > {
+  TimelineGroupEventsNotifierProvider._({
+    required TimelineGroupEventsNotifierFamily super.from,
     required String super.argument,
   }) : super(
          retry: null,
-         name: r'timelineGroupEventsProvider',
+         name: r'timelineGroupEventsNotifierProvider',
          isAutoDispose: true,
          dependencies: null,
          $allTransitiveDependencies: null,
        );
 
   @override
-  String debugGetCreateSourceHash() => _$timelineGroupEventsHash();
+  String debugGetCreateSourceHash() => _$timelineGroupEventsNotifierHash();
 
   @override
   String toString() {
-    return r'timelineGroupEventsProvider'
+    return r'timelineGroupEventsNotifierProvider'
         ''
         '($argument)';
   }
 
   @$internal
   @override
-  TimelineGroupEvents create() => TimelineGroupEvents();
+  TimelineGroupEventsNotifier create() => TimelineGroupEventsNotifier();
 
   /// {@macro riverpod.override_with_value}
   Override overrideWithValue(TimelineGroupEventsState value) {
@@ -49,7 +54,8 @@ final class TimelineGroupEventsProvider
 
   @override
   bool operator ==(Object other) {
-    return other is TimelineGroupEventsProvider && other.argument == argument;
+    return other is TimelineGroupEventsNotifierProvider &&
+        other.argument == argument;
   }
 
   @override
@@ -58,35 +64,35 @@ final class TimelineGroupEventsProvider
   }
 }
 
-String _$timelineGroupEventsHash() =>
-    r'91e02a4344f62662087de561b0f1758eb5668894';
+String _$timelineGroupEventsNotifierHash() =>
+    r'5ce039e3a98254a659be9397e1afcc1bccef8a66';
 
-final class TimelineGroupEventsFamily extends $Family
+final class TimelineGroupEventsNotifierFamily extends $Family
     with
         $ClassFamilyOverride<
-          TimelineGroupEvents,
+          TimelineGroupEventsNotifier,
           TimelineGroupEventsState,
           TimelineGroupEventsState,
           TimelineGroupEventsState,
           String
         > {
-  TimelineGroupEventsFamily._()
+  TimelineGroupEventsNotifierFamily._()
     : super(
         retry: null,
-        name: r'timelineGroupEventsProvider',
+        name: r'timelineGroupEventsNotifierProvider',
         dependencies: null,
         $allTransitiveDependencies: null,
         isAutoDispose: true,
       );
 
-  TimelineGroupEventsProvider call(String groupId) =>
-      TimelineGroupEventsProvider._(argument: groupId, from: this);
+  TimelineGroupEventsNotifierProvider call(String groupId) =>
+      TimelineGroupEventsNotifierProvider._(argument: groupId, from: this);
 
   @override
-  String toString() => r'timelineGroupEventsProvider';
+  String toString() => r'timelineGroupEventsNotifierProvider';
 }
 
-abstract class _$TimelineGroupEvents
+abstract class _$TimelineGroupEventsNotifier
     extends $Notifier<TimelineGroupEventsState> {
   late final _$args = ref.$arg as String;
   String get groupId => _$args;

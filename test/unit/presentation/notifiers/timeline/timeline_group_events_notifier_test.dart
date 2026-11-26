@@ -30,7 +30,7 @@ void main() {
     year: 2025,
     memo: '別の年',
   );
-  final provider = timelineGroupEventsProvider('g');
+  final provider = timelineGroupEventsNotifierProvider('g');
   late MockGroupEventQueryService query;
   late MockGroupEventRepository repository;
   late ProviderContainer container;
@@ -60,7 +60,7 @@ void main() {
       2025: other,
     });
     final loaded = Completer<void>();
-    container.listen(timelineGroupEventsProvider('g2'), (_, next) {
+    container.listen(timelineGroupEventsNotifierProvider('g2'), (_, next) {
       if (next.eventsByYear != null && !loaded.isCompleted) loaded.complete();
     });
     await loaded.future;
@@ -151,5 +151,58 @@ void main() {
     await container.read(provider.notifier).reload();
     expect(container.read(provider).eventsByYear, isEmpty);
     expect(container.read(provider).error, isA<TestException>());
+  });
+
+  test('再取得が同じ内容でも保存と削除の結果を戻さない', () async {
+    when(repository.saveGroupEvent(any)).thenAnswer((_) async => 'e');
+    final notifier = container.read(provider.notifier);
+    await notifier.save(year: 2026, memo: '編集後', eventAtOpen: original);
+    await notifier.reload();
+    expect(container.read(provider).eventsByYear![2026]!.memo, '編集後');
+    await notifier.save(year: 2026, memo: '', eventAtOpen: original);
+    await notifier.reload();
+    expect(container.read(provider).eventsByYear, {2025: other});
+  });
+
+  test('監視終了後に再監視するとグループのデータを再取得する', () async {
+    Future<void> subscribeAndClose() async {
+      final loaded = Completer<void>();
+      final subscription = container.listen(
+        timelineGroupEventsNotifierProvider('g2'),
+        (_, next) {
+          if (next.eventsByYear != null && !loaded.isCompleted) {
+            loaded.complete();
+          }
+        },
+      );
+      await loaded.future;
+      subscription.close();
+      await container.pump();
+    }
+
+    await subscribeAndClose();
+    await subscribeAndClose();
+    verify(query.getGroupEventsByGroupId('g2', orderBy: anyNamed('orderBy')))
+        .called(2);
+  });
+
+  test('保存中に監視が終了しても保存完了後に破棄済み状態へアクセスしない', () async {
+    final target = timelineGroupEventsNotifierProvider('g2');
+    final loaded = Completer<void>();
+    final subscription = container.listen(target, (_, next) {
+      if (next.eventsByYear != null && !loaded.isCompleted) loaded.complete();
+    });
+    await loaded.future;
+    final saving = Completer<String>();
+    when(repository.saveGroupEvent(any)).thenAnswer((_) => saving.future);
+    final pending = container
+        .read(target.notifier)
+        .save(year: 2026, memo: '新規', eventAtOpen: null);
+    subscription.close();
+    await container.pump();
+    saving.complete('new');
+    await pending;
+    verify(query.getGroupEventsByGroupId('g2', orderBy: anyNamed('orderBy')))
+        .called(1);
   });
 }
