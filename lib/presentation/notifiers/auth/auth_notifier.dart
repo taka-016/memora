@@ -12,8 +12,6 @@ import 'package:memora/application/usecases/account/get_current_user_usecase.dar
 import 'package:memora/application/usecases/account/login_usecase.dart';
 import 'package:memora/application/usecases/account/logout_usecase.dart';
 import 'package:memora/application/usecases/account/observe_auth_state_changes_usecase.dart';
-import 'package:memora/application/usecases/account/send_email_verification_usecase.dart';
-import 'package:memora/application/usecases/account/signup_usecase.dart';
 import 'package:memora/application/usecases/member/get_member_by_account_id_usecase.dart';
 import 'package:memora/application/usecases/member/create_member_from_user_usecase.dart';
 import 'package:memora/application/usecases/member/accept_invitation_usecase.dart';
@@ -29,15 +27,13 @@ typedef AuthViewState = AuthState;
 class AuthNotifier extends Notifier<AuthState> {
   StreamSubscription<UserDto?>? _authStateSubscription;
   int _authStateChangeGeneration = 0;
+  bool _isSigningIn = false;
 
   ObserveAuthStateChangesUseCase get observeAuthStateChangesUseCase =>
       ref.read(observeAuthStateChangesUseCaseProvider);
-  SendEmailVerificationUseCase get sendEmailVerificationUseCase =>
-      ref.read(sendEmailVerificationUseCaseProvider);
   GetCurrentUserUseCase get getCurrentUserUseCase =>
       ref.read(getCurrentUserUseCaseProvider);
   LoginUseCase get loginUseCase => ref.read(loginUseCaseProvider);
-  SignupUseCase get signupUseCase => ref.read(signupUseCaseProvider);
   LogoutUseCase get logoutUseCase => ref.read(logoutUseCaseProvider);
   GetMemberByAccountIdUseCase get getMemberByAccountIdUseCase =>
       ref.read(getMemberByAccountIdUseCaseProvider);
@@ -76,40 +72,6 @@ class AuthNotifier extends Notifier<AuthState> {
     return const AuthState.loading();
   }
 
-  Future<void> _handleUnverifiedUser(int generation) async {
-    if (!_isLatestAuthStateChange(generation)) {
-      return;
-    }
-    try {
-      await sendEmailVerificationUseCase.execute();
-      if (!_isLatestAuthStateChange(generation)) {
-        return;
-      }
-    } catch (e, stack) {
-      logger.e(
-        'AuthNotifier._handleUnverifiedUser: ${e.toString()}',
-        error: e,
-        stackTrace: stack,
-      );
-      if (!_isLatestAuthStateChange(generation)) {
-        return;
-      }
-      await _signOutWithError(
-        '認証メールの送信に失敗しました。再度ログインしてください。',
-        generation: generation,
-      );
-      return;
-    }
-    if (!_isLatestAuthStateChange(generation)) {
-      return;
-    }
-    state = const AuthState.unauthenticated(
-      '認証メールを再送しました。メールを確認して認証を完了してください。',
-      messageType: MessageType.info,
-    );
-    await _signOut();
-  }
-
   Future<void> _handleAuthStateChange(UserDto? user, int generation) async {
     if (!_isLatestAuthStateChange(generation)) {
       return;
@@ -122,7 +84,10 @@ class AuthNotifier extends Notifier<AuthState> {
 
     if (state.user?.id != user.id) state = const AuthState.loading();
     if (!user.isVerified) {
-      await _handleUnverifiedUser(generation);
+      await _signOutWithError(
+        'Googleアカウントのメールアドレスを確認できませんでした。別のアカウントでログインしてください。',
+        generation: generation,
+      );
       return;
     }
 
@@ -200,7 +165,7 @@ class AuthNotifier extends Notifier<AuthState> {
   }
 
   bool _isLatestAuthStateChange(int generation) {
-    return generation == _authStateChangeGeneration;
+    return ref.mounted && generation == _authStateChangeGeneration;
   }
 
   Future<void> createNewMember(UserDto user) async {
@@ -292,43 +257,26 @@ class AuthNotifier extends Notifier<AuthState> {
     state = const AuthState.unauthenticated('');
   }
 
-  Future<void> login({required String email, required String password}) async {
+  Future<void> login() async {
+    if (_isSigningIn || state.isLoading) return;
+    _isSigningIn = true;
+    state = const AuthState.loading();
     try {
-      state = const AuthState.loading();
-      await loginUseCase.execute(email: email, password: password);
-      // 状態更新はauthStateChangesリスナーで自動的に処理される
+      final didSignIn = await loginUseCase.execute();
+      if (!ref.mounted) return;
+      if (!didSignIn) {
+        state = const AuthState.unauthenticated('');
+      }
     } catch (e, stack) {
-      logger.e(
-        'AuthNotifier.login: ${e.toString()}',
-        error: e,
-        stackTrace: stack,
-      );
+      logger.e('Googleでのログインに失敗しました', error: e, stackTrace: stack);
+      if (!ref.mounted) return;
       state = AuthState.unauthenticated(
-        e.toString(),
+        e.toString().replaceFirst('Exception: ', ''),
         messageType: MessageType.error,
       );
+    } finally {
+      _isSigningIn = false;
     }
-  }
-
-  Future<bool> signup({required String email, required String password}) async {
-    bool isSuccess = false;
-    try {
-      state = const AuthState.loading();
-      await signupUseCase.execute(email: email, password: password);
-      isSuccess = true;
-      // 状態更新はauthStateChangesリスナーで自動的に処理される
-    } catch (e, stack) {
-      logger.e(
-        'AuthNotifier.signup: ${e.toString()}',
-        error: e,
-        stackTrace: stack,
-      );
-      state = AuthState.unauthenticated(
-        e.toString(),
-        messageType: MessageType.error,
-      );
-    }
-    return isSuccess;
   }
 
   Future<void> logout() async {

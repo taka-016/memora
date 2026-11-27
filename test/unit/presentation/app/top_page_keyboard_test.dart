@@ -11,10 +11,7 @@ void main() {
   final context = TopPageTestContext();
   setUp(context.setUpContext);
 
-  for (final location in [
-    const GroupListRoute().location,
-    const AccountSettingsRoute().location,
-  ]) {
+  for (final location in [const GroupListRoute().location]) {
     testWidgets('$locationではダイアログ終了後もキーボードが閉じるまで背後の表示領域を維持する', (tester) async {
       tester.view.devicePixelRatio = 1;
       tester.view.physicalSize = const Size(800, 1000);

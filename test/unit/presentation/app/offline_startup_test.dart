@@ -129,14 +129,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  for (final path in [
-    '/',
-    '/loading',
-    '/login',
-    '/signup',
-    '/member-setup',
-    '/account-settings',
-  ]) {
+  for (final path in ['/', '/loading', '/login', '/member-setup']) {
     testWidgets('オフラインでは$pathから認証を解決せずカレンダーへ起動する', (tester) async {
       var authResolutions = 0;
       final container = ProviderContainer(

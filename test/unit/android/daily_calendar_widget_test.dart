@@ -28,10 +28,13 @@ void main() {
     final source = File(
       'lib/infrastructure/services/home_widget_calendar_cache_storage.dart',
     ).readAsStringSync();
-    expect(source, contains('com.example.memora.DailyCalendarWidgetReceiver'));
     expect(
       source,
-      contains('com.example.memora.DailyCalendarDarkWidgetReceiver'),
+      contains('io.github.taka016.memora.DailyCalendarWidgetReceiver'),
+    );
+    expect(
+      source,
+      contains('io.github.taka016.memora.DailyCalendarDarkWidgetReceiver'),
     );
     final manifest = File('$root/AndroidManifest.xml').readAsStringSync();
     expect(manifest, contains('android:name=".DailyCalendarWidgetReceiver"'));

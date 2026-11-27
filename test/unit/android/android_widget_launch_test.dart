@@ -3,9 +3,9 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 const _itineraryWidgetPath =
-    'android/app/src/main/kotlin/com/example/memora/ItineraryWidget.kt';
+    'android/app/src/main/kotlin/io/github/taka016/memora/ItineraryWidget.kt';
 const _rendererPath =
-    'android/app/src/main/kotlin/com/example/memora/ItineraryWidgetRenderer.kt';
+    'android/app/src/main/kotlin/io/github/taka016/memora/ItineraryWidgetRenderer.kt';
 const _mainPath = 'lib/main.dart';
 const _topPagePath = 'lib/presentation/app/top_page.dart';
 

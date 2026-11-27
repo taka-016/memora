@@ -18,5 +18,5 @@ flutter:
   plugin:
     platforms:
       android:
-        package: com.example.memora
+        package: io.github.taka016.memora
         pluginClass: AndroidWidgetToastPlugin

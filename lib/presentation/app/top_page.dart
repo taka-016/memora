@@ -389,8 +389,6 @@ class TopPage extends HookConsumerWidget {
       AppNavigationItem.groupManagement =>
         const GroupManagementRoute().location,
       AppNavigationItem.settings => const SettingsRoute().location,
-      AppNavigationItem.accountSettings =>
-        const AccountSettingsRoute().location,
     };
     if (location == null) {
       return;
@@ -606,18 +604,6 @@ class TopPage extends HookConsumerWidget {
         AppNavigationItem.settings,
         closeDrawer,
       ),
-      if (ref
-          .watch(appCapabilitiesProvider)
-          .availability(AppFeature.authentication)
-          .isAvailable)
-        _buildDrawerItem(
-          context,
-          ref,
-          Icons.account_circle,
-          'アカウント設定',
-          AppNavigationItem.accountSettings,
-          closeDrawer,
-        ),
     ];
   }
 

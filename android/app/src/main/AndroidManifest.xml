@@ -119,7 +119,7 @@
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED"/>
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
-                <action android:name="com.example.memora.action.CHECK_ANDROID_WIDGET_UPDATE"/>
+                <action android:name="io.github.taka016.memora.action.CHECK_ANDROID_WIDGET_UPDATE"/>
             </intent-filter>
         </receiver>
         <!-- Don't delete the meta-data below.

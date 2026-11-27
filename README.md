@@ -79,15 +79,34 @@ cd /workspaces/memora
 ### オンライン版の設定
 
 1. [Firebase Console](https://console.firebase.google.com/)でプロジェクトを作成する。
-2. Authentication（Google・メールアドレス/パスワード）、Firestore Database（本番モード）、Identity Toolkit API、Token Service APIを有効にする。
+2. AuthenticationのGoogle認証、Firestore Database（本番モード）、Identity Toolkit API、Token Service APIを有効にする。
 3. [Google Cloud CLI](https://cloud.google.com/sdk/docs/install)を用意し、必要なFirestoreセキュリティルールを設定する。
-4. `just setup-cloud`で「すべて実行」を選び、ログイン・プロジェクト選択・設定生成を進める。
+4. `just setup-cloud`で「すべて実行」を選び、ログイン・プロジェクト選択・設定生成を進める。APIキーの入力時は、下表のFirebase用キーを指定する。
 5. 設定更新後、アプリを再ビルドする。
+
+APIキーはGoogle Cloudの「APIとサービス → 認証情報」で確認する。Firebase用とMaps用は用途が異なるため、次のように使い分ける。
+
+| 用途 | このプロジェクトのキー名 | 設定先 |
+| --- | --- | --- |
+| Firebaseの認証・接続 | `firebase for memora` | `just setup-cloud`のAPIキー入力（環境変数`FIREBASE_API_KEY`でも指定可） |
+| 地図表示・位置検索 | `maps for memora` | `android/local.properties`の`MAPS_API_KEY`と、初期設定時の`.env`の`GOOGLE_PLACES_APIKEY` |
+
+Firebase用キーにはIdentity Toolkit API・Token Service API・Firebase Installations APIを許可する。Androidアプリ制限を設定する場合は、使用するapplication IDと署名証明書のSHA-1も登録する。Maps用キーをFirebase認証に使うと、ログイン時に`SignInWithPassword are blocked`などのエラーになる。
+
+オンライン版は、同じFirebaseプロジェクトにリリース用 `io.github.taka016.memora` とデバッグ用 `io.github.taka016.memora.debug` を登録し、両方を含む`google-services.json`を共用する。Firebase用・Maps用キーのAndroidアプリ制限には、それぞれのapplication IDと使用する署名証明書のSHA-1を登録する。
+
+Googleログインには、Firebaseの各Androidアプリへの署名証明書のSHA-1登録と、Google認証を有効にした後の`google-services.json`が必要。JSONにWeb OAuthクライアント（`client_type: 3`）を含める。既存利用者は、同じFirebase UIDへGoogle認証を連携してから利用する。[公式手順](https://firebase.google.com/docs/auth/flutter/federated-auth)
+
+`google-services.json`をダウンロードし直した場合も、含まれるキーがFirebase用とは限らない。先頭のキーをそのまま採用せず、次の手順でFirebase用キーを反映する。
+
+1. 新しいJSONを`android/app/google-services.json`へ配置する。
+2. 同じFirebase Androidアプリの設定を置き換えた場合は、`just setup-cloud api-key`でFirebase用キーを入力する。application IDの変更などでFirebase Androidアプリを追加した場合は、`just setup-cloud configure`で対象アプリの設定を生成し、Firebase用キーを入力する。
+3. アプリを再ビルドする。
+
+キーはJSON内のリリース用・デバッグ用アプリと`lib/firebase_options.dart`へ反映される。Dart設定も1ファイルで共用し、デバッグ実行ではデバッグ用、release・profile実行ではリリース用のFirebase App IDを選ぶ。既存ファイルの削除は不要。
 
 設定・認証時の注意：
 
-- Firebase用APIキーはGoogle Cloudの「APIとサービス → 認証情報」から取得し、案内に従って入力する。環境変数`FIREBASE_API_KEY`でも指定可。
-- キーの反映先は`android/app/google-services.json`と`lib/firebase_options.dart`。既存ファイルの削除は不要。
 - Google Cloud認証にはFirestore読み書き権限（`roles/datastore.user`など）のある管理用アカウントを使う。Firebase CLIとは別認証で、表示URLと認証コードでログインする。認証済みなら再ログインは不要。
 - 接続先は`.firebaserc`の`projects.default`。アクセストークンは自動取得する。CIでは`FIRESTORE_ACCESS_TOKEN`に有効なOAuthアクセストークンを指定可。
 - 初回のビルド番号変更・Firestore文書登録は不要。最低対応ビルド番号は配布後に旧版を停止するときだけ設定する。
@@ -100,10 +119,14 @@ cd /workspaces/memora
 - APKのインストール：`adb install -r <APKのパス>`。
 - 初期化：`adb shell pm clear <application ID>`。アンインストール：`adb uninstall <application ID>`。どちらも対象アプリのデータを削除する。
 
-| モード | application ID |
-| --- | --- |
-| オンライン | `com.example.memora` |
-| オフライン | `com.example.memora.offline` |
+デバッグ版とリリース版も同じ端末にインストールできる。オンラインの両ビルドは同じFirebaseプロジェクトを利用する。
+
+| モード | ビルド種別 | アプリ名 | application ID |
+| --- | --- | --- | --- |
+| オンライン | release・profile | memora | `io.github.taka016.memora` |
+| オンライン | debug | memora-debug | `io.github.taka016.memora.debug` |
+| オフライン | release・profile | memora lite | `io.github.taka016.memora.offline` |
+| オフライン | debug | memora lite-debug | `io.github.taka016.memora.offline.debug` |
 
 ### 端末カレンダー連携
 

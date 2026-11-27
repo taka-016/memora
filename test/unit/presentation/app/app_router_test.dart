@@ -7,7 +7,7 @@ import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/presentation/app/app_redirect_controller.dart';
 import 'package:memora/presentation/app/app_router.dart';
 import 'package:memora/presentation/app/app_routes.dart';
-import 'package:memora/presentation/features/auth/signup_page.dart';
+import 'package:memora/presentation/features/auth/login_page.dart';
 import 'package:memora/presentation/notifiers/android_widget/android_widget_launch_notifier.dart';
 import 'package:memora/presentation/notifiers/auth/auth_notifier.dart';
 import 'package:memora/presentation/notifiers/auth/auth_state.dart';
@@ -319,8 +319,8 @@ void main() {
     expect(
       controller.resolve(
         authState: unauthenticated,
-        matchedLocation: const SignupRoute().location,
-        location: const SignupRoute().location,
+        matchedLocation: const LoginRoute().location,
+        location: const LoginRoute().location,
       ),
       isNull,
     );
@@ -328,8 +328,8 @@ void main() {
     expect(
       controller.resolve(
         authState: memberSelection,
-        matchedLocation: const SignupRoute().location,
-        location: const SignupRoute().location,
+        matchedLocation: const LoginRoute().location,
+        location: const LoginRoute().location,
       ),
       const MemberSetupRoute().location,
     );
@@ -485,11 +485,11 @@ void main() {
       tester,
       FakeAuthNotifier.unauthenticated(),
     );
-    router.go(const SignupRoute().location);
+    router.go(const LoginRoute().location);
     await pumpNavigation(tester);
 
     showDialog<void>(
-      context: tester.element(find.byType(SignupPage)),
+      context: tester.element(find.byType(LoginPage)),
       builder: (_) => const AlertDialog(content: Text('確認ダイアログ')),
     );
     await pumpNavigation(tester);
@@ -498,6 +498,6 @@ void main() {
     await pumpNavigation(tester);
 
     expect(find.text('確認ダイアログ'), findsNothing);
-    expect(router.state.matchedLocation, const SignupRoute().location);
+    expect(router.state.matchedLocation, const LoginRoute().location);
   });
 }

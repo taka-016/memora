@@ -3,11 +3,11 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 const _itineraryWidgetPath =
-    'android/app/src/main/kotlin/com/example/memora/ItineraryWidget.kt';
+    'android/app/src/main/kotlin/io/github/taka016/memora/ItineraryWidget.kt';
 const _toastHandlerPath =
-    'packages/memora_android_widget_toast/android/src/main/kotlin/com/example/memora/AndroidWidgetToastMethodChannelHandler.kt';
+    'packages/memora_android_widget_toast/android/src/main/kotlin/io/github/taka016/memora/AndroidWidgetToastMethodChannelHandler.kt';
 const _toastPluginPath =
-    'packages/memora_android_widget_toast/android/src/main/kotlin/com/example/memora/AndroidWidgetToastPlugin.kt';
+    'packages/memora_android_widget_toast/android/src/main/kotlin/io/github/taka016/memora/AndroidWidgetToastPlugin.kt';
 const _toastPluginPubspecPath =
     'packages/memora_android_widget_toast/pubspec.yaml';
 
@@ -34,7 +34,7 @@ void main() {
 
     test('ネイティブの選択日は現在のナビゲーションに存在する場合だけ使う', () {
       final source = File(
-        'android/app/src/main/kotlin/com/example/memora/ItineraryWidgetCache.kt',
+        'android/app/src/main/kotlin/io/github/taka016/memora/ItineraryWidgetCache.kt',
       ).readAsStringSync();
       expect(source, contains('it in cache.dateIds'));
       expect(

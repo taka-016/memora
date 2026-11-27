@@ -43,7 +43,7 @@ if (resolvedAppMode == "online") {
 }
 
 android {
-    namespace = "com.example.memora"
+    namespace = "io.github.taka016.memora"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = "28.2.13676358"
 
@@ -62,7 +62,7 @@ android {
     val mapsApiKey = localProperties.getProperty("MAPS_API_KEY") ?: ""
 
     defaultConfig {
-        applicationId = "com.example.memora"
+        applicationId = "io.github.taka016.memora"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = maxOf(flutter.minSdkVersion, 23)
@@ -107,6 +107,9 @@ android {
     }
 
     buildTypes {
+        getByName("debug") {
+            applicationIdSuffix = ".debug"
+        }
         getByName("release") {
             signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = false

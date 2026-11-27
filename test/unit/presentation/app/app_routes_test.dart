@@ -5,7 +5,6 @@ void main() {
   group('型付きルート', () {
     test('画面パラメータからURLを生成する', () {
       expect(const LoginRoute().location, '/login');
-      expect(const SignupRoute().location, '/signup');
       expect(const GroupListRoute().location, '/groups');
       expect(
         const GroupTimelineRoute(groupId: 'group 1').location,
@@ -27,7 +26,6 @@ void main() {
       expect(const MemberManagementRoute().location, '/members');
       expect(const GroupManagementRoute().location, '/group-management');
       expect(const SettingsRoute().location, '/settings');
-      expect(const AccountSettingsRoute().location, '/account-settings');
     });
 
     test('現在地からDrawerの選択項目を決定する', () {
@@ -56,10 +54,6 @@ void main() {
       expect(
         appNavigationItemForLocation(const SettingsRoute().location),
         AppNavigationItem.settings,
-      );
-      expect(
-        appNavigationItemForLocation(const AccountSettingsRoute().location),
-        AppNavigationItem.accountSettings,
       );
     });
   });

@@ -21,7 +21,7 @@ class HomeWidgetAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
   static const lastUpdatedAtKey = 'memora_widget_last_updated_at';
   static const cacheFileKey = 'memora_widget_itinerary_cache';
   static const qualifiedAndroidName =
-      'com.example.memora.ItineraryWidgetReceiver';
+      'io.github.taka016.memora.ItineraryWidgetReceiver';
 
   Future<void> trackItineraryLoading(
     String groupId,
@@ -157,7 +157,8 @@ class HomeWidgetAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
     }
     await HomeWidget.updateWidget(qualifiedAndroidName: qualifiedAndroidName);
     await HomeWidget.updateWidget(
-      qualifiedAndroidName: 'com.example.memora.ItineraryDarkWidgetReceiver',
+      qualifiedAndroidName:
+          'io.github.taka016.memora.ItineraryDarkWidgetReceiver',
     );
     await const HomeWidgetCalendarCacheStorage().update();
   }
