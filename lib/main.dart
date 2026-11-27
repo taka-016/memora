@@ -19,6 +19,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/app/app_router.dart';
 import 'package:memora/presentation/notifiers/android_widget/android_widget_launch_notifier.dart';
+import 'package:memora/presentation/notifiers/calendar/calendar_launch_notifier.dart';
 
 import 'package:flutter_localizations/flutter_localizations.dart';
 
@@ -97,6 +98,7 @@ class MyApp extends ConsumerWidget {
     ref.watch(calendarPreferencesNotifierProvider);
     ref.watch(calendarNotificationPreferencesNotifierProvider);
     ref.watch(androidWidgetLaunchNotifierProvider);
+    ref.watch(calendarLaunchNotifierProvider);
     ref.watch(calendarNotificationsNotifierProvider);
     ref.watch(calendarGroupSettingsNotifierProvider);
     return MaterialApp.router(

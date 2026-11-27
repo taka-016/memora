@@ -1,6 +1,7 @@
 package io.github.taka016.memora
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -11,14 +12,32 @@ import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.StandardMethodCodec
 
 class MainActivity : FlutterActivity() {
+    private val calendarLaunchInbox = CalendarLaunchInbox()
+    private var calendarLaunchChannel: MethodChannel? = null
     private var deviceCalendar: DeviceCalendarMethodChannelHandler? = null
     override fun onCreate(savedInstanceState: Bundle?) {
+        calendarLaunchInbox.receive(intent)
         super.onCreate(savedInstanceState)
         requestNotificationPermissionIfNeeded()
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+
+        calendarLaunchChannel = MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            "memora/calendar_launch",
+        ).also { channel ->
+            channel.setMethodCallHandler { call, result ->
+                if (call.method == "takePending") {
+                    val pending = calendarLaunchInbox.takePending()
+                    if (pending != null) setIntent(Intent(this, MainActivity::class.java).setAction(Intent.ACTION_MAIN))
+                    result.success(pending)
+                } else {
+                    result.notImplemented()
+                }
+            }
+        }
 
         MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,
@@ -37,6 +56,14 @@ class MainActivity : FlutterActivity() {
             ).setMethodCallHandler(handler)
             EventChannel(messenger, DeviceCalendarMethodChannelHandler.CHANGES_CHANNEL)
                 .setStreamHandler(handler)
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        if (calendarLaunchInbox.receive(intent)) {
+            calendarLaunchChannel?.invokeMethod("launchChanged", null)
         }
     }
 
