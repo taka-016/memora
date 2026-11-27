@@ -17,6 +17,25 @@ class _LaunchSource implements CalendarLaunchSource {
 }
 
 void main() {
+  test('起動時の取得中に変更通知が重なっても消費済みの要求を失わない', () async {
+    final source = _LaunchSource();
+    addTearDown(source.events.close);
+    final pending = Completer<CalendarLaunchRequestDto?>();
+    source.read = () => pending.future;
+    final container = ProviderContainer(overrides: [
+      watchCalendarLaunchUsecaseProvider.overrideWithValue(WatchCalendarLaunchUsecase(source)),
+    ]);
+    addTearDown(container.dispose);
+    container.read(calendarLaunchNotifierProvider);
+    source.read = () async => null;
+    source.events.add(null);
+    await container.pump();
+    final request = CalendarLaunchRequestDto(date: DateTime(2026, 11, 28));
+    pending.complete(request);
+    await container.pump();
+    expect(container.read(calendarLaunchNotifierProvider).request, same(request));
+  });
+
   test('ログイン待ちの要求を保持し一度消費した後も同じ日付で再起動できる', () async {
     final source = _LaunchSource();
     addTearDown(source.events.close);
