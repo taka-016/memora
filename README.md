@@ -93,13 +93,15 @@ APIキーはGoogle Cloudの「APIとサービス → 認証情報」で確認す
 
 Firebase用キーにはIdentity Toolkit API・Token Service API・Firebase Installations APIを許可する。Androidアプリ制限を設定する場合は、使用するapplication IDと署名証明書のSHA-1も登録する。Maps用キーをFirebase認証に使うと、ログイン時に`SignInWithPassword are blocked`などのエラーになる。
 
+オンライン版は、同じFirebaseプロジェクトにリリース用 `io.github.taka016.memora` とデバッグ用 `io.github.taka016.memora.debug` を登録し、両方を含む`google-services.json`を共用する。Firebase用・Maps用キーのAndroidアプリ制限には、それぞれのapplication IDと使用する署名証明書のSHA-1を登録する。
+
 `google-services.json`をダウンロードし直した場合も、含まれるキーがFirebase用とは限らない。先頭のキーをそのまま採用せず、次の手順でFirebase用キーを反映する。
 
 1. 新しいJSONを`android/app/google-services.json`へ配置する。
 2. 同じFirebase Androidアプリの設定を置き換えた場合は、`just setup-cloud api-key`でFirebase用キーを入力する。application IDの変更などでFirebase Androidアプリを追加した場合は、`just setup-cloud configure`で対象アプリの設定を生成し、Firebase用キーを入力する。
 3. アプリを再ビルドする。
 
-キーは`android/app/google-services.json`と`lib/firebase_options.dart`の両方へ反映される。既存ファイルの削除は不要。
+キーはJSON内のリリース用・デバッグ用アプリと`lib/firebase_options.dart`へ反映される。Dart設定も1ファイルで共用し、デバッグ実行ではデバッグ用、release・profile実行ではリリース用のFirebase App IDを選ぶ。既存ファイルの削除は不要。
 
 設定・認証時の注意：
 
@@ -115,10 +117,14 @@ Firebase用キーにはIdentity Toolkit API・Token Service API・Firebase Insta
 - APKのインストール：`adb install -r <APKのパス>`。
 - 初期化：`adb shell pm clear <application ID>`。アンインストール：`adb uninstall <application ID>`。どちらも対象アプリのデータを削除する。
 
-| モード | application ID |
-| --- | --- |
-| オンライン | `io.github.taka016.memora` |
-| オフライン | `io.github.taka016.memora.offline` |
+デバッグ版とリリース版も同じ端末にインストールできる。オンラインの両ビルドは同じFirebaseプロジェクトを利用する。
+
+| モード | ビルド種別 | application ID |
+| --- | --- | --- |
+| オンライン | release・profile | `io.github.taka016.memora` |
+| オンライン | debug | `io.github.taka016.memora.debug` |
+| オフライン | release・profile | `io.github.taka016.memora.offline` |
+| オフライン | debug | `io.github.taka016.memora.offline.debug` |
 
 ### 端末カレンダー連携
 

@@ -26,7 +26,11 @@ void main() {
     test('デバッグ版だけにdebugサフィックスを付けリリース版と併存できる', () {
       expect(
         buildGradle,
-        matches(RegExp(r'getByName\("debug"\)\s*\{\s*applicationIdSuffix = "\.debug"')),
+        matches(
+          RegExp(
+            r'getByName\("debug"\)\s*\{\s*applicationIdSuffix = "\.debug"',
+          ),
+        ),
       );
       final release = RegExp(r'getByName\("release"\)\s*\{([^}]+)\}')
           .firstMatch(buildGradle)!;

@@ -208,15 +208,22 @@ esac
         'mobilesdk_app_id': 'debug-app',
         'android_client_info': {'package_name': 'test.memora.debug'},
       },
-      'api_key': [{'current_key': 'AIzaMapsKey'}],
+      'api_key': [
+        {'current_key': 'AIzaMapsKey'},
+      ],
     });
-    file('android/app/google-services.json').writeAsStringSync(jsonEncode(config));
+    file('android/app/google-services.json')
+        .writeAsStringSync(jsonEncode(config));
 
     success(await runSetup(['api-key']));
 
-    final updated = jsonDecode(file('android/app/google-services.json').readAsStringSync());
+    final updated = jsonDecode(
+      file('android/app/google-services.json').readAsStringSync(),
+    );
     for (final index in [0, 2]) {
-      expect(updated['client'][index]['api_key'], [{'current_key': _firebaseKey}]);
+      expect(updated['client'][index]['api_key'], [
+        {'current_key': _firebaseKey},
+      ]);
     }
     expect(updated['client'][1], (_config['client'] as List)[1]);
     final dart = file('lib/firebase_options.dart').readAsStringSync();
@@ -229,6 +236,28 @@ esac
     expect(dart, contains("bool.fromEnvironment('dart.vm.profile')"));
     expect(dart, isNot(contains(_oldKey)));
     expect(dart, contains("apiKey: 'ios-key'"));
+
+    file('generated_options.dart').writeAsStringSync('''
+class FirebaseOptions {
+  final String apiKey;
+  final String appId;
+  final String projectId;
+  const FirebaseOptions({required this.apiKey, required this.appId, required this.projectId});
+}
+$dart
+void main() => print(DefaultFirebaseOptions.android.appId);
+''');
+    for (final mode in ['', 'dart.vm.product', 'dart.vm.profile']) {
+      final result = await Process.run(dartPath, [
+        if (mode.isNotEmpty) '-D$mode=true',
+        'generated_options.dart',
+      ], workingDirectory: project.path);
+      success(result);
+      expect(
+        (result.stdout as String).trim(),
+        mode.isEmpty ? 'debug-app' : 'android-app',
+      );
+    }
 
     success(await runSetup(['api-key']));
     expect(file('lib/firebase_options.dart').readAsStringSync(), dart);

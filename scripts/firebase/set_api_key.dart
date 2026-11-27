@@ -26,10 +26,14 @@ void updateApiKey() {
   final declarations = RegExp(
     r'static const FirebaseOptions (android|androidRelease|androidDebug)\s*=\s*([\s\S]*?);',
   ).allMatches(dartSource).toList();
-  final android = declarations.where((match) =>
-      match.group(1) == 'androidRelease' ||
-      (match.group(1) == 'android' &&
-          match.group(2)!.startsWith('FirebaseOptions('))).firstOrNull;
+  final android = declarations
+      .where(
+        (match) =>
+            match.group(1) == 'androidRelease' ||
+            (match.group(1) == 'android' &&
+                match.group(2)!.startsWith('FirebaseOptions(')),
+      )
+      .firstOrNull;
   if (config is! Map<String, dynamic> || android == null) {
     throw const FormatException();
   }
@@ -58,10 +62,14 @@ void updateApiKey() {
   if (matches.length != 1) throw const FormatException();
 
   final release = matches.single;
-  final packageName = release['client_info']['android_client_info']['package_name'];
-  final debugClients = clients.whereType<Map<String, dynamic>>().where((client) {
+  final packageName =
+      release['client_info']['android_client_info']['package_name'];
+  final debugClients = clients.whereType<Map<String, dynamic>>().where((
+    client,
+  ) {
     final info = client['client_info'];
-    return info is Map && info['android_client_info'] is Map &&
+    return info is Map &&
+        info['android_client_info'] is Map &&
         info['android_client_info']['package_name'] == '$packageName.debug';
   }).toList();
   if (debugClients.length > 1 ||
@@ -69,7 +77,8 @@ void updateApiKey() {
           debugClients.isEmpty)) {
     throw const FormatException();
   }
-  final debugAppId = debugClients.firstOrNull?['client_info']['mobilesdk_app_id'];
+  final debugAppId =
+      debugClients.firstOrNull?['client_info']['mobilesdk_app_id'];
   if (debugClients.isNotEmpty &&
       (debugAppId is! String ||
           !RegExp(r'^[A-Za-z0-9:_-]+$').hasMatch(debugAppId) ||
@@ -78,18 +87,24 @@ void updateApiKey() {
   }
   for (final client in [release, ...debugClients]) {
     client['api_key'] = [
-    {'current_key': key},
-  ];
+      {'current_key': key},
+    ];
   }
   final updatedOptions = options.replaceFirst(apiKey, "apiKey: '$key'");
   var updatedDart = dartSource;
   if (debugClients.isEmpty) {
-    updatedDart = dartSource.replaceRange(android.start, android.end,
-        'static const FirebaseOptions android = $updatedOptions;');
+    updatedDart = dartSource.replaceRange(
+      android.start,
+      android.end,
+      'static const FirebaseOptions android = $updatedOptions;',
+    );
   } else {
     final debugOptions = updatedOptions.replaceFirst(
-        RegExp(r"\bappId:\s*'[^']*'"), "appId: '$debugAppId'");
-    final replacement = '''static const FirebaseOptions android =
+      RegExp(r"\bappId:\s*'[^']*'"),
+      "appId: '$debugAppId'",
+    );
+    final replacement =
+        '''static const FirebaseOptions android =
       bool.fromEnvironment('dart.vm.product') || bool.fromEnvironment('dart.vm.profile')
           ? androidRelease : androidDebug;
 
@@ -97,13 +112,18 @@ void updateApiKey() {
 
   static const FirebaseOptions androidDebug = $debugOptions;''';
     for (var index = 1; index < declarations.length; index++) {
-      if (dartSource.substring(declarations[index - 1].end,
-          declarations[index].start).trim().isNotEmpty) {
+      if (dartSource
+          .substring(declarations[index - 1].end, declarations[index].start)
+          .trim()
+          .isNotEmpty) {
         throw const FormatException();
       }
     }
     updatedDart = dartSource.replaceRange(
-        declarations.first.start, declarations.last.end, replacement);
+      declarations.first.start,
+      declarations.last.end,
+      replacement,
+    );
   }
   jsonFile.writeAsStringSync(
     '${const JsonEncoder.withIndent('  ').convert(config)}\n',
