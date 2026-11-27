@@ -27,6 +27,7 @@ class CalendarLaunchNotifier extends _$CalendarLaunchNotifier {
   @override
   CalendarLaunchState build() {
     final usecase = ref.watch(watchCalendarLaunchUsecaseProvider);
+    if (usecase == null) return const CalendarLaunchState();
     final subscription = usecase.changes.listen((_) => unawaited(_load()));
     ref.onDispose(() => unawaited(subscription.cancel()));
     unawaited(_load());
@@ -46,9 +47,15 @@ class CalendarLaunchNotifier extends _$CalendarLaunchNotifier {
         final version = _version;
         CalendarLaunchRequestDto? request;
         try {
-          request = await ref.read(watchCalendarLaunchUsecaseProvider).takePending();
+          request = await ref
+              .read(watchCalendarLaunchUsecaseProvider)!
+              .takePending();
         } catch (error, stackTrace) {
-          logger.e('カレンダーの起動要求を取得できませんでした', error: error, stackTrace: stackTrace);
+          logger.e(
+            'カレンダーの起動要求を取得できませんでした',
+            error: error,
+            stackTrace: stackTrace,
+          );
         }
         if (!ref.mounted) return;
         if (version == _version) {
