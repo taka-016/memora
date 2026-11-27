@@ -8,8 +8,10 @@ class CalendarLaunchInbox {
 
     fun receive(intent: Intent): Boolean {
         val uri = intent.data
+        val calendarIntent = intent.selector ?: intent
         val action = when {
-            intent.action == Intent.ACTION_MAIN && intent.hasCategory(Intent.CATEGORY_APP_CALENDAR) -> "view"
+            calendarIntent.action == Intent.ACTION_MAIN &&
+                calendarIntent.hasCategory(Intent.CATEGORY_APP_CALENDAR) -> "view"
             intent.action == Intent.ACTION_VIEW && uri?.scheme == "content" &&
                 uri.authority == CalendarContract.AUTHORITY &&
                 uri.pathSegments.size == 2 && uri.pathSegments.first() == "time" &&

@@ -59,6 +59,11 @@
                 <data android:scheme="content" android:host="com.android.calendar" android:pathPrefix="/time/"/>
             </intent-filter>
             <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:scheme="content" android:host="com.android.calendar" android:pathPrefix="/time/" android:mimeType="time/epoch"/>
+            </intent-filter>
+            <intent-filter>
                 <action android:name="android.intent.action.INSERT"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <data android:mimeType="vnd.android.cursor.dir/event"/>
