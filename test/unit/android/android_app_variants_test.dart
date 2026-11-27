@@ -12,11 +12,11 @@ void main() {
       buildGradle = File(_buildGradlePath).readAsStringSync();
     });
 
-    test('オンライン版は既存IDを維持しオフライン版は別IDを使用する', () {
+    test('オンライン版は正式IDを使いオフライン版は別IDを使用する', () {
       expect(buildGradle, contains('flavorDimensions += "appMode"'));
       expect(buildGradle, contains('create("online")'));
       expect(buildGradle, contains('create("offline")'));
-      expect(buildGradle, contains('applicationId = "com.example.memora"'));
+      expect(buildGradle, contains('applicationId = "io.github.taka016.memora"'));
       expect(buildGradle, contains('applicationIdSuffix = ".offline"'));
     });
 

@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 const _mainActivityPath =
-    'android/app/src/main/kotlin/com/example/memora/MainActivity.kt';
+    'android/app/src/main/kotlin/io/github/taka016/memora/MainActivity.kt';
 
 void main() {
   group('AndroidNotificationPermission', () {

@@ -9,11 +9,11 @@ const _mainPath = 'lib/composition_root/app_bootstrap.dart';
 const _cacheUsecasesPath =
     'lib/application/usecases/android_widget/android_widget_itinerary_cache_usecases.dart';
 const _itineraryWidgetPath =
-    'android/app/src/main/kotlin/com/example/memora/ItineraryWidget.kt';
+    'android/app/src/main/kotlin/io/github/taka016/memora/ItineraryWidget.kt';
 const _fallbackSchedulerPath =
-    'android/app/src/main/kotlin/com/example/memora/AndroidWidgetUpdateFallbackScheduler.kt';
+    'android/app/src/main/kotlin/io/github/taka016/memora/AndroidWidgetUpdateFallbackScheduler.kt';
 const _fallbackReceiverPath =
-    'android/app/src/main/kotlin/com/example/memora/AndroidWidgetUpdateFallbackReceiver.kt';
+    'android/app/src/main/kotlin/io/github/taka016/memora/AndroidWidgetUpdateFallbackReceiver.kt';
 const _widgetInfoPath =
     'android/app/src/main/res/xml/itinerary_widget_info.xml';
 const _androidManifestPath = 'android/app/src/main/AndroidManifest.xml';
@@ -151,7 +151,7 @@ void main() {
     test('ライト版とダーク版の両方が標準Receiverの更新処理を使う', () {
       final source = File(_itineraryWidgetPath).readAsStringSync();
       final appearance = File(
-        'android/app/src/main/kotlin/com/example/memora/WidgetAppearance.kt',
+        'android/app/src/main/kotlin/io/github/taka016/memora/WidgetAppearance.kt',
       ).readAsStringSync();
       final manifest = File(_androidManifestPath).readAsStringSync();
       expect(source, contains('ItineraryWidgetReceiver : AppWidgetProvider()'));
@@ -165,7 +165,7 @@ void main() {
 
     test('描画用キャッシュは現在のモードと対象グループに限定する', () {
       final source = File(
-        'android/app/src/main/kotlin/com/example/memora/ItineraryWidgetCache.kt',
+        'android/app/src/main/kotlin/io/github/taka016/memora/ItineraryWidgetCache.kt',
       ).readAsStringSync();
       expect(source, contains('BuildConfig.RESOLVED_APP_MODE'));
       expect(source, contains('it.groupId == targetGroup(context)'));
