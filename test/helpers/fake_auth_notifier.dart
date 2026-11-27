@@ -9,11 +9,9 @@ class FakeAuthNotifier extends AuthNotifier {
   FakeAuthNotifier(this._initialState);
 
   final AuthState _initialState;
-  bool _signupCalled = false;
   bool _loginCalled = false;
   bool _logoutCalled = false;
 
-  bool get signupCalled => _signupCalled;
   bool get loginCalled => _loginCalled;
   bool get logoutCalled => _logoutCalled;
 
@@ -43,13 +41,7 @@ class FakeAuthNotifier extends AuthNotifier {
   }
 
   @override
-  Future<bool> signup({required String email, required String password}) async {
-    _signupCalled = true;
-    return true;
-  }
-
-  @override
-  Future<void> login({required String email, required String password}) async {
+  Future<void> login() async {
     _loginCalled = true;
   }
 

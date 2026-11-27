@@ -5,13 +5,5 @@ class LoginUseCase {
 
   final AuthService authService;
 
-  Future<void> execute({
-    required String email,
-    required String password,
-  }) async {
-    await authService.signInWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
-  }
+  Future<bool> execute() => authService.signInWithGoogle();
 }

@@ -385,11 +385,10 @@ extension TopPageBackNavigationTests on TopPageTestContext {
         (label: 'グループ', finder: find.byKey(const Key('group_settings'))),
         (label: 'メンバー', finder: find.byKey(const Key('member_settings'))),
         (label: '設定', finder: find.byKey(const Key('settings'))),
-        (label: 'アカウント設定', finder: find.text('アカウント設定')),
       ];
 
       for (final target in menuTargets) {
-        if (target.label == '設定' || target.label == 'アカウント設定') {
+        if (target.label == '設定') {
           await tester.tap(find.byIcon(Icons.menu));
           await tester.pumpAndSettle();
         }

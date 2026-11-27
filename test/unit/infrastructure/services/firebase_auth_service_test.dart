@@ -1,6 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:memora/application/exceptions/reauthentication_required_exception.dart';
-import 'package:memora/core/app_logger.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -15,12 +13,10 @@ void main() {
     late FirebaseAuthService firebaseAuthService;
     late MockFirebaseAuth mockFirebaseAuth;
     late MockUser mockFirebaseUser;
-    late MockUserCredential mockUserCredential;
 
     setUp(() {
       mockFirebaseAuth = MockFirebaseAuth();
       mockFirebaseUser = MockUser();
-      mockUserCredential = MockUserCredential();
       firebaseAuthService = FirebaseAuthService(firebaseAuth: mockFirebaseAuth);
     });
 
@@ -48,119 +44,12 @@ void main() {
       expect(result, isNull);
     });
 
-    test('正常にログインできる', () async {
-      when(
-        mockFirebaseAuth.signInWithEmailAndPassword(
-          email: 'test@example.com',
-          password: 'password123',
-        ),
-      ).thenAnswer((_) async => mockUserCredential);
-      when(mockUserCredential.user).thenReturn(mockFirebaseUser);
-      when(mockFirebaseUser.uid).thenReturn('user123');
-      when(mockFirebaseUser.email).thenReturn('test@example.com');
-      when(mockFirebaseUser.displayName).thenReturn('テストユーザー');
-      when(mockFirebaseUser.emailVerified).thenReturn(true);
-
-      final result = await firebaseAuthService.signInWithEmailAndPassword(
-        email: 'test@example.com',
-        password: 'password123',
-      );
-
-      expect(result.id, 'user123');
-      expect(result.loginId, 'test@example.com');
-      expect(result.displayName, 'テストユーザー');
-      expect(result.isVerified, true);
-    });
-
-    test('ログインに失敗した場合、例外をスローする', () async {
-      AppLogger.suppressLogging(true);
-
-      when(
-        mockFirebaseAuth.signInWithEmailAndPassword(
-          email: 'test@example.com',
-          password: 'wrongpassword',
-        ),
-      ).thenThrow(FirebaseAuthException(code: 'wrong-password'));
-
-      expect(
-        () => firebaseAuthService.signInWithEmailAndPassword(
-          email: 'test@example.com',
-          password: 'wrongpassword',
-        ),
-        throwsA(
-          isA<Exception>().having(
-            (e) => e.toString(),
-            'message',
-            contains('パスワードが間違っています。'),
-          ),
-        ),
-      );
-    });
-
-    test('正常にユーザーを作成できる', () async {
-      when(
-        mockFirebaseAuth.createUserWithEmailAndPassword(
-          email: 'test@example.com',
-          password: 'password123',
-        ),
-      ).thenAnswer((_) async => mockUserCredential);
-      when(mockUserCredential.user).thenReturn(mockFirebaseUser);
-      when(mockFirebaseUser.uid).thenReturn('user123');
-      when(mockFirebaseUser.email).thenReturn('test@example.com');
-      when(mockFirebaseUser.displayName).thenReturn(null);
-      when(mockFirebaseUser.emailVerified).thenReturn(false);
-
-      final result = await firebaseAuthService.createUserWithEmailAndPassword(
-        email: 'test@example.com',
-        password: 'password123',
-      );
-
-      expect(result.id, 'user123');
-      expect(result.loginId, 'test@example.com');
-      expect(result.displayName, isNull);
-      expect(result.isVerified, false);
-    });
-
     test('正常にサインアウトできる', () async {
       when(mockFirebaseAuth.signOut()).thenAnswer((_) async => {});
 
       await firebaseAuthService.signOut();
 
       verify(mockFirebaseAuth.signOut()).called(1);
-    });
-
-    test('メールアドレス更新で認証期限切れの場合は型付き例外へ変換する', () async {
-      when(mockFirebaseAuth.currentUser).thenReturn(mockFirebaseUser);
-      when(mockFirebaseUser.verifyBeforeUpdateEmail('new@example.com'))
-          .thenThrow(FirebaseAuthException(code: 'requires-recent-login'));
-
-      expect(
-        () => firebaseAuthService.updateEmail(newEmail: 'new@example.com'),
-        throwsA(isA<ReauthenticationRequiredException>()),
-      );
-    });
-
-    test('パスワード更新で認証期限切れの場合は型付き例外へ変換する', () async {
-      when(mockFirebaseAuth.currentUser).thenReturn(mockFirebaseUser);
-      when(mockFirebaseUser.updatePassword('NewPassword123#'))
-          .thenThrow(FirebaseAuthException(code: 'requires-recent-login'));
-
-      expect(
-        () =>
-            firebaseAuthService.updatePassword(newPassword: 'NewPassword123#'),
-        throwsA(isA<ReauthenticationRequiredException>()),
-      );
-    });
-
-    test('アカウント削除で認証期限切れの場合は型付き例外へ変換する', () async {
-      when(mockFirebaseAuth.currentUser).thenReturn(mockFirebaseUser);
-      when(mockFirebaseUser.delete())
-          .thenThrow(FirebaseAuthException(code: 'requires-recent-login'));
-
-      expect(
-        firebaseAuthService.deleteUser,
-        throwsA(isA<ReauthenticationRequiredException>()),
-      );
     });
 
     test('認証状態の変更を監視できる', () {

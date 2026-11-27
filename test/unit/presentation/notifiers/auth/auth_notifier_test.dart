@@ -18,8 +18,6 @@ import 'package:memora/application/usecases/account/get_current_user_usecase.dar
 import 'package:memora/application/usecases/account/login_usecase.dart';
 import 'package:memora/application/usecases/account/logout_usecase.dart';
 import 'package:memora/application/usecases/account/observe_auth_state_changes_usecase.dart';
-import 'package:memora/application/usecases/account/send_email_verification_usecase.dart';
-import 'package:memora/application/usecases/account/signup_usecase.dart';
 import 'package:memora/application/usecases/member/get_member_by_account_id_usecase.dart';
 import 'package:memora/application/usecases/member/create_member_from_user_usecase.dart';
 import 'package:memora/application/usecases/member/accept_invitation_usecase.dart';
@@ -30,10 +28,8 @@ import 'auth_notifier_test.mocks.dart';
 
 @GenerateMocks([
   ObserveAuthStateChangesUseCase,
-  SendEmailVerificationUseCase,
   GetCurrentUserUseCase,
   LoginUseCase,
-  SignupUseCase,
   LogoutUseCase,
   GetMemberByAccountIdUseCase,
   CreateMemberFromUserUseCase,
@@ -42,10 +38,8 @@ import 'auth_notifier_test.mocks.dart';
 void main() {
   group('AuthNotifier', () {
     late MockObserveAuthStateChangesUseCase mockObserveAuthStateChangesUseCase;
-    late MockSendEmailVerificationUseCase mockSendEmailVerificationUseCase;
     late MockGetCurrentUserUseCase mockGetCurrentUserUseCase;
     late MockLoginUseCase mockLoginUseCase;
-    late MockSignupUseCase mockSignupUseCase;
     late MockLogoutUseCase mockLogoutUseCase;
     late MockGetMemberByAccountIdUseCase mockGetMemberByAccountIdUseCase;
     late MockCreateMemberFromUserUseCase mockCreateMemberFromUserUseCase;
@@ -53,10 +47,8 @@ void main() {
 
     setUp(() {
       mockObserveAuthStateChangesUseCase = MockObserveAuthStateChangesUseCase();
-      mockSendEmailVerificationUseCase = MockSendEmailVerificationUseCase();
       mockGetCurrentUserUseCase = MockGetCurrentUserUseCase();
       mockLoginUseCase = MockLoginUseCase();
-      mockSignupUseCase = MockSignupUseCase();
       mockLogoutUseCase = MockLogoutUseCase();
       mockGetMemberByAccountIdUseCase = MockGetMemberByAccountIdUseCase();
       mockCreateMemberFromUserUseCase = MockCreateMemberFromUserUseCase();
@@ -72,14 +64,10 @@ void main() {
           observeAuthStateChangesUseCaseProvider.overrideWithValue(
             mockObserveAuthStateChangesUseCase,
           ),
-          sendEmailVerificationUseCaseProvider.overrideWithValue(
-            mockSendEmailVerificationUseCase,
-          ),
           getCurrentUserUseCaseProvider.overrideWithValue(
             mockGetCurrentUserUseCase,
           ),
           loginUseCaseProvider.overrideWithValue(mockLoginUseCase),
-          signupUseCaseProvider.overrideWithValue(mockSignupUseCase),
           logoutUseCaseProvider.overrideWithValue(mockLogoutUseCase),
           getMemberByAccountIdUseCaseProvider.overrideWithValue(
             mockGetMemberByAccountIdUseCase,
@@ -353,8 +341,6 @@ void main() {
       );
       final signOutCompleter = Completer<void>();
 
-      when(mockSendEmailVerificationUseCase.execute())
-          .thenThrow(TestException('send mail failed'));
       when(mockLogoutUseCase.execute())
           .thenAnswer((_) => signOutCompleter.future);
 
@@ -371,50 +357,19 @@ void main() {
       await Future(() {});
       await Future(() {});
       expect(notifier.state.status, AuthStatus.unauthenticated);
-      expect(notifier.state.message, '認証メールの送信に失敗しました。再度ログインしてください。');
-
-      signOutCompleter.complete();
-      await Future(() {});
-      await Future(() {});
-      expect(notifier.state.status, AuthStatus.unauthenticated);
-      expect(notifier.state.message, '認証メールの送信に失敗しました。再度ログインしてください。');
-    });
-
-    test('サインアウト中にnullイベントが来ても認証メール再送メッセージを保持する', () async {
-      const user = UserDto(
-        id: 'user123',
-        loginId: 'test@example.com',
-        isVerified: false,
+      expect(
+        notifier.state.message,
+        'Googleアカウントのメールアドレスを確認できませんでした。別のアカウントでログインしてください。',
       );
-      final signOutCompleter = Completer<void>();
-
-      when(mockSendEmailVerificationUseCase.execute()).thenAnswer((_) async {});
-      when(mockLogoutUseCase.execute())
-          .thenAnswer((_) => signOutCompleter.future);
-
-      final controller = StreamController<UserDto?>();
-      addTearDown(controller.close);
-      final container = createContainer(controller.stream);
-      addTearDown(container.dispose);
-
-      final notifier = container.read(authNotifierProvider.notifier);
-      controller.add(user);
-      await Future(() {});
-      await Future(() {});
-
-      controller.add(null);
-      await Future(() {});
-      await Future(() {});
-      expect(notifier.state.status, AuthStatus.unauthenticated);
-      expect(notifier.state.message, '認証メールを再送しました。メールを確認して認証を完了してください。');
-      expect(notifier.state.messageType, MessageType.info);
 
       signOutCompleter.complete();
       await Future(() {});
       await Future(() {});
       expect(notifier.state.status, AuthStatus.unauthenticated);
-      expect(notifier.state.message, '認証メールを再送しました。メールを確認して認証を完了してください。');
-      expect(notifier.state.messageType, MessageType.info);
+      expect(
+        notifier.state.message,
+        'Googleアカウントのメールアドレスを確認できませんでした。別のアカウントでログインしてください。',
+      );
     });
 
     test(

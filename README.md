@@ -79,7 +79,7 @@ cd /workspaces/memora
 ### オンライン版の設定
 
 1. [Firebase Console](https://console.firebase.google.com/)でプロジェクトを作成する。
-2. Authentication（メールアドレス/パスワード）、Firestore Database（本番モード）、Identity Toolkit API、Token Service APIを有効にする。
+2. AuthenticationのGoogle認証、Firestore Database（本番モード）、Identity Toolkit API、Token Service APIを有効にする。
 3. [Google Cloud CLI](https://cloud.google.com/sdk/docs/install)を用意し、必要なFirestoreセキュリティルールを設定する。
 4. `just setup-cloud`で「すべて実行」を選び、ログイン・プロジェクト選択・設定生成を進める。APIキーの入力時は、下表のFirebase用キーを指定する。
 5. 設定更新後、アプリを再ビルドする。
@@ -94,6 +94,8 @@ APIキーはGoogle Cloudの「APIとサービス → 認証情報」で確認す
 Firebase用キーにはIdentity Toolkit API・Token Service API・Firebase Installations APIを許可する。Androidアプリ制限を設定する場合は、使用するapplication IDと署名証明書のSHA-1も登録する。Maps用キーをFirebase認証に使うと、ログイン時に`SignInWithPassword are blocked`などのエラーになる。
 
 オンライン版は、同じFirebaseプロジェクトにリリース用 `io.github.taka016.memora` とデバッグ用 `io.github.taka016.memora.debug` を登録し、両方を含む`google-services.json`を共用する。Firebase用・Maps用キーのAndroidアプリ制限には、それぞれのapplication IDと使用する署名証明書のSHA-1を登録する。
+
+Googleログインには、Firebaseの各Androidアプリへの署名証明書のSHA-1登録と、Google認証を有効にした後の`google-services.json`が必要。JSONにWeb OAuthクライアント（`client_type: 3`）を含める。既存利用者は、同じFirebase UIDへGoogle認証を連携してから利用する。[公式手順](https://firebase.google.com/docs/auth/flutter/federated-auth)
 
 `google-services.json`をダウンロードし直した場合も、含まれるキーがFirebase用とは限らない。先頭のキーをそのまま採用せず、次の手順でFirebase用キーを反映する。
 

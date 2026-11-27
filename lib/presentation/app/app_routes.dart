@@ -8,11 +8,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:memora/presentation/app/top_page.dart';
 import 'package:memora/presentation/features/calendar/calendar_screen.dart';
-import 'package:memora/presentation/features/account_setting/account_settings.dart';
 import 'package:memora/presentation/features/auth/auth_guard.dart';
 import 'package:memora/presentation/features/auth/auth_initialization_view.dart';
 import 'package:memora/presentation/features/auth/login_page.dart';
-import 'package:memora/presentation/features/auth/signup_page.dart';
 import 'package:memora/presentation/features/dvc/dvc_point_calculation_screen.dart';
 import 'package:memora/presentation/features/group/group_management.dart';
 import 'package:memora/presentation/features/map/map_screen.dart';
@@ -35,7 +33,6 @@ enum AppNavigationItem {
   memberManagement,
   groupManagement,
   settings,
-  accountSettings,
 }
 
 @TypedGoRoute<AppRootRoute>(path: '/')
@@ -69,9 +66,6 @@ AppNavigationItem appNavigationItemForLocation(String location) {
   if (location == const SettingsRoute().location) {
     return AppNavigationItem.settings;
   }
-  if (location == const AccountSettingsRoute().location) {
-    return AppNavigationItem.accountSettings;
-  }
   return AppNavigationItem.groupTimeline;
 }
 
@@ -94,16 +88,6 @@ class LoginRoute extends GoRouteData with $LoginRoute {
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
     return const NoTransitionPage<void>(child: LoginPage());
-  }
-}
-
-@TypedGoRoute<SignupRoute>(path: '/signup')
-class SignupRoute extends GoRouteData with $SignupRoute {
-  const SignupRoute();
-
-  @override
-  Page<void> buildPage(BuildContext context, GoRouterState state) {
-    return const NoTransitionPage<void>(child: SignupPage());
   }
 }
 
@@ -142,7 +126,6 @@ class MemberSetupRoute extends GoRouteData with $MemberSetupRoute {
     TypedGoRoute<MemberManagementRoute>(path: '/members'),
     TypedGoRoute<GroupManagementRoute>(path: '/group-management'),
     TypedGoRoute<SettingsRoute>(path: '/settings'),
-    TypedGoRoute<AccountSettingsRoute>(path: '/account-settings'),
   ],
 )
 class AppShellRoute extends ShellRouteData {
@@ -405,15 +388,6 @@ class SettingsRoute extends GoRouteData with $SettingsRoute {
   @override
   Widget build(BuildContext context, GoRouterState state) {
     return const Material(child: Settings());
-  }
-}
-
-class AccountSettingsRoute extends GoRouteData with $AccountSettingsRoute {
-  const AccountSettingsRoute();
-
-  @override
-  Widget build(BuildContext context, GoRouterState state) {
-    return const Material(child: AccountSettings());
   }
 }
 

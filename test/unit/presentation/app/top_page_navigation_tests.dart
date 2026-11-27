@@ -58,10 +58,7 @@ extension TopPageNavigationTests on TopPageTestContext {
         expect(find.text(groups.first.name), findsOneWidget);
       });
     }
-    for (final route in [
-      const SettingsRoute().location,
-      const AccountSettingsRoute().location,
-    ]) {
+    for (final route in [const SettingsRoute().location]) {
       testWidgets('$routeへ直接開いた場合も下部メニューから年表へ移動できる', (tester) async {
         await tester.pumpWidget(createTestWidget(initialLocation: route));
         await tester.pumpAndSettle();
@@ -75,7 +72,7 @@ extension TopPageNavigationTests on TopPageTestContext {
         expect(find.byKey(const Key('group_list')), findsOneWidget);
       });
     }
-    for (final title in ['設定', 'アカウント設定']) {
+    for (final title in ['設定']) {
       testWidgets('$titleは戻るボタン付きの追加ヘッダーを表示せず下部メニューから移動できる', (tester) async {
         await tester.pumpWidget(createTestWidget());
         await tester.pumpAndSettle();
@@ -99,7 +96,7 @@ extension TopPageNavigationTests on TopPageTestContext {
         expect(find.byKey(const Key('group_list')), findsOneWidget);
       });
     }
-    testWidgets('ハンバーガーメニューには設定とアカウント設定を残す', (tester) async {
+    testWidgets('ハンバーガーメニューには設定を残す', (tester) async {
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
       await tester.tap(find.byIcon(Icons.menu));
@@ -110,11 +107,7 @@ extension TopPageNavigationTests on TopPageTestContext {
           matching: find.byType(ListTile),
         ),
       );
-      expect(tiles.map((tile) => (tile.title as Text).data), [
-        '設定',
-        'アカウント設定',
-        'ログアウト',
-      ]);
+      expect(tiles.map((tile) => (tile.title as Text).data), ['設定', 'ログアウト']);
       await tester.tap(find.text('設定'));
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('settings')), findsOneWidget);

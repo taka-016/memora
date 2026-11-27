@@ -1,9 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:memora/application/exceptions/reauthentication_required_exception.dart';
-import 'package:memora/infrastructure/errors/firebase_error_mapper.dart';
-import 'package:memora/domain/entities/account/user.dart' as domain;
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:memora/application/services/auth_service.dart';
 import 'package:memora/core/app_logger.dart';
+import 'package:memora/domain/entities/account/user.dart' as domain;
+import 'package:memora/infrastructure/errors/firebase_error_mapper.dart';
 
 class FirebaseAuthService implements AuthService {
   FirebaseAuthService({FirebaseAuth? firebaseAuth, this._ensureAvailable})
@@ -11,6 +11,17 @@ class FirebaseAuthService implements AuthService {
 
   final FirebaseAuth _firebaseAuth;
   final Future<void> Function()? _ensureAvailable;
+  static final _googleSignIn = GoogleSignIn.instance;
+  static Future<void>? _googleInitialization;
+
+  Future<void> _initializeGoogleSignIn() async {
+    try {
+      await (_googleInitialization ??= _googleSignIn.initialize());
+    } catch (_) {
+      _googleInitialization = null;
+      rethrow;
+    }
+  }
 
   @override
   Future<domain.User?> getCurrentUser() async {
@@ -21,56 +32,28 @@ class FirebaseAuthService implements AuthService {
   }
 
   @override
-  Future<domain.User> signInWithEmailAndPassword({
-    required String email,
-    required String password,
-  }) async {
-    try {
-      final userCredential = await _firebaseAuth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-
-      if (userCredential.user == null) {
-        throw Exception('ログインに失敗しました');
-      }
-
-      return _mapFirebaseUserToDomainUser(userCredential.user!);
-    } on FirebaseAuthException catch (e, stack) {
-      final message = FirebaseErrorMapper.getFirebaseErrorMessage(e);
-      logger.e(
-        'FirebaseAuthService.signInWithEmailAndPassword: $message',
-        error: e,
-        stackTrace: stack,
-      );
-      throw Exception(message);
-    }
-  }
-
-  @override
-  Future<domain.User> createUserWithEmailAndPassword({
-    required String email,
-    required String password,
-  }) async {
+  Future<bool> signInWithGoogle() async {
     await _ensureAvailable?.call();
     try {
-      final userCredential = await _firebaseAuth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-
-      if (userCredential.user == null) {
-        throw Exception('ユーザー作成に失敗しました');
+      await _initializeGoogleSignIn();
+      final googleUser = await _googleSignIn.authenticate();
+      final idToken = googleUser.authentication.idToken;
+      if (idToken == null) {
+        throw Exception('Googleの認証情報を取得できませんでした。再試行してください。');
       }
-
-      return _mapFirebaseUserToDomainUser(userCredential.user!);
+      final credential = GoogleAuthProvider.credential(idToken: idToken);
+      final result = await _firebaseAuth.signInWithCredential(credential);
+      if (result.user == null) {
+        throw Exception('Googleでのログインに失敗しました。再試行してください。');
+      }
+      return true;
+    } on GoogleSignInException catch (e, stack) {
+      if (e.code == GoogleSignInExceptionCode.canceled) return false;
+      logger.e('Google認証に失敗しました', error: e, stackTrace: stack);
+      throw Exception('Googleでのログインに失敗しました。再試行してください。');
     } on FirebaseAuthException catch (e, stack) {
       final message = FirebaseErrorMapper.getFirebaseErrorMessage(e);
-      logger.e(
-        'FirebaseAuthService.createUserWithEmailAndPassword: $message',
-        error: e,
-        stackTrace: stack,
-      );
+      logger.e('Firebase認証に失敗しました', error: e, stackTrace: stack);
       throw Exception(message);
     }
   }
@@ -81,96 +64,27 @@ class FirebaseAuthService implements AuthService {
       await _firebaseAuth.signOut();
     } on FirebaseAuthException catch (e, stack) {
       final message = FirebaseErrorMapper.getFirebaseErrorMessage(e);
-      logger.e(
-        'FirebaseAuthService.signOut: $message',
-        error: e,
-        stackTrace: stack,
-      );
+      logger.e('ログアウトに失敗しました', error: e, stackTrace: stack);
       throw Exception(message);
     }
-  }
 
-  @override
-  Future<void> updateEmail({required String newEmail}) async {
-    await _executeCurrentUserUpdate(
-      (currentUser) => currentUser.verifyBeforeUpdateEmail(newEmail),
-    );
-  }
-
-  @override
-  Future<void> updatePassword({required String newPassword}) async {
-    await _executeCurrentUserUpdate(
-      (currentUser) => currentUser.updatePassword(newPassword),
-    );
-  }
-
-  @override
-  Future<void> deleteUser() async {
-    await _executeCurrentUserUpdate((currentUser) => currentUser.delete());
-  }
-
-  Future<void> _executeCurrentUserUpdate(
-    Future<void> Function(User currentUser) update,
-  ) async {
-    await _ensureAvailable?.call();
-    final currentUser = _firebaseAuth.currentUser;
-    if (currentUser == null) {
-      throw Exception('ユーザーがログインしていません');
-    }
-
-    try {
-      await update(currentUser);
-    } on FirebaseAuthException catch (e) {
-      if (e.code == 'requires-recent-login') {
-        throw const ReauthenticationRequiredException();
+    if (_googleInitialization != null) {
+      try {
+        await _googleInitialization;
+        await _googleSignIn.signOut();
+      } catch (e, stack) {
+        logger.w('Googleのログイン状態を解除できませんでした', error: e, stackTrace: stack);
       }
-      rethrow;
     }
   }
 
   @override
-  Future<void> reauthenticate({required String password}) async {
-    final currentUser = _firebaseAuth.currentUser;
-    if (currentUser == null) {
-      throw Exception('ユーザーがログインしていません');
-    }
-    if (currentUser.email == null) {
-      throw Exception('メールアドレスが取得できません');
-    }
-    final credential = EmailAuthProvider.credential(
-      email: currentUser.email!,
-      password: password,
-    );
-    await currentUser.reauthenticateWithCredential(credential);
-  }
-
-  @override
-  Future<void> sendEmailVerification() async {
-    final currentUser = _firebaseAuth.currentUser;
-    if (currentUser == null) {
-      throw Exception('現在のユーザーが存在しません');
-    }
-
-    try {
-      await currentUser.sendEmailVerification();
-    } catch (e, stack) {
-      logger.e(
-        'FirebaseAuthService.sendEmailVerification: ${e.toString()}',
-        error: e,
-        stackTrace: stack,
-      );
-      throw Exception('認証メールの送信に失敗しました: $e');
-    }
-  }
-
-  @override
-  Stream<domain.User?> get authStateChanges {
-    return _firebaseAuth.authStateChanges().map((firebaseUser) {
-      return firebaseUser != null
-          ? _mapFirebaseUserToDomainUser(firebaseUser)
-          : null;
-    });
-  }
+  Stream<domain.User?> get authStateChanges =>
+      _firebaseAuth.authStateChanges().map((firebaseUser) {
+        return firebaseUser != null
+            ? _mapFirebaseUserToDomainUser(firebaseUser)
+            : null;
+      });
 
   domain.User _mapFirebaseUserToDomainUser(User firebaseUser) {
     return domain.User(

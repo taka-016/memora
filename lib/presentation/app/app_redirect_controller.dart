@@ -5,8 +5,7 @@ import 'package:memora/presentation/shared/supported_year_range.dart';
 class AppRedirectController {
   String? resolveOffline({required String location}) {
     final uri = Uri.parse(location);
-    if (_isAuthenticationLocation(uri.path) ||
-        uri.path == const AccountSettingsRoute().location) {
+    if (_isAuthenticationLocation(uri.path)) {
       return const CalendarRoute().location;
     }
     return _safeLocationFor(uri);
@@ -39,7 +38,6 @@ class AppRedirectController {
 
     final loadingLocation = const LoadingRoute().location;
     final loginLocation = const LoginRoute().location;
-    final signupLocation = const SignupRoute().location;
     final memberSetupLocation = const MemberSetupRoute().location;
 
     if (_canCaptureProtectedLocation &&
@@ -49,8 +47,7 @@ class AppRedirectController {
     }
 
     if (authState.isLoading || authState.hasInitializationError) {
-      if (matchedLocation == signupLocation ||
-          matchedLocation == loadingLocation) {
+      if (matchedLocation == loadingLocation) {
         return null;
       }
       return loadingLocation;
@@ -61,8 +58,7 @@ class AppRedirectController {
           : memberSetupLocation;
     }
     if (!authState.isAuthenticated) {
-      if (matchedLocation == loginLocation ||
-          matchedLocation == signupLocation) {
+      if (matchedLocation == loginLocation) {
         return null;
       }
       return loginLocation;
@@ -118,7 +114,6 @@ String? _safeLocationFor(Uri uri) {
 bool _isAuthenticationLocation(String location) {
   return location == const LoadingRoute().location ||
       location == const LoginRoute().location ||
-      location == const SignupRoute().location ||
       location == const MemberSetupRoute().location;
 }
 
@@ -132,6 +127,5 @@ bool _isProtectedLocation(String path) {
       path == const MapRoute().location ||
       path == const MemberManagementRoute().location ||
       path == const GroupManagementRoute().location ||
-      path == const SettingsRoute().location ||
-      path == const AccountSettingsRoute().location;
+      path == const SettingsRoute().location;
 }
