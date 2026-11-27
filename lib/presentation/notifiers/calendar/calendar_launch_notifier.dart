@@ -21,6 +21,8 @@ class CalendarLaunchState {
 @Riverpod(keepAlive: true)
 class CalendarLaunchNotifier extends _$CalendarLaunchNotifier {
   int _version = 0;
+  bool _reading = false;
+  bool _readAgain = false;
 
   @override
   CalendarLaunchState build() {
@@ -33,20 +35,32 @@ class CalendarLaunchNotifier extends _$CalendarLaunchNotifier {
 
   Future<void> _load() async {
     if (!ref.mounted) return;
-    final version = ++_version;
-    CalendarLaunchRequestDto? request;
-    try {
-      request = await ref
-          .read(watchCalendarLaunchUsecaseProvider)
-          .takePending();
-    } catch (error, stackTrace) {
-      logger.e('カレンダーの起動要求を取得できませんでした', error: error, stackTrace: stackTrace);
+    if (_reading) {
+      _readAgain = true;
+      return;
     }
-    if (!ref.mounted || version != _version) return;
-    state = CalendarLaunchState(
-      request: request ?? state.request,
-      sequence: state.sequence + (request == null ? 0 : 1),
-    );
+    _reading = true;
+    try {
+      do {
+        _readAgain = false;
+        final version = _version;
+        CalendarLaunchRequestDto? request;
+        try {
+          request = await ref.read(watchCalendarLaunchUsecaseProvider).takePending();
+        } catch (error, stackTrace) {
+          logger.e('カレンダーの起動要求を取得できませんでした', error: error, stackTrace: stackTrace);
+        }
+        if (!ref.mounted) return;
+        if (version == _version) {
+          state = CalendarLaunchState(
+            request: request ?? state.request,
+            sequence: state.sequence + (request == null ? 0 : 1),
+          );
+        }
+      } while (_readAgain);
+    } finally {
+      _reading = false;
+    }
   }
 
   CalendarLaunchRequestDto? takeRequest() {
