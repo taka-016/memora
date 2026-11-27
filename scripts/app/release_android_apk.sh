@@ -83,5 +83,11 @@ fi
 
 cp -f "$source_apk" "$target_apk"
 
+for previous_apk in "$apk_dir"/memora-*-"$app_mode".apk; do
+  if [ -f "$previous_apk" ] && [ "$previous_apk" != "$target_apk" ]; then
+    rm -- "$previous_apk"
+  fi
+done
+
 echo "MEMORA_APP_MODE=${app_mode}"
 echo "リリースAPKを作成しました: $target_apk"

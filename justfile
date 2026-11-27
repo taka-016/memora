@@ -21,6 +21,7 @@ build mode='online' *args:
   bash scripts/app/run_flutter_app.sh build "$@"
 
 # 出力先: build/app/outputs/flutter-apk/memora-<version>-<mode>.apk
+# 保存成功後、同じモードの過去のAPKを削除する
 # release APKを作成する（online / offline、オンラインは毎回Firestoreで採番）
 release mode='online' *args:
   bash scripts/app/release_android_apk.sh "$@"
