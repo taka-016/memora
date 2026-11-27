@@ -11,7 +11,7 @@ if (agpMajor < 9) {
 }
 
 android {
-    namespace = "com.example.memora.android_widget_toast"
+    namespace = "io.github.taka016.memora.android_widget_toast"
     compileSdk = 36
 
     compileOptions {

@@ -58,7 +58,7 @@ class HomeWidgetCalendarCacheStorage {
 
   static const selectedDateKey = 'memora_widget_calendar_selected_date';
   static const qualifiedAndroidName =
-      'com.example.memora.CalendarWidgetReceiver';
+      'io.github.taka016.memora.CalendarWidgetReceiver';
 
   static String loadStateKey(String groupId, DateTime date) {
     final month = DateTime(
@@ -206,14 +206,14 @@ class HomeWidgetCalendarCacheStorage {
     if (!Platform.isAndroid) return;
     await HomeWidget.updateWidget(qualifiedAndroidName: qualifiedAndroidName);
     await HomeWidget.updateWidget(
-      qualifiedAndroidName: 'com.example.memora.CalendarDarkWidgetReceiver',
+      qualifiedAndroidName: 'io.github.taka016.memora.CalendarDarkWidgetReceiver',
     );
     await HomeWidget.updateWidget(
-      qualifiedAndroidName: 'com.example.memora.DailyCalendarWidgetReceiver',
+      qualifiedAndroidName: 'io.github.taka016.memora.DailyCalendarWidgetReceiver',
     );
     await HomeWidget.updateWidget(
       qualifiedAndroidName:
-          'com.example.memora.DailyCalendarDarkWidgetReceiver',
+          'io.github.taka016.memora.DailyCalendarDarkWidgetReceiver',
     );
   }
 }

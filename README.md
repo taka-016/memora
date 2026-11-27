@@ -102,8 +102,8 @@ cd /workspaces/memora
 
 | モード | application ID |
 | --- | --- |
-| オンライン | `com.example.memora` |
-| オフライン | `com.example.memora.offline` |
+| オンライン | `io.github.taka016.memora` |
+| オフライン | `io.github.taka016.memora.offline` |
 
 ### 端末カレンダー連携
 
