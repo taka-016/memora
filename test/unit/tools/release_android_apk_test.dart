@@ -77,6 +77,69 @@ printf '%s\\n' "\$@" > flutter_arguments.txt
     testProject.deleteSync(recursive: true);
   });
 
+  for (final mode in ['online', 'offline']) {
+    test('$modeの保存成功後は同じモードの過去のAPKだけを削除する', () {
+      final apkDirectory = Directory(
+        '${testProject.path}/build/app/outputs/flutter-apk',
+      )..createSync(recursive: true);
+      final otherMode = mode == 'online' ? 'offline' : 'online';
+      final oldApks = ['memora-0.9.0-$mode.apk', 'memora-1.2.3-$mode.apk'];
+      final retainedApks = [
+        'memora-0.9.0-$otherMode.apk',
+        'app-$mode-debug.apk',
+        'app-$otherMode-release.apk',
+        'unrelated.apk',
+      ];
+      for (final name in [...oldApks, ...retainedApks]) {
+        File('${apkDirectory.path}/$name').writeAsStringSync(name);
+      }
+      final source = File('${apkDirectory.path}/app-$mode-release.apk')
+        ..writeAsStringSync('新しいAPK');
+
+      final result = runReleaseScript([mode, '--build-name', '2.0.0']);
+
+      expect(result.exitCode, 0, reason: result.stderr as String);
+      expect(
+        File('${apkDirectory.path}/memora-2.0.0-$mode.apk').readAsStringSync(),
+        source.readAsStringSync(),
+      );
+      for (final name in oldApks) {
+        expect(File('${apkDirectory.path}/$name').existsSync(), isFalse);
+      }
+      for (final name in retainedApks) {
+        expect(File('${apkDirectory.path}/$name').readAsStringSync(), name);
+      }
+    });
+  }
+
+  for (final failure in ['ビルド', '成果物の確認', '保存']) {
+    test('$failureに失敗した場合は過去のAPKを残す', () {
+      final oldApk = File(
+        '${testProject.path}/build/app/outputs/flutter-apk/'
+        'memora-0.9.0-offline.apk',
+      );
+      oldApk.parent.createSync(recursive: true);
+      oldApk.writeAsStringSync('過去のAPK');
+      switch (failure) {
+        case 'ビルド':
+          File('${testProject.path}/bin/flutter')
+              .writeAsStringSync('#!/usr/bin/env bash\nexit 1\n');
+        case '成果物の確認':
+          File('${testProject.path}/bin/flutter')
+              .writeAsStringSync('#!/usr/bin/env bash\nexit 0\n');
+        case '保存':
+          final cpStub = File('${testProject.path}/bin/cp')
+            ..writeAsStringSync('#!/usr/bin/env bash\nexit 1\n');
+          Process.runSync('chmod', ['+x', cpStub.path]);
+      }
+
+      final result = runReleaseScript(['offline']);
+
+      expect(result.exitCode, isNot(0));
+      expect(oldApk.readAsStringSync(), '過去のAPK');
+    });
+  }
+
   test('指定モードをログと成果物名で確認できる', () {
     final result = runReleaseScript(['offline']);
 
