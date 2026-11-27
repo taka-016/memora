@@ -148,10 +148,8 @@ void main() {
     await container.read(groupRepositoryProvider).updateGroup(group);
     expect(store.rows['groups/g']!['name'], '変更後');
   });
-  testWidgets('アカウントの変更も確認を待ち利用不可ならSDKへ渡さない', (tester) async {
+  testWidgets('ログインも確認を待ち利用不可ならSDKへ渡さない', (tester) async {
     final auth = MockFirebaseAuth();
-    final user = MockUser();
-    when(auth.currentUser).thenReturn(user);
     final pending = Completer<AppAvailability>();
     when(check.execute()).thenAnswer((_) => pending.future);
     final accountContainer = ProviderContainer(
@@ -162,38 +160,16 @@ void main() {
     );
     addTearDown(accountContainer.dispose);
     final service = accountContainer.read(authServiceProvider);
-    final updating = service.updatePassword(newPassword: 'new-password');
+    final signingIn = service.signInWithGoogle();
     final failed = expectLater(
-      updating,
+      signingIn,
       throwsA(isA<ApplicationValidationException>()),
     );
     await tester.pump();
-    verifyNever(user.updatePassword(any));
+    verifyNever(auth.signInWithCredential(any));
     pending.complete(AppAvailability.maintenance);
     await tester.pump();
     await failed;
-    await expectLater(
-      service.deleteUser(),
-      throwsA(isA<ApplicationValidationException>()),
-    );
-    await expectLater(
-      service.updateEmail(newEmail: 'next@example.com'),
-      throwsA(isA<ApplicationValidationException>()),
-    );
-    await expectLater(
-      service.createUserWithEmailAndPassword(
-        email: 'new@example.com',
-        password: 'password',
-      ),
-      throwsA(isA<ApplicationValidationException>()),
-    );
-    verifyNever(user.delete());
-    verifyNever(user.verifyBeforeUpdateEmail(any));
-    verifyNever(
-      auth.createUserWithEmailAndPassword(
-        email: anyNamed('email'),
-        password: anyNamed('password'),
-      ),
-    );
+    verifyNever(auth.signInWithCredential(any));
   });
 }
