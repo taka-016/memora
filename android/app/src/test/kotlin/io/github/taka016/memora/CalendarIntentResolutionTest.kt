@@ -16,6 +16,17 @@ import org.robolectric.annotation.Config
 @Config(sdk = [35], application = Application::class)
 class CalendarIntentResolutionTest {
     @Test
+    fun `日時のMIME型付き呼び出しでもMemoraが起動候補になる`() {
+        val context = RuntimeEnvironment.getApplication()
+        val intent = Intent(Intent.ACTION_VIEW).setDataAndType(
+            Uri.parse("content://com.android.calendar/time/1796086800000"),
+            "time/epoch",
+        )
+        val candidates = context.packageManager.queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY)
+        assertTrue(candidates.any { it.activityInfo.name == MainActivity::class.java.name })
+    }
+
+    @Test
     fun `日付表示と予定追加でMemoraが起動候補になる`() {
         val context = RuntimeEnvironment.getApplication()
         val intents = listOf(

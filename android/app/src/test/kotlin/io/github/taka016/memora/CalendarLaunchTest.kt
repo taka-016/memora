@@ -14,6 +14,13 @@ import org.robolectric.annotation.Config
 @Config(sdk = [35], manifest = Config.NONE, application = Application::class)
 class CalendarLaunchTest {
     @Test
+    fun `標準のセレクター形式でカレンダーアプリとして呼び出された要求を受け取る`() {
+        val inbox = CalendarLaunchInbox()
+        assertTrue(inbox.receive(Intent.makeMainSelectorActivity(Intent.ACTION_MAIN, Intent.CATEGORY_APP_CALENDAR)))
+        assertEquals("view", inbox.takePending()!!["action"])
+    }
+
+    @Test
     fun `日時から開く要求を一度だけ受け取り起動済みでも次の要求を受け取る`() {
         val inbox = CalendarLaunchInbox()
         val date = Intent(Intent.ACTION_VIEW, Uri.parse("content://com.android.calendar/time/1796086800000"))
