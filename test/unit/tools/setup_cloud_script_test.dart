@@ -201,6 +201,39 @@ esac
     ]);
   });
 
+  test('同じJSONのデバッグ版とリリース版へFirebase用キーを反映しDart設定を切り替える', () async {
+    final config = jsonDecode(jsonEncode(_config)) as Map<String, dynamic>;
+    config['client'].add({
+      'client_info': {
+        'mobilesdk_app_id': 'debug-app',
+        'android_client_info': {'package_name': 'test.memora.debug'},
+      },
+      'api_key': [{'current_key': 'AIzaMapsKey'}],
+    });
+    file('android/app/google-services.json').writeAsStringSync(jsonEncode(config));
+
+    success(await runSetup(['api-key']));
+
+    final updated = jsonDecode(file('android/app/google-services.json').readAsStringSync());
+    for (final index in [0, 2]) {
+      expect(updated['client'][index]['api_key'], [{'current_key': _firebaseKey}]);
+    }
+    expect(updated['client'][1], (_config['client'] as List)[1]);
+    final dart = file('lib/firebase_options.dart').readAsStringSync();
+    expect(dart, contains("appId: 'android-app'"));
+    expect(dart, contains("appId: 'debug-app'"));
+    expect(dart, contains('static const FirebaseOptions androidRelease'));
+    expect(dart, contains('static const FirebaseOptions androidDebug'));
+    expect(dart, contains('? androidRelease : androidDebug'));
+    expect(dart, contains("bool.fromEnvironment('dart.vm.product')"));
+    expect(dart, contains("bool.fromEnvironment('dart.vm.profile')"));
+    expect(dart, isNot(contains(_oldKey)));
+    expect(dart, contains("apiKey: 'ios-key'"));
+
+    success(await runSetup(['api-key']));
+    expect(file('lib/firebase_options.dart').readAsStringSync(), dart);
+  });
+
   test('キー未指定時は入力を受け取りキーそのものを出力しない', () async {
     final result = await runSetup(
       ['api-key'],

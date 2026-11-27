@@ -23,6 +23,16 @@ void main() {
       expect(buildGradle, contains('applicationIdSuffix = ".offline"'));
     });
 
+    test('デバッグ版だけにdebugサフィックスを付けリリース版と併存できる', () {
+      expect(
+        buildGradle,
+        matches(RegExp(r'getByName\("debug"\)\s*\{\s*applicationIdSuffix = "\.debug"')),
+      );
+      final release = RegExp(r'getByName\("release"\)\s*\{([^}]+)\}')
+          .firstMatch(buildGradle)!;
+      expect(release.group(1), isNot(contains('applicationIdSuffix')));
+    });
+
     test('各バリアントのネイティブモードを固定する', () {
       expect(
         buildGradle,
