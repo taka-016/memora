@@ -13,15 +13,27 @@ void main() {
       final harness = CalendarTestHarness();
       await harness.pump(tester);
       final context = tester.element(find.byType(Scaffold).first);
-      final start = allDay ? DateTime.utc(2026, 11, 28) : DateTime(2026, 11, 28, 9);
-      final end = allDay ? DateTime.utc(2026, 11, 30) : DateTime(2026, 11, 28, 10);
-      Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => CalendarEventInputPage(
-        date: DateTime(2026, 11, 28),
-        initialDraft: CalendarEventDraftDto(
-          title: '外部からの予定', memo: '持ち物', locationName: '公園',
-          start: start, end: end, isAllDay: allDay,
+      final start = allDay
+          ? DateTime.utc(2026, 11, 28)
+          : DateTime(2026, 11, 28, 9);
+      final end = allDay
+          ? DateTime.utc(2026, 11, 30)
+          : DateTime(2026, 11, 28, 10);
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => CalendarEventInputPage(
+            date: DateTime(2026, 11, 28),
+            initialDraft: CalendarEventDraftDto(
+              title: '外部からの予定',
+              memo: '持ち物',
+              locationName: '公園',
+              start: start,
+              end: end,
+              isAllDay: allDay,
+            ),
+          ),
         ),
-      )));
+      );
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
       expect(find.widgetWithText(TextFormField, '外部からの予定'), findsOneWidget);

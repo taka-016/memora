@@ -81,8 +81,9 @@ class TopPage extends HookConsumerWidget {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!context.mounted ||
             ref.read(currentMemberNotifierProvider).member?.id !=
-                currentMember.id)
+                currentMember.id) {
           return;
+        }
         final request = ref
             .read(calendarLaunchNotifierProvider.notifier)
             .takeRequest();

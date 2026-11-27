@@ -29,7 +29,13 @@ class _CalendarLaunch extends CalendarLaunchNotifier {
 class _Auth extends FakeAuthNotifier {
   _Auth() : super(const AuthState.unauthenticated(''));
   void authenticate() {
-    state = const AuthState.authenticated(UserDto(id: 'test_user_id', loginId: 'test@example.com', isVerified: true));
+    state = const AuthState.authenticated(
+      UserDto(
+        id: 'test_user_id',
+        loginId: 'test@example.com',
+        isVerified: true,
+      ),
+    );
   }
 }
 
@@ -40,20 +46,29 @@ void main() {
   testWidgets('ログイン前に受け取った日時指定をログイン完了後に開く', (tester) async {
     final launch = _CalendarLaunch();
     final auth = _Auth();
-    final container = ProviderContainer(overrides: [
-      ...context.createTopPageTestOverrides(authNotifier: auth, initialLocation: '/settings'),
-      appCapabilitiesProvider.overrideWithValue(AppCapabilities.forMode(AppMode.online)),
-      calendarLaunchNotifierProvider.overrideWith(() => launch),
-    ]);
+    final container = ProviderContainer(
+      overrides: [
+        ...context.createTopPageTestOverrides(
+          authNotifier: auth,
+          initialLocation: '/settings',
+        ),
+        appCapabilitiesProvider.overrideWithValue(
+          AppCapabilities.forMode(AppMode.online),
+        ),
+        calendarLaunchNotifierProvider.overrideWith(() => launch),
+      ],
+    );
     addTearDown(container.dispose);
     final router = container.read(appRouterConfigProvider);
     final date = DateTime(2026, 11, 28);
     container.read(calendarLaunchNotifierProvider);
     launch.receive(CalendarLaunchRequestDto(date: date));
-    await tester.pumpWidget(UncontrolledProviderScope(
-      container: container,
-      child: MaterialApp.router(routerConfig: router),
-    ));
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp.router(routerConfig: router),
+      ),
+    );
     await tester.pump();
     expect(router.state.uri.path, '/login');
     expect(container.read(calendarLaunchNotifierProvider).request, isNotNull);
@@ -62,27 +77,37 @@ void main() {
     await tester.pump();
     await tester.pump();
     expect(router.state.uri.path, '/calendar');
-    expect(tester.widget<CalendarScreen>(find.byType(CalendarScreen)).initialDate, date);
+    expect(
+      tester.widget<CalendarScreen>(find.byType(CalendarScreen)).initialDate,
+      date,
+    );
   });
 
   testWidgets('起動済みの別画面から日時指定でカレンダーを開き同じ日付で再度開ける', (tester) async {
     final launch = _CalendarLaunch();
-    final container = ProviderContainer(overrides: [
-      ...context.createTopPageTestOverrides(initialLocation: '/settings'),
-      calendarLaunchNotifierProvider.overrideWith(() => launch),
-    ]);
+    final container = ProviderContainer(
+      overrides: [
+        ...context.createTopPageTestOverrides(initialLocation: '/settings'),
+        calendarLaunchNotifierProvider.overrideWith(() => launch),
+      ],
+    );
     addTearDown(container.dispose);
     final router = container.read(appRouterConfigProvider);
-    await tester.pumpWidget(UncontrolledProviderScope(
-      container: container,
-      child: MaterialApp.router(routerConfig: router),
-    ));
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp.router(routerConfig: router),
+      ),
+    );
     await tester.pump();
     final date = DateTime(2026, 11, 28);
     launch.receive(CalendarLaunchRequestDto(date: date));
     await tester.pump();
     await tester.pump();
-    expect(tester.widget<CalendarScreen>(find.byType(CalendarScreen)).initialDate, date);
+    expect(
+      tester.widget<CalendarScreen>(find.byType(CalendarScreen)).initialDate,
+      date,
+    );
     final firstLocation = router.state.uri.toString();
     launch.receive(CalendarLaunchRequestDto(date: date));
     await tester.pump();
@@ -93,30 +118,43 @@ void main() {
 
   testWidgets('予定追加の要求からタイトルと場所を引き継いだ新規入力画面を開く', (tester) async {
     final launch = _CalendarLaunch();
-    final container = ProviderContainer(overrides: [
-      ...context.createTopPageTestOverrides(initialLocation: '/settings'),
-      calendarLaunchNotifierProvider.overrideWith(() => launch),
-      calendarGroupSettingsNotifierProvider.overrideWith(() => TestCalendarGroupSettingsNotifier(defaultGroupId: null)),
-    ]);
+    final container = ProviderContainer(
+      overrides: [
+        ...context.createTopPageTestOverrides(initialLocation: '/settings'),
+        calendarLaunchNotifierProvider.overrideWith(() => launch),
+        calendarGroupSettingsNotifierProvider.overrideWith(
+          () => TestCalendarGroupSettingsNotifier(defaultGroupId: null),
+        ),
+      ],
+    );
     addTearDown(container.dispose);
     final router = container.read(appRouterConfigProvider);
-    await tester.pumpWidget(UncontrolledProviderScope(
-      container: container,
-      child: MaterialApp.router(routerConfig: router),
-    ));
-    await tester.pump();
-    launch.receive(CalendarLaunchRequestDto(
-      date: DateTime(2026, 11, 28, 9),
-      draft: CalendarEventDraftDto(
-        title: '予約 & 打合せ', locationName: '会議室A', memo: '資料\n持参',
-        start: DateTime(2026, 11, 28, 9), end: DateTime(2026, 11, 28, 10),
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp.router(routerConfig: router),
       ),
-    ));
+    );
+    await tester.pump();
+    launch.receive(
+      CalendarLaunchRequestDto(
+        date: DateTime(2026, 11, 28, 9),
+        draft: CalendarEventDraftDto(
+          title: '予約 & 打合せ',
+          locationName: '会議室A',
+          memo: '資料\n持参',
+          start: DateTime(2026, 11, 28, 9),
+          end: DateTime(2026, 11, 28, 10),
+        ),
+      ),
+    );
     await tester.pump();
     await tester.pump();
     expect(find.byType(CalendarEventInputPage), findsOneWidget);
     expect(find.widgetWithText(TextFormField, '予約 & 打合せ'), findsOneWidget);
-    final input = tester.widget<CalendarEventInputPage>(find.byType(CalendarEventInputPage));
+    final input = tester.widget<CalendarEventInputPage>(
+      find.byType(CalendarEventInputPage),
+    );
     expect(input.event, isNull);
     expect(input.initialDraft!.locationName, '会議室A');
     expect(input.initialDraft!.memo, '資料\n持参');

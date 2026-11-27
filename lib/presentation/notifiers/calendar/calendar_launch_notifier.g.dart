@@ -42,7 +42,7 @@ final class CalendarLaunchNotifierProvider
 }
 
 String _$calendarLaunchNotifierHash() =>
-    r'4e524ecbbeea71f4c84eaab36ff240ca917dc41e';
+    r'721c5b2872374b85e92b0633bdc3a72f2a77024c';
 
 abstract class _$CalendarLaunchNotifier extends $Notifier<CalendarLaunchState> {
   CalendarLaunchState build();
