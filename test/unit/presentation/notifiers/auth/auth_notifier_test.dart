@@ -82,6 +82,82 @@ void main() {
       );
     }
 
+    testWidgets('Google認証中の連続操作を抑えキャンセル後は再試行できる', (tester) async {
+      final controller = StreamController<UserDto?>();
+      addTearDown(controller.close);
+      final container = createContainer(controller.stream);
+      addTearDown(container.dispose);
+      final notifier = container.read(authNotifierProvider.notifier);
+      controller.add(null);
+      await tester.pump();
+      final pending = Completer<bool>();
+      when(mockLoginUseCase.execute()).thenAnswer((_) => pending.future);
+
+      final signingIn = notifier.login();
+      expect(notifier.state.isLoading, isTrue);
+      controller.add(null);
+      await tester.pump();
+      await notifier.login();
+      verify(mockLoginUseCase.execute()).called(1);
+      pending.complete(false);
+      await signingIn;
+      expect(notifier.state.isLoading, isFalse);
+      expect(notifier.state.message, isEmpty);
+
+      when(mockLoginUseCase.execute()).thenAnswer((_) async => true);
+      const user = UserDto(
+        id: 'existing',
+        loginId: 'test@example.com',
+        isVerified: true,
+      );
+      when(mockGetMemberByAccountIdUseCase.execute(user.id)).thenAnswer(
+        (_) async => const MemberDto(id: 'member', displayName: '本人'),
+      );
+      await notifier.login();
+      controller.add(user);
+      await tester.pump();
+      expect(notifier.state.isAuthenticated, isTrue);
+      expect(notifier.state.member!.id, 'member');
+      verify(mockLoginUseCase.execute()).called(1);
+    });
+
+    testWidgets('Google認証の失敗を表示して再試行できる', (tester) async {
+      final controller = StreamController<UserDto?>();
+      addTearDown(controller.close);
+      final container = createContainer(controller.stream);
+      addTearDown(container.dispose);
+      final notifier = container.read(authNotifierProvider.notifier);
+      controller.add(null);
+      await tester.pump();
+      when(mockLoginUseCase.execute()).thenThrow(TestException('通信失敗'));
+
+      await notifier.login();
+      expect(notifier.state.isLoading, isFalse);
+      expect(notifier.state.message, contains('通信失敗'));
+      expect(notifier.state.messageType, MessageType.error);
+
+      when(mockLoginUseCase.execute()).thenAnswer((_) async => false);
+      await notifier.login();
+      expect(notifier.state.message, isEmpty);
+      expect(notifier.state.isLoading, isFalse);
+      verify(mockLoginUseCase.execute()).called(2);
+    });
+
+    testWidgets('Google認証中に破棄されても遅延した結果で状態更新しない', (tester) async {
+      final controller = StreamController<UserDto?>();
+      addTearDown(controller.close);
+      final container = createContainer(controller.stream);
+      final notifier = container.read(authNotifierProvider.notifier);
+      controller.add(null);
+      await tester.pump();
+      final pending = Completer<bool>();
+      when(mockLoginUseCase.execute()).thenAnswer((_) => pending.future);
+      final signingIn = notifier.login();
+      container.dispose();
+      pending.complete(false);
+      await expectLater(signingIn, completes);
+    });
+
     {
       testWidgets('起動時のメンバー確認を5回試してもタイムアウトした場合にログアウトせず手動再試行できる', (
         tester,

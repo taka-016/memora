@@ -26,10 +26,11 @@ void main() {
       final loginButton = find.byKey(const Key('login_button'));
 
       await tester.tap(loginButton);
-      await tester.pumpAndSettle();
+      await tester.pump();
 
-      // loginメソッドが呼ばれたことを確認
       expect(fakeAuthNotifier.loginCalled, isTrue);
+      expect(find.byType(TextFormField), findsNothing);
+      expect(find.text('新規登録'), findsNothing);
     });
   });
 }
