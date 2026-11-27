@@ -157,7 +157,8 @@ class HomeWidgetAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
     }
     await HomeWidget.updateWidget(qualifiedAndroidName: qualifiedAndroidName);
     await HomeWidget.updateWidget(
-      qualifiedAndroidName: 'io.github.taka016.memora.ItineraryDarkWidgetReceiver',
+      qualifiedAndroidName:
+          'io.github.taka016.memora.ItineraryDarkWidgetReceiver',
     );
     await const HomeWidgetCalendarCacheStorage().update();
   }

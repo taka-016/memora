@@ -206,10 +206,12 @@ class HomeWidgetCalendarCacheStorage {
     if (!Platform.isAndroid) return;
     await HomeWidget.updateWidget(qualifiedAndroidName: qualifiedAndroidName);
     await HomeWidget.updateWidget(
-      qualifiedAndroidName: 'io.github.taka016.memora.CalendarDarkWidgetReceiver',
+      qualifiedAndroidName:
+          'io.github.taka016.memora.CalendarDarkWidgetReceiver',
     );
     await HomeWidget.updateWidget(
-      qualifiedAndroidName: 'io.github.taka016.memora.DailyCalendarWidgetReceiver',
+      qualifiedAndroidName:
+          'io.github.taka016.memora.DailyCalendarWidgetReceiver',
     );
     await HomeWidget.updateWidget(
       qualifiedAndroidName:

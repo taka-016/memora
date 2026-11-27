@@ -16,7 +16,10 @@ void main() {
       expect(buildGradle, contains('flavorDimensions += "appMode"'));
       expect(buildGradle, contains('create("online")'));
       expect(buildGradle, contains('create("offline")'));
-      expect(buildGradle, contains('applicationId = "io.github.taka016.memora"'));
+      expect(
+        buildGradle,
+        contains('applicationId = "io.github.taka016.memora"'),
+      );
       expect(buildGradle, contains('applicationIdSuffix = ".offline"'));
     });
 
