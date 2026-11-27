@@ -119,12 +119,12 @@ Firebase用キーにはIdentity Toolkit API・Token Service API・Firebase Insta
 
 デバッグ版とリリース版も同じ端末にインストールできる。オンラインの両ビルドは同じFirebaseプロジェクトを利用する。
 
-| モード | ビルド種別 | application ID |
-| --- | --- | --- |
-| オンライン | release・profile | `io.github.taka016.memora` |
-| オンライン | debug | `io.github.taka016.memora.debug` |
-| オフライン | release・profile | `io.github.taka016.memora.offline` |
-| オフライン | debug | `io.github.taka016.memora.offline.debug` |
+| モード | ビルド種別 | アプリ名 | application ID |
+| --- | --- | --- | --- |
+| オンライン | release・profile | memora | `io.github.taka016.memora` |
+| オンライン | debug | memora-debug | `io.github.taka016.memora.debug` |
+| オフライン | release・profile | memora lite | `io.github.taka016.memora.offline` |
+| オフライン | debug | memora lite-debug | `io.github.taka016.memora.offline.debug` |
 
 ### 端末カレンダー連携
 
