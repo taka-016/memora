@@ -187,14 +187,14 @@ class _CalendarWeekRow extends StatelessWidget {
                           weekStart.month,
                           weekStart.day + column,
                         );
-                        if (date.month != month.month ||
-                            date.year != month.year) {
+                        if (date.isBefore(month) || date.year > 9999) {
                           return const SizedBox.shrink();
                         }
                         return _CalendarDayCell(
                           state: state,
                           showRokuyo: showRokuyo,
                           date: date,
+                          outsideMonth: date.month != month.month,
                           entries: layout.entries
                               .where(
                                 (entry) =>
@@ -286,6 +286,7 @@ class _CalendarDayCell extends StatelessWidget {
     required this.state,
     required this.showRokuyo,
     required this.date,
+    required this.outsideMonth,
     required this.onTap,
     required this.entries,
     required this.visibleCount,
@@ -296,6 +297,7 @@ class _CalendarDayCell extends StatelessWidget {
   final bool showRokuyo;
   final CalendarState state;
   final DateTime date;
+  final bool outsideMonth;
   final VoidCallback? onTap;
   final List<CalendarWeekEntry> entries;
   final int visibleCount;
@@ -339,10 +341,12 @@ class _CalendarDayCell extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 14,
                             height: 1.4,
-                            color: calendarDateColor(
-                              date,
-                              Theme.of(context).brightness,
-                            ),
+                            color: outsideMonth
+                                ? scheme.onSurfaceVariant
+                                : calendarDateColor(
+                                    date,
+                                    Theme.of(context).brightness,
+                                  ),
                           ),
                         ),
                         if (showRokuyo) ...[

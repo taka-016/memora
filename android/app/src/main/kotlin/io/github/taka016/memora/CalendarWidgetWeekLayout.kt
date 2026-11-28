@@ -24,7 +24,7 @@ internal class CalendarWidgetWeekLayout(
 
     init {
         val columns = days.map { day ->
-            if (day.date.year == month.year && day.date.month == month.month) day.displayEvents else emptyList()
+            if (!day.date.isBefore(month.withDayOfMonth(1)) && day.date.year <= 9999) day.displayEvents else emptyList()
         }
         val occupied = List(maxLines) { BooleanArray(7) }
         val visibleCounts = IntArray(7)

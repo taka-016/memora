@@ -66,7 +66,12 @@ class GetAndroidWidgetCalendarCacheUsecase {
     final load = loadSharedGroup;
     final useShared = load != null && ownerId != null;
     final onlinePeriods = [
-      for (final value in months)
+      for (final value in {
+        for (final month in months) ...[
+          month,
+          DateTime(month.year, month.month + 1),
+        ],
+      }.toList()..sort())
         if (value.year >= 1 && value.year <= 9999)
           CalendarEventPeriod.forCalendarMonth(value),
     ];
