@@ -44,7 +44,7 @@ if (resolvedAppMode == "online") {
 
 android {
     namespace = "io.github.taka016.memora"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 37
     ndkVersion = "28.2.13676358"
 
     compileOptions {
@@ -150,17 +150,13 @@ kotlin {
     }
 }
 
-configurations.all {
-    resolutionStrategy.force("androidx.glance:glance-appwidget:1.1.1")
-}
-
 dependencies {
     testImplementation("junit:junit:4.13.2")
-    testImplementation("org.robolectric:robolectric:4.17")
-    testImplementation("androidx.work:work-testing:2.11.2")
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
-    implementation("com.google.android.libraries.places:places:5.3.0")
-    implementation("androidx.glance:glance-appwidget:1.1.1")
-    implementation("androidx.glance:glance-material3:1.1.1")
-    implementation("androidx.work:work-runtime:2.11.2")
+    testImplementation("org.robolectric:robolectric:4.18.1")
+    testImplementation("androidx.work:work-testing:2.12.0")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
+    implementation("com.google.android.libraries.places:places:6.1.0")
+    implementation("androidx.glance:glance-appwidget:1.2.0")
+    implementation("androidx.glance:glance-material3:1.2.0")
+    implementation("androidx.work:work-runtime:2.12.0")
 }

@@ -1,12 +1,21 @@
 FROM ubuntu:24.04 AS sdk
 
 ARG DEBIAN_FRONTEND=noninteractive
-ARG ANDROID_SDK_TOOLS_VERSION=15859902
+ARG ANDROID_SDK_TOOLS_VERSION=16111833
 ENV ANDROID_HOME=/opt/android-sdk-linux
+ENV JAVA_HOME=/opt/java
+ENV PATH="${JAVA_HOME}/bin:${PATH}"
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-  ca-certificates curl unzip openjdk-17-jre-headless && \
+  ca-certificates curl unzip && \
   rm -rf /var/lib/apt/lists/*
+
+RUN curl -fsSL 'https://github.com/adoptium/temurin27-binaries/releases/download/jdk-27.0.1.1%2B4/OpenJDK27U-jdk_x64_linux_hotspot_27.0.1.1_4.tar.gz' \
+    -o /tmp/java.tar.gz && \
+  echo '005e57ee860978acfeeff1be2b30f770664fe2b941e9b803c61c76992086d107  /tmp/java.tar.gz' | sha256sum -c - && \
+  mkdir -p "$JAVA_HOME" && \
+  tar -xzf /tmp/java.tar.gz -C "$JAVA_HOME" --strip-components=1 && \
+  rm /tmp/java.tar.gz
 
 RUN mkdir -p "$ANDROID_HOME/cmdline-tools" && \
   curl -fsSL "https://dl.google.com/android/repository/commandlinetools-linux-${ANDROID_SDK_TOOLS_VERSION}_latest.zip" \
