@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:memora/presentation/app/app_redirect_controller.dart';
 import 'package:memora/presentation/app/app_routes.dart';
 import 'package:memora/presentation/notifiers/android_widget/android_widget_launch_notifier.dart';
+import 'package:memora/presentation/notifiers/calendar/calendar_launch_notifier.dart';
 import 'package:memora/presentation/notifiers/auth/auth_notifier.dart';
 import 'package:memora/presentation/notifiers/auth/auth_state.dart';
 import 'package:memora/presentation/notifiers/timeline/group_timeline_group_selection_notifier.dart';
@@ -33,6 +34,7 @@ final appRouterConfigProvider = Provider<GoRouter>((ref) {
         ref
             .read(androidWidgetLaunchNotifierProvider.notifier)
             .cancelPendingLaunch();
+        ref.read(calendarLaunchNotifierProvider.notifier).cancelPendingLaunch();
         ref.read(groupTimelineGroupSelectionNotifierProvider.notifier).reset();
       }
       refreshNotifier.refresh();

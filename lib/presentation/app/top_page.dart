@@ -10,6 +10,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/presentation/app/app_routes.dart';
 import 'package:memora/presentation/notifiers/android_widget/android_widget_launch_notifier.dart';
+import 'package:memora/presentation/notifiers/calendar/calendar_launch_notifier.dart';
 import 'package:memora/presentation/notifiers/auth/auth_notifier.dart';
 import 'package:memora/presentation/notifiers/timeline/group_timeline_group_selection_notifier.dart';
 import 'package:memora/presentation/notifiers/member/current_member_notifier.dart';
@@ -51,6 +52,7 @@ class TopPage extends HookConsumerWidget {
 
     final currentMemberState = ref.watch(currentMemberNotifierProvider);
     final currentMember = currentMemberState.member;
+    final calendarLaunch = ref.watch(calendarLaunchNotifierProvider);
     final androidWidgetLaunchState = ref.watch(
       androidWidgetLaunchNotifierProvider,
     );
@@ -65,12 +67,41 @@ class TopPage extends HookConsumerWidget {
     final pendingAndroidWidgetTripId = androidWidgetLaunchState.pendingTripId;
     final androidWidgetLaunchResolution = androidWidgetLaunchState.resolution;
     final shouldHideForAndroidWidgetLaunch =
+        calendarLaunch.isLoading ||
+        calendarLaunch.request != null ||
         androidWidgetLaunchState.isInitialUriLoading ||
         pendingAndroidWidgetTripId != null ||
         androidWidgetLaunchState.pendingCalendarUri != null ||
         androidWidgetLaunchState.isSettingsLaunchPending ||
         androidWidgetLaunchState.isResolving ||
         androidWidgetLaunchResolution != null;
+
+    useEffect(() {
+      if (calendarLaunch.request == null || currentMember == null) return null;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!context.mounted ||
+            ref.read(currentMemberNotifierProvider).member?.id !=
+                currentMember.id) {
+          return;
+        }
+        final request = ref
+            .read(calendarLaunchNotifierProvider.notifier)
+            .takeRequest();
+        if (request == null) return;
+        androidWidgetLaunchNotifier.cancelPendingLaunch();
+        CalendarRoute(
+          date: request.date?.toIso8601String(),
+          create: request.draft != null,
+          request: -calendarLaunch.sequence,
+          title: request.draft?.title,
+          memo: request.draft?.memo,
+          locationName: request.draft?.locationName,
+          end: request.draft?.end?.toIso8601String(),
+          isAllDay: request.draft?.isAllDay,
+        ).go(context);
+      });
+      return null;
+    }, [calendarLaunch.request, currentMember?.id]);
 
     useEffect(
       () {

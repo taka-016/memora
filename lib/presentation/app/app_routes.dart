@@ -1,6 +1,7 @@
 import 'package:memora/presentation/features/shopping_list/shopping_list_group_selection.dart';
 import 'package:memora/presentation/features/shopping_list/shopping_list_page.dart';
 import 'package:memora/presentation/features/calendar/calendar_event_input_page.dart';
+import 'package:memora/application/dtos/calendar/calendar_event_draft_dto.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_group_settings_notifier.dart';
 import 'package:memora/composition_root/providers/app_providers.dart';
 import 'package:flutter/material.dart';
@@ -215,6 +216,11 @@ class CalendarRoute extends GoRouteData with $CalendarRoute {
     this.request = 0,
     this.eventId,
     this.occurrence,
+    this.title,
+    this.memo,
+    this.locationName,
+    this.end,
+    this.isAllDay,
   });
   final String? groupId;
   final String? date;
@@ -222,12 +228,27 @@ class CalendarRoute extends GoRouteData with $CalendarRoute {
   final int request;
   final String? eventId;
   final String? occurrence;
+  final String? title;
+  final String? memo;
+  final String? locationName;
+  final String? end;
+  final bool? isAllDay;
   @override
   Widget build(BuildContext context, GoRouterState state) {
     if (create) {
       return _CalendarEventInputRoutePage(
         key: ValueKey(request),
         date: DateTime.tryParse(date ?? ''),
+        draft: isAllDay == null
+            ? null
+            : CalendarEventDraftDto(
+                title: title ?? '',
+                memo: memo ?? '',
+                locationName: locationName ?? '',
+                start: DateTime.tryParse(date ?? ''),
+                end: DateTime.tryParse(end ?? ''),
+                isAllDay: isAllDay!,
+              ),
       );
     }
     return Material(
@@ -243,8 +264,9 @@ class CalendarRoute extends GoRouteData with $CalendarRoute {
 }
 
 class _CalendarEventInputRoutePage extends ConsumerStatefulWidget {
-  const _CalendarEventInputRoutePage({super.key, this.date});
+  const _CalendarEventInputRoutePage({super.key, this.date, this.draft});
   final DateTime? date;
+  final CalendarEventDraftDto? draft;
 
   @override
   ConsumerState<_CalendarEventInputRoutePage> createState() =>
@@ -290,6 +312,7 @@ class _CalendarEventInputRoutePageState
     }
     return CalendarEventInputPage(
       date: _date,
+      initialDraft: widget.draft,
       onSaved: (savedDay) =>
           CalendarRoute(date: savedDay.toIso8601String()).go(context),
       onCancelled: () =>

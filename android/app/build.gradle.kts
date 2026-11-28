@@ -96,6 +96,10 @@ android {
         compose = true
     }
 
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
+
     
     signingConfigs {
         create("release") {
@@ -132,6 +136,13 @@ androidComponents {
 flutter {
     source = "../.."
 }
+
+// Androidリソースを読む単体テストでもFlutterのアセット生成を先に完了させる。
+tasks.matching { it.name.startsWith("package") && it.name.endsWith("UnitTestForUnitTest") }
+    .configureEach {
+        val variant = name.removePrefix("package").removeSuffix("UnitTestForUnitTest")
+        dependsOn("copyFlutterAssets$variant")
+    }
 
 kotlin {
     compilerOptions {

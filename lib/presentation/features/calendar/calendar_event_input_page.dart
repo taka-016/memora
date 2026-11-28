@@ -1,4 +1,5 @@
 import 'package:memora/application/dtos/calendar/calendar_label_dto.dart';
+import 'package:memora/application/dtos/calendar/calendar_event_draft_dto.dart';
 import 'package:memora/presentation/features/calendar/calendar_event_details.dart';
 import 'package:memora/presentation/shared/dialogs/edit_discard_confirm_dialog.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_mutation_coordinator.dart';
@@ -48,6 +49,7 @@ class CalendarEventInputPage extends ConsumerStatefulWidget {
     this.series,
     this.onSaved,
     this.onCancelled,
+    this.initialDraft,
   }) : _duplicateSource = null;
 
   const CalendarEventInputPage.duplicate({
@@ -58,6 +60,7 @@ class CalendarEventInputPage extends ConsumerStatefulWidget {
        event = null,
        series = null,
        onSaved = null,
+       initialDraft = null,
        onCancelled = null;
 
   final ValueChanged<DateTime>? onSaved;
@@ -65,6 +68,7 @@ class CalendarEventInputPage extends ConsumerStatefulWidget {
   final DateTime date;
   final CalendarEventDto? event;
   final CalendarEventDto? series;
+  final CalendarEventDraftDto? initialDraft;
   final CalendarEventDto? _duplicateSource;
 
   @override
@@ -88,8 +92,12 @@ class _CalendarEventInputPageState
   late DateTime _end;
   late bool _hasStartDate = widget._duplicateSource == null;
   late bool _hasEndDate = widget._duplicateSource == null;
-  late bool _hasStartTime = widget._duplicateSource == null;
-  late bool _hasEndTime = widget._duplicateSource == null;
+  late bool _hasStartTime =
+      widget._duplicateSource == null &&
+      (widget.initialDraft == null || widget.initialDraft!.start != null);
+  late bool _hasEndTime =
+      widget._duplicateSource == null &&
+      (widget.initialDraft == null || widget.initialDraft!.end != null);
   late bool _allDay;
   String? _labelId;
   String _error = '';
@@ -137,6 +145,7 @@ class _CalendarEventInputPageState
     super.initState();
     final event = widget.event;
     final source = event ?? widget._duplicateSource;
+    final draft = widget.initialDraft;
     _groupId =
         source?.groupId ??
         ref
@@ -156,13 +165,15 @@ class _CalendarEventInputPageState
     _initialNotifications = _notifications == null
         ? null
         : List.of(_notifications!);
-    _title = TextEditingController(text: source?.title ?? '');
+    _title = TextEditingController(text: source?.title ?? draft?.title ?? '');
     _url = TextEditingController(text: source?.url ?? '');
-    _memo = TextEditingController(text: source?.memo ?? '');
-    _locationName = TextEditingController(text: source?.locationName ?? '');
+    _memo = TextEditingController(text: source?.memo ?? draft?.memo ?? '');
+    _locationName = TextEditingController(
+      text: source?.locationName ?? draft?.locationName ?? '',
+    );
     _latitude = source?.latitude;
     _longitude = source?.longitude;
-    _allDay = source?.isAllDay ?? true;
+    _allDay = source?.isAllDay ?? draft?.isAllDay ?? true;
     _start = event == null
         ? widget.date
         : _allDay
@@ -181,6 +192,18 @@ class _CalendarEventInputPageState
             event.endDateTime.day - 1,
           )
         : event.endDateTime.toLocal();
+    if (event == null && draft != null) {
+      final start = draft.start ?? widget.date;
+      final end = draft.end;
+      _start = _allDay
+          ? DateTime(start.year, start.month, start.day)
+          : start.toLocal();
+      _end = end == null
+          ? _start
+          : _allDay
+          ? DateTime(end.year, end.month, end.day - 1)
+          : end.toLocal();
+    }
     _seriesAllDay = widget.series?.isAllDay ?? event?.isAllDay;
     _zone = source?.timeZone ?? 'Asia/Tokyo';
     final expander = ref.read(calendarRecurrenceExpanderProvider);

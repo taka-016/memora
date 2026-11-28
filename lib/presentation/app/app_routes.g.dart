@@ -306,6 +306,15 @@ mixin $CalendarRoute on GoRouteData {
         _$convertMapValue('request', state.uri.queryParameters, int.parse) ?? 0,
     eventId: state.uri.queryParameters['event-id'],
     occurrence: state.uri.queryParameters['occurrence'],
+    title: state.uri.queryParameters['title'],
+    memo: state.uri.queryParameters['memo'],
+    locationName: state.uri.queryParameters['location-name'],
+    end: state.uri.queryParameters['end'],
+    isAllDay: _$convertMapValue(
+      'is-all-day',
+      state.uri.queryParameters,
+      _$boolConverter,
+    ),
   );
 
   CalendarRoute get _self => this as CalendarRoute;
@@ -320,6 +329,11 @@ mixin $CalendarRoute on GoRouteData {
       if (_self.request != 0) 'request': _self.request.toString(),
       if (_self.eventId != null) 'event-id': _self.eventId,
       if (_self.occurrence != null) 'occurrence': _self.occurrence,
+      if (_self.title != null) 'title': _self.title,
+      if (_self.memo != null) 'memo': _self.memo,
+      if (_self.locationName != null) 'location-name': _self.locationName,
+      if (_self.end != null) 'end': _self.end,
+      if (_self.isAllDay != null) 'is-all-day': _self.isAllDay!.toString(),
     },
   );
 
