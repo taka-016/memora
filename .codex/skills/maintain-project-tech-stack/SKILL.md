@@ -1,18 +1,24 @@
 ---
-name: maintain-flutter-dependencies
-description: memoraのFlutter SDK、Dart/Flutterパッケージ、Docker開発環境、Android SDK・NDK、Gradle Wrapper、Android Gradle Plugin、Kotlin、JDKなどの開発・ビルド依存をまとめて調査、更新、互換性修正、検証、PR作成まで行う。`packages have newer versions incompatible with dependency constraints`を解消したいとき、依存関係が古くなったとき、FlutterやAndroidビルド環境を一括更新したいときに使う。
+name: maintain-project-tech-stack
+description: memoraで使用する言語・実行環境、SDK・フレームワーク、ライブラリ、ビルドツール、開発環境をまとめて調査・更新し、互換性修正・検証・PR作成まで行う。プロジェクトの技術基盤を一括更新したいときや、Flutter・パッケージ・開発環境の更新を依頼されたときに使う。
 ---
 
-# Flutter依存関係メンテナンス
+# プロジェクトの技術基盤の一括更新
 
-Flutter、パッケージ、コンテナ、Androidビルドツールを一つの互換性単位として更新する。最新版へ機械的に揃えず、公式の互換条件と実際のビルド結果を根拠に、安全に採用できる最新構成へ進める。
+プロジェクトの技術基盤全体を更新候補として調査し、公式の互換条件と実際の検証結果を根拠に、安全に採用できる最新構成へ進める。対象はプロジェクトの設定・導入手順で使用・管理するものとし、ユーザーによる対象指定を優先する。
+
+- 言語・実行環境：Dart、Java、Kotlin、Node.jsなど。
+- SDK・フレームワーク：Flutter、Android SDK・NDKなど。
+- ライブラリ・パッケージ：直接依存・推移依存・開発依存、ネイティブライブラリ。
+- ビルドツール：Gradle、AGP、Compose Compiler、コード生成ツールなど。
+- 開発環境：DockerのベースOS・イメージ、npm、just、Firebase・FlutterFireなどのCLI、導入スクリプト。
 
 ## 基本方針
 
-- 依存保守自体はtodoの確認・事前登録・完了項目整理を不要とする。上流・SDKの制約で残す更新は既存項目との重複を確認し、対象・制約元・再検討条件をtodoの「更新保留」などの独立した節に残す。ユーザーがtodo更新の省略を明示した場合は従い、残件をPRに記載する。
+- 技術基盤の更新自体はtodoの確認・事前登録・完了項目整理を不要とする。上流・SDKの制約で残す更新は既存項目との重複を確認し、対象・制約元・再検討条件をtodoの「更新保留」などの独立した節に残す。ユーザーがtodo更新の省略を明示した場合は従い、残件をPRに記載する。
 - 作業開始時に `coding-preparation`、アプリやテストのコード修正時に `coding` と `test-coding`、完了時に `coding-completion` を使用する。
 - 現在が `main` なら `chore/` で始まる作業ブランチを作成する。
-- ユーザーが対象を限定していない限り、Flutter、Dartパッケージ、Docker開発環境、Androidビルド環境を一括で点検する。
+- ユーザーが対象を限定していない限り、上記の全分類を点検する。各対象について現行版・最新の正式版・採用版を確認し、更新または据え置きの理由を記録する。更新を保留する場合は再検討条件も残し、既に最新版ならその旨を記録する。
 - バージョン番号だけを根拠なく揃えない。公式の互換条件を確認し、通常はその範囲内の組み合わせを採用する。ユーザー指定の最新版などで完全対応範囲を超える場合は、制約と実ビルド結果を報告し、実測での成功を公式対応と扱わない。
 - `dependency_overrides`、解決戦略による強制、上限の無条件撤廃で競合を隠さない。必要な場合は理由と除去条件をユーザーに示し、了承を得る。
 - 推移依存の最新版未採用だけを理由に、直接依存を追加しない。
@@ -31,6 +37,8 @@ flutter doctor -v
 flutter pub outdated
 ```
 
+設定・導入手順から対象一覧を作り、Flutterやパッケージ管理コマンドに表示されない対象も含めて実際に使うバージョンを確認する。
+
 バージョン指定箇所を `rg` で横断確認する。最低限、次を対象にする。
 
 - `docker/Dockerfile` と関連する `docker/**/Dockerfile`
@@ -47,6 +55,10 @@ flutter pub outdated
   - Java、Kotlin JVM target、NDK、compileSdk、targetSdk、ネイティブ依存
 - `packages/**/android/build.gradle.kts`
   - ローカルプラグインのSDK・Java・Kotlin設定
+- `**/package.json` と対応するlockfile
+  - JavaScriptのライブラリ、テスト・開発ツール
+- `compose.yaml`、`scripts/dev/`、`justfile`、`.github/`
+  - コンテナイメージ、CLIの導入・実行、CIで使用するバージョン
 
 更新前に `just check` と、オンライン・オフライン両方のdebug APKビルドを実行する。既存の失敗やログがある場合は更新起因と混同せず、結果を記録してから進める。
 
@@ -63,6 +75,7 @@ flutter build apk --debug --flavor offline --dart-define=MEMORA_APP_MODE=offline
 - Dart/Flutterパッケージ: `flutter pub outdated`、pub.dev、公式リポジトリのchangelog・migration guide
 - Android: Android DevelopersのAGPリリースノートと互換表、Gradle公式互換情報、Kotlin公式情報
 - Docker開発環境: 利用しているベースイメージと各配布元の公式情報
+- その他の言語・実行環境・CLI: 各配布元の正式リリース、サポート期間、互換条件
 
 Flutter/DartパッケージのAPIや移行方法を調べる場合は、AGENTS.mdに従ってContext7でライブラリIDを解決し、公式ドキュメントを取得する。Context7に対象がない場合は公式サイトや公式リポジトリを使う。
 
@@ -79,7 +92,7 @@ Flutter/DartパッケージのAPIや移行方法を調べる場合は、AGENTS.m
 
 最新版同士が非互換なら、プロジェクト全体で検証できる最も新しい互換構成を選ぶ。保留する更新は、上流の制約と再検討条件を明記する。
 
-## 3. 依存関係を更新する
+## 3. 技術基盤を更新する
 
 影響源に近い順で更新する。
 
@@ -91,6 +104,7 @@ Flutter/DartパッケージのAPIや移行方法を調べる場合は、AGENTS.m
 6. `flutter pub outdated` を再実行し、残件を確認する。
 7. 必要なAndroidビルド環境を互換性マトリクスに沿って更新する。
 8. Docker開発環境とAndroidプロジェクトで重複指定するNDK、JDKなどを一致させる。
+9. その他の言語・実行環境、ライブラリ、CLI、ベースOS・イメージも調査結果に沿って更新する。相互に依存する対象は互換性に合わせて更新順を調整する。
 
 一度に原因を見失わないよう、Flutter/SDK、Dartパッケージ、Androidツールの境界ごとに差分とコマンド結果を確認する。`pubspec.lock` はアプリケーションの再現可能なビルドに必要なため更新対象に含める。pubの取得・更新・追加とコード生成は逐次実行し、暗黙にpubを実行する解析・ビルドも依存更新の完了後に開始する。
 
@@ -136,7 +150,8 @@ just test-calendar-widget
 - Dockerが利用可能なら検証専用の明示的なタグを付けて `docker/Dockerfile` と、変更した関連Dockerfileの対象ステージをビルドする。イメージ内でFlutter・Dart・Java・javacの版と、必要なAndroid SDK・NDKの配置を、各イメージの役割に応じて確認する。
 - 検証用Dockerイメージ内の確認がすべて成功したら、結果を記録した直後に `docker image rm <検証専用タグ>` でそのイメージだけを削除する。`docker image prune` や `docker system prune` など、対象を広げる削除コマンドは使わない。
 - Dockerをビルドできない環境では、Dockerfileの指定値とAndroid側の整合を静的に確認し、未実施の検証を明記する。
-- releaseビルドはユーザーが許可し、署名情報を利用できる場合に実行する。オンラインの `just release` はFirestoreで採番するため、依存更新の検証だけを目的に自動実行しない。未実施の場合は理由とdebug APKの検証結果を報告する。
+- Flutter・Android以外の対象を更新した場合も、その対象を使う既存の導入・起動・テスト経路で互換性を確認する。
+- releaseビルドはユーザーが許可し、署名情報を利用できる場合に実行する。オンラインの `just release` はFirestoreで採番するため、技術基盤の更新の検証だけを目的に自動実行しない。未実施の場合は理由とdebug APKの検証結果を報告する。
 
 Flutterを一時SDKで検証した場合も、最終的なコマンド結果が `docker/Dockerfile` に指定した版と一致することを確認する。検証失敗を残したまま完了しない。
 
@@ -148,7 +163,7 @@ Flutterを一時SDKで検証した場合も、最終的なコマンド結果が 
 
 PRと最終報告には次を含める。
 
-- Flutter/Dart、主要パッケージ、AGP、Gradle、Kotlin、JDK、Android SDK/NDKの更新前後
+- 調査した全対象の現行版・最新の正式版・採用版、更新・据え置きの理由と保留時の再検討条件。パッケージは管理ツールの一覧・差分を根拠にまとめてもよい
 - 破壊的変更に対するコード・設定修正
 - 実行した検証と結果
 - `flutter pub outdated` に残るパッケージ、更新できない具体的な理由、再検討条件、todoの記録先（省略した場合はその理由）
