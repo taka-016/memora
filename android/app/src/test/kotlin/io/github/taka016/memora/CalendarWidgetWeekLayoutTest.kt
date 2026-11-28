@@ -91,13 +91,13 @@ class CalendarWidgetWeekLayoutTest {
     }
 
     @Test
-    fun `月境界では対象月の範囲に帯を切り出す`() {
+    fun `月境界でも前月から帯を連続して表示する`() {
         val oct = LocalDate.of(2026, 10, 1)
         val trip = event("月またぎ", multiDay = true)
         val layout = CalendarWidgetWeekLayout(
             week(LocalDate.of(2026, 9, 27), (3..6).associateWith { listOf(trip) }), oct, 3,
         )
-        assertEquals(4, layout.entries.single().startColumn)
+        assertEquals(3, layout.entries.single().startColumn)
         assertEquals(6, layout.entries.single().endColumn)
         assertTrue(layout.remainingCounts.all { it == 0 })
     }

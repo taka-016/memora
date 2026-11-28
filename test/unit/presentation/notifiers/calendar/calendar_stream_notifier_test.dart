@@ -300,6 +300,35 @@ void main() {
     expect(events.streams, hasLength(2));
   });
 
+  test('年初の先読みで前月の予定を月移動前から週表示に反映する', () async {
+    await start();
+    final notifier = container.read(provider.notifier);
+    notifier.selectDate(DateTime(2027, 1, 2));
+    events.streams.last.add([]);
+    await flush();
+    final previous = event.copyWith(
+      id: 'previous',
+      startDateTime: DateTime(2026, 12, 31),
+      endDateTime: DateTime(2027, 1, 1),
+    );
+    events.streams.first.add([previous]);
+    await flush();
+    final state = container.read(provider);
+    expect(state.isLoading, isFalse);
+    final layout = CalendarWeekLayout(
+      state: state,
+      weekStart: DateTime(2026, 12, 27),
+      month: DateTime(2027, 1),
+    );
+    expect(layout.entries.single.event.id, 'previous');
+    expect(layout.entries.single.startColumn, 4);
+    notifier.selectDate(DateTime(2026, 12, 31));
+    expect(events.streams, hasLength(2));
+    expect(container.read(provider).eventsForDay(DateTime(2026, 12, 31)), [
+      previous,
+    ]);
+  });
+
   test('先読みの失敗は移動先で表示し再試行はその期間の購読だけを再開する', () async {
     await start();
     final notifier = container.read(provider.notifier);

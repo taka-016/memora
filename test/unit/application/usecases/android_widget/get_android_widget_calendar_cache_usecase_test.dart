@@ -77,7 +77,7 @@ void main() {
     });
   }
 
-  test('公開月が離れていても各最終週の翌月を取得して繰り返しと取消を反映する', () async {
+  test('公開月が離れていても前後月を取得して繰り返しと取消を反映する', () async {
     final december = DateTime(2026, 12);
     final march = DateTime(2026, 3);
     final january = CalendarEventPeriod.forCalendarMonth(DateTime(2027, 1));
@@ -90,8 +90,10 @@ void main() {
       loadSharedGroup:
           (_, groupId, periods, {required force, required forceLabels}) async {
             expect(periods, [
+              CalendarEventPeriod.forCalendarMonth(DateTime(2026, 2)),
               CalendarEventPeriod.forCalendarMonth(march),
               april,
+              CalendarEventPeriod.forCalendarMonth(DateTime(2026, 11)),
               CalendarEventPeriod.forCalendarMonth(december),
               january,
             ]);
@@ -100,6 +102,12 @@ void main() {
               eventsByPeriod: {
                 for (final period in periods)
                   period: [
+                    if (period.from == DateTime(2026, 11))
+                      event(
+                        '前月の予定',
+                        DateTime.utc(2026, 11, 30),
+                        DateTime.utc(2026, 12, 1),
+                      ),
                     if (period == january)
                       event(
                         '毎日',
@@ -140,6 +148,7 @@ void main() {
             .map((item) => item['title'])
             .toList();
     expect(titles('2026-03-01', '2026-04-01'), ['翌月の予定']);
+    expect(titles('2026-12-01', '2026-11-30'), ['前月の予定']);
     expect(titles('2026-12-01', '2027-01-01'), ['毎日']);
     expect(titles('2026-12-01', '2027-01-02'), isEmpty);
     verifyZeroInteractions(events);
@@ -164,6 +173,7 @@ void main() {
       loadSharedGroup:
           (_, groupId, periods, {required force, required forceLabels}) async {
             expect(periods, [
+              CalendarEventPeriod.forCalendarMonth(DateTime(2026, 8)),
               previous,
               displayed,
               next,
@@ -217,6 +227,7 @@ void main() {
       loadSharedGroup:
           (_, groupId, periods, {required force, required forceLabels}) async {
             expect(periods, [
+              CalendarEventPeriod.forCalendarMonth(DateTime(2026, 8)),
               earlier,
               CalendarEventPeriod.forCalendarMonth(DateTime(2026, 10)),
               later,

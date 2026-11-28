@@ -57,7 +57,7 @@ void main() {
     expect(layout.visibleCounts, [0, 0, 0, 0, 1, 2, 2]);
   });
 
-  test('複数日終日の帯を週と月の境界で切り各週にタイトルを配置する', () {
+  test('複数日終日の帯を週の境界で切り前月から連続して配置する', () {
     final state = CalendarState(
       selectedDate: DateTime(2026, 10, 1),
       events: [event('trip', DateTime(2026, 9, 30), DateTime(2026, 10, 7))],
@@ -67,7 +67,7 @@ void main() {
       weekStart: DateTime(2026, 9, 27),
       month: DateTime(2026, 10),
     );
-    expect(first.entries.single.startColumn, 4);
+    expect(first.entries.single.startColumn, 3);
     expect(first.entries.single.endColumn, 6);
     final next = CalendarWeekLayout(
       state: state,
@@ -77,7 +77,7 @@ void main() {
     expect(next.entries.single.startColumn, 0);
     expect(next.entries.single.endColumn, 2);
   });
-  test('時刻付きの複数日予定を週と月の境界で切り重複なく帯で表示する', () {
+  test('時刻付きの複数日予定を週の境界で切り前月から重複なく帯で表示する', () {
     final state = CalendarState(
       selectedDate: DateTime(2026, 10, 1),
       events: [
@@ -90,7 +90,7 @@ void main() {
       ],
     );
     for (final (weekStart, start, end) in [
-      (DateTime(2026, 9, 27), 4, 6),
+      (DateTime(2026, 9, 27), 3, 6),
       (DateTime(2026, 10, 4), 0, 2),
     ]) {
       final layout = CalendarWeekLayout(
