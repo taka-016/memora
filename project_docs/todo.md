@@ -1,32 +1,5 @@
 # ToDo List
 
-## `com.example`から正式なアプリ識別子への変更
-
-オンライン版のベースのアプリ識別子を `io.github.taka016.memora`、オフライン版を `io.github.taka016.memora.offline` とする。GitHub Pagesのドメイン `taka-016.github.io` に由来し、Androidの命名規則に合わせてハイフンを除く。
-
-既存インストールからの端末内データ・設定の引き継ぎと、旧版の併存・削除時期の調整は対象外とする。オンライン・オフラインの別アプリ構成を維持し、オフライン版へFirebase・Google APIの設定や連携機能を追加しない。
-
-1. 下表に従い、利用先での識別子の重複を確認し、新しいオンライン版の識別子に対応するFirebase・Google Cloudのアプリ登録と認証設定を用意する。同じプロジェクトのAuthentication・Firestoreデータを引き続き使い、プロジェクトや既存データを作り直さない。
-2. 新しいFirebase Androidアプリに対応する`android/app/google-services.json`を取得し、FlutterFire設定を再生成して`lib/firebase_options.dart`・ローカルの`firebase.json`を新しいFirebase App IDへ合わせる。利用中の認証設定を維持し、Git管理対象外の設定ファイルを強制追加しない。オンライン版で既存のFirebaseプロジェクトへの接続、認証、地図表示・位置検索ができる状態を完了条件とする。
-
-変更に合わせて扱う外部設定は以下とする。現時点ではConsole上の登録状況・公開状況は未確認。
-
-| 対象 | 変更時に行うこと |
-| --- | --- |
-| Firebase Console | 既存Androidアプリのパッケージ名は変更できないため、同じプロジェクトへ新しいオンライン版のAndroidアプリを追加し、利用する署名証明書を登録する。Firebase App IDが変わるため設定ファイルも更新する。[公式手順](https://firebase.google.com/docs/android/setup) |
-| Google CloudのAndroid OAuthクライアント | Googleログイン等で利用している場合、新しいパッケージ名とdebug・releaseそれぞれの署名SHA-1の組でクライアントを用意する。Play App Signing利用時は配信APKのアプリ署名証明書を使う。端末カレンダー連携のためのOAuth設定は不要。[署名証明書の確認](https://developers.google.com/android/guides/client-auth) |
-| Maps・PlacesなどのAPIキー | Androidアプリ制限に新しいパッケージ名と署名SHA-1を登録する。既存のAPI制限を維持する。[制限の設定](https://developers.google.com/maps/api-security-best-practices) |
-| Google Play（配布済みの場合） | application IDが変わると別アプリとなり、既存掲載への更新として配布できない。新規掲載・配布先を用意する。[application IDの扱い](https://developer.android.com/build/configure-app-module) |
-| Apple側の登録（利用済みの場合） | iOS・macOSのBundle ID変更に合わせ、Apple DeveloperのApp ID・署名プロファイル・利用中の外部サービスのアプリ登録を更新する。未登録のサービスをこの作業だけのために新規導入しない。 |
-
-## Androidのデバッグ版とリリース版を同じ端末にインストールできるようにする
-
-1. オンラインのデバッグ版 `io.github.taka016.memora.debug` を既存のFirebaseプロジェクトへAndroidアプリとして登録し、利用するデバッグ署名証明書を登録する。Firebase用キー `firebase for memora` のAndroidアプリ制限にも、新しいパッケージ名とデバッグ署名証明書のSHA-1を追加する。既存のリリース版の許可は維持する。
-2. オンラインのデバッグ版とリリース版の両方を含む`google-services.json`を`android/app/google-services.json`へ配置し、[READMEの再設定手順](../README.md#オンライン版の設定)に従ってFirebase用キーを反映する。Dart設定は1ファイルで共用し、両ビルドのApp IDを切り替える。
-3. 地図表示・位置検索に使う既存のMaps用キー `maps for memora` のAndroidアプリ制限に、オンラインのデバッグ版のパッケージ名とデバッグ署名証明書のSHA-1の組を追加する。リリース版の許可設定を維持する。オフライン版へFirebase・Google APIの設定を追加しない。
-
-登録・設定更新後、オンライン・オフラインの各モードでデバッグ版とリリース版を同じ端末にインストールして起動でき、オンラインの両ビルドで既存のFirebaseプロジェクトへの接続、ログイン、地図表示、位置検索ができる状態を完了条件とする。
-
 ## 外部プラグインのbuilt-in Kotlin対応版への更新
 
 - KGP未対応の外部プラグイン（home_widget、workmanager_android）がbuilt-in Kotlin対応版に更新されたら対応する
