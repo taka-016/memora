@@ -18,6 +18,45 @@ CalendarEventDto event(
   isAllDay: allDay,
 );
 void main() {
+  test('最終週は翌月の予定を参照し月をまたぐ帯を重複させない', () {
+    final trip = event(
+      'trip',
+      DateTime.utc(2026, 12, 31),
+      DateTime.utc(2027, 1, 3),
+    );
+    final next = event(
+      'next',
+      DateTime.utc(2027, 1, 1),
+      DateTime.utc(2027, 1, 2),
+    );
+    final timed = event(
+      'timed',
+      DateTime(2027, 1, 2, 9),
+      DateTime(2027, 1, 2, 10),
+      allDay: false,
+    );
+    final state = CalendarState(
+      selectedDate: DateTime(2026, 12),
+      events: [trip],
+      previewEventsByMonth: {
+        DateTime(2027, 1): [trip, next, timed],
+      },
+    );
+    final layout = CalendarWeekLayout(
+      state: state,
+      weekStart: DateTime(2026, 12, 27),
+      month: DateTime(2026, 12),
+    );
+    expect(layout.entries.map((entry) => entry.event.id), [
+      'trip',
+      'next',
+      'timed',
+    ]);
+    expect(layout.entries.first.startColumn, 4);
+    expect(layout.entries.first.endColumn, 6);
+    expect(layout.visibleCounts, [0, 0, 0, 0, 1, 2, 2]);
+  });
+
   test('複数日終日の帯を週と月の境界で切り各週にタイトルを配置する', () {
     final state = CalendarState(
       selectedDate: DateTime(2026, 10, 1),

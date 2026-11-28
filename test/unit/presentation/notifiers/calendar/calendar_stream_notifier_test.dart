@@ -18,6 +18,7 @@ import 'package:memora/composition_root/providers/calendar_providers.dart';
 import 'package:memora/composition_root/providers/app_providers.dart';
 import 'package:memora/infrastructure/time/fixed_app_clock.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_notifier.dart';
+import 'package:memora/presentation/features/calendar/calendar_week_layout.dart';
 
 import '../../../../helpers/test_exception.dart';
 import 'calendar_notifier_test.mocks.dart';
@@ -283,6 +284,13 @@ void main() {
       spanning,
       nextEvent,
     ]);
+    final layout = CalendarWeekLayout(
+      state: container.read(provider),
+      weekStart: DateTime(2026, 12, 27),
+      month: DateTime(2026, 12),
+    );
+    expect(layout.entries.map((entry) => entry.event.id), ['e', 'next']);
+    expect(layout.entries.first.endColumn, 6);
     notifier.selectDate(january);
     expect(container.read(provider).eventsForDay(january), [
       spanning,

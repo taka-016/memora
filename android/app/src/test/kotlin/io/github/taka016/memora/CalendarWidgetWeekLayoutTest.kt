@@ -5,6 +5,23 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class CalendarWidgetWeekLayoutTest {
+    @Test
+    fun `年末の最終週に翌月の帯と時刻付き予定を表示する`() {
+        val december = LocalDate.of(2026, 12, 1)
+        val trip = event("月またぎ", multiDay = true)
+        val next = event("翌月の通院", allDay = false)
+        val layout = CalendarWidgetWeekLayout(
+            week(LocalDate.of(2026, 12, 27), mapOf(
+                4 to listOf(trip), 5 to listOf(trip, next), 6 to listOf(trip),
+            )), december, 3,
+        )
+        assertEquals(listOf("月またぎ", "翌月の通院"), layout.entries.map { it.event.title })
+        assertEquals(4, layout.entries.first().startColumn)
+        assertEquals(6, layout.entries.first().endColumn)
+        assertEquals(5, layout.entries.last().startColumn)
+        assertTrue(layout.remainingCounts.all { it == 0 })
+    }
+
     private val month = LocalDate.of(2026, 11, 1)
     private fun event(id: String, allDay: Boolean = true, multiDay: Boolean = false,
                       occurrence: String = id, start: Long = 1L) = CalendarWidgetEvent(

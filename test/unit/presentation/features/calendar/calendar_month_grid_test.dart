@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/application/models/calendar_display_settings.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/presentation/features/calendar/calendar_month_grid.dart';
@@ -9,8 +10,12 @@ Future<void> _pumpGrid(
   DateTime? initialDate,
   CalendarDisplaySettings settings = const CalendarDisplaySettings(),
   TargetPlatform platform = TargetPlatform.android,
+  Map<DateTime, List<CalendarEventDto>> previewEventsByMonth = const {},
 }) async {
-  var state = CalendarState(selectedDate: initialDate ?? DateTime(2026, 10, 1));
+  var state = CalendarState(
+    selectedDate: initialDate ?? DateTime(2026, 10, 1),
+    previewEventsByMonth: previewEventsByMonth,
+  );
   await tester.pumpWidget(
     MaterialApp(
       theme: ThemeData(platform: platform),
@@ -37,6 +42,44 @@ Future<void> _pumpGrid(
 }
 
 void main() {
+  for (final start in CalendarWeekStart.values) {
+    testWidgets('最終週の翌月の予定を表示して日付を選択できる（${start.name}）', (tester) async {
+      await _pumpGrid(
+        tester,
+        initialDate: DateTime(2026, 12),
+        settings: CalendarDisplaySettings(weekStart: start),
+        previewEventsByMonth: {
+          DateTime(2027, 1): [
+            CalendarEventDto(
+              id: 'next',
+              groupId: 'g',
+              labelId: 'l',
+              title: '翌月の通院',
+              startDateTime: DateTime(2027, 1, 1, 9),
+              endDateTime: DateTime(2027, 1, 1, 10),
+              isAllDay: false,
+            ),
+          ],
+        },
+      );
+      final page = find.byKey(const Key('calendar_month_2026_12'));
+      final day = find.descendant(
+        of: page,
+        matching: find.byKey(const Key('calendar_day_2027_1_1')),
+      );
+      expect(
+        find.descendant(of: day, matching: find.text('翌月の通院')),
+        findsOneWidget,
+      );
+      expect(find.byKey(const Key('calendar_day_2026_11_30')), findsNothing);
+      await tester.tap(day);
+      await tester.pump();
+      await tester.pump();
+      expect(find.byKey(const Key('calendar_month_2027_1')), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
   testWidgets('祝日は日曜と同じ赤色で表示し六曜を設定で切り替える', (tester) async {
     Future<void> pump(bool showRokuyo) => _pumpGrid(
       tester,
