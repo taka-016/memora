@@ -9,11 +9,11 @@ Flutter、パッケージ、コンテナ、Androidビルドツールを一つの
 
 ## 基本方針
 
-- このスキルによる依存保守だけを目的とする作業では、`project_docs/todo.md` の確認と更新を不要とし、依存保守自体をtodoへ追加しない。
+- 依存保守自体はtodoの確認・事前登録・完了項目整理を不要とする。上流・SDKの制約で残す更新は既存項目との重複を確認し、対象・制約元・再検討条件をtodoの「更新保留」などの独立した節に残す。ユーザーがtodo更新の省略を明示した場合は従い、残件をPRに記載する。
 - 作業開始時に `coding-preparation`、アプリやテストのコード修正時に `coding` と `test-coding`、完了時に `coding-completion` を使用する。
 - 現在が `main` なら `chore/` で始まる作業ブランチを作成する。
 - ユーザーが対象を限定していない限り、Flutter、Dartパッケージ、Docker開発環境、Androidビルド環境を一括で点検する。
-- バージョン番号だけを根拠なく揃えない。Flutterと各ツールが公式にサポートする組み合わせを採用する。
+- バージョン番号だけを根拠なく揃えない。公式の互換条件を確認し、通常はその範囲内の組み合わせを採用する。ユーザー指定の最新版などで完全対応範囲を超える場合は、制約と実ビルド結果を報告し、実測での成功を公式対応と扱わない。
 - `dependency_overrides`、解決戦略による強制、上限の無条件撤廃で競合を隠さない。必要な場合は理由と除去条件をユーザーに示し、了承を得る。
 - 推移依存の最新版未採用だけを理由に、直接依存を追加しない。
 - Flutter/SDK、Dartパッケージ、Androidビルド環境、互換性修正など、独立して検証・取り消せる作業ポイントごとにコミットし、ロールバックしやすい履歴を保つ。
@@ -33,7 +33,7 @@ flutter pub outdated
 
 バージョン指定箇所を `rg` で横断確認する。最低限、次を対象にする。
 
-- `docker/Dockerfile`
+- `docker/Dockerfile` と関連する `docker/**/Dockerfile`
   - Ubuntu、Flutter、JDK、Android command-line tools、platform、build-tools、NDK
 - `pubspec.yaml` と `pubspec.lock`
   - Dart/Flutter SDK制約、直接依存、開発依存
@@ -45,6 +45,8 @@ flutter pub outdated
   - Gradle Wrapper
 - `android/app/build.gradle.kts`
   - Java、Kotlin JVM target、NDK、compileSdk、targetSdk、ネイティブ依存
+- `packages/**/android/build.gradle.kts`
+  - ローカルプラグインのSDK・Java・Kotlin設定
 
 更新前に `just check` と、オンライン・オフライン両方のdebug APKビルドを実行する。既存の失敗やログがある場合は更新起因と混同せず、結果を記録してから進める。
 
@@ -73,6 +75,8 @@ Flutter/DartパッケージのAPIや移行方法を調べる場合は、AGENTS.m
 - Flutter/プラグイン ↔ compileSdk・targetSdk・minSdk・NDK
 - `docker/Dockerfile` のJDK・Android SDK・NDK ↔ Androidプロジェクト設定
 
+ビルドを実行するJDKと、Java・Kotlinの生成対象バージョンは分けて判断する。JDKを更新するだけなら生成対象を同じ番号へ上げない。既存コンテナで検証用SDK・JDKを使う場合は、各コマンドが参照する版と、再ビルド後のDocker環境が一致することを確認する。
+
 最新版同士が非互換なら、プロジェクト全体で検証できる最も新しい互換構成を選ぶ。保留する更新は、上流の制約と再検討条件を明記する。
 
 ## 3. 依存関係を更新する
@@ -88,14 +92,14 @@ Flutter/DartパッケージのAPIや移行方法を調べる場合は、AGENTS.m
 7. 必要なAndroidビルド環境を互換性マトリクスに沿って更新する。
 8. Docker開発環境とAndroidプロジェクトで重複指定するNDK、JDKなどを一致させる。
 
-一度に原因を見失わないよう、Flutter/SDK、Dartパッケージ、Androidツールの境界ごとに差分とコマンド結果を確認する。`pubspec.lock` はアプリケーションの再現可能なビルドに必要なため更新対象に含める。
+一度に原因を見失わないよう、Flutter/SDK、Dartパッケージ、Androidツールの境界ごとに差分とコマンド結果を確認する。`pubspec.lock` はアプリケーションの再現可能なビルドに必要なため更新対象に含める。pubの取得・更新・追加とコード生成は逐次実行し、暗黙にpubを実行する解析・ビルドも依存更新の完了後に開始する。
 
 `flutter pub outdated` の残件は次に分類する。
 
 - 直接依存の制約を安全に更新できる: 更新する。
 - 別の直接依存が古い推移依存を要求している: 上位パッケージの更新可否を調べる。
 - Flutter/Dart SDKがバージョンを固定している: SDKの公式制約として記録する。
-- 上流がまだ互換版を提供していない: 無理に解決せず、パッケージ名と制約元をPRへ記載する。
+- 上流がまだ互換版を提供していない: 無理に解決せず、同じ制約元に従うパッケージをまとめて、対象・制約元・再検討条件をPRとtodoへ記載する。todo更新を省略する条件は「基本方針」に従う。
 
 ## 4. 破壊的変更へ対応する
 
@@ -117,18 +121,22 @@ Flutter更新後のAndroidテンプレート差分が必要なら、同じFlutte
 flutter pub get
 flutter pub outdated
 just check
+just check offline
 flutter build apk --debug --flavor online --dart-define=MEMORA_APP_MODE=online
 flutter build apk --debug --flavor offline --dart-define=MEMORA_APP_MODE=offline
+just test-calendar-widget
 ```
+
+全体テスト・Androidビルド・Dockerビルドはメモリ消費が大きいため、原則として逐次実行する。Gradleデーモンが消失した場合はコンパイルエラーやクラッシュ記録、OOMの有無を確認し、メモリ不足なら他の重い処理の終了後に単独で再実行する。
 
 加えて次を確認する。
 
-- `just check` にエラー、予期しないExceptionログ、エラーログがない。
+- 両モードの全体チェックとAndroid側の単体テストにエラー、予期しないExceptionログ、エラーログがない。
 - Androidビルドが更新後のGradle Wrapper、AGP、Kotlin、JDK、SDK、NDKを実際に使用して成功する。
-- Dockerが利用可能なら検証専用の明示的なタグを付けて `docker/Dockerfile` をビルドし、少なくともFlutterとAndroid SDKの導入が成功する。
+- Dockerが利用可能なら検証専用の明示的なタグを付けて `docker/Dockerfile` と、変更した関連Dockerfileの対象ステージをビルドする。イメージ内でFlutter・Dart・Java・javacの版と、必要なAndroid SDK・NDKの配置を、各イメージの役割に応じて確認する。
 - 検証用Dockerイメージ内の確認がすべて成功したら、結果を記録した直後に `docker image rm <検証専用タグ>` でそのイメージだけを削除する。`docker image prune` や `docker system prune` など、対象を広げる削除コマンドは使わない。
 - Dockerをビルドできない環境では、Dockerfileの指定値とAndroid側の整合を静的に確認し、未実施の検証を明記する。
-- 署名情報が利用できる場合は `just release` も実行する。利用できない場合はdebug APK成功をAndroid検証とする。
+- releaseビルドはユーザーが許可し、署名情報を利用できる場合に実行する。オンラインの `just release` はFirestoreで採番するため、依存更新の検証だけを目的に自動実行しない。未実施の場合は理由とdebug APKの検証結果を報告する。
 
 Flutterを一時SDKで検証した場合も、最終的なコマンド結果が `docker/Dockerfile` に指定した版と一致することを確認する。検証失敗を残したまま完了しない。
 
@@ -143,7 +151,7 @@ PRと最終報告には次を含める。
 - Flutter/Dart、主要パッケージ、AGP、Gradle、Kotlin、JDK、Android SDK/NDKの更新前後
 - 破壊的変更に対するコード・設定修正
 - 実行した検証と結果
-- `flutter pub outdated` に残るパッケージと、更新できない具体的な理由
+- `flutter pub outdated` に残るパッケージ、更新できない具体的な理由、再検討条件、todoの記録先（省略した場合はその理由）
 - Dockerビルドやrelease APKなど未実施の検証と理由
 
 更新対象がなく、既に安全な最新互換構成だった場合は、不要な差分やPRを作らず調査結果だけを報告する。

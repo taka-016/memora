@@ -4,6 +4,15 @@
 
 - KGP未対応の外部プラグイン（home_widget、workmanager_android）がbuilt-in Kotlin対応版に更新されたら対応する
 
+## 依存パッケージの更新保留（上流・SDKの対応待ち）
+
+[PR #600](https://github.com/taka-016/memora/pull/600)で更新できなかった9件を、以下の条件で再検討する。互換性のある組み合わせが解決できたら対象の依存制約と`pubspec.lock`を更新し、解消した項目を削除する。
+
+- `build`・`build_runner`・`build_config`・`built_collection`：Mockitoが`build <5`の制約を解消したら、`build 5`を要求する新しい`build_runner`と、それに制約される生成用パッケージをまとめて更新する。
+- `cross_file`：`file_picker`・`share_plus`とそれらの実装パッケージが0.4系以降に対応したら更新する。
+- `dbus`・`gsettings`：`geolocator_linux`・`geoclue`が`dbus`の0.7系制約を解消したら、0.8系を要求する`gsettings`とまとめて更新する。
+- `material_color_utilities`・`test_api`：Flutter・`flutter_test`が固定するバージョンが進んだら、Flutter SDKの更新に合わせて更新する。
+
 ## Firestoreの無料枠を活かすために読み取りを計測し、削減候補を絞る
 
 オンライン版の不要な読み取りを減らし、Firestoreの無料枠内で利用できる規模を広げる。Firestore Standardの無料枠は1日5万読み取り。日次の枠に対する消費は本番の利用量で確認し、どの操作で読み取りが増えるかはエミュレータで再現する。エミュレータの観測値は操作間・変更前後の比較に使う。[Firestoreの無料枠と課金ルール](https://firebase.google.com/docs/firestore/pricing)・[利用量ダッシュボードの計上範囲](https://firebase.google.com/docs/firestore/monitor-usage)
