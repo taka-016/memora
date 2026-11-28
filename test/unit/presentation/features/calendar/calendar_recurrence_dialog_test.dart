@@ -1,6 +1,6 @@
 import 'package:memora/presentation/shared/dialogs/custom_date_picker_dialog.dart';
 import 'package:memora/domain/entities/calendar/calendar_event_override.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:shared_preferences/shared_preferences.dart';

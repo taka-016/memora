@@ -35,7 +35,7 @@ class CalendarNotificationPreferencesNotifier
       await ref.read(calendarNotificationStorageProvider).save(preferences);
       if (!ref.mounted) return true;
       state = AsyncData(CalendarNotificationPreferencesState(preferences));
-      if (ref.exists(calendarNotificationsNotifierProvider)) {
+      if (ref.read(calendarNotificationsNotifierProvider.exists)) {
         await ref
             .read(calendarNotificationsNotifierProvider.notifier)
             .refresh();

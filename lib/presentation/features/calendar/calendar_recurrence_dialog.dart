@@ -1,6 +1,6 @@
 import 'package:memora/presentation/shared/dialogs/edit_discard_scope.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:memora/application/services/calendar/calendar_recurrence_settings.dart';
 
 Future<CalendarRecurrenceSettings?> showCalendarRecurrencePicker(

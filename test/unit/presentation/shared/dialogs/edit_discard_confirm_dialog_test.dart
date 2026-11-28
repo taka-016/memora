@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/presentation/shared/dialogs/edit_discard_confirm_dialog.dart';
 

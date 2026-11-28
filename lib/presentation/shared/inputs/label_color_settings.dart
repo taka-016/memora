@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:memora/presentation/shared/inputs/color_picker.dart';
 import 'package:memora/presentation/shared/inputs/label_color_preview.dart';
 

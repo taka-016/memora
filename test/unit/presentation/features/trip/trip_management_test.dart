@@ -2,7 +2,7 @@ import 'package:memora/presentation/shared/map_views/placeholder_map_view_builde
 
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/exceptions/application_validation_exception.dart';

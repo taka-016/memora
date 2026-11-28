@@ -5,7 +5,7 @@ import 'package:memora/composition_root/providers/startup_common_data_providers.
 import 'package:memora/composition_root/providers/location_providers.dart';
 import 'package:memora/presentation/shared/map_views/placeholder_map_view_builder.dart';
 import 'package:memora/composition_root/providers/app_providers.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

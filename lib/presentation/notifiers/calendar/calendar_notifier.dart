@@ -356,7 +356,7 @@ class CalendarNotifier extends _$CalendarNotifier {
       _refreshWidgetAfterMutation(() => refreshWidget(force: !eventsChanged)),
     );
     if (!ref.mounted) return true;
-    if (ref.exists(calendarNotificationsNotifierProvider)) {
+    if (ref.read(calendarNotificationsNotifierProvider.exists)) {
       unawaited(
         ref.read(calendarNotificationsNotifierProvider.notifier).refresh(),
       );

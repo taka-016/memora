@@ -8,7 +8,7 @@ import 'package:memora/application/models/offline_backup_snapshot.dart';
 import 'package:memora/composition_root/providers/app_providers.dart';
 import 'package:memora/composition_root/providers/android_widget_providers.dart';
 import 'package:memora/composition_root/providers/group_providers.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:equatable/equatable.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';

@@ -177,7 +177,7 @@ class CalendarGroupSettingsNotifier extends _$CalendarGroupSettingsNotifier {
   }
 
   bool get _usesCommonData =>
-      ref.exists(startupCommonDataNotifierProvider) &&
+      ref.read(startupCommonDataNotifierProvider.exists) &&
       ref.read(startupCommonDataOwnerProvider) != null;
 
   bool get _groupsConfirmed =>

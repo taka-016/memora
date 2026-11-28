@@ -1,0 +1,4 @@
+interface:
+  display_name: "プロジェクトの技術基盤の一括更新"
+  short_description: "言語・SDK・ライブラリ・ビルドツール・開発環境を一括調査・更新"
+  default_prompt: "$maintain-project-tech-stack を使ってプロジェクトの技術基盤全体を調査・更新し、全対象の採用版・据え置き理由・再検討条件を記録して、互換性修正、検証、PR作成まで進めてください。"

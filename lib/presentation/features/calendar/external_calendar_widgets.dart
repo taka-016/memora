@@ -1,5 +1,5 @@
 import 'package:memora/presentation/features/calendar/external_calendar_recurrence_text.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/application/dtos/calendar/external_calendar_dto.dart';

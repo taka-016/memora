@@ -1,5 +1,5 @@
 import 'package:memora/presentation/shared/dialogs/edit_discard_scope.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/presentation/shared/inputs/label_color_settings.dart';
 import 'package:memora/application/dtos/calendar/calendar_label_dto.dart';

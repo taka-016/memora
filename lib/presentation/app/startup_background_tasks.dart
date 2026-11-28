@@ -2,7 +2,7 @@ import 'package:memora/presentation/notifiers/setting/theme_settings_notifier.da
 
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/presentation/notifiers/startup/startup_background_tasks_notifier.dart';
 

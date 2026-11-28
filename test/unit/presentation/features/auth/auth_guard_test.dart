@@ -6,7 +6,7 @@ import 'package:memora/presentation/notifiers/app_availability/app_availability_
 
 import '../../notifiers/auth/auth_notifier_test.mocks.dart';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/account/user_dto.dart';

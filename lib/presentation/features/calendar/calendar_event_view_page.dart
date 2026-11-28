@@ -1,6 +1,6 @@
 import 'package:memora/presentation/notifiers/calendar/calendar_event_view_notifier.dart';
 import 'package:memora/presentation/features/calendar/calendar_event_details.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/application/services/calendar/calendar_recurrence_settings.dart';

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:memora/application/dtos/trip/task_dto.dart';
 
 class TaskList extends StatelessWidget {

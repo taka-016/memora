@@ -7,16 +7,17 @@ ARG DEBIAN_FRONTEND=noninteractive
 ARG TZ
 ENV TZ="$TZ"
 
-ARG FLUTTER_VERSION=3.47.2
-ARG ANDROID_SDK_TOOLS_VERSION=15859902
-ARG ANDROID_PLATFORM_VERSION=36
-ARG ANDROID_BUILD_TOOLS_VERSION=36.0.0
+ARG FLUTTER_VERSION=3.50.1
+ARG ANDROID_SDK_TOOLS_VERSION=16111833
+ARG ANDROID_PLATFORM_VERSION=37.0
+ARG ANDROID_BUILD_TOOLS_VERSION=37.0.0
 ARG ANDROID_NDK_VERSION=28.2.13676358
 
 ENV FLUTTER_HOME=/opt/flutter
+ENV JAVA_HOME=/opt/java
 ENV ANDROID_HOME=/opt/android-sdk-linux
 ENV ANDROID_SDK_ROOT=/opt/android-sdk-linux
-ENV PATH="${FLUTTER_HOME}/bin:${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools:${ANDROID_HOME}/emulator:/root/.pub-cache/bin:/root/.codex/packages/standalone/current:${PATH}"
+ENV PATH="${JAVA_HOME}/bin:${FLUTTER_HOME}/bin:${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools:${ANDROID_HOME}/emulator:/root/.pub-cache/bin:/root/.codex/packages/standalone/current:${PATH}"
 
 # 基本パッケージのインストール
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -38,9 +39,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   gnupg \
   ca-certificates \
   unzip \
-  xz-utils \
-  openjdk-17-jdk && \
+  xz-utils && \
   apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Java 27の正式版をチェックサム付きで導入
+RUN curl -fsSL 'https://github.com/adoptium/temurin27-binaries/releases/download/jdk-27.0.1.1%2B4/OpenJDK27U-jdk_x64_linux_hotspot_27.0.1.1_4.tar.gz' \
+    -o /tmp/java.tar.gz && \
+  echo '005e57ee860978acfeeff1be2b30f770664fe2b941e9b803c61c76992086d107  /tmp/java.tar.gz' | sha256sum -c - && \
+  mkdir -p "$JAVA_HOME" && \
+  tar -xzf /tmp/java.tar.gz -C "$JAVA_HOME" --strip-components=1 && \
+  rm /tmp/java.tar.gz
 
 # ホストのDockerを操作するCLIとGitHub・Google Cloud CLIを導入
 RUN install -m 0755 -d /etc/apt/keyrings && \
@@ -141,7 +149,7 @@ RUN dart pub global activate flutterfire_cli
 RUN printf '%s\n' 'if [ "${BASH_ENV:-}" = /run/memora/environment.sh ] && [ -r /run/memora/environment.sh ]; then . /run/memora/environment.sh; fi' \
     > /etc/profile.d/memora.sh && \
   printf 'export PATH="%s:$PATH"\n' \
-    "$FLUTTER_HOME/bin:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:/root/.pub-cache/bin:/root/.codex/packages/standalone/current" \
+    "$JAVA_HOME/bin:$FLUTTER_HOME/bin:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:/root/.pub-cache/bin:/root/.codex/packages/standalone/current" \
     >> /etc/profile.d/memora.sh && \
   sed -i '1i if [ "${BASH_ENV:-}" = /run/memora/environment.sh ] && [ -r /run/memora/environment.sh ]; then . /run/memora/environment.sh; fi' /root/.bashrc && \
   rm -f /etc/ssh/ssh_host_* && \

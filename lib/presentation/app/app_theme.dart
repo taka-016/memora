@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:memora/application/models/app_theme_mode.dart';
 
 ThemeMode resolveAppThemeMode(AppThemeMode? mode) => switch (mode) {

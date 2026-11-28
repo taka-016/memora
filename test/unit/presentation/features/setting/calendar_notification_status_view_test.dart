@@ -1,5 +1,5 @@
 import 'package:memora/composition_root/providers/calendar_notification_providers.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/services/calendar/calendar_notification_gateway.dart';

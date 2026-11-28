@@ -73,7 +73,7 @@ class GroupMutationCoordinator {
 
   Future<void> _refreshCommonData() async {
     if (ref.mounted &&
-        ref.exists(startupCommonDataNotifierProvider) &&
+        ref.read(startupCommonDataNotifierProvider.exists) &&
         ref.read(startupCommonDataOwnerProvider) != null) {
       await ref
           .read(startupCommonDataNotifierProvider.notifier)

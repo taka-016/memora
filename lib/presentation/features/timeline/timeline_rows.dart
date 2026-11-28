@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/presentation/features/timeline/dvc_row.dart';
 import 'package:memora/presentation/features/timeline/group_event_row.dart';
