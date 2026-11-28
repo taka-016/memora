@@ -5,6 +5,22 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class CalendarWidgetWeekLayoutTest {
+    @Test
+    fun `年末の最終週に翌月の帯と時刻付き予定を表示する`() {
+        val trip = event("月またぎ", multiDay = true)
+        val next = event("翌月の通院", allDay = false)
+        val layout = CalendarWidgetWeekLayout(
+            week(LocalDate.of(2026, 12, 27), mapOf(
+                4 to listOf(trip), 5 to listOf(trip, next), 6 to listOf(trip),
+            )), 3,
+        )
+        assertEquals(listOf("月またぎ", "翌月の通院"), layout.entries.map { it.event.title })
+        assertEquals(4, layout.entries.first().startColumn)
+        assertEquals(6, layout.entries.first().endColumn)
+        assertEquals(5, layout.entries.last().startColumn)
+        assertTrue(layout.remainingCounts.all { it == 0 })
+    }
+
     private val month = LocalDate.of(2026, 11, 1)
     private fun event(id: String, allDay: Boolean = true, multiDay: Boolean = false,
                       occurrence: String = id, start: Long = 1L) = CalendarWidgetEvent(
@@ -18,8 +34,8 @@ class CalendarWidgetWeekLayoutTest {
     @Test
     fun `複数日に同じ回が含まれても週ごとに1本の帯を配置する`() {
         val trip = event("旅行", multiDay = true)
-        val first = CalendarWidgetWeekLayout(week(events = (4..6).associateWith { listOf(trip) }), month, 3)
-        val next = CalendarWidgetWeekLayout(week(month.plusDays(7), (0..2).associateWith { listOf(trip) }), month, 3)
+        val first = CalendarWidgetWeekLayout(week(events = (4..6).associateWith { listOf(trip) }), 3)
+        val next = CalendarWidgetWeekLayout(week(month.plusDays(7), (0..2).associateWith { listOf(trip) }), 3)
         assertEquals(1, first.entries.size)
         assertEquals(4, first.entries.single().startColumn)
         assertEquals(6, first.entries.single().endColumn)
@@ -35,7 +51,7 @@ class CalendarWidgetWeekLayoutTest {
         val timed = event("通院", allDay = false)
         val days = week(events = mapOf(1 to listOf(band), 2 to listOf(band, timed)))
             .mapIndexed { index, day -> if (index == 2) day.copy(holidayName = "文化の日") else day }
-        val layout = CalendarWidgetWeekLayout(days, month, 3)
+        val layout = CalendarWidgetWeekLayout(days, 3)
         assertEquals(listOf("文化の日", "旅行", "通院"), layout.entries.map { it.event.title })
         assertEquals(listOf(0, 1, 2), layout.entries.map { it.lane })
         assertEquals(1, layout.entries[1].startColumn)
@@ -48,7 +64,7 @@ class CalendarWidgetWeekLayoutTest {
         val band = event("旅行", multiDay = true)
         val days = week(events = mapOf(1 to listOf(band), 2 to listOf(band)))
             .mapIndexed { index, day -> if (index == 2) day.copy(holidayName = "文化の日") else day }
-        val layout = CalendarWidgetWeekLayout(days, month, 1)
+        val layout = CalendarWidgetWeekLayout(days, 1)
         assertEquals("文化の日", layout.entries.single().event.title)
         assertEquals(listOf(0, 1, 1, 0, 0, 0, 0), layout.remainingCounts)
         assertEquals(listOf("文化の日", "旅行"), days[2].displayEvents.map { it.title })
@@ -64,7 +80,7 @@ class CalendarWidgetWeekLayoutTest {
         val single = event("午前0時終了", allDay = false, start = 4)
         val layout = CalendarWidgetWeekLayout(week(events = mapOf(
             0 to listOf(first), 1 to listOf(second), 2 to listOf(long, single), 3 to listOf(long),
-        )), month, 3)
+        )), 3)
         val repeated = layout.entries.filter { it.event.id == "毎日" }
         assertEquals(2, repeated.size)
         assertTrue(repeated.all { it.startColumn == it.endColumn })
@@ -74,13 +90,12 @@ class CalendarWidgetWeekLayoutTest {
     }
 
     @Test
-    fun `月境界では対象月の範囲に帯を切り出す`() {
-        val oct = LocalDate.of(2026, 10, 1)
+    fun `月境界でも前月から帯を連続して表示する`() {
         val trip = event("月またぎ", multiDay = true)
         val layout = CalendarWidgetWeekLayout(
-            week(LocalDate.of(2026, 9, 27), (3..6).associateWith { listOf(trip) }), oct, 3,
+            week(LocalDate.of(2026, 9, 27), (3..6).associateWith { listOf(trip) }), 3,
         )
-        assertEquals(4, layout.entries.single().startColumn)
+        assertEquals(3, layout.entries.single().startColumn)
         assertEquals(6, layout.entries.single().endColumn)
         assertTrue(layout.remainingCounts.all { it == 0 })
     }

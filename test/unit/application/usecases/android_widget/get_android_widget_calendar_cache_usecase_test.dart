@@ -6,6 +6,7 @@ import 'package:memora/application/models/calendar_event_period.dart';
 import 'package:memora/application/models/calendar_widget_group_data.dart';
 import 'package:memora/application/services/current_user_service.dart';
 import 'package:memora/domain/entities/account/user.dart';
+import 'package:memora/domain/entities/calendar/calendar_event_override.dart';
 import 'package:memora/application/queries/calendar/calendar_event_query_service.dart';
 import 'package:memora/application/queries/calendar/calendar_label_query_service.dart';
 import 'package:memora/application/services/calendar/calendar_recurrence_expander.dart';
@@ -76,6 +77,83 @@ void main() {
     });
   }
 
+  test('公開月が離れていても前後月を取得して繰り返しと取消を反映する', () async {
+    final december = DateTime(2026, 12);
+    final march = DateTime(2026, 3);
+    final january = CalendarEventPeriod.forCalendarMonth(DateTime(2027, 1));
+    final april = CalendarEventPeriod.forCalendarMonth(DateTime(2026, 4));
+    final online = GetAndroidWidgetCalendarCacheUsecase(
+      events: events,
+      labels: labels,
+      expander: CalendarRecurrenceExpander(IanaCalendarTimeZone()),
+      mode: AppMode.online,
+      loadSharedGroup:
+          (_, groupId, periods, {required force, required forceLabels}) async {
+            expect(periods, [
+              CalendarEventPeriod.forCalendarMonth(DateTime(2026, 2)),
+              CalendarEventPeriod.forCalendarMonth(march),
+              april,
+              CalendarEventPeriod.forCalendarMonth(DateTime(2026, 11)),
+              CalendarEventPeriod.forCalendarMonth(december),
+              january,
+            ]);
+            return CalendarWidgetGroupData(
+              labels: [],
+              eventsByPeriod: {
+                for (final period in periods)
+                  period: [
+                    if (period.from == DateTime(2026, 11))
+                      event(
+                        '前月の予定',
+                        DateTime.utc(2026, 11, 30),
+                        DateTime.utc(2026, 12, 1),
+                      ),
+                    if (period == january)
+                      event(
+                        '毎日',
+                        DateTime.utc(2027, 1, 1),
+                        DateTime.utc(2027, 1, 2),
+                        rule: 'FREQ=DAILY;COUNT=3',
+                      ).copyWith(
+                        overrides: [
+                          CalendarEventOverride(
+                            originalStartDateTime: DateTime.utc(2027, 1, 2),
+                          ),
+                        ],
+                      ),
+                    if (period == april)
+                      event(
+                        '翌月の予定',
+                        DateTime.utc(2026, 4, 1),
+                        DateTime.utc(2026, 4, 2),
+                      ),
+                  ],
+              },
+            );
+          },
+    );
+    final result = (await online.execute(
+      [group],
+      december,
+      ownerId: 'online:a',
+      publishedMonths: [march],
+    ))!;
+    final months = result['months'] as Map;
+    expect(months.keys, ['2026-03-01', '2026-12-01']);
+    List titles(String month, String date) =>
+        ((months[month]['days'] as List).singleWhere(
+                  (day) => day['date'] == date,
+                )['events']
+                as List)
+            .map((item) => item['title'])
+            .toList();
+    expect(titles('2026-03-01', '2026-04-01'), ['翌月の予定']);
+    expect(titles('2026-12-01', '2026-11-30'), ['前月の予定']);
+    expect(titles('2026-12-01', '2027-01-01'), ['毎日']);
+    expect(titles('2026-12-01', '2027-01-02'), isEmpty);
+    verifyZeroInteractions(events);
+  });
+
   test('全表示グループで表示月を取得した場合だけ同期完了とする', () async {
     final month = DateTime(2026, 10);
     final previous = CalendarEventPeriod(from: DateTime(2026, 9), to: month);
@@ -94,7 +172,13 @@ void main() {
       mode: AppMode.online,
       loadSharedGroup:
           (_, groupId, periods, {required force, required forceLabels}) async {
-            expect(periods, [previous, displayed, next]);
+            expect(periods, [
+              CalendarEventPeriod.forCalendarMonth(DateTime(2026, 8)),
+              previous,
+              displayed,
+              next,
+              CalendarEventPeriod.forCalendarMonth(DateTime(2026, 12)),
+            ]);
             return CalendarWidgetGroupData(
               eventsByPeriod: {for (final period in periods) period: []},
               labels: [],
@@ -142,13 +226,19 @@ void main() {
       mode: AppMode.online,
       loadSharedGroup:
           (_, groupId, periods, {required force, required forceLabels}) async {
-            expect(periods, [earlier, later]);
+            expect(periods, [
+              CalendarEventPeriod.forCalendarMonth(DateTime(2026, 8)),
+              earlier,
+              CalendarEventPeriod.forCalendarMonth(DateTime(2026, 10)),
+              later,
+              CalendarEventPeriod.forCalendarMonth(DateTime(2026, 12)),
+            ]);
             expect(force, isFalse);
             expect(forceLabels, isTrue);
             return CalendarWidgetGroupData(
               eventsByPeriod: {
-                earlier: [saved],
-                later: [],
+                for (final period in periods)
+                  period: period == earlier ? [saved] : [],
               },
               labels: [],
             );

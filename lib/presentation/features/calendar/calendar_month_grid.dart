@@ -168,7 +168,6 @@ class _CalendarWeekRow extends StatelessWidget {
         final layout = CalendarWeekLayout(
           state: state,
           weekStart: weekStart,
-          month: month,
           maxVisibleEvents: maxVisibleEvents,
           isHoliday: (date) => JapaneseCalendar.holidayName(date) != null,
         );
@@ -187,14 +186,14 @@ class _CalendarWeekRow extends StatelessWidget {
                           weekStart.month,
                           weekStart.day + column,
                         );
-                        if (date.month != month.month ||
-                            date.year != month.year) {
+                        if (date.year < 1 || date.year > 9999) {
                           return const SizedBox.shrink();
                         }
                         return _CalendarDayCell(
                           state: state,
                           showRokuyo: showRokuyo,
                           date: date,
+                          outsideMonth: date.month != month.month,
                           entries: layout.entries
                               .where(
                                 (entry) =>
@@ -286,6 +285,7 @@ class _CalendarDayCell extends StatelessWidget {
     required this.state,
     required this.showRokuyo,
     required this.date,
+    required this.outsideMonth,
     required this.onTap,
     required this.entries,
     required this.visibleCount,
@@ -296,6 +296,7 @@ class _CalendarDayCell extends StatelessWidget {
   final bool showRokuyo;
   final CalendarState state;
   final DateTime date;
+  final bool outsideMonth;
   final VoidCallback? onTap;
   final List<CalendarWeekEntry> entries;
   final int visibleCount;
@@ -308,6 +309,10 @@ class _CalendarDayCell extends StatelessWidget {
     final selected = date == state.selectedDate;
     final holiday = JapaneseCalendar.holidayName(date);
     final scheme = Theme.of(context).colorScheme;
+    final brightness = Theme.of(context).brightness;
+    final mutedDateColor = brightness == Brightness.dark
+        ? const Color(0xFF757575)
+        : const Color(0xFFCCCCCC);
     return Semantics(
       selected: selected,
       button: true,
@@ -339,17 +344,20 @@ class _CalendarDayCell extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 14,
                             height: 1.4,
-                            color: calendarDateColor(
-                              date,
-                              Theme.of(context).brightness,
-                            ),
+                            color: outsideMonth
+                                ? mutedDateColor
+                                : calendarDateColor(date, brightness),
                           ),
                         ),
                         if (showRokuyo) ...[
                           const SizedBox(width: 2),
                           Text(
                             JapaneseCalendar.rokuyo(date),
-                            style: const TextStyle(fontSize: 8, height: 1.4),
+                            style: TextStyle(
+                              fontSize: 8,
+                              height: 1.4,
+                              color: outsideMonth ? mutedDateColor : null,
+                            ),
                           ),
                         ],
                       ],

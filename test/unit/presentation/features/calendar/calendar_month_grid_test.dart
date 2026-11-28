@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/application/models/calendar_display_settings.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/presentation/features/calendar/calendar_month_grid.dart';
@@ -9,11 +10,16 @@ Future<void> _pumpGrid(
   DateTime? initialDate,
   CalendarDisplaySettings settings = const CalendarDisplaySettings(),
   TargetPlatform platform = TargetPlatform.android,
+  Brightness brightness = Brightness.light,
+  Map<DateTime, List<CalendarEventDto>> previewEventsByMonth = const {},
 }) async {
-  var state = CalendarState(selectedDate: initialDate ?? DateTime(2026, 10, 1));
+  var state = CalendarState(
+    selectedDate: initialDate ?? DateTime(2026, 10, 1),
+    previewEventsByMonth: previewEventsByMonth,
+  );
   await tester.pumpWidget(
     MaterialApp(
-      theme: ThemeData(platform: platform),
+      theme: ThemeData(platform: platform, brightness: brightness),
       home: Scaffold(
         body: StatefulBuilder(
           builder: (context, setState) => CalendarMonthGrid(
@@ -37,6 +43,113 @@ Future<void> _pumpGrid(
 }
 
 void main() {
+  for (final start in CalendarWeekStart.values) {
+    for (final brightness in Brightness.values) {
+      testWidgets(
+        '前月の予定を表示して選択でき前後月の日付と六曜を薄くする（${start.name}・${brightness.name}）',
+        (tester) async {
+          await _pumpGrid(
+            tester,
+            initialDate: DateTime(2028, 1),
+            brightness: brightness,
+            settings: CalendarDisplaySettings(
+              weekStart: start,
+              showRokuyo: true,
+            ),
+            previewEventsByMonth: {
+              DateTime(2027, 12): [
+                CalendarEventDto(
+                  id: 'previous',
+                  groupId: 'g',
+                  labelId: 'l',
+                  title: '前月の通院',
+                  startDateTime: DateTime(2027, 12, 31, 9),
+                  endDateTime: DateTime(2027, 12, 31, 10),
+                  isAllDay: false,
+                ),
+              ],
+            },
+          );
+          final page = find.byKey(const Key('calendar_month_2028_1'));
+          Finder cell(String date) => find.descendant(
+            of: page,
+            matching: find.byKey(Key('calendar_day_$date')),
+          );
+          final previous = cell('2027_12_31');
+          expect(
+            find.descendant(of: previous, matching: find.text('前月の通院')),
+            findsOneWidget,
+          );
+          final muted = brightness == Brightness.dark
+              ? const Color(0xFF757575)
+              : const Color(0xFFCCCCCC);
+          for (final (date, day) in [('2027_12_31', '31'), ('2028_2_1', '1')]) {
+            final texts = tester.widgetList<Text>(
+              find.descendant(of: cell(date), matching: find.byType(Text)),
+            );
+            expect(
+              texts.firstWhere((text) => text.data == day).style!.color,
+              muted,
+            );
+            expect(
+              texts
+                  .firstWhere((text) => text.style?.fontSize == 8)
+                  .style!
+                  .color,
+              muted,
+            );
+          }
+          await tester.tap(previous);
+          await tester.pump();
+          await tester.pump();
+          expect(
+            find.byKey(const Key('calendar_month_2027_12')),
+            findsOneWidget,
+          );
+          expect(tester.takeException(), isNull);
+        },
+      );
+    }
+  }
+
+  for (final start in CalendarWeekStart.values) {
+    testWidgets('最終週の翌月の予定を表示して日付を選択できる（${start.name}）', (tester) async {
+      await _pumpGrid(
+        tester,
+        initialDate: DateTime(2026, 12),
+        settings: CalendarDisplaySettings(weekStart: start),
+        previewEventsByMonth: {
+          DateTime(2027, 1): [
+            CalendarEventDto(
+              id: 'next',
+              groupId: 'g',
+              labelId: 'l',
+              title: '翌月の通院',
+              startDateTime: DateTime(2027, 1, 1, 9),
+              endDateTime: DateTime(2027, 1, 1, 10),
+              isAllDay: false,
+            ),
+          ],
+        },
+      );
+      final page = find.byKey(const Key('calendar_month_2026_12'));
+      final day = find.descendant(
+        of: page,
+        matching: find.byKey(const Key('calendar_day_2027_1_1')),
+      );
+      expect(
+        find.descendant(of: day, matching: find.text('翌月の通院')),
+        findsOneWidget,
+      );
+      expect(find.byKey(const Key('calendar_day_2026_11_30')), findsOneWidget);
+      await tester.tap(day);
+      await tester.pump();
+      await tester.pump();
+      expect(find.byKey(const Key('calendar_month_2027_1')), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
   testWidgets('祝日は日曜と同じ赤色で表示し六曜を設定で切り替える', (tester) async {
     Future<void> pump(bool showRokuyo) => _pumpGrid(
       tester,

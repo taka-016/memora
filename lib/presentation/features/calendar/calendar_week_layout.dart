@@ -24,20 +24,13 @@ class CalendarWeekLayout {
   CalendarWeekLayout({
     required CalendarState state,
     required DateTime weekStart,
-    required DateTime month,
     int maxVisibleEvents = MAX_VISIBLE_EVENTS,
     bool Function(DateTime)? isHoliday,
   }) {
     final lanes = List.generate(maxVisibleEvents, (_) => List.filled(7, false));
     final weekDay = _day(weekStart);
-    final firstColumn = math.max(
-      0,
-      _day(DateTime(month.year, month.month)) - weekDay,
-    );
-    final lastColumn = math.min(
-      6,
-      _day(DateTime(month.year, month.month + 1, 0)) - weekDay,
-    );
+    final firstColumn = math.max(0, _day(DateTime(1)) - weekDay);
+    final lastColumn = math.min(6, _day(DateTime(9999, 12, 31)) - weekDay);
     void place(CalendarEventDto event, int start, int end) {
       for (var lane = 0; lane < maxVisibleEvents; lane++) {
         if (List.generate(
@@ -72,12 +65,29 @@ class CalendarWeekLayout {
         if (isHoliday(date)) lanes[0][column] = true;
       }
     }
-    final bandEvents = state.eventsForMonth(month).where(_isBand).toList()
-      ..sort((a, b) {
-        if (a.isAllDay != b.isAllDay) return a.isAllDay ? -1 : 1;
-        final order = a.startDateTime.compareTo(b.startDateTime);
-        return order != 0 ? order : a.id.compareTo(b.id);
-      });
+    final bandEvents =
+        {
+          for (var column = firstColumn; column <= lastColumn; column++)
+            for (final event
+                in state
+                    .eventsForDay(
+                      DateTime(
+                        weekStart.year,
+                        weekStart.month,
+                        weekStart.day + column,
+                      ),
+                    )
+                    .where(_isBand))
+              (
+                event.groupId,
+                event.id,
+                event.originalStartDateTime ?? event.startDateTime,
+              ): event,
+        }.values.toList()..sort((a, b) {
+          if (a.isAllDay != b.isAllDay) return a.isAllDay ? -1 : 1;
+          final order = a.startDateTime.compareTo(b.startDateTime);
+          return order != 0 ? order : a.id.compareTo(b.id);
+        });
     for (final event in bandEvents) {
       final start = math.max(firstColumn, _day(_startDate(event)) - weekDay);
       final end = math.min(lastColumn, _day(_endDate(event)) - weekDay);

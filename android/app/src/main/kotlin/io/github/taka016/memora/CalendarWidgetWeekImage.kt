@@ -7,14 +7,12 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.RectF
 import android.util.TypedValue
-import java.time.LocalDate
 import kotlin.math.roundToInt
 
 internal object CalendarWidgetWeekImage {
     fun render(
         context: Context,
         days: List<CalendarWidgetDay>,
-        month: LocalDate,
         widthDp: Int,
         heightDp: Float,
         compact: Boolean,
@@ -32,7 +30,7 @@ internal object CalendarWidgetWeekImage {
         val laneHeight = dp(if (compact) 8f else 12f)
         val lines = minOf(maxLines, ((height - headerHeight - dp(1f)) / laneHeight).toInt().coerceAtLeast(0))
         if (lines == 0) return bitmap
-        val layout = CalendarWidgetWeekLayout(days, month, lines)
+        val layout = CalendarWidgetWeekLayout(days, lines)
         val columnWidth = width / 7f
         val fill = Paint(Paint.ANTI_ALIAS_FLAG)
         val text = Paint(Paint.ANTI_ALIAS_FLAG).apply {
