@@ -24,7 +24,6 @@ class CalendarWeekLayout {
   CalendarWeekLayout({
     required CalendarState state,
     required DateTime weekStart,
-    required DateTime month,
     int maxVisibleEvents = MAX_VISIBLE_EVENTS,
     bool Function(DateTime)? isHoliday,
   }) {

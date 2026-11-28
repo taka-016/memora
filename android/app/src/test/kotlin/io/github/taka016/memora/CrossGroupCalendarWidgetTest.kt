@@ -12,7 +12,7 @@ class CrossGroupCalendarWidgetTest {
         val second = first.copy(groupId = "friends", title = "友人")
         val date = LocalDate.of(2026, 11, 2)
         val days = (0L..6L).map { CalendarWidgetDay(date.plusDays(it), if (it < 2) listOf(first, second) else emptyList()) }
-        val layout = CalendarWidgetWeekLayout(days, date.withDayOfMonth(1), 3)
+        val layout = CalendarWidgetWeekLayout(days, 3)
         assertEquals(listOf("family", "friends"), layout.entries.map { it.event.groupId })
         assertEquals(listOf(0, 0, 0, 0, 0, 0, 0), layout.remainingCounts)
     }

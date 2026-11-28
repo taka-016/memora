@@ -240,7 +240,7 @@ internal object CalendarWidgetRenderer {
         }
         state.month.days.chunked(7).forEachIndexed { week, days ->
             views.setImageViewBitmap(weekEventIds[week], CalendarWidgetWeekImage.render(
-                context, days, month, (size.width - 16).coerceAtLeast(7), rowHeight,
+                context, days, (size.width - 16).coerceAtLeast(7), rowHeight,
                 compactDay, visibleEvents, state.appearance,
             ))
         }

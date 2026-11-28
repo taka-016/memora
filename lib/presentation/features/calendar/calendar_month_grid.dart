@@ -168,7 +168,6 @@ class _CalendarWeekRow extends StatelessWidget {
         final layout = CalendarWeekLayout(
           state: state,
           weekStart: weekStart,
-          month: month,
           maxVisibleEvents: maxVisibleEvents,
           isHoliday: (date) => JapaneseCalendar.holidayName(date) != null,
         );

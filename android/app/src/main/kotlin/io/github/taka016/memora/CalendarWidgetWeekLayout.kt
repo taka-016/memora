@@ -1,7 +1,5 @@
 package io.github.taka016.memora
 
-import java.time.LocalDate
-
 internal data class CalendarWidgetWeekEntry(
     val event: CalendarWidgetEvent,
     val startColumn: Int,
@@ -13,7 +11,6 @@ internal data class CalendarWidgetWeekEntry(
 
 internal class CalendarWidgetWeekLayout(
     days: List<CalendarWidgetDay>,
-    month: LocalDate,
     maxLines: Int,
 ) {
     private data class EventKey(val groupId: String?, val id: String, val occurrence: String?, val startMillis: Long)

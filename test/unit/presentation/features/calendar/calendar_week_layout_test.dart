@@ -45,7 +45,6 @@ void main() {
     final layout = CalendarWeekLayout(
       state: state,
       weekStart: DateTime(2026, 12, 27),
-      month: DateTime(2026, 12),
     );
     expect(layout.entries.map((entry) => entry.event.id), [
       'trip',
@@ -65,14 +64,12 @@ void main() {
     final first = CalendarWeekLayout(
       state: state,
       weekStart: DateTime(2026, 9, 27),
-      month: DateTime(2026, 10),
     );
     expect(first.entries.single.startColumn, 3);
     expect(first.entries.single.endColumn, 6);
     final next = CalendarWeekLayout(
       state: state,
       weekStart: DateTime(2026, 10, 4),
-      month: DateTime(2026, 10),
     );
     expect(next.entries.single.startColumn, 0);
     expect(next.entries.single.endColumn, 2);
@@ -93,11 +90,7 @@ void main() {
       (DateTime(2026, 9, 27), 3, 6),
       (DateTime(2026, 10, 4), 0, 2),
     ]) {
-      final layout = CalendarWeekLayout(
-        state: state,
-        weekStart: weekStart,
-        month: DateTime(2026, 10),
-      );
+      final layout = CalendarWeekLayout(state: state, weekStart: weekStart);
       expect(layout.entries.single.startColumn, start);
       expect(layout.entries.single.endColumn, end);
       expect(layout.visibleCounts.sublist(start, end + 1), everyElement(1));
@@ -118,7 +111,6 @@ void main() {
     final layout = CalendarWeekLayout(
       state: state,
       weekStart: DateTime(2026, 10, 4),
-      month: DateTime(2026, 10),
     );
     expect(layout.entries.single.startColumn, 0);
     expect(layout.entries.single.endColumn, 1);
@@ -134,7 +126,6 @@ void main() {
     CalendarWeekLayout layout(int lines) => CalendarWeekLayout(
       state: state,
       weekStart: DateTime(2026, 11),
-      month: DateTime(2026, 11),
       maxVisibleEvents: lines,
       isHoliday: (date) => date.day == 3,
     );
@@ -176,7 +167,6 @@ void main() {
     final layout = CalendarWeekLayout(
       state: state,
       weekStart: DateTime(2026, 10, 4),
-      month: DateTime(2026, 10),
     );
     expect(layout.entries.map((entry) => entry.event.id), [
       'a',

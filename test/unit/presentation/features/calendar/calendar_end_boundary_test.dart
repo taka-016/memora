@@ -38,7 +38,6 @@ void main() {
       final layout = CalendarWeekLayout(
         state: state,
         weekStart: DateTime(2026, 11, 1),
-        month: DateTime(2026, 11),
       );
       expect(layout.entries.single.startColumn, 1);
       expect(layout.entries.single.endColumn, 2);

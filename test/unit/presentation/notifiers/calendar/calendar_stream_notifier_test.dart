@@ -287,7 +287,6 @@ void main() {
     final layout = CalendarWeekLayout(
       state: container.read(provider),
       weekStart: DateTime(2026, 12, 27),
-      month: DateTime(2026, 12),
     );
     expect(layout.entries.map((entry) => entry.event.id), ['e', 'next']);
     expect(layout.entries.first.endColumn, 6);
@@ -318,7 +317,6 @@ void main() {
     final layout = CalendarWeekLayout(
       state: state,
       weekStart: DateTime(2026, 12, 27),
-      month: DateTime(2027, 1),
     );
     expect(layout.entries.single.event.id, 'previous');
     expect(layout.entries.single.startColumn, 4);
