@@ -68,6 +68,7 @@ class GetAndroidWidgetCalendarCacheUsecase {
     final onlinePeriods = [
       for (final value in {
         for (final month in months) ...[
+          DateTime(month.year, month.month - 1),
           month,
           DateTime(month.year, month.month + 1),
         ],

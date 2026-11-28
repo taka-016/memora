@@ -187,7 +187,7 @@ class _CalendarWeekRow extends StatelessWidget {
                           weekStart.month,
                           weekStart.day + column,
                         );
-                        if (date.isBefore(month) || date.year > 9999) {
+                        if (date.year < 1 || date.year > 9999) {
                           return const SizedBox.shrink();
                         }
                         return _CalendarDayCell(
@@ -310,6 +310,10 @@ class _CalendarDayCell extends StatelessWidget {
     final selected = date == state.selectedDate;
     final holiday = JapaneseCalendar.holidayName(date);
     final scheme = Theme.of(context).colorScheme;
+    final brightness = Theme.of(context).brightness;
+    final mutedDateColor = brightness == Brightness.dark
+        ? const Color(0xFF757575)
+        : const Color(0xFFCCCCCC);
     return Semantics(
       selected: selected,
       button: true,
@@ -342,18 +346,19 @@ class _CalendarDayCell extends StatelessWidget {
                             fontSize: 14,
                             height: 1.4,
                             color: outsideMonth
-                                ? scheme.onSurfaceVariant
-                                : calendarDateColor(
-                                    date,
-                                    Theme.of(context).brightness,
-                                  ),
+                                ? mutedDateColor
+                                : calendarDateColor(date, brightness),
                           ),
                         ),
                         if (showRokuyo) ...[
                           const SizedBox(width: 2),
                           Text(
                             JapaneseCalendar.rokuyo(date),
-                            style: const TextStyle(fontSize: 8, height: 1.4),
+                            style: TextStyle(
+                              fontSize: 8,
+                              height: 1.4,
+                              color: outsideMonth ? mutedDateColor : null,
+                            ),
                           ),
                         ],
                       ],

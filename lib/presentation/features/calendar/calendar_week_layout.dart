@@ -30,10 +30,7 @@ class CalendarWeekLayout {
   }) {
     final lanes = List.generate(maxVisibleEvents, (_) => List.filled(7, false));
     final weekDay = _day(weekStart);
-    final firstColumn = math.max(
-      0,
-      _day(DateTime(month.year, month.month)) - weekDay,
-    );
+    final firstColumn = math.max(0, _day(DateTime(1)) - weekDay);
     final lastColumn = math.min(6, _day(DateTime(9999, 12, 31)) - weekDay);
     void place(CalendarEventDto event, int start, int end) {
       for (var lane = 0; lane < maxVisibleEvents; lane++) {
