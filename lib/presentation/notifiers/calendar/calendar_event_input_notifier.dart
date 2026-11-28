@@ -63,7 +63,7 @@ class CalendarEventInputNotifier extends _$CalendarEventInputNotifier {
   }
 
   bool get _usesCommonData =>
-      ref.exists(startupCommonDataNotifierProvider) &&
+      ref.read(startupCommonDataNotifierProvider.exists) &&
       ref.read(startupCommonDataOwnerProvider) != null;
 
   Future<void> retry() async {
@@ -131,14 +131,14 @@ class CalendarEventInputNotifier extends _$CalendarEventInputNotifier {
       return;
     }
     try {
-      final settings = ref.exists(calendarGroupSettingsNotifierProvider)
+      final settings = ref.read(calendarGroupSettingsNotifierProvider.exists)
           ? ref.read(calendarGroupSettingsNotifierProvider)
           : null;
       final knownGroup = settings?.groupsReady == true
           ? settings!.groups.where((group) => group.id == id).firstOrNull
           : null;
       final calendar =
-          knownGroup != null && ref.exists(calendarNotifierProvider(id))
+          knownGroup != null && ref.read(calendarNotifierProvider(id).exists)
           ? ref.read(calendarNotifierProvider(id))
           : null;
       final results = await Future.wait<Object?>([

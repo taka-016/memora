@@ -292,7 +292,7 @@ class AndroidWidgetLaunchNotifier extends Notifier<AndroidWidgetLaunchState> {
       );
       try {
         final groups =
-            ref.exists(startupCommonDataNotifierProvider) &&
+            ref.read(startupCommonDataNotifierProvider.exists) &&
                 ref.read(startupCommonDataOwnerProvider) != null
             ? await ref
                   .read(startupCommonDataNotifierProvider.notifier)

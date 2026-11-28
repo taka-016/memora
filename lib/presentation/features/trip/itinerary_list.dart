@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
 
 class ItineraryList extends StatelessWidget {

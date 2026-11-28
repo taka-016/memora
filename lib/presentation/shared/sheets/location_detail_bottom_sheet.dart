@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:memora/application/dtos/trip/location_dto.dart';
 import 'package:memora/presentation/shared/sheets/location_detail_panel_frame.dart';
 

@@ -20,7 +20,7 @@ import 'package:memora/application/usecases/calendar/change_calendar_recurrence_
 import 'package:memora/application/exceptions/application_validation_exception.dart';
 import 'package:memora/composition_root/providers/calendar_providers.dart';
 import 'package:memora/presentation/features/calendar/calendar_recurrence_dialog.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_preferences_notifier.dart';

@@ -5,7 +5,7 @@ import 'package:memora/composition_root/providers/external_calendar_providers.da
 import 'package:memora/presentation/notifiers/calendar/external_calendar_notifier.dart';
 import 'package:memora/presentation/features/calendar/external_calendar_overlay.dart';
 import 'package:memora/presentation/features/calendar/external_calendar_widgets.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/presentation/features/calendar/calendar_event_details.dart';

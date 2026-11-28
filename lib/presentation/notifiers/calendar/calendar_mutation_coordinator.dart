@@ -47,7 +47,7 @@ class CalendarMutationCoordinator {
   }
 
   Future<void> labelsChanged(String groupId) async {
-    if (ref.exists(startupCommonDataNotifierProvider) &&
+    if (ref.read(startupCommonDataNotifierProvider.exists) &&
         ref.read(startupCommonDataOwnerProvider) != null) {
       await ref
           .read(startupCommonDataNotifierProvider.notifier)
@@ -60,13 +60,13 @@ class CalendarMutationCoordinator {
     if (!ref.mounted) return;
     for (final id in ids) {
       final provider = calendarNotifierProvider(id);
-      if (ref.exists(provider) && !ref.read(provider).isWatching) {
+      if (ref.read(provider.exists) && !ref.read(provider).isWatching) {
         await ref.read(provider.notifier).load();
       }
       if (!ref.mounted) return;
     }
     try {
-      if (ref.exists(calendarNotificationsNotifierProvider)) {
+      if (ref.read(calendarNotificationsNotifierProvider.exists)) {
         await ref
             .read(calendarNotificationsNotifierProvider.notifier)
             .refresh();

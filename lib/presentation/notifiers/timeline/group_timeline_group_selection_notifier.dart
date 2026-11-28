@@ -42,7 +42,7 @@ class GroupTimelineGroupSelectionNotifier
   }
 
   bool get _usesCommonData =>
-      ref.exists(startupCommonDataNotifierProvider) &&
+      ref.read(startupCommonDataNotifierProvider.exists) &&
       ref.read(startupCommonDataOwnerProvider) != null;
 
   Future<List<GroupDto>> _loadGroups(

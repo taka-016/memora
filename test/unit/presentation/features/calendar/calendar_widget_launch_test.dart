@@ -12,7 +12,7 @@ import 'package:memora/application/dtos/calendar/external_calendar_dto.dart';
 import 'package:memora/presentation/notifiers/calendar/external_calendar_notifier.dart';
 import 'package:memora/presentation/notifiers/calendar/external_calendar_state.dart';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';

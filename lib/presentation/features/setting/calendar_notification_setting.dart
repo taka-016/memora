@@ -1,6 +1,6 @@
 import 'package:memora/presentation/shared/dialogs/edit_discard_scope.dart';
 import 'package:memora/composition_root/providers/calendar_notification_providers.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/services/calendar/calendar_notification_gateway.dart';
 import 'package:memora/application/services/calendar/calendar_notification_preferences.dart';

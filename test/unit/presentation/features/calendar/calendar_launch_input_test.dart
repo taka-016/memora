@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_draft_dto.dart';
 import 'package:memora/presentation/features/calendar/calendar_event_input_page.dart';

@@ -4,7 +4,7 @@ import 'package:memora/presentation/features/calendar/calendar_event_input_page.
 import 'package:memora/application/dtos/calendar/calendar_event_draft_dto.dart';
 import 'package:memora/presentation/notifiers/calendar/calendar_group_settings_notifier.dart';
 import 'package:memora/composition_root/providers/app_providers.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:memora/presentation/app/top_page.dart';

@@ -1,7 +1,7 @@
 import 'package:memora/presentation/features/calendar/calendar_labels_dialog.dart';
 import 'package:memora/application/services/calendar/calendar_display_labels.dart';
 import 'package:memora/presentation/shared/inputs/label_color_settings.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';

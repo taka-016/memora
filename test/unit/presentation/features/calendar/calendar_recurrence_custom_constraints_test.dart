@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/services/calendar/calendar_recurrence_settings.dart';
 import 'package:memora/presentation/features/calendar/calendar_recurrence_dialog.dart';

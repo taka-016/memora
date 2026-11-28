@@ -1,5 +1,5 @@
 import 'package:memora/presentation/features/calendar/calendar_preview_text.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class CalendarHolidayBanner extends StatelessWidget {
   const CalendarHolidayBanner({

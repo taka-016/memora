@@ -2,7 +2,7 @@ import 'package:memora/composition_root/providers/location_providers.dart';
 
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/location/location_candidate_dto.dart';

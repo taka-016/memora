@@ -1,5 +1,5 @@
 import 'package:memora/presentation/shared/map_views/placeholder_map_view_builder.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/presentation/shared/map_views/location_map_dialog.dart';
 

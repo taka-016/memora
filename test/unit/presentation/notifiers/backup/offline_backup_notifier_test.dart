@@ -120,7 +120,7 @@ void main() {
     subscription.close();
     await container.pump();
 
-    expect(container.exists(offlineBackupNotifierProvider), isFalse);
+    expect(container.read(offlineBackupNotifierProvider.exists), isFalse);
   });
 }
 

@@ -3,7 +3,7 @@ import 'package:memora/presentation/features/calendar/calendar_holiday_banner.da
 import 'package:memora/application/models/calendar_display_settings.dart';
 import 'package:memora/application/services/calendar/japanese_calendar.dart';
 import 'package:memora/presentation/features/calendar/calendar_date_color.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:memora/application/dtos/calendar/calendar_event_dto.dart';
 import 'package:memora/presentation/features/calendar/calendar_event_details.dart';
 import 'package:memora/presentation/features/calendar/calendar_labels_dialog.dart';

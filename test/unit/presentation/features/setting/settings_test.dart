@@ -7,7 +7,7 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:memora/composition_root/providers/android_widget_providers.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/android_widget/android_widget_itinerary_cache_dto.dart';

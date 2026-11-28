@@ -1,6 +1,6 @@
 import 'package:memora/presentation/notifiers/app_availability/app_availability_notifier.dart';
 import 'package:memora/composition_root/providers/account_providers.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/account/user_dto.dart';
 import 'package:memora/presentation/notifiers/auth/auth_notifier.dart';
